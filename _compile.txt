@@ -1,4 +1,4 @@
-gcc -std=c99 -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined *.c -o shl
+gcc -std=c99 -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined *.c -o ncsh
 
 --compile debug
 make
@@ -6,19 +6,19 @@ make
 make -f makefile.release
 
 --leak checking
-gcc -std=c99 -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined *.c -o shl
-clang -std=c99 -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined *.c -o shl
-valgrind --leak-check=yes ./shl
+gcc -std=c99 -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined *.c -o ncsh
+clang -std=c99 -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined *.c -o ncsh
+valgrind --leak-check=yes ./ncsh
 
 --profiling
-gcc -std=c99 -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -O3 -pg *.c -o shl
-clang -std=c99 -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -O3 -pg *.c -o shl
+gcc -std=c99 -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -O3 -pg *.c -o ncsh
+clang -std=c99 -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -O3 -pg *.c -o ncsh
 1. compile with -pg
 2. run program
-3. generate report: gprof shl gmon.out > analysis.txt
+3. generate report: gprof ncsh gmon.out > analysis.txt
 4. review analysis.txt
 
 --debugging
-gcc -std=c99 -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined -g *.c -o shl
-clang -std=c99 -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined -g *.c -o shl
+gcc -std=c99 -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined -g *.c -o ncsh
+clang -std=c99 -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined -g *.c -o ncsh
 

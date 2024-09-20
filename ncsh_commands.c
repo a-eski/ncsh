@@ -97,7 +97,7 @@ void ncsh_history_add(char* line, uint_fast32_t length)
 	}
 }
 
-uint_fast32_t ncsh_history_command()
+uint_fast32_t ncsh_history_command(void)
 {
 	for (uint_fast32_t i = 0; i < history_position; i++) {
 		printf("%s\n", history[i]);
