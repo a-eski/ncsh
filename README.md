@@ -1,5 +1,5 @@
 # ncsh
-An interactive shell written in C focused on speed and building everything from the ground up.
+An interactive unix shell written in C focused on speed and building everything from the ground up.
 
 # goals
 1. autocomplete
