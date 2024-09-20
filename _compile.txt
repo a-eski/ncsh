@@ -11,8 +11,8 @@ clang -std=c99 -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=addr
 valgrind --leak-check=yes ./ncsh
 
 --profiling
-gcc -std=c99 -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -O3 -pg *.c -o ncsh
-clang -std=c99 -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -O3 -pg *.c -o ncsh
+gcc -std=c99 -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -O3 -DNDEBUG -pg *.c -o ncsh
+clang -std=c99 -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -O3 -DNDEBUG -pg *.c -o ncsh
 1. compile with -pg
 2. run program
 3. generate report: gprof ncsh gmon.out > analysis.txt
