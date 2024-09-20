@@ -1,23 +1,23 @@
-#ifndef shl_types_h
-#define shl_types_h
+#ifndef ncsh_types_h
+#define ncsh_types_h
 
 #include <linux/limits.h>
 #include <stdint.h>
 
-struct shl_Args
+struct ncsh_Args
 {
 	uint_fast32_t count;
 	uint_fast32_t maxLineSize;
 	char** lines;
 };
 
-struct shl_Directory
+struct ncsh_Directory
 {
 	char* user;
 	char path[PATH_MAX];
 };
 
-enum shl_Hotkey
+enum ncsh_Hotkey
 {
 	NONE = 0,
 	UP = 1,
@@ -27,5 +27,5 @@ enum shl_Hotkey
 	DELETE = 5
 };
 
-#endif // !shl_types_h
+#endif // !ncsh_types_h
 

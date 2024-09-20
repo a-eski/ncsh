@@ -2,13 +2,13 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "shl_terminal.h"
-#include "shl_output.h"
+#include "ncsh_terminal.h"
+#include "ncsh_output.h"
 
 static struct termios terminal;
 static struct termios original_terminal;
 
-void shl_terminal_reset(void)
+void ncsh_terminal_reset(void)
 {
 	fflush(stdout);
 	if (tcsetattr(STDIN_FILENO, TCSANOW, &original_terminal) != 0)
@@ -17,7 +17,7 @@ void shl_terminal_reset(void)
 	}
 }
 
-void shl_terminal_init(void)
+void ncsh_terminal_init(void)
 {
 	if (!isatty(STDIN_FILENO))
 	{
@@ -30,7 +30,7 @@ void shl_terminal_init(void)
 		perror(RED "Could not get terminal settings" RESET);
 		exit(EXIT_FAILURE);
 	}
-	atexit(shl_terminal_reset);
+	atexit(ncsh_terminal_reset);
 
 	terminal = original_terminal;
 	terminal.c_lflag &= ~(ICANON|ECHO);

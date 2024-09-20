@@ -1,5 +1,5 @@
-#ifndef shl_output_h
-#define shl_output_h
+#ifndef ncsh_output_h
+#define ncsh_output_h
 
 #define RED	"\x1B[31m"
 #define GREEN	"\x1B[32m"
@@ -10,5 +10,5 @@
 #define WHITE	"\x1B[37m"
 #define RESET	"\x1B[0m"
 
-#endif // !shl_output_h
+#endif // !ncsh_output_h
 

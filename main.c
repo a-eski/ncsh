@@ -6,14 +6,14 @@
 #include <unistd.h>
 #include <stdbool.h>
 
-#include "shl_types.h"
-#include "shl_terminal.h"
-#include "shl_output.h"
-#include "shl_string.h"
-#include "shl_commands.h"
+#include "ncsh_types.h"
+#include "ncsh_terminal.h"
+#include "ncsh_output.h"
+#include "ncsh_string.h"
+#include "ncsh_commands.h"
 
-#define SHL_TOKEN_BUFFER_SIZE 64
-#define SHL_ARGS_ARRAY_SIZE 20
+#define ncsh_TOKEN_BUFFER_SIZE 64
+#define ncsh_ARGS_ARRAY_SIZE 20
 
 #define ESCAPE_CHARACTER 27
 #define CTRL_D '\004'
@@ -33,7 +33,7 @@
 #define ERASE_CURRENT_LINE "\033[K"
 #define ERASE_CURRENT_LINE_LENGTH 3
 
-_Bool shl_is_delimiter(char ch)
+_Bool ncsh_is_delimiter(char ch)
 {
 	switch (ch)
 	{
@@ -56,14 +56,14 @@ _Bool shl_is_delimiter(char ch)
 	}
 }
 
-struct shl_Args shl_line_split(char line[], uint_fast32_t length)
+struct ncsh_Args ncsh_line_split(char line[], uint_fast32_t length)
 {
-	const uint_fast32_t buffer_size = SHL_TOKEN_BUFFER_SIZE;
-	char buffer[SHL_TOKEN_BUFFER_SIZE];
+	const uint_fast32_t buffer_size = ncsh_TOKEN_BUFFER_SIZE;
+	char buffer[ncsh_TOKEN_BUFFER_SIZE];
 	uint_fast32_t buffer_position = 0;
 
-	struct shl_Args args = { .count = 0, .lines = NULL };
-	args.lines = malloc(sizeof(char*) * SHL_TOKEN_BUFFER_SIZE);
+	struct ncsh_Args args = { .count = 0, .lines = NULL };
+	args.lines = malloc(sizeof(char*) * ncsh_TOKEN_BUFFER_SIZE);
 	if (args.lines == NULL)
 		exit(-1);
 
@@ -71,17 +71,17 @@ struct shl_Args shl_line_split(char line[], uint_fast32_t length)
 
 	for (uint_fast32_t line_position = 0; line_position < length + 1; line_position++)
 	{
-		if (line_position == length || buffer_position == SHL_TOKEN_BUFFER_SIZE - 1)
+		if (line_position == length || buffer_position == ncsh_TOKEN_BUFFER_SIZE - 1)
 		{
 			args.lines[args.count] = NULL;
 			break;
 		}
-		else if (shl_is_delimiter(line[line_position]) && (double_quotes_count == 0 || double_quotes_count == 2))
+		else if (ncsh_is_delimiter(line[line_position]) && (double_quotes_count == 0 || double_quotes_count == 2))
 		{
 			buffer[buffer_position] = '\0';
 
 			args.lines[args.count] = malloc(sizeof(char) * buffer_size);
-			shl_string_copy(args.lines[args.count], buffer, buffer_size);
+			ncsh_string_copy(args.lines[args.count], buffer, buffer_size);
 			args.count++;
 
 			if (args.maxLineSize == 0 || buffer_position > args.maxLineSize)
@@ -103,7 +103,7 @@ struct shl_Args shl_line_split(char line[], uint_fast32_t length)
 	return args;
 }
 
-_Bool shl_args_is_valid(struct shl_Args args)
+_Bool ncsh_args_is_valid(struct ncsh_Args args)
 {
 	if (args.count == 0 || args.lines == NULL)
 		return 0;
@@ -114,14 +114,14 @@ _Bool shl_args_is_valid(struct shl_Args args)
 	return 1;
 }
 
-void shl_args_free(struct shl_Args args)
+void ncsh_args_free(struct ncsh_Args args)
 {
 	for (uint_fast32_t i = 0; i < args.count; i++)
 		free(args.lines[i]);
 	free(args.lines);
 }
 
-void shl_print_prompt(struct shl_Directory prompt_info)
+void ncsh_print_prompt(struct ncsh_Directory prompt_info)
 {
 	char *getcwd_result = getcwd(prompt_info.path, sizeof(prompt_info.path));
 	if (getcwd_result == NULL)
@@ -134,7 +134,7 @@ void shl_print_prompt(struct shl_Directory prompt_info)
 	fflush(stdout);
 }
 
-enum shl_Hotkey shl_get_key(char character)
+enum ncsh_Hotkey ncsh_get_key(char character)
 {
 	switch (character)
 	{
@@ -153,7 +153,7 @@ enum shl_Hotkey shl_get_key(char character)
 	}
 }
 
-char shl_read_char(void)
+char ncsh_read_char(void)
 {
 	char character;
 	if (read(STDIN_FILENO, &character, 1) == -1)
@@ -165,7 +165,7 @@ char shl_read_char(void)
 	return character;
 }
 
-void shl_write(char* string, uint_fast32_t length)
+void ncsh_write(char* string, uint_fast32_t length)
 {
 	if (write(STDOUT_FILENO, string, length) == -1)
 	{
@@ -176,7 +176,7 @@ void shl_write(char* string, uint_fast32_t length)
 	fflush(stdout);
 }
 
-void shl_backspace(void)
+void ncsh_backspace(void)
 {
 	if (write(STDOUT_FILENO, BACKSPACE_STRING, BACKSPACE_STRING_LENGTH) == -1)
 	{
@@ -187,7 +187,7 @@ void shl_backspace(void)
 	fflush(stdout);
 }
 
-void shl_delete_line(void)
+void ncsh_delete_line(void)
 {
 	if (write(STDOUT_FILENO, ERASE_CURRENT_LINE, ERASE_CURRENT_LINE_LENGTH) == -1)
 	{
@@ -198,7 +198,7 @@ void shl_delete_line(void)
 	fflush(stdout);
 }
 
-void shl_move_cursor_left(void)
+void ncsh_move_cursor_left(void)
 {
 	if (write(STDOUT_FILENO, MOVE_CURSOR_LEFT, MOVE_CURSOR_LEFT_LENGTH) == -1)
 	{
@@ -209,7 +209,7 @@ void shl_move_cursor_left(void)
 	fflush(stdout);
 }
 
-void shl_move_cursor_right(void)
+void ncsh_move_cursor_right(void)
 {
 	if (write(STDOUT_FILENO, MOVE_CURSOR_RIGHT, MOVE_CURSOR_RIGHT_LENGTH) == -1)
 	{
@@ -226,25 +226,25 @@ int main(void)
 	char buffer[MAX_INPUT];
 	uint_fast32_t buffer_position = 0;
 
-	struct shl_Directory prompt_info;
+	struct ncsh_Directory prompt_info;
 	prompt_info.user = getenv("USER");
 	bool reprint_prompt = true;
 
-	struct shl_Args args;
+	struct ncsh_Args args;
 	uint_fast32_t command_result = 0;
-	enum shl_Hotkey key;
+	enum ncsh_Hotkey key;
 
-	shl_terminal_init();
-	shl_history_init();
+	ncsh_terminal_init();
+	ncsh_history_init();
 
 	while (1)
 	{
 		if (buffer_position == 0 && reprint_prompt == true)
-			shl_print_prompt(prompt_info);
+			ncsh_print_prompt(prompt_info);
 		else
 			reprint_prompt = true;
 
-		character = shl_read_char();
+		character = ncsh_read_char();
 
 		if (character == CTRL_D)
 		{
@@ -262,17 +262,17 @@ int main(void)
 					continue;
 			}
 
-			shl_backspace();
+			ncsh_backspace();
 			--buffer_position;
 		}
 		else if (character == ESCAPE_CHARACTER)
 		{
-			character = shl_read_char();
+			character = ncsh_read_char();
 
 			if (character == '[')
 			{
-				character = shl_read_char();
-				key = shl_get_key(character);
+				character = ncsh_read_char();
+				key = ncsh_get_key(character);
 
 				if (key == RIGHT)
 				{
@@ -282,7 +282,7 @@ int main(void)
 						continue;
 					}
 
-					shl_move_cursor_right();
+					ncsh_move_cursor_right();
 					++buffer_position;
 				}
 				if (key == LEFT)
@@ -293,7 +293,7 @@ int main(void)
 						continue;
 					}
 
-					shl_move_cursor_left();
+					ncsh_move_cursor_left();
 					--buffer_position;
 
 					if (buffer_position == 0)
@@ -309,7 +309,7 @@ int main(void)
 							continue;
 					}
 
-					shl_backspace();
+					ncsh_backspace();
 					--buffer_position;
 				}
 			}
@@ -323,14 +323,14 @@ int main(void)
 
 			buffer[buffer_position++] = '\0';
 
-			args = shl_line_split(buffer, buffer_position);
-			if (!shl_args_is_valid(args))
+			args = ncsh_line_split(buffer, buffer_position);
+			if (!ncsh_args_is_valid(args))
 				continue;
 
-			shl_history_add(buffer, buffer_position);
+			ncsh_history_add(buffer, buffer_position);
 
-			command_result = shl_execute_command(args);
-			shl_args_free(args);
+			command_result = ncsh_execute_command(args);
+			ncsh_args_free(args);
 			
 			if (command_result == 0)
 				break;
@@ -347,7 +347,7 @@ int main(void)
 		}
 	}
 
-	shl_terminal_reset();
+	ncsh_terminal_reset();
 
 	return EXIT_SUCCESS;
 }
