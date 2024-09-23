@@ -4,21 +4,12 @@
 #include <linux/limits.h>
 #include <stdint.h>
 
-struct ncsh_Args
-{
-	uint_fast32_t count;
-	uint_fast32_t maxLineSize;
-	char** lines;
-};
-
-struct ncsh_Directory
-{
+struct ncsh_Directory {
 	char* user;
 	char path[PATH_MAX];
 };
 
-enum ncsh_Hotkey
-{
+enum ncsh_Hotkey {
 	NONE = 0,
 	UP = 1,
 	DOWN = 2,

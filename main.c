@@ -6,16 +6,15 @@
 #include <unistd.h>
 #include <stdbool.h>
 
+#include "eskilib/eskilib_colors.h"
 #include "ncsh_types.h"
+#include "ncsh_args.h"
 #include "ncsh_terminal.h"
-#include "ncsh_output.h"
-#include "ncsh_string.h"
 #include "ncsh_commands.h"
-
-#define ncsh_TOKEN_BUFFER_SIZE 64
-#define ncsh_ARGS_ARRAY_SIZE 20
+#include "ncsh_parser.h"
 
 #define ESCAPE_CHARACTER 27
+#define DOUBLE_QUOTE_KEY '\"'
 #define CTRL_D '\004'
 #define BACKSPACE_KEY 127
 #define UP_ARROW 'A'
@@ -33,99 +32,14 @@
 #define ERASE_CURRENT_LINE "\033[K"
 #define ERASE_CURRENT_LINE_LENGTH 3
 
-_Bool ncsh_is_delimiter(char ch)
-{
-	switch (ch)
-	{
-		case ' ':
-			return true;
-		case '\t':
-			return true;
-		case '\r':
-			return true;
-		case '\n':
-			return true;
-		case '\a':
-			return true;
-		case EOF:
-			return true;
-		case '\0':
-			return true;
-		default:
-			return false;
-	}
-}
+#define PIPE_KEY '|'
+#define OUTPUT_REDIRECTION_KEY '>'
+#define INPUT_REDIRECTION_KEY '<'
+#define BACKGROUND_JOB_KEY '&'
 
-struct ncsh_Args ncsh_line_split(char line[], uint_fast32_t length)
-{
-	const uint_fast32_t buffer_size = ncsh_TOKEN_BUFFER_SIZE;
-	char buffer[ncsh_TOKEN_BUFFER_SIZE];
-	uint_fast32_t buffer_position = 0;
-
-	struct ncsh_Args args = { .count = 0, .lines = NULL };
-	args.lines = malloc(sizeof(char*) * ncsh_TOKEN_BUFFER_SIZE);
-	if (args.lines == NULL)
-		exit(-1);
-
-	uint_fast32_t double_quotes_count = 0;
-
-	for (uint_fast32_t line_position = 0; line_position < length + 1; line_position++)
-	{
-		if (line_position == length || buffer_position == ncsh_TOKEN_BUFFER_SIZE - 1)
-		{
-			args.lines[args.count] = NULL;
-			break;
-		}
-		else if (ncsh_is_delimiter(line[line_position]) && (double_quotes_count == 0 || double_quotes_count == 2))
-		{
-			buffer[buffer_position] = '\0';
-
-			args.lines[args.count] = malloc(sizeof(char) * buffer_size);
-			ncsh_string_copy(args.lines[args.count], buffer, buffer_size);
-			args.count++;
-
-			if (args.maxLineSize == 0 || buffer_position > args.maxLineSize)
-				args.maxLineSize = buffer_position;
-
-			buffer[0] = '\0';
-			buffer_position = 0;
-			double_quotes_count = 0;
-		}
-		else
-		{
-			if (line[line_position] == '\"')
-				double_quotes_count++;
-			else	
-				buffer[buffer_position++] = line[line_position];
-		}
-	}
-
-	return args;
-}
-
-_Bool ncsh_args_is_valid(struct ncsh_Args args)
-{
-	if (args.count == 0 || args.lines == NULL)
-		return 0;
-
-	if (args.lines[0][0] == '\0')
-		return 0;
-
-	return 1;
-}
-
-void ncsh_args_free(struct ncsh_Args args)
-{
-	for (uint_fast32_t i = 0; i < args.count; i++)
-		free(args.lines[i]);
-	free(args.lines);
-}
-
-void ncsh_print_prompt(struct ncsh_Directory prompt_info)
-{
+void ncsh_print_prompt(struct ncsh_Directory prompt_info) {
 	char *getcwd_result = getcwd(prompt_info.path, sizeof(prompt_info.path));
-	if (getcwd_result == NULL)
-	{
+	if (getcwd_result == NULL) {
 		perror(RED "conch-shell: error when getting current directory" RESET);
 		exit(EXIT_FAILURE);
 	}
@@ -134,30 +48,26 @@ void ncsh_print_prompt(struct ncsh_Directory prompt_info)
 	fflush(stdout);
 }
 
-enum ncsh_Hotkey ncsh_get_key(char character)
-{
-	switch (character)
-	{
-	case UP_ARROW:
-		return UP;
-	case DOWN_ARROW:
-		return DOWN;
-	case RIGHT_ARROW:
-		return RIGHT;
-	case LEFT_ARROW:
-		return LEFT;
-	case DELETE_KEY:
-		return DELETE;
-	default:
-		return NONE;
+enum ncsh_Hotkey ncsh_get_key(char character) {
+	switch (character) {
+		case UP_ARROW:
+			return UP;
+		case DOWN_ARROW:
+			return DOWN;
+		case RIGHT_ARROW:
+			return RIGHT;
+		case LEFT_ARROW:
+			return LEFT;
+		case DELETE_KEY:
+			return DELETE;
+		default:
+			return NONE;
 	}
 }
 
-char ncsh_read_char(void)
-{
+char ncsh_read_char(void) {
 	char character;
-	if (read(STDIN_FILENO, &character, 1) == -1)
-	{
+	if (read(STDIN_FILENO, &character, 1) == -1) {
 		perror(RED "Error reading from stdin" RESET);
 		fflush(stdout);
 		exit(EXIT_FAILURE);
@@ -165,10 +75,8 @@ char ncsh_read_char(void)
 	return character;
 }
 
-void ncsh_write(char* string, uint_fast32_t length)
-{
-	if (write(STDOUT_FILENO, string, length) == -1)
-	{
+void ncsh_write(char* string, uint_fast32_t length) {
+	if (write(STDOUT_FILENO, string, length) == -1) {
 		perror(RED "Error writing to stdout" RESET);
 		fflush(stdout);
 		exit(EXIT_FAILURE);
@@ -176,10 +84,8 @@ void ncsh_write(char* string, uint_fast32_t length)
 	fflush(stdout);
 }
 
-void ncsh_backspace(void)
-{
-	if (write(STDOUT_FILENO, BACKSPACE_STRING, BACKSPACE_STRING_LENGTH) == -1)
-	{
+void ncsh_backspace(void) {
+	if (write(STDOUT_FILENO, BACKSPACE_STRING, BACKSPACE_STRING_LENGTH) == -1) {
 		perror(RED "Error writing to stdout" RESET);
 		fflush(stdout);
 		exit(EXIT_FAILURE);
@@ -187,10 +93,8 @@ void ncsh_backspace(void)
 	fflush(stdout);
 }
 
-void ncsh_delete_line(void)
-{
-	if (write(STDOUT_FILENO, ERASE_CURRENT_LINE, ERASE_CURRENT_LINE_LENGTH) == -1)
-	{
+void ncsh_delete_line(void) {
+	if (write(STDOUT_FILENO, ERASE_CURRENT_LINE, ERASE_CURRENT_LINE_LENGTH) == -1) {
 		perror(RED "Error writing to stdout" RESET);
 		fflush(stdout);
 		exit(EXIT_FAILURE);
@@ -198,10 +102,8 @@ void ncsh_delete_line(void)
 	fflush(stdout);
 }
 
-void ncsh_move_cursor_left(void)
-{
-	if (write(STDOUT_FILENO, MOVE_CURSOR_LEFT, MOVE_CURSOR_LEFT_LENGTH) == -1)
-	{
+void ncsh_move_cursor_left(void) {
+	if (write(STDOUT_FILENO, MOVE_CURSOR_LEFT, MOVE_CURSOR_LEFT_LENGTH) == -1) {
 		perror(RED "Error writing to stdout" RESET);
 		fflush(stdout);
 		exit(EXIT_FAILURE);
@@ -209,10 +111,8 @@ void ncsh_move_cursor_left(void)
 	fflush(stdout);
 }
 
-void ncsh_move_cursor_right(void)
-{
-	if (write(STDOUT_FILENO, MOVE_CURSOR_RIGHT, MOVE_CURSOR_RIGHT_LENGTH) == -1)
-	{
+void ncsh_move_cursor_right(void) {
+	if (write(STDOUT_FILENO, MOVE_CURSOR_RIGHT, MOVE_CURSOR_RIGHT_LENGTH) == -1) {
 		perror(RED "Error writing to stdout" RESET);
 		fflush(stdout);
 		exit(EXIT_FAILURE);
@@ -220,15 +120,15 @@ void ncsh_move_cursor_right(void)
 	fflush(stdout);
 }
 
-int main(void)
-{
+int main(void) {
 	char character;
 	char buffer[MAX_INPUT];
 	uint_fast32_t buffer_position = 0;
 
 	struct ncsh_Directory prompt_info;
 	prompt_info.user = getenv("USER");
-	bool reprint_prompt = true;
+	bool reprint_prompt = false;
+	ncsh_print_prompt(prompt_info);
 
 	struct ncsh_Args args;
 	uint_fast32_t command_result = 0;
@@ -236,9 +136,9 @@ int main(void)
 
 	ncsh_terminal_init();
 	ncsh_history_init();
-
-	while (1)
-	{
+	// setenv("shell", prompt_info.path, 1);
+	
+	while (1) {
 		if (buffer_position == 0 && reprint_prompt == true)
 			ncsh_print_prompt(prompt_info);
 		else
@@ -246,15 +146,13 @@ int main(void)
 
 		character = ncsh_read_char();
 
-		if (character == CTRL_D)
-		{
+		if (character == CTRL_D) {
 			putchar('\n');
 			fflush(stdout);
 			break;
 		}
 
-		if (character == BACKSPACE_KEY)
-		{
+		if (character == BACKSPACE_KEY) {
 			if (buffer_position <= 1)
 			{
 				reprint_prompt = false;
@@ -265,19 +163,15 @@ int main(void)
 			ncsh_backspace();
 			--buffer_position;
 		}
-		else if (character == ESCAPE_CHARACTER)
-		{
+		else if (character == ESCAPE_CHARACTER) {
 			character = ncsh_read_char();
 
-			if (character == '[')
-			{
+			if (character == '[') {
 				character = ncsh_read_char();
 				key = ncsh_get_key(character);
 
-				if (key == RIGHT)
-				{
-					if (buffer_position == MAX_INPUT)
-					{
+				if (key == RIGHT) {
+					if (buffer_position == MAX_INPUT) {
 						reprint_prompt = false;
 						continue;
 					}
@@ -285,10 +179,8 @@ int main(void)
 					ncsh_move_cursor_right();
 					++buffer_position;
 				}
-				if (key == LEFT)
-				{
-					if (buffer_position == 0)
-					{
+				if (key == LEFT) {
+					if (buffer_position == 0) {
 						reprint_prompt = false;
 						continue;
 					}
@@ -300,10 +192,8 @@ int main(void)
 						reprint_prompt = false;
 				}
 			
-				if (key == DELETE)
-				{
-					if (buffer_position <= 1)
-					{
+				if (key == DELETE) {
+					if (buffer_position <= 1) {
 						reprint_prompt = false;
 						if (buffer_position == 0)
 							continue;
@@ -314,8 +204,7 @@ int main(void)
 				}
 			}
 		}
-		else if (character == '\n' || character == '\r')
-		{
+		else if (character == '\n' || character == '\r') {
 			putchar('\n');
 			fflush(stdout);
 
@@ -323,13 +212,14 @@ int main(void)
 
 			buffer[buffer_position++] = '\0';
 
-			args = ncsh_line_split(buffer, buffer_position);
+			args = ncsh_parse(buffer, buffer_position);
 			if (!ncsh_args_is_valid(args))
 				continue;
 
 			ncsh_history_add(buffer, buffer_position);
 
 			command_result = ncsh_execute_command(args);
+
 			ncsh_args_free(args);
 			
 			if (command_result == 0)
@@ -338,8 +228,7 @@ int main(void)
 			buffer[0] = '\0';
 			buffer_position = 0;
 		}
-		else
-		{
+		else {
 			putchar(character);
 			fflush(stdout);
 			buffer[buffer_position++] = character;
