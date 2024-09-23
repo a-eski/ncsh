@@ -22,3 +22,5 @@ clang -std=c99 -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -O3 -DNDEBUG -p
 gcc -std=c99 -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined -g *.c -o ncsh
 clang -std=c99 -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined -g *.c -o ncsh
 
+--tests
+gcc -std=c2x -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined ./eskilib/eskilib_string.c ./eskilib/eskilib_test.c ncsh_parser.c ./tests/ncsh_parser_tests.c ncsh_args.c -o ncsh_parser_tests
