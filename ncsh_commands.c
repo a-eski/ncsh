@@ -1,3 +1,4 @@
+#define _POSIX_SOURCE
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -5,192 +6,173 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <signal.h>
 #include <time.h>
 #include <unistd.h>
 
 #include "ncsh_terminal.h"
 #include "ncsh_args.h"
+#include "ncsh_builtin_commands.h"
 #include "eskilib/eskilib_string.h"
 #include "eskilib/eskilib_colors.h"
 
-bool ncsh_is_exit_command(struct ncsh_Args args) {
-	if (eskilib_string_equals(args.values[0], "q", args.max_line_length))
-		return true;
-	else if (eskilib_string_equals(args.values[0], "exit", args.max_line_length))
-		return true;
-	else if (eskilib_string_equals(args.values[0], "quit", args.max_line_length))
-		return true;
-	else
-		return false;
+#define PIPE_KEY "|"
+#define OUTPUT_REDIRECTION_KEY '>'
+#define INPUT_REDIRECTION_KEY '<'
+#define BACKGROUND_JOB_KEY '&'
+
+uint_fast8_t ncsh_pipe_error(void) {
+	perror(RED "Error when piping process" RESET);
+	fflush(stdout);
+	return 0;
 }
 
-uint_fast32_t ncsh_echo_command(struct ncsh_Args args) {
-	for (uint_fast32_t i = 1; i < args.count; i++)
-		printf("%s ", args.values[i]);
-
-	if (args.count > 0)
-		printf("\n");
-
-	return 1;
+uint_fast8_t ncsh_fork_error(void) {
+	perror(RED "Error when forking process" RESET);
+	fflush(stdout);
+	return 0;
 }
 
-uint_fast32_t ncsh_help_command(void) {
-	printf("ncshell by Alex Eski: help\n\n");
-
-	printf("To exit, type q, exit, or quit and press enter.\n");
-	printf("You can also use Ctrl+D to exit.\n");
-
-	return 1;
-}
-
-uint_fast32_t ncsh_cd_command(struct ncsh_Args args) {
-	if (args.values[1][0] == '\0') {
-		char* home = getenv("HOME");
-		if (home == NULL || chdir(home) != 0)
-			fprintf(stderr, "ncsh: could not change directory.\n");
-
-		return 1;
-	}
-
-	if (chdir(args.values[1]) != 0)
-		fprintf(stderr, "ncsh: could not change directory.\n");
-
-	return 1;
-}
-
-static char** history;
-static uint_fast32_t history_position = 0;
-static const uint_fast32_t max_history_position = 50;
-
-void ncsh_history_init(void) {
-	history = malloc(sizeof(char*) * max_history_position);
-}
-
-void ncsh_history_add(char* line, uint_fast32_t length) {
-	if (history_position < max_history_position) {
-		history[history_position] = malloc(sizeof(char) * length);
-		eskilib_string_copy(history[history_position++], line, length);
-	}
-}
-
-uint_fast32_t ncsh_history_command(void) {
-	for (uint_fast32_t i = 0; i < history_position; i++) {
-		printf("%s\n", history[i]);
-	}
-	return 1;
-}
-
-bool ncsh_args_any_shell_commands(struct ncsh_Args args) {
-	for (uint_fast32_t i = 0; i < args.count; i++) {
-		if (args.op_codes[i] != OP_NONE)
+bool ncsh_any_op_codes(struct ncsh_Args args) {
+	for (uint_fast8_t i = 0; i < args.count; i++) {
+		if (eskilib_string_equals(args.values[i], PIPE_KEY, args.max_line_length))
 			return true;
 	}
-
 	return false;
 }
 
-// uint_fast32_t ncsh_execute_piped(struct ncsh_Args args) {
-// 	pid_t pid_one;
-// 	pid_t pid_two;
-// 	int pipe_destination[2];
-//
-// 	// char** args_one;
-// 	// args_one = malloc(sizeof(char*) * args.count);
-// 	// uint_fast32_t args_one_index = 0;
-// 	// for (uint_fast32_t args_one_index = 0;
-// 	// 	args_one_index < args.count && args.lines[args_one_index] != NULL;
-// 	// 	args_one_index++) {
-// 	// 	if (args.shellCommands[args_one_index] == NO_COMMAND) {
-// 	// 		args_one[args_one_index] = malloc(sizeof(char) * (args_one_index + 1));
-// 	// 		eskilib_string_copy(args_one[args_one_index], args.lines[args_one_index], args.maxLineSize);
-// 	// 	}
-// 	// 	else
-// 	// 		break;
-// 	// }
-// 	// printf("args_one[0]: %s", args_one[0]);
-// 	//
-// 	// char** args_two;
-// 	// uint_fast32_t position = 0;
-// 	// args_two = malloc(sizeof(char*) * (args.count - args_one_index));
-// 	// for (uint_fast32_t args_two_index = args_one_index;
-// 	// 	args_two_index < args.count && args.lines[args_two_index] != NULL;
-// 	// 	args_two_index++) {
-// 	// 	if (args.shellCommands[args_two_index] == NO_COMMAND) {
-// 	// 		args_two[position++] = malloc(sizeof(char) * (args_one_index + 1));
-// 	// 		eskilib_string_copy(args_two[args_two_index], args.lines[args_two_index], args.maxLineSize);
-// 	// 	}
-// 	// 	else
-// 	// 		break;
-// 	// }
-// 	// printf("args_two[0]: %s", args_two[0]);
-// 	//
-// 	if (pipe(pipe_destination) < 0) {
-// 		printf(RED "Could not initialize pipe.\n" RESET);
-// 		fflush(stdout);
-// 		return 0;
-// 	}
-// 	pid_one = fork();
-// 	if (pid_one == 0) {
-// 		close(pipe_destination[0]);
-// 		dup2(pipe_destination[1], STDOUT_FILENO);
-// 		close(pipe_destination[1]);
-//
-// 		if (execvp(args.values[0], &args.values[0].value) < 0) {
-// 			printf(RED "Error when executing first command" RESET);
-// 			return 1;
-// 		}
-// 	}
-// 	else if (pid_one < 0) {
-// 		perror(RED "Error when forking process" RESET);
-// 		fflush(stdout);
-// 		return 0;
-// 	}
-// 	else {
-// 		pid_two = fork();
-// 		if (pid_two == 0) {
-// 			close(pipe_destination[1]);
-// 			dup2(pipe_destination[0], STDIN_FILENO);
-// 			close(pipe_destination[0]);
-// 			
-// 			if (execvp(args.values[0], &args.values[0].value) < 0) {
-// 				printf(RED "Error when executing second command" RESET);
-// 				return 1;
-// 			}
-// 		}
-// 		else if (pid_two < 0) {
-// 			perror(RED "Error when forking process" RESET);
-// 			fflush(stdout);
-// 			return 0;
-// 		}
-// 		else {
-// 			wait(NULL);
-// 			wait(NULL);
-// 		}
-// 	}
-//
-// 	return 1;
-// }
+uint_fast8_t ncsh_execute_piped(struct ncsh_Args args) {
+	int file_descriptor_one[2];
+	int file_descriptor_two[2];
+	
+	uint_fast8_t number_of_commands = 0;
+	char *command[256];
+	pid_t pid;
+	bool end = false;
+	
+	uint_fast8_t i = 0; uint_fast8_t j = 0; uint_fast8_t k = 0; uint_fast8_t l = 0;
+	
+	while (args.values[l] != NULL){
+		if (eskilib_string_equals(args.values[l], PIPE_KEY, args.max_line_length)){
+			number_of_commands++;
+		}
+		l++;
+	}
+	number_of_commands++;
+	
+	while (args.values[j] != NULL && end != true){
+		k = 0;
 
-uint_fast32_t ncsh_execute(char** args) {
+		while (!eskilib_string_equals(args.values[j], PIPE_KEY, args.max_line_length)) {
+			command[k] = args.values[j];
+			j++;
+
+			if (args.values[j] == NULL) {
+				end = true;
+				k++;
+				break;
+			}
+
+			k++;
+		}
+
+		command[k] = NULL;
+		j++;
+
+		if (i % 2 != 0) {
+			if (pipe(file_descriptor_one) != 0)
+				return ncsh_pipe_error();
+		}
+		else {
+			if (pipe(file_descriptor_two) != 0)
+				return ncsh_pipe_error();
+		}
+
+		pid = fork();
+		if (pid == -1) {
+			if (i != number_of_commands - 1) {
+				if (i % 2 != 0)
+					close(file_descriptor_one[1]);
+				else
+					close(file_descriptor_two[1]);
+			}
+			
+			return ncsh_fork_error();
+		}
+
+		if (pid == 0) {
+			if (i == 0) { //first command
+				dup2(file_descriptor_two[1], STDOUT_FILENO);
+			}
+			else if (i == number_of_commands - 1) { //last command
+				if (number_of_commands % 2 != 0)
+					dup2(file_descriptor_one[0], STDIN_FILENO);
+				else
+					dup2(file_descriptor_two[0], STDIN_FILENO);
+			}
+			else { //middle command
+				if (i % 2 != 0) {
+					dup2(file_descriptor_two[0], STDIN_FILENO); 
+					dup2(file_descriptor_one[1], STDOUT_FILENO);
+				}
+				else {
+					dup2(file_descriptor_one[0], STDIN_FILENO);
+					dup2(file_descriptor_two[1], STDOUT_FILENO);
+				}
+			}
+
+			if (execvp(command[0],command) == -1)
+				kill(getpid(), SIGTERM);
+		}
+
+		// closing file descriptors
+		if (i == 0) {
+			close(file_descriptor_two[1]);
+		}
+		else if (i == number_of_commands - 1) {
+			if (number_of_commands % 2 != 0)
+				close(file_descriptor_one[0]);
+			else
+				close(file_descriptor_two[0]);
+		}
+		else {
+			if (i % 2 != 0) {
+				close(file_descriptor_two[0]);
+				close(file_descriptor_one[1]);
+			}
+			else {
+				close(file_descriptor_one[0]);
+				close(file_descriptor_two[1]);
+			}
+		}
+
+		waitpid(pid,NULL,0);
+
+		i++;
+	}
+
+	return 1;
+}
+
+uint_fast32_t ncsh_execute_program(char** args) {
 	pid_t pid;
 	int status;
 
 	pid = fork();
 	if (pid == 0) {
-		int exec_result = execvp(args[0], args);
-		if (exec_result == -1)
-		{
+		if (execvp(args[0], args) == -1) {
 			perror(RED "Could not find command" RESET);
 			fflush(stdout);
 			ncsh_terminal_init();
 			return 0;
 		}
+
 		return 1;
-	} else if (pid < 0) {
-		perror(RED "Error when forking process" RESET);
-		fflush(stdout);
-		return 0;
-	} else {
+	}
+	else if (pid < 0) {
+		return ncsh_fork_error();
+	}
+	else {
 		do {
 			waitpid(pid, &status, WUNTRACED);
 		} while (!WIFEXITED(status) && !WIFSIGNALED(status));
@@ -199,7 +181,14 @@ uint_fast32_t ncsh_execute(char** args) {
 	}
 }
 
-uint_fast32_t ncsh_execute_command(struct ncsh_Args args) {
+uint_fast32_t ncsh_execute_external(struct ncsh_Args args) {
+	if (ncsh_any_op_codes(args))
+		return ncsh_execute_piped(args);
+
+	return ncsh_execute_program(args.values);
+}
+
+uint_fast32_t ncsh_execute(struct ncsh_Args args) {
 	if (ncsh_is_exit_command(args))
 		return 0;
 
@@ -215,9 +204,6 @@ uint_fast32_t ncsh_execute_command(struct ncsh_Args args) {
 	if (eskilib_string_equals(args.values[0], "history", args.max_line_length))
 		return ncsh_history_command();
 
-	// if (args.op_code_found)
-	// 	return ncsh_execute_piped(args);
-
-	return ncsh_execute(args.values);
+	return ncsh_execute_external(args);
 }
 

@@ -11,7 +11,11 @@
 #include "ncsh_args.h"
 #include "ncsh_terminal.h"
 #include "ncsh_commands.h"
+#include "ncsh_builtin_commands.h"
 #include "ncsh_parser.h"
+// #ifndef NDEBUG
+// #include "ncsh_debug.h"
+// #endif /* ifndef NDEBUG */
 
 #define ESCAPE_CHARACTER 27
 #define DOUBLE_QUOTE_KEY '\"'
@@ -31,11 +35,6 @@
 #define BACKSPACE_STRING_LENGTH 3
 #define ERASE_CURRENT_LINE "\033[K"
 #define ERASE_CURRENT_LINE_LENGTH 3
-
-#define PIPE_KEY '|'
-#define OUTPUT_REDIRECTION_KEY '>'
-#define INPUT_REDIRECTION_KEY '<'
-#define BACKGROUND_JOB_KEY '&'
 
 void ncsh_print_prompt(struct ncsh_Directory prompt_info) {
 	char *getcwd_result = getcwd(prompt_info.path, sizeof(prompt_info.path));
@@ -215,10 +214,13 @@ int main(void) {
 			args = ncsh_parse(buffer, buffer_position);
 			if (!ncsh_args_is_valid(args))
 				continue;
+			// #ifndef NDEBUG
+			// ncsh_debug_args(args);
+			// #endif /* ifndef NDEBUG */
 
 			ncsh_history_add(buffer, buffer_position);
 
-			command_result = ncsh_execute_command(args);
+			command_result = ncsh_execute(args);
 
 			ncsh_args_free(args);
 			

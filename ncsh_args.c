@@ -14,8 +14,9 @@ bool ncsh_args_is_valid(struct ncsh_Args args) {
 }
 
 void ncsh_args_free(struct ncsh_Args args) {
-	for (uint_fast32_t i = 0; i < args.count; i++)
+	for (uint_fast8_t i = 0; i < args.count; i++)
 		free(args.values[i]);
 
 	free(args.values);
 }
+

@@ -15,12 +15,10 @@ void ncsh_parser_ls_test(void) {
 	struct ncsh_Args args = ncsh_parse(line, length);
 
 	eskilib_assert(args.values != NULL);
-	eskilib_assert(args.op_codes != NULL);
 	eskilib_assert(args.count == 1);
 	eskilib_assert(args.max_line_length == 2);
 
 	eskilib_assert(eskilib_string_equals(args.values[0], line, length));
-	eskilib_assert(args.op_codes[0] == OP_NONE);
 
 	ncsh_args_free(args);
 }
@@ -32,15 +30,10 @@ void ncsh_parser_ls_dash_l_test(void) {
 	struct ncsh_Args args = ncsh_parse(line, length);
 
 	eskilib_assert(args.values != NULL);
-	eskilib_assert(args.op_codes != NULL);
 	eskilib_assert(args.count == 2);
 	eskilib_assert(args.max_line_length == 2);
-
 	eskilib_assert(eskilib_string_equals(args.values[0], "ls", length));
-	eskilib_assert(args.op_codes[0] == OP_NONE);
-
 	eskilib_assert(eskilib_string_equals(args.values[1], "-l", length));
-	eskilib_assert(args.op_codes[1] == OP_NONE);
 
 	ncsh_args_free(args);
 }
@@ -52,15 +45,11 @@ void ncsh_parser_pipe_test(void) {
 	struct ncsh_Args args = ncsh_parse(line, length);
 
 	eskilib_assert(args.values != NULL);
-	eskilib_assert(args.op_codes != NULL);
-	eskilib_assert(args.count == 2);
+	eskilib_assert(args.count == 3);
 	eskilib_assert(args.max_line_length == 4);
-
 	eskilib_assert(eskilib_string_equals(args.values[0], "ls", length));
-	eskilib_assert(args.op_codes[0] == OP_PIPE);
-
-	eskilib_assert(eskilib_string_equals(args.values[1], "sort", length));
-	eskilib_assert(args.op_codes[1] == OP_NONE);
+	eskilib_assert(eskilib_string_equals(args.values[1], "|", length));
+	eskilib_assert(eskilib_string_equals(args.values[2], "sort", length));
 
 	ncsh_args_free(args);
 }
@@ -72,18 +61,14 @@ void ncsh_parser_multiple_pipe_test(void) {
 	struct ncsh_Args args = ncsh_parse(line, length);
 
 	eskilib_assert(args.values != NULL);
-	eskilib_assert(args.op_codes != NULL);
-	eskilib_assert(args.count == 3);
+	eskilib_assert(args.count == 5);
 	eskilib_assert(args.max_line_length == 5);
 
 	eskilib_assert(eskilib_string_equals(args.values[0], "ls", length));
-	eskilib_assert(args.op_codes[0] == OP_PIPE);
-
-	eskilib_assert(eskilib_string_equals(args.values[1], "sort", length));
-	eskilib_assert(args.op_codes[1] == OP_PIPE);
-
-	eskilib_assert(eskilib_string_equals(args.values[2], "table", length));
-	eskilib_assert(args.op_codes[2] == OP_NONE);
+	eskilib_assert(eskilib_string_equals(args.values[1], "|", length));
+	eskilib_assert(eskilib_string_equals(args.values[2], "sort", length));
+	eskilib_assert(eskilib_string_equals(args.values[3], "|", length));
+	eskilib_assert(eskilib_string_equals(args.values[4], "table", length));
 
 	ncsh_args_free(args);
 }
@@ -95,12 +80,11 @@ void ncsh_parser_background_job_test(void) {
 	struct ncsh_Args args = ncsh_parse(line, length);
 
 	eskilib_assert(args.values != NULL);
-	eskilib_assert(args.op_codes != NULL);
-	eskilib_assert(args.count == 1);
+	eskilib_assert(args.count == 2);
 	eskilib_assert(args.max_line_length == 18);
 
 	eskilib_assert(eskilib_string_equals(args.values[0], "longrunningprogram", length));
-	eskilib_assert(args.op_codes[0] == OP_BACKGROUND_JOB);
+	eskilib_assert(eskilib_string_equals(args.values[1], "&", length));
 
 	ncsh_args_free(args);
 }
@@ -112,15 +96,12 @@ void ncsh_parser_output_redirection_test(void) {
 	struct ncsh_Args args = ncsh_parse(line, length);
 
 	eskilib_assert(args.values != NULL);
-	eskilib_assert(args.op_codes != NULL);
-	eskilib_assert(args.count == 2);
+	eskilib_assert(args.count == 3);
 	eskilib_assert(args.max_line_length == 8);
 
 	eskilib_assert(eskilib_string_equals(args.values[0], "ls", length));
-	eskilib_assert(args.op_codes[0] == OP_OUTPUT_REDIRECTION);
-
-	eskilib_assert(eskilib_string_equals(args.values[1], "text.txt", length));
-	eskilib_assert(args.op_codes[1] == OP_NONE);
+	eskilib_assert(eskilib_string_equals(args.values[1], ">", length));
+	eskilib_assert(eskilib_string_equals(args.values[2], "text.txt", length));
 
 	ncsh_args_free(args);
 }
@@ -132,15 +113,12 @@ void ncsh_parser_output_redirection_append_test(void) {
 	struct ncsh_Args args = ncsh_parse(line, length);
 
 	eskilib_assert(args.values != NULL);
-	eskilib_assert(args.op_codes != NULL);
-	eskilib_assert(args.count == 2);
+	eskilib_assert(args.count == 3);
 	eskilib_assert(args.max_line_length == 8);
 
 	eskilib_assert(eskilib_string_equals(args.values[0], "ls", length));
-	eskilib_assert(args.op_codes[0] == OP_OUTPUT_REDIRECTION_APPEND);
-
-	eskilib_assert(eskilib_string_equals(args.values[1], "text.txt", length));
-	eskilib_assert(args.op_codes[1] == OP_NONE);
+	eskilib_assert(eskilib_string_equals(args.values[1], ">>", length));
+	eskilib_assert(eskilib_string_equals(args.values[2], "text.txt", length));
 
 	ncsh_args_free(args);
 }
@@ -152,15 +130,11 @@ void ncsh_parser_double_quotes_test(void) {
 	struct ncsh_Args args = ncsh_parse(line, length);
 
 	eskilib_assert(args.values != NULL);
-	eskilib_assert(args.op_codes != NULL);
 	eskilib_assert(args.count == 2);
 	eskilib_assert(args.max_line_length == 5);
 
 	eskilib_assert(eskilib_string_equals(args.values[0], "echo", length));
-	eskilib_assert(args.op_codes[0] == OP_NONE);
-
 	eskilib_assert(eskilib_string_equals(args.values[1], "hello", length));
-	eskilib_assert(args.op_codes[1] == OP_NONE);
 
 	ncsh_args_free(args);
 }
@@ -173,7 +147,7 @@ void ncsh_parser_tests(void) {
 	eskilib_test_run("ncsh_parser_background_job_test", ncsh_parser_background_job_test);
 	eskilib_test_run("ncsh_parser_output_redirection_test", ncsh_parser_output_redirection_test);
 	eskilib_test_run("ncsh_parser_double_quotes_test", ncsh_parser_double_quotes_test);
-	// eskilib_test_run("ncsh_parser_output_redirection_append_test", ncsh_parser_output_redirection_append_test);
+	eskilib_test_run("ncsh_parser_output_redirection_append_test", ncsh_parser_output_redirection_append_test);
 }
 
 #ifndef ncsh_TEST_ALL
