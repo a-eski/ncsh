@@ -7,7 +7,6 @@
 #include "eskilib/eskilib_string.h"
 #include "ncsh_args.h"
 
-
 #define DOUBLE_QUOTE_KEY '\"'
 
 #define PIPE_SYMBOL '|'
@@ -19,49 +18,30 @@
 
 bool ncsh_is_delimiter(char ch) {
 	switch (ch) {
-		case ' ':
+		case ' ': {
 			return true;
-		case '\t':
-			return true;
-		case '\r':
-			return true;
-		case '\n':
-			return true;
-		case '\a':
-			return true;
-		case EOF:
-			return true;
-		case '\0':
-			return true;
-		default:
-			return false;
-	}
-}
-
-uint_fast8_t ncsh_get_shell_command(char buffer[], uint_fast32_t buffer_length) {
-	if (buffer_length == 1) {
-		switch (buffer[0]) {
-			case PIPE_SYMBOL:
-				return OP_PIPE;
-			case INPUT_REDIRECTION_SYMBOL:
-				return OP_INPUT_REDIRECTION;
-			case OUTPUT_REDIRECTION_SYMBOL:
-				return OP_OUTPUT_REDIRECTION;
-			case BACKGROUND_JOB_SYMBOL:
-				return OP_BACKGROUND_JOB;
-			default:
-				return OP_NONE;
 		}
-	}
-	else if (buffer_length == 2) {
-		if (eskilib_string_equals(buffer, INPUT_REDIRECTION_APPEND_SYMBOL, 3))
-			return OP_INPUT_REDIRECTION_APPEND;
-		else if (eskilib_string_equals(buffer, OUTPUT_REDIRECTION_APPEND_SYMBOL, 3))
-			return OP_OUTPUT_REDIRECTION_APPEND;
-		else return OP_NONE;
-	}
-	else {
-		return OP_NONE;
+		case '\t': {
+			return true;
+		}
+		case '\r': {
+			return true;
+		}
+		case '\n': {
+			return true;
+		}
+		case '\a': {
+			return true;
+		}
+		case EOF: {
+			return true;
+		}
+		case '\0': {
+			return true;
+		}
+		default: {
+			return false;
+		}
 	}
 }
 
@@ -82,18 +62,6 @@ struct ncsh_Args ncsh_parse(char line[], uint_fast32_t length) {
 		else if (ncsh_is_delimiter(line[line_position]) && (double_quotes_count == 0 || double_quotes_count == 2)) {
 			buffer[buffer_position] = '\0';
 
-			if (line_position > 0 && args.count > 0 && buffer_position == 1) {
-				args.op_codes[args.count - 1] = ncsh_get_shell_command(buffer, buffer_position);
-				if (args.op_codes[args.count - 1] != OP_NONE) {
-					args.op_code_found = true;
-					buffer[0] = '\0';
-					buffer_position = 0;
-					double_quotes_count = 0;
-					continue;
-				}
-			}
-
-			args.op_codes[args.count] = OP_NONE;
 			args.values[args.count] = malloc(sizeof(char) * (buffer_position + 1));
 			eskilib_string_copy(args.values[args.count], buffer, buffer_position + 1);
 			args.count++;
