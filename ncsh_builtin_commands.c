@@ -1,4 +1,3 @@
-#include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -71,9 +70,18 @@ void ncsh_history_add(char* line, uint_fast32_t length) {
 	}
 }
 
+char* ncsh_history_get(uint_fast32_t position) {
+	if (history_position == 0 || position > history_position || position > max_history_position) {
+		return "";
+	}	
+	else {
+		return history[history_position - position];
+	}
+}
+
 uint_fast32_t ncsh_history_command(void) {
 	for (uint_fast32_t i = 0; i < history_position; i++) {
-		printf("%s\n", history[i]);
+		printf("%lu %s\n", i + 1, history[i]);
 	}
 	return 1;
 }
