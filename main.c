@@ -127,23 +127,25 @@ int main(void) {
 					continue;
 			}
 
-			// if (buffer_position > 1 && buffer[buffer_position]) {
-			// 	--buffer_position;
-			// 
-			// 	ncsh_write(BACKSPACE_AND_SAVE_POSITION_STRING, BACKSPACE_AND_SAVE_POSITION_STRING_LENGTH);
-			// 	ncsh_write(ERASE_CURRENT_LINE, ERASE_CURRENT_LINE_LENGTH);
-			// 
-			// 	for(uint_fast8_t i = buffer_position; buffer[buffer_position] != 0; i++)
-			// 		buffer[i] = buffer[i + 1];
-			// 
-			// 	printf("%s", buffer);
-			// 	ncsh_write(RESTORE_SAVED_POSITION_STRING, RESTORE_SAVED_POSITION_STRING_LENGTH);
-			// }
-			// else {
+			if (buffer_position > 1 && buffer[buffer_position]) {
+				--buffer_position;
+			
+				ncsh_write(BACKSPACE_AND_SAVE_POSITION_STRING, BACKSPACE_AND_SAVE_POSITION_STRING_LENGTH);
+				ncsh_write(ERASE_CURRENT_LINE, ERASE_CURRENT_LINE_LENGTH);
+			
+				for(uint_fast8_t i = buffer_position; buffer[i]; i++) {
+					buffer[i] = buffer[i + 1];
+				}
+
+				putchar(buffer[buffer_position++]);
+
+				ncsh_write(RESTORE_SAVED_POSITION_STRING, RESTORE_SAVED_POSITION_STRING_LENGTH);
+			}
+			else {
 				ncsh_write(BACKSPACE_STRING, BACKSPACE_STRING_LENGTH);
 				--buffer_position;
 				buffer[buffer_position] = 0;
-			// }
+			}
 		}
 		else if (character == ESCAPE_CHARACTER) {
 			character = ncsh_read_char();
