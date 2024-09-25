@@ -9,7 +9,8 @@ endif
 std = -std=c2x
 debug_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined
 release_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -O3 -DNDEBUG
-objects = main.o ncsh_commands.o ncsh_terminal.o eskilib/eskilib_string.o ncsh_debug.o ncsh_args.o ncsh_parser.o ncsh_builtin_commands.o
+objects = main.o ncsh_commands.o ncsh_terminal.o eskilib/eskilib_string.o ncsh_debug.o ncsh_args.o ncsh_parser.o ncsh_builtin_commands.o \
+	  ncsh_io.o
 target = ncsh
 
 RELEASE ?= 0
@@ -35,6 +36,8 @@ ncsh_parser.o : ncsh_parser.c ncsh_args.h
 	$(cc_with_flags) -c ncsh_parser.c
 ncsh_args.o : ncsh_args.c ncsh_args.h
 	$(cc_with_flags) -c ncsh_args.c
+ncsh_io.o : ncsh_io.c ncsh_io.h eskilib/eskilib_colors.h ncsh_types.h
+	$(cc_with_flags) -c ncsh_io.c
 eskilib_string.o : eskilib_string.c eskilib_string.h
 	$(cc_with_flags) -c eskilib/eskilib_string.c
 ncsh_debug.o : ncsh_debug.c ncsh_debug.h ncsh_types.h ncsh_args.h
