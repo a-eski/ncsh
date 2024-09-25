@@ -33,11 +33,12 @@ uint_fast8_t ncsh_fork_error(void) {
 	return 0;
 }
 
-bool ncsh_any_op_codes(struct ncsh_Args args) {
+bool ncsh_any_pipes(struct ncsh_Args args) {
 	for (uint_fast8_t i = 0; i < args.count; i++) {
 		if (eskilib_string_equals(args.values[i], PIPE_KEY, args.max_line_length))
 			return true;
 	}
+
 	return false;
 }
 
@@ -182,7 +183,7 @@ uint_fast32_t ncsh_execute_program(char** args) {
 }
 
 uint_fast32_t ncsh_execute_external(struct ncsh_Args args) {
-	if (ncsh_any_op_codes(args))
+	if (ncsh_any_pipes(args))
 		return ncsh_execute_piped(args);
 
 	return ncsh_execute_program(args.values);

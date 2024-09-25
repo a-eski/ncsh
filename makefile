@@ -6,7 +6,7 @@ else
 	cc = gcc
 endif
 
-std = -std=c99
+std = -std=c2x
 debug_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined
 release_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -O3 -DNDEBUG
 objects = main.o ncsh_commands.o ncsh_terminal.o eskilib/eskilib_string.o ncsh_debug.o ncsh_args.o ncsh_parser.o ncsh_builtin_commands.o

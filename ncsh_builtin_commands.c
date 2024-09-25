@@ -33,7 +33,7 @@ uint_fast32_t ncsh_echo_command(struct ncsh_Args args) {
 }
 
 uint_fast32_t ncsh_help_command(void) {
-	printf("ncshell by Alex Eski: help\n\n");
+	printf("ncsh by Alex Eski: help\n\n");
 
 	printf("To exit, type q, exit, or quit and press enter.\n");
 	printf("You can also use Ctrl+D to exit.\n");
@@ -42,7 +42,7 @@ uint_fast32_t ncsh_help_command(void) {
 }
 
 uint_fast32_t ncsh_cd_command(struct ncsh_Args args) {
-	if (args.values[1][0] == '\0') {
+	if (args.values[1] == NULL) {
 		char* home = getenv("HOME");
 		if (home == NULL || chdir(home) != 0)
 			fprintf(stderr, "ncsh: could not change directory.\n");
