@@ -5,7 +5,6 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <stdbool.h>
-#include <assert.h>
 
 #include "eskilib/eskilib_colors.h"
 #include "ncsh_types.h"
