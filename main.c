@@ -41,26 +41,30 @@ int main(void) {
 	char buffer[MAX_INPUT] = {};
 	uint_fast8_t buffer_position = 0;
 
+	enum ncsh_Hotkey key;
+	bool reprint_prompt = false;
 	struct ncsh_Directory prompt_info;
 	prompt_info.user = getenv("USER");
-	bool reprint_prompt = false;
 	ncsh_print_prompt(prompt_info);
 
+	uint_fast8_t command_result = 0;
 	struct ncsh_Args args = { .count = 0 };
 	args.values = malloc(sizeof(char*) * ncsh_TOKENS);
 	if (args.values == NULL)
 		exit(EXIT_FAILURE);
 
-	uint_fast8_t command_result = 0;
-	enum ncsh_Hotkey key;
+	uint_fast32_t history_position = 0;
+	// uint_fast32_t previous_buffer_position = 0;
+	struct ncsh_String history;
+	ncsh_history_malloc();
 
-	// uint_fast32_t history_position = 0;
 	ncsh_terminal_init();
 	atexit(ncsh_terminal_reset);
-	ncsh_history_init();
 	// setenv("shell", prompt_info.path, 1);
 
 	while (1) {
+		history_position = 0;
+
 		if (buffer_position == 0 && reprint_prompt == true)
 			ncsh_print_prompt(prompt_info);
 		else
@@ -89,7 +93,8 @@ int main(void) {
 					buffer[i] = buffer[i + 1];
 				}
 
-				putchar(buffer[buffer_position++]);
+				while (buffer[buffer_position])
+					putchar(buffer[buffer_position++]);
 
 				ncsh_write(RESTORE_SAVED_POSITION_STRING, RESTORE_SAVED_POSITION_STRING_LENGTH);
 			}
@@ -153,15 +158,21 @@ int main(void) {
 				else if (key == UP) {
 					reprint_prompt = false;
 
-					// char* history = ncsh_history_get(++history_position);
-					// printf("%s\n", history);
+					history = ncsh_history_get(++history_position);
+					if (history.value != NULL) {
+						ncsh_write(ERASE_CURRENT_LINE, ERASE_CURRENT_LINE_LENGTH);
+						printf("%s", history.value);
+					}
 
 				}
 				else if (key == DOWN) {
 					reprint_prompt = false;
 
-					// char* history = ncsh_history_get(++history_position);
-					// printf("%s\n", history);
+					history = ncsh_history_get(--history_position);
+					if (history.value != NULL) {
+						ncsh_write(ERASE_CURRENT_LINE, ERASE_CURRENT_LINE_LENGTH);
+						printf("%s", history.value);
+					}
 				}
 			}
 		}

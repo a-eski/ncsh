@@ -28,7 +28,7 @@ main.o : main.c ncsh_commands.h ncsh_terminal.h eskilib/eskilib_string.h eskilib
 	$(cc_with_flags) -c main.c
 ncsh_commands.o : ncsh_commands.h eskilib/eskilib_string.h eskilib/eskilib_colors.h ncsh_types.h ncsh_terminal.h ncsh_args.h ncsh_builtin_commands.h
 	$(cc_with_flags) -c ncsh_commands.c
-ncsh_builtin_commands.o : ncsh_builtin_commands.h ncsh_args.h eskilib/eskilib_string.h
+ncsh_builtin_commands.o : ncsh_builtin_commands.h ncsh_args.h eskilib/eskilib_string.h ncsh_types.h
 	$(cc_with_flags) -c ncsh_builtin_commands.c
 ncsh_terminal.o : ncsh_terminal.c ncsh_terminal.h
 	$(cc_with_flags) -c ncsh_terminal.c
