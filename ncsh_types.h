@@ -41,5 +41,10 @@ enum ncsh_Hotkey {
 	DELETE = 5
 };
 
+struct ncsh_String {
+	uint_fast8_t length;
+	char* value;
+};
+
 #endif // !ncsh_types_h
 
