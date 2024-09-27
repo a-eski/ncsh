@@ -1,0 +1,7 @@
+#ifdef WIN32 || _WIN32 || _WIN64
+
+#endif // WIN32
+
+#ifdef linux || __unix__
+
+#endif // linux

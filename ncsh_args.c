@@ -13,13 +13,24 @@ bool ncsh_args_is_valid(struct ncsh_Args args) {
 		return true;
 }
 
+struct ncsh_Args ncsh_args_malloc(void) {
+	struct ncsh_Args args = { .count = 0 };
+	args.values = malloc(sizeof(char*) * ncsh_TOKENS);
+	if (args.values == NULL)
+		exit(EXIT_FAILURE);
+
+	return args;
+}
+
 void ncsh_args_free(struct ncsh_Args args) {
 	free(args.values);
+	args.values = NULL;
 }
 
 void ncsh_args_free_values(struct ncsh_Args args) {
 	for (uint_fast8_t i = 0; i < args.count; i++) {
 		free(args.values[i]);
+		args.values[i] = NULL;
 	}
 }
 

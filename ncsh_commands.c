@@ -45,14 +45,14 @@ bool ncsh_any_pipes(struct ncsh_Args args) {
 uint_fast8_t ncsh_execute_piped(struct ncsh_Args args) {
 	int file_descriptor_one[2];
 	int file_descriptor_two[2];
-	
+
 	uint_fast8_t number_of_commands = 0;
 	char *command[256];
 	pid_t pid;
 	bool end = false;
-	
+
 	uint_fast8_t i = 0; uint_fast8_t j = 0; uint_fast8_t k = 0; uint_fast8_t l = 0;
-	
+
 	while (args.values[l] != NULL){
 		if (eskilib_string_equals(args.values[l], PIPE_KEY, args.max_line_length)){
 			number_of_commands++;
@@ -60,7 +60,7 @@ uint_fast8_t ncsh_execute_piped(struct ncsh_Args args) {
 		l++;
 	}
 	number_of_commands++;
-	
+
 	while (args.values[j] != NULL && end != true){
 		k = 0;
 
@@ -97,7 +97,7 @@ uint_fast8_t ncsh_execute_piped(struct ncsh_Args args) {
 				else
 					close(file_descriptor_two[1]);
 			}
-			
+
 			return ncsh_fork_error();
 		}
 
@@ -113,7 +113,7 @@ uint_fast8_t ncsh_execute_piped(struct ncsh_Args args) {
 			}
 			else { //middle command
 				if (i % 2 != 0) {
-					dup2(file_descriptor_two[0], STDIN_FILENO); 
+					dup2(file_descriptor_two[0], STDIN_FILENO);
 					dup2(file_descriptor_one[1], STDOUT_FILENO);
 				}
 				else {

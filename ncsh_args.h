@@ -15,6 +15,8 @@ struct ncsh_Args {
 
 bool ncsh_args_is_valid(struct ncsh_Args args);
 
+struct ncsh_Args ncsh_args_malloc(void);
+
 void ncsh_args_free(struct ncsh_Args args);
 
 void ncsh_args_free_values(struct ncsh_Args args);

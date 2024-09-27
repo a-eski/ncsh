@@ -9,13 +9,6 @@
 
 #define DOUBLE_QUOTE_KEY '\"'
 
-#define PIPE_SYMBOL '|'
-#define INPUT_REDIRECTION_SYMBOL '<'
-#define INPUT_REDIRECTION_APPEND_SYMBOL "<<"
-#define OUTPUT_REDIRECTION_SYMBOL '>'
-#define OUTPUT_REDIRECTION_APPEND_SYMBOL ">>"
-#define BACKGROUND_JOB_SYMBOL '&'
-
 bool ncsh_is_delimiter(char ch) {
 	switch (ch) {
 		case ' ': {
@@ -72,7 +65,7 @@ struct ncsh_Args ncsh_parse(char line[], uint_fast32_t length, struct ncsh_Args 
 		else {
 			if (line[line_position] == DOUBLE_QUOTE_KEY)
 				double_quotes_count++;
-			else	
+			else
 				buffer[buffer_position++] = line[line_position];
 		}
 	}
