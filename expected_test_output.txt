@@ -1,0 +1,27 @@
+[37mncsh_parser_ls_test started.
+[32mncsh_parser_ls_test passed.
+[0m[37mncsh_parser_ls_dash_l_test started.
+[32mncsh_parser_ls_dash_l_test passed.
+[0m[37mncsh_parser_pipe_test started.
+[32mncsh_parser_pipe_test passed.
+[0m[37mncsh_parser_multiple_pipe_test started.
+[32mncsh_parser_multiple_pipe_test passed.
+[0m[37mncsh_parser_background_job_test started.
+[32mncsh_parser_background_job_test passed.
+[0m[37mncsh_parser_output_redirection_test started.
+[32mncsh_parser_output_redirection_test passed.
+[0m[37mncsh_parser_double_quotes_test started.
+[32mncsh_parser_double_quotes_test passed.
+[0m[37mncsh_parser_output_redirection_append_test started.
+[32mncsh_parser_output_redirection_append_test passed.
+[0m[37mncsh_history_malloc_test started.
+[32mncsh_history_malloc_test passed.
+[0m[37mncsh_history_add_test started.
+[32mncsh_history_add_test passed.
+[0m[37mncsh_history_add_multiple_test started.
+[32mncsh_history_add_multiple_test passed.
+[0m[37mncsh_history_get_out_of_range_test started.
+[32mncsh_history_get_out_of_range_test passed.
+[0m[37mncsh_history_get_multiple_test started.
+[32mncsh_history_get_multiple_test passed.
+[0m
