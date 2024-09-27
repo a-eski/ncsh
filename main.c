@@ -1,3 +1,6 @@
+/* Copyright Alex Eski 2024 */
+
+#include <linux/limits.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -7,6 +10,7 @@
 #include <stdbool.h>
 
 #include "eskilib/eskilib_colors.h"
+#include "eskilib/eskilib_string.h"
 #include "ncsh_types.h"
 #include "ncsh_args.h"
 #include "ncsh_terminal.h"
@@ -18,21 +22,26 @@
 // #include "ncsh_debug.h"
 // #endif /* ifndef NDEBUG */
 
-
 enum ncsh_Hotkey ncsh_get_key(char character) {
 	switch (character) {
-		case UP_ARROW:
+		case UP_ARROW: {
 			return UP;
-		case DOWN_ARROW:
+		}
+		case DOWN_ARROW: {
 			return DOWN;
-		case RIGHT_ARROW:
+		}
+		case RIGHT_ARROW: {
 			return RIGHT;
-		case LEFT_ARROW:
+		}
+		case LEFT_ARROW: {
 			return LEFT;
-		case DELETE_KEY:
+		}
+		case DELETE_KEY: {
 			return DELETE;
-		default:
+		}
+		default: {
 			return NONE;
+		}
 	}
 }
 
@@ -48,27 +57,23 @@ int main(void) {
 	ncsh_print_prompt(prompt_info);
 
 	uint_fast8_t command_result = 0;
-	struct ncsh_Args args = { .count = 0 };
-	args.values = malloc(sizeof(char*) * ncsh_TOKENS);
-	if (args.values == NULL)
-		exit(EXIT_FAILURE);
+	struct ncsh_Args args = ncsh_args_malloc();
 
 	uint_fast32_t history_position = 0;
-	// uint_fast32_t previous_buffer_position = 0;
 	struct ncsh_String history;
 	ncsh_history_malloc();
 
 	ncsh_terminal_init();
 	atexit(ncsh_terminal_reset);
-	// setenv("shell", prompt_info.path, 1);
 
 	while (1) {
-		history_position = 0;
-
-		if (buffer_position == 0 && reprint_prompt == true)
+		if (buffer_position == 0 && reprint_prompt == true) {
 			ncsh_print_prompt(prompt_info);
-		else
+			history_position = 0;
+		}
+		else {
 			reprint_prompt = true;
+		}
 
 		if (read(STDIN_FILENO, &character, 1) == -1) {
 			perror(RED "Error reading from stdin" RESET);
@@ -158,20 +163,25 @@ int main(void) {
 				else if (key == UP) {
 					reprint_prompt = false;
 
-					history = ncsh_history_get(++history_position);
-					if (history.value != NULL) {
+					history = ncsh_history_get(history_position++);
+					if (history.length > 0) {
 						ncsh_write(ERASE_CURRENT_LINE, ERASE_CURRENT_LINE_LENGTH);
-						printf("%s", history.value);
+						buffer_position = buffer_position > history.length ? buffer_position : history.length;
+						eskilib_string_copy(buffer, history.value, ++buffer_position);
+						printf("%s", buffer);
+						fflush(stdout);
 					}
-
 				}
 				else if (key == DOWN) {
 					reprint_prompt = false;
 
-					history = ncsh_history_get(--history_position);
+					history = ncsh_history_get(history_position--);
 					if (history.value != NULL) {
-						ncsh_write(ERASE_CURRENT_LINE, ERASE_CURRENT_LINE_LENGTH);
-						printf("%s", history.value);
+						// --history_position;
+						buffer_position = buffer_position > history.length ? buffer_position : history.length;
+						eskilib_string_copy(buffer, history.value, ++buffer_position);
+						printf("%s", buffer);
+						fflush(stdout);
 					}
 				}
 			}
@@ -211,11 +221,17 @@ int main(void) {
 			putchar(character);
 			fflush(stdout);
 			buffer[buffer_position++] = character;
+			if (buffer[buffer_position]) {
+				for (uint_fast8_t i = buffer_position; buffer[i]; i++) {
+					buffer[i] = buffer[i + 1];
+				}
+			}
 			buffer[buffer_position] = '\0';
 		}
 	}
 
 	ncsh_args_free(args);
+	ncsh_history_free();
 
 	return EXIT_SUCCESS;
 }

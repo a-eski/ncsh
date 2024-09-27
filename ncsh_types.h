@@ -24,6 +24,10 @@
 #define BACKSPACE_AND_SAVE_POSITION_STRING_LENGTH 3
 #define RESTORE_SAVED_POSITION_STRING "\0338"
 #define RESTORE_SAVED_POSITION_STRING_LENGTH 2
+#define SAVE_CURSOR_POSITION "\033[s"
+#define SAVE_CURSOR_POSITION_LENGTH 3
+#define RESTORE_CURSOR_POSITION "\033[u"
+#define RESTORE_CURSOR_POSITION_LENGTH 3
 #define ERASE_CURRENT_LINE "\033[K"
 #define ERASE_CURRENT_LINE_LENGTH 3
 
@@ -45,6 +49,18 @@ struct ncsh_String {
 	uint_fast8_t length;
 	char* value;
 };
+
+// struct ncsh_Loop {
+// 	bool reprint_prompt;
+// 	uint_fast8_t command_result;
+// 	enum ncsh_Hotkey key;
+// 	uint_fast32_t history_position;
+// 	char character;
+// 	char buffer[MAX_INPUT];
+// 	struct ncsh_Directory prompt_info;
+// 	struct ncsh_Args args;
+// 	struct ncsh_String history;
+// };
 
 #endif // !ncsh_types_h
 

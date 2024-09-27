@@ -64,24 +64,37 @@ void ncsh_history_malloc(void) {
 	history = malloc(sizeof(char*) * max_history_position);
 }
 
+void ncsh_history_free(void) {
+	for (uint_fast32_t i = 0; i < history_position; i++) {
+		free(history[i].value);
+		history[i].value = NULL;
+	}
+
+	free(history);
+	history = NULL;
+	history_position = 0;
+}
+
 void ncsh_history_add(char* line, uint_fast32_t length) {
 	if (history_position < max_history_position) {
 		history[history_position].length = length;
 		history[history_position].value = malloc(sizeof(char) * length);
-		eskilib_string_copy(history[history_position++].value, line, length);
+		eskilib_string_copy(history[history_position].value, line, length);
+		++history_position;
 	}
 }
 
 struct ncsh_String ncsh_history_get(uint_fast32_t position) {
 	const struct ncsh_String empty_string = { .length = 0, .value = NULL };
-	if (history_position == 0)
+
+	if (history_position == 0 && position == 0)
 		return empty_string;
-	else if (position > history_position)
+	if (position >= history_position)
 		return empty_string;
 	else if (position > max_history_position)
 		return history[max_history_position];
 	else
-		return history[history_position - position];
+		return history[history_position - position - 1];
 }
 
 uint_fast32_t ncsh_history_command(void) {
