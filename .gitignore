@@ -2,3 +2,4 @@ analysis.txt
 gmon.out
 ncsh
 *.o
+test_output.txt

@@ -43,5 +43,10 @@ eskilib_string.o : eskilib_string.c eskilib_string.h
 ncsh_debug.o : ncsh_debug.c ncsh_debug.h ncsh_types.h ncsh_args.h
 	$(cc_with_flags) -c ncsh_debug.c
 
+check :
+	chmod +x ./tests_harness.sh
+	chmod +x ./tests.sh
+	./tests_harness.sh
+
 clean :
 	rm $(target) $(objects)
