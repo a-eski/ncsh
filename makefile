@@ -9,7 +9,7 @@ endif
 std = -std=c2x
 debug_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined
 release_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -O3 -DNDEBUG
-objects = main.o ncsh_commands.o ncsh_terminal.o eskilib/eskilib_string.o ncsh_debug.o ncsh_args.o ncsh_parser.o ncsh_builtin_commands.o \
+objects = main.o ncsh.o ncsh_commands.o ncsh_terminal.o eskilib/eskilib_string.o ncsh_debug.o ncsh_args.o ncsh_parser.o ncsh_builtin_commands.o \
 	  ncsh_io.o
 target = ncsh
 
@@ -24,8 +24,10 @@ endif
 $(target) : $(objects)
 	$(cc_with_flags) -o $(target) $(objects)
 
-main.o : main.c ncsh_commands.h ncsh_terminal.h eskilib/eskilib_string.h eskilib/eskilib_colors.h ncsh_types.h ncsh_parser.h ncsh_args.h
+main.o : main.c ncsh.h
 	$(cc_with_flags) -c main.c
+ncsh.o : ncsh.c ncsh.h ncsh_commands.h ncsh_terminal.h eskilib/eskilib_string.h eskilib/eskilib_colors.h ncsh_types.h ncsh_parser.h ncsh_args.h
+	$(cc_with_flags) -c ncsh.c
 ncsh_commands.o : ncsh_commands.h eskilib/eskilib_string.h eskilib/eskilib_colors.h ncsh_types.h ncsh_terminal.h ncsh_args.h ncsh_builtin_commands.h
 	$(cc_with_flags) -c ncsh_commands.c
 ncsh_builtin_commands.o : ncsh_builtin_commands.h ncsh_args.h eskilib/eskilib_string.h ncsh_types.h
