@@ -35,7 +35,7 @@ enum ncsh_Hotkey ncsh_get_key(char character) {
 
 int ncsh(void) {
 	char character;
-	char buffer[MAX_INPUT] = {};
+	char buffer[MAX_INPUT] = {0};
 	uint_fast8_t buffer_position = 0;
 
 	enum ncsh_Hotkey key;
