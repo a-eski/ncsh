@@ -43,8 +43,8 @@ eskilib_string.o : eskilib_string.c eskilib_string.h
 ncsh_debug.o : ncsh_debug.c ncsh_debug.h ncsh_types.h ncsh_args.h
 	$(cc_with_flags) -c ncsh_debug.c
 
-check : ./tests_check.sh
-	diff test_output.txt expected_test_output.txt
+check :
+	./tests_check.sh
 
 clean :
 	rm $(target) $(objects)
