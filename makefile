@@ -44,6 +44,7 @@ ncsh_debug.o : ncsh_debug.c ncsh_debug.h ncsh_types.h ncsh_args.h
 	$(cc_with_flags) -c ncsh_debug.c
 
 check :
+	chmod +x ./tests_check.sh
 	./tests_check.sh
 
 clean :
