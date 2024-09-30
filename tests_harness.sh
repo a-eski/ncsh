@@ -1,6 +1,5 @@
 #!/bin/bash
 
-rm test_output.txt
 echo "starting tests" &&
 ./tests.sh > test_output.txt &&
 echo "made test_ouput" &&
