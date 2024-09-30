@@ -24,24 +24,12 @@
 
 enum ncsh_Hotkey ncsh_get_key(char character) {
 	switch (character) {
-		case UP_ARROW: {
-			return UP;
-		}
-		case DOWN_ARROW: {
-			return DOWN;
-		}
-		case RIGHT_ARROW: {
-			return RIGHT;
-		}
-		case LEFT_ARROW: {
-			return LEFT;
-		}
-		case DELETE_KEY: {
-			return DELETE;
-		}
-		default: {
-			return NONE;
-		}
+		case UP_ARROW: { return UP; }
+		case DOWN_ARROW: { return DOWN; }
+		case RIGHT_ARROW: { return RIGHT; }
+		case LEFT_ARROW: { return LEFT; }
+		case DELETE_KEY: { return DELETE; }
+		default: { return NONE; }
 	}
 }
 
@@ -91,17 +79,19 @@ int ncsh(void) {
 			if (buffer_position > 1 && buffer[buffer_position]) {
 				--buffer_position;
 
-				ncsh_write(BACKSPACE_AND_SAVE_POSITION_STRING, BACKSPACE_AND_SAVE_POSITION_STRING_LENGTH);
-				ncsh_write(ERASE_CURRENT_LINE, ERASE_CURRENT_LINE_LENGTH);
+				// ncsh_write(BACKSPACE_AND_SAVE_POSITION_STRING ERASE_CURRENT_LINE,
+				// 	BACKSPACE_AND_SAVE_POSITION_STRING_LENGTH + ERASE_CURRENT_LINE_LENGTH);
+				ncsh_write(BACKSPACE_STRING ERASE_CURRENT_LINE, BACKSPACE_STRING_LENGTH + ERASE_CURRENT_LINE_LENGTH);
 
-				for (uint_fast8_t i = buffer_position; buffer[i]; i++) {
+				for (uint_fast8_t i = buffer_position; buffer[i]; i++)
 					buffer[i] = buffer[i + 1];
-				}
 
 				while (buffer[buffer_position])
 					putchar(buffer[buffer_position++]);
 
-				ncsh_write(RESTORE_SAVED_POSITION_STRING, RESTORE_SAVED_POSITION_STRING_LENGTH);
+				// ncsh_write(RESTORE_SAVED_POSITION_STRING, RESTORE_SAVED_POSITION_STRING_LENGTH);
+
+				fflush(stdout);
 			}
 			else if (buffer_position == 0) {
 				reprint_prompt = false;
@@ -131,7 +121,7 @@ int ncsh(void) {
 
 				switch (key) {
 					case RIGHT: {
-						if (buffer_position == MAX_INPUT) {
+						if (!buffer[buffer_position] || buffer_position == MAX_INPUT) {
 							reprint_prompt = false;
 							continue;
 						}
@@ -142,7 +132,7 @@ int ncsh(void) {
 						break;
 					}
 					case LEFT: {
-						if (buffer_position == 0) {
+						if (buffer_position == 0 || !buffer[buffer_position - 1]) {
 							reprint_prompt = false;
 							continue;
 						}
