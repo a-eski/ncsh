@@ -215,7 +215,6 @@ int ncsh(void) {
 				++buffer_position;
 
 			buffer[buffer_position++] = '\0';
-			printf("%s\n", buffer);
 
 			args = ncsh_parse(buffer, buffer_position, args);
 			if (!ncsh_args_is_valid(args))
