@@ -37,6 +37,7 @@ int ncsh(void) {
 	char character;
 	char buffer[MAX_INPUT] = {0};
 	uint_fast8_t buffer_position = 0;
+	uint_fast8_t max_buffer_position = 0;
 
 	enum ncsh_Hotkey key;
 	bool reprint_prompt = false;
@@ -78,6 +79,7 @@ int ncsh(void) {
 		if (character == BACKSPACE_KEY) {
 			if (buffer_position > 1 && buffer[buffer_position]) {
 				--buffer_position;
+				--max_buffer_position;
 
 				ncsh_write(BACKSPACE_STRING ERASE_CURRENT_LINE, BACKSPACE_STRING_LENGTH + ERASE_CURRENT_LINE_LENGTH);
 
@@ -206,8 +208,11 @@ int ncsh(void) {
 			putchar('\n');
 			fflush(stdout);
 
-			if (buffer_position == 0)
+			if (buffer_position == 0 && !buffer[buffer_position])
 				continue;
+
+			while (buffer_position < max_buffer_position)
+				++buffer_position;
 
 			buffer[buffer_position++] = '\0';
 
@@ -229,6 +234,7 @@ int ncsh(void) {
 
 			buffer[0] = '\0';
 			buffer_position = 0;
+			max_buffer_position = 0;
 			args.count = 0;
 			args.max_line_length = 0;
 			args.values[0] = NULL;
@@ -242,6 +248,8 @@ int ncsh(void) {
 					buffer[i] = buffer[i + 1];
 				}
 			}
+			if (buffer_position > max_buffer_position)
+				max_buffer_position = buffer_position;
 			buffer[buffer_position] = '\0';
 		}
 	}
