@@ -41,6 +41,15 @@ uint_fast32_t ncsh_help_command(void) {
 	return 1;
 }
 
+bool ncsh_is_cd_command(struct ncsh_Args args) {
+	if (eskilib_string_equals(args.values[0], "cd", args.max_line_length))
+		return true;
+	if (eskilib_string_equals(args.values[0], "z", args.max_line_length))
+		return true;
+
+	return false;
+}
+
 uint_fast32_t ncsh_cd_command(struct ncsh_Args args) {
 	if (args.values[1] == NULL) {
 		char* home = getenv("HOME");

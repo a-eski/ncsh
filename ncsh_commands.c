@@ -199,7 +199,7 @@ uint_fast32_t ncsh_execute(struct ncsh_Args args) {
 	if (eskilib_string_equals(args.values[0], "help", args.max_line_length))
 		return ncsh_help_command();
 
-	if (eskilib_string_equals(args.values[0], "cd", args.max_line_length))
+	if (ncsh_is_cd_command(args))
 		return ncsh_cd_command(args);
 
 	if (eskilib_string_equals(args.values[0], "history", args.max_line_length))

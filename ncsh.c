@@ -59,6 +59,7 @@ int ncsh(void) {
 		if (buffer_position == 0 && reprint_prompt == true) {
 			ncsh_print_prompt(prompt_info);
 			history_position = 0;
+			ncsh_write(SAVE_CURSOR_POSITION, SAVE_CURSOR_POSITION_LENGTH);
 		}
 		else {
 			reprint_prompt = true;
@@ -161,13 +162,14 @@ int ncsh(void) {
 					case UP: {
 						reprint_prompt = false;
 
-						history = ncsh_history_get(history_position++);
+						history = ncsh_history_get(history_position);
 						if (history.length > 0) {
-							ncsh_write(ERASE_CURRENT_LINE, ERASE_CURRENT_LINE_LENGTH);
-							buffer_position = buffer_position > history.length ? buffer_position : history.length;
-							eskilib_string_copy(buffer, history.value, ++buffer_position);
-							printf("%s", buffer);
-							fflush(stdout);
+							++history_position;
+							ncsh_write(RESTORE_CURSOR_POSITION ERASE_CURRENT_LINE,
+								RESTORE_CURSOR_POSITION_LENGTH + ERASE_CURRENT_LINE_LENGTH);
+							buffer_position = history.length - 1;
+							eskilib_string_copy(buffer, history.value, buffer_position);
+							ncsh_write(buffer, buffer_position);
 						}
 
 						break;
@@ -175,13 +177,22 @@ int ncsh(void) {
 					case DOWN: {
 						reprint_prompt = false;
 
-						history = ncsh_history_get(history_position--);
-						if (history.value != NULL) {
-							// --history_position;
-							buffer_position = buffer_position > history.length ? buffer_position : history.length;
-							eskilib_string_copy(buffer, history.value, ++buffer_position);
-							printf("%s", buffer);
-							fflush(stdout);
+						if (history_position == 0)
+							break;
+
+						history = ncsh_history_get(history_position - 2);
+						ncsh_write(RESTORE_CURSOR_POSITION ERASE_CURRENT_LINE,
+								RESTORE_CURSOR_POSITION_LENGTH + ERASE_CURRENT_LINE_LENGTH);
+						if (history.length > 0) {
+							--history_position;
+							buffer_position = history.length - 1;
+							eskilib_string_copy(buffer, history.value, buffer_position);
+							ncsh_write(buffer, buffer_position);
+						}
+						else {
+							buffer[0] = '\0';
+							buffer_position = 0;
+							max_buffer_position = 0;
 						}
 
 						break;
@@ -211,8 +222,11 @@ int ncsh(void) {
 			if (buffer_position == 0 && !buffer[buffer_position])
 				continue;
 
-			while (buffer_position < max_buffer_position)
+			while (buffer_position < max_buffer_position && buffer[buffer_position])
 				++buffer_position;
+
+			while (buffer[buffer_position - 1] == ' ')
+				--buffer_position;
 
 			buffer[buffer_position++] = '\0';
 
@@ -240,6 +254,14 @@ int ncsh(void) {
 			args.values[0] = NULL;
 		}
 		else {
+			if (buffer_position == MAX_INPUT - 1) {
+				fputs(RED "\nHit max input.\n" RESET, stderr);
+				buffer[0] = '\0';
+				buffer_position = 0;
+				max_buffer_position = 0;
+				continue;
+			}
+
 			putchar(character);
 			fflush(stdout);
 			buffer[buffer_position++] = character;
