@@ -175,9 +175,9 @@ int ncsh(void) {
 					case DOWN: {
 						reprint_prompt = false;
 
-						history = ncsh_history_get(history_position--);
+						history = ncsh_history_get(--history_position);
 						if (history.value != NULL) {
-							// --history_position;
+							ncsh_write(ERASE_CURRENT_LINE, ERASE_CURRENT_LINE_LENGTH);
 							buffer_position = buffer_position > history.length ? buffer_position : history.length;
 							eskilib_string_copy(buffer, history.value, ++buffer_position);
 							printf("%s", buffer);
@@ -211,8 +211,11 @@ int ncsh(void) {
 			if (buffer_position == 0 && !buffer[buffer_position])
 				continue;
 
-			while (buffer_position < max_buffer_position)
+			while (buffer_position < max_buffer_position && buffer[buffer_position])
 				++buffer_position;
+
+			while (buffer[buffer_position - 1] == ' ')
+				--buffer_position;
 
 			buffer[buffer_position++] = '\0';
 

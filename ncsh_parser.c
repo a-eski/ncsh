@@ -11,30 +11,14 @@
 
 bool ncsh_is_delimiter(char ch) {
 	switch (ch) {
-		case ' ': {
-			return true;
-		}
-		case '\t': {
-			return true;
-		}
-		case '\r': {
-			return true;
-		}
-		case '\n': {
-			return true;
-		}
-		case '\a': {
-			return true;
-		}
-		case EOF: {
-			return true;
-		}
-		case '\0': {
-			return true;
-		}
-		default: {
-			return false;
-		}
+		case ' ':  { return true; }
+		case '\t': { return true; }
+		case '\r': { return true; }
+		case '\n': { return true; }
+		case '\a': { return true; }
+		case EOF:  { return true; }
+		case '\0': { return true; }
+		default:   { return false; }
 	}
 }
 
