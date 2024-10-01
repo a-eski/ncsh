@@ -79,19 +79,30 @@ int ncsh(void) {
 			if (buffer_position > 1 && buffer[buffer_position]) {
 				--buffer_position;
 
-				// ncsh_write(BACKSPACE_AND_SAVE_POSITION_STRING ERASE_CURRENT_LINE,
-				// 	BACKSPACE_AND_SAVE_POSITION_STRING_LENGTH + ERASE_CURRENT_LINE_LENGTH);
 				ncsh_write(BACKSPACE_STRING ERASE_CURRENT_LINE, BACKSPACE_STRING_LENGTH + ERASE_CURRENT_LINE_LENGTH);
 
-				for (uint_fast8_t i = buffer_position; buffer[i]; i++)
+				uint_fast8_t buf_start = buffer_position;
+				for (uint_fast8_t i = buffer_position; buffer[i]; i++) {
 					buffer[i] = buffer[i + 1];
+				}
 
 				while (buffer[buffer_position])
 					putchar(buffer[buffer_position++]);
 
-				// ncsh_write(RESTORE_SAVED_POSITION_STRING, RESTORE_SAVED_POSITION_STRING_LENGTH);
-
 				fflush(stdout);
+
+				while (buffer_position > buf_start) {
+					if (buffer_position == 0 || !buffer[buffer_position - 1]) {
+						reprint_prompt = false;
+						continue;
+					}
+
+					ncsh_write(MOVE_CURSOR_LEFT, MOVE_CURSOR_LEFT_LENGTH);
+					--buffer_position;
+
+					if (buffer_position == 0)
+						reprint_prompt = false;
+				}
 			}
 			else if (buffer_position == 0) {
 				reprint_prompt = false;
