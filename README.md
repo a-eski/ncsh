@@ -11,4 +11,4 @@ Copyright Alex Eski 2024.
 5. aliasing
 6. better prompt line
 7. add non-iteractive mode
-8. save history at end of session
+8. incoporate z-oxide or z-oxide like cd command
