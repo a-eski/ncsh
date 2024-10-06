@@ -5,3 +5,5 @@ ncsh
 test_output.txt
 ncsh_builtin_commands_tests
 ncsh_parser_tests
+.ncsh_history
+.ncsh_history_test
