@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-#define eskilib_assert(condition) if (!(condition)) { printf("%s condition failed on line %d\n", __func__, __LINE__); eskilib_test_failed(); }
+#define eskilib_assert(condition) if (!(condition)) { printf("%s condition failed on line %d\n", __func__, __LINE__); eskilib_test_failed(); return; }
 
 extern void eskilib_test_run(const char* function_name, void (*function)(void));
 

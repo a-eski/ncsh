@@ -5,7 +5,6 @@
 #include "../ncsh_builtin_commands.h"
 #include "../eskilib/eskilib_test.h"
 #include "../eskilib/eskilib_string.h"
-
 #include "ncsh_builtin_commands_tests.h"
 
 void ncsh_history_malloc_test(void) {
@@ -17,6 +16,13 @@ void ncsh_history_malloc_test(void) {
 	eskilib_assert(result.value == NULL);
 
 	ncsh_history_free();
+}
+
+void ncsh_history_add_uninitialized_test(void) {
+	#define NDEBUG
+	#include <assert.h>
+	ncsh_history_add("ls", 3); // should not crash
+	#undef NDEBUG
 }
 
 void ncsh_history_add_test(void) {
@@ -145,6 +151,7 @@ void ncsh_history_get_multiple_test(void) {
 void ncsh_builtin_commands_tests(void) {
 	eskilib_test_run("ncsh_history_malloc_test", ncsh_history_malloc_test);
 	eskilib_test_run("ncsh_history_add_test", ncsh_history_add_test);
+	eskilib_test_run("ncsh_history_add_uninitialized_test", ncsh_history_add_uninitialized_test);
 	eskilib_test_run("ncsh_history_add_multiple_test", ncsh_history_add_multiple_test);
 	eskilib_test_run("ncsh_history_get_out_of_range_test", ncsh_history_get_out_of_range_test);
 	eskilib_test_run("ncsh_history_get_multiple_test", ncsh_history_get_multiple_test);

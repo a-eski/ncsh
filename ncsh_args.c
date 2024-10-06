@@ -1,3 +1,5 @@
+/* Copyright Alex Eski 2024 */
+
 #include <stdlib.h>
 
 #include "ncsh_args.h"

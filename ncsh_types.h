@@ -1,3 +1,5 @@
+/* Copyright Alex Eski 2024 */
+
 #ifndef ncsh_types_h
 #define ncsh_types_h
 
