@@ -18,10 +18,22 @@
 [32mncsh_history_malloc_test passed.
 [0m[37mncsh_history_add_test started.
 [32mncsh_history_add_test passed.
+[0m[37mncsh_history_add_uninitialized_test started.
+[32mncsh_history_add_uninitialized_test passed.
 [0m[37mncsh_history_add_multiple_test started.
 [32mncsh_history_add_multiple_test passed.
 [0m[37mncsh_history_get_out_of_range_test started.
 [32mncsh_history_get_out_of_range_test passed.
 [0m[37mncsh_history_get_multiple_test started.
 [32mncsh_history_get_multiple_test passed.
+[0m[37mncsh_history_load_file_not_exists_test started.
+[32mncsh_history_load_file_not_exists_test passed.
+[0m[37mncsh_history_load_file_exists_test started.
+[32mncsh_history_load_file_exists_test passed.
+[0m[37mncsh_history_save_adds_to_file started.
+[32mncsh_history_save_adds_to_file passed.
+[0m[37mncsh_history_save_adds_multiple_to_file started.
+[32mncsh_history_save_adds_multiple_to_file passed.
+[0m[37mncsh_history_load_entries_test started.
+[32mncsh_history_load_entries_test passed.
 [0m

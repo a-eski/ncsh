@@ -18,9 +18,10 @@
 #include "ncsh_builtin_commands.h"
 #include "ncsh_parser.h"
 #include "ncsh_io.h"
-// #ifndef NDEBUG
-// #include "ncsh_debug.h"
-// #endif /* ifndef NDEBUG */
+// #define NCSH_DEBUG
+#ifdef NCSH_DEBUG
+#include "ncsh_debug.h"
+#endif /* ifdef NCSH_DEBUG */
 
 enum ncsh_Hotkey ncsh_get_key(char character) {
 	switch (character) {
@@ -51,6 +52,7 @@ int ncsh(void) {
 	uint_fast32_t history_position = 0;
 	struct ncsh_String history;
 	ncsh_history_malloc();
+	ncsh_history_load();
 
 	ncsh_terminal_init();
 	atexit(ncsh_terminal_reset);
@@ -78,7 +80,7 @@ int ncsh(void) {
 		}
 
 		if (character == BACKSPACE_KEY) {
-			if (buffer_position > 1 && buffer[buffer_position]) {
+			if (buffer_position > 0 && buffer[buffer_position]) {
 				--buffer_position;
 				--max_buffer_position;
 
@@ -135,7 +137,7 @@ int ncsh(void) {
 
 				switch (key) {
 					case RIGHT: {
-						if (!buffer[buffer_position] || buffer_position == MAX_INPUT) {
+						if (buffer_position == MAX_INPUT - 1 || (!buffer[buffer_position] && !buffer[buffer_position + 1] )) {
 							reprint_prompt = false;
 							continue;
 						}
@@ -146,7 +148,7 @@ int ncsh(void) {
 						break;
 					}
 					case LEFT: {
-						if (buffer_position == 0 || !buffer[buffer_position - 1]) {
+						if (buffer_position == 0 || (!buffer[buffer_position] && !buffer[buffer_position - 1])) {
 							reprint_prompt = false;
 							continue;
 						}
@@ -229,13 +231,16 @@ int ncsh(void) {
 				--buffer_position;
 
 			buffer[buffer_position++] = '\0';
+			#ifdef NCSH_DEBUG
+			ncsh_debug_line(buffer, buffer_position);
+			#endif /* ifdef NCSH_DEBUG */
 
 			args = ncsh_parse(buffer, buffer_position, args);
 			if (!ncsh_args_is_valid(args))
 				continue;
-			// #ifndef NDEBUG
-			// ncsh_debug_args(args);
-			// #endif /* ifndef NDEBUG */
+			#ifdef NCSH_DEBUG
+			ncsh_debug_args(args);
+			#endif /* ifdef NCSH_DEBUG */
 
 			ncsh_history_add(buffer, buffer_position);
 
@@ -277,7 +282,9 @@ int ncsh(void) {
 	}
 
 	ncsh_args_free(args);
+	ncsh_history_save();
 	ncsh_history_free();
+	ncsh_terminal_reset();
 
 	return EXIT_SUCCESS;
 }

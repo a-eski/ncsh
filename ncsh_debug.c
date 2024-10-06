@@ -1,3 +1,5 @@
+/* Copyright Alex Eski 2024 */
+
 #include <stdint.h>
 #include <stdio.h>
 

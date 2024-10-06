@@ -1,3 +1,5 @@
+/* Copyright Alex Eski 2024 */
+
 #define _POSIX_SOURCE
 #include <assert.h>
 #include <stdint.h>
@@ -183,10 +185,17 @@ uint_fast32_t ncsh_execute_program(char** args) {
 }
 
 uint_fast32_t ncsh_execute_external(struct ncsh_Args args) {
-	if (ncsh_any_pipes(args))
-		return ncsh_execute_piped(args);
+	ncsh_terminal_reset();
 
-	return ncsh_execute_program(args.values);
+	uint_fast32_t result = EXIT_FAILURE;
+	if (ncsh_any_pipes(args))
+		result = ncsh_execute_piped(args);
+	else
+		result = ncsh_execute_program(args.values);
+
+	ncsh_terminal_init();
+
+	return result;
 }
 
 uint_fast32_t ncsh_execute(struct ncsh_Args args) {
