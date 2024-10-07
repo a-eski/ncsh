@@ -3,8 +3,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
-
-#include "ncsh_types.h"
+#include "ncsh_args.h"
 
 void ncsh_debug_line(char* line, uint_fast32_t length);
 void ncsh_debug_args(struct ncsh_Args args);

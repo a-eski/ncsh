@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "../ncsh_types.h"
 #include "../ncsh_builtin_commands.h"
 #include "../eskilib/eskilib_test.h"
 #include "../eskilib/eskilib_string.h"
@@ -10,7 +9,7 @@
 void ncsh_history_malloc_test(void) {
 	ncsh_history_malloc();
 
-	struct ncsh_String result = ncsh_history_get(0);
+	struct eskilib_String result = ncsh_history_get(0);
 
 	eskilib_assert(result.length == 0);
 	eskilib_assert(result.value == NULL);
@@ -30,7 +29,7 @@ void ncsh_history_add_test(void) {
 
 	ncsh_history_add("ls", 3);
 
-	struct ncsh_String result = ncsh_history_get(0);
+	struct eskilib_String result = ncsh_history_get(0);
 
 	eskilib_assert(result.length == 3);
 	eskilib_assert(eskilib_string_equals(result.value, "ls", 3));
@@ -47,12 +46,12 @@ void ncsh_history_add_multiple_test(void) {
 	ncsh_history_add(ls, 3);
 	ncsh_history_add(ls_pipe_sort, 10);
 
-	struct ncsh_String result_one = ncsh_history_get(0);
+	struct eskilib_String result_one = ncsh_history_get(0);
 
 	eskilib_assert(result_one.length == 10);
 	eskilib_assert(eskilib_string_equals(result_one.value, ls_pipe_sort, result_one.length));
 
-	struct ncsh_String result_two = ncsh_history_get(1);
+	struct eskilib_String result_two = ncsh_history_get(1);
 
 	eskilib_assert(result_two.length == 3);
 	eskilib_assert(eskilib_string_equals(result_two.value, ls, result_two.length));
@@ -71,23 +70,23 @@ void ncsh_history_add_multiple_before_get_test(void) {
 	ncsh_history_add(ls_dash_l, 5);
 	ncsh_history_add(ls_pipe_sort, 10);
 
-	struct ncsh_String result_one = ncsh_history_get(0);
+	struct eskilib_String result_one = ncsh_history_get(0);
 	eskilib_assert(result_one.length == 10);
 	eskilib_assert(eskilib_string_equals(result_one.value, ls_pipe_sort, result_one.length));
 
-	struct ncsh_String result_two = ncsh_history_get(1);
+	struct eskilib_String result_two = ncsh_history_get(1);
 	eskilib_assert(result_two.length == 5);
 	eskilib_assert(eskilib_string_equals(result_two.value, ls_dash_l, result_two.length));
 
-	struct ncsh_String result_three = ncsh_history_get(0);
+	struct eskilib_String result_three = ncsh_history_get(0);
 	eskilib_assert(result_three.length == 10);
 	eskilib_assert(eskilib_string_equals(result_three.value, ls_pipe_sort, result_three.length));
 
-	struct ncsh_String result_four = ncsh_history_get(1);
+	struct eskilib_String result_four = ncsh_history_get(1);
 	eskilib_assert(result_four.length == 5);
 	eskilib_assert(eskilib_string_equals(result_four.value, ls_pipe_sort, result_four.length));
 
-	struct ncsh_String result_five = ncsh_history_get(2);
+	struct eskilib_String result_five = ncsh_history_get(2);
 	eskilib_assert(result_five.length == 3);
 	eskilib_assert(eskilib_string_equals(result_five.value, ls, result_five.length));
 
@@ -103,17 +102,17 @@ void ncsh_history_get_out_of_range_test(void) {
 	ncsh_history_add(ls, 3);
 	ncsh_history_add(ls_pipe_sort, 10);
 
-	struct ncsh_String result_one = ncsh_history_get(0);
+	struct eskilib_String result_one = ncsh_history_get(0);
 
 	eskilib_assert(result_one.length == 10);
 	eskilib_assert(eskilib_string_equals(result_one.value, ls_pipe_sort, result_one.length));
 
-	struct ncsh_String result_two = ncsh_history_get(1);
+	struct eskilib_String result_two = ncsh_history_get(1);
 
 	eskilib_assert(result_two.length == 3);
 	eskilib_assert(eskilib_string_equals(result_two.value, ls, result_two.length));
 
-	struct ncsh_String result_three = ncsh_history_get(2);
+	struct eskilib_String result_three = ncsh_history_get(2);
 
 	eskilib_assert(result_three.length == 0);
 	eskilib_assert(result_three.value == NULL);
@@ -130,17 +129,17 @@ void ncsh_history_get_multiple_test(void) {
 	ncsh_history_add(ls, 3);
 	ncsh_history_add(ls_pipe_sort, 10);
 
-	struct ncsh_String result_one = ncsh_history_get(0);
+	struct eskilib_String result_one = ncsh_history_get(0);
 
 	eskilib_assert(result_one.length == 10);
 	eskilib_assert(eskilib_string_equals(result_one.value, ls_pipe_sort, result_one.length));
 
-	struct ncsh_String result_two = ncsh_history_get(1);
+	struct eskilib_String result_two = ncsh_history_get(1);
 
 	eskilib_assert(result_two.length == 3);
 	eskilib_assert(eskilib_string_equals(result_two.value, ls, result_two.length));
 
-	struct ncsh_String result_three = ncsh_history_get(0);
+	struct eskilib_String result_three = ncsh_history_get(0);
 
 	eskilib_assert(result_three.length == 10);
 	eskilib_assert(eskilib_string_equals(result_three.value, ls_pipe_sort, result_three.length));

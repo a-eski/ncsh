@@ -4,6 +4,11 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+struct eskilib_String {
+	uint_fast8_t length;
+	char* value;
+};
+
 char* eskilib_string_copy(char* dest, char* source, const uint_fast32_t maxBufferSize);
 
 //checks if two strings are equivalent and returns true if they are, false otherwise.

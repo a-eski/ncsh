@@ -5,7 +5,6 @@
 
 #include "../eskilib/eskilib_test.h"
 #include "../eskilib/eskilib_string.h"
-#include "../ncsh_types.h"
 
 #define NCSH_HISTORY_TEST
 #include "../ncsh_builtin_commands.h"
@@ -32,7 +31,7 @@ void ncsh_history_load_entries_test() {
 	ncsh_history_malloc();
 	ncsh_history_load();
 
-	// struct ncsh_String result = ncsh_history_get(0);
+	// struct eskilib_String result = ncsh_history_get(0);
 	// eskilib_assert(eskilib_string_equals(result.value, "ls\n", result.length));
 
 	ncsh_history_free();

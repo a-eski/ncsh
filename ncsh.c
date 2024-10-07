@@ -11,28 +11,17 @@
 
 #include "eskilib/eskilib_colors.h"
 #include "eskilib/eskilib_string.h"
-#include "ncsh_types.h"
 #include "ncsh_args.h"
 #include "ncsh_terminal.h"
 #include "ncsh_commands.h"
 #include "ncsh_builtin_commands.h"
 #include "ncsh_parser.h"
 #include "ncsh_io.h"
+
 // #define NCSH_DEBUG
 #ifdef NCSH_DEBUG
 #include "ncsh_debug.h"
 #endif /* ifdef NCSH_DEBUG */
-
-enum ncsh_Hotkey ncsh_get_key(char character) {
-	switch (character) {
-		case UP_ARROW: { return UP; }
-		case DOWN_ARROW: { return DOWN; }
-		case RIGHT_ARROW: { return RIGHT; }
-		case LEFT_ARROW: { return LEFT; }
-		case DELETE_KEY: { return DELETE; }
-		default: { return NONE; }
-	}
-}
 
 int ncsh(void) {
 	char character;
@@ -51,7 +40,7 @@ int ncsh(void) {
 	struct ncsh_Args args = ncsh_args_malloc();
 
 	uint_fast32_t history_position = 0;
-	struct ncsh_String history;
+	struct eskilib_String history;
 	ncsh_history_malloc();
 	ncsh_history_load();
 

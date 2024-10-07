@@ -25,11 +25,11 @@ $(target) : $(objects)
 
 main.o : main.c ncsh.h
 	$(cc_with_flags) -c main.c
-ncsh.o : ncsh.c ncsh.h ncsh_commands.h ncsh_terminal.h eskilib/eskilib_string.h eskilib/eskilib_colors.h ncsh_types.h ncsh_parser.h ncsh_args.h
+ncsh.o : ncsh.c ncsh.h ncsh_commands.h ncsh_terminal.h eskilib/eskilib_string.h eskilib/eskilib_colors.h ncsh_parser.h ncsh_args.h
 	$(cc_with_flags) -c ncsh.c
-ncsh_commands.o : ncsh_commands.h eskilib/eskilib_string.h eskilib/eskilib_colors.h ncsh_types.h ncsh_terminal.h ncsh_args.h ncsh_builtin_commands.h
+ncsh_commands.o : ncsh_commands.h eskilib/eskilib_string.h eskilib/eskilib_colors.h ncsh_terminal.h ncsh_args.h ncsh_builtin_commands.h
 	$(cc_with_flags) -c ncsh_commands.c
-ncsh_builtin_commands.o : ncsh_builtin_commands.h ncsh_args.h eskilib/eskilib_string.h ncsh_types.h
+ncsh_builtin_commands.o : ncsh_builtin_commands.h ncsh_args.h eskilib/eskilib_string.h
 	$(cc_with_flags) -c ncsh_builtin_commands.c
 ncsh_terminal.o : ncsh_terminal.c ncsh_terminal.h
 	$(cc_with_flags) -c ncsh_terminal.c
@@ -37,11 +37,11 @@ ncsh_parser.o : ncsh_parser.c ncsh_args.h
 	$(cc_with_flags) -c ncsh_parser.c
 ncsh_args.o : ncsh_args.c ncsh_args.h
 	$(cc_with_flags) -c ncsh_args.c
-ncsh_io.o : ncsh_io.c ncsh_io.h eskilib/eskilib_colors.h ncsh_types.h
+ncsh_io.o : ncsh_io.c ncsh_io.h eskilib/eskilib_colors.h
 	$(cc_with_flags) -c ncsh_io.c
 eskilib_string.o : eskilib/eskilib_string.c eskilib/eskilib_string.h
 	$(cc_with_flags) -c eskilib/eskilib_string.c
-ncsh_debug.o : ncsh_debug.c ncsh_debug.h ncsh_types.h ncsh_args.h
+ncsh_debug.o : ncsh_debug.c ncsh_debug.h ncsh_args.h
 	$(cc_with_flags) -c ncsh_debug.c
 
 check :
