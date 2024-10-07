@@ -11,6 +11,8 @@ bool ncsh_args_is_valid(struct ncsh_Args args) {
 		return false;
 	else if (args.values[0] == NULL)
 		return false;
+	else if (args.ops == NULL)
+		return false;
 	else
 		return true;
 }
@@ -20,6 +22,10 @@ struct ncsh_Args ncsh_args_malloc(void) {
 	args.values = malloc(sizeof(char*) * ncsh_TOKENS);
 	if (args.values == NULL)
 		exit(EXIT_FAILURE);
+	args.ops = malloc(sizeof(char*) * ncsh_TOKENS);
+	if (args.ops == NULL)
+		exit(EXIT_FAILURE);
+
 
 	return args;
 }
@@ -27,6 +33,8 @@ struct ncsh_Args ncsh_args_malloc(void) {
 void ncsh_args_free(struct ncsh_Args args) {
 	free(args.values);
 	args.values = NULL;
+	free(args.ops);
+	args.ops = NULL;
 }
 
 void ncsh_args_free_values(struct ncsh_Args args) {

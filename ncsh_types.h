@@ -6,6 +6,7 @@
 #include <linux/limits.h>
 #include <stdint.h>
 
+//input definitions
 #define ESCAPE_CHARACTER 27
 #define DOUBLE_QUOTE_KEY '\"'
 #define CTRL_D '\004'
@@ -16,6 +17,7 @@
 #define LEFT_ARROW 'D'
 #define DELETE_KEY '~'
 
+//terminal manipulations
 #define MOVE_CURSOR_RIGHT "\033[1C"
 #define MOVE_CURSOR_RIGHT_LENGTH 4
 #define MOVE_CURSOR_LEFT "\033[1D"

@@ -1,5 +1,0 @@
-1. space midline, then backspace midline, line gets cut off and can't cycle between rest of visible characters
-2. pressing space while on an existing character doesn't adjust the buffer
-3. history up/down bug
-4. history file loading into memory
-5. delete key doesn't work
