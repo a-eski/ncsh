@@ -3,7 +3,6 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include "ncsh_args.h"
 #include "ncsh_debug.h"
 
 void ncsh_debug_line(char* line, uint_fast32_t length) {

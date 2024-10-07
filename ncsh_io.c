@@ -7,6 +7,17 @@
 #include "ncsh_io.h"
 #include "eskilib/eskilib_colors.h"
 
+enum ncsh_Hotkey ncsh_get_key(char character) {
+	switch (character) {
+		case UP_ARROW: { return UP; }
+		case DOWN_ARROW: { return DOWN; }
+		case RIGHT_ARROW: { return RIGHT; }
+		case LEFT_ARROW: { return LEFT; }
+		case DELETE_KEY: { return DELETE; }
+		default: { return NONE; }
+	}
+}
+
 void ncsh_write(char* string, uint_fast32_t length) {
 	if (write(STDOUT_FILENO, string, length) == -1) {
 		perror(RED "Error writing to stdout" RESET);

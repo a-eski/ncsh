@@ -25,7 +25,7 @@ void ncsh_history_load();
 void ncsh_history_save(void);
 void ncsh_history_free(void);
 void ncsh_history_add(char* line, uint_fast32_t length);
-struct ncsh_String ncsh_history_get(uint_fast32_t position);
+struct eskilib_String ncsh_history_get(uint_fast32_t position);
 uint_fast32_t ncsh_history_command(void);
 
 #endif // !ncsh_builtin_commands_h

@@ -12,7 +12,6 @@
 
 #include "ncsh_args.h"
 #include "eskilib/eskilib_string.h"
-#include "ncsh_types.h"
 #include "ncsh_builtin_commands.h"
 
 bool ncsh_is_exit_command(struct ncsh_Args args) {
@@ -72,7 +71,7 @@ uint_fast32_t ncsh_cd_command(struct ncsh_Args args) {
 	return 1;
 }
 
-static struct ncsh_String* history;
+static struct eskilib_String* history;
 static uint_fast32_t history_position = 0;
 static const uint_fast32_t max_history_position = 50;
 
@@ -179,8 +178,8 @@ void ncsh_history_add(char* line, uint_fast32_t length) {
 	}
 }
 
-struct ncsh_String ncsh_history_get(uint_fast32_t position) {
-	const struct ncsh_String empty_string = { .length = 0, .value = NULL };
+struct eskilib_String ncsh_history_get(uint_fast32_t position) {
+	const struct eskilib_String empty_string = { .length = 0, .value = NULL };
 
 	if (history_position == 0 && position == 0)
 		return empty_string;
