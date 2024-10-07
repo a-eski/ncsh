@@ -11,6 +11,13 @@
 
 #define DOUBLE_QUOTE_KEY '\"'
 
+#define PIPE_STRING "|"
+#define INPUT_REDIRECTION_STRING "<"
+#define INPUT_REDIRECTION_APPEND_STRING "<<"
+#define OUTPUT_REDIRECTION_STRING ">"
+#define OUTPUT_REDIRECTION_APPEND_STRING ">>"
+#define BACKGROUND_JOB_STRING "&"
+
 bool ncsh_is_delimiter(char ch) {
 	switch (ch) {
 		case ' ':  { return true; }
@@ -22,6 +29,25 @@ bool ncsh_is_delimiter(char ch) {
 		case '\0': { return true; }
 		default:   { return false; }
 	}
+}
+
+enum ncsh_Ops ncsh_op_get(char line[], uint_fast32_t length) {
+	if (line == NULL)
+		return OP_NONE;
+	if (eskilib_string_equals(line, PIPE_STRING, length))
+		return OP_PIPE;
+	else if (eskilib_string_equals(line, OUTPUT_REDIRECTION_STRING, length))
+		return OP_OUTPUT_REDIRECTION;
+	else if (eskilib_string_equals(line, OUTPUT_REDIRECTION_APPEND_STRING, length))
+		return OP_OUTPUT_REDIRECTION_APPEND;
+	else if (eskilib_string_equals(line, INPUT_REDIRECTION_STRING, length))
+		return OP_INPUT_REDIRECTION;
+	else if (eskilib_string_equals(line, INPUT_REDIRECTION_APPEND_STRING, length))
+		return OP_INPUT_REDIRECTION_APPEND;
+	else if (eskilib_string_equals(line, BACKGROUND_JOB_STRING, length))
+		return OP_BACKGROUND_JOB;
+
+	return OP_CONSTANT;
 }
 
 struct ncsh_Args ncsh_parse(char line[], uint_fast32_t length, struct ncsh_Args args) {
@@ -39,6 +65,9 @@ struct ncsh_Args ncsh_parse(char line[], uint_fast32_t length, struct ncsh_Args 
 
 			args.values[args.count] = malloc(sizeof(char) * (buffer_position + 1));
 			eskilib_string_copy(args.values[args.count], buffer, buffer_position + 1);
+
+			args.ops[args.count] = ncsh_op_get(buffer, buffer_position);
+
 			args.count++;
 
 			if (args.max_line_length == 0 || buffer_position > args.max_line_length)
