@@ -50,7 +50,8 @@ int ncsh(void) {
 	while (1) {
 		if (buf_position == 0 && reprint_prompt == true) {
 			ncsh_print_prompt(prompt_info);
-			history_position = 0;
+			history_position = 0; // init history position and save cursor position for history
+			ncsh_write(SAVE_CURSOR_POSITION, SAVE_CURSOR_POSITION_LENGTH);
 		}
 		else {
 			reprint_prompt = true;
@@ -121,10 +122,10 @@ int ncsh(void) {
 
 				switch (key) {
 					case RIGHT: {
-						if (buf_position == MAX_INPUT - 1 || (!buffer[buf_position] && !buffer[buf_position + 1] )) {
-							reprint_prompt = false;
+						reprint_prompt = false;
+
+						if (buf_position == MAX_INPUT - 1 || (!buffer[buf_position] && !buffer[buf_position + 1]))
 							continue;
-						}
 
 						ncsh_write(MOVE_CURSOR_RIGHT, MOVE_CURSOR_RIGHT_LENGTH);
 						++buf_position;
@@ -132,16 +133,13 @@ int ncsh(void) {
 						break;
 					}
 					case LEFT: {
-						if (buf_position == 0 || (!buffer[buf_position] && !buffer[buf_position - 1])) {
-							reprint_prompt = false;
+						reprint_prompt = false;
+
+						if (buf_position == 0 || (!buffer[buf_position] && !buffer[buf_position - 1]))
 							continue;
-						}
 
 						ncsh_write(MOVE_CURSOR_LEFT, MOVE_CURSOR_LEFT_LENGTH);
 						--buf_position;
-
-						if (buf_position == 0)
-							reprint_prompt = false;
 
 						break;
 					}

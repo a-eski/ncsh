@@ -1,5 +1,6 @@
 /* Copyright Alex Eski 2024 */
 
+#include <linux/limits.h>
 #define _POSIX_SOURCE
 #include <assert.h>
 #include <stdint.h>
@@ -11,6 +12,7 @@
 #include <signal.h>
 #include <time.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 #include "ncsh_terminal.h"
 #include "ncsh_args.h"
@@ -35,13 +37,22 @@ uint_fast8_t ncsh_fork_error(void) {
 	return 0;
 }
 
-bool ncsh_any_pipes(struct ncsh_Args args) {
+bool ncsh_ops_any(struct ncsh_Args args) {
 	for (uint_fast8_t i = 0; i < args.count; i++) {
-		if (eskilib_string_equals(args.values[i], PIPE_KEY, args.max_line_length))
+		if (args.ops[i] != OP_CONSTANT)
 			return true;
 	}
 
 	return false;
+}
+
+enum ncsh_Ops ncsh_ops_first(struct ncsh_Args args) {
+	for (uint_fast8_t i = 0; i < args.count; i++) {
+		if (args.ops[i] != OP_CONSTANT)
+			return args.ops[i];
+	}
+
+	return OP_CONSTANT;
 }
 
 uint_fast8_t ncsh_execute_piped(struct ncsh_Args args) {
@@ -49,7 +60,7 @@ uint_fast8_t ncsh_execute_piped(struct ncsh_Args args) {
 	int file_descriptor_two[2];
 
 	uint_fast8_t number_of_commands = 0;
-	char *command[256];
+	char* command[MAX_INPUT];
 	pid_t pid;
 	bool end = false;
 
@@ -149,8 +160,7 @@ uint_fast8_t ncsh_execute_piped(struct ncsh_Args args) {
 			}
 		}
 
-		waitpid(pid,NULL,0);
-
+		waitpid(pid, NULL, 0);
 		i++;
 	}
 
@@ -166,7 +176,6 @@ uint_fast32_t ncsh_execute_program(char** args) {
 		if (execvp(args[0], args) == -1) {
 			perror(RED "Could not find command" RESET);
 			fflush(stdout);
-			ncsh_terminal_init();
 			return 0;
 		}
 
@@ -184,12 +193,60 @@ uint_fast32_t ncsh_execute_program(char** args) {
 	}
 }
 
+uint_fast32_t ncsh_execute_output_redirected(struct ncsh_Args args) {
+	int file_descriptor = open(args.values[2], O_WRONLY | O_CREAT | O_TRUNC, 0644);
+
+	int original_stdout = dup(STDOUT_FILENO);
+	int original_stderr = dup(STDERR_FILENO);
+	dup2(file_descriptor, STDOUT_FILENO);
+	dup2(file_descriptor, STDERR_FILENO);
+
+	close(file_descriptor);
+
+	pid_t pid;
+	int status;
+
+	pid = fork();
+	if (pid == 0) {
+		char** args_p = malloc(sizeof(char*) * 1);
+		args_p[0] = args.values[0];
+		if (execvp(args.values[0], args_p) == -1) {
+			perror(RED "Could not find command" RESET);
+			fflush(stdout);
+			return 0;
+		}
+	}
+	else if (pid < 0) {
+		return ncsh_fork_error();
+	}
+	else {
+		do {
+			waitpid(pid, &status, WUNTRACED);
+		} while (!WIFEXITED(status) && !WIFSIGNALED(status));
+	}
+
+	dup2(original_stdout, STDOUT_FILENO);
+	dup2(original_stderr, STDERR_FILENO);
+
+	return 1;
+}
+
+uint_fast32_t ncsh_execute_program_ops(struct ncsh_Args args) {
+	enum ncsh_Ops op = ncsh_ops_first(args);
+
+	switch (op) {
+		case OP_PIPE: { return ncsh_execute_piped(args); }
+		case OP_OUTPUT_REDIRECTION: { return ncsh_execute_output_redirected(args); }
+		default: { return 0; }
+	}
+}
+
 uint_fast32_t ncsh_execute_external(struct ncsh_Args args) {
 	ncsh_terminal_reset();
 
 	uint_fast32_t result = EXIT_FAILURE;
-	if (ncsh_any_pipes(args))
-		result = ncsh_execute_piped(args);
+	if (ncsh_ops_any(args))
+		result = ncsh_execute_program_ops(args);
 	else
 		result = ncsh_execute_program(args.values);
 
