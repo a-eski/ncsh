@@ -13,7 +13,7 @@ enum ncsh_Hotkey ncsh_get_key(char character) {
 		case DOWN_ARROW: { return DOWN; }
 		case RIGHT_ARROW: { return RIGHT; }
 		case LEFT_ARROW: { return LEFT; }
-		case DELETE_KEY: { return DELETE; }
+		case DELETE_PREFIX_KEY: { return DELETE_PREFIX; }
 		default: { return NONE; }
 	}
 }

@@ -13,6 +13,7 @@
 #define DOWN_ARROW 'B'
 #define RIGHT_ARROW 'C'
 #define LEFT_ARROW 'D'
+#define DELETE_PREFIX_KEY 51
 #define DELETE_KEY '~'
 
 //terminal manipulations
@@ -22,10 +23,8 @@
 #define MOVE_CURSOR_LEFT_LENGTH 4
 #define BACKSPACE_STRING "\b \b"
 #define BACKSPACE_STRING_LENGTH 3
-#define BACKSPACE_AND_SAVE_POSITION_STRING "\b\0337"
-#define BACKSPACE_AND_SAVE_POSITION_STRING_LENGTH 3
-#define RESTORE_SAVED_POSITION_STRING "\0338"
-#define RESTORE_SAVED_POSITION_STRING_LENGTH 2
+#define DELETE_STRING " \b"
+#define DELETE_STRING_LENGTH 2
 #define SAVE_CURSOR_POSITION "\033[s"
 #define SAVE_CURSOR_POSITION_LENGTH 3
 #define RESTORE_CURSOR_POSITION "\033[u"
@@ -45,7 +44,7 @@ enum ncsh_Hotkey {
 	DOWN = 2,
 	LEFT = 3,
 	RIGHT = 4,
-	DELETE = 5
+	DELETE_PREFIX = 5
 };
 
 enum ncsh_Hotkey ncsh_get_key(char character);

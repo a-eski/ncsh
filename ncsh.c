@@ -51,7 +51,6 @@ int ncsh(void) {
 		if (buf_position == 0 && reprint_prompt == true) {
 			ncsh_print_prompt(prompt_info);
 			history_position = 0;
-			ncsh_write(SAVE_CURSOR_POSITION, SAVE_CURSOR_POSITION_LENGTH);
 		}
 		else {
 			reprint_prompt = true;
@@ -70,7 +69,11 @@ int ncsh(void) {
 		}
 
 		if (character == BACKSPACE_KEY) {
-			if (buf_position > 0 && buffer[buf_position]) {
+			reprint_prompt = false;
+			if (buf_position == 0) {
+				continue;
+			}
+			else if (buf_position > 0 && buffer[buf_position]) {
 				--buf_position;
 				--max_buf_position;
 
@@ -88,23 +91,14 @@ int ncsh(void) {
 
 				while (buf_position > buf_start) {
 					if (buf_position == 0 || !buffer[buf_position - 1]) {
-						reprint_prompt = false;
-						continue;
+						break;
 					}
 
 					ncsh_write(MOVE_CURSOR_LEFT, MOVE_CURSOR_LEFT_LENGTH);
 					--buf_position;
-
-					if (buf_position == 0)
-						reprint_prompt = false;
 				}
 			}
-			else if (buf_position == 0) {
-				reprint_prompt = false;
-				continue;
-			}
 			else {
-				reprint_prompt = false;
 				ncsh_write(BACKSPACE_STRING, BACKSPACE_STRING_LENGTH);
 				--buf_position;
 				buffer[buf_position] = 0;
@@ -189,17 +183,41 @@ int ncsh(void) {
 
 						break;
 					}
-					case DELETE: {
-						reprint_prompt = false;
-						if (buf_position == 0)
+					case DELETE_PREFIX: {
+						if (read(STDIN_FILENO, &character, 1) == -1) {
+							perror(RED "Error reading from stdin" RESET);
+							fflush(stdout);
+							exit(EXIT_FAILURE);
+						}
+
+						if (character != DELETE_KEY)
 							continue;
 
-						ncsh_write(BACKSPACE_STRING, BACKSPACE_STRING_LENGTH);
-						--buf_position;
+						reprint_prompt = false;
+
+						ncsh_write(DELETE_STRING ERASE_CURRENT_LINE, DELETE_STRING_LENGTH + ERASE_CURRENT_LINE_LENGTH);
+						buf_start = buf_position;
+						for (uint_fast8_t i = buf_position; buffer[i]; i++)
+							buffer[i] = buffer[i + 1];
+
+						while (buffer[buf_position])
+							putchar(buffer[buf_position++]);
+
+						fflush(stdout);
+
+						while (buf_position > buf_start) {
+							if (buf_position == 0 || !buffer[buf_position - 1]) {
+								continue;
+							}
+
+							ncsh_write(MOVE_CURSOR_LEFT, MOVE_CURSOR_LEFT_LENGTH);
+							--buf_position;
+						}
 
 						break;
 					}
 					case NONE: {
+
 						continue;
 					}
 				}
@@ -220,7 +238,7 @@ int ncsh(void) {
 
 			buffer[buf_position++] = '\0';
 			#ifdef NCSH_DEBUG
-			ncsh_debug_line(buffer, buffer_position);
+			ncsh_debug_line(buffer, buf_position);
 			#endif /* ifdef NCSH_DEBUG */
 
 			args = ncsh_parse(buffer, buf_position, args);
@@ -258,16 +276,12 @@ int ncsh(void) {
 			putchar(character);
 			fflush(stdout);
 			buffer[buf_position++] = character;
-			if (buffer[buf_position]) {
-				for (uint_fast8_t i = buf_position; buffer[i]; i++) {
-					buffer[i] = buffer[i + 1];
-				}
-			}
 
 			if (buf_position > max_buf_position)
 				max_buf_position = buf_position;
 
-			buffer[buf_position] = '\0';
+			if (buf_position == max_buf_position)
+				buffer[buf_position] = '\0';
 		}
 	}
 
