@@ -27,12 +27,11 @@ void ncsh_history_load_file_exists_test() {
 	fclose(file);
 }
 
-void ncsh_history_load_entries_test() {
-	ncsh_history_malloc();
+void ncsh_history_get_empty_file_test() {
 	ncsh_history_load();
 
-	// struct eskilib_String result = ncsh_history_get(0);
-	// eskilib_assert(eskilib_string_equals(result.value, "ls\n", result.length));
+	struct eskilib_String result = ncsh_history_get(0);
+	eskilib_assert(result.length == 0);
 
 	ncsh_history_free();
 }
@@ -64,6 +63,7 @@ void ncsh_history_save_adds_multiple_to_file() {
 	ncsh_history_add("echo hello\0", 11);
 
 	ncsh_history_save();
+	ncsh_history_free();
 
 	FILE* file = fopen(NCSH_HISTORY_FILE, "r");
 	eskilib_assert(file != NULL);
@@ -72,22 +72,32 @@ void ncsh_history_save_adds_multiple_to_file() {
 	for (uint_fast8_t i = 0; fgets(buffer, sizeof(buffer), file); i++) {
 		if (i == 0)
 			eskilib_assert(eskilib_string_equals(buffer, existing_command, max));
-		if (i == 1)
+ 	if (i == 1)
 			eskilib_assert(eskilib_string_equals(buffer, "ls | sort\n", max));
 		if (i == 2)
 			eskilib_assert(eskilib_string_equals(buffer, "echo hello\n", max));
 	}
 
 	fclose(file);
+}
+
+void ncsh_history_load_and_get_entries_test() {
+	ncsh_history_malloc();
+	ncsh_history_load();
+
+	// struct eskilib_String result = ncsh_history_get(0);
+	// eskilib_assert(eskilib_string_equals(result.value, "ls\0", result.length));
+
 	ncsh_history_free();
 }
 
 void ncsh_history_file_tests(void) {
 	eskilib_test_run("ncsh_history_load_file_not_exists_test", ncsh_history_load_file_not_exists_test);
 	eskilib_test_run("ncsh_history_load_file_exists_test", ncsh_history_load_file_exists_test);
+	eskilib_test_run("ncsh_history_get_empty_file_test", ncsh_history_get_empty_file_test);
 	eskilib_test_run("ncsh_history_save_adds_to_file", ncsh_history_save_adds_to_file);
 	eskilib_test_run("ncsh_history_save_adds_multiple_to_file", ncsh_history_save_adds_multiple_to_file);
-	eskilib_test_run("ncsh_history_load_entries_test", ncsh_history_load_entries_test);
+	eskilib_test_run("ncsh_history_load_and_get_entries_test", ncsh_history_load_and_get_entries_test);
 }
 
 #ifndef ncsh_TEST_ALL

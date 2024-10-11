@@ -30,10 +30,12 @@
 [32mncsh_history_load_file_not_exists_test passed.
 [0m[37mncsh_history_load_file_exists_test started.
 [32mncsh_history_load_file_exists_test passed.
+[0m[37mncsh_history_get_empty_file_test started.
+[32mncsh_history_get_empty_file_test passed.
 [0m[37mncsh_history_save_adds_to_file started.
 [32mncsh_history_save_adds_to_file passed.
 [0m[37mncsh_history_save_adds_multiple_to_file started.
 [32mncsh_history_save_adds_multiple_to_file passed.
-[0m[37mncsh_history_load_entries_test started.
-[32mncsh_history_load_entries_test passed.
+[0m[37mncsh_history_load_and_get_entries_test started.
+[32mncsh_history_load_and_get_entries_test passed.
 [0m

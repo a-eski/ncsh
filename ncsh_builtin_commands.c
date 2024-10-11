@@ -1,6 +1,8 @@
 /* Copyright Alex Eski 2024 */
 
-// #include <linux/limits.h>
+#include <stddef.h>
+#include <string.h>
+#include <linux/limits.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -74,8 +76,11 @@ uint_fast32_t ncsh_cd_command(struct ncsh_Args args) {
 static struct eskilib_String* history;
 static uint_fast32_t history_position = 0;
 static const uint_fast32_t max_history_position = 50;
+static bool history_loaded = false;
 
 void ncsh_history_malloc(void) {
+	history_position = 0;
+	history_loaded = false;
 	history = malloc(sizeof(char*) * max_history_position);
 }
 
@@ -132,29 +137,35 @@ void ncsh_history_load() {
 		return;
 	}
 
-	// if (ftell(file) == 0)
-	// 	return;
-
 	// char buffer[MAX_INPUT];
 	// int_fast32_t buffer_length = 0;
 
-	// for (uint_fast8_t i = 0; (buffer_length = ncsh_fgets(buffer, sizeof(buffer), file)) != EOF && i < max_history_position;
-		// i++) {
-		// printf("loaded %s", buffer);
-	// 	history[i].value = malloc(sizeof(char) * buffer_length);
-	// 	// buffer[buffer_length] = '\0';
-	// 	eskilib_string_copy(history[i].value, buffer, buffer_length);
+	// for (uint_fast8_t i = 0;
+	// 	(buffer_length = ncsh_fgets(buffer, sizeof(buffer), file)) != EOF && i < max_history_position;
+	// 	i++) {
+	// 	if (buffer_length > 0) {
+	// 		printf("loaded %s", buffer);
+	// 		fflush(stdout);
+	// 		history[i].value = malloc(sizeof(char) * buffer_length + 1);
+	// 		eskilib_string_copy(history[i].value, buffer, buffer_length + 1);
+	// 	}
 	// }
 
+	// char buffer[MAX_INPUT];
 	// for (uint_fast8_t i = 0; (fgets(buffer, sizeof(buffer), file)) != NULL && i < max_history_position; i++) {
-	// 	printf("loaded %s", buffer);
-		// int buffer_length = strlen(buffer);
-		// history[i].value = malloc(sizeof(char) * buffer_length);
-		// eskilib_string_copy(history[i].value, buffer, buffer_length);
-		// ++history_position;
+	// 	int buffer_length = strlen(buffer);
+	//
+	// 	if (buffer_length > 0) {
+	// 		printf("loaded %s", buffer);
+	// 		// history[i].value = malloc(sizeof(char) * buffer_length);
+	// 		// eskilib_string_copy(history[i].value, buffer, buffer_length);
+	// 		// ++history_position;
+	// 	}
 	// }
 
 	fclose(file);
+
+	history_loaded = true;
 }
 
 void ncsh_history_free(void) {
@@ -172,7 +183,6 @@ void ncsh_history_add(char* line, uint_fast32_t length) {
 	if (history != NULL && history_position < max_history_position) {
 		history[history_position].length = length;
 		history[history_position].value = malloc(sizeof(char) * length);
-		// history[history_position].value = malloc(sizeof(char) * (length + 1));
 		eskilib_string_copy(history[history_position].value, line, length);
 		++history_position;
 	}
@@ -181,9 +191,11 @@ void ncsh_history_add(char* line, uint_fast32_t length) {
 struct eskilib_String ncsh_history_get(uint_fast32_t position) {
 	const struct eskilib_String empty_string = { .length = 0, .value = NULL };
 
-	if (history_position == 0 && position == 0)
+	if (!history_loaded)
 		return empty_string;
-	if (position >= history_position)
+	else if (history_position == 0 && position == 0)
+		return empty_string;
+	else if (position >= history_position)
 		return empty_string;
 	else if (position > max_history_position)
 		return history[max_history_position];
