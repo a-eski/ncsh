@@ -17,11 +17,30 @@
 #include "ncsh_builtin_commands.h"
 #include "ncsh_parser.h"
 #include "ncsh_io.h"
+#include "ncsh.h"
 
 // #define NCSH_DEBUG
 #ifdef NCSH_DEBUG
 #include "ncsh_debug.h"
 #endif /* ifdef NCSH_DEBUG */
+
+// struct ncsh_Loop {
+// 	char character;
+// 	char buffer[MAX_INPUT];
+// 	uint_fast8_t buf_start;
+// 	uint_fast8_t buf_position;
+// 	uint_fast8_t max_buf_position;
+// 	enum ncsh_Hotkey key;
+//
+// 	bool reprint_prompt;
+// 	struct ncsh_Directory prompt_info;
+//
+// 	uint_fast8_t command_result;
+// 	struct ncsh_Args args;
+//
+// 	uint_fast32_t history_position;
+// 	struct eskilib_String history;
+// };
 
 int ncsh(void) {
 	char character;

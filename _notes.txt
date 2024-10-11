@@ -1,2 +1,5 @@
 https://theasciicode.com.ar/
 
+
+if next command has an op, prepare for that op
+if not, continue to execute next command

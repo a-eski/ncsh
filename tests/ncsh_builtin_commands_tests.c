@@ -8,6 +8,7 @@
 
 void ncsh_history_malloc_test(void) {
 	ncsh_history_malloc();
+	ncsh_history_load();
 
 	struct eskilib_String result = ncsh_history_get(0);
 
@@ -26,6 +27,7 @@ void ncsh_history_add_uninitialized_test(void) {
 
 void ncsh_history_add_test(void) {
 	ncsh_history_malloc();
+	ncsh_history_load();
 
 	ncsh_history_add("ls", 3);
 
@@ -42,6 +44,7 @@ void ncsh_history_add_multiple_test(void) {
 	char* ls_pipe_sort = "ls | sort";
 
 	ncsh_history_malloc();
+	ncsh_history_load();
 
 	ncsh_history_add(ls, 3);
 	ncsh_history_add(ls_pipe_sort, 10);
@@ -65,6 +68,7 @@ void ncsh_history_add_multiple_before_get_test(void) {
 	char* ls_pipe_sort = "ls | sort";
 
 	ncsh_history_malloc();
+	ncsh_history_load();
 
 	ncsh_history_add(ls, 3);
 	ncsh_history_add(ls_dash_l, 5);
@@ -98,6 +102,7 @@ void ncsh_history_get_out_of_range_test(void) {
 	char* ls_pipe_sort = "ls | sort";
 
 	ncsh_history_malloc();
+	ncsh_history_load();
 
 	ncsh_history_add(ls, 3);
 	ncsh_history_add(ls_pipe_sort, 10);
@@ -125,6 +130,7 @@ void ncsh_history_get_multiple_test(void) {
 	char* ls_pipe_sort = "ls | sort";
 
 	ncsh_history_malloc();
+	ncsh_history_load();
 
 	ncsh_history_add(ls, 3);
 	ncsh_history_add(ls_pipe_sort, 10);
