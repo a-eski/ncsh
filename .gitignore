@@ -8,5 +8,5 @@ ncsh_parser_tests
 ncsh_history_file_tests
 .ncsh_history
 .ncsh_history_test
-obj/
-bin/
+obj/*
+bin/*
