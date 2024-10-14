@@ -1,0 +1,12 @@
+gcc -std=c2x -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined,leak ./eskilib/eskilib_string.c ./eskilib/eskilib_test.c ncsh_parser.c ./tests/ncsh_parser_v2_tests.c ncsh_args.c -o ncsh_parser_v2_tests &&
+./ncsh_parser_v2_tests
+
+gcc -std=c2x -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined,leak ./eskilib/eskilib_string.c ./eskilib/eskilib_test.c ncsh_tokenize.c ./tests/ncsh_tokenize_tests.c ncsh_args.c ncsh_parser.c -o ncsh_tokenize_tests &&
+./ncsh_tokenize_tests
+
+
+//fuzz testing
+afl-clang-fast -g3 -fsanitize=address,undefined ./tests/ncsh_parser_afl.c ./eskilib/eskilib_string.c
+afl-fuzz -m32T -ii -oo ./a.out
+AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES=1 afl-fuzz -m32T -ii -oo ./a.out
+// results with be in o/

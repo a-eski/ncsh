@@ -57,6 +57,7 @@ int ncsh(void) {
 
 	uint_fast8_t command_result = 0;
 	struct ncsh_Args args = ncsh_args_malloc();
+	//struct ncsh_Tokens tokens = ncsh_tokens_malloc();
 
 	uint_fast32_t history_position = 0;
 	struct eskilib_String history;
@@ -250,7 +251,7 @@ int ncsh(void) {
 			while (buf_position < max_buf_position && buffer[buf_position])
 				++buf_position;
 
-			while (buffer[buf_position - 1] == ' ')
+			while (buf_position > 1 && buffer[buf_position - 1] == ' ')
 				--buf_position;
 
 			buffer[buf_position++] = '\0';
@@ -261,6 +262,7 @@ int ncsh(void) {
 			args = ncsh_parse(buffer, buf_position, args);
 			if (!ncsh_args_is_valid(args))
 				continue;
+
 			#ifdef NCSH_DEBUG
 			ncsh_debug_args(args);
 			#endif /* ifdef NCSH_DEBUG */
@@ -290,9 +292,15 @@ int ncsh(void) {
 				continue;
 			}
 
+			// may need to go here?
 			putchar(character);
 			fflush(stdout);
 			buffer[buf_position++] = character;
+			/*if (buf_position < max_buf_position) {
+				printf("space midline");
+				fflush(stdout);
+				// adjust the rest of the buffer right when adding a character midline
+			}*/
 
 			if (buf_position > max_buf_position)
 				max_buf_position = buf_position;

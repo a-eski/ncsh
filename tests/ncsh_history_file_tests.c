@@ -9,7 +9,7 @@
 #define NCSH_HISTORY_TEST
 #include "../ncsh_builtin_commands.h"
 
-void ncsh_history_load_file_not_exists_test() {
+void ncsh_history_load_file_not_exists_test(void) {
 	remove(NCSH_HISTORY_FILE);
 
 	ncsh_history_load();
@@ -19,7 +19,7 @@ void ncsh_history_load_file_not_exists_test() {
 	fclose(file);
 }
 
-void ncsh_history_load_file_exists_test() {
+void ncsh_history_load_file_exists_test(void) {
 	ncsh_history_load();
 
 	FILE* file = fopen(NCSH_HISTORY_FILE, "r");
@@ -27,7 +27,7 @@ void ncsh_history_load_file_exists_test() {
 	fclose(file);
 }
 
-void ncsh_history_get_empty_file_test() {
+void ncsh_history_get_empty_file_test(void) {
 	ncsh_history_load();
 
 	struct eskilib_String result = ncsh_history_get(0);
@@ -36,7 +36,7 @@ void ncsh_history_get_empty_file_test() {
 	ncsh_history_free();
 }
 
-void ncsh_history_save_adds_to_file() {
+void ncsh_history_save_adds_to_file(void) {
 	ncsh_history_malloc();
 	ncsh_history_load();
 
@@ -54,7 +54,7 @@ void ncsh_history_save_adds_to_file() {
 	ncsh_history_free();
 }
 
-void ncsh_history_save_adds_multiple_to_file() {
+void ncsh_history_save_adds_multiple_to_file(void) {
 	ncsh_history_malloc();
 	ncsh_history_load();
 
@@ -81,7 +81,7 @@ void ncsh_history_save_adds_multiple_to_file() {
 	fclose(file);
 }
 
-void ncsh_history_load_and_get_entries_test() {
+void ncsh_history_load_and_get_entries_test(void) {
 	ncsh_history_malloc();
 	ncsh_history_load();
 

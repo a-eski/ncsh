@@ -11,12 +11,18 @@
 
 #define DOUBLE_QUOTE_KEY '\"'
 
-#define PIPE_STRING "|"
-#define INPUT_REDIRECTION_STRING "<"
+#define PIPE '|'
+#define INPUT_REDIRECTION '<'
+#define OUTPUT_REDIRECTION '>'
+#define BACKGROUND_JOB '&'
+
+/*#define PIPE_STRING "|"*/
+/*#define INPUT_REDIRECTION_STRING "<"*/
 #define INPUT_REDIRECTION_APPEND_STRING "<<"
-#define OUTPUT_REDIRECTION_STRING ">"
+/*#define OUTPUT_REDIRECTION_STRING ">"*/
 #define OUTPUT_REDIRECTION_APPEND_STRING ">>"
-#define BACKGROUND_JOB_STRING "&"
+#define AND "&&"
+#define OR "||"
 
 bool ncsh_is_delimiter(char ch) {
 	switch (ch) {
@@ -34,18 +40,31 @@ bool ncsh_is_delimiter(char ch) {
 enum ncsh_Ops ncsh_op_get(char line[], uint_fast32_t length) {
 	if (line == NULL)
 		return OP_NONE;
-	if (eskilib_string_equals(line, PIPE_STRING, length))
-		return OP_PIPE;
-	else if (eskilib_string_equals(line, OUTPUT_REDIRECTION_STRING, length))
-		return OP_OUTPUT_REDIRECTION;
-	else if (eskilib_string_equals(line, OUTPUT_REDIRECTION_APPEND_STRING, length))
+
+	if (length == 1) {
+		switch (line[0]) {
+			case PIPE: {
+				return OP_PIPE;
+			}
+			case OUTPUT_REDIRECTION: {
+				return OP_OUTPUT_REDIRECTION;
+			}
+			case INPUT_REDIRECTION: {
+				return OP_INPUT_REDIRECTION;
+			}
+			case BACKGROUND_JOB: {
+				return OP_BACKGROUND_JOB;
+			}
+			default: {
+				return OP_CONSTANT;
+			}
+		}
+	}
+
+	if (eskilib_string_equals(line, OUTPUT_REDIRECTION_APPEND_STRING, length))
 		return OP_OUTPUT_REDIRECTION_APPEND;
-	else if (eskilib_string_equals(line, INPUT_REDIRECTION_STRING, length))
-		return OP_INPUT_REDIRECTION;
 	else if (eskilib_string_equals(line, INPUT_REDIRECTION_APPEND_STRING, length))
 		return OP_INPUT_REDIRECTION_APPEND;
-	else if (eskilib_string_equals(line, BACKGROUND_JOB_STRING, length))
-		return OP_BACKGROUND_JOB;
 
 	return OP_CONSTANT;
 }
@@ -88,10 +107,11 @@ struct ncsh_Args ncsh_parse(char line[], uint_fast32_t length, struct ncsh_Args 
 	return args;
 }
 
-struct ncsh_Args ncsh_parse_and_tokenize(char line[], uint_fast32_t length, struct ncsh_Args args) {
+struct ncsh_Args ncsh_parse_v2(char line[], uint_fast32_t length, struct ncsh_Args args) {
 	char buffer[ncsh_TOKEN_BUFFER_SIZE];
 	uint_fast8_t buffer_position = 0;
 	uint_fast8_t double_quotes_count = 0;
+	enum ncsh_Ops op_current;
 
 	for (uint_fast8_t line_position = 0; line_position < length + 1; line_position++) {
 		if (line_position == length || buffer_position == ncsh_TOKEN_BUFFER_SIZE - 1) {
@@ -101,9 +121,10 @@ struct ncsh_Args ncsh_parse_and_tokenize(char line[], uint_fast32_t length, stru
 		else if (ncsh_is_delimiter(line[line_position]) && (double_quotes_count == 0 || double_quotes_count == 2)) {
 			buffer[buffer_position] = '\0';
 
-			if (line_position > 0 && args.count > 0 && buffer_position == 1) {
-				args.ops[args.count - 1] = ncsh_op_get(buffer, buffer_position);
-				if (args.ops[args.count - 1] != OP_CONSTANT) {
+			if (line_position > 0 && args.count > 0 && buffer_position <= 2) {
+				op_current = ncsh_op_get(buffer, buffer_position);
+				if (op_current != OP_CONSTANT) {
+					args.ops[args.count - 1] = op_current;
 					buffer[0] = '\0';
 					buffer_position = 0;
 					double_quotes_count = 0;
@@ -112,11 +133,8 @@ struct ncsh_Args ncsh_parse_and_tokenize(char line[], uint_fast32_t length, stru
 			}
 
 			args.ops[args.count] = OP_CONSTANT;
-
 			args.values[args.count] = malloc(sizeof(char) * (buffer_position + 1));
 			eskilib_string_copy(args.values[args.count], buffer, buffer_position + 1);
-
-			args.ops[args.count] = ncsh_op_get(buffer, buffer_position);
 
 			args.count++;
 

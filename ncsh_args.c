@@ -22,10 +22,9 @@ struct ncsh_Args ncsh_args_malloc(void) {
 	args.values = malloc(sizeof(char*) * ncsh_TOKENS);
 	if (args.values == NULL)
 		exit(EXIT_FAILURE);
-	args.ops = malloc(sizeof(char*) * ncsh_TOKENS);
+	args.ops = malloc(sizeof(enum ncsh_Ops) * ncsh_TOKENS);
 	if (args.ops == NULL)
 		exit(EXIT_FAILURE);
-
 
 	return args;
 }
