@@ -13,7 +13,7 @@
 #include "eskilib/eskilib_string.h"
 #include "ncsh_args.h"
 #include "ncsh_terminal.h"
-#include "ncsh_commands.h"
+#include "ncsh_vm.h"
 #include "ncsh_builtin_commands.h"
 #include "ncsh_parser.h"
 #include "ncsh_io.h"
@@ -268,7 +268,7 @@ int ncsh(void) {
 
 			ncsh_history_add(buffer, buf_position);
 
-			command_result = ncsh_execute(args);
+			command_result = ncsh_vm_execute(args);
 
 			ncsh_args_free_values(args);
 

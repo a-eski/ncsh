@@ -9,7 +9,7 @@ endif
 std = -std=c2x
 debug_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined,leak
 release_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -O3 -DNDEBUG
-objects = main.o ncsh.o ncsh_commands.o ncsh_terminal.o eskilib_string.o ncsh_debug.o ncsh_args.o ncsh_parser.o ncsh_builtin_commands.o ncsh_io.o
+objects = main.o ncsh.o ncsh_vm.o ncsh_terminal.o eskilib_string.o ncsh_debug.o ncsh_args.o ncsh_parser.o ncsh_builtin_commands.o ncsh_io.o
 target = ncsh
 
 RELEASE ?= 0
@@ -23,26 +23,26 @@ endif
 $(target) : $(objects)
 	$(cc_with_flags) -o $(target) $(objects)
 
-main.o : main.c ncsh.h
-	$(cc_with_flags) -c main.c
-ncsh.o : ncsh.c ncsh.h ncsh_commands.h ncsh_terminal.h eskilib/eskilib_string.h eskilib/eskilib_colors.h ncsh_parser.h ncsh_args.h
-	$(cc_with_flags) -c ncsh.c
-ncsh_commands.o : ncsh_commands.h eskilib/eskilib_string.h eskilib/eskilib_colors.h ncsh_terminal.h ncsh_args.h ncsh_builtin_commands.h
-	$(cc_with_flags) -c ncsh_commands.c
-ncsh_builtin_commands.o : ncsh_builtin_commands.h ncsh_args.h eskilib/eskilib_string.h
-	$(cc_with_flags) -c ncsh_builtin_commands.c
-ncsh_terminal.o : ncsh_terminal.c ncsh_terminal.h
-	$(cc_with_flags) -c ncsh_terminal.c
-ncsh_parser.o : ncsh_parser.c ncsh_args.h
-	$(cc_with_flags) -c ncsh_parser.c
-ncsh_args.o : ncsh_args.c ncsh_args.h
-	$(cc_with_flags) -c ncsh_args.c
-ncsh_io.o : ncsh_io.c ncsh_io.h eskilib/eskilib_colors.h
-	$(cc_with_flags) -c ncsh_io.c
-eskilib_string.o : eskilib/eskilib_string.c eskilib/eskilib_string.h
-	$(cc_with_flags) -c eskilib/eskilib_string.c
-ncsh_debug.o : ncsh_debug.c ncsh_debug.h ncsh_args.h
-	$(cc_with_flags) -c ncsh_debug.c
+main.o : src/main.c src/ncsh.h
+	$(cc_with_flags) -c src/main.c
+ncsh.o : src/ncsh.c src/ncsh.h src/ncsh_vm.h src/ncsh_terminal.h src/eskilib/eskilib_string.h src/eskilib/eskilib_colors.h src/ncsh_parser.h src/ncsh_args.h
+	$(cc_with_flags) -c src/ncsh.c
+ncsh_vm.o : src/ncsh_vm.h src/eskilib/eskilib_string.h src/eskilib/eskilib_colors.h src/ncsh_terminal.h src/ncsh_args.h src/ncsh_builtin_commands.h
+	$(cc_with_flags) -c src/ncsh_vm.c
+ncsh_builtin_commands.o : src/ncsh_builtin_commands.h src/ncsh_args.h src/eskilib/eskilib_string.h
+	$(cc_with_flags) -c src/ncsh_builtin_commands.c
+ncsh_terminal.o : src/ncsh_terminal.c src/ncsh_terminal.h
+	$(cc_with_flags) -c src/ncsh_terminal.c
+ncsh_parser.o : src/ncsh_parser.c src/ncsh_args.h
+	$(cc_with_flags) -c src/ncsh_parser.c
+ncsh_args.o : src/ncsh_args.c src/ncsh_args.h
+	$(cc_with_flags) -c src/ncsh_args.c
+ncsh_io.o : src/ncsh_io.c src/ncsh_io.h src/eskilib/eskilib_colors.h
+	$(cc_with_flags) -c src/ncsh_io.c
+eskilib_string.o : src/eskilib/eskilib_string.c src/eskilib/eskilib_string.h
+	$(cc_with_flags) -c src/eskilib/eskilib_string.c
+ncsh_debug.o : src/ncsh_debug.c src/ncsh_debug.h src/ncsh_args.h
+	$(cc_with_flags) -c src/ncsh_debug.c
 
 check :
 	chmod +x ./tests_harness.sh
