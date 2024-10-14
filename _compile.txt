@@ -2,12 +2,13 @@ docker
 sudo docker build . --tag ncsh-docked --file ./dockerfile
 sudo docker run -d ncsh-docked
 
-gcc -std=c99 -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined *.c -o ncsh
-
 --compile debug
 make
+make CLANG=1
+
 --compile release
-make -f makefile.release
+make RELEASE=1
+make CLANG=1 RELEASE=1
 
 --leak checking
 gcc -std=c99 -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined *.c -o ncsh
@@ -22,9 +23,3 @@ clang -std=c99 -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -O3 -DNDEBUG -p
 3. generate report: gprof ncsh gmon.out > analysis.txt
 4. review analysis.txt
 
---debugging
-gcc -std=c99 -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined -g *.c -o ncsh
-clang -std=c99 -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined -g *.c -o ncsh
-
---tests
-gcc -std=c2x -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined ./eskilib/eskilib_string.c ./eskilib/eskilib_test.c ncsh_parser.c ./tests/ncsh_parser_tests.c ncsh_args.c -o ncsh_parser_tests

@@ -336,7 +336,7 @@ uint_fast32_t ncsh_execute_program(char** args) {
 // 	return 1;
 // }
 
-uint_fast32_t ncsh_execute(struct ncsh_Args args) {
+uint_fast32_t ncsh_vm_execute(struct ncsh_Args args) {
 	assert(args.values != NULL);
 	assert(args.ops != NULL);
 
