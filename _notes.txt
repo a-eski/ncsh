@@ -1,5 +1,18 @@
+references
 https://theasciicode.com.ar/
 
+bugs
+pressing space while on an existing character doesn't adjust the buffer
+history file loading into memory
+handle deleting when input is over multiple lines
 
-if next command has an op, prepare for that op
-if not, continue to execute next command
+windows
+#ifdef WIN32 || _WIN32 || _WIN64
+
+#endif // WIN32
+
+#ifdef linux || __unix__
+
+#endif // linux
+
+//CreateProcess

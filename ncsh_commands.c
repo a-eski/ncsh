@@ -25,6 +25,16 @@
 #define INPUT_REDIRECTION_KEY '<'
 #define BACKGROUND_JOB_KEY '&'
 
+struct ncsh_Output_Redirect_IO {
+	int original_stdout;
+	int original_stderr;
+};
+
+struct ncsh_Pipe_IO {
+	int fd_one[2];
+	int fd_two[2];
+};
+
 uint_fast8_t ncsh_pipe_error(void) {
 	perror(RED "Error when piping process" RESET);
 	fflush(stdout);
@@ -37,30 +47,9 @@ uint_fast8_t ncsh_fork_error(void) {
 	return 0;
 }
 
-enum ncsh_Ops ncsh_ops_first(struct ncsh_Args args) {
-	for (uint_fast8_t i = 0; i < args.count; i++) {
-		if (args.ops[i] != OP_CONSTANT)
-			return args.ops[i];
-	}
-
-	return OP_CONSTANT;
-}
-
-bool ncsh_ops_any(struct ncsh_Args args) {
-	for (uint_fast8_t i = 0; i < args.count; i++) {
-		if (args.ops[i] != OP_CONSTANT)
-			return true;
-	}
-
-	return false;
-}
-
-struct ncsh_Output_Redirect_IO {
-	int original_stdout;
-	int original_stderr;
-};
-
 struct ncsh_Output_Redirect_IO ncsh_output_redirection_start(char file[]) {
+	assert(file != NULL);
+
 	int file_descriptor = open(file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
 	struct ncsh_Output_Redirect_IO io;
 
@@ -79,12 +68,9 @@ void ncsh_output_redirection_stop(struct ncsh_Output_Redirect_IO io) {
 	dup2(io.original_stderr, STDERR_FILENO);
 }
 
-struct ncsh_Pipe_IO {
-	int fd_one[2];
-	int fd_two[2];
-};
-
 uint_fast8_t ncsh_pipe_start(struct ncsh_Pipe_IO* pipes, uint_fast8_t command_position) {
+	assert(pipes != NULL);
+
 	if (command_position % 2 != 0) {
 		if (pipe(pipes->fd_one) != 0)
 			return ncsh_pipe_error();
@@ -98,6 +84,8 @@ uint_fast8_t ncsh_pipe_start(struct ncsh_Pipe_IO* pipes, uint_fast8_t command_po
 }
 
 uint_fast8_t ncsh_pipe_fork_failure(struct ncsh_Pipe_IO* pipes, uint_fast8_t command_position, uint_fast8_t number_of_commands) {
+	assert(pipes != NULL);
+
 	if (command_position != number_of_commands - 1) {
 		if (command_position % 2 != 0)
 			close(pipes->fd_one[1]);
@@ -109,6 +97,8 @@ uint_fast8_t ncsh_pipe_fork_failure(struct ncsh_Pipe_IO* pipes, uint_fast8_t com
 }
 
 void ncsh_pipe_connect(struct ncsh_Pipe_IO* pipes, uint_fast8_t command_position, uint_fast8_t number_of_commands) {
+	assert(pipes != NULL);
+
 	if (command_position == 0) { //first command
 		dup2(pipes->fd_two[1], STDOUT_FILENO);
 	}
@@ -130,7 +120,26 @@ void ncsh_pipe_connect(struct ncsh_Pipe_IO* pipes, uint_fast8_t command_position
 	}
 }
 
+void ncsh_pipe_redirect_output(struct ncsh_Pipe_IO* pipes, uint_fast8_t command_position, char file[]) {
+	assert(pipes != NULL);
+
+	int file_descriptor = open(file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+	if (command_position == 0) { //first command
+		dup2(pipes->fd_two[1], file_descriptor);
+	}
+	else { //middle command
+		if (command_position % 2 != 0) {
+			dup2(pipes->fd_one[1], file_descriptor);
+		}
+		else {
+			dup2(pipes->fd_two[1], file_descriptor);
+		}
+	}
+}
+
 void ncsh_pipe_stop(struct ncsh_Pipe_IO* pipes, uint_fast8_t command_position, uint_fast8_t number_of_commands) {
+	assert(pipes != NULL);
+
 	if (command_position == 0) {
 		close(pipes->fd_two[1]);
 	}
@@ -162,18 +171,17 @@ uint_fast8_t ncsh_vm(struct ncsh_Args args) {
 	pid_t pid;
 	bool args_end = false;
 	enum ncsh_Ops op_current;
-	// enum ncsh_Ops op_previous;
+	enum ncsh_Ops op_next;
 
 	uint_fast8_t number_of_commands = 0;
 	uint_fast8_t command_position = 0;
 	uint_fast8_t args_position = 0;
 	uint_fast8_t buffer_position = 0;
 
-	for (uint_fast8_t l = 0; args.values[l] != NULL;) {
-		if (args.ops[l] != OP_CONSTANT) { // if (args.ops[l] == OP_PIPE) {
+	for (uint_fast8_t l = 0; l < args.count; l++) {
+		if (args.ops[l] == OP_PIPE) {
 			number_of_commands++;
 		}
-		++l;
 	}
 	number_of_commands++;
 
@@ -193,11 +201,12 @@ uint_fast8_t ncsh_vm(struct ncsh_Args args) {
 			buffer_position++;
 		}
 
-		// op_previous = op_current;
 		if (!args_end)
 			op_current = args.ops[args_position];
+
 		buffer[buffer_position] = NULL;
 		args_position++;
+		op_next = args.ops[args_position];
 
 		if (op_current == OP_PIPE && !args_end) {
 			if (!ncsh_pipe_start(&pipes_io, command_position))
@@ -213,11 +222,17 @@ uint_fast8_t ncsh_vm(struct ncsh_Args args) {
 			return ncsh_pipe_fork_failure(&pipes_io, command_position, number_of_commands);
 
 		if (pid == 0) {
-			if (op_current == OP_PIPE)
+			if (op_current == OP_PIPE && op_next == OP_OUTPUT_REDIRECTION) { //this doesn't work as expected
+				ncsh_pipe_redirect_output(&pipes_io, command_position, args.values[args_position + 1]);
+			}
+			else if (op_current == OP_PIPE)
 				ncsh_pipe_connect(&pipes_io, command_position, number_of_commands);
 
-			if (execvp(buffer[0], buffer) == -1)
+			if (execvp(buffer[0], buffer) == -1) {
+				perror(RED "Could not find command" RESET);
+				fflush(stdout);
 				kill(getpid(), SIGTERM);
+			}
 		}
 
 		if (op_current == OP_PIPE)
@@ -237,6 +252,8 @@ uint_fast8_t ncsh_vm(struct ncsh_Args args) {
 }
 
 uint_fast32_t ncsh_execute_program(char** args) {
+	assert(args != NULL);
+
 	pid_t pid;
 	int status;
 
@@ -319,57 +336,10 @@ uint_fast32_t ncsh_execute_program(char** args) {
 // 	return 1;
 // }
 
-// uint_fast32_t ncsh_execute_input_redirected(struct ncsh_Args args) {
-// 	int file_descriptor = open(args.values[0], O_RDONLY, 0644);
-//
-// 	int original_stdin = dup(STDIN_FILENO);
-// 	dup2(file_descriptor, STDIN_FILENO);
-//
-// 	close(file_descriptor);
-//
-// 	char** args_prepared = malloc(sizeof(char*) * 1);
-// 	args_prepared[0] = args.values[2];
-//
-// 	ncsh_execute_program(args_prepared);
-//
-// 	free(args_prepared);
-//
-// 	dup2(original_stdin, STDIN_FILENO);
-//
-// 	return 1;
-// }
-
-uint_fast32_t ncsh_execute_external(struct ncsh_Args args) {
-	ncsh_terminal_reset();
-
-	uint_fast32_t result = EXIT_FAILURE;
-	if (ncsh_ops_any(args))
-		result = ncsh_vm(args);
-	else
-		result = ncsh_execute_program(args.values);
-
-	ncsh_terminal_init();
-
-	return result;
-}
-
-// uint_fast32_t ncsh_execute_external_test(struct ncsh_Args args) {
-// 	ncsh_terminal_reset();
-//
-// 	uint_fast32_t result = EXIT_FAILURE;
-// 	enum ncsh_Ops op_first = ncsh_ops_first(args);
-//
-// 	if (op_first == OP_PIPE)
-// 		result = ncsh_vm(args);
-// 	else
-// 		result = ncsh_execute_output_redirected(args);
-//
-// 	ncsh_terminal_init();
-//
-// 	return result;
-// }
-
 uint_fast32_t ncsh_execute(struct ncsh_Args args) {
+	assert(args.values != NULL);
+	assert(args.ops != NULL);
+
 	if (ncsh_is_exit_command(args))
 		return 0;
 
@@ -385,6 +355,14 @@ uint_fast32_t ncsh_execute(struct ncsh_Args args) {
 	if (eskilib_string_equals(args.values[0], "history", args.max_line_length))
 		return ncsh_history_command();
 
-	return ncsh_execute_external(args);
+	//execute external (not builtin) program
+	ncsh_terminal_reset(); //reset terminal settings since a lot of terminal programs use canonical mode
+
+	uint_fast32_t result = 0;
+	result = ncsh_vm(args);
+
+	ncsh_terminal_init(); //back to noncanonical mode
+
+	return result;
 }
 

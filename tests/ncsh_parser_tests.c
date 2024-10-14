@@ -6,7 +6,6 @@
 #include "../ncsh_parser.h"
 #include "../eskilib/eskilib_string.h"
 #include "../eskilib/eskilib_test.h"
-#include "ncsh_parser_tests.h"
 
 void ncsh_parser_ls_test(void) {
 	char* line = "ls\0";

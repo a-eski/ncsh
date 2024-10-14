@@ -4,7 +4,6 @@
 #include "../ncsh_builtin_commands.h"
 #include "../eskilib/eskilib_test.h"
 #include "../eskilib/eskilib_string.h"
-#include "ncsh_builtin_commands_tests.h"
 
 void ncsh_history_malloc_test(void) {
 	ncsh_history_malloc();
