@@ -57,7 +57,6 @@ int ncsh(void) {
 
 	uint_fast8_t command_result = 0;
 	struct ncsh_Args args = ncsh_args_malloc();
-	//struct ncsh_Tokens tokens = ncsh_tokens_malloc();
 
 	uint_fast32_t history_position = 0;
 	struct eskilib_String history;
