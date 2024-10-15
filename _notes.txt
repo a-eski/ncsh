@@ -2,7 +2,6 @@ references
 https://theasciicode.com.ar/
 
 bugs
-pressing space while on an existing character doesn't adjust the buffer
 history file loading into memory
 handle deleting when input is over multiple lines
 

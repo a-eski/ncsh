@@ -44,6 +44,7 @@
 
 int ncsh(void) {
 	char character;
+	char temp_character;
 	char buffer[MAX_INPUT] = {0};
 	uint_fast8_t buf_start = 0;
 	uint_fast8_t buf_position = 0;
@@ -69,7 +70,7 @@ int ncsh(void) {
 	while (1) {
 		if (buf_position == 0 && reprint_prompt == true) {
 			ncsh_print_prompt(prompt_info);
-			history_position = 0; // init history position and save cursor position for history
+			history_position = 0; // reset history position and save cursor position for history
 			ncsh_write(SAVE_CURSOR_POSITION, SAVE_CURSOR_POSITION_LENGTH);
 		}
 		else {
@@ -171,6 +172,7 @@ int ncsh(void) {
 							ncsh_write(RESTORE_CURSOR_POSITION ERASE_CURRENT_LINE,
 								RESTORE_CURSOR_POSITION_LENGTH + ERASE_CURRENT_LINE_LENGTH);
 							buf_position = history.length - 1;
+							max_buf_position = history.length - 1;
 							eskilib_string_copy(buffer, history.value, buf_position);
 							ncsh_write(buffer, buf_position);
 						}
@@ -189,6 +191,7 @@ int ncsh(void) {
 						if (history.length > 0) {
 							--history_position;
 							buf_position = history.length - 1;
+							max_buf_position = history.length - 1;
 							eskilib_string_copy(buffer, history.value, buf_position);
 							ncsh_write(buffer, buf_position);
 						}
@@ -224,7 +227,7 @@ int ncsh(void) {
 
 						while (buf_position > buf_start) {
 							if (buf_position == 0 || !buffer[buf_position - 1]) {
-								continue;
+								break;
 							}
 
 							ncsh_write(MOVE_CURSOR_LEFT, MOVE_CURSOR_LEFT_LENGTH);
@@ -291,21 +294,40 @@ int ncsh(void) {
 				continue;
 			}
 
-			// may need to go here?
-			putchar(character);
-			fflush(stdout);
-			buffer[buf_position++] = character;
-			/*if (buf_position < max_buf_position) {
-				printf("space midline");
+			if (buf_position < max_buf_position && buf_position > 0 && buf_position < MAX_INPUT - 1 && buffer[buf_position + 1]) {
+				buf_start = buf_position;
+
+				for (uint_fast8_t i = buf_position - 1; i < max_buf_position; i++) {
+					temp_character = character;
+					character = buffer[i + 1];
+					buffer[i + 1] = temp_character;
+					putchar(buffer[i + 1]);
+					++buf_position;
+				}
+				if (buf_position > max_buf_position)
+					max_buf_position = buf_position;
+
+				if (buf_position == max_buf_position)
+					buffer[buf_position] = '\0';
 				fflush(stdout);
-				// adjust the rest of the buffer right when adding a character midline
-			}*/
 
-			if (buf_position > max_buf_position)
-				max_buf_position = buf_position;
+				while (buf_position > buf_start + 1)
+				{
+					ncsh_write(MOVE_CURSOR_LEFT, MOVE_CURSOR_LEFT_LENGTH);
+					--buf_position;
+				}
+			}
+			else {
+				putchar(character);
+				fflush(stdout);
+				buffer[buf_position++] = character;
 
-			if (buf_position == max_buf_position)
-				buffer[buf_position] = '\0';
+				if (buf_position > max_buf_position)
+					max_buf_position = buf_position;
+
+				if (buf_position == max_buf_position)
+					buffer[buf_position] = '\0';
+			}
 		}
 	}
 
