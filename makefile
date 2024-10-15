@@ -9,7 +9,7 @@ endif
 std = -std=c2x
 debug_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined,leak
 release_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -O3 -DNDEBUG
-objects = obj/main.o obj/ncsh.o obj/ncsh_vm.o obj/ncsh_terminal.o obj/eskilib_string.o obj/ncsh_debug.o obj/ncsh_args.o obj/ncsh_parser.o obj/ncsh_builtin_commands.o obj/ncsh_io.o
+objects = obj/main.o obj/ncsh.o obj/ncsh_vm.o obj/ncsh_terminal.o obj/eskilib_string.o obj/ncsh_debug.o obj/ncsh_args.o obj/ncsh_parser.o obj/ncsh_builtins.o obj/ncsh_io.o
 target = bin/ncsh
 
 RELEASE ?= 0
@@ -27,10 +27,10 @@ obj/main.o : src/main.c src/ncsh.h
 	$(cc_with_flags) -c src/main.c -o obj/main.o
 obj/ncsh.o : src/ncsh.c src/ncsh.h src/ncsh_vm.h src/ncsh_terminal.h src/eskilib/eskilib_string.h src/eskilib/eskilib_colors.h src/ncsh_parser.h src/ncsh_args.h
 	$(cc_with_flags) -c src/ncsh.c -o obj/ncsh.o
-obj/ncsh_vm.o : src/ncsh_vm.h src/eskilib/eskilib_string.h src/eskilib/eskilib_colors.h src/ncsh_terminal.h src/ncsh_args.h src/ncsh_builtin_commands.h
+obj/ncsh_vm.o : src/ncsh_vm.h src/eskilib/eskilib_string.h src/eskilib/eskilib_colors.h src/ncsh_terminal.h src/ncsh_args.h src/ncsh_builtins.h
 	$(cc_with_flags) -c src/ncsh_vm.c -o obj/ncsh_vm.o
-obj/ncsh_builtin_commands.o : src/ncsh_builtin_commands.h src/ncsh_args.h src/eskilib/eskilib_string.h
-	$(cc_with_flags) -c src/ncsh_builtin_commands.c -o obj/ncsh_builtin_commands.o
+obj/ncsh_builtins.o : src/ncsh_builtins.h src/ncsh_args.h src/eskilib/eskilib_string.h
+	$(cc_with_flags) -c src/ncsh_builtins.c -o obj/ncsh_builtins.o
 obj/ncsh_terminal.o : src/ncsh_terminal.c src/ncsh_terminal.h
 	$(cc_with_flags) -c src/ncsh_terminal.c -o obj/ncsh_terminal.o
 obj/ncsh_parser.o : src/ncsh_parser.c src/ncsh_args.h

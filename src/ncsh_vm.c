@@ -16,7 +16,7 @@
 
 #include "ncsh_terminal.h"
 #include "ncsh_args.h"
-#include "ncsh_builtin_commands.h"
+#include "ncsh_builtins.h"
 #include "eskilib/eskilib_string.h"
 #include "eskilib/eskilib_colors.h"
 

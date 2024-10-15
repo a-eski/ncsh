@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "../ncsh_builtin_commands.h"
+#include "../ncsh_builtins.h"
 #include "../eskilib/eskilib_test.h"
 #include "../eskilib/eskilib_string.h"
 
@@ -152,7 +152,7 @@ void ncsh_history_get_multiple_test(void) {
 	ncsh_history_free();
 }
 
-void ncsh_builtin_commands_tests(void) {
+void ncsh_builtins_tests(void) {
 	eskilib_test_run("ncsh_history_malloc_test", ncsh_history_malloc_test);
 	eskilib_test_run("ncsh_history_add_test", ncsh_history_add_test);
 	eskilib_test_run("ncsh_history_add_uninitialized_test", ncsh_history_add_uninitialized_test);
@@ -163,7 +163,7 @@ void ncsh_builtin_commands_tests(void) {
 
 #ifndef ncsh_TEST_ALL
 int main(void) {
-	ncsh_builtin_commands_tests();
+	ncsh_builtins_tests();
 
 	return EXIT_SUCCESS;
 }

@@ -14,7 +14,7 @@
 #include "ncsh_args.h"
 #include "ncsh_terminal.h"
 #include "ncsh_vm.h"
-#include "ncsh_builtin_commands.h"
+#include "ncsh_builtins.h"
 #include "ncsh_parser.h"
 #include "ncsh_io.h"
 #include "ncsh.h"
