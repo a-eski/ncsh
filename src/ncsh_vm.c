@@ -1,4 +1,4 @@
-/* Copyright Alex Eski 2024 */
+/* Copyright ncsh by Alex Eski 2024 */
 
 #define _POSIX_SOURCE
 #include <linux/limits.h>
@@ -16,7 +16,7 @@
 
 #include "ncsh_terminal.h"
 #include "ncsh_args.h"
-#include "ncsh_builtin_commands.h"
+#include "ncsh_builtins.h"
 #include "eskilib/eskilib_string.h"
 #include "eskilib/eskilib_colors.h"
 

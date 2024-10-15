@@ -7,7 +7,7 @@
 #include "../eskilib/eskilib_string.h"
 
 #define NCSH_HISTORY_TEST
-#include "../ncsh_builtin_commands.h"
+#include "../ncsh_builtins.h"
 
 void ncsh_history_load_file_not_exists_test(void) {
 	remove(NCSH_HISTORY_FILE);

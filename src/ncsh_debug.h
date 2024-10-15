@@ -1,3 +1,5 @@
+/* Copyright ncsh by Alex Eski 2024 */
+
 #ifndef ncsh_debug_h
 #define ncsh_debug_h
 

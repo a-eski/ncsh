@@ -1,4 +1,4 @@
-/* Copyright ncsh by Alex Eski 2024 */
+/* Copyright Alex Eski 2024 */
 
 #include <stdint.h>
 #include <stdio.h>
@@ -16,7 +16,10 @@
 #define OUTPUT_REDIRECTION '>'
 #define BACKGROUND_JOB '&'
 
+/*#define PIPE_STRING "|"*/
+/*#define INPUT_REDIRECTION_STRING "<"*/
 #define INPUT_REDIRECTION_APPEND_STRING "<<"
+/*#define OUTPUT_REDIRECTION_STRING ">"*/
 #define OUTPUT_REDIRECTION_APPEND_STRING ">>"
 #define AND "&&"
 #define OR "||"
@@ -66,10 +69,11 @@ enum ncsh_Ops ncsh_op_get(char line[], uint_fast32_t length) {
 	return OP_CONSTANT;
 }
 
-struct ncsh_Args ncsh_parse(char line[], uint_fast32_t length, struct ncsh_Args args) {
+struct ncsh_Args ncsh_parse_v2(char line[], uint_fast32_t length, struct ncsh_Args args) {
 	char buffer[ncsh_TOKEN_BUFFER_SIZE];
 	uint_fast8_t buffer_position = 0;
 	uint_fast8_t double_quotes_count = 0;
+	enum ncsh_Ops op_current;
 
 	for (uint_fast8_t line_position = 0; line_position < length + 1; line_position++) {
 		if (line_position == length || buffer_position == ncsh_TOKEN_BUFFER_SIZE - 1) {
@@ -79,10 +83,20 @@ struct ncsh_Args ncsh_parse(char line[], uint_fast32_t length, struct ncsh_Args 
 		else if (ncsh_is_delimiter(line[line_position]) && (double_quotes_count == 0 || double_quotes_count == 2)) {
 			buffer[buffer_position] = '\0';
 
+			if (line_position > 0 && args.count > 0 && buffer_position <= 2) {
+				op_current = ncsh_op_get(buffer, buffer_position);
+				if (op_current != OP_CONSTANT) {
+					args.ops[args.count - 1] = op_current;
+					buffer[0] = '\0';
+					buffer_position = 0;
+					double_quotes_count = 0;
+					continue;
+				}
+			}
+
+			args.ops[args.count] = OP_CONSTANT;
 			args.values[args.count] = malloc(sizeof(char) * (buffer_position + 1));
 			eskilib_string_copy(args.values[args.count], buffer, buffer_position + 1);
-
-			args.ops[args.count] = ncsh_op_get(buffer, buffer_position);
 
 			args.count++;
 

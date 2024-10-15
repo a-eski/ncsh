@@ -1,5 +1,7 @@
-#ifndef ncsh_builtin_commands_h
-#define ncsh_builtin_commands_h
+/* Copyright ncsh by Alex Eski 2024 */
+
+#ifndef ncsh_builtins_h
+#define ncsh_builtins_h
 
 #include <stdint.h>
 
@@ -28,5 +30,5 @@ void ncsh_history_add(char* line, uint_fast32_t length);
 struct eskilib_String ncsh_history_get(uint_fast32_t position);
 uint_fast32_t ncsh_history_command(void);
 
-#endif // !ncsh_builtin_commands_h
+#endif // !ncsh_builtins_h
 

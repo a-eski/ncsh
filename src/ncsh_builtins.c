@@ -1,4 +1,4 @@
-/* Copyright Alex Eski 2024 */
+/* Copyright ncsh by Alex Eski 2024 */
 
 #include <stddef.h>
 #include <string.h>
@@ -14,7 +14,7 @@
 
 #include "ncsh_args.h"
 #include "eskilib/eskilib_string.h"
-#include "ncsh_builtin_commands.h"
+#include "ncsh_builtins.h"
 
 bool ncsh_is_exit_command(struct ncsh_Args args) {
 	if (eskilib_string_equals(args.values[0], "q", args.max_line_length))

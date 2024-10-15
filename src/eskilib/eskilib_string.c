@@ -1,3 +1,5 @@
+/* Copyright eskilib by Alex Eski 2024 */
+
 #include "eskilib_string.h"
 
 char* eskilib_string_copy(char* dest, char* source, const uint_fast32_t maxBufferSize) {
