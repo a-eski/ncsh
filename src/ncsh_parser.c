@@ -1,4 +1,4 @@
-/* Copyright Alex Eski 2024 */
+/* Copyright ncsh by Alex Eski 2024 */
 
 #include <stdint.h>
 #include <stdio.h>
@@ -16,10 +16,7 @@
 #define OUTPUT_REDIRECTION '>'
 #define BACKGROUND_JOB '&'
 
-/*#define PIPE_STRING "|"*/
-/*#define INPUT_REDIRECTION_STRING "<"*/
 #define INPUT_REDIRECTION_APPEND_STRING "<<"
-/*#define OUTPUT_REDIRECTION_STRING ">"*/
 #define OUTPUT_REDIRECTION_APPEND_STRING ">>"
 #define AND "&&"
 #define OR "||"

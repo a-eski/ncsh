@@ -1,4 +1,4 @@
-/* Copyright Alex Eski 2024 */
+/* Copyright ncsh by Alex Eski 2024 */
 
 #include <stdio.h>
 #include <stdlib.h>

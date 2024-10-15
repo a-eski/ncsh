@@ -1,3 +1,5 @@
+/* Copyright ncsh by Alex Eski 2024 */
+
 #ifndef ncsh_io_h
 #define ncsh_io_h
 
@@ -31,7 +33,6 @@
 #define RESTORE_CURSOR_POSITION_LENGTH 3
 #define ERASE_CURRENT_LINE "\033[K"
 #define ERASE_CURRENT_LINE_LENGTH 3
-
 
 struct ncsh_Directory {
 	char* user;

@@ -1,3 +1,5 @@
+/* Copyright ncsh by Alex Eski 2024 */
+
 #ifndef ncsh_builtins_h
 #define ncsh_builtins_h
 

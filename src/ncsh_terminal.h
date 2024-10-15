@@ -1,3 +1,5 @@
+/* Copyright ncsh by Alex Eski 2024 */
+
 #ifndef ncsh_terminal_h
 #define ncsh_terminal_h
 
