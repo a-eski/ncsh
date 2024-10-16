@@ -2,7 +2,8 @@ references
 https://theasciicode.com.ar/
 
 bugs
-history file loading into memory
+history entries when its full already
+history file when its full already?
 handle deleting when input is over multiple lines
 
 windows
