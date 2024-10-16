@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <time.h>
 #include <unistd.h>
 #include <stdbool.h>
 
@@ -14,7 +15,7 @@
 #include "ncsh_args.h"
 #include "ncsh_terminal.h"
 #include "ncsh_vm.h"
-#include "ncsh_builtins.h"
+#include "ncsh_history.h"
 #include "ncsh_parser.h"
 #include "ncsh_io.h"
 #include "ncsh.h"
@@ -43,6 +44,8 @@
 // };
 
 int ncsh(void) {
+	clock_t start = clock();
+
 	char character;
 	char temp_character;
 	char buffer[MAX_INPUT] = {0};
@@ -54,18 +57,23 @@ int ncsh(void) {
 	bool reprint_prompt = false;
 	struct ncsh_Directory prompt_info;
 	prompt_info.user = getenv("USER");
-	ncsh_print_prompt(prompt_info);
 
 	uint_fast8_t command_result = 0;
 	struct ncsh_Args args = ncsh_args_malloc();
 
-	uint_fast32_t history_position = 0;
-	struct eskilib_String history;
-	ncsh_history_malloc();
-	ncsh_history_load();
+	uint_fast32_t history_position = 0; // current position in history for the current loop, reset every loop
+	struct eskilib_String history_entry; // used to hold return value when cycling through history
+	struct ncsh_History history;
+	ncsh_history_malloc(&history);
+	ncsh_history_load(&history);
 
 	ncsh_terminal_init();
-	atexit(ncsh_terminal_reset);
+
+	clock_t end = clock();
+	double elapsed_ms = ((double)(end - start)) / CLOCKS_PER_SEC * 1000;
+	printf("Startup time: %.2f milliseconds\n", elapsed_ms);
+
+	ncsh_print_prompt(prompt_info);
 
 	while (1) {
 		if (buf_position == 0 && reprint_prompt == true) {
@@ -166,14 +174,14 @@ int ncsh(void) {
 					case UP: {
 						reprint_prompt = false;
 
-						history = ncsh_history_get(history_position);
-						if (history.length > 0) {
+						history_entry = ncsh_history_get(history_position, &history);
+						if (history_entry.length > 0) {
 							++history_position;
 							ncsh_write(RESTORE_CURSOR_POSITION ERASE_CURRENT_LINE,
 								RESTORE_CURSOR_POSITION_LENGTH + ERASE_CURRENT_LINE_LENGTH);
-							buf_position = history.length - 1;
-							max_buf_position = history.length - 1;
-							eskilib_string_copy(buffer, history.value, buf_position);
+							buf_position = history_entry.length - 1;
+							max_buf_position = history_entry.length - 1;
+							eskilib_string_copy(buffer, history_entry.value, buf_position);
 							ncsh_write(buffer, buf_position);
 						}
 
@@ -185,14 +193,14 @@ int ncsh(void) {
 						if (history_position == 0)
 							break;
 
-						history = ncsh_history_get(history_position - 2);
+						history_entry = ncsh_history_get(history_position - 2, &history);
 						ncsh_write(RESTORE_CURSOR_POSITION ERASE_CURRENT_LINE,
 								RESTORE_CURSOR_POSITION_LENGTH + ERASE_CURRENT_LINE_LENGTH);
-						if (history.length > 0) {
+						if (history_entry.length > 0) {
 							--history_position;
-							buf_position = history.length - 1;
-							max_buf_position = history.length - 1;
-							eskilib_string_copy(buffer, history.value, buf_position);
+							buf_position = history_entry.length - 1;
+							max_buf_position = history_entry.length - 1;
+							eskilib_string_copy(buffer, history_entry.value, buf_position);
 							ncsh_write(buffer, buf_position);
 						}
 						else {
@@ -269,9 +277,9 @@ int ncsh(void) {
 			ncsh_debug_args(args);
 			#endif /* ifdef NCSH_DEBUG */
 
-			ncsh_history_add(buffer, buf_position);
+			ncsh_history_add(buffer, buf_position, &history);
 
-			command_result = ncsh_vm_execute(args);
+			command_result = ncsh_vm_execute(args, &history);
 
 			ncsh_args_free_values(args);
 
@@ -332,8 +340,10 @@ int ncsh(void) {
 	}
 
 	ncsh_args_free(args);
-	ncsh_history_save();
-	ncsh_history_free();
+
+	ncsh_history_save(&history);
+	ncsh_history_free(&history);
+
 	ncsh_terminal_reset();
 
 	return EXIT_SUCCESS;

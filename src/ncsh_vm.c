@@ -17,6 +17,7 @@
 #include "ncsh_terminal.h"
 #include "ncsh_args.h"
 #include "ncsh_builtins.h"
+#include "ncsh_history.h"
 #include "eskilib/eskilib_string.h"
 #include "eskilib/eskilib_colors.h"
 
@@ -336,7 +337,7 @@ uint_fast32_t ncsh_execute_program(char** args) {
 // 	return 1;
 // }
 
-uint_fast32_t ncsh_vm_execute(struct ncsh_Args args) {
+uint_fast32_t ncsh_vm_execute(struct ncsh_Args args, struct ncsh_History* history) {
 	assert(args.values != NULL);
 	assert(args.ops != NULL);
 
@@ -353,7 +354,7 @@ uint_fast32_t ncsh_vm_execute(struct ncsh_Args args) {
 		return ncsh_cd_command(args);
 
 	if (eskilib_string_equals(args.values[0], "history", args.max_line_length))
-		return ncsh_history_command();
+		return ncsh_history_command(history);
 
 	//execute external (not builtin) program
 	ncsh_terminal_reset(); //reset terminal settings since a lot of terminal programs use canonical mode
