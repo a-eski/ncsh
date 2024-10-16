@@ -63,9 +63,20 @@ int ncsh(void) {
 
 	uint_fast32_t history_position = 0; // current position in history for the current loop, reset every loop
 	struct eskilib_String history_entry; // used to hold return value when cycling through history
+	enum ncsh_History_Result result;
 	struct ncsh_History history;
-	ncsh_history_malloc(&history);
-	ncsh_history_load(&history);
+	result = ncsh_history_malloc(&history);
+	if (result != H_SUCCESS) {
+		perror(RED "Error when allocating memory for history" RESET);
+		fflush(stdout);
+		return EXIT_FAILURE;
+	}
+	result = ncsh_history_load(&history);
+	if (result != H_SUCCESS) {
+		perror(RED "Error when loading data from history file into memory" RESET);
+		fflush(stdout);
+		return EXIT_FAILURE;
+	}
 
 	ncsh_terminal_init();
 
@@ -78,7 +89,8 @@ int ncsh(void) {
 	while (1) {
 		if (buf_position == 0 && reprint_prompt == true) {
 			ncsh_print_prompt(prompt_info);
-			history_position = 0; // reset history position and save cursor position for history
+			history_position = 0;
+			// save cursor position so we can reset cursor when loading history entries
 			ncsh_write(SAVE_CURSOR_POSITION, SAVE_CURSOR_POSITION_LENGTH);
 		}
 		else {
