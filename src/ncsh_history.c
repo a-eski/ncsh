@@ -15,6 +15,7 @@ enum ncsh_History_Result ncsh_history_malloc(struct ncsh_History* history) {
 		return H_FAILURE_NULL_REFERENCE;
 
 	history->history_count = 0;
+	history->file_position = 0;
 	history->history_loaded = false;
 	history->entries = malloc(sizeof(struct eskilib_String) * NCSH_MAX_HISTORY_FILE);
 	if (history->entries == NULL)
@@ -122,10 +123,16 @@ void ncsh_history_free(struct ncsh_History* history) {
 
 enum ncsh_History_Result ncsh_history_add(char* line, uint_fast32_t length, struct ncsh_History* history) {
 	assert(history != NULL);
+	assert(line != NULL);
+	assert(length != 0);
 
-	if (history == NULL)
+	if (history == NULL || line == NULL)
 		return H_FAILURE_NULL_REFERENCE;
-	if (history->history_count >= NCSH_MAX_HISTORY_FILE)
+	else if (length == 0)
+		return H_ZERO_LENGTH;
+	else if (history->history_count + 1 < history->history_count)
+		return H_OVERFLOW_PROTECTION;
+	else if (history->history_count >= NCSH_MAX_HISTORY_FILE)
 		return H_HISTORY_MAX_REACHED;
 
 	history->entries[history->history_count].length = length;

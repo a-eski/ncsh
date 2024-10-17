@@ -59,7 +59,10 @@ int ncsh(void) {
 	prompt_info.user = getenv("USER");
 
 	uint_fast8_t command_result = 0;
-	struct ncsh_Args args = ncsh_args_malloc();
+	struct ncsh_Args args = {0};
+	bool did_malloc_succeed = ncsh_args_malloc(&args);
+	if (!did_malloc_succeed)
+		return EXIT_FAILURE;
 
 	uint_fast32_t history_position = 0; // current position in history for the current loop, reset every loop
 	struct eskilib_String history_entry; // used to hold return value when cycling through history
@@ -69,29 +72,34 @@ int ncsh(void) {
 	if (result != H_SUCCESS) {
 		perror(RED "Error when allocating memory for history" RESET);
 		fflush(stdout);
+		ncsh_args_free(args);
 		return EXIT_FAILURE;
 	}
 	result = ncsh_history_load(&history);
 	if (result != H_SUCCESS) {
 		perror(RED "Error when loading data from history file into memory" RESET);
 		fflush(stdout);
+		ncsh_args_free(args);
 		return EXIT_FAILURE;
 	}
 
 	ncsh_terminal_init();
+
+	// save cursor position so we can reset cursor when loading history entries
+	ncsh_write(SAVE_CURSOR_POSITION, SAVE_CURSOR_POSITION_LENGTH);
 
 	clock_t end = clock();
 	double elapsed_ms = ((double)(end - start)) / CLOCKS_PER_SEC * 1000;
 	printf("Startup time: %.2f milliseconds\n", elapsed_ms);
 
 	ncsh_print_prompt(prompt_info);
-	// save cursor position so we can reset cursor when loading history entries
-	ncsh_write(SAVE_CURSOR_POSITION, SAVE_CURSOR_POSITION_LENGTH);
 
 	while (1) {
 		if (buf_position == 0 && reprint_prompt == true) {
 			ncsh_print_prompt(prompt_info);
 			history_position = 0;
+			// save cursor position so we can reset cursor when loading history entries
+			ncsh_write(SAVE_CURSOR_POSITION, SAVE_CURSOR_POSITION_LENGTH);
 		}
 		else {
 			reprint_prompt = true;

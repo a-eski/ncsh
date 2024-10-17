@@ -165,11 +165,16 @@ void ncsh_pipe_stop(struct ncsh_Pipe_IO* pipes, uint_fast8_t command_position, u
 }
 
 uint_fast8_t ncsh_vm(struct ncsh_Args args) {
+	assert(args.values != NULL);
+	assert(args.ops != NULL);
+	assert(args.count != 0);
+	assert(args.max_line_length != 0);
+
 	struct ncsh_Pipe_IO pipes_io = {0};
 	struct ncsh_Output_Redirect_IO output_io = {0};
 
-	char* buffer[MAX_INPUT];
-	pid_t pid;
+	char* buffer[MAX_INPUT] = {0};
+	pid_t pid = 0;
 	bool args_end = false;
 	enum ncsh_Ops op_current = OP_NONE;
 	enum ncsh_Ops op_next = OP_NONE;

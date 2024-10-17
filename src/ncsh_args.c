@@ -5,7 +5,7 @@
 #include "ncsh_args.h"
 
 bool ncsh_args_is_valid(struct ncsh_Args args) {
-	if (args.count == 0)
+	if (args.count == 0 || args.max_line_length == 0)
 		return false;
 	else if (args.values == NULL)
 		return false;
@@ -17,16 +17,21 @@ bool ncsh_args_is_valid(struct ncsh_Args args) {
 		return true;
 }
 
-struct ncsh_Args ncsh_args_malloc(void) {
-	struct ncsh_Args args = { .count = 0 };
-	args.values = malloc(sizeof(char*) * ncsh_TOKENS);
-	if (args.values == NULL)
-		exit(EXIT_FAILURE);
-	args.ops = malloc(sizeof(enum ncsh_Ops) * ncsh_TOKENS);
-	if (args.ops == NULL)
-		exit(EXIT_FAILURE);
+bool ncsh_args_malloc(struct ncsh_Args* args) {
+	args->count = 0;
+	args->max_line_length = 0;
 
-	return args;
+	args->values = calloc(sizeof(char*), ncsh_TOKENS);
+	if (args->values == NULL)
+		return false;
+
+	args->ops = calloc(sizeof(enum ncsh_Ops), ncsh_TOKENS);
+	if (args->ops == NULL) {
+		free(args->values);
+		return false;
+	}
+
+	return true;
 }
 
 void ncsh_args_free(struct ncsh_Args args) {
