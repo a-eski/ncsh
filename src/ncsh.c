@@ -59,7 +59,10 @@ int ncsh(void) {
 	prompt_info.user = getenv("USER");
 
 	uint_fast8_t command_result = 0;
-	struct ncsh_Args args = ncsh_args_malloc();
+	struct ncsh_Args args = {0};
+	bool did_malloc_succeed = ncsh_args_malloc(&args);
+	if (!did_malloc_succeed)
+		return EXIT_FAILURE;
 
 	uint_fast32_t history_position = 0; // current position in history for the current loop, reset every loop
 	struct eskilib_String history_entry; // used to hold return value when cycling through history
@@ -69,12 +72,14 @@ int ncsh(void) {
 	if (result != H_SUCCESS) {
 		perror(RED "Error when allocating memory for history" RESET);
 		fflush(stdout);
+		ncsh_args_free(args);
 		return EXIT_FAILURE;
 	}
 	result = ncsh_history_load(&history);
 	if (result != H_SUCCESS) {
 		perror(RED "Error when loading data from history file into memory" RESET);
 		fflush(stdout);
+		ncsh_args_free(args);
 		return EXIT_FAILURE;
 	}
 

@@ -39,3 +39,4 @@ enum z_Database_Result z_database_add(struct z_Database* database);
 struct eskilib_String* z_database_get_match(const struct eskilib_String* target, struct z_Database* database);
 
 #endif // !z_database_h
+

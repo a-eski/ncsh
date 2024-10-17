@@ -6,7 +6,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define ncsh_TOKENS 10
+#define ncsh_TOKENS 50
 #define ncsh_TOKEN_BUFFER_SIZE 64
 
 enum ncsh_Ops {
@@ -31,7 +31,7 @@ struct ncsh_Args {
 
 bool ncsh_args_is_valid(struct ncsh_Args args);
 
-struct ncsh_Args ncsh_args_malloc(void);
+bool ncsh_args_malloc(struct ncsh_Args* args);
 
 void ncsh_args_free(struct ncsh_Args args);
 

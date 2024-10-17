@@ -22,7 +22,6 @@ struct eskilib_String* z_process (const struct eskilib_String* target) {
 	return (struct eskilib_String*)target;
 }
 
-
 uint_fast32_t z_finish(void) {
 	if (z_database_save(&database) != Z_SUCCESS)
 		return 1;
@@ -32,3 +31,4 @@ uint_fast32_t z_finish(void) {
 
 	return 0;
 }
+

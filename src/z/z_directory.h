@@ -24,3 +24,4 @@ struct z_Directory {
 rank z_score(struct z_Directory* directory, epoch now);
 
 #endif // !z_directory_h
+
