@@ -16,7 +16,7 @@ enum ncsh_History_Result ncsh_history_malloc(struct ncsh_History* history) {
 
 	history->history_count = 0;
 	history->history_loaded = false;
-	history->entries = malloc(sizeof(struct eskilib_String) * NCSH_MAX_HISTORY);
+	history->entries = malloc(sizeof(struct eskilib_String) * NCSH_MAX_HISTORY_FILE);
 	if (history->entries == NULL)
 		return H_FAILURE_MALLOC;
 
@@ -59,10 +59,10 @@ enum ncsh_History_Result ncsh_history_load(struct ncsh_History* history) {
 	int_fast32_t buffer_length = 0;
 
 	for (uint_fast32_t i = 0;
-		(buffer_length = ncsh_fgets(buffer, sizeof(buffer), file)) != EOF && i < NCSH_MAX_HISTORY;
+		(buffer_length = ncsh_fgets(buffer, sizeof(buffer), file)) != EOF && i < NCSH_MAX_HISTORY_FILE;
 		i++) {
 		if (buffer_length > 0) {
-			++history->history_count;
+			++history->file_position;
 			history->entries[i].length = buffer_length;
 			history->entries[i].value = malloc(sizeof(char) * buffer_length);
 			if (history->entries[i].value == NULL)
@@ -71,6 +71,8 @@ enum ncsh_History_Result ncsh_history_load(struct ncsh_History* history) {
 			eskilib_string_copy(history->entries[i].value, buffer, buffer_length);
 		}
 	}
+
+	history->history_count = history->file_position;
 
 	fclose(file);
 
@@ -89,7 +91,9 @@ enum ncsh_History_Result ncsh_history_save(struct ncsh_History* history) {
 		return H_FAILURE_FILE_OP;
 	}
 
-	for (uint_fast32_t i = 0; i < history->history_count; i ++) {
+	for (uint_fast32_t i = history->file_position == 0 ? 0 : history->file_position - 1;
+		i < history->history_count;
+		i++) {
 		if (!fputs(history->entries[i].value, file)) {
 			perror("Error writing to file");
 			fclose(file);
@@ -121,7 +125,7 @@ enum ncsh_History_Result ncsh_history_add(char* line, uint_fast32_t length, stru
 
 	if (history == NULL)
 		return H_FAILURE_NULL_REFERENCE;
-	if (history->history_count >= NCSH_MAX_HISTORY)
+	if (history->history_count >= NCSH_MAX_HISTORY_FILE)
 		return H_HISTORY_MAX_REACHED;
 
 	history->entries[history->history_count].length = length;
@@ -146,8 +150,8 @@ struct eskilib_String ncsh_history_get(uint_fast32_t position, struct ncsh_Histo
 		return empty_string;
 	else if (position >= history->history_count)
 		return empty_string;
-	else if (position > NCSH_MAX_HISTORY)
-		return history->entries[NCSH_MAX_HISTORY];
+	else if (position > NCSH_MAX_HISTORY_FILE)
+		return history->entries[NCSH_MAX_HISTORY_FILE];
 	else
 		return history->entries[history->history_count - position - 1];
 }

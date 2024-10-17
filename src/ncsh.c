@@ -85,13 +85,13 @@ int ncsh(void) {
 	printf("Startup time: %.2f milliseconds\n", elapsed_ms);
 
 	ncsh_print_prompt(prompt_info);
+	// save cursor position so we can reset cursor when loading history entries
+	ncsh_write(SAVE_CURSOR_POSITION, SAVE_CURSOR_POSITION_LENGTH);
 
 	while (1) {
 		if (buf_position == 0 && reprint_prompt == true) {
 			ncsh_print_prompt(prompt_info);
 			history_position = 0;
-			// save cursor position so we can reset cursor when loading history entries
-			ncsh_write(SAVE_CURSOR_POSITION, SAVE_CURSOR_POSITION_LENGTH);
 		}
 		else {
 			reprint_prompt = true;
@@ -324,6 +324,7 @@ int ncsh(void) {
 					putchar(buffer[i + 1]);
 					++buf_position;
 				}
+
 				if (buf_position > max_buf_position)
 					max_buf_position = buf_position;
 

@@ -1,5 +1,5 @@
 #!/bin/bash
 
 make clean
-make RELEASE=1 CLANG=1 &&
+make RELEASE=1 &&
 ./bin/ncsh
