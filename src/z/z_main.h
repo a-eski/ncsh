@@ -1,0 +1,7 @@
+#include <stdint.h>
+
+uint_fast32_t z_start (void);
+
+struct eskilib_String* z_process (const struct eskilib_String* target);
+
+uint_fast32_t z_finish (void);

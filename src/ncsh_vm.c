@@ -171,8 +171,8 @@ uint_fast8_t ncsh_vm(struct ncsh_Args args) {
 	char* buffer[MAX_INPUT];
 	pid_t pid;
 	bool args_end = false;
-	enum ncsh_Ops op_current;
-	enum ncsh_Ops op_next;
+	enum ncsh_Ops op_current = OP_NONE;
+	enum ncsh_Ops op_next = OP_NONE;
 
 	uint_fast8_t number_of_commands = 0;
 	uint_fast8_t command_position = 0;
