@@ -7,7 +7,7 @@
 #include <stdbool.h>
 
 struct eskilib_String {
-	uint_fast8_t length;
+	uint_fast32_t length;
 	char* value;
 };
 
