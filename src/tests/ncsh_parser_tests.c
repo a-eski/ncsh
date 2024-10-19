@@ -11,7 +11,6 @@ void ncsh_parser_ls_test(void) {
 	char* line = "ls\0";
 	uint_fast8_t length = 3;
 
-
 	struct ncsh_Args args;
 	bool result = ncsh_args_malloc(&args);
 	eskilib_assert(result == true);
