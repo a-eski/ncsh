@@ -13,12 +13,10 @@
 #define Z_DEBUG
 
 enum z_Database_Result z_database_malloc(struct z_Database* database) {
-	assert(database != NULL);
-	if (database == NULL)
-		return Z_FAILURE_NULL_REFERENCE;
-
 	database->dirty = false;
 	database->directories = malloc(sizeof(struct eskilib_String) * Z_DATABASE_IN_MEMORY_LIMIT);
+	if (database->directories == NULL)
+		return Z_FAILURE_MALLOC;
 
 	return Z_SUCCESS;
 }
@@ -40,6 +38,8 @@ enum z_Database_Result z_database_set_directory(char* buffer, int_fast32_t buffe
 
 enum z_Database_Result z_database_load(struct z_Database* database) {
 	assert(database != NULL);
+	if (database == NULL)
+		return Z_FAILURE_NULL_REFERENCE;
 
 	FILE* file = fopen(Z_DATABASE_FILE, "r");
 	if (file == NULL) {
@@ -54,7 +54,6 @@ enum z_Database_Result z_database_load(struct z_Database* database) {
 	char buffer[PATH_MAX];
 	int_fast32_t buffer_length = 0;
 
-	uint_fast32_t delimiter_count = 0;
 	for (uint_fast32_t i = 0;
 		(buffer_length = eskilib_fgets(buffer, sizeof(buffer), file)) != EOF && i < Z_DATABASE_IN_MEMORY_LIMIT;
 		i++) {
@@ -62,9 +61,6 @@ enum z_Database_Result z_database_load(struct z_Database* database) {
 			++database->count;
 			z_database_set_directory(buffer, buffer_length, database->directories);
 			++database->directories;
-			++delimiter_count;
-			if (delimiter_count == 0)
-				delimiter_count = 0;
 		}
 	}
 
@@ -74,14 +70,39 @@ enum z_Database_Result z_database_load(struct z_Database* database) {
 }
 
 enum z_Database_Result z_database_save(struct z_Database* database) {
+	assert(database != NULL);
+	if (database == NULL)
+		return Z_FAILURE_NULL_REFERENCE;
+
 	return Z_SUCCESS;
 }
 
 enum z_Database_Result z_database_clean(struct z_Database* database) {
+	assert(database != NULL);
+	if (database == NULL)
+		return Z_FAILURE_NULL_REFERENCE;
+
 	return Z_SUCCESS;
 }
 
-void z_database_free(struct z_Database* database) {}
+enum z_Database_Result z_database_free(struct z_Database* database) {
+	assert(database != NULL);
+	if (database == NULL)
+		return Z_FAILURE_NULL_REFERENCE;
+
+	// for (uint_fast32_t i = 0; i < database->count - 1; i++)
+	// 	free(database->directories[i].path.value);
+
+	/*while(*database->directories->path.value) {*/
+	/*	free (database->directories->path.value);*/
+	/*	++database->directories;*/
+	/*}*/
+
+	// if (database->directories != NULL)
+	// 	free(database->directories);
+
+	return Z_SUCCESS;
+}
 
 struct eskilib_String* z_database_get_match(const struct eskilib_String* target, struct z_Database* database) {
 	assert(target != NULL);
@@ -89,7 +110,7 @@ struct eskilib_String* z_database_get_match(const struct eskilib_String* target,
 	return NULL;
 }
 
-enum z_Database_Result z_database_add(struct z_Database* database) {
+enum z_Database_Result z_database_add(const struct eskilib_String* target, struct z_Database* database) {
 	database->dirty = true;
 
 	return Z_SUCCESS;

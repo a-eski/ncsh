@@ -12,16 +12,14 @@
 #define Z_WEEK 7 * Z_DAY
 #define Z_MONTH 30 * Z_DAY
 
-typedef double rank;
-typedef clock_t epoch;
 
 struct z_Directory {
+	double rank;
+	clock_t last_accessed;
 	struct eskilib_String path;
-	rank rank;
-	epoch last_accessed;
 };
 
-rank z_score(struct z_Directory* directory, epoch now);
+double z_score(struct z_Directory* directory, clock_t now);
 
 #endif // !z_directory_h
 

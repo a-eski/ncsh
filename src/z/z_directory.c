@@ -1,7 +1,7 @@
 #include "z_directory.h"
 
-rank z_score(struct z_Directory* directory, epoch now) {
-	epoch duration = now - directory->last_accessed;
+double z_score(struct z_Directory* directory, clock_t now) {
+	clock_t duration = now - directory->last_accessed;
 
 	if (duration < Z_HOUR)
 		return directory->rank * 4.0;

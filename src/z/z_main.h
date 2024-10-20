@@ -3,11 +3,13 @@
 
 #include <stdint.h>
 
-uint_fast32_t z_start (void);
+#include "z_database.h"
 
-struct eskilib_String* z_process (const struct eskilib_String* target);
+enum z_Database_Result z_start (struct z_Database* database);
 
-uint_fast32_t z_finish (void);
+struct eskilib_String* z_process (const struct eskilib_String* target, struct z_Database* database);
+
+enum z_Database_Result z_finish (struct z_Database* database);
 
 #endif // !z_main_h
 
