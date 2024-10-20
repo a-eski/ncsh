@@ -75,6 +75,9 @@ int ncsh(void) {
 		ncsh_args_free(args);
 		return EXIT_FAILURE;
 	}
+	// history.history_file_directory = getenv("HOME");
+	getcwd(history.history_file_directory, PATH_MAX);
+	printf("%s\n", history.history_file_directory);
 	result = ncsh_history_load(&history);
 	if (result != H_SUCCESS) {
 		perror(RED "Error when loading data from history file into memory" RESET);

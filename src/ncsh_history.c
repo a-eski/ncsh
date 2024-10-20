@@ -43,8 +43,16 @@ int_fast32_t ncsh_fgets(char* input_buffer, int size_of_input_buffer, FILE* file
 	return characters_read;
 }
 
+void ncsh_history_file_path(char* path, char* destination) {
+	strcat(destination, path);
+	strcat(destination, NCSH_HISTORY_FILE);
+}
+
 enum ncsh_History_Result ncsh_history_load(struct ncsh_History* history) {
 	assert(history != NULL);
+
+	// char file_buffer[PATH_MAX];
+	// ncsh_history_file_path(history->history_file_directory, file_buffer);
 
 	FILE* file = fopen(NCSH_HISTORY_FILE, "r");
 	if (file == NULL) {
@@ -85,6 +93,9 @@ enum ncsh_History_Result ncsh_history_save(struct ncsh_History* history) {
 	assert(history != NULL);
 	if (history == NULL || !history->entries[0].value)
 		return H_FAILURE_NULL_REFERENCE;
+
+	// char file_buffer[PATH_MAX];
+	// ncsh_history_file_path(history->history_file_directory, file_buffer);
 
 	FILE* file = fopen(NCSH_HISTORY_FILE, "a");
 	if (file == NULL) {

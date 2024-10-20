@@ -1,6 +1,7 @@
 #ifndef ncsh_history_h
 #define ncsh_history_h
 
+#include <linux/limits.h>
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -29,6 +30,7 @@ struct ncsh_History {
 	uint_fast32_t history_count;
 	uint_fast32_t file_position;
 	bool history_loaded;
+	char history_file_directory[PATH_MAX];
 	struct eskilib_String* entries;
 };
 
