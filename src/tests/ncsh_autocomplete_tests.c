@@ -139,11 +139,33 @@ void ncsh_autocomplete_add_multiple_related_test(void) {
 	ncsh_autocomplete_free(tree);
 }
 
+void ncsh_autocomplete_search_test(void) {
+	struct ncsh_Autocomplete* tree = ncsh_autocomplete_malloc();
+	eskilib_assert(tree != NULL);
+
+	struct eskilib_String string_one = { .value = "gene", .length = 5 };
+	ncsh_autocomplete_add(string_one, tree);
+	struct eskilib_String string_two = { .value = "genetic", .length = 8 };
+	ncsh_autocomplete_add(string_two, tree);
+	struct eskilib_String string_three = { .value = "genius", .length = 7 };
+	ncsh_autocomplete_add(string_three, tree);
+
+	struct eskilib_String string_search = { .value = "gen", .length = 4 };
+	struct ncsh_Autocomplete* result = ncsh_autocomplete_search(string_search, tree);
+	eskilib_assert(result != NULL);
+	struct ncsh_Autocomplete* result_e = result->nodes[ncsh_autocomplete_map_char('e')];
+	eskilib_assert(result_e != NULL);
+	eskilib_assert(result_e->is_end_of_a_word == true);
+
+	ncsh_autocomplete_free(tree);
+}
+
 void ncsh_autocomplete_tests(void) {
 	eskilib_test_run("ncsh_autocomplete_add_test", ncsh_autocomplete_add_test);
 	eskilib_test_run("ncsh_autocomplete_add_duplicate_test", ncsh_autocomplete_add_duplicate_test);
 	eskilib_test_run("ncsh_autocomplete_add_multiple_unrelated_test", ncsh_autocomplete_add_multiple_unrelated_test);
 	eskilib_test_run("ncsh_autocomplete_add_multiple_related_test", ncsh_autocomplete_add_multiple_related_test);
+	eskilib_test_run("ncsh_autocomplete_search_test", ncsh_autocomplete_search_test);
 }
 
 #ifndef ncsh_TEST_ALL

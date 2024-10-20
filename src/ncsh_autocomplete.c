@@ -44,9 +44,22 @@ void ncsh_autocomplete_add(struct eskilib_String string, struct ncsh_Autocomplet
 	tree->is_end_of_a_word = true;
 }
 
-struct ncsh_Autocomplete* ncsh_autocomplete_search(struct eskilib_String string) {
+struct ncsh_Autocomplete* ncsh_autocomplete_search(struct eskilib_String string, struct ncsh_Autocomplete* tree) {
 	assert(string.value != NULL);
 	assert(string.length > 0);
+
+	int index = 0;
+
+	for (uint_fast32_t i = 0; i < string.length - 1; i++) {
+		index = (int)string.value[i] - 'a';
+		if (tree->nodes[index] == NULL)
+			return NULL;
+
+		tree = tree->nodes[index];
+	}
+
+	if (tree != NULL)
+		return tree;
 
 	return NULL;
 }

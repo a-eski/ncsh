@@ -21,6 +21,8 @@ void ncsh_autocomplete_free(struct ncsh_Autocomplete* tree);
 
 void ncsh_autocomplete_add(struct eskilib_String string, struct ncsh_Autocomplete* tree);
 
+struct ncsh_Autocomplete* ncsh_autocomplete_search(struct eskilib_String string, struct ncsh_Autocomplete* tree);
+
 // char ncsh_autocomplete_map_position(int position);
 
 int ncsh_autocomplete_map_char(char character);
