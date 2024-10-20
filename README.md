@@ -1,8 +1,6 @@
 # ncsh
 An interactive unix shell written in C focused on speed and building everything from the ground up.
 
-Copyright Alex Eski 2024.
-
 # goals
 1. autocomplete
 2. piping, output/input redirection, !, &&, ||, etc.
