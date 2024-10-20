@@ -28,12 +28,4 @@
 [32mncsh_history_load_and_get_entries_test passed.
 [0m[37mncsh_history_load_and_get_entries_then_add_entries_test started.
 [32mncsh_history_load_and_get_entries_then_add_entries_test passed.
-[0m[37mncsh_autocomplete_add_test started.
-[32mncsh_autocomplete_add_test passed.
-[0m[37mncsh_autocomplete_add_duplicate_test started.
-[32mncsh_autocomplete_add_duplicate_test passed.
-[0m[37mncsh_autocomplete_add_multiple_unrelated_test started.
-[32mncsh_autocomplete_add_multiple_unrelated_test passed.
-[0m[37mncsh_autocomplete_add_multiple_related_test started.
-[32mncsh_autocomplete_add_multiple_related_test passed.
 [0m
