@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "ncsh_types.h"
 #include "eskilib/eskilib_string.h"
 
 #ifndef NCSH_TEST_HISTORY
@@ -15,36 +16,25 @@
 
 #define NCSH_MAX_HISTORY_FILE 500
 
-enum ncsh_History_Result {
-	H_ZERO_LENGTH = -5,
-	H_OVERFLOW_PROTECTION = -4,
-	H_FAILURE_FILE_OP = -3,
-	H_FAILURE_MALLOC = -2,
-	H_FAILURE_NULL_REFERENCE = -1,
-	H_FAILURE = 0,
-	H_SUCCESS = 1,
-	H_HISTORY_MAX_REACHED = 2
-};
-
 struct ncsh_History {
 	uint_fast32_t history_count;
 	uint_fast32_t file_position;
 	bool history_loaded;
-	char history_file_directory[PATH_MAX];
+	// char history_file_directory[PATH_MAX];
 	struct eskilib_String* entries;
 };
 
-enum ncsh_History_Result ncsh_history_malloc(struct ncsh_History* history);
+enum ncsh_Result ncsh_history_malloc(struct ncsh_History* history);
 
-enum ncsh_History_Result ncsh_history_load(struct ncsh_History* history);
+enum ncsh_Result ncsh_history_load(struct ncsh_History* history);
 
-enum ncsh_History_Result ncsh_history_save(struct ncsh_History* history);
+enum ncsh_Result ncsh_history_save(struct ncsh_History* history);
 
 void ncsh_history_clean(struct ncsh_History* history);
 
 void ncsh_history_free(struct ncsh_History* history);
 
-enum ncsh_History_Result ncsh_history_add(char* line, uint_fast32_t length, struct ncsh_History* history);
+enum ncsh_Result ncsh_history_add(char* line, uint_fast32_t length, struct ncsh_History* history);
 
 struct eskilib_String ncsh_history_get(uint_fast32_t position, struct ncsh_History* history);
 
