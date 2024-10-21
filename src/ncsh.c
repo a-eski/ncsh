@@ -13,7 +13,9 @@
 #include "eskilib/eskilib_colors.h"
 #include "eskilib/eskilib_string.h"
 #include "ncsh_args.h"
+// #include "ncsh_autocomplete.h"
 #include "ncsh_terminal.h"
+#include "ncsh_types.h"
 #include "ncsh_vm.h"
 #include "ncsh_history.h"
 #include "ncsh_parser.h"
@@ -64,25 +66,38 @@ int ncsh(void) {
 	if (!did_malloc_succeed)
 		return EXIT_FAILURE;
 
-	uint_fast32_t history_position = 0; // current position in history for the current loop, reset every loop
-	struct eskilib_String history_entry; // used to hold return value when cycling through history
-	enum ncsh_History_Result result;
-	struct ncsh_History history;
-	result = ncsh_history_malloc(&history);
-	if (result != H_SUCCESS) {
-		perror(RED "Error when allocating memory for history" RESET);
+	enum ncsh_Result result; // used to track operation results
+
+	/*struct eskilib_String autocomplete_entry;
+	struct ncsh_Autocomplete autocomplete;
+	result = ncsh_autocomplete_malloc(&autocomplete);
+	if (result != N_SUCCESS) {
+		perror(RED "Error when allocating memory for autocomplete" RESET);
 		fflush(stdout);
 		ncsh_args_free(args);
 		return EXIT_FAILURE;
+	}*/
+
+	uint_fast32_t history_position = 0; // current position in history for the current loop, reset every loop
+	struct eskilib_String history_entry; // used to hold return value when cycling through history
+	struct ncsh_History history;
+	result = ncsh_history_malloc(&history);
+	if (result != N_SUCCESS) {
+		perror(RED "Error when allocating memory for history" RESET);
+		fflush(stdout);
+		ncsh_args_free(args);
+		// ncsh_autocomplete_free(&autocomplete);
+		return EXIT_FAILURE;
 	}
 	// history.history_file_directory = getenv("HOME");
-	getcwd(history.history_file_directory, PATH_MAX);
-	printf("%s\n", history.history_file_directory);
+	// getcwd(history.history_file_directory, PATH_MAX);
+	// printf("%s\n", history.history_file_directory);
 	result = ncsh_history_load(&history);
-	if (result != H_SUCCESS) {
+	if (result != N_SUCCESS) {
 		perror(RED "Error when loading data from history file into memory" RESET);
 		fflush(stdout);
 		ncsh_args_free(args);
+		// ncsh_autocomplete_free(&autocomplete);
 		return EXIT_FAILURE;
 	}
 
