@@ -318,13 +318,12 @@ void eskilib_trie_matches_test(void) {
 }
 
 void eskilib_trie_tests(void) {
-	/*eskilib_test_run("eskilib_trie_add_test", eskilib_trie_add_test);
+	eskilib_test_run("eskilib_trie_add_test", eskilib_trie_add_test);
 	eskilib_test_run("eskilib_trie_add_duplicate_test", eskilib_trie_add_duplicate_test);
 	eskilib_test_run("eskilib_trie_add_multiple_unrelated_test", eskilib_trie_add_multiple_unrelated_test);
 	eskilib_test_run("eskilib_trie_add_multiple_related_test", eskilib_trie_add_multiple_related_test);
 	eskilib_test_run("eskilib_trie_search_test", eskilib_trie_search_test);
-	eskilib_test_run("eskilib_trie_commands_test", eskilib_trie_commands_test);*/
-
+	eskilib_test_run("eskilib_trie_commands_test", eskilib_trie_commands_test);
 	eskilib_test_run("eskilib_tree_matches_test", eskilib_trie_matches_test);
 }
 
@@ -332,7 +331,7 @@ void eskilib_trie_tests(void) {
 int main(void) {
 	eskilib_trie_tests();
 
-		return EXIT_SUCCESS;
-	}
+	return EXIT_SUCCESS;
+}
 #endif /* ifndef ncsh_TEST_ALL */
 
