@@ -182,3 +182,4 @@ uint_fast32_t ncsh_history_command(struct ncsh_History* history) {
 	}
 	return 1;
 }
+

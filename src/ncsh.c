@@ -10,10 +10,7 @@
 #include <unistd.h>
 #include <stdbool.h>
 
-#include "eskilib/eskilib_colors.h"
-#include "eskilib/eskilib_string.h"
 #include "ncsh_args.h"
-// #include "ncsh_autocomplete.h"
 #include "ncsh_terminal.h"
 #include "ncsh_types.h"
 #include "ncsh_vm.h"
@@ -21,6 +18,8 @@
 #include "ncsh_parser.h"
 #include "ncsh_io.h"
 #include "ncsh.h"
+#include "eskilib/eskilib_colors.h"
+#include "eskilib/eskilib_string.h"
 
 // #define NCSH_DEBUG
 #ifdef NCSH_DEBUG
@@ -66,18 +65,18 @@ int ncsh(void) {
 	if (!did_malloc_succeed)
 		return EXIT_FAILURE;
 
-	enum ncsh_Result result; // used to track operation results
 
 	/*struct eskilib_String autocomplete_entry;
-	struct ncsh_Autocomplete autocomplete;
-	result = ncsh_autocomplete_malloc(&autocomplete);
-	if (result != N_SUCCESS) {
+	struct eskilib_HashTable autocomplete;
+	did_malloc_succeed = eskilib_hashtable_malloc(&autocomplete);
+	if (!did_malloc_succeed) {
 		perror(RED "Error when allocating memory for autocomplete" RESET);
 		fflush(stdout);
 		ncsh_args_free(args);
 		return EXIT_FAILURE;
 	}*/
 
+	enum ncsh_Result result; // used to track operation results
 	uint_fast32_t history_position = 0; // current position in history for the current loop, reset every loop
 	struct eskilib_String history_entry; // used to hold return value when cycling through history
 	struct ncsh_History history;
@@ -86,7 +85,7 @@ int ncsh(void) {
 		perror(RED "Error when allocating memory for history" RESET);
 		fflush(stdout);
 		ncsh_args_free(args);
-		// ncsh_autocomplete_free(&autocomplete);
+		// eskilib_hashtable_free(&autocomplete);
 		return EXIT_FAILURE;
 	}
 	// history.history_file_directory = getenv("HOME");
@@ -97,7 +96,7 @@ int ncsh(void) {
 		perror(RED "Error when loading data from history file into memory" RESET);
 		fflush(stdout);
 		ncsh_args_free(args);
-		// ncsh_autocomplete_free(&autocomplete);
+		// eskilib_hashtable_free(&autocomplete);
 		return EXIT_FAILURE;
 	}
 
