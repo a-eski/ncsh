@@ -37,3 +37,4 @@ int_fast32_t eskilib_fgets_delimited(char* input_buffer, int size_of_input_buffe
 	*buffer = '\0';
 	return characters_read;
 }
+
