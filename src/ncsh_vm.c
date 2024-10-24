@@ -36,13 +36,13 @@ struct ncsh_Pipe_IO {
 	int fd_two[2];
 };
 
-uint_fast8_t ncsh_pipe_error(void) {
+uint_fast32_t ncsh_pipe_error(void) {
 	perror(RED "Error when piping process" RESET);
 	fflush(stdout);
 	return 0;
 }
 
-uint_fast8_t ncsh_fork_error(void) {
+uint_fast32_t ncsh_fork_error(void) {
 	perror(RED "Error when forking process" RESET);
 	fflush(stdout);
 	return 0;
@@ -69,7 +69,7 @@ void ncsh_output_redirection_stop(struct ncsh_Output_Redirect_IO io) {
 	dup2(io.original_stderr, STDERR_FILENO);
 }
 
-uint_fast8_t ncsh_pipe_start(struct ncsh_Pipe_IO* pipes, uint_fast8_t command_position) {
+uint_fast32_t ncsh_pipe_start(struct ncsh_Pipe_IO* pipes, uint_fast32_t command_position) {
 	assert(pipes != NULL);
 
 	if (command_position % 2 != 0) {
@@ -84,7 +84,7 @@ uint_fast8_t ncsh_pipe_start(struct ncsh_Pipe_IO* pipes, uint_fast8_t command_po
 	return 1;
 }
 
-uint_fast8_t ncsh_pipe_fork_failure(struct ncsh_Pipe_IO* pipes, uint_fast8_t command_position, uint_fast8_t number_of_commands) {
+uint_fast32_t ncsh_pipe_fork_failure(struct ncsh_Pipe_IO* pipes, uint_fast32_t command_position, uint_fast32_t number_of_commands) {
 	assert(pipes != NULL);
 
 	if (command_position != number_of_commands - 1) {
@@ -97,7 +97,7 @@ uint_fast8_t ncsh_pipe_fork_failure(struct ncsh_Pipe_IO* pipes, uint_fast8_t com
 	return ncsh_fork_error();
 }
 
-void ncsh_pipe_connect(struct ncsh_Pipe_IO* pipes, uint_fast8_t command_position, uint_fast8_t number_of_commands) {
+void ncsh_pipe_connect(struct ncsh_Pipe_IO* pipes, uint_fast32_t command_position, uint_fast32_t number_of_commands) {
 	assert(pipes != NULL);
 
 	if (command_position == 0) { //first command
@@ -121,7 +121,7 @@ void ncsh_pipe_connect(struct ncsh_Pipe_IO* pipes, uint_fast8_t command_position
 	}
 }
 
-void ncsh_pipe_redirect_output(struct ncsh_Pipe_IO* pipes, uint_fast8_t command_position, char file[]) {
+void ncsh_pipe_redirect_output(struct ncsh_Pipe_IO* pipes, uint_fast32_t command_position, char file[]) {
 	assert(pipes != NULL);
 
 	int file_descriptor = open(file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
@@ -138,7 +138,7 @@ void ncsh_pipe_redirect_output(struct ncsh_Pipe_IO* pipes, uint_fast8_t command_
 	}
 }
 
-void ncsh_pipe_stop(struct ncsh_Pipe_IO* pipes, uint_fast8_t command_position, uint_fast8_t number_of_commands) {
+void ncsh_pipe_stop(struct ncsh_Pipe_IO* pipes, uint_fast32_t command_position, uint_fast32_t number_of_commands) {
 	assert(pipes != NULL);
 
 	if (command_position == 0) {
@@ -164,7 +164,7 @@ void ncsh_pipe_stop(struct ncsh_Pipe_IO* pipes, uint_fast8_t command_position, u
 	}
 }
 
-uint_fast8_t ncsh_vm(struct ncsh_Args args) {
+uint_fast32_t ncsh_vm(struct ncsh_Args args) {
 	assert(args.values != NULL);
 	assert(args.ops != NULL);
 	assert(args.count != 0);
@@ -179,12 +179,12 @@ uint_fast8_t ncsh_vm(struct ncsh_Args args) {
 	enum ncsh_Ops op_current = OP_NONE;
 	enum ncsh_Ops op_next = OP_NONE;
 
-	uint_fast8_t number_of_commands = 0;
-	uint_fast8_t command_position = 0;
-	uint_fast8_t args_position = 0;
-	uint_fast8_t buffer_position = 0;
+	uint_fast32_t number_of_commands = 0;
+	uint_fast32_t command_position = 0;
+	uint_fast32_t args_position = 0;
+	uint_fast32_t buffer_position = 0;
 
-	for (uint_fast8_t l = 0; l < args.count; l++) {
+	for (uint_fast32_t l = 0; l < args.count; l++) {
 		if (args.ops[l] == OP_PIPE) {
 			number_of_commands++;
 		}
@@ -287,16 +287,16 @@ uint_fast32_t ncsh_execute_program(char** args) {
 
 // uint_fast32_t ncsh_execute_output_redirected(struct ncsh_Args args) {
 // 	char* buffer[MAX_INPUT];
-// 	uint_fast8_t args_position = 0;
-// 	uint_fast8_t buffer_position = 0;
-// 	uint_fast8_t number_of_commands = 0;
-// 	uint_fast8_t command_position = 0;
+// 	uint_fast32_t args_position = 0;
+// 	uint_fast32_t buffer_position = 0;
+// 	uint_fast32_t number_of_commands = 0;
+// 	uint_fast32_t command_position = 0;
 // 	bool args_end = false;
 // 	enum ncsh_Ops op_current = OP_CONSTANT;
 // 	// enum ncsh_Ops op_previous = OP_CONSTANT;
 // 	struct ncsh_Output_Redirect_IO io;
 //
-// 	for (uint_fast8_t l = 0; args.values[l] != NULL;) {
+// 	for (uint_fast32_t l = 0; args.values[l] != NULL;) {
 // 		if (args.ops[l] != OP_CONSTANT) {
 // 			number_of_commands++;
 // 		}

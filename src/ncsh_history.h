@@ -26,6 +26,7 @@ struct ncsh_History {
 
 enum ncsh_Result ncsh_history_malloc(struct ncsh_History* history);
 
+// populates history and autocomplete
 enum ncsh_Result ncsh_history_load(struct ncsh_History* history);
 
 enum ncsh_Result ncsh_history_save(struct ncsh_History* history);
