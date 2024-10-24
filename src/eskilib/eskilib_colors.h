@@ -15,6 +15,8 @@
 #define WHITE		"\x1B[37m"
 #define DEFAULT		"\x1B[39m"
 
+#define WHITE_DIM "\033[2m"
+
 #define BLACK_BG	"\x1B[40"
 #define RED_BG		"\x1B[41m"
 #define GREEN_BG	"\x1B[42m"

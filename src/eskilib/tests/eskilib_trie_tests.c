@@ -10,7 +10,7 @@ void eskilib_trie_add_test(void) {
 	eskilib_assert(tree != NULL);
 
 	struct eskilib_String string = { .value = "and", .length = 4 };
-	eskilib_trie_add(string, tree);
+	eskilib_trie_add(string.value, string.length, tree);
 
 	// sanity check: unrelated letters are null
 	eskilib_assert(tree->nodes[eskilib_trie_map_char('b')] == NULL);
@@ -42,8 +42,8 @@ void eskilib_trie_add_duplicate_test(void) {
 	eskilib_assert(tree != NULL);
 
 	struct eskilib_String string = { .value = "and", .length = 4 };
-	eskilib_trie_add(string, tree);
-	eskilib_trie_add(string, tree);
+	eskilib_trie_add(string.value, string.length, tree);
+	eskilib_trie_add_string(string, tree);
 
 	struct eskilib_Trie* first_node = tree->nodes[eskilib_trie_map_char('a')];
 	eskilib_assert(first_node != NULL);
@@ -68,9 +68,9 @@ void eskilib_trie_add_multiple_unrelated_test(void) {
 	eskilib_assert(tree != NULL);
 
 	struct eskilib_String string_one = { .value = "ls", .length = 3 };
-	eskilib_trie_add(string_one, tree);
+	eskilib_trie_add(string_one.value, string_one.length, tree);
 	struct eskilib_String string_two = { .value = "echo", .length = 5 };
-	eskilib_trie_add(string_two, tree);
+	eskilib_trie_add_string(string_two, tree);
 
 	struct eskilib_Trie* ls_first_node = tree->nodes[eskilib_trie_map_char('l')];
 	eskilib_assert(ls_first_node != NULL);
@@ -106,11 +106,11 @@ void eskilib_trie_add_multiple_related_test(void) {
 	eskilib_assert(tree != NULL);
 
 	struct eskilib_String string_one = { .value = "gene", .length = 5 };
-	eskilib_trie_add(string_one, tree);
+	eskilib_trie_add(string_one.value, string_one.length, tree);
 	struct eskilib_String string_two = { .value = "genetic", .length = 8 };
-	eskilib_trie_add(string_two, tree);
+	eskilib_trie_add_string(string_two, tree);
 	struct eskilib_String string_three = { .value = "genius", .length = 7 };
-	eskilib_trie_add(string_three, tree);
+	eskilib_trie_add_string(string_three, tree);
 
 	// gene
 	struct eskilib_Trie* first_node = tree->nodes[eskilib_trie_map_char('g')];
@@ -166,14 +166,14 @@ void eskilib_trie_search_test(void) {
 	eskilib_assert(tree != NULL);
 
 	struct eskilib_String string_one = { .value = "gene", .length = 5 };
-	eskilib_trie_add(string_one, tree);
+	eskilib_trie_add(string_one.value, string_one.length, tree);
 	struct eskilib_String string_two = { .value = "genetic", .length = 8 };
-	eskilib_trie_add(string_two, tree);
+	eskilib_trie_add(string_two.value, string_two.length, tree);
 	struct eskilib_String string_three = { .value = "genius", .length = 7 };
-	eskilib_trie_add(string_three, tree);
+	eskilib_trie_add_string(string_three, tree);
 
 	struct eskilib_String string_search = { .value = "gen", .length = 4 };
-	struct eskilib_Trie* result = eskilib_trie_search(string_search, tree);
+	struct eskilib_Trie* result = eskilib_trie_search(string_search.value, string_search.length, tree);
 	eskilib_assert(result != NULL);
 	struct eskilib_Trie* result_e = result->nodes[eskilib_trie_map_char('e')];
 	eskilib_assert(result_e != NULL);
@@ -183,17 +183,17 @@ void eskilib_trie_search_test(void) {
 	eskilib_trie_free(tree);
 }
 
-void eskilib_trie_commands_test(void) {
+void eskilib_trie_search_commands_test(void) {
 	struct eskilib_Trie* tree = eskilib_trie_malloc();
 	eskilib_assert(tree != NULL);
 
-	eskilib_trie_add((struct eskilib_String){ .value = "ls", .length = 3 }, tree);
-	eskilib_trie_add((struct eskilib_String){ .value = "ls | sort", .length = 10 }, tree);
-	eskilib_trie_add((struct eskilib_String){ .value = "ls | sort | wc -c", .length = 18 }, tree);
-	eskilib_trie_add((struct eskilib_String){ .value = "ls > t.txt", .length = 11 }, tree);
-	eskilib_trie_add((struct eskilib_String){ .value = "cat t.txt", .length = 10 }, tree);
-	eskilib_trie_add((struct eskilib_String){ .value = "rm t.txt", .length = 9 }, tree);
-	eskilib_trie_add((struct eskilib_String){ .value = "ss", .length = 3 }, tree);
+	eskilib_trie_add_string((struct eskilib_String){ .value = "ls", .length = 3 }, tree);
+	eskilib_trie_add_string((struct eskilib_String){ .value = "ls | sort", .length = 10 }, tree);
+	eskilib_trie_add_string((struct eskilib_String){ .value = "ls | sort | wc -c", .length = 18 }, tree);
+	eskilib_trie_add_string((struct eskilib_String){ .value = "ls > t.txt", .length = 11 }, tree);
+	eskilib_trie_add_string((struct eskilib_String){ .value = "cat t.txt", .length = 10 }, tree);
+	eskilib_trie_add_string((struct eskilib_String){ .value = "rm t.txt", .length = 9 }, tree);
+	eskilib_trie_add_string((struct eskilib_String){ .value = "ss", .length = 3 }, tree);
 
 	struct eskilib_Trie* result = tree->nodes[eskilib_trie_map_char('l')];
 	eskilib_assert(result != NULL);
@@ -208,7 +208,7 @@ void eskilib_trie_commands_test(void) {
 	eskilib_assert(result->is_end_of_a_word == false);
 	eskilib_assert(result->letter == ' ');
 
-	struct eskilib_Trie* search_result = eskilib_trie_search((struct eskilib_String){ .value = "ls | ", .length = 6 }, tree);
+	struct eskilib_Trie* search_result = eskilib_trie_search_string((struct eskilib_String){ .value = "ls | ", .length = 6 }, tree);
 	eskilib_assert(search_result != NULL);
 	eskilib_assert(search_result->is_end_of_a_word == false);
 	eskilib_assert(search_result->letter == ' ');
@@ -232,81 +232,48 @@ void eskilib_trie_commands_test(void) {
 	eskilib_trie_free(tree);
 }
 
-void eskilib_trie_match(char* matches[], uint_fast32_t* array_position, uint_fast32_t* position, struct eskilib_Trie* tree) {
-	for (uint_fast32_t i = 0; i < NCSH_LETTERS; i++) {
-		if (tree->nodes[i] != NULL) {
-			if (matches[*array_position] == NULL) {
-				matches[*array_position] = malloc(sizeof(char) * NCSH_MATCH_LENGTH);
+void eskilib_trie_search_no_results_test(void) {
+	struct eskilib_Trie* tree = eskilib_trie_malloc();
+	eskilib_assert(tree != NULL);
 
-				if (*position > 0 && *array_position > 0)
-					eskilib_string_copy(matches[*array_position], matches[*array_position - 1], *position);
-			}
+	struct eskilib_String string_one = { .value = "gene", .length = 5 };
+	eskilib_trie_add_string(string_one, tree);
+	struct eskilib_String string_two = { .value = "genetic", .length = 8 };
+	eskilib_trie_add_string(string_two, tree);
+	struct eskilib_String string_three = { .value = "genius", .length = 7 };
+	eskilib_trie_add_string(string_three, tree);
 
-			matches[*array_position][*position] = tree->nodes[i]->letter;
-			++*position;
-			matches[*array_position][*position] = '\0';
+	struct eskilib_String string_search = { .value = "ls", .length = 3 };
+	struct eskilib_Trie* search_result = eskilib_trie_search_string(string_search, tree);
+	eskilib_assert(search_result == NULL);
 
-			if (tree->nodes[i]->is_end_of_a_word == true && *array_position + 1 < NCSH_MATCH_LENGTH)
-				++*array_position;
-
-			eskilib_trie_match(matches, array_position, position, tree->nodes[i]);
-		}
-	}
-}
-
-void eskilib_trie_matches(char* matches[], struct eskilib_Trie* tree) {
-	uint_fast32_t array_position = 0;
-	uint_fast32_t position = 0;
-
-	for (uint_fast32_t i = 0; i < NCSH_LETTERS; i++) {
-		if (tree->nodes[i] != NULL) {
-			if (matches[array_position] == NULL) {
-				matches[array_position] = malloc(sizeof(char) * NCSH_MATCH_LENGTH);
-
-				if (position > 0 && array_position > 0)
-					eskilib_string_copy(matches[array_position], matches[array_position - 1], position);
-			}
-
-			matches[array_position][position] = tree->nodes[i]->letter;
-			++position;
-			matches[array_position][position] = '\0';
-
-			if (tree->nodes[i]->is_end_of_a_word == true && array_position + 1 < NCSH_MATCH_LENGTH)
-				++array_position;
-
-			eskilib_trie_match(matches, &array_position, &position, tree->nodes[i]);
-
-			if (matches[array_position] != NULL)
-				++array_position;
-
-			position = 0;
-		}
-	}
+	eskilib_trie_free(tree);
 }
 
 void eskilib_trie_matches_test(void) {
 	struct eskilib_Trie* tree = eskilib_trie_malloc();
 	eskilib_assert(tree != NULL);
 
-	eskilib_trie_add((struct eskilib_String){ .value = "ls", .length = 3 }, tree);
-	eskilib_trie_add((struct eskilib_String){ .value = "ls | wc -c", .length = 11 }, tree);
-	eskilib_trie_add((struct eskilib_String){ .value = "ls | sort", .length = 10 }, tree);
-	eskilib_trie_add((struct eskilib_String){ .value = "ls | sort | wc -c", .length = 18 }, tree);
-	eskilib_trie_add((struct eskilib_String){ .value = "ls > t.txt", .length = 11 }, tree);
-	eskilib_trie_add((struct eskilib_String){ .value = "cat t.txt", .length = 10 }, tree);
-	eskilib_trie_add((struct eskilib_String){ .value = "rm t.txt", .length = 9 }, tree);
-	eskilib_trie_add((struct eskilib_String){ .value = "ss", .length = 3 }, tree);
+	eskilib_trie_add_string((struct eskilib_String){ .value = "ls", .length = 3 }, tree);
+	eskilib_trie_add_string((struct eskilib_String){ .value = "ls | wc -c", .length = 11 }, tree);
+	eskilib_trie_add_string((struct eskilib_String){ .value = "ls | sort", .length = 10 }, tree);
+	eskilib_trie_add_string((struct eskilib_String){ .value = "ls | sort | wc -c", .length = 18 }, tree);
+	eskilib_trie_add_string((struct eskilib_String){ .value = "ls > t.txt", .length = 11 }, tree);
+	eskilib_trie_add_string((struct eskilib_String){ .value = "cat t.txt", .length = 10 }, tree);
+	eskilib_trie_add_string((struct eskilib_String){ .value = "rm t.txt", .length = 9 }, tree);
+	eskilib_trie_add_string((struct eskilib_String){ .value = "ss", .length = 3 }, tree);
 
-	struct eskilib_Trie* search_result = eskilib_trie_search((struct eskilib_String){ .value = "ls | ", .length = 6 }, tree);
+	struct eskilib_Trie* search_result = eskilib_trie_search_string((struct eskilib_String){ .value = "ls | ", .length = 6 }, tree);
+	eskilib_assert(search_result != NULL);
 
 	char* autocomplete[NCSH_MATCH_LENGTH] = {0};
 
-	eskilib_trie_matches(autocomplete, search_result);
+	uint_fast32_t match_count = eskilib_trie_matches(autocomplete, search_result);
 
+	eskilib_assert(match_count == 3);
 	eskilib_assert(eskilib_string_equals(autocomplete[0], "sort", 5) == true);
 	eskilib_assert(eskilib_string_equals(autocomplete[1], "sort | wc -c", 13) == true);
 	eskilib_assert(eskilib_string_equals(autocomplete[2], "wc -c", 6) == true);
-
 
 	for (uint_fast32_t i = 0; i < NCSH_MATCH_LENGTH - 1; i++) {
 		if (autocomplete[i] != NULL) {
@@ -317,14 +284,157 @@ void eskilib_trie_matches_test(void) {
 	eskilib_trie_free(tree);
 }
 
+void eskilib_trie_matches_no_results_test(void) {
+	struct eskilib_Trie* tree = eskilib_trie_malloc();
+	eskilib_assert(tree != NULL);
+
+	eskilib_trie_add_string((struct eskilib_String){ .value = "ls", .length = 3 }, tree);
+	eskilib_trie_add_string((struct eskilib_String){ .value = "ls | wc -c", .length = 11 }, tree);
+	eskilib_trie_add_string((struct eskilib_String){ .value = "ls | sort", .length = 10 }, tree);
+	eskilib_trie_add_string((struct eskilib_String){ .value = "ls | sort | wc -c", .length = 18 }, tree);
+	eskilib_trie_add_string((struct eskilib_String){ .value = "ls > t.txt", .length = 11 }, tree);
+	eskilib_trie_add_string((struct eskilib_String){ .value = "cat t.txt", .length = 10 }, tree);
+	eskilib_trie_add_string((struct eskilib_String){ .value = "rm t.txt", .length = 9 }, tree);
+	eskilib_trie_add_string((struct eskilib_String){ .value = "ss", .length = 3 }, tree);
+
+	struct eskilib_Trie* search_result = eskilib_trie_search_string((struct eskilib_String){ .value = "ss", .length = 3 }, tree);
+	eskilib_assert(search_result != NULL);
+
+	char* autocomplete[NCSH_MATCH_LENGTH] = {0};
+
+	uint_fast32_t match_count = eskilib_trie_matches(autocomplete, search_result);
+
+	eskilib_assert(match_count == 0);
+	eskilib_assert(autocomplete[0] == NULL);
+
+	eskilib_trie_free(tree);
+}
+
+void eskilib_trie_matches_multiple_test(void) {
+	struct eskilib_Trie* tree = eskilib_trie_malloc();
+	eskilib_assert(tree != NULL);
+
+	eskilib_trie_add_string((struct eskilib_String){ .value = "ls", .length = 3 }, tree);
+	eskilib_trie_add_string((struct eskilib_String){ .value = "ls | wc -c", .length = 11 }, tree);
+	eskilib_trie_add_string((struct eskilib_String){ .value = "ls | sort", .length = 10 }, tree);
+	eskilib_trie_add_string((struct eskilib_String){ .value = "ls | sort | wc -c", .length = 18 }, tree);
+	eskilib_trie_add_string((struct eskilib_String){ .value = "ls > t.txt", .length = 11 }, tree);
+	eskilib_trie_add_string((struct eskilib_String){ .value = "cat t.txt", .length = 10 }, tree);
+	eskilib_trie_add_string((struct eskilib_String){ .value = "rm t.txt", .length = 9 }, tree);
+	eskilib_trie_add_string((struct eskilib_String){ .value = "ss", .length = 3 }, tree);
+
+	struct eskilib_Trie* search_result = eskilib_trie_search_string((struct eskilib_String){ .value = "ls | ", .length = 6 }, tree);
+	eskilib_assert(search_result != NULL);
+
+	char* autocomplete[NCSH_MATCH_LENGTH] = {0};
+
+	uint_fast32_t match_count = eskilib_trie_matches(autocomplete, search_result);
+
+	eskilib_assert(match_count == 3);
+	eskilib_assert(eskilib_string_equals(autocomplete[0], "sort", 5) == true);
+	eskilib_assert(eskilib_string_equals(autocomplete[1], "sort | wc -c", 13) == true);
+	eskilib_assert(eskilib_string_equals(autocomplete[2], "wc -c", 6) == true);
+
+	for (uint_fast32_t i = 0; i < NCSH_MATCH_LENGTH - 1; i++) {
+		if (autocomplete[i] != NULL) {
+			// printf("i:%lu %s\n", i, autocomplete[i]);
+			free(autocomplete[i]);
+		}
+	}
+
+	search_result = eskilib_trie_search_string((struct eskilib_String){ .value = "l", .length = 2 }, tree);
+	eskilib_assert(search_result != NULL);
+
+	char* autocomplete_two[NCSH_MATCH_LENGTH] = {0};
+
+	match_count = eskilib_trie_matches(autocomplete_two, search_result);
+
+	eskilib_assert(match_count == 5);
+	eskilib_assert(eskilib_string_equals(autocomplete_two[0], "s", 2) == true);
+	eskilib_assert(eskilib_string_equals(autocomplete_two[1], "s > t.txt", 10) == true);
+	eskilib_assert(eskilib_string_equals(autocomplete_two[2], "s | sort", 9) == true);
+	eskilib_assert(eskilib_string_equals(autocomplete_two[3], "s | sort | wc -c", 17) == true);
+	eskilib_assert(eskilib_string_equals(autocomplete_two[4], "s | wc -c", 10) == true);
+
+	for (uint_fast32_t i = 0; i < NCSH_MATCH_LENGTH - 1; i++) {
+		if (autocomplete_two[i] != NULL) {
+			// printf("i:%lu %s\n", i, autocomplete_two[i]);
+			free(autocomplete_two[i]);
+		}
+	}
+
+	eskilib_trie_free(tree);
+}
+
+void eskilib_trie_matches_multiple_simulation_test(void) {
+	struct eskilib_Trie* tree = eskilib_trie_malloc();
+	eskilib_assert(tree != NULL);
+
+	eskilib_trie_add_string((struct eskilib_String){ .value = "ls", .length = 3 }, tree);
+	eskilib_trie_add_string((struct eskilib_String){ .value = "ls | wc -c", .length = 11 }, tree);
+	eskilib_trie_add_string((struct eskilib_String){ .value = "ls | sort", .length = 10 }, tree);
+	eskilib_trie_add_string((struct eskilib_String){ .value = "ls | sort | wc -c", .length = 18 }, tree);
+	eskilib_trie_add_string((struct eskilib_String){ .value = "ls > t.txt", .length = 11 }, tree);
+	eskilib_trie_add_string((struct eskilib_String){ .value = "cat t.txt", .length = 10 }, tree);
+	eskilib_trie_add_string((struct eskilib_String){ .value = "rm t.txt", .length = 9 }, tree);
+	eskilib_trie_add_string((struct eskilib_String){ .value = "ss", .length = 3 }, tree);
+	eskilib_trie_add("nvim", 5, tree);
+	eskilib_trie_add("nvim .", 7, tree);
+
+	struct eskilib_Trie* search_result = eskilib_trie_search_string((struct eskilib_String){ .value = "l", .length = 6 }, tree);
+	eskilib_assert(search_result != NULL);
+
+	char* autocomplete[NCSH_MATCH_LENGTH] = {0};
+
+	uint_fast32_t match_count = eskilib_trie_matches(autocomplete, search_result);
+
+	eskilib_assert(match_count == 5);
+	eskilib_assert(eskilib_string_equals(autocomplete[0], "s", 2) == true);
+	eskilib_assert(eskilib_string_equals(autocomplete[1], "s > t.txt", 10) == true);
+	eskilib_assert(eskilib_string_equals(autocomplete[2], "s | sort", 9) == true);
+	eskilib_assert(eskilib_string_equals(autocomplete[3], "s | sort | wc -c", 17) == true);
+	eskilib_assert(eskilib_string_equals(autocomplete[4], "s | wc -c", 10) == true);
+	for (uint_fast32_t i = 0; i < NCSH_MATCH_LENGTH - 1; i++) {
+		if (autocomplete[i] != NULL) {
+			// printf("i:%lu %s\n", i, autocomplete[i]);
+			free(autocomplete[i]);
+		}
+	}
+
+	search_result = eskilib_trie_search_string((struct eskilib_String){ .value = "ls", .length = 3 }, tree);
+	eskilib_assert(search_result != NULL);
+
+	char* autocomplete_two[NCSH_MATCH_LENGTH] = {0};
+
+	match_count = eskilib_trie_matches(autocomplete_two, search_result);
+
+	eskilib_assert(match_count == 4);
+	eskilib_assert(eskilib_string_equals(autocomplete_two[1], " > t.txt", 10) == true);
+	eskilib_assert(eskilib_string_equals(autocomplete_two[2], " | sort", 9) == true);
+	eskilib_assert(eskilib_string_equals(autocomplete_two[3], " | sort | wc -c", 17) == true);
+	eskilib_assert(eskilib_string_equals(autocomplete_two[4], " | wc -c", 10) == true);
+
+	for (uint_fast32_t i = 0; i < NCSH_MATCH_LENGTH - 1; i++) {
+		if (autocomplete_two[i] != NULL) {
+			// printf("i:%lu %s\n", i, autocomplete_two[i]);
+			free(autocomplete_two[i]);
+		}
+	}
+
+	eskilib_trie_free(tree);
+}
+
 void eskilib_trie_tests(void) {
 	eskilib_test_run("eskilib_trie_add_test", eskilib_trie_add_test);
 	eskilib_test_run("eskilib_trie_add_duplicate_test", eskilib_trie_add_duplicate_test);
 	eskilib_test_run("eskilib_trie_add_multiple_unrelated_test", eskilib_trie_add_multiple_unrelated_test);
 	eskilib_test_run("eskilib_trie_add_multiple_related_test", eskilib_trie_add_multiple_related_test);
 	eskilib_test_run("eskilib_trie_search_test", eskilib_trie_search_test);
-	eskilib_test_run("eskilib_trie_commands_test", eskilib_trie_commands_test);
+	eskilib_test_run("eskilib_trie_search_no_results_test", eskilib_trie_search_no_results_test);
+	eskilib_test_run("eskilib_trie_search_commands_test", eskilib_trie_search_commands_test);
 	eskilib_test_run("eskilib_tree_matches_test", eskilib_trie_matches_test);
+	eskilib_test_run("eskilib_trie_matches_no_results_test", eskilib_trie_matches_no_results_test);
+	eskilib_test_run("eskilib_tree_matches_multiple_test", eskilib_trie_matches_multiple_test);
 }
 
 #ifndef ncsh_TEST_ALL
