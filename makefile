@@ -31,7 +31,7 @@ obj/ncsh_vm.o : src/ncsh_vm.h src/eskilib/eskilib_string.h src/eskilib/eskilib_c
 	$(cc_with_flags) -c src/ncsh_vm.c -o obj/ncsh_vm.o
 obj/ncsh_builtins.o : src/ncsh_builtins.h src/ncsh_args.h src/eskilib/eskilib_string.h
 	$(cc_with_flags) -c src/ncsh_builtins.c -o obj/ncsh_builtins.o
-obj/ncsh_history.o : src/ncsh_history.h src/eskilib/eskilib_string.h src/ncsh_autocompletions.h
+obj/ncsh_history.o : src/ncsh_history.h src/eskilib/eskilib_string.h
 	$(cc_with_flags) -c src/ncsh_history.c -o obj/ncsh_history.o
 obj/ncsh_autocompletions.o : src/ncsh_autocompletions.h src/eskilib/eskilib_string.h
 	$(cc_with_flags) -c src/ncsh_autocompletions.c -o obj/ncsh_autocompletions.o

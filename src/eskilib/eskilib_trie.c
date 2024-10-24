@@ -28,7 +28,7 @@ void eskilib_trie_free(struct eskilib_Trie* tree) {
 }
 
 void eskilib_trie_add(char* string, uint_fast32_t length, struct eskilib_Trie* tree) {
-	assert(string!= NULL);
+	assert(string != NULL);
 	assert(length > 0);
 	assert(tree != NULL);
 
@@ -76,7 +76,7 @@ void eskilib_trie_add_multiple(struct eskilib_String* strings, uint_fast32_t cou
 }
 
 struct eskilib_Trie* eskilib_trie_search(char* string, uint_fast32_t length, struct eskilib_Trie* tree) {
-	assert(string!= NULL);
+	assert(string != NULL);
 	assert(length > 0);
 	assert(tree != NULL);
 
