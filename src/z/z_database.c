@@ -46,21 +46,22 @@ enum z_Database_Result z_database_load(struct z_Database* database) {
 		file = fopen(Z_DATABASE_FILE, "w");
 		if (file == NULL)
 		{
-			perror("Could not load or create history file.");
+			perror("Could not load or create z database file.");
 			return Z_FAILURE_FILE_OP;
 		}
 	}
 
 	char buffer[PATH_MAX];
 	int_fast32_t buffer_length = 0;
+	struct z_Directory* directories = database->directories;
 
 	for (uint_fast32_t i = 0;
 		(buffer_length = eskilib_fgets(buffer, sizeof(buffer), file)) != EOF && i < Z_DATABASE_IN_MEMORY_LIMIT;
 		i++) {
 		if (buffer_length > 0) {
 			++database->count;
-			z_database_set_directory(buffer, buffer_length, database->directories);
-			++database->directories;
+			z_database_set_directory(buffer, buffer_length, directories);
+			++directories;
 		}
 	}
 
@@ -90,16 +91,11 @@ enum z_Database_Result z_database_free(struct z_Database* database) {
 	if (database == NULL)
 		return Z_FAILURE_NULL_REFERENCE;
 
-	// for (uint_fast32_t i = 0; i < database->count - 1; i++)
-	// 	free(database->directories[i].path.value);
+	for (uint_fast32_t i = 0; i < database->count; i++)
+		free(database->directories[i].path.value);
 
-	/*while(*database->directories->path.value) {*/
-	/*	free (database->directories->path.value);*/
-	/*	++database->directories;*/
-	/*}*/
-
-	// if (database->directories != NULL)
-	// 	free(database->directories);
+	if (database->directories != NULL)
+		free(database->directories);
 
 	return Z_SUCCESS;
 }

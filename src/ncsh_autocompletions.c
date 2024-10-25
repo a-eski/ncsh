@@ -28,7 +28,7 @@ void ncsh_autocompletions_free(struct ncsh_Autocompletions* tree) {
 }
 
 void ncsh_autocompletions_add(char* string, uint_fast32_t length, struct ncsh_Autocompletions* tree) {
-	assert(string!= NULL);
+	assert(string != NULL);
 	assert(length > 0);
 	assert(tree != NULL);
 
@@ -76,7 +76,7 @@ void ncsh_autocompletions_add_multiple(struct eskilib_String* strings, uint_fast
 }
 
 struct ncsh_Autocompletions* ncsh_autocompletions_search(char* string, uint_fast32_t length, struct ncsh_Autocompletions* tree) {
-	assert(string!= NULL);
+	assert(string != NULL);
 	assert(length > 0);
 	assert(tree != NULL);
 

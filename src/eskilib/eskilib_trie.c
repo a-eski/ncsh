@@ -1,3 +1,4 @@
+#include "eskilib_trie.h"
 #include <assert.h>
 #include <stdint.h>
 #include <stddef.h>
@@ -18,7 +19,7 @@ struct eskilib_Trie* eskilib_trie_malloc() {
 void eskilib_trie_free(struct eskilib_Trie* tree) {
 	assert(tree != NULL);
 
-	for (uint_fast32_t i = 0; i < NCSH_LETTERS; i++) {
+	for (uint_fast32_t i = 0; i < ESKILIB_TRIE_LETTERS; i++) {
 		if (tree->nodes[i] != NULL)
 			eskilib_trie_free(tree->nodes[i]);
 		else
@@ -117,11 +118,15 @@ struct eskilib_Trie* eskilib_trie_search_string(struct eskilib_String string, st
 	return NULL;
 }
 
-void eskilib_trie_match(char* matches[], uint_fast32_t* string_position, uint_fast32_t* matches_position, struct eskilib_Trie* tree) {
-	for (uint_fast32_t i = 0; i < NCSH_LETTERS; i++) {
+void eskilib_trie_match(char* matches[],
+				uint_fast32_t* string_position,
+				uint_fast32_t* matches_position,
+				const uint_fast32_t max_match_length,
+				struct eskilib_Trie* tree) {
+	for (uint_fast32_t i = 0; i < ESKILIB_TRIE_LETTERS; i++) {
 		if (tree->nodes[i] != NULL) {
 			if (matches[*matches_position] == NULL) {
-				matches[*matches_position] = malloc(sizeof(char) * NCSH_MATCH_LENGTH);
+				matches[*matches_position] = malloc(sizeof(char) * max_match_length);
 				if (matches[*matches_position] == NULL)
 					return;
 
@@ -133,10 +138,10 @@ void eskilib_trie_match(char* matches[], uint_fast32_t* string_position, uint_fa
 			++*string_position;
 			matches[*matches_position][*string_position] = '\0';
 
-			if (tree->nodes[i]->is_end_of_a_word == true && *matches_position + 1 < NCSH_MATCH_LENGTH)
+			if (tree->nodes[i]->is_end_of_a_word == true && *matches_position + 1 < max_match_length)
 				++*matches_position;
 
-			eskilib_trie_match(matches, string_position, matches_position, tree->nodes[i]);
+			eskilib_trie_match(matches, string_position, matches_position, max_match_length, tree->nodes[i]);
 
 			if (matches[*matches_position] != NULL)
 				++*matches_position;
@@ -146,13 +151,25 @@ void eskilib_trie_match(char* matches[], uint_fast32_t* string_position, uint_fa
 	}
 }
 
-uint_fast32_t eskilib_trie_matches(char* matches[], struct eskilib_Trie* tree) {
+uint_fast32_t eskilib_trie_matches(char* matches[], const uint_fast32_t max_match_length, struct eskilib_Trie* tree) {
 	uint_fast32_t string_position = 0;
 	uint_fast32_t matches_position = 0;
 
-	eskilib_trie_match(matches, &string_position, &matches_position, tree);
+	eskilib_trie_match(matches, &string_position, &matches_position, max_match_length, tree);
 
 	return matches_position;
+}
+
+uint_fast32_t eskilib_trie_get(char* search,
+				       uint_fast32_t search_length,
+				       char* matches[],
+				       const uint_fast32_t max_match_length,
+				       struct eskilib_Trie* tree) {
+	struct eskilib_Trie *search_result = eskilib_trie_search(search, search_length, tree);
+	if (search_result == NULL)
+		return 0;
+
+	return eskilib_trie_matches(matches, max_match_length, search_result);
 }
 
 int eskilib_trie_map_char(char character) {

@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "../ncsh_autocompletions.h"
 #include "../eskilib/eskilib_test.h"
@@ -301,8 +302,7 @@ void ncsh_autocompletions_matches_no_results_test(void) {
 	constexpr uint_fast32_t max_match_length = 256;
 	char* autocomplete[max_match_length] = {0};
 
-	uint_fast32_t match_count = ncsh_autocompletions_get("l", 2, autocomplete, max_match_length, tree);
-
+	uint_fast32_t match_count = ncsh_autocompletions_get("n", 2, autocomplete, max_match_length, tree);
 
 	eskilib_assert(match_count == 0);
 	eskilib_assert(autocomplete[0] == NULL);
@@ -399,10 +399,10 @@ void ncsh_autocompletions_matches_multiple_simulation_test(void) {
 	match_count = ncsh_autocompletions_get("ls", 3, autocomplete_two, max_match_length, tree);
 
 	eskilib_assert(match_count == 4);
-	eskilib_assert(eskilib_string_equals(autocomplete_two[1], " > t.txt", 10) == true);
-	eskilib_assert(eskilib_string_equals(autocomplete_two[2], " | sort", 9) == true);
-	eskilib_assert(eskilib_string_equals(autocomplete_two[3], " | sort | wc -c", 17) == true);
-	eskilib_assert(eskilib_string_equals(autocomplete_two[4], " | wc -c", 10) == true);
+	eskilib_assert(eskilib_string_equals(autocomplete_two[0], " > t.txt", 9) == true);
+	eskilib_assert(eskilib_string_equals(autocomplete_two[1], " | sort", 8) == true);
+	eskilib_assert(eskilib_string_equals(autocomplete_two[2], " | sort | wc -c", 16) == true);
+	eskilib_assert(eskilib_string_equals(autocomplete_two[3], " | wc -c", 8) == true);
 
 	for (uint_fast32_t i = 0; i < max_match_length - 1; i++) {
 		if (autocomplete_two[i] != NULL) {
@@ -422,9 +422,10 @@ void ncsh_autocompletions_tests(void) {
 	eskilib_test_run("ncsh_autocompletions_search_test", ncsh_autocompletions_search_test);
 	eskilib_test_run("ncsh_autocompletions_search_no_results_test", ncsh_autocompletions_search_no_results_test);
 	eskilib_test_run("ncsh_autocompletions_search_commands_test", ncsh_autocompletions_search_commands_test);
-	eskilib_test_run("eskilib_tree_matches_test", ncsh_autocompletions_matches_test);
+	eskilib_test_run("ncsh_autocompletions_matches_test", ncsh_autocompletions_matches_test);
 	eskilib_test_run("ncsh_autocompletions_matches_no_results_test", ncsh_autocompletions_matches_no_results_test);
-	eskilib_test_run("eskilib_tree_matches_multiple_test", ncsh_autocompletions_matches_multiple_test);
+	eskilib_test_run("ncsh_autocompletions_matches_multiple_test", ncsh_autocompletions_matches_multiple_test);
+	eskilib_test_run("ncsh_autocompletions_matches_multiple_simulation_test", ncsh_autocompletions_matches_multiple_simulation_test);
 }
 
 #ifndef ncsh_TEST_ALL

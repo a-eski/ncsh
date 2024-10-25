@@ -1,4 +1,4 @@
-/* Copyright ncsh by Alex Eski 2024 */
+// Copyright (c) ncsh by Alex Eski 2024
 
 #define _POSIX_SOURCE
 #include <linux/limits.h>

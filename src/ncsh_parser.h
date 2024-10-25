@@ -1,4 +1,4 @@
-/* Copyright ncsh by Alex Eski 2024 */
+// Copyright (c) ncsh by Alex Eski 2024
 
 #ifndef ncsh_parser_h
 #define ncsh_parser_h
