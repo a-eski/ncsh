@@ -1,3 +1,5 @@
+// Copyright (c) ncsh by Alex Eski 2024
+
 #include <stdint.h>
 #include <stdlib.h>
 #include <stddef.h>

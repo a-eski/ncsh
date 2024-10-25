@@ -15,8 +15,6 @@ jobs:
     - uses: actions/checkout@v4
       with:
         ref: ${{ github.ref }}
-    - name: Setup GCC
-      uses: Dup4/actions-setup-gcc@v1
     - name: make
       run: make
     - name: make check

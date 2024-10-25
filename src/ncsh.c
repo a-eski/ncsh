@@ -27,41 +27,140 @@
 #include "ncsh_debug.h"
 #endif /* ifdef NCSH_DEBUG */
 
+#define NCSH_MAX_INPUT 528
+#define NCSH_MAX_MATCHES 32
+
 // struct ncsh_Loop {
 // 	char character;
-// 	char buffer[max_input];
-// 	uint_fast8_t buf_start;
-// 	uint_fast8_t buf_position;
-// 	uint_fast8_t max_buf_position;
+// 	char buffer[NCSH_MAX_INPUT];
+// 	uint_fast32_t buf_start;
+// 	uint_fast32_t buf_position;
+// 	uint_fast32_t max_buf_position;
 // 	enum ncsh_Hotkey key;
 //
 // 	bool reprint_prompt;
 // 	struct ncsh_Directory prompt_info;
 //
-// 	uint_fast8_t command_result;
+// 	uint_fast32_t command_result;
 // 	struct ncsh_Args args;
 //
 // 	uint_fast32_t history_position;
 // 	struct eskilib_String history;
 // };
 
+void ncsh_backspace(char* buffer, uint_fast32_t* buf_position, uint_fast32_t* max_buf_position) {
+	uint_fast32_t buf_start;
+
+	if (*buf_position > 0 && buffer[*buf_position]) {
+		--*buf_position;
+		--*max_buf_position;
+
+		ncsh_write(BACKSPACE_STRING ERASE_CURRENT_LINE, BACKSPACE_STRING_LENGTH + ERASE_CURRENT_LINE_LENGTH);
+
+		buf_start = *buf_position;
+		for (uint_fast32_t i = *buf_position; buffer[i]; i++) {
+			buffer[i] = buffer[i + 1];
+		}
+
+		while (buffer[*buf_position]) {
+			putchar(buffer[*buf_position]);
+			++*buf_position;
+		}
+
+		fflush(stdout);
+
+		while (*buf_position > buf_start) {
+			if (*buf_position == 0 || !buffer[*buf_position - 1]) {
+				break;
+			}
+
+			ncsh_write(MOVE_CURSOR_LEFT, MOVE_CURSOR_LEFT_LENGTH);
+			--*buf_position;
+		}
+	}
+	else {
+		ncsh_write(BACKSPACE_STRING, BACKSPACE_STRING_LENGTH);
+		--*buf_position;
+		buffer[*buf_position] = 0;
+	}
+}
+
+void ncsh_delete(char* buffer, uint_fast32_t* buf_position) {
+	ncsh_write(DELETE_STRING ERASE_CURRENT_LINE, DELETE_STRING_LENGTH + ERASE_CURRENT_LINE_LENGTH);
+
+	uint_fast32_t buf_start = *buf_position;
+	for (uint_fast32_t i = *buf_position; buffer[i]; i++)
+		buffer[i] = buffer[i + 1];
+
+	while (buffer[*buf_position]) {
+		putchar(buffer[*buf_position]);
+		++*buf_position;
+	}
+
+	fflush(stdout);
+
+	while (*buf_position > buf_start) {
+		if (*buf_position == 0 || !buffer[*buf_position - 1]) {
+			break;
+		}
+
+		ncsh_write(MOVE_CURSOR_LEFT, MOVE_CURSOR_LEFT_LENGTH);
+		--*buf_position;
+	}
+}
+
+void ncsh_autocompletions(char buffer[],
+			uint_fast32_t buf_position,
+			char** autocompletions_ref,
+			uint_fast32_t* autocompletions_matches_count,
+			struct ncsh_Autocompletions* autocompletions_tree) {
+	// free autocompletions from last iteration
+	for (uint_fast32_t i = 0; i < *autocompletions_matches_count; i++) {
+		if (autocompletions_ref[i] != NULL) {
+			free(autocompletions_ref[i]);
+		}
+	}
+
+	// get autocompletions for current iteration
+	char* autocompletion_matches[NCSH_MAX_MATCHES] = {0};
+	*autocompletions_matches_count = ncsh_autocompletions_get(buffer, buf_position + 1, autocompletion_matches, NCSH_MAX_INPUT, autocompletions_tree);
+	if (autocompletions_matches_count == 0)
+		return;
+
+	for (uint_fast32_t i = 0; i < *autocompletions_matches_count; i++) {
+		autocompletions_ref[i] = autocompletion_matches[i];
+	}
+
+	/*printf(WHITE_DIM "%s" RESET, autocompletion_matches[0]);
+	fflush(stdout);*/
+
+	/*buf_start = buf_position;
+	autocompletions_ref_pos = buf_position + 1;
+	for (uint_fast32_t i = 0; autocompletion_matches[0][i]; i++)
+	{
+		buffer[buf_position + 1 + i] = autocompletion_matches[0][i];
+		putchar(autocompletion_matches[0][i]);
+	}*/
+
+	// printf("\nbuffer %s, buf_positon %ld", buffer, buf_position + 1);
+}
+
 int ncsh(void) {
 	clock_t start = clock();
 
-	constexpr uint_fast32_t max_input = 528;
 	char character;
 	char temp_character;
-	char buffer[max_input] = {};
+	char buffer[NCSH_MAX_INPUT] = {0};
 	uint_fast32_t buf_start = 0;
 	uint_fast32_t buf_position = 0;
 	uint_fast32_t max_buf_position = 0;
-
 	enum ncsh_Hotkey key;
+
 	bool reprint_prompt = false;
 	struct ncsh_Directory prompt_info;
 	prompt_info.user = getenv("USER");
 
-	uint_fast8_t command_result = 0;
+	uint_fast32_t command_result = 0;
 	struct ncsh_Args args = {0};
 	bool did_malloc_succeed = ncsh_args_malloc(&args);
 	if (!did_malloc_succeed)
@@ -80,7 +179,6 @@ int ncsh(void) {
 	}
 	// history.history_file_directory = getenv("HOME");
 	// getcwd(history.history_file_directory, PATH_MAX);
-	// printf("%s\n", history.history_file_directory);
 	result = ncsh_history_load(&history);
 	if (result != N_SUCCESS) {
 		perror(RED "Error when loading data from history file into memory" RESET);
@@ -89,11 +187,10 @@ int ncsh(void) {
 		return EXIT_FAILURE;
 	}
 
-	constexpr uint_fast32_t autocompletion_matches_max_count = 64;
-	uint_fast32_t autocompletion_matches_count = 0;
-	// uint_fast32_t autocompletion_matches_last_count = 0;
-	// char** autocompletion_matches = malloc(sizeof(char*) * autocompletion_matches_max_count);
-	// char** autocompletion_matches_last = malloc(sizeof(char*) * autocompletion_matches_max_count);
+	char** autocompletions_ref = malloc(sizeof(char*) * NCSH_MAX_MATCHES);
+	// uint_fast32_t autocompletions_ref_pos = 0;
+
+	uint_fast32_t autocompletions_matches_count = 0;
 	struct ncsh_Autocompletions* autocompletions_tree = ncsh_autocompletions_malloc();
 	if (autocompletions_tree == NULL)
 	{
@@ -144,36 +241,7 @@ int ncsh(void) {
 			if (buf_position == 0) {
 				continue;
 			}
-			else if (buf_position > 0 && buffer[buf_position]) {
-				--buf_position;
-				--max_buf_position;
-
-				ncsh_write(BACKSPACE_STRING ERASE_CURRENT_LINE, BACKSPACE_STRING_LENGTH + ERASE_CURRENT_LINE_LENGTH);
-
-				buf_start = buf_position;
-				for (uint_fast8_t i = buf_position; buffer[i]; i++) {
-					buffer[i] = buffer[i + 1];
-				}
-
-				while (buffer[buf_position])
-					putchar(buffer[buf_position++]);
-
-				fflush(stdout);
-
-				while (buf_position > buf_start) {
-					if (buf_position == 0 || !buffer[buf_position - 1]) {
-						break;
-					}
-
-					ncsh_write(MOVE_CURSOR_LEFT, MOVE_CURSOR_LEFT_LENGTH);
-					--buf_position;
-				}
-			}
-			else {
-				ncsh_write(BACKSPACE_STRING, BACKSPACE_STRING_LENGTH);
-				--buf_position;
-				buffer[buf_position] = 0;
-			}
+			ncsh_backspace(buffer, &buf_position, &max_buf_position);
 		}
 		else if (character == ESCAPE_CHARACTER) {
 			if (read(STDIN_FILENO, &character, 1) == -1) {
@@ -194,7 +262,7 @@ int ncsh(void) {
 					case RIGHT: {
 						reprint_prompt = false;
 
-						if (buf_position == max_input - 1 || (!buffer[buf_position] && !buffer[buf_position + 1]))
+						if (buf_position == NCSH_MAX_INPUT - 1 || (!buffer[buf_position] && !buffer[buf_position + 1]))
 							continue;
 
 						ncsh_write(MOVE_CURSOR_RIGHT, MOVE_CURSOR_RIGHT_LENGTH);
@@ -265,24 +333,7 @@ int ncsh(void) {
 
 						reprint_prompt = false;
 
-						ncsh_write(DELETE_STRING ERASE_CURRENT_LINE, DELETE_STRING_LENGTH + ERASE_CURRENT_LINE_LENGTH);
-						buf_start = buf_position;
-						for (uint_fast8_t i = buf_position; buffer[i]; i++)
-							buffer[i] = buffer[i + 1];
-
-						while (buffer[buf_position])
-							putchar(buffer[buf_position++]);
-
-						fflush(stdout);
-
-						while (buf_position > buf_start) {
-							if (buf_position == 0 || !buffer[buf_position - 1]) {
-								break;
-							}
-
-							ncsh_write(MOVE_CURSOR_LEFT, MOVE_CURSOR_LEFT_LENGTH);
-							--buf_position;
-						}
+						ncsh_delete(buffer, &buf_position);
 
 						break;
 					}
@@ -337,7 +388,7 @@ int ncsh(void) {
 			args.values[0] = NULL;
 		}
 		else {
-			if (buf_position == max_input - 1) {
+			if (buf_position == NCSH_MAX_INPUT - 1) {
 				fputs(RED "\nHit max input.\n" RESET, stderr);
 				buffer[0] = '\0';
 				buf_position = 0;
@@ -345,10 +396,10 @@ int ncsh(void) {
 				continue;
 			}
 
-			if (buf_position < max_buf_position && buf_position > 0 && buf_position < max_input - 1 && buffer[buf_position + 1]) {
+			if (buf_position < max_buf_position && buf_position > 0 && buffer[buf_position + 1]) {
 				buf_start = buf_position;
 
-				for (uint_fast8_t i = buf_position - 1; i < max_buf_position; i++) {
+				for (uint_fast32_t i = buf_position - 1; i < max_buf_position; i++) {
 					temp_character = character;
 					character = buffer[i + 1];
 					buffer[i + 1] = temp_character;
@@ -381,32 +432,7 @@ int ncsh(void) {
 					buffer[buf_position] = '\0';
 			}
 
-			char* autocompletion_matches[autocompletion_matches_max_count] = {0};
-			autocompletion_matches_count = ncsh_autocompletions_get(buffer, buf_position + 1, autocompletion_matches, max_input, autocompletions_tree);
-			if (autocompletion_matches_count == 0)
-				continue;
-
-			for (uint_fast32_t i = 0; i < autocompletion_matches_count; i++) {
-				if (autocompletion_matches[i] != NULL) {
-					// printf("%s, ", autocomplete_matches[i]);
-					free(autocompletion_matches[i]);
-				}
-			}
-
-			// autocompletion_matches_last = autocompletion_matches;
-			// autocompletion_matches_last_count = autocompletion_matches_count;
-
-			// printf(WHITE_DIM "%s" RESET, autocompletion_matches[0]);
-
-			/*for (uint_fast32_t i = 0; autocompletion_matches[0][i]; i++)
-			{
-				buffer[buf_position + 1 + i] = autocompletion_matches[0][i];
-				putchar(autocompletion_matches[0][i]);
-			}*/
-
-			// printf("\nbuffer %s, buf_positon %ld", buffer, buf_position + 1);
-
-			// fflush(stdout);
+			ncsh_autocompletions(buffer, buf_position, autocompletions_ref, &autocompletions_matches_count, autocompletions_tree);
 		}
 	}
 
@@ -415,6 +441,7 @@ int ncsh(void) {
 	ncsh_history_save(&history);
 	ncsh_history_free(&history);
 
+	free(autocompletions_ref);
 	ncsh_autocompletions_free(autocompletions_tree);
 
 	ncsh_terminal_reset();

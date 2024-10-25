@@ -1,3 +1,5 @@
+// Copyright (c) ncsh by Alex Eski 2024
+
 #ifndef ncsh_history_h
 #define ncsh_history_h
 

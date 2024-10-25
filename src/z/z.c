@@ -35,4 +35,3 @@ enum z_Database_Result z_finish(struct z_Database* database) {
 
 	return Z_SUCCESS;
 }
-
