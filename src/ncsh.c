@@ -122,7 +122,7 @@ void ncsh_autocompletions(char buffer[],
 	}
 
 	// get autocompletions for current iteration
-	char* autocompletion_matches[NCSH_MAX_MATCHES] = {};
+	char* autocompletion_matches[NCSH_MAX_MATCHES] = {0};
 	*autocompletions_matches_count = ncsh_autocompletions_get(buffer, buf_position + 1, autocompletion_matches, NCSH_MAX_INPUT, autocompletions_tree);
 	if (autocompletions_matches_count == 0)
 		return;
@@ -150,7 +150,7 @@ int ncsh(void) {
 
 	char character;
 	char temp_character;
-	char buffer[NCSH_MAX_INPUT] = {};
+	char buffer[NCSH_MAX_INPUT] = {0};
 	uint_fast32_t buf_start = 0;
 	uint_fast32_t buf_position = 0;
 	uint_fast32_t max_buf_position = 0;
@@ -161,7 +161,7 @@ int ncsh(void) {
 	prompt_info.user = getenv("USER");
 
 	uint_fast32_t command_result = 0;
-	struct ncsh_Args args = {};
+	struct ncsh_Args args = {0};
 	bool did_malloc_succeed = ncsh_args_malloc(&args);
 	if (!did_malloc_succeed)
 		return EXIT_FAILURE;
