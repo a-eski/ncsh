@@ -104,6 +104,5 @@ bool eskilib_string_contains(const struct eskilib_String string, const struct es
 	}
 
 	return false;
-
 }
 
