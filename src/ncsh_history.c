@@ -97,7 +97,7 @@ enum eskilib_Result ncsh_history_save(struct ncsh_History* history) {
 	if (history == NULL || !history->entries[0].value)
 		return E_FAILURE_NULL_REFERENCE;
 
-	// char file_buffer[PATN_MAX];
+	// char file_buffer[PATH_MAX];
 	// ncsh_history_file_path(history->history_file_directory, file_buffer);
 
 	FILE* file = fopen(NCSH_HISTORY_FILE, "a");
