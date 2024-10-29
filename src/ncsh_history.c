@@ -9,21 +9,22 @@
 #include <assert.h>
 
 #include "ncsh_history.h"
+#include "eskilib/eskilib_result.h"
 
-enum ncsh_Result ncsh_history_malloc(struct ncsh_History* history) {
+enum eskilib_Result ncsh_history_malloc(struct ncsh_History* history) {
 	assert(history != NULL);
 
 	if (history == NULL)
-		return N_FAILURE_NULL_REFERENCE;
+		return E_FAILURE_NULL_REFERENCE;
 
 	history->history_count = 0;
 	history->file_position = 0;
 	history->history_loaded = false;
 	history->entries = malloc(sizeof(struct eskilib_String) * NCSH_MAX_HISTORY_FILE);
 	if (history->entries == NULL)
-		return N_FAILURE_MALLOC;
+		return E_FAILURE_MALLOC;
 
-	return N_SUCCESS;
+	return E_SUCCESS;
 }
 
 //simple fgets implementation that returns the number of characters read
@@ -50,10 +51,10 @@ void ncsh_history_file_path(char* path, char* destination) {
 	strcat(destination, NCSH_HISTORY_FILE);
 }
 
-enum ncsh_Result ncsh_history_load(struct ncsh_History* history) {
+enum eskilib_Result ncsh_history_load(struct ncsh_History* history) {
 	assert(history != NULL);
 
-	// char file_buffer[PATN_MAX];
+	// char file_buffer[PATH_MAX];
 	// ncsh_history_file_path(history->history_file_directory, file_buffer);
 
 	FILE* file = fopen(NCSH_HISTORY_FILE, "r");
@@ -62,7 +63,7 @@ enum ncsh_Result ncsh_history_load(struct ncsh_History* history) {
 		if (file == NULL)
 		{
 			perror("Could not load or create history file.");
-			return N_FAILURE_FILE_OP;
+			return E_FAILURE_FILE_OP;
 		}
 	}
 
@@ -77,7 +78,7 @@ enum ncsh_Result ncsh_history_load(struct ncsh_History* history) {
 			history->entries[i].length = buffer_length;
 			history->entries[i].value = malloc(sizeof(char) * buffer_length);
 			if (history->entries[i].value == NULL)
-				return N_FAILURE_MALLOC;
+				return E_FAILURE_MALLOC;
 
 			eskilib_string_copy(history->entries[i].value, buffer, buffer_length);
 		}
@@ -88,13 +89,13 @@ enum ncsh_Result ncsh_history_load(struct ncsh_History* history) {
 	fclose(file);
 
 	history->history_loaded = true;
-	return N_SUCCESS;
+	return E_SUCCESS;
 }
 
-enum ncsh_Result ncsh_history_save(struct ncsh_History* history) {
+enum eskilib_Result ncsh_history_save(struct ncsh_History* history) {
 	assert(history != NULL);
 	if (history == NULL || !history->entries[0].value)
-		return N_FAILURE_NULL_REFERENCE;
+		return E_FAILURE_NULL_REFERENCE;
 
 	// char file_buffer[PATN_MAX];
 	// ncsh_history_file_path(history->history_file_directory, file_buffer);
@@ -102,7 +103,7 @@ enum ncsh_Result ncsh_history_save(struct ncsh_History* history) {
 	FILE* file = fopen(NCSH_HISTORY_FILE, "a");
 	if (file == NULL) {
 		fputs("Could not create or open .ncsh_history file.\n", stderr);
-		return N_FAILURE_FILE_OP;
+		return E_FAILURE_FILE_OP;
 	}
 
 	for (uint_fast32_t i = history->file_position == 0 ? 0 : history->file_position - 1;
@@ -111,17 +112,17 @@ enum ncsh_Result ncsh_history_save(struct ncsh_History* history) {
 		if (!fputs(history->entries[i].value, file)) {
 			perror("Error writing to file");
 			fclose(file);
-			return N_FAILURE_FILE_OP;
+			return E_FAILURE_FILE_OP;
 		}
 		if (!fputc('\n', file)) {
 			perror("Error writing to file");
 			fclose(file);
-			return N_FAILURE_FILE_OP;
+			return E_FAILURE_FILE_OP;
 		}
 	}
 
 	fclose(file);
-	return N_SUCCESS;
+	return E_SUCCESS;
 }
 
 void ncsh_history_free(struct ncsh_History* history) {
@@ -134,25 +135,25 @@ void ncsh_history_free(struct ncsh_History* history) {
 	free(history->entries);
 }
 
-enum ncsh_Result ncsh_history_add(char* line, uint_fast32_t length, struct ncsh_History* history) {
+enum eskilib_Result ncsh_history_add(char* line, uint_fast32_t length, struct ncsh_History* history) {
 	assert(history != NULL);
 	assert(line != NULL);
 	assert(length != 0);
 
 	if (history == NULL || line == NULL)
-		return N_FAILURE_NULL_REFERENCE;
+		return E_FAILURE_NULL_REFERENCE;
 	else if (length == 0)
-		return N_ZERO_LENGTH;
+		return E_ZERO_LENGTH;
 	else if (history->history_count + 1 < history->history_count)
-		return N_OVERFLOW_PROTECTION;
+		return E_OVERFLOW_PROTECTION;
 	else if (history->history_count >= NCSH_MAX_HISTORY_FILE)
-		return N_HISTORY_MAX_REACHED;
+		return E_MAX_LIMIT_REACHED;
 
 	history->entries[history->history_count].length = length;
 	history->entries[history->history_count].value = malloc(sizeof(char) * length);
 	eskilib_string_copy(history->entries[history->history_count].value, line, length);
 	++history->history_count;
-	return N_SUCCESS;
+	return E_SUCCESS;
 }
 
 struct eskilib_String ncsh_history_get(uint_fast32_t position, struct ncsh_History* history) {

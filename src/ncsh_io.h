@@ -17,6 +17,7 @@
 #define LEFT_ARROW 'D'
 #define DELETE_PREFIX_KEY 51
 #define DELETE_KEY '~'
+#define TAB_KEY '\t'
 
 //terminal manipulations
 #define MOVE_CURSOR_RIGHT "\033[1C"

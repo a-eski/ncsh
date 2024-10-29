@@ -5,3 +5,7 @@ gcc -std=c2x -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=addres
 gcc -std=c2x -Wall -pedantic-errors -Wformat=2 -fsanitize=address,undefined,leak -g ./src/eskilib/eskilib_string.c ./src/eskilib/eskilib_test.c ./src/eskilib/eskilib_trie.c ./src/eskilib/tests/eskilib_trie_tests.c -o ./bin/eskilib_trie_tests &&
 ./bin/eskilib_trie_tests
 
+
+gcc -std=c2x -Wall -pedantic-errors -Wformat=2 -fsanitize=address,undefined,leak -g ./src/eskilib/eskilib_string.c ./src/eskilib/eskilib_test.c ./src/eskilib/tests/eskilib_string_tests.c -o ./bin/eskilib_string_tests &&
+./bin/eskilib_string_tests
+

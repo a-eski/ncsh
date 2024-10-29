@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
+#include <time.h>
 
 #include "z_directory.h"
 #include "z_database.h"
@@ -100,14 +101,37 @@ enum z_Database_Result z_database_free(struct z_Database* database) {
 	return Z_SUCCESS;
 }
 
-struct eskilib_String* z_database_get_match(const struct eskilib_String* target, struct z_Database* database) {
-	assert(target != NULL);
+struct eskilib_String z_database_get_match(const struct eskilib_String target, struct z_Database* database) {
+	assert(target.value != NULL);
 
-	return NULL;
+	for (uint_fast32_t i = 0; i < database->count; i++) {
+		if (eskilib_string_contains(database->directories[i].path, target)) {
+			return database->directories[i].path;
+		}
+	}
+
+	return eskilib_String_Empty;
 }
 
-enum z_Database_Result z_database_add(const struct eskilib_String* target, struct z_Database* database) {
+enum z_Database_Result z_database_add(const struct eskilib_String target, struct z_Database* database) {
 	database->dirty = true;
+
+	uint_fast32_t length = 0;
+	for (uint_fast32_t i = 0; i < database->count; i++) {
+		length = database->directories[i].path.length > target.length
+			? database->directories[i].path.length
+			: target.length;
+
+		if (eskilib_string_equals(database->directories[i].path.value, target.value, length)) {
+			database->directories[i].rank = 1;
+			database->directories[i].last_accessed = clock();
+		}
+	}
+
+	database->directories[database->count].path = target;
+	++database->directories[database->count].rank;
+	database->directories[database->count].last_accessed = clock();
+	++database->count;
 
 	return Z_SUCCESS;
 }

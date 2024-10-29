@@ -28,6 +28,7 @@ struct ncsh_Autocompletions_Matches {
 struct ncsh_Autocompletions* ncsh_autocompletions_malloc();
 
 void ncsh_autocompletions_free(struct ncsh_Autocompletions* tree);
+void ncsh_autocompletions_free_values(char** autocompletions, uint_fast32_t count);
 
 void ncsh_autocompletions_add(char* string, uint_fast32_t length, struct ncsh_Autocompletions* tree);
 void ncsh_autocompletions_add_string(struct eskilib_String string, struct ncsh_Autocompletions* tree);

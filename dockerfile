@@ -6,14 +6,13 @@ RUN apt update && \
 
 ENV RUBYOPT="-KU -E utf-8:utf-8"
 WORKDIR "/var/lib/gems/2.5.0/gems/ttytest-0.5.0/lib/ttytest"
-# RUN sed 's/def assert_cursor_position(x:, y:)/def assert_cursor_position(x, y)/' \
-#   matchers.rb > \
-#   matchers.rb.changed && \
-#   mv matchers.rb.changed matchers.rb
-# RUN touch /home/very_long_filename_to_test_shell_behavior
-# RUN touch /home/short_file
-# RUN touch /bin/very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_long_filename_to_test_shell_behavior
-# RUN touch ~/.ncshrc
+RUN sed 's/def assert_cursor_position(x:, y:)/def assert_cursor_position(x, y)/' \
+  matchers.rb > \
+  matchers.rb.changed && \
+  mv matchers.rb.changed matchers.rb
+RUN touch /home/very_long_filename_to_test_shell_behavior
+RUN touch /home/short_file
+RUN touch /bin/very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_very_long_filename_to_test_shell_behavior
 
 WORKDIR "/ncsh"
 ENTRYPOINT [ "/bin/bash", "-l", "-c" ]
