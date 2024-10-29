@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <termios.h>
 
 #include "ncsh_terminal.h"
 #include "eskilib/eskilib_colors.h"
@@ -39,3 +40,12 @@ void ncsh_terminal_init(void) {
 	}
 }
 
+void ncsh_terminal_size() {}
+
+void ncsh_terminal_move(int x, int y) {
+	printf("\033[%d;%dH", y, x);
+}
+
+struct ncsh_Coordinates ncsh_terminal_position() {
+	return (struct ncsh_Coordinates) { .x = 0, .y = 0 };
+}

@@ -27,6 +27,14 @@ void ncsh_autocompletions_free(struct ncsh_Autocompletions* tree) {
 	free(tree);
 }
 
+void ncsh_autocompletions_free_values(char **autocompletions, uint_fast32_t count) {
+	for (uint_fast32_t i = 0; i < count; i++) {
+		if (autocompletions[i] != NULL) {
+			free(autocompletions[i]);
+		}
+	}
+}
+
 void ncsh_autocompletions_add(char* string, uint_fast32_t length, struct ncsh_Autocompletions* tree) {
 	assert(string != NULL);
 	assert(length > 0);

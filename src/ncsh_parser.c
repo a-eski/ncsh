@@ -67,12 +67,25 @@ enum ncsh_Ops ncsh_op_get(char line[], uint_fast32_t length) {
 }
 
 struct ncsh_Args ncsh_parse(char line[], uint_fast32_t length, struct ncsh_Args args) {
+	if (line == NULL || args.values == NULL || args.ops == NULL) {
+		args.max_line_length = 0;
+		args.count = 0;
+		return args;
+	}
+
+	if (length == 0 || length > ncsh_TOKEN_BUFFER_SIZE) {
+		args.max_line_length = 0;
+		args.count = 0;
+		return args;
+	}
+
 	char buffer[ncsh_TOKEN_BUFFER_SIZE];
 	uint_fast32_t buffer_position = 0;
 	uint_fast32_t double_quotes_count = 0;
 
 	for (uint_fast32_t line_position = 0; line_position < length + 1; line_position++) {
-		if (line_position == length || buffer_position == ncsh_TOKEN_BUFFER_SIZE - 1) {
+		if (line_position == length || line_position == ncsh_TOKEN_BUFFER_SIZE - 1 ||
+			buffer_position == ncsh_TOKEN_BUFFER_SIZE - 1 || args.count == ncsh_TOKEN_BUFFER_SIZE - 1) {
 			args.values[args.count] = NULL;
 			break;
 		}

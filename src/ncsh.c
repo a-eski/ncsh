@@ -12,7 +12,6 @@
 
 #include "ncsh_args.h"
 #include "ncsh_terminal.h"
-#include "ncsh_types.h"
 #include "ncsh_vm.h"
 #include "ncsh_history.h"
 #include "ncsh_parser.h"
@@ -114,12 +113,10 @@ void ncsh_autocompletions(char buffer[],
 			char** autocompletions_ref,
 			uint_fast32_t* autocompletions_matches_count,
 			struct ncsh_Autocompletions* autocompletions_tree) {
-	// free autocompletions from last iteration
-	for (uint_fast32_t i = 0; i < *autocompletions_matches_count; i++) {
-		if (autocompletions_ref[i] != NULL) {
-			free(autocompletions_ref[i]);
-		}
-	}
+	if (buffer[0] == '\0' || buf_position == 0)
+		return;
+
+	ncsh_autocompletions_free_values(autocompletions_ref, *autocompletions_matches_count);
 
 	// get autocompletions for current iteration
 	char* autocompletion_matches[NCSH_MAX_MATCHES] = {0};
@@ -145,6 +142,24 @@ void ncsh_autocompletions(char buffer[],
 	// printf("\nbuffer %s, buf_positon %ld", buffer, buf_position + 1);
 }
 
+void ncsh_tab(char buffer[],
+		uint_fast32_t buf_position,
+		char** autocompletions_ref,
+		uint_fast32_t* autocompletions_matches_count,
+		struct ncsh_Autocompletions* autocompletions_tree) {
+
+	ncsh_autocompletions(buffer, buf_position, autocompletions_ref, autocompletions_matches_count, autocompletions_tree);
+
+	ncsh_write(SAVE_CURSOR_POSITION, SAVE_CURSOR_POSITION_LENGTH);
+	putchar('\n');
+	ncsh_write(ERASE_CURRENT_LINE, ERASE_CURRENT_LINE_LENGTH);
+	for (uint_fast32_t i = 0; i < *autocompletions_matches_count; i++) {
+		printf("%s%s    ", buffer, autocompletions_ref[i]);
+	}
+	ncsh_write(RESTORE_CURSOR_POSITION, RESTORE_CURSOR_POSITION_LENGTH);
+	fflush(stdout);
+}
+
 int ncsh(void) {
 	clock_t start = clock();
 
@@ -166,12 +181,12 @@ int ncsh(void) {
 	if (!did_malloc_succeed)
 		return EXIT_FAILURE;
 
-	enum ncsh_Result result; // used to track operation results
+	enum eskilib_Result result; // used to track operation results
 	uint_fast32_t history_position = 0; // current position in history for the current loop, reset every loop
 	struct eskilib_String history_entry; // used to hold return value when cycling through history
 	struct ncsh_History history;
 	result = ncsh_history_malloc(&history);
-	if (result != N_SUCCESS) {
+	if (result != E_SUCCESS) {
 		perror(RED "Error when allocating memory for history" RESET);
 		fflush(stdout);
 		ncsh_args_free(args);
@@ -180,7 +195,7 @@ int ncsh(void) {
 	// history.history_file_directory = getenv("HOME");
 	// getcwd(history.history_file_directory, PATH_MAX);
 	result = ncsh_history_load(&history);
-	if (result != N_SUCCESS) {
+	if (result != E_SUCCESS) {
 		perror(RED "Error when loading data from history file into memory" RESET);
 		fflush(stdout);
 		ncsh_args_free(args);
@@ -344,6 +359,11 @@ int ncsh(void) {
 				}
 			}
 		}
+		else if (character == TAB_KEY) {
+			reprint_prompt = false;
+
+			ncsh_tab(buffer, buf_position, autocompletions_ref, &autocompletions_matches_count, autocompletions_tree);
+		}
 		else if (character == '\n' || character == '\r') {
 			putchar('\n');
 			fflush(stdout);
@@ -431,8 +451,6 @@ int ncsh(void) {
 				if (buf_position == max_buf_position)
 					buffer[buf_position] = '\0';
 			}
-
-			ncsh_autocompletions(buffer, buf_position, autocompletions_ref, &autocompletions_matches_count, autocompletions_tree);
 		}
 	}
 
@@ -441,6 +459,8 @@ int ncsh(void) {
 	ncsh_history_save(&history);
 	ncsh_history_free(&history);
 
+
+	ncsh_autocompletions_free_values(autocompletions_ref, autocompletions_matches_count);
 	free(autocompletions_ref);
 	ncsh_autocompletions_free(autocompletions_tree);
 

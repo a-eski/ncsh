@@ -441,4 +441,3 @@ int main(void) {
 }
 #endif /* ifndef ncsh_TEST_ALL */
 
-

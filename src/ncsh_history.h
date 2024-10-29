@@ -7,7 +7,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "ncsh_types.h"
+#include "eskilib/eskilib_result.h"
 #include "eskilib/eskilib_string.h"
 
 #ifndef NCSH_TEST_HISTORY
@@ -26,17 +26,17 @@ struct ncsh_History {
 	struct eskilib_String* entries;
 };
 
-enum ncsh_Result ncsh_history_malloc(struct ncsh_History* history);
+enum eskilib_Result ncsh_history_malloc(struct ncsh_History* history);
 
-enum ncsh_Result ncsh_history_load(struct ncsh_History* history);
+enum eskilib_Result ncsh_history_load(struct ncsh_History* history);
 
-enum ncsh_Result ncsh_history_save(struct ncsh_History* history);
+enum eskilib_Result ncsh_history_save(struct ncsh_History* history);
 
 void ncsh_history_clean(struct ncsh_History* history);
 
 void ncsh_history_free(struct ncsh_History* history);
 
-enum ncsh_Result ncsh_history_add(char* line, uint_fast32_t length, struct ncsh_History* history);
+enum eskilib_Result ncsh_history_add(char* line, uint_fast32_t length, struct ncsh_History* history);
 
 struct eskilib_String ncsh_history_get(uint_fast32_t position, struct ncsh_History* history);
 

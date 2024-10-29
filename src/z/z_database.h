@@ -35,9 +35,9 @@ enum z_Database_Result z_database_clean(struct z_Database* database);
 enum z_Database_Result z_database_free(struct z_Database* database);
 
 // adds to database if it does not exist or increases its rank ifi it does
-enum z_Database_Result z_database_add(const struct eskilib_String* string, struct z_Database* database);
+enum z_Database_Result z_database_add(const struct eskilib_String string, struct z_Database* database);
 
-struct eskilib_String* z_database_get_match(const struct eskilib_String* target, struct z_Database* database);
+struct eskilib_String z_database_get_match(const struct eskilib_String target, struct z_Database* database);
 
 #endif // !z_database_h
 
