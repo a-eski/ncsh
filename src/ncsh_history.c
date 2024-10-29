@@ -10,6 +10,8 @@
 
 #include "ncsh_history.h"
 #include "eskilib/eskilib_result.h"
+#include "eskilib/eskilib_file.h"
+#include "eskilib/eskilib_string.h"
 
 enum eskilib_Result ncsh_history_malloc(struct ncsh_History* history) {
 	assert(history != NULL);
@@ -25,25 +27,6 @@ enum eskilib_Result ncsh_history_malloc(struct ncsh_History* history) {
 		return E_FAILURE_MALLOC;
 
 	return E_SUCCESS;
-}
-
-//simple fgets implementation that returns the number of characters read
-int_fast32_t ncsh_fgets(char* input_buffer, int size_of_input_buffer, FILE* file_pointer) {
-	register int character;
-	register char* buffer = input_buffer;
-	int_fast32_t characters_read = 0;
-
-	while(--size_of_input_buffer > 0 && (character = getc(file_pointer)) != EOF) {
-		++characters_read;
-
-		if((*buffer = character) == '\n')
-			break;
-		else
-			++buffer;
-	}
-
-	*buffer = '\0';
-	return characters_read;
 }
 
 void ncsh_history_file_path(char* path, char* destination) {
@@ -71,7 +54,7 @@ enum eskilib_Result ncsh_history_load(struct ncsh_History* history) {
 	int_fast32_t buffer_length = 0;
 
 	for (uint_fast32_t i = 0;
-		(buffer_length = ncsh_fgets(buffer, sizeof(buffer), file)) != EOF && i < NCSH_MAX_HISTORY_FILE;
+		(buffer_length = eskilib_fgets(buffer, sizeof(buffer), file)) != EOF && i < NCSH_MAX_HISTORY_FILE;
 		i++) {
 		if (buffer_length > 0) {
 			++history->file_position;
@@ -157,24 +140,29 @@ enum eskilib_Result ncsh_history_add(char* line, uint_fast32_t length, struct nc
 }
 
 struct eskilib_String ncsh_history_get(uint_fast32_t position, struct ncsh_History* history) {
-	const struct eskilib_String empty_string = { .length = 0, .value = NULL };
-
 	assert(history != NULL);
 
-	if (history == NULL)
-		return empty_string;
-	else if (history->entries == NULL)
-		return  empty_string;
-	else if (!history->history_loaded)
-		return empty_string;
-	else if (history->history_count == 0 && position == 0)
-		return empty_string;
-	else if (position >= history->history_count)
-		return empty_string;
-	else if (position > NCSH_MAX_HISTORY_FILE)
+	if (history == NULL) {
+		return eskilib_String_Empty;
+	}
+	else if (history->entries == NULL) {
+		return eskilib_String_Empty;
+	}
+	else if (!history->history_loaded) {
+		return eskilib_String_Empty;
+	}
+	else if (history->history_count == 0 && position == 0) {
+		return eskilib_String_Empty;
+	}
+	else if (position >= history->history_count) {
+		return eskilib_String_Empty;
+	}
+	else if (position > NCSH_MAX_HISTORY_FILE) {
 		return history->entries[NCSH_MAX_HISTORY_FILE];
-	else
+	}
+	else {
 		return history->entries[history->history_count - position - 1];
+	}
 }
 
 uint_fast32_t ncsh_history_command(struct ncsh_History* history) {

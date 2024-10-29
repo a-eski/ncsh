@@ -6,6 +6,18 @@
 #include "../eskilib/eskilib_test.h"
 #include "../eskilib/eskilib_string.h"
 
+void ncsh_autocompletions_add_length_mismatch_test(void) {
+	struct ncsh_Autocompletions* tree = ncsh_autocompletions_malloc();
+	eskilib_assert(tree != NULL);
+
+	struct eskilib_String string = { .value = "and", .length = 3 };
+	ncsh_autocompletions_add(string.value, string.length, tree);
+
+	//not crashing is a test pass here
+
+	ncsh_autocompletions_free(tree);
+}
+
 void ncsh_autocompletions_add_test(void) {
 	struct ncsh_Autocompletions* tree = ncsh_autocompletions_malloc();
 	eskilib_assert(tree != NULL);
@@ -415,6 +427,7 @@ void ncsh_autocompletions_matches_multiple_simulation_test(void) {
 }
 
 void ncsh_autocompletions_tests(void) {
+	eskilib_test_run("ncsh_autocompletions_add_length_mismatch_test", ncsh_autocompletions_add_length_mismatch_test);
 	eskilib_test_run("ncsh_autocompletions_add_test", ncsh_autocompletions_add_test);
 	eskilib_test_run("ncsh_autocompletions_add_duplicate_test", ncsh_autocompletions_add_duplicate_test);
 	eskilib_test_run("ncsh_autocompletions_add_multiple_unrelated_test", ncsh_autocompletions_add_multiple_unrelated_test);

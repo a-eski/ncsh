@@ -9,7 +9,7 @@ endif
 std = -std=c2x
 debug_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined,leak
 release_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -O3 -DNDEBUG
-objects = obj/main.o obj/ncsh.o obj/ncsh_vm.o obj/ncsh_terminal.o obj/eskilib_string.o obj/ncsh_debug.o obj/ncsh_args.o obj/ncsh_parser.o obj/ncsh_builtins.o obj/ncsh_io.o obj/ncsh_history.o obj/ncsh_autocompletions.o
+objects = obj/main.o obj/ncsh.o obj/ncsh_vm.o obj/ncsh_terminal.o obj/eskilib_string.o obj/eskilib_file.o obj/ncsh_debug.o obj/ncsh_args.o obj/ncsh_parser.o obj/ncsh_builtins.o obj/ncsh_io.o obj/ncsh_history.o obj/ncsh_autocompletions.o
 target = bin/ncsh
 
 RELEASE ?= 0
@@ -31,7 +31,7 @@ obj/ncsh_vm.o : src/ncsh_vm.h src/eskilib/eskilib_string.h src/eskilib/eskilib_c
 	$(cc_with_flags) -c src/ncsh_vm.c -o obj/ncsh_vm.o
 obj/ncsh_builtins.o : src/ncsh_builtins.h src/ncsh_args.h src/eskilib/eskilib_string.h
 	$(cc_with_flags) -c src/ncsh_builtins.c -o obj/ncsh_builtins.o
-obj/ncsh_history.o : src/ncsh_history.h src/eskilib/eskilib_string.h
+obj/ncsh_history.o : src/ncsh_history.h src/eskilib/eskilib_string.h src/eskilib/eskilib_file.h
 	$(cc_with_flags) -c src/ncsh_history.c -o obj/ncsh_history.o
 obj/ncsh_autocompletions.o : src/ncsh_autocompletions.h src/eskilib/eskilib_string.h
 	$(cc_with_flags) -c src/ncsh_autocompletions.c -o obj/ncsh_autocompletions.o
@@ -45,6 +45,8 @@ obj/ncsh_io.o : src/ncsh_io.c src/ncsh_io.h src/eskilib/eskilib_colors.h
 	$(cc_with_flags) -c src/ncsh_io.c -o obj/ncsh_io.o
 obj/eskilib_string.o : src/eskilib/eskilib_string.c src/eskilib/eskilib_string.h
 	$(cc_with_flags) -c src/eskilib/eskilib_string.c -o obj/eskilib_string.o
+obj/eskilib_file.o : src/eskilib/eskilib_file.c src/eskilib/eskilib_file.h
+	$(cc_with_flags) -c src/eskilib/eskilib_file.c -o obj/eskilib_file.o
 obj/ncsh_debug.o : src/ncsh_debug.c src/ncsh_debug.h src/ncsh_args.h
 	$(cc_with_flags) -c src/ncsh_debug.c -o obj/ncsh_debug.o
 

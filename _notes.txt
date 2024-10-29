@@ -18,3 +18,7 @@ windows
 #endif // linux
 
 //CreateProcess
+
+fuzzing
+https://llvm.org/docs/LibFuzzer.html#corpus
+https://github.com/google/fuzzing/blob/master/tutorial/libFuzzerTutorial.md#seed-corpus

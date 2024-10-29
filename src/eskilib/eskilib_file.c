@@ -1,5 +1,4 @@
-#include <stdint.h>
-#include <stdio.h>
+#include "eskilib_file.h"
 
 //simple fgets implementation that returns the number of characters read
 int_fast32_t eskilib_fgets(char* input_buffer, int size_of_input_buffer, FILE* file_pointer) {
