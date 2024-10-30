@@ -1,6 +1,5 @@
 // Copyright (c) ncsh by Alex Eski 2024
 
-#include <bits/posix2_lim.h>
 #include <linux/limits.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -63,7 +62,7 @@ void ncsh_backspace(char* buffer, uint_fast32_t* buf_position, uint_fast32_t* ma
 	else {
 		ncsh_write(BACKSPACE_STRING, BACKSPACE_STRING_LENGTH);
 		--*buf_position;
-		buffer[*buf_position] = 0;
+		buffer[*buf_position] = '\0';
 	}
 }
 
@@ -400,6 +399,8 @@ int ncsh(void) {
 			}
 
 			if (buf_position < max_buf_position && buffer[buf_position]) {
+				buf_start = buf_position;
+
 				if (buf_position == 0) {
 					temp_character = buffer[0];
 					buffer[0] = character;
@@ -408,7 +409,6 @@ int ncsh(void) {
 					++buf_position;
 				}
 
-				buf_start = buf_position;
 
 				for (uint_fast32_t i = buf_position - 1; i < max_buf_position && i < NCSH_MAX_INPUT; i++) {
 					temp_character = character;
@@ -427,7 +427,7 @@ int ncsh(void) {
 
 				fflush(stdout);
 
-				while (buf_position > buf_start) {
+				while (buf_position > buf_start + 1) {
 					ncsh_write(MOVE_CURSOR_LEFT, MOVE_CURSOR_LEFT_LENGTH);
 					--buf_position;
 				}
