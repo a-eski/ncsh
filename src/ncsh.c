@@ -1,5 +1,6 @@
 // Copyright (c) ncsh by Alex Eski 2024
 
+#include <bits/posix2_lim.h>
 #include <linux/limits.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -28,24 +29,6 @@
 
 #define NCSH_MAX_INPUT 528
 #define NCSH_MAX_MATCHES 32
-
-// struct ncsh_Loop {
-// 	char character;
-// 	char buffer[NCSH_MAX_INPUT];
-// 	uint_fast32_t buf_start;
-// 	uint_fast32_t buf_position;
-// 	uint_fast32_t max_buf_position;
-// 	enum ncsh_Hotkey key;
-//
-// 	bool reprint_prompt;
-// 	struct ncsh_Directory prompt_info;
-//
-// 	uint_fast32_t command_result;
-// 	struct ncsh_Args args;
-//
-// 	uint_fast32_t history_position;
-// 	struct eskilib_String history;
-// };
 
 void ncsh_backspace(char* buffer, uint_fast32_t* buf_position, uint_fast32_t* max_buf_position) {
 	uint_fast32_t buf_start;
@@ -416,14 +399,23 @@ int ncsh(void) {
 				continue;
 			}
 
-			if (buf_position < max_buf_position && buf_position > 0 && buffer[buf_position + 1]) {
+			if (buf_position < max_buf_position && buffer[buf_position]) {
+				if (buf_position == 0) {
+					temp_character = buffer[0];
+					buffer[0] = character;
+					putchar(character);
+					character = temp_character;
+					++buf_position;
+				}
+
 				buf_start = buf_position;
 
-				for (uint_fast32_t i = buf_position - 1; i < max_buf_position; i++) {
+				for (uint_fast32_t i = buf_position - 1; i < max_buf_position && i < NCSH_MAX_INPUT; i++) {
 					temp_character = character;
 					character = buffer[i + 1];
 					buffer[i + 1] = temp_character;
-					putchar(buffer[i + 1]);
+					putchar(temp_character);
+
 					++buf_position;
 				}
 
@@ -432,10 +424,10 @@ int ncsh(void) {
 
 				if (buf_position == max_buf_position)
 					buffer[buf_position] = '\0';
+
 				fflush(stdout);
 
-				while (buf_position > buf_start + 1)
-				{
+				while (buf_position > buf_start) {
 					ncsh_write(MOVE_CURSOR_LEFT, MOVE_CURSOR_LEFT_LENGTH);
 					--buf_position;
 				}
