@@ -28,7 +28,7 @@ bool ncsh_is_exit_command(struct ncsh_Args args) {
 }
 
 uint_fast32_t ncsh_echo_command(struct ncsh_Args args) {
-	for (uint_fast32_t i = 1; i < args.count; i++)
+	for (uint_fast32_t i = 1; i < args.count; ++i)
 		printf("%s ", args.values[i]);
 
 	if (args.count > 0)

@@ -15,7 +15,7 @@ void ncsh_debug_args(struct ncsh_Args args) {
 	printf("args.count: %lu\n", args.count);
 	printf("args.max_line_length: %lu\n", args.max_line_length);
 
-	for (uint_fast32_t i = 0; i < args.count; i++) {
+	for (uint_fast32_t i = 0; i < args.count; ++i) {
 		printf("args.values[%lu] %s\n", i, args.values[i]);
 		printf("args.ops[%lu] %d\n", i, args.ops[i]);
 	}

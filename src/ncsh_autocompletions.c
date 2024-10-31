@@ -20,7 +20,7 @@ void ncsh_autocompletions_free(struct ncsh_Autocompletions* tree) {
 	if (tree == NULL)
 		return;
 
-	for (uint_fast32_t i = 0; i < NCSH_LETTERS; i++) {
+	for (uint_fast32_t i = 0; i < NCSH_LETTERS; ++i) {
 		if (tree->nodes[i] != NULL)
 			ncsh_autocompletions_free(tree->nodes[i]);
 		else
@@ -34,7 +34,7 @@ void ncsh_autocompletions_free_values(char **autocompletions, uint_fast32_t coun
 	if (autocompletions == NULL)
 		return;
 
-	for (uint_fast32_t i = 0; i < count; i++) {
+	for (uint_fast32_t i = 0; i < count; ++i) {
 		if (autocompletions[i] != NULL) {
 			free(autocompletions[i]);
 		}
@@ -50,7 +50,7 @@ void ncsh_autocompletions_add(char* string, uint_fast32_t length, struct ncsh_Au
 
 	int index = 0;
 
-	for (uint_fast32_t i = 0; i < length - 1; i++) { //string.length - 1 because it includes null terminator
+	for (uint_fast32_t i = 0; i < length - 1; ++i) { //string.length - 1 because it includes null terminator
 		index = (int)string[i] - ' ';
 		if (index < 32 || index > 127) //found unsupported character
 			break;
@@ -76,7 +76,7 @@ void ncsh_autocompletions_add_string(struct eskilib_String string, struct ncsh_A
 
 	int index = 0;
 
-	for (uint_fast32_t i = 0; i < string.length - 1; i++) { //string.length - 1 because it includes null terminator
+	for (uint_fast32_t i = 0; i < string.length - 1; ++i) { //string.length - 1 because it includes null terminator
 		index = (int)string.value[i] - ' ';
 		if (tree->nodes[index] == NULL) {
 			tree->nodes[index] = calloc(1, sizeof(struct ncsh_Autocompletions));
@@ -97,7 +97,7 @@ void ncsh_autocompletions_add_multiple(struct eskilib_String* strings, uint_fast
 	if (strings == NULL || count == 0 || tree == NULL)
 		return;
 
-	for (uint_fast32_t i = 0; i < count; i++) {
+	for (uint_fast32_t i = 0; i < count; ++i) {
 		ncsh_autocompletions_add_string(strings[i], tree);
 	}
 }
@@ -111,7 +111,7 @@ struct ncsh_Autocompletions* ncsh_autocompletions_search(char* string, uint_fast
 
 	int index = 0;
 
-	for (uint_fast32_t i = 0; i < length - 1; i++) {
+	for (uint_fast32_t i = 0; i < length - 1; ++i) {
 		index = (int)string[i] - ' ';
 		if (tree->nodes[index] == NULL)
 			return NULL;
@@ -134,7 +134,7 @@ struct ncsh_Autocompletions* ncsh_autocompletions_search_string(struct eskilib_S
 
 	int index = 0;
 
-	for (uint_fast32_t i = 0; i < string.length - 1; i++) {
+	for (uint_fast32_t i = 0; i < string.length - 1; ++i) {
 		index = (int)string.value[i] - ' ';
 		if (tree->nodes[index] == NULL)
 			return NULL;
@@ -153,7 +153,7 @@ void ncsh_autocompletions_match(char* matches[],
 				uint_fast32_t* matches_position,
 				const uint_fast32_t max_match_length,
 				struct ncsh_Autocompletions* tree) {
-	for (uint_fast32_t i = 0; i < NCSH_LETTERS; i++) {
+	for (uint_fast32_t i = 0; i < NCSH_LETTERS; ++i) {
 		if (tree->nodes[i] != NULL) {
 			if (matches[*matches_position] == NULL) {
 				matches[*matches_position] = malloc(sizeof(char) * max_match_length);

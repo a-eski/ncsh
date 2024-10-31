@@ -1,12 +1,18 @@
 // Copyright (c) ncsh by Alex Eski 2024
 
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <termios.h>
+#include <sys/ioctl.h>
 
 #include "ncsh_terminal.h"
+#include "ncsh_io.h"
 #include "eskilib/eskilib_colors.h"
+
+#define TERMINAL_RETURN 'R'
+#define BUFFER_LENGTH 30
 
 static struct termios terminal;
 static struct termios original_terminal;
@@ -40,12 +46,44 @@ void ncsh_terminal_init(void) {
 	}
 }
 
-void ncsh_terminal_size() {}
+struct ncsh_Coordinates ncsh_terminal_size() {
+	struct winsize w;
+	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+	return (struct ncsh_Coordinates) { .x = w.ws_col, .y = w.ws_row };
+}
 
 void ncsh_terminal_move(int x, int y) {
 	printf("\033[%d;%dH", y, x);
 }
 
 struct ncsh_Coordinates ncsh_terminal_position() {
-	return (struct ncsh_Coordinates) { .x = 0, .y = 0 };
+	char buffer[BUFFER_LENGTH] = {0};
+	int_fast32_t i;
+	int_fast32_t power = 0;
+	char character;
+	struct ncsh_Coordinates cursor_position = {0};
+
+	ncsh_write(GET_CURSOR_POSITION, GET_CURSOR_POSITION_LENGTH);
+
+	for (i = 0; i < BUFFER_LENGTH && character != TERMINAL_RETURN; ++i) {
+		if (read(STDIN_FILENO, &character, 1) == -1)
+		{
+			perror("ncsh: Could not get cursor position.");
+			return cursor_position;
+		}
+		buffer[i] = character;
+	}
+
+	if (i < 2 || i == BUFFER_LENGTH - 1)
+	{
+		return cursor_position;
+	}
+
+	for (i -= 2, power = 1; buffer[i] != ';'; i--, power *= 10)
+		cursor_position.x += (buffer[i] - '0') * power;
+
+	for (i--, power = 1; buffer[i] != '['; i--, power *= 10)
+		cursor_position.y += (buffer[i] - '0') * power;
+
+	return cursor_position;
 }
