@@ -184,7 +184,7 @@ uint_fast32_t ncsh_vm(struct ncsh_Args args) {
 	uint_fast32_t args_position = 0;
 	uint_fast32_t buffer_position = 0;
 
-	for (uint_fast32_t l = 0; l < args.count; l++) {
+	for (uint_fast32_t l = 0; l < args.count; ++l) {
 		if (args.ops[l] == OP_PIPE) {
 			number_of_commands++;
 		}

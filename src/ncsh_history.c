@@ -55,7 +55,7 @@ enum eskilib_Result ncsh_history_load(struct ncsh_History* history) {
 
 	for (uint_fast32_t i = 0;
 		(buffer_length = eskilib_fgets(buffer, sizeof(buffer), file)) != EOF && i < NCSH_MAX_HISTORY_FILE;
-		i++) {
+		++i) {
 		if (buffer_length > 0) {
 			++history->file_position;
 			history->entries[i].length = buffer_length;
@@ -91,7 +91,7 @@ enum eskilib_Result ncsh_history_save(struct ncsh_History* history) {
 
 	for (uint_fast32_t i = history->file_position == 0 ? 0 : history->file_position - 1;
 		i < history->history_count;
-		i++) {
+		++i) {
 		if (!fputs(history->entries[i].value, file)) {
 			perror("Error writing to file");
 			fclose(file);
@@ -111,7 +111,7 @@ enum eskilib_Result ncsh_history_save(struct ncsh_History* history) {
 void ncsh_history_free(struct ncsh_History* history) {
 	assert(history != NULL);
 
-	for (uint_fast32_t i = 0; i < history->history_count; i++) {
+	for (uint_fast32_t i = 0; i < history->history_count; ++i) {
 		free(history->entries[i].value);
 	}
 
@@ -168,7 +168,7 @@ struct eskilib_String ncsh_history_get(uint_fast32_t position, struct ncsh_Histo
 uint_fast32_t ncsh_history_command(struct ncsh_History* history) {
 	assert(history != NULL);
 
-	for (uint_fast32_t i = 0; i < history->history_count; i++) {
+	for (uint_fast32_t i = 0; i < history->history_count; ++i) {
 		printf("%lu %s\n", i + 1, history->entries[i].value);
 	}
 	return 1;

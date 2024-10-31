@@ -32,14 +32,17 @@
 void ncsh_backspace(char* buffer, uint_fast32_t* buf_position, uint_fast32_t* max_buf_position) {
 	uint_fast32_t buf_start;
 
-	if (*buf_position > 0 && buffer[*buf_position]) {
+	if (*buf_position == 0) {
+		return;
+	}
+	else if (buffer[*buf_position]) {
 		--*buf_position;
 		--*max_buf_position;
 
 		ncsh_write(BACKSPACE_STRING ERASE_CURRENT_LINE, BACKSPACE_STRING_LENGTH + ERASE_CURRENT_LINE_LENGTH);
 
 		buf_start = *buf_position;
-		for (uint_fast32_t i = *buf_position; buffer[i]; i++) {
+		for (uint_fast32_t i = *buf_position; buffer[i]; ++i) {
 			buffer[i] = buffer[i + 1];
 		}
 
@@ -66,25 +69,23 @@ void ncsh_backspace(char* buffer, uint_fast32_t* buf_position, uint_fast32_t* ma
 	}
 }
 
-void ncsh_delete(char* buffer, uint_fast32_t* buf_position) {
+void ncsh_delete(char* buffer, uint_fast32_t* buf_position, uint_fast32_t* max_buf_position) {
 	ncsh_write(DELETE_STRING ERASE_CURRENT_LINE, DELETE_STRING_LENGTH + ERASE_CURRENT_LINE_LENGTH);
 
 	uint_fast32_t buf_start = *buf_position;
-	for (uint_fast32_t i = *buf_position; buffer[i]; i++)
+	for (uint_fast32_t i = *buf_position; i < *max_buf_position && buffer[i]; ++i)
 		buffer[i] = buffer[i + 1];
 
-	while (buffer[*buf_position]) {
-		putchar(buffer[*buf_position]);
+	--*max_buf_position;
+
+	for (uint_fast32_t i = *buf_position; i < *max_buf_position && buffer[*buf_position]; ++i) {
+		putchar(buffer[i]);
 		++*buf_position;
 	}
 
 	fflush(stdout);
 
-	while (*buf_position > buf_start) {
-		if (*buf_position == 0 || !buffer[*buf_position - 1]) {
-			break;
-		}
-
+	while (*buf_position > buf_start && *buf_position != 0 && buffer[*buf_position - 1]) {
 		ncsh_write(MOVE_CURSOR_LEFT, MOVE_CURSOR_LEFT_LENGTH);
 		--*buf_position;
 	}
@@ -106,7 +107,7 @@ void ncsh_autocompletions(char buffer[],
 	if (autocompletions_matches_count == 0)
 		return;
 
-	for (uint_fast32_t i = 0; i < *autocompletions_matches_count; i++) {
+	for (uint_fast32_t i = 0; i < *autocompletions_matches_count; ++i) {
 		autocompletions_ref[i] = autocompletion_matches[i];
 	}
 
@@ -115,7 +116,7 @@ void ncsh_autocompletions(char buffer[],
 
 	/*buf_start = buf_position;
 	autocompletions_ref_pos = buf_position + 1;
-	for (uint_fast32_t i = 0; autocompletion_matches[0][i]; i++)
+	for (uint_fast32_t i = 0; autocompletion_matches[0][i]; ++i)
 	{
 		buffer[buf_position + 1 + i] = autocompletion_matches[0][i];
 		putchar(autocompletion_matches[0][i]);
@@ -135,7 +136,7 @@ void ncsh_tab(char buffer[],
 	ncsh_write(SAVE_CURSOR_POSITION, SAVE_CURSOR_POSITION_LENGTH);
 	putchar('\n');
 	ncsh_write(ERASE_CURRENT_LINE, ERASE_CURRENT_LINE_LENGTH);
-	for (uint_fast32_t i = 0; i < *autocompletions_matches_count; i++) {
+	for (uint_fast32_t i = 0; i < *autocompletions_matches_count; ++i) {
 		printf("%s%s    ", buffer, autocompletions_ref[i]);
 	}
 	ncsh_write(RESTORE_CURSOR_POSITION, RESTORE_CURSOR_POSITION_LENGTH);
@@ -330,7 +331,7 @@ int ncsh(void) {
 
 						reprint_prompt = false;
 
-						ncsh_delete(buffer, &buf_position);
+						ncsh_delete(buffer, &buf_position, &max_buf_position);
 
 						break;
 					}
@@ -409,8 +410,7 @@ int ncsh(void) {
 					++buf_position;
 				}
 
-
-				for (uint_fast32_t i = buf_position - 1; i < max_buf_position && i < NCSH_MAX_INPUT; i++) {
+				for (uint_fast32_t i = buf_position - 1; i < max_buf_position && i < NCSH_MAX_INPUT; ++i) {
 					temp_character = character;
 					character = buffer[i + 1];
 					buffer[i + 1] = temp_character;
@@ -450,7 +450,6 @@ int ncsh(void) {
 
 	ncsh_history_save(&history);
 	ncsh_history_free(&history);
-
 
 	ncsh_autocompletions_free_values(autocompletions_ref, autocompletions_matches_count);
 	free(autocompletions_ref);

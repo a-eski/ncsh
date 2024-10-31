@@ -50,10 +50,36 @@ obj/eskilib_file.o : src/eskilib/eskilib_file.c src/eskilib/eskilib_file.h
 obj/ncsh_debug.o : src/ncsh_debug.c src/ncsh_debug.h src/ncsh_args.h
 	$(cc_with_flags) -c src/ncsh_debug.c -o obj/ncsh_debug.o
 
+run :
+	make
+	./bin/ncsh
+
+release :
+	make clean
+	make RELEASE=1
+	./bin/ncsh
+
+runnew :
+	make clean
+	make
+	./bin/ncsh
+
 check :
 	chmod +x ./tests_harness.sh
 	chmod +x ./tests.sh
 	./tests_harness.sh
+
+fuzz_history :
+	clang -std=c2x -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined,fuzzer -O3 -DNDEBUG ./src/tests/ncsh_history_fuzzing.c ./src/ncsh_history.c ./src/eskilib/eskilib_string.c ./src/eskilib/eskilib_file.c
+	./a.out NCSH_HISTORY_CORPUS/ -detect_leaks=0 -rss_limit_mb=4096
+
+fuzz_autocompletions :
+	clang -std=c2x -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined,fuzzer -O3 -DNDEBUG ./src/tests/ncsh_autocompletions_fuzzing.c ./src/ncsh_autocompletions.c ./src/eskilib/eskilib_string.c
+	./a.out NCSH_AUTOCOMPLETIONS_CORPUS/ -detect_leaks=0 -rss_limit_mb=4096
+
+fuzz_parser :
+	clang -std=c2x -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined,fuzzer -O3 -DNDEBUG ./src/tests/ncsh_parser_fuzzing.c ./src/ncsh_parser.c ./src/eskilib/eskilib_string.c ./src/ncsh_args.c
+	./a.out NCSH_PARSER_CORPUS/ -detect_leaks=0 -rss_limit_mb=4096
 
 clean :
 	rm $(target) $(objects)
