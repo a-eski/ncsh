@@ -64,6 +64,7 @@ void ncsh_backspace(char* buffer, uint_fast32_t* buf_position, uint_fast32_t* ma
 	}
 	else {
 		ncsh_write(BACKSPACE_STRING, BACKSPACE_STRING_LENGTH);
+		--*max_buf_position;
 		--*buf_position;
 		buffer[*buf_position] = '\0';
 	}
@@ -84,6 +85,9 @@ void ncsh_delete(char* buffer, uint_fast32_t* buf_position, uint_fast32_t* max_b
 	}
 
 	fflush(stdout);
+
+	if (*buf_position == 0)
+		return;
 
 	while (*buf_position > buf_start && *buf_position != 0 && buffer[*buf_position - 1]) {
 		ncsh_write(MOVE_CURSOR_LEFT, MOVE_CURSOR_LEFT_LENGTH);
@@ -336,7 +340,6 @@ int ncsh(void) {
 						break;
 					}
 					case NONE: {
-
 						continue;
 					}
 				}
@@ -415,7 +418,6 @@ int ncsh(void) {
 					character = buffer[i + 1];
 					buffer[i + 1] = temp_character;
 					putchar(temp_character);
-
 					++buf_position;
 				}
 
@@ -426,6 +428,9 @@ int ncsh(void) {
 					buffer[buf_position] = '\0';
 
 				fflush(stdout);
+
+				if (buf_position == 0 || buffer[1] == '\0')
+					continue;
 
 				while (buf_position > buf_start + 1) {
 					ncsh_write(MOVE_CURSOR_LEFT, MOVE_CURSOR_LEFT_LENGTH);
