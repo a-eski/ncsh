@@ -63,7 +63,12 @@ struct ncsh_Coordinates ncsh_terminal_position() {
 	char character;
 	struct ncsh_Coordinates cursor_position = {0};
 
-	ncsh_write(GET_CURSOR_POSITION, GET_CURSOR_POSITION_LENGTH);
+	if (write(STDOUT_FILENO, GET_CURSOR_POSITION, GET_CURSOR_POSITION_LENGTH) == -1) {
+		perror(RED "Error writing to stdout" RESET);
+		fflush(stdout);
+		return cursor_position;
+	}
+
 
 	for (i = 0; i < BUFFER_LENGTH && character != TERMINAL_RETURN; ++i) {
 		if (read(STDIN_FILENO, &character, 1) == -1)

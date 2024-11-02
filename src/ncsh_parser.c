@@ -35,7 +35,7 @@ bool ncsh_is_delimiter(char ch) {
 }
 
 enum ncsh_Ops ncsh_op_get(char line[], uint_fast32_t length) {
-	if (line == NULL)
+	if (line == NULL || length == 0)
 		return OP_NONE;
 
 	if (length == 1) {

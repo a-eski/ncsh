@@ -51,11 +51,5 @@ enum ncsh_Hotkey {
 	DELETE_PREFIX = 5
 };
 
-enum ncsh_Hotkey ncsh_get_key(char character);
-
-void ncsh_write(char* string, uint_fast32_t length);
-
-void ncsh_print_prompt(struct ncsh_Directory prompt_info);
-
 #endif // !ncsh_io_h
 

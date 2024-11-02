@@ -1,16 +1,19 @@
+std = -std=c2x
+debug_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined,leak
+release_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -O3 -DNDEBUG
+objects = obj/main.o obj/ncsh.o obj/ncsh_vm.o obj/ncsh_terminal.o obj/eskilib_string.o obj/eskilib_file.o obj/ncsh_debug.o obj/ncsh_args.o obj/ncsh_parser.o obj/ncsh_builtins.o obj/ncsh_history.o obj/ncsh_autocompletions.o
+install_destination = /usr/local
+target = bin/ncsh
+history_file = .ncsh_history
+
 CLANG ?= 0
 
 ifeq ($(CLANG), 1)
 	cc = clang
 else
 	cc = gcc
+	release_flags += -s
 endif
-
-std = -std=c2x
-debug_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined,leak
-release_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -O3 -DNDEBUG
-objects = obj/main.o obj/ncsh.o obj/ncsh_vm.o obj/ncsh_terminal.o obj/eskilib_string.o obj/eskilib_file.o obj/ncsh_debug.o obj/ncsh_args.o obj/ncsh_parser.o obj/ncsh_builtins.o obj/ncsh_io.o obj/ncsh_history.o obj/ncsh_autocompletions.o
-target = bin/ncsh
 
 RELEASE ?= 0
 
@@ -41,8 +44,6 @@ obj/ncsh_parser.o : src/ncsh_parser.c src/ncsh_args.h
 	$(cc_with_flags) -c src/ncsh_parser.c -o obj/ncsh_parser.o
 obj/ncsh_args.o : src/ncsh_args.c src/ncsh_args.h
 	$(cc_with_flags) -c src/ncsh_args.c -o obj/ncsh_args.o
-obj/ncsh_io.o : src/ncsh_io.c src/ncsh_io.h src/eskilib/eskilib_colors.h
-	$(cc_with_flags) -c src/ncsh_io.c -o obj/ncsh_io.o
 obj/eskilib_string.o : src/eskilib/eskilib_string.c src/eskilib/eskilib_string.h
 	$(cc_with_flags) -c src/eskilib/eskilib_string.c -o obj/eskilib_string.o
 obj/eskilib_file.o : src/eskilib/eskilib_file.c src/eskilib/eskilib_file.h
@@ -50,36 +51,50 @@ obj/eskilib_file.o : src/eskilib/eskilib_file.c src/eskilib/eskilib_file.h
 obj/ncsh_debug.o : src/ncsh_debug.c src/ncsh_debug.h src/ncsh_args.h
 	$(cc_with_flags) -c src/ncsh_debug.c -o obj/ncsh_debug.o
 
+.PHONY: run
 run :
 	make
 	./bin/ncsh
 
+.PHONY: release
 release :
-	make clean
-	make RELEASE=1
+	make -B RELEASE=1
+
+.PHONY: releaserun
+release :
+	make -B RELEASE=1
 	./bin/ncsh
 
+.PHONY: runnew
 runnew :
-	make clean
-	make
+	make -B
 	./bin/ncsh
 
+.PHONY: install
+install : $(target)
+	install -C $(target) $(history_file) $(install_destination)
+
+.PHONY: check
 check :
 	chmod +x ./tests_harness.sh
 	chmod +x ./tests.sh
 	./tests_harness.sh
 
+.PHONY: fuzz_history
 fuzz_history :
 	clang -std=c2x -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined,fuzzer -O3 -DNDEBUG ./src/tests/ncsh_history_fuzzing.c ./src/ncsh_history.c ./src/eskilib/eskilib_string.c ./src/eskilib/eskilib_file.c
 	./a.out NCSH_HISTORY_CORPUS/ -detect_leaks=0 -rss_limit_mb=4096
 
+.PHONY: fuzz_autocompletions
 fuzz_autocompletions :
 	clang -std=c2x -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined,fuzzer -O3 -DNDEBUG ./src/tests/ncsh_autocompletions_fuzzing.c ./src/ncsh_autocompletions.c ./src/eskilib/eskilib_string.c
 	./a.out NCSH_AUTOCOMPLETIONS_CORPUS/ -detect_leaks=0 -rss_limit_mb=4096
 
+.PHONY: fuzz_parser
 fuzz_parser :
 	clang -std=c2x -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined,fuzzer -O3 -DNDEBUG ./src/tests/ncsh_parser_fuzzing.c ./src/ncsh_parser.c ./src/eskilib/eskilib_string.c ./src/ncsh_args.c
 	./a.out NCSH_PARSER_CORPUS/ -detect_leaks=0 -rss_limit_mb=4096
 
+.PHONY: clean
 clean :
 	rm $(target) $(objects)
