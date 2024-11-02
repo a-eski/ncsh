@@ -10,7 +10,6 @@
 #include "eskilib/eskilib_string.h"
 
 #define DOUBLE_QUOTE_KEY '\"'
-#define WILDCARD_KEY '*'
 
 #define PIPE '|'
 #define INPUT_REDIRECTION '<'
