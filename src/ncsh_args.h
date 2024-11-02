@@ -19,7 +19,8 @@ enum ncsh_Ops {
 	OP_INPUT_REDIRECTION_APPEND = 6,
 	OP_BACKGROUND_JOB = 7,
 	OP_AND = 8,
-	OP_OR = 9
+	OP_OR = 9,
+	OP_WILDCARD
 };
 
 struct ncsh_Args {

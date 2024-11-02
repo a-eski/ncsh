@@ -29,6 +29,37 @@
 #define NCSH_MAX_INPUT 528
 #define NCSH_MAX_MATCHES 32
 
+enum ncsh_Hotkey ncsh_get_key(char character) {
+	switch (character) {
+		case UP_ARROW: { return UP; }
+		case DOWN_ARROW: { return DOWN; }
+		case RIGHT_ARROW: { return RIGHT; }
+		case LEFT_ARROW: { return LEFT; }
+		case DELETE_PREFIX_KEY: { return DELETE_PREFIX; }
+		default: { return NONE; }
+	}
+}
+
+void ncsh_write(char* string, uint_fast32_t length) {
+	if (write(STDOUT_FILENO, string, length) == -1) {
+		perror(RED "Error writing to stdout" RESET);
+		fflush(stdout);
+		exit(EXIT_FAILURE);
+	}
+	fflush(stdout);
+}
+
+void ncsh_print_prompt(struct ncsh_Directory prompt_info) {
+	char *getcwd_result = getcwd(prompt_info.path, sizeof(prompt_info.path));
+	if (getcwd_result == NULL) {
+		perror(RED "conch-shell: error when getting current directory" RESET);
+		exit(EXIT_FAILURE);
+	}
+
+	printf(ncsh_GREEN "%s" WHITE ":" ncsh_CYAN "%s" WHITE "$ ", prompt_info.user, prompt_info.path);
+	fflush(stdout);
+}
+
 void ncsh_backspace(char* buffer, uint_fast32_t* buf_position, uint_fast32_t* max_buf_position) {
 	uint_fast32_t buf_start;
 

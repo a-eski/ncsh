@@ -26,6 +26,14 @@
 #define INPUT_REDIRECTION_KEY '<'
 #define BACKGROUND_JOB_KEY '&'
 
+/*struct ncsh_VM {
+	enum ncsh_Ops op;
+	int original_stdout;
+	int original_stdin;
+	int fd_one[2];
+	int fd_two[2];
+};*/
+
 struct ncsh_Output_Redirect_IO {
 	int original_stdout;
 	int original_stderr;
