@@ -219,6 +219,10 @@ uint_fast32_t ncsh_vm(struct ncsh_Args args) {
 			op_current = args.ops[args_position];
 
 		buffer[buffer_position] = NULL;
+		if (buffer[0] == NULL) {
+			return 1;
+		}
+
 		args_position++;
 		op_next = args.ops[args_position];
 
