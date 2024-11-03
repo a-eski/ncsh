@@ -114,6 +114,9 @@ struct eskilib_String z_database_get_match(const struct eskilib_String target, s
 }
 
 enum z_Database_Result z_database_add(const struct eskilib_String target, struct z_Database* database) {
+	if (database == NULL || target.value == NULL || target.length == 0)
+		return Z_FAILURE_NULL_REFERENCE;
+
 	database->dirty = true;
 
 	uint_fast32_t length = 0;

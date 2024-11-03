@@ -66,7 +66,7 @@ void ncsh_backspace(char* buffer, uint_fast32_t* buf_position, uint_fast32_t* ma
 	if (*buf_position == 0) {
 		return;
 	}
-	else if (buffer[*buf_position]) {
+	else {// if (buffer[*buf_position]) {
 		--*buf_position;
 		--*max_buf_position;
 
@@ -93,12 +93,12 @@ void ncsh_backspace(char* buffer, uint_fast32_t* buf_position, uint_fast32_t* ma
 			--*buf_position;
 		}
 	}
-	else {
+	/*else {
 		ncsh_write(BACKSPACE_STRING, BACKSPACE_STRING_LENGTH);
 		--*max_buf_position;
 		--*buf_position;
 		buffer[*buf_position] = '\0';
-	}
+	}*/
 }
 
 void ncsh_delete(char* buffer, uint_fast32_t* buf_position, uint_fast32_t* max_buf_position) {
@@ -124,58 +124,6 @@ void ncsh_delete(char* buffer, uint_fast32_t* buf_position, uint_fast32_t* max_b
 		ncsh_write(MOVE_CURSOR_LEFT, MOVE_CURSOR_LEFT_LENGTH);
 		--*buf_position;
 	}
-}
-
-void ncsh_autocompletions(char buffer[],
-			uint_fast32_t buf_position,
-			char** autocompletions_ref,
-			uint_fast32_t* autocompletions_matches_count,
-			struct ncsh_Autocompletions* autocompletions_tree) {
-	if (buffer[0] == '\0' || buf_position == 0)
-		return;
-
-	ncsh_autocompletions_free_values(autocompletions_ref, *autocompletions_matches_count);
-
-	// get autocompletions for current iteration
-	char* autocompletion_matches[NCSH_MAX_MATCHES] = {0};
-	*autocompletions_matches_count = ncsh_autocompletions_get(buffer, buf_position + 1, autocompletion_matches, NCSH_MAX_INPUT, autocompletions_tree);
-	if (autocompletions_matches_count == 0)
-		return;
-
-	for (uint_fast32_t i = 0; i < *autocompletions_matches_count; ++i) {
-		autocompletions_ref[i] = autocompletion_matches[i];
-	}
-
-	/*printf(WHITE_DIM "%s" RESET, autocompletion_matches[0]);
-	fflush(stdout);*/
-
-	/*buf_start = buf_position;
-	autocompletions_ref_pos = buf_position + 1;
-	for (uint_fast32_t i = 0; autocompletion_matches[0][i]; ++i)
-	{
-		buffer[buf_position + 1 + i] = autocompletion_matches[0][i];
-		putchar(autocompletion_matches[0][i]);
-	}*/
-
-	// printf("\nbuffer %s, buf_positon %ld", buffer, buf_position + 1);
-}
-
-void ncsh_tab(char buffer[],
-		uint_fast32_t buf_position,
-		char** autocompletions_ref,
-		uint_fast32_t* autocompletions_matches_count,
-		struct ncsh_Autocompletions* autocompletions_tree) {
-
-	ncsh_autocompletions(buffer, buf_position, autocompletions_ref, autocompletions_matches_count, autocompletions_tree);
-
-	ncsh_write(SAVE_CURSOR_POSITION, SAVE_CURSOR_POSITION_LENGTH);
-	putchar('\n');
-	ncsh_write(ERASE_CURRENT_LINE, ERASE_CURRENT_LINE_LENGTH);
-	for (uint_fast32_t i = 0; i < *autocompletions_matches_count; ++i) {
-		printf("%s%s    ", buffer, autocompletions_ref[i]);
-	}
-	ncsh_write(RESTORE_CURSOR_POSITION, RESTORE_CURSOR_POSITION_LENGTH);
-	fflush(stdout);
 }
 
 int ncsh(void) {
@@ -220,8 +168,7 @@ int ncsh(void) {
 		return EXIT_FAILURE;
 	}
 
-	char** autocompletions_ref = malloc(sizeof(char*) * NCSH_MAX_MATCHES);
-	// uint_fast32_t autocompletions_ref_pos = 0;
+	char* current_autocompletion = malloc(sizeof(char) * MAX_INPUT);
 
 	uint_fast32_t autocompletions_matches_count = 0;
 	struct ncsh_Autocompletions* autocompletions_tree = ncsh_autocompletions_malloc();
@@ -242,7 +189,7 @@ int ncsh(void) {
 
 	clock_t end = clock();
 	double elapsed_ms = ((double)(end - start)) / CLOCKS_PER_SEC * 1000;
-	printf("Startup time: %.2f milliseconds\n", elapsed_ms);
+	printf("ncsh: startup time: %.2f milliseconds\n", elapsed_ms);
 
 	ncsh_print_prompt(prompt_info);
 
@@ -294,6 +241,18 @@ int ncsh(void) {
 				switch (key) {
 					case RIGHT: {
 						reprint_prompt = false;
+
+						if (buf_position == max_buf_position) {
+							printf("%s", current_autocompletion);
+							for (uint_fast32_t i = 0; current_autocompletion[i] != '\0'; i++) {
+								buffer[buf_position] = current_autocompletion[i];
+								++buf_position;
+							}
+							buffer[buf_position] = '\0';
+
+							fflush(stdout);
+							break;
+						}
 
 						if (buf_position == NCSH_MAX_INPUT - 1 || (!buffer[buf_position] && !buffer[buf_position + 1]))
 							continue;
@@ -376,15 +335,7 @@ int ncsh(void) {
 				}
 			}
 		}
-		else if (character == TAB_KEY) {
-			reprint_prompt = false;
-
-			ncsh_tab(buffer, buf_position, autocompletions_ref, &autocompletions_matches_count, autocompletions_tree);
-		}
 		else if (character == '\n' || character == '\r') {
-			putchar('\n');
-			fflush(stdout);
-
 			if (buf_position == 0 && !buffer[buf_position])
 				continue;
 
@@ -395,6 +346,12 @@ int ncsh(void) {
 				--buf_position;
 
 			buffer[buf_position++] = '\0';
+
+			ncsh_write(ERASE_CURRENT_LINE, ERASE_CURRENT_LINE_LENGTH);
+
+			putchar('\n');
+			fflush(stdout);
+
 			#ifdef NCSH_DEBUG
 			ncsh_debug_line(buffer, buf_position);
 			#endif /* ifdef NCSH_DEBUG */
@@ -408,7 +365,7 @@ int ncsh(void) {
 			#endif /* ifdef NCSH_DEBUG */
 
 			ncsh_history_add(buffer, buf_position, &history);
-			// ncsh_autocompletions_add(buffer, buf_position + 1, autocompletions_tree);
+			ncsh_autocompletions_add(buffer, buf_position, autocompletions_tree);
 
 			command_result = ncsh_vm_execute(args, &history);
 
@@ -478,7 +435,30 @@ int ncsh(void) {
 
 				if (buf_position == max_buf_position)
 					buffer[buf_position] = '\0';
+
+				ncsh_write(ERASE_CURRENT_LINE, ERASE_CURRENT_LINE_LENGTH);
 			}
+
+			// autocompletion logic
+			if (buffer[0] == '\0')
+				continue;
+
+			char* autocompletion_matches[NCSH_MAX_MATCHES] = {0};
+			autocompletions_matches_count = ncsh_autocompletions_get(buffer, buf_position + 1, autocompletion_matches, NCSH_MAX_INPUT, autocompletions_tree);
+
+			if (autocompletions_matches_count == 0) {
+				current_autocompletion[0] = '\0';
+				continue;
+			}
+
+			struct ncsh_Coordinates position = ncsh_terminal_position();
+			if (position.x == 0 && position.y == 0)
+				continue;
+
+			current_autocompletion = autocompletion_matches[0];
+			printf(WHITE_DIM "%s" RESET, current_autocompletion);
+			ncsh_terminal_move(position.x, position.y);
+			fflush(stdout);
 		}
 	}
 
@@ -487,8 +467,7 @@ int ncsh(void) {
 	ncsh_history_save(&history);
 	ncsh_history_free(&history);
 
-	ncsh_autocompletions_free_values(autocompletions_ref, autocompletions_matches_count);
-	free(autocompletions_ref);
+	free(current_autocompletion);
 	ncsh_autocompletions_free(autocompletions_tree);
 
 	ncsh_terminal_reset();
