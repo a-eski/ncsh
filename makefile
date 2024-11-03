@@ -2,17 +2,16 @@ std = -std=c2x
 debug_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined,leak -g
 release_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -O3 -DNDEBUG
 objects = obj/main.o obj/ncsh.o obj/ncsh_vm.o obj/ncsh_terminal.o obj/eskilib_string.o obj/eskilib_file.o obj/ncsh_debug.o obj/ncsh_args.o obj/ncsh_parser.o obj/ncsh_builtins.o obj/ncsh_history.o obj/ncsh_autocompletions.o
-install_destination = /usr/local
 target = bin/ncsh
 history_file = .ncsh_history
 
 CC ?= gcc
+DESTDIR ?= /usr/local
+RELEASE ?= 1
 
 ifeq ($(CC), gcc)
 	release_flags += -s
 endif
-
-RELEASE ?= 1
 
 ifeq ($(RELEASE), 1)
 	run_command = make
@@ -66,7 +65,7 @@ runnew :
 
 .PHONY: install
 install : $(target)
-	install -C $(target) $(history_file) $(install_destination)
+	install -C $(target) $(history_file) $(DESTDIR)
 
 .PHONY: check
 check :
