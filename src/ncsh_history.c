@@ -167,6 +167,8 @@ struct eskilib_String ncsh_history_get(uint_fast32_t position, struct ncsh_Histo
 
 uint_fast32_t ncsh_history_command(struct ncsh_History* history) {
 	assert(history != NULL);
+	if (history == NULL || history->history_count == 0)
+		return 1;
 
 	for (uint_fast32_t i = 0; i < history->history_count; ++i) {
 		printf("%lu %s\n", i + 1, history->entries[i].value);

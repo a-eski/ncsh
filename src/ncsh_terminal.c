@@ -58,9 +58,9 @@ void ncsh_terminal_move(int x, int y) {
 
 struct ncsh_Coordinates ncsh_terminal_position() {
 	char buffer[BUFFER_LENGTH] = {0};
-	int_fast32_t i;
+	int_fast32_t i = 0;
 	int_fast32_t power = 0;
-	char character;
+	char character = 0;
 	struct ncsh_Coordinates cursor_position = {0};
 
 	if (write(STDOUT_FILENO, GET_CURSOR_POSITION, GET_CURSOR_POSITION_LENGTH) == -1) {

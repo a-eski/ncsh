@@ -186,14 +186,14 @@ int ncsh(void) {
 
 	ncsh_terminal_init();
 
-	// save cursor position so we can reset cursor when loading history entries
-	ncsh_write(SAVE_CURSOR_POSITION, SAVE_CURSOR_POSITION_LENGTH);
 
 	clock_t end = clock();
 	double elapsed_ms = ((double)(end - start)) / CLOCKS_PER_SEC * 1000;
 	printf("ncsh: startup time: %.2f milliseconds\n", elapsed_ms);
 
 	ncsh_print_prompt(prompt_info);
+	// save cursor position so we can reset cursor when loading history entries
+	ncsh_write(SAVE_CURSOR_POSITION, SAVE_CURSOR_POSITION_LENGTH);
 
 	while (1) {
 		if (buf_position == 0 && reprint_prompt == true) {
@@ -464,7 +464,10 @@ int ncsh(void) {
 			if (position.x == 0 && position.y == 0)
 				continue;
 
-			current_autocompletion = autocompletion_matches[0];
+			eskilib_string_copy(current_autocompletion, autocompletion_matches[0], NCSH_MAX_INPUT);
+			for (uint_fast32_t i = 0; i < autocompletions_matches_count; ++i)
+				free(autocompletion_matches[i]);
+
 			printf(WHITE_DIM "%s" RESET, current_autocompletion);
 			ncsh_terminal_move(position.x, position.y);
 			fflush(stdout);
