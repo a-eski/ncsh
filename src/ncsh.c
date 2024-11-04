@@ -68,7 +68,8 @@ void ncsh_backspace(char* buffer, uint_fast32_t* buf_position, uint_fast32_t* ma
 	}
 	else {// if (buffer[*buf_position]) {
 		--*buf_position;
-		--*max_buf_position;
+		if (max_buf_position != 0)
+			--*max_buf_position;
 
 		ncsh_write(BACKSPACE_STRING ERASE_CURRENT_LINE, BACKSPACE_STRING_LENGTH + ERASE_CURRENT_LINE_LENGTH);
 
@@ -108,7 +109,8 @@ void ncsh_delete(char* buffer, uint_fast32_t* buf_position, uint_fast32_t* max_b
 	for (uint_fast32_t i = *buf_position; i < *max_buf_position && buffer[i]; ++i)
 		buffer[i] = buffer[i + 1];
 
-	--*max_buf_position;
+	if (max_buf_position != 0)
+		--*max_buf_position;
 
 	for (uint_fast32_t i = *buf_position; i < *max_buf_position && buffer[*buf_position]; ++i) {
 		putchar(buffer[i]);
@@ -184,14 +186,14 @@ int ncsh(void) {
 
 	ncsh_terminal_init();
 
-	// save cursor position so we can reset cursor when loading history entries
-	ncsh_write(SAVE_CURSOR_POSITION, SAVE_CURSOR_POSITION_LENGTH);
 
 	clock_t end = clock();
 	double elapsed_ms = ((double)(end - start)) / CLOCKS_PER_SEC * 1000;
 	printf("ncsh: startup time: %.2f milliseconds\n", elapsed_ms);
 
 	ncsh_print_prompt(prompt_info);
+	// save cursor position so we can reset cursor when loading history entries
+	ncsh_write(SAVE_CURSOR_POSITION, SAVE_CURSOR_POSITION_LENGTH);
 
 	while (1) {
 		if (buf_position == 0 && reprint_prompt == true) {
@@ -221,6 +223,7 @@ int ncsh(void) {
 			if (buf_position == 0) {
 				continue;
 			}
+			current_autocompletion[0] = '\0';
 			ncsh_backspace(buffer, &buf_position, &max_buf_position);
 		}
 		else if (character == ESCAPE_CHARACTER) {
@@ -249,6 +252,8 @@ int ncsh(void) {
 								++buf_position;
 							}
 							buffer[buf_position] = '\0';
+							if (buf_position > max_buf_position)
+								max_buf_position = buf_position;
 
 							fflush(stdout);
 							break;
@@ -336,8 +341,11 @@ int ncsh(void) {
 			}
 		}
 		else if (character == '\n' || character == '\r') {
-			if (buf_position == 0 && !buffer[buf_position])
+			if (buf_position == 0 && !buffer[buf_position]) {
+				putchar('\n');
+				fflush(stdout);
 				continue;
+			}
 
 			while (buf_position < max_buf_position && buffer[buf_position])
 				++buf_position;
@@ -354,6 +362,7 @@ int ncsh(void) {
 
 			#ifdef NCSH_DEBUG
 			ncsh_debug_line(buffer, buf_position);
+			printf("buf_position: %lu, max_buf_position %lu\n", buf_position, max_buf_position);
 			#endif /* ifdef NCSH_DEBUG */
 
 			args = ncsh_parse(buffer, buf_position, args);
@@ -455,7 +464,10 @@ int ncsh(void) {
 			if (position.x == 0 && position.y == 0)
 				continue;
 
-			current_autocompletion = autocompletion_matches[0];
+			eskilib_string_copy(current_autocompletion, autocompletion_matches[0], NCSH_MAX_INPUT);
+			for (uint_fast32_t i = 0; i < autocompletions_matches_count; ++i)
+				free(autocompletion_matches[i]);
+
 			printf(WHITE_DIM "%s" RESET, current_autocompletion);
 			ncsh_terminal_move(position.x, position.y);
 			fflush(stdout);

@@ -30,6 +30,7 @@
 	enum ncsh_Ops op;
 	int original_stdout;
 	int original_stdin;
+	int original_stderr;
 	int fd_one[2];
 	int fd_two[2];
 };*/
@@ -269,94 +270,10 @@ uint_fast32_t ncsh_vm(struct ncsh_Args args) {
 	return 1;
 }
 
-uint_fast32_t ncsh_execute_program(char** args) {
-	assert(args != NULL);
-
-	pid_t pid;
-	int status;
-
-	pid = fork();
-	if (pid == 0) {
-		if (execvp(args[0], args) == -1) {
-			perror(RED "Could not find command" RESET);
-			fflush(stdout);
-			return 0;
-		}
-
-		return 1;
-	}
-	else if (pid < 0) {
-		return ncsh_fork_error();
-	}
-	else {
-		do {
-			waitpid(pid, &status, WUNTRACED);
-		} while (!WIFEXITED(status) && !WIFSIGNALED(status));
-
-		return 1;
-	}
-}
-
-// uint_fast32_t ncsh_execute_output_redirected(struct ncsh_Args args) {
-// 	char* buffer[MAX_INPUT];
-// 	uint_fast32_t args_position = 0;
-// 	uint_fast32_t buffer_position = 0;
-// 	uint_fast32_t number_of_commands = 0;
-// 	uint_fast32_t command_position = 0;
-// 	bool args_end = false;
-// 	enum ncsh_Ops op_current = OP_CONSTANT;
-// 	// enum ncsh_Ops op_previous = OP_CONSTANT;
-// 	struct ncsh_Output_Redirect_IO io;
-//
-// 	for (uint_fast32_t l = 0; args.values[l] != NULL;) {
-// 		if (args.ops[l] != OP_CONSTANT) {
-// 			number_of_commands++;
-// 		}
-// 		++l;
-// 	}
-// 	number_of_commands++;
-//
-// 	while (args.values[args_position] != NULL && args_end != true) {
-// 		buffer_position = 0;
-// 		while (args.ops[args_position] == OP_CONSTANT) {
-// 			buffer[buffer_position] = args.values[args_position];
-// 			args_position++;
-//
-// 			if (args.values[args_position] == NULL) {
-// 				buffer_position++;
-// 				args_end = true;
-// 				break;
-// 			}
-//
-// 			buffer_position++;
-// 		}
-//
-// 		// op_previous = op_current;
-// 		if (!args_end)
-// 			op_current = args.ops[args_position];
-//
-// 		buffer[buffer_position] = NULL;
-// 		args_position++;
-//
-// 		if (op_current == OP_OUTPUT_REDIRECTION) {
-// 			io = ncsh_output_redirection_start(args.values[args_position]);
-// 			++args_position; //increment since we are using next arg as target of output redirection
-// 		}
-//
-// 		ncsh_execute_program(buffer);
-//
-// 		if (op_current == OP_OUTPUT_REDIRECTION)
-// 			ncsh_output_redirection_stop(io);
-//
-// 		++command_position;
-// 	}
-//
-// 	return 1;
-// }
-
 uint_fast32_t ncsh_vm_execute(struct ncsh_Args args, struct ncsh_History* history) {
 	assert(args.values != NULL);
 	assert(args.ops != NULL);
+	assert(history != NULL);
 
 	if (ncsh_is_exit_command(args))
 		return 0;
@@ -373,11 +290,9 @@ uint_fast32_t ncsh_vm_execute(struct ncsh_Args args, struct ncsh_History* histor
 	if (eskilib_string_equals(args.values[0], "history", args.max_line_length))
 		return ncsh_history_command(history);
 
-	//execute external (not builtin) program
 	ncsh_terminal_reset(); //reset terminal settings since a lot of terminal programs use canonical mode
 
-	uint_fast32_t result = 0;
-	result = ncsh_vm(args);
+	uint_fast32_t result = ncsh_vm(args);
 
 	ncsh_terminal_init(); //back to noncanonical mode
 
