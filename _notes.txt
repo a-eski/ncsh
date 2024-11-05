@@ -6,8 +6,7 @@ history entries when its full already
 history file when its full already?
 handle deleting when input is over multiple lines
 handle copying/pasting when input is multiple lines
-autocompletions show up when you are midline
-history saves in whatever directory you exit in
+history saves in whatever directory you exit the program in
 
 windows
 #ifdef WIN32 || _WIN32 || _WIN64
