@@ -171,7 +171,6 @@ int ncsh(void) {
 	}
 
 	char* current_autocompletion = malloc(sizeof(char) * MAX_INPUT);
-
 	uint_fast32_t autocompletions_matches_count = 0;
 	struct ncsh_Autocompletions* autocompletions_tree = ncsh_autocompletions_malloc();
 	if (autocompletions_tree == NULL)
@@ -185,7 +184,6 @@ int ncsh(void) {
 	ncsh_autocompletions_add_multiple(history.entries, history.history_count, autocompletions_tree);
 
 	ncsh_terminal_init();
-
 
 	clock_t end = clock();
 	double elapsed_ms = ((double)(end - start)) / CLOCKS_PER_SEC * 1000;
@@ -256,6 +254,7 @@ int ncsh(void) {
 								max_buf_position = buf_position;
 
 							fflush(stdout);
+							current_autocompletion[0] = '\0';
 							break;
 						}
 
@@ -449,7 +448,7 @@ int ncsh(void) {
 			}
 
 			// autocompletion logic
-			if (buffer[0] == '\0')
+			if (buffer[0] == '\0' || buffer[buf_position] != '\0')
 				continue;
 
 			char* autocompletion_matches[NCSH_MAX_MATCHES] = {0};

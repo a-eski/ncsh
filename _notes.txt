@@ -4,9 +4,9 @@ https://theasciicode.com.ar/
 bugs
 history entries when its full already
 history file when its full already?
-deleting/backspace/insert characters when buffer position is 0
 handle deleting when input is over multiple lines
-history saves in whatever directory you exit in
+handle copying/pasting when input is multiple lines
+history saves in whatever directory you exit the program in
 
 windows
 #ifdef WIN32 || _WIN32 || _WIN64

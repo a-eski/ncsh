@@ -6,6 +6,9 @@ make CLANG=1
 make RELEASE=1
 make CLANG=1 RELEASE=1
 
+--debug
+gdb -tui ./bin/ncsh
+
 --leak checking
 gcc -std=c99 -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined *.c -o ncsh
 clang -std=c99 -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined *.c -o ncsh
