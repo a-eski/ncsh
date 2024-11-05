@@ -247,6 +247,7 @@ uint_fast32_t ncsh_vm(struct ncsh_Args args) {
 
 		if (pid == 0) {
 			/*if (op_current == OP_OUTPUT_REDIRECTION && op_previous == OP_PIPE) { //this doesn't work as expected
+			if (op_current == OP_PIPE && op_next == OP_OUTPUT_REDIRECTION) { //this doesn't work as expected
 				puts("redirecting pipes");
 				ncsh_pipe_redirect_output(&pipes_io, command_position, args.values[args_position]);
 			}
