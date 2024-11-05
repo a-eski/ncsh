@@ -4,8 +4,9 @@ https://theasciicode.com.ar/
 bugs
 history entries when its full already
 history file when its full already?
-deleting/backspace/insert characters when buffer position is 0
 handle deleting when input is over multiple lines
+handle copying/pasting when input is multiple lines
+autocompletions show up when you are midline
 history saves in whatever directory you exit in
 
 windows

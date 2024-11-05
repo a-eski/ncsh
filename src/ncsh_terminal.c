@@ -92,3 +92,4 @@ struct ncsh_Coordinates ncsh_terminal_position() {
 
 	return cursor_position;
 }
+

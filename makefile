@@ -63,6 +63,10 @@ runnew :
 	$(run_new_command)
 	./$(target)
 
+.PHONY: debug
+debug :
+	make -B RELEASE=0
+
 .PHONY: install
 install : $(target)
 	install -C $(target) $(history_file) $(DESTDIR)
