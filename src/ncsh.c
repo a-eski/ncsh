@@ -9,6 +9,8 @@
 #include <time.h>
 #include <unistd.h>
 #include <stdbool.h>
+#include <string.h>
+#include <sys/stat.h>
 
 #include "ncsh_args.h"
 #include "ncsh_terminal.h"
@@ -26,7 +28,9 @@
 #include "ncsh_debug.h"
 #endif /* ifdef NCSH_DEBUG */
 
-#define NCSH_MAX_INPUT 528
+#define NCSH "ncsh"
+#define NCSH_LENGTH 5
+#define NCSH_CONFIG_LENGTH 8 // length for .config
 #define NCSH_MAX_MATCHES 32
 
 enum ncsh_Hotkey ncsh_get_key(char character) {
@@ -66,7 +70,7 @@ void ncsh_backspace(char* buffer, uint_fast32_t* buf_position, uint_fast32_t* ma
 	if (*buf_position == 0) {
 		return;
 	}
-	else {// if (buffer[*buf_position]) {
+	else {
 		--*buf_position;
 		if (max_buf_position != 0)
 			--*max_buf_position;
@@ -94,12 +98,6 @@ void ncsh_backspace(char* buffer, uint_fast32_t* buf_position, uint_fast32_t* ma
 			--*buf_position;
 		}
 	}
-	/*else {
-		ncsh_write(BACKSPACE_STRING, BACKSPACE_STRING_LENGTH);
-		--*max_buf_position;
-		--*buf_position;
-		buffer[*buf_position] = '\0';
-	}*/
 }
 
 void ncsh_delete(char* buffer, uint_fast32_t* buf_position, uint_fast32_t* max_buf_position) {
@@ -128,7 +126,53 @@ void ncsh_delete(char* buffer, uint_fast32_t* buf_position, uint_fast32_t* max_b
 	}
 }
 
-int ncsh(void) {
+uint_fast32_t ncsh_config(char* out, size_t max_length) {
+	const char *const out_original_ptr = out;
+	char *home = getenv("XDG_CONFIG_HOME");
+	bool set_config = false;
+	if (!home) {
+		home = getenv("HOME");
+		if (!home) { // neither HOME or XDG_CONFIG_HOME are available
+			out[0] = 0;
+			return 0;
+		}
+		set_config = true;
+	}
+
+	uint_fast32_t home_length = strlen(home);
+	uint_fast32_t length = home_length;
+
+	/* first +1 is "/", second is terminating null */
+	if (home_length + 1 + NCSH_CONFIG_LENGTH + NCSH_LENGTH + 1 > max_length) {
+		out[0] = 0;
+		return 0;
+	}
+
+	memcpy(out, home, home_length);
+	out += home_length;
+	*out = '/';
+	++length;
+	++out;
+	if (set_config) {
+		memcpy(out, ".config/", NCSH_CONFIG_LENGTH);
+		out += NCSH_CONFIG_LENGTH;
+		*out = '\0';
+		length += NCSH_CONFIG_LENGTH;
+	}
+	memcpy(out, NCSH, NCSH_LENGTH);
+	out += NCSH_LENGTH;
+	*out = '\0';
+	length += NCSH_LENGTH;
+
+	#ifdef NCSH_DEBUG
+	printf("mkdir %s\n", out_original_ptr);
+	#endif /* ifdef NCSH_DEBUG */
+	mkdir(out_original_ptr, 0755);
+
+	return length;
+}
+
+int ncsh() {
 	clock_t start = clock();
 
 	char character;
@@ -160,21 +204,27 @@ int ncsh(void) {
 		ncsh_args_free(args);
 		return EXIT_FAILURE;
 	}
-	// history.history_file_directory = getenv("HOME");
-	// getcwd(history.history_file_directory, PATH_MAX);
+
+	history.config_location.value = malloc(NCSH_MAX_INPUT);
+	history.config_location.length = ncsh_config(history.config_location.value, NCSH_MAX_INPUT);
+	#ifdef  NCSH_DEBUG
+	printf("config value: %s\n", history.config_location.value);
+	printf("config length: %lu\n", history.config_location.length);
+	#endif /* ifdef  NCSH_DEBUG */
+
 	result = ncsh_history_load(&history);
 	if (result != E_SUCCESS) {
 		perror(RED "Error when loading data from history file into memory" RESET);
 		fflush(stdout);
 		ncsh_args_free(args);
+		ncsh_history_free(&history);
 		return EXIT_FAILURE;
 	}
 
 	char* current_autocompletion = malloc(sizeof(char) * MAX_INPUT);
 	uint_fast32_t autocompletions_matches_count = 0;
 	struct ncsh_Autocompletions* autocompletions_tree = ncsh_autocompletions_malloc();
-	if (autocompletions_tree == NULL)
-	{
+	if (autocompletions_tree == NULL) {
 		perror(RED "Error when loading data from history file into memory" RESET);
 		fflush(stdout);
 		ncsh_history_free(&history);

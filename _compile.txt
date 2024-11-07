@@ -8,6 +8,9 @@ make CLANG=1 RELEASE=1
 
 --debug
 gdb -tui ./bin/ncsh
+c - continue
+s - step
+n - step over
 
 --leak checking
 gcc -std=c99 -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined *.c -o ncsh
