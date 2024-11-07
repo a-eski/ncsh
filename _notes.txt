@@ -36,4 +36,3 @@ waitpid
 close pipes->fd_two[0]
 waitpid
 
-/home/alex/.config/ncsh

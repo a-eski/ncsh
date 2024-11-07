@@ -2,7 +2,7 @@
 An interactive unix shell focused on speed and building everything from the ground up.
 
 # to build from source
-make OR make CLANG=1
+make
 sudo make install
 
 # notes

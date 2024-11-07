@@ -10,9 +10,9 @@
 #include "eskilib/eskilib_result.h"
 #include "eskilib/eskilib_string.h"
 
-#if defined(NCSH_TEST_HISTORY)
+#ifdef NCSH_TEST_HISTORY
 	#define NCSH_HISTORY_FILE "/.ncsh_history_test"
-	#define NCSH_HISTORY_FILE_LENGTH 20
+	#define NCSH_HISTORY_FILE_LENGTH 19
 #else
 	#define NCSH_HISTORY_FILE "/.ncsh_history"
 	#define NCSH_HISTORY_FILE_LENGTH 14

@@ -1,6 +1,5 @@
 // Copyright (c) ncsh by Alex Eski 2024
 
-// #define _XOPEN_SOURCE 500
 #include <linux/limits.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -157,7 +156,6 @@ uint_fast32_t ncsh_config(char* out, size_t max_length) {
 	if (set_config) {
 		memcpy(out, ".config/", NCSH_CONFIG_LENGTH);
 		out += NCSH_CONFIG_LENGTH;
-		/* Make the .config folder if it doesn't already exist */
 		*out = '\0';
 		length += NCSH_CONFIG_LENGTH;
 	}
