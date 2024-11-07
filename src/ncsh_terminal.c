@@ -73,7 +73,7 @@ struct ncsh_Coordinates ncsh_terminal_position() {
 	for (i = 0; i < BUFFER_LENGTH && character != TERMINAL_RETURN; ++i) {
 		if (read(STDIN_FILENO, &character, 1) == -1)
 		{
-			perror("ncsh: Could not get cursor position.");
+			perror("ncsh: Could not get cursor position");
 			return cursor_position;
 		}
 		buffer[i] = character;
