@@ -65,7 +65,7 @@ enum eskilib_Result ncsh_history_load(struct ncsh_History* history) {
 		file = fopen(history_file, "w");
 		if (file == NULL)
 		{
-			perror("Could not load or create history file.");
+			perror("Could not load or create history file");
 			return E_FAILURE_FILE_OP;
 		}
 		return E_SUCCESS;
@@ -103,7 +103,7 @@ enum eskilib_Result ncsh_history_save(struct ncsh_History* history) {
 
 	FILE* file = fopen(history_file, "a");
 	if (file == NULL) {
-		perror(RED "Could not open .ncsh_history file to save history." RESET);
+		perror(RED "Could not open .ncsh_history file to save history" RESET);
 		return E_FAILURE_FILE_OP;
 	}
 
@@ -189,7 +189,7 @@ enum eskilib_Result ncsh_history_add(char* line, uint_fast32_t length, struct nc
 
 	FILE* file = fopen(history_file, "w");
 	if (file == NULL) {
-		perror("Could not load or create history file.");
+		perror("Could not load or create history file");
 		return E_FAILURE_FILE_OP;
 	}
 
