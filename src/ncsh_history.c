@@ -9,9 +9,31 @@
 #include <assert.h>
 
 #include "ncsh_history.h"
+#include "eskilib/eskilib_colors.h"
 #include "eskilib/eskilib_result.h"
 #include "eskilib/eskilib_file.h"
 #include "eskilib/eskilib_string.h"
+
+static char* history_file;
+
+void ncsh_history_file_set(struct eskilib_String config_file) {
+	assert(config_file.value != NULL);
+	assert(config_file.length > 0);
+	if (config_file.value == NULL || config_file.length == 0) {
+		history_file = NULL;
+		return;
+	}
+
+
+	if (config_file.length + NCSH_HISTORY_FILE_LENGTH > NCSH_MAX_INPUT) {
+		history_file = NULL;
+		return;
+	}
+
+	history_file = config_file.value;
+
+	strncat(history_file, NCSH_HISTORY_FILE, NCSH_HISTORY_FILE_LENGTH);
+}
 
 enum eskilib_Result ncsh_history_malloc(struct ncsh_History* history) {
 	assert(history != NULL);
@@ -29,28 +51,27 @@ enum eskilib_Result ncsh_history_malloc(struct ncsh_History* history) {
 	return E_SUCCESS;
 }
 
-void ncsh_history_file_path(char* path, char* destination) {
-	strcat(destination, path);
-	strcat(destination, NCSH_HISTORY_FILE);
-}
-
 enum eskilib_Result ncsh_history_load(struct ncsh_History* history) {
 	assert(history != NULL);
+	if (history == NULL)
+		return E_FAILURE_NULL_REFERENCE;
 
-	// char file_buffer[PATH_MAX];
-	// ncsh_history_file_path(history->history_file_directory, file_buffer);
+	ncsh_history_file_set(history->config_location);
+	if (history_file == NULL)
+		return E_FAILURE;
 
-	FILE* file = fopen(NCSH_HISTORY_FILE, "r");
+	FILE* file = fopen(history_file, "r");
 	if (file == NULL) {
-		file = fopen(NCSH_HISTORY_FILE, "w");
+		file = fopen(history_file, "w");
 		if (file == NULL)
 		{
 			perror("Could not load or create history file.");
 			return E_FAILURE_FILE_OP;
 		}
+		return E_SUCCESS;
 	}
 
-	char buffer[MAX_INPUT];
+	char buffer[NCSH_MAX_INPUT];
 	int_fast32_t buffer_length = 0;
 
 	for (uint_fast32_t i = 0;
@@ -80,18 +101,18 @@ enum eskilib_Result ncsh_history_save(struct ncsh_History* history) {
 	if (history == NULL || !history->entries[0].value)
 		return E_FAILURE_NULL_REFERENCE;
 
-	// char file_buffer[PATH_MAX];
-	// ncsh_history_file_path(history->history_file_directory, file_buffer);
-
-	FILE* file = fopen(NCSH_HISTORY_FILE, "a");
+	FILE* file = fopen(history_file, "a");
 	if (file == NULL) {
-		fputs("Could not create or open .ncsh_history file.\n", stderr);
+		perror(RED "Could not open .ncsh_history file to save history." RESET);
 		return E_FAILURE_FILE_OP;
 	}
 
 	for (uint_fast32_t i = history->file_position == 0 ? 0 : history->file_position - 1;
 		i < history->history_count;
 		++i) {
+		if (history->entries[i].length == 0 || history->entries[i].value == NULL)
+			continue;
+
 		if (!fputs(history->entries[i].value, file)) {
 			perror("Error writing to file");
 			fclose(file);
@@ -115,6 +136,7 @@ void ncsh_history_free(struct ncsh_History* history) {
 		free(history->entries[i].value);
 	}
 
+	free(history->config_location.value);
 	free(history->entries);
 }
 
@@ -126,11 +148,11 @@ enum eskilib_Result ncsh_history_add(char* line, uint_fast32_t length, struct nc
 	if (history == NULL || line == NULL)
 		return E_FAILURE_NULL_REFERENCE;
 	else if (length == 0)
-		return E_ZERO_LENGTH;
+		return E_FAILURE_ZERO_LENGTH;
 	else if (history->history_count + 1 < history->history_count)
-		return E_OVERFLOW_PROTECTION;
+		return E_FAILURE_OVERFLOW_PROTECTION;
 	else if (history->history_count >= NCSH_MAX_HISTORY_FILE)
-		return E_MAX_LIMIT_REACHED;
+		return E_NO_OP_MAX_LIMIT_REACHED;
 
 	history->entries[history->history_count].length = length;
 	history->entries[history->history_count].value = malloc(sizeof(char) * length);
@@ -138,6 +160,50 @@ enum eskilib_Result ncsh_history_add(char* line, uint_fast32_t length, struct nc
 	++history->history_count;
 	return E_SUCCESS;
 }
+
+/*enum eskilib_Result ncsh_history_remove(char* line, uint_fast32_t length, struct ncsh_History* history) {
+	assert(history != NULL);
+	assert(line != NULL);
+	assert(length != 0);
+
+	if (history == NULL || line == NULL)
+		return E_FAILURE_NULL_REFERENCE;
+	else if (length == 0)
+		return E_FAILURE_ZERO_LENGTH;
+	else if (history->history_loaded == false)
+		return E_NO_OP;
+
+	bool entry_found = false;
+	int_fast32_t max_length;
+	for (uint_fast32_t i = 0; i < history->history_count; ++i) {
+		max_length = history->entries[i].length > length ? history->entries[i].length : length;
+		if (eskilib_string_equals(line, history->entries[i].value, max_length)) {
+			entry_found = true;
+			history->entries[i].value = NULL;
+			history->entries[i].length = 0;
+		}
+	}
+
+	if (!entry_found)
+		return E_NO_OP;
+
+	FILE* file = fopen(history_file, "w");
+	if (file == NULL) {
+		perror("Could not load or create history file.");
+		return E_FAILURE_FILE_OP;
+	}
+
+	int_fast32_t buffer_length = 0;
+	char buffer[NCSH_MAX_INPUT] = {0};
+	while ((buffer_length = eskilib_fgets(buffer, sizeof(buffer), file)) != EOF) {
+		max_length = buffer_length > length ? buffer_length : length;
+		if (eskilib_string_equals(line, buffer, max_length)) {
+			fputs("", file);
+		}
+	}
+
+	return E_SUCCESS;
+}*/
 
 struct eskilib_String ncsh_history_get(uint_fast32_t position, struct ncsh_History* history) {
 	assert(history != NULL);

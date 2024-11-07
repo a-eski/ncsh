@@ -1,9 +1,9 @@
 std = -std=c2x
 debug_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined,leak -g
-release_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -O3 -DNDEBUG
+release_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -O3 -DNDEBUG -DNCSH_RELEASE
 objects = obj/main.o obj/ncsh.o obj/ncsh_vm.o obj/ncsh_terminal.o obj/eskilib_string.o obj/eskilib_file.o obj/ncsh_debug.o obj/ncsh_args.o obj/ncsh_parser.o obj/ncsh_builtins.o obj/ncsh_history.o obj/ncsh_autocompletions.o
 target = bin/ncsh
-history_file = .ncsh_history
+history_file = ~/.config/.ncsh_history
 
 CC ?= gcc
 DESTDIR ?= /usr/local
@@ -14,13 +14,9 @@ ifeq ($(CC), gcc)
 endif
 
 ifeq ($(RELEASE), 1)
-	run_command = make
-	run_new_command = make -B
 	CFLAGS ?= $(release_flags)
 	cc_with_flags = $(CC) $(std) $(CFLAGS)
 else
-	run_command = make RELEASE=0
-	run_new_command = make -B RELEASE=0
 	CFLAGS ?= $(debug_flags)
 	cc_with_flags = $(CC) $(std) $(CFLAGS)
 endif
@@ -54,13 +50,8 @@ obj/ncsh_debug.o : src/ncsh_debug.c src/ncsh_debug.h src/ncsh_args.h
 	$(cc_with_flags) -c src/ncsh_debug.c -o obj/ncsh_debug.o
 
 .PHONY: run
-run :
-	$(run_command)
-	./$(target)
-
-.PHONY: runnew
-runnew :
-	$(run_new_command)
+run:
+	make -B
 	./$(target)
 
 .PHONY: debug
@@ -74,7 +65,7 @@ debugrun :
 
 .PHONY: install
 install : $(target)
-	install -C $(target) $(history_file) $(DESTDIR)
+	install -C $(target) $(DESTDIR)
 
 .PHONY: check
 check :

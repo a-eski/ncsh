@@ -137,13 +137,16 @@ void ncsh_pipe_redirect_output(struct ncsh_Pipe_IO* pipes, uint_fast32_t command
 
 	int file_descriptor = open(file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
 	if (command_position == 0) { //first command
+		close(pipes->fd_two[1]);
 		dup2(pipes->fd_two[1], file_descriptor);
 	}
 	else { //middle command
 		if (command_position % 2 != 0) {
+			close(pipes->fd_one[1]);
 			dup2(pipes->fd_one[1], file_descriptor);
 		}
 		else {
+			close(pipes->fd_two[1]);
 			dup2(pipes->fd_two[1], file_descriptor);
 		}
 	}
@@ -189,7 +192,7 @@ uint_fast32_t ncsh_vm(struct ncsh_Args args) {
 	bool args_end = false;
 	// enum ncsh_Ops op_previous = OP_NONE;
 	enum ncsh_Ops op_current = OP_NONE;
-	// enum ncsh_Ops op_next = OP_NONE;
+	enum ncsh_Ops op_next = OP_NONE;
 
 	uint_fast32_t number_of_commands = 0;
 	uint_fast32_t command_position = 0;
@@ -197,9 +200,8 @@ uint_fast32_t ncsh_vm(struct ncsh_Args args) {
 	uint_fast32_t buffer_position = 0;
 
 	for (uint_fast32_t l = 0; l < args.count; ++l) {
-		if (args.ops[l] == OP_PIPE) {
+		if (args.ops[l] != OP_CONSTANT)// if (args.ops[l] == OP_PIPE)
 			++number_of_commands;
-		}
 	}
 	++number_of_commands;
 
@@ -230,7 +232,12 @@ uint_fast32_t ncsh_vm(struct ncsh_Args args) {
 		}
 
 		++args_position;
-		// op_next = args.ops[args_position];
+		for (uint_fast32_t i = args_position; i < args.count; ++i) {
+			if (args.ops[i] != OP_CONSTANT) {
+				op_next = args.ops[i];
+				break;
+			}
+		}
 
 		if (op_current == OP_PIPE && !args_end) {
 			if (!ncsh_pipe_start(&pipes_io, command_position))
@@ -246,12 +253,11 @@ uint_fast32_t ncsh_vm(struct ncsh_Args args) {
 			return ncsh_pipe_fork_failure(&pipes_io, command_position, number_of_commands);
 
 		if (pid == 0) {
-			/*if (op_current == OP_OUTPUT_REDIRECTION && op_previous == OP_PIPE) { //this doesn't work as expected
-			if (op_current == OP_PIPE && op_next == OP_OUTPUT_REDIRECTION) { //this doesn't work as expected
+			if (op_current == OP_PIPE && op_next == OP_OUTPUT_REDIRECTION) {
 				puts("redirecting pipes");
 				ncsh_pipe_redirect_output(&pipes_io, command_position, args.values[args_position]);
 			}
-			else*/ if (op_current == OP_PIPE)
+			else if (op_current == OP_PIPE)
 				ncsh_pipe_connect(&pipes_io, command_position, number_of_commands);
 
 			if (execvp(buffer[0], buffer) == -1) {
