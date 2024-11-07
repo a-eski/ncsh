@@ -65,7 +65,7 @@ enum eskilib_Result ncsh_history_load(struct ncsh_History* history) {
 		file = fopen(history_file, "w");
 		if (file == NULL)
 		{
-			perror("Could not load or create history file");
+			perror(RED "Could not load or create history file" RESET);
 			return E_FAILURE_FILE_OP;
 		}
 		return E_SUCCESS;
@@ -114,12 +114,12 @@ enum eskilib_Result ncsh_history_save(struct ncsh_History* history) {
 			continue;
 
 		if (!fputs(history->entries[i].value, file)) {
-			perror("Error writing to file");
+			perror(RED "Error writing to file" RESET);
 			fclose(file);
 			return E_FAILURE_FILE_OP;
 		}
 		if (!fputc('\n', file)) {
-			perror("Error writing to file");
+			perror(RED "Error writing to file" RESET);
 			fclose(file);
 			return E_FAILURE_FILE_OP;
 		}
@@ -189,7 +189,7 @@ enum eskilib_Result ncsh_history_add(char* line, uint_fast32_t length, struct nc
 
 	FILE* file = fopen(history_file, "w");
 	if (file == NULL) {
-		perror("Could not load or create history file");
+		perror(RED "Could not load or create history file" RESET);
 		return E_FAILURE_FILE_OP;
 	}
 
