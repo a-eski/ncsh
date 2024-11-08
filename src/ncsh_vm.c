@@ -47,13 +47,13 @@ struct ncsh_Pipe_IO {
 };
 
 uint_fast32_t ncsh_pipe_error(void) {
-	perror(RED "Error when piping process" RESET);
+	perror(RED "ncsh: Error when piping process" RESET);
 	fflush(stdout);
 	return 0;
 }
 
 uint_fast32_t ncsh_fork_error(void) {
-	perror(RED "Error when forking process" RESET);
+	perror(RED "ncsh: Error when forking process" RESET);
 	fflush(stdout);
 	return 0;
 }
@@ -261,7 +261,7 @@ uint_fast32_t ncsh_vm(struct ncsh_Args args) {
 				ncsh_pipe_connect(&pipes_io, command_position, number_of_commands);
 
 			if (execvp(buffer[0], buffer) == -1) {
-				perror(RED "Could not find command" RESET);
+				perror(RED "ncsh: Could not find command" RESET);
 				fflush(stdout);
 				kill(getpid(), SIGTERM);
 			}
