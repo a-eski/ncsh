@@ -39,7 +39,7 @@ struct z_Database {
 	struct z_Directory* directories;
 };
 
-enum z_Database_Result z_start (const size_t config_path_max, struct eskilib_String config_path, struct z_Database* database);
+enum z_Database_Result z_start (const size_t config_path_max, const struct eskilib_String config_path, struct z_Database* database);
 
 struct eskilib_String z_process (const struct eskilib_String target, struct z_Database* database);
 

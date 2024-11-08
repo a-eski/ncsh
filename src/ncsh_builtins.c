@@ -39,32 +39,32 @@ uint_fast32_t ncsh_echo_command(struct ncsh_Args args) {
 
 uint_fast32_t ncsh_help_command(void) {
 	if (write(STDOUT_FILENO, "ncsh by Alex Eski: help\n\n", 25) == -1) {
-		perror("ncsh: error writing to stdout");
+		perror("ncsh: Error writing to stdout");
 		return 0;
 	}
 
 	if (write(STDOUT_FILENO, "Builtin Commands {command} {args}\n", 34) == -1) {
-		perror("ncsh: error writing to stdout");
+		perror("ncsh: Error writing to stdout");
 		return 0;
 	}
 
 	if (write(STDOUT_FILENO, "q:		To exit, type q, exit, or quit and press enter. You can also use Ctrl+D to exit.\n", 85) == -1) {
-		perror("ncsh: error writing to stdout");
+		perror("ncsh: Error writing to stdout");
 		return 0;
 	}
 
 	if (write(STDOUT_FILENO, "cd/z:		You can change directory with cd or z.\n", 46) == -1) {
-		perror("ncsh: error writing to stdout");
+		perror("ncsh: Error writing to stdout");
 		return 0;
 	}
 
 	if (write(STDOUT_FILENO, "echo:		You can write things to the screen using echo.\n", 54) == -1) {
-		perror("ncsh: error writing to stdout");
+		perror("ncsh: Error writing to stdout");
 		return 0;
 	}
 
 	if (write(STDOUT_FILENO, "history:	You can see your command history using the history command.\n", 69) == -1) {
-		perror("ncsh: error writing to stdout");
+		perror("ncsh: Error writing to stdout");
 		return 0;
 	}
 

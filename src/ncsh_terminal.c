@@ -20,7 +20,7 @@ static struct termios original_terminal;
 void ncsh_terminal_reset(void) {
 	fflush(stdout);
 	if (tcsetattr(STDIN_FILENO, TCSANOW, &original_terminal) != 0) {
-		perror(RED "Could not restore terminal settings" RESET);
+		perror(RED "ncsh: Could not restore terminal settings" RESET);
 	}
 }
 
@@ -31,7 +31,7 @@ void ncsh_terminal_init(void) {
 	}
 
 	if (tcgetattr(STDIN_FILENO, &original_terminal) != 0) {
-		perror(RED "Could not get terminal settings" RESET);
+		perror(RED "ncsh: Could not get terminal settings" RESET);
 		exit(EXIT_FAILURE);
 	}
 	atexit(ncsh_terminal_reset);
@@ -42,7 +42,7 @@ void ncsh_terminal_init(void) {
 	terminal.c_cc[VTIME] = 0;
 
 	if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &terminal) != 0) {
-		perror(RED "Could not set terminal settings" RESET);
+		perror(RED "ncsh: Could not set terminal settings" RESET);
 	}
 }
 
@@ -64,7 +64,7 @@ struct ncsh_Coordinates ncsh_terminal_position() {
 	struct ncsh_Coordinates cursor_position = {0};
 
 	if (write(STDOUT_FILENO, GET_CURSOR_POSITION, GET_CURSOR_POSITION_LENGTH) == -1) {
-		perror(RED "Error writing to stdout" RESET);
+		perror(RED "ncsh: Error writing to stdout" RESET);
 		fflush(stdout);
 		return cursor_position;
 	}
@@ -73,7 +73,7 @@ struct ncsh_Coordinates ncsh_terminal_position() {
 	for (i = 0; i < BUFFER_LENGTH && character != TERMINAL_RETURN; ++i) {
 		if (read(STDIN_FILENO, &character, 1) == -1)
 		{
-			perror("ncsh: Could not get cursor position");
+			perror(RED "ncsh: Could not get cursor position" RESET);
 			return cursor_position;
 		}
 		buffer[i] = character;
