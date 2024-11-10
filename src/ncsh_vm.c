@@ -37,6 +37,7 @@
 };*/
 
 struct ncsh_Output_Redirect_IO {
+	int fd;
 	int original_stdout;
 	int original_stderr;
 };
@@ -58,7 +59,7 @@ uint_fast32_t ncsh_fork_error(void) {
 	return 0;
 }
 
-struct ncsh_Output_Redirect_IO ncsh_output_redirection_start(char file[]) {
+struct ncsh_Output_Redirect_IO ncsh_output_redirection_start(char* file) {
 	assert(file != NULL);
 
 	int file_descriptor = open(file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
@@ -131,27 +132,6 @@ void ncsh_pipe_connect(struct ncsh_Pipe_IO* pipes, uint_fast32_t command_positio
 	}
 }
 
-void ncsh_pipe_redirect_output(struct ncsh_Pipe_IO* pipes, uint_fast32_t command_position, char file[]) {
-	assert(pipes != NULL);
-	assert(file != NULL);
-
-	int file_descriptor = open(file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
-	if (command_position == 0) { //first command
-		close(pipes->fd_two[1]);
-		dup2(pipes->fd_two[1], file_descriptor);
-	}
-	else { //middle command
-		if (command_position % 2 != 0) {
-			close(pipes->fd_one[1]);
-			dup2(pipes->fd_one[1], file_descriptor);
-		}
-		else {
-			close(pipes->fd_two[1]);
-			dup2(pipes->fd_two[1], file_descriptor);
-		}
-	}
-}
-
 void ncsh_pipe_stop(struct ncsh_Pipe_IO* pipes, uint_fast32_t command_position, uint_fast32_t number_of_commands) {
 	assert(pipes != NULL);
 
@@ -190,20 +170,30 @@ uint_fast32_t ncsh_vm(struct ncsh_Args args) {
 	char* buffer[MAX_INPUT] = {0};
 	pid_t pid = 0;
 	bool args_end = false;
-	// enum ncsh_Ops op_previous = OP_NONE;
 	enum ncsh_Ops op_current = OP_NONE;
-	enum ncsh_Ops op_next = OP_NONE;
 
 	uint_fast32_t number_of_commands = 0;
 	uint_fast32_t command_position = 0;
 	uint_fast32_t args_position = 0;
 	uint_fast32_t buffer_position = 0;
 
+	char* file = NULL;
+	uint_fast32_t file_found = 0;
 	for (uint_fast32_t l = 0; l < args.count; ++l) {
-		if (args.ops[l] != OP_CONSTANT)// if (args.ops[l] == OP_PIPE)
+		if (args.ops[l] == OP_OUTPUT_REDIRECTION) {
+			file = args.values[l + 1];
+			file_found = l;
+		}
+		else if (args.ops[l] == OP_PIPE) {
 			++number_of_commands;
+		}
 	}
 	++number_of_commands;
+	if (file != NULL) {
+		args.count = file_found - 1;
+		args.values[file_found] = NULL;
+		output_io = ncsh_output_redirection_start(file);
+	}
 
 	while (args.values[args_position] != NULL && args_end != true) {
 		buffer_position = 0;
@@ -222,7 +212,6 @@ uint_fast32_t ncsh_vm(struct ncsh_Args args) {
 		}
 
 		if (!args_end) {
-			// op_previous = op_current;
 			op_current = args.ops[args_position];
 		}
 
@@ -232,20 +221,10 @@ uint_fast32_t ncsh_vm(struct ncsh_Args args) {
 		}
 
 		++args_position;
-		for (uint_fast32_t i = args_position; i < args.count; ++i) {
-			if (args.ops[i] != OP_CONSTANT) {
-				op_next = args.ops[i];
-				break;
-			}
-		}
 
 		if (op_current == OP_PIPE && !args_end) {
 			if (!ncsh_pipe_start(&pipes_io, command_position))
 				return 1;
-		}
-		else if (op_current == OP_OUTPUT_REDIRECTION) {
-			output_io = ncsh_output_redirection_start(args.values[args_position]);
-			++args_position; //increment since we are using next arg as target of output redirection
 		}
 
 		pid = fork();
@@ -253,12 +232,9 @@ uint_fast32_t ncsh_vm(struct ncsh_Args args) {
 			return ncsh_pipe_fork_failure(&pipes_io, command_position, number_of_commands);
 
 		if (pid == 0) {
-			if (op_current == OP_PIPE && op_next == OP_OUTPUT_REDIRECTION) {
-				puts("redirecting pipes");
-				ncsh_pipe_redirect_output(&pipes_io, command_position, args.values[args_position]);
-			}
-			else if (op_current == OP_PIPE)
+			if (op_current == OP_PIPE)
 				ncsh_pipe_connect(&pipes_io, command_position, number_of_commands);
+
 
 			if (execvp(buffer[0], buffer) == -1) {
 				perror(RED "ncsh: Could not find command" RESET);
@@ -269,8 +245,6 @@ uint_fast32_t ncsh_vm(struct ncsh_Args args) {
 
 		if (op_current == OP_PIPE)
 			ncsh_pipe_stop(&pipes_io, command_position, number_of_commands);
-		else if (op_current == OP_OUTPUT_REDIRECTION)
-			ncsh_output_redirection_stop(output_io);
 
 		int status;
 		do {
@@ -279,6 +253,9 @@ uint_fast32_t ncsh_vm(struct ncsh_Args args) {
 
 		++command_position;
 	}
+
+	if (file != NULL)
+		ncsh_output_redirection_stop(output_io);
 
 	return 1;
 }
