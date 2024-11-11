@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <assert.h>
 
+#include "ncsh_defines.h"
 #include "ncsh_history.h"
 #include "eskilib/eskilib_colors.h"
 #include "eskilib/eskilib_result.h"
@@ -37,7 +38,6 @@ void ncsh_history_file_set(struct eskilib_String config_file) {
 
 enum eskilib_Result ncsh_history_malloc(struct ncsh_History* history) {
 	assert(history != NULL);
-
 	if (history == NULL)
 		return E_FAILURE_NULL_REFERENCE;
 

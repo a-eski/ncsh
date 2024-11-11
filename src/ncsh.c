@@ -20,7 +20,7 @@
 #include "ncsh_io.h"
 #include "ncsh.h"
 #include "ncsh_autocompletions.h"
-#include "ncsh_types.h"
+#include "ncsh_defines.h"
 #include "eskilib/eskilib_colors.h"
 #include "eskilib/eskilib_string.h"
 
@@ -32,7 +32,7 @@
 #define NCSH "ncsh"
 #define NCSH_LENGTH 5
 #define NCSH_CONFIG_LENGTH 8 // length for .config
-#define NCSH_MAX_MATCHES 32
+//
 #define NCSH_ERROR_STDOUT "ncsh: Error writing to stdout"
 #define NCSH_ERROR_STDIN "ncsh: Error writing to stdin"
 
@@ -194,6 +194,28 @@ uint_fast32_t ncsh_config(char* out, size_t max_length) {
 	return length;
 }
 
+void ncsh_autocomplete(char* buffer, uint_fast32_t buf_position, char* current_autocompletion, struct ncsh_Autocompletions* autocompletions_tree) {
+	char* autocompletion_matches[NCSH_MAX_MATCHES] = {0};
+	uint_fast32_t autocompletions_matches_count = ncsh_autocompletions_get(buffer, buf_position + 1, autocompletion_matches, autocompletions_tree);
+
+	if (autocompletions_matches_count == 0) {
+		current_autocompletion[0] = '\0';
+		return;
+	}
+
+	struct ncsh_Coordinates position = ncsh_terminal_position();
+	if (position.x == 0 && position.y == 0)
+		return;
+
+	eskilib_string_copy(current_autocompletion, autocompletion_matches[0], NCSH_MAX_INPUT);
+	for (uint_fast32_t i = 0; i < autocompletions_matches_count; ++i)
+		free(autocompletion_matches[i]);
+
+	printf(WHITE_DIM "%s" RESET, current_autocompletion);
+	ncsh_terminal_move(position.x, position.y);
+	fflush(stdout);
+}
+
 int ncsh() {
 	clock_t start = clock();
 
@@ -244,7 +266,6 @@ int ncsh() {
 	}
 
 	char* current_autocompletion = malloc(MAX_INPUT);
-	uint_fast32_t autocompletions_matches_count = 0;
 	struct ncsh_Autocompletions* autocompletions_tree = ncsh_autocompletions_malloc();
 	if (autocompletions_tree == NULL) {
 		perror(RED "ncsh: Error when loading data from history as autocompletions" RESET);
@@ -535,6 +556,7 @@ int ncsh() {
 				continue;
 			}
 
+			// midline insertions
 			if (buf_position < max_buf_position && buffer[buf_position]) {
 				buf_start = buf_position;
 
@@ -575,7 +597,7 @@ int ncsh() {
 					--buf_position;
 				}
 			}
-			else {
+			else { // end of line insertions
 				putchar(character);
 				fflush(stdout);
 				buffer[buf_position++] = character;
@@ -598,25 +620,7 @@ int ncsh() {
 			if (buffer[0] == '\0' || buffer[buf_position] != '\0')
 				continue;
 
-			char* autocompletion_matches[NCSH_MAX_MATCHES] = {0};
-			autocompletions_matches_count = ncsh_autocompletions_get(buffer, buf_position + 1, autocompletion_matches, NCSH_MAX_INPUT, autocompletions_tree);
-
-			if (autocompletions_matches_count == 0) {
-				current_autocompletion[0] = '\0';
-				continue;
-			}
-
-			struct ncsh_Coordinates position = ncsh_terminal_position();
-			if (position.x == 0 && position.y == 0)
-				continue;
-
-			eskilib_string_copy(current_autocompletion, autocompletion_matches[0], NCSH_MAX_INPUT);
-			for (uint_fast32_t i = 0; i < autocompletions_matches_count; ++i)
-				free(autocompletion_matches[i]);
-
-			printf(WHITE_DIM "%s" RESET, current_autocompletion);
-			ncsh_terminal_move(position.x, position.y);
-			fflush(stdout);
+			ncsh_autocomplete(buffer, buf_position, current_autocompletion, autocompletions_tree);
 		}
 	}
 

@@ -16,7 +16,6 @@ struct ncsh_Autocompletions;
 
 struct ncsh_Autocompletions {
 	bool is_end_of_a_word;
-	char letter;
 	struct ncsh_Autocompletions* nodes[NCSH_LETTERS];
 };
 
@@ -24,6 +23,10 @@ struct ncsh_Autocompletions_Matches {
 	uint_fast32_t count;
 	struct eskilib_String* entries;
 };
+
+inline int ncsh_char_to_index(char character) { return (int)character - ' '; }
+
+inline char ncsh_index_to_char(int index) { return (char)index + ' '; }
 
 struct ncsh_Autocompletions* ncsh_autocompletions_malloc();
 
@@ -41,11 +44,7 @@ struct ncsh_Autocompletions* ncsh_autocompletions_search_string(struct eskilib_S
 uint_fast32_t ncsh_autocompletions_get(char* search,
 				       uint_fast32_t search_length,
 				       char* matches[],
-				       const uint_fast32_t max_match_length,
 				       struct ncsh_Autocompletions* tree);
-
-int ncsh_autocompletions_map_char(char character);
-char ncsh_autocompletions_map_position(int position);
 
 #endif // !ncsh_autocompletions_h
 
