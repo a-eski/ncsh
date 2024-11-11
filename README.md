@@ -3,6 +3,8 @@ An interactive unix shell focused on speed, handy features, and building everyth
 
 # to build from source
 make<br />
+
+# to install
 sudo make install
 
 # notes
