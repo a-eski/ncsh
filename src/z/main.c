@@ -1,5 +1,6 @@
 //for testing
 #include <stdio.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "z.h"
@@ -10,7 +11,13 @@ int main(void) {
 	const struct eskilib_String config_path = eskilib_String_Empty;
 	struct z_Database database;
 
-	z_start(528, config_path, &database);
+	enum eskilib_Result start_result = z_start(528, config_path, &database);
+	if (start_result != E_SUCCESS) {
+		printf("Error starting z with config_path: %s\n", config_path.value);
+		printf("z_start result: %d\n", start_result);
+		return 1;
+	}
+
 
 	char buffer[528];
 

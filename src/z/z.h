@@ -5,6 +5,7 @@
 #include <time.h>
 
 #include "../eskilib/eskilib_string.h"
+#include "../eskilib/eskilib_result.h"
 
 #define Z_DATABASE_FILE "database.z"
 #define Z_DATABASE_FILE_LENGTH 10
@@ -23,14 +24,6 @@ struct z_Directory {
 	struct eskilib_String path;
 };
 
-enum z_Database_Result {
-	Z_FAILURE_FILE_OP = -3,
-	Z_FAILURE_MALLOC = -2,
-	Z_FAILURE_NULL_REFERENCE = -1,
-	Z_FAILURE = 0,
-	Z_SUCCESS = 1,
-};
-
 struct z_Database {
 	bool dirty;
 	uint_fast32_t count;
@@ -39,11 +32,11 @@ struct z_Database {
 	struct z_Directory* directories;
 };
 
-enum z_Database_Result z_start (const size_t config_path_max, const struct eskilib_String config_path, struct z_Database* database);
+enum eskilib_Result z_start (const size_t config_path_max, const struct eskilib_String config_path, struct z_Database* database);
 
 struct eskilib_String z_process (const struct eskilib_String target, struct z_Database* database);
 
-enum z_Database_Result z_finish (struct z_Database* database);
+enum eskilib_Result z_finish (struct z_Database* database);
 
 #endif // !z_main_h
 

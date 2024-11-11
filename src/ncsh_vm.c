@@ -178,11 +178,11 @@ uint_fast32_t ncsh_vm(struct ncsh_Args args) {
 	uint_fast32_t buffer_position = 0;
 
 	char* file = NULL;
-	uint_fast32_t file_found = 0;
+	uint_fast32_t output_redirect_found = 0;
 	for (uint_fast32_t l = 0; l < args.count; ++l) {
 		if (args.ops[l] == OP_OUTPUT_REDIRECTION) {
 			file = args.values[l + 1];
-			file_found = l;
+			output_redirect_found = l;
 		}
 		else if (args.ops[l] == OP_PIPE) {
 			++number_of_commands;
@@ -190,8 +190,8 @@ uint_fast32_t ncsh_vm(struct ncsh_Args args) {
 	}
 	++number_of_commands;
 	if (file != NULL) {
-		args.count = file_found - 1;
-		args.values[file_found] = NULL;
+		args.count = output_redirect_found;
+		args.values[output_redirect_found] = NULL;
 		output_io = ncsh_output_redirection_start(file);
 	}
 

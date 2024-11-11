@@ -36,20 +36,20 @@ void z_database_file_set(const size_t config_path_max, struct eskilib_String con
 	memcpy(z_database_file, Z_DATABASE_FILE, Z_DATABASE_FILE_LENGTH);
 }
 
-enum z_Database_Result z_database_malloc(struct z_Database* database) {
+enum eskilib_Result z_database_malloc(struct z_Database* database) {
 	database->dirty = false;
 	database->directories = malloc(sizeof(struct eskilib_String) * Z_DATABASE_IN_MEMORY_LIMIT);
 	if (database->directories == NULL)
-		return Z_FAILURE_MALLOC;
+		return E_FAILURE_MALLOC;
 
-	return Z_SUCCESS;
+	return E_SUCCESS;
 }
 
-enum z_Database_Result z_database_set_directory(char* buffer, int_fast32_t buffer_length, struct z_Directory* directory) {
+enum eskilib_Result z_database_set_directory(char* buffer, int_fast32_t buffer_length, struct z_Directory* directory) {
 	directory->path.length = buffer_length;
 	directory->path.value = malloc(sizeof(char) * buffer_length);
 	if (directory->path.value == NULL)
-		return Z_FAILURE_MALLOC;
+		return E_FAILURE_MALLOC;
 
 	eskilib_string_copy(directory->path.value, buffer, buffer_length);
 
@@ -57,13 +57,13 @@ enum z_Database_Result z_database_set_directory(char* buffer, int_fast32_t buffe
 	printf("Loaded: %s\n", directory->path.value);
 	#endif
 
-	return Z_SUCCESS;
+	return E_SUCCESS;
 }
 
-enum z_Database_Result z_database_load(struct z_Database* database) {
+enum eskilib_Result z_database_load(struct z_Database* database) {
 	assert(database != NULL);
 	if (database == NULL)
-		return Z_FAILURE_NULL_REFERENCE;
+		return E_FAILURE_NULL_REFERENCE;
 
 	FILE* file;
 	if (z_database_file != NULL)
@@ -80,7 +80,7 @@ enum z_Database_Result z_database_load(struct z_Database* database) {
 		if (file == NULL)
 		{
 			perror(RED "Could not load or create z database file" RESET);
-			return Z_FAILURE_FILE_OP;
+			return E_FAILURE_FILE_OP;
 		}
 	}
 
@@ -100,29 +100,41 @@ enum z_Database_Result z_database_load(struct z_Database* database) {
 
 	fclose(file);
 
-	return Z_SUCCESS;
+	return E_SUCCESS;
 }
 
-enum z_Database_Result z_database_save(struct z_Database* database) {
+enum eskilib_Result z_database_save(struct z_Database* database) {
 	assert(database != NULL);
-	if (database == NULL)
-		return Z_FAILURE_NULL_REFERENCE;
+	if (database == NULL || database->count == 0 || database->directories[0].path.value == NULL)
+		return E_FAILURE_NULL_REFERENCE;
 
-	return Z_SUCCESS;
+	FILE* file;
+	if (z_database_file != NULL)
+		file = fopen(z_database_file, "a");
+	else
+		file = fopen(Z_DATABASE_FILE, "a");
+
+	if (file == NULL) {
+		perror(RED "z: Could not open database file to save current session" RESET);
+		return E_FAILURE_FILE_OP;
+	}
+
+	fclose(file);
+	return E_SUCCESS;
 }
 
-enum z_Database_Result z_database_clean(struct z_Database* database) {
+enum eskilib_Result z_database_clean(struct z_Database* database) {
 	assert(database != NULL);
 	if (database == NULL)
-		return Z_FAILURE_NULL_REFERENCE;
+		return E_FAILURE_NULL_REFERENCE;
 
-	return Z_SUCCESS;
+	return E_SUCCESS;
 }
 
-enum z_Database_Result z_database_free(struct z_Database* database) {
+enum eskilib_Result z_database_free(struct z_Database* database) {
 	assert(database != NULL);
 	if (database == NULL)
-		return Z_FAILURE_NULL_REFERENCE;
+		return E_FAILURE_NULL_REFERENCE;
 
 	for (uint_fast32_t i = 0; i < database->count; i++)
 		free(database->directories[i].path.value);
@@ -130,7 +142,7 @@ enum z_Database_Result z_database_free(struct z_Database* database) {
 	if (database->directories != NULL)
 		free(database->directories);
 
-	return Z_SUCCESS;
+	return E_SUCCESS;
 }
 
 struct eskilib_String z_database_get_match(const struct eskilib_String target, struct z_Database* database) {
@@ -145,9 +157,9 @@ struct eskilib_String z_database_get_match(const struct eskilib_String target, s
 	return eskilib_String_Empty;
 }
 
-enum z_Database_Result z_database_add(const struct eskilib_String target, struct z_Database* database) {
+enum eskilib_Result z_database_add(const struct eskilib_String target, struct z_Database* database) {
 	if (database == NULL || target.value == NULL || target.length == 0)
-		return Z_FAILURE_NULL_REFERENCE;
+		return E_FAILURE_NULL_REFERENCE;
 
 	database->dirty = true;
 
@@ -168,7 +180,7 @@ enum z_Database_Result z_database_add(const struct eskilib_String target, struct
 	database->directories[database->count].last_accessed = clock();
 	++database->count;
 
-	return Z_SUCCESS;
+	return E_SUCCESS;
 }
 
 double z_score(struct z_Directory* directory, clock_t now) {
@@ -184,19 +196,18 @@ double z_score(struct z_Directory* directory, clock_t now) {
 		return directory->rank * 0.25;
 }
 
-enum z_Database_Result z_start(const size_t config_path_max, struct eskilib_String config_path, struct z_Database* database) {
+enum eskilib_Result z_start(const size_t config_path_max, struct eskilib_String config_path, struct z_Database* database) {
 	z_database_file_set(config_path_max, config_path);
 
-	enum z_Database_Result result;
-	result = z_database_malloc(database);
-	if (result != Z_SUCCESS)
+	enum eskilib_Result result = z_database_malloc(database);
+	if (result != E_SUCCESS)
 		return result;
 
 	result = z_database_load(database);
-	if (result != Z_SUCCESS)
+	if (result != E_SUCCESS)
 		return result;
 
-	return Z_SUCCESS;
+	return E_SUCCESS;
 }
 
 struct eskilib_String z_process (const struct eskilib_String target, struct z_Database* database) {
@@ -207,18 +218,17 @@ struct eskilib_String z_process (const struct eskilib_String target, struct z_Da
 	return match;
 }
 
-enum z_Database_Result z_finish(struct z_Database* database) {
-	enum z_Database_Result result;
-	result = z_database_save(database);
-	if (result != Z_SUCCESS)
+enum eskilib_Result z_finish(struct z_Database* database) {
+	enum eskilib_Result result = z_database_save(database);
+	if (result != E_SUCCESS)
 		return result;
 	result = z_database_clean(database);
-	if (result != Z_SUCCESS)
+	if (result != E_SUCCESS)
 		return result;
 	result = z_database_free(database);
-	if (result != Z_SUCCESS)
+	if (result != E_SUCCESS)
 		return result;
 
-	return Z_SUCCESS;
+	return E_SUCCESS;
 }
 
