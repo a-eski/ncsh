@@ -5,4 +5,3 @@ docker run -ti --rm -v $(shell pwd):/docker ncsh-docked "make && ruby ./src/inte
 
 sudo docker run -ti --rm -v $(shell pwd):/docker ncsh-docked "make && ruby ./src/integration_tests/tests.rb"
 
-

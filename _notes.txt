@@ -22,16 +22,3 @@ fuzzing
 https://llvm.org/docs/LibFuzzer.html#corpus
 https://github.com/google/fuzzing/blob/master/tutorial/libFuzzerTutorial.md#seed-corpus
 
--- vm "ls | sort" example --
-pass in args {"ls", "|", "sort"}
-create char** with args for ls command
-
-set current op to pipe
-call pipe with pipes->fd
-fork process
-close pipes->fd[1]
-fork process
-waitpid
-close pipes->fd_two[0]
-waitpid
-

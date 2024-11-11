@@ -5,9 +5,10 @@
 
 #include "ncsh_debug.h"
 
-void ncsh_debug_line(char* line, uint_fast32_t length) {
-	printf("line: %s\n", line);
-	printf("length: %lu\n", length);
+void ncsh_debug_line(char* buffer, uint_fast32_t buf_position, uint_fast32_t max_buf_position) {
+	printf("buffer: %s\n", buffer);
+	printf("buf_position: %lu\n", buf_position);
+	printf("max_buf_position %lu\n", max_buf_position);
 	fflush(stdout);
 }
 
@@ -19,5 +20,10 @@ void ncsh_debug_args(struct ncsh_Args args) {
 		printf("args.values[%lu] %s\n", i, args.values[i]);
 		printf("args.ops[%lu] %d\n", i, args.ops[i]);
 	}
+}
+
+void ncsh_debug_config(struct eskilib_String config_location) {
+	printf("config value: %s\n", config_location.value);
+	printf("config length: %lu\n", config_location.length);
 }
 

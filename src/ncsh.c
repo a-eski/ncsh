@@ -32,7 +32,6 @@
 #define NCSH "ncsh"
 #define NCSH_LENGTH 5
 #define NCSH_CONFIG_LENGTH 8 // length for .config
-//
 #define NCSH_ERROR_STDOUT "ncsh: Error writing to stdout"
 #define NCSH_ERROR_STDIN "ncsh: Error writing to stdin"
 
@@ -48,7 +47,7 @@ enum ncsh_Hotkey ncsh_get_key(char character) {
 }
 
 [[nodiscard]]
-int_fast32_t ncsh_print_prompt(struct ncsh_Directory prompt_info) {
+int_fast32_t ncsh_prompt(struct ncsh_Directory prompt_info) {
 	char* wd_result = getcwd(prompt_info.path, sizeof(prompt_info.path));
 	if (wd_result == NULL) {
 		perror(RED "ncsh: Error when getting current directory" RESET);
@@ -58,6 +57,13 @@ int_fast32_t ncsh_print_prompt(struct ncsh_Directory prompt_info) {
 
 	printf(ncsh_GREEN "%s" WHITE ":" ncsh_CYAN "%s" WHITE "$ ", prompt_info.user, prompt_info.path);
 	fflush(stdout);
+
+	// save cursor position so we can reset cursor when loading history entries
+	if (write(STDOUT_FILENO, SAVE_CURSOR_POSITION, SAVE_CURSOR_POSITION_LENGTH) == -1) {
+		perror(RED NCSH_ERROR_STDOUT RESET);
+		fflush(stderr);
+		return NCSH_EXIT_FAILURE;
+	}
 
 	return NCSH_EXIT_SUCCESS;
 }
@@ -71,7 +77,7 @@ int_fast32_t ncsh_backspace(char* buffer, uint_fast32_t* buf_position, uint_fast
 	}
 	else {
 		--*buf_position;
-		if (max_buf_position != 0)
+		if (*max_buf_position > 0)
 			--*max_buf_position;
 
 		if (write(STDOUT_FILENO, BACKSPACE_STRING ERASE_CURRENT_LINE, BACKSPACE_STRING_LENGTH + ERASE_CURRENT_LINE_LENGTH) == -1) {
@@ -120,7 +126,7 @@ int_fast32_t ncsh_delete(char* buffer, uint_fast32_t* buf_position, uint_fast32_
 	for (uint_fast32_t i = *buf_position; i < *max_buf_position && buffer[i]; ++i)
 		buffer[i] = buffer[i + 1];
 
-	if (max_buf_position != 0)
+	if (*max_buf_position > 0)
 		--*max_buf_position;
 
 	for (uint_fast32_t i = *buf_position; i < *max_buf_position && buffer[*buf_position]; ++i) {
@@ -216,7 +222,7 @@ void ncsh_autocomplete(char* buffer, uint_fast32_t buf_position, char* current_a
 	fflush(stdout);
 }
 
-int ncsh() {
+int ncsh(void) {
 	clock_t start = clock();
 
 	char character;
@@ -237,12 +243,10 @@ int ncsh() {
 	if (!did_malloc_succeed)
 		return EXIT_FAILURE;
 
-	enum eskilib_Result result; // used to track operation results
 	uint_fast32_t history_position = 0; // current position in history for the current loop, reset every loop
 	struct eskilib_String history_entry; // used to hold return value when cycling through history
 	struct ncsh_History history;
-	result = ncsh_history_malloc(&history);
-	if (result != E_SUCCESS) {
+	if (ncsh_history_malloc(&history) != E_SUCCESS) {
 		perror(RED "ncsh: Error when allocating memory for history" RESET);
 		fflush(stderr);
 		ncsh_args_free(args);
@@ -252,12 +256,10 @@ int ncsh() {
 	history.config_location.value = malloc(NCSH_MAX_INPUT);
 	history.config_location.length = ncsh_config(history.config_location.value, NCSH_MAX_INPUT);
 	#ifdef  NCSH_DEBUG
-	printf("config value: %s\n", history.config_location.value);
-	printf("config length: %lu\n", history.config_location.length);
+	ncsh_debug_config(history.config_location);
 	#endif /* ifdef  NCSH_DEBUG */
 
-	result = ncsh_history_load(&history);
-	if (result != E_SUCCESS) {
+	if (ncsh_history_load(&history) != E_SUCCESS) {
 		perror(RED "ncsh: Error when loading data from history file" RESET);
 		fflush(stderr);
 		ncsh_args_free(args);
@@ -265,7 +267,7 @@ int ncsh() {
 		return EXIT_FAILURE;
 	}
 
-	char* current_autocompletion = malloc(MAX_INPUT);
+	char* current_autocompletion = malloc(NCSH_MAX_INPUT);
 	struct ncsh_Autocompletions* autocompletions_tree = ncsh_autocompletions_malloc();
 	if (autocompletions_tree == NULL) {
 		perror(RED "ncsh: Error when loading data from history as autocompletions" RESET);
@@ -283,33 +285,18 @@ int ncsh() {
 	printf("ncsh: startup time: %.2f milliseconds\n", elapsed_ms);
 
 	int exit = EXIT_SUCCESS;
-	if (ncsh_print_prompt(prompt_info) == NCSH_EXIT_FAILURE) {
-		exit = EXIT_FAILURE;
-		goto free_all;
-	}
-
-	// save cursor position so we can reset cursor when loading history entries
-	if (write(STDOUT_FILENO, SAVE_CURSOR_POSITION, SAVE_CURSOR_POSITION_LENGTH) == -1) {
-		perror(RED NCSH_ERROR_STDOUT RESET);
-		fflush(stderr);
+	if (ncsh_prompt(prompt_info) == NCSH_EXIT_FAILURE) {
 		exit = EXIT_FAILURE;
 		goto free_all;
 	}
 
 	while (1) {
 		if (buf_position == 0 && reprint_prompt == true) {
-			if (ncsh_print_prompt(prompt_info) == NCSH_EXIT_FAILURE) {
+			if (ncsh_prompt(prompt_info) == NCSH_EXIT_FAILURE) {
 				exit = EXIT_FAILURE;
 				goto free_all;
 			}
 			history_position = 0;
-			// save cursor position so we can reset cursor when loading history entries
-			if (write(STDOUT_FILENO, SAVE_CURSOR_POSITION, SAVE_CURSOR_POSITION_LENGTH) == -1) {
-				perror(RED NCSH_ERROR_STDOUT RESET);
-				fflush(stderr);
-				exit = EXIT_FAILURE;
-				goto free_all;
-			}
 		}
 		else {
 			reprint_prompt = true;
@@ -516,8 +503,7 @@ int ncsh() {
 			fflush(stdout);
 
 			#ifdef NCSH_DEBUG
-			ncsh_debug_line(buffer, buf_position);
-			printf("buf_position: %lu, max_buf_position %lu\n", buf_position, max_buf_position);
+			ncsh_debug_line(buffer, buf_position, max_buf_position);
 			#endif /* ifdef NCSH_DEBUG */
 
 			args = ncsh_parse(buffer, buf_position, args);

@@ -1,5 +1,5 @@
 // Copyright (c) ncsh by Alex Eski 2024
-// Based on ncsh_autocompletions prefix tree implementation.
+// Based on eskilib_trie prefix tree implementation.
 
 #ifndef ncsh_autocompletions_h
 #define ncsh_autocompletions_h

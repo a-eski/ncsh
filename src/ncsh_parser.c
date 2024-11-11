@@ -92,7 +92,7 @@ struct ncsh_Args ncsh_parse(char line[], uint_fast32_t length, struct ncsh_Args 
 		else if (ncsh_is_delimiter(line[line_position]) && (double_quotes_count == 0 || double_quotes_count == 2)) {
 			buffer[buffer_position] = '\0';
 
-			args.values[args.count] = malloc(sizeof(char) * (buffer_position + 1));
+			args.values[args.count] = malloc(buffer_position + 1);
 			eskilib_string_copy(args.values[args.count], buffer, buffer_position + 1);
 
 			args.ops[args.count] = ncsh_op_get(buffer, buffer_position);
