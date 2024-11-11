@@ -18,7 +18,6 @@
 	#define NCSH_HISTORY_FILE_LENGTH 15
 #endif
 
-#define NCSH_MAX_INPUT 528
 #define NCSH_MAX_HISTORY_FILE 2000
 
 struct ncsh_History {
