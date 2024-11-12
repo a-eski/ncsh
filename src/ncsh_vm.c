@@ -3,7 +3,6 @@
 #define _POSIX_SOURCE
 #include <linux/limits.h>
 #include <assert.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -17,7 +16,7 @@
 #include "ncsh_terminal.h"
 #include "ncsh_args.h"
 #include "ncsh_builtins.h"
-#include "ncsh_history.h"
+#include "ncsh_vm.h"
 #include "eskilib/eskilib_string.h"
 #include "eskilib/eskilib_colors.h"
 
@@ -47,18 +46,6 @@ struct ncsh_Pipe_IO {
 	int fd_two[2];
 };
 
-uint_fast32_t ncsh_pipe_error(void) {
-	perror(RED "ncsh: Error when piping process" RESET);
-	fflush(stdout);
-	return 0;
-}
-
-uint_fast32_t ncsh_fork_error(void) {
-	perror(RED "ncsh: Error when forking process" RESET);
-	fflush(stdout);
-	return 0;
-}
-
 struct ncsh_Output_Redirect_IO ncsh_output_redirection_start(char* file) {
 	assert(file != NULL);
 
@@ -84,12 +71,18 @@ uint_fast32_t ncsh_pipe_start(struct ncsh_Pipe_IO* pipes, uint_fast32_t command_
 	assert(pipes != NULL);
 
 	if (command_position % 2 != 0) {
-		if (pipe(pipes->fd_one) != 0)
-			return ncsh_pipe_error();
+		if (pipe(pipes->fd_one) != 0) {
+			perror(RED "ncsh: Error when piping process" RESET);
+			fflush(stdout);
+			return 0;
+		}
 	}
 	else {
-		if (pipe(pipes->fd_two) != 0)
-			return ncsh_pipe_error();
+		if (pipe(pipes->fd_two) != 0) {
+			perror(RED "ncsh: Error when piping process" RESET);
+			fflush(stdout);
+			return 0;
+		}
 	}
 
 	return 1;
@@ -105,7 +98,9 @@ uint_fast32_t ncsh_pipe_fork_failure(struct ncsh_Pipe_IO* pipes, uint_fast32_t c
 			close(pipes->fd_two[1]);
 	}
 
-	return ncsh_fork_error();
+	perror(RED "ncsh: Error when forking process" RESET);
+	fflush(stdout);
+	return 0;
 }
 
 void ncsh_pipe_connect(struct ncsh_Pipe_IO* pipes, uint_fast32_t command_position, uint_fast32_t number_of_commands) {
@@ -169,10 +164,10 @@ uint_fast32_t ncsh_vm(struct ncsh_Args args) {
 
 	char* buffer[MAX_INPUT] = {0};
 	pid_t pid = 0;
-	bool args_end = false;
+	bool end = false;
 	enum ncsh_Ops op_current = OP_NONE;
 
-	uint_fast32_t number_of_commands = 0;
+	uint_fast32_t number_of_pipe_commands = 0;
 	uint_fast32_t command_position = 0;
 	uint_fast32_t args_position = 0;
 	uint_fast32_t buffer_position = 0;
@@ -185,17 +180,17 @@ uint_fast32_t ncsh_vm(struct ncsh_Args args) {
 			output_redirect_found = l;
 		}
 		else if (args.ops[l] == OP_PIPE) {
-			++number_of_commands;
+			++number_of_pipe_commands;
 		}
 	}
-	++number_of_commands;
+	++number_of_pipe_commands;
 	if (file != NULL) {
 		args.count = output_redirect_found;
 		args.values[output_redirect_found] = NULL;
 		output_io = ncsh_output_redirection_start(file);
 	}
 
-	while (args.values[args_position] != NULL && args_end != true) {
+	while (args.values[args_position] != NULL && end != true) {
 		buffer_position = 0;
 
 		while (args.ops[args_position] == OP_CONSTANT) {
@@ -203,7 +198,7 @@ uint_fast32_t ncsh_vm(struct ncsh_Args args) {
 			++args_position;
 
 			if (args.values[args_position] == NULL) {
-				args_end = true;
+				end = true;
 				++buffer_position;
 				break;
 			}
@@ -211,7 +206,7 @@ uint_fast32_t ncsh_vm(struct ncsh_Args args) {
 			++buffer_position;
 		}
 
-		if (!args_end) {
+		if (!end) {
 			op_current = args.ops[args_position];
 		}
 
@@ -222,29 +217,30 @@ uint_fast32_t ncsh_vm(struct ncsh_Args args) {
 
 		++args_position;
 
-		if (op_current == OP_PIPE && !args_end) {
+		if (op_current == OP_PIPE && !end) {
 			if (!ncsh_pipe_start(&pipes_io, command_position))
-				return 1;
+				return 0;
 		}
 
 		pid = fork();
 		if (pid == -1)
-			return ncsh_pipe_fork_failure(&pipes_io, command_position, number_of_commands);
+			return ncsh_pipe_fork_failure(&pipes_io, command_position, number_of_pipe_commands);
 
 		if (pid == 0) {
 			if (op_current == OP_PIPE)
-				ncsh_pipe_connect(&pipes_io, command_position, number_of_commands);
+				ncsh_pipe_connect(&pipes_io, command_position, number_of_pipe_commands);
 
 
 			if (execvp(buffer[0], buffer) == -1) {
-				perror(RED "ncsh: Could not find command" RESET);
+				end = true;
+				perror(RED "ncsh: Could not find command or directory" RESET);
 				fflush(stdout);
 				kill(getpid(), SIGTERM);
 			}
 		}
 
 		if (op_current == OP_PIPE)
-			ncsh_pipe_stop(&pipes_io, command_position, number_of_commands);
+			ncsh_pipe_stop(&pipes_io, command_position, number_of_pipe_commands);
 
 		int status;
 		do {

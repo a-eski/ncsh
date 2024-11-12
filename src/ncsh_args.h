@@ -25,7 +25,7 @@ enum ncsh_Ops {
 struct ncsh_Args {
 	uint_fast32_t count;
 	uint_fast32_t max_line_length;
-	enum ncsh_Ops* ops;
+	uint_fast8_t* ops;
 	char** values;
 };
 

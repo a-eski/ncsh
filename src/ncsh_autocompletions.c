@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <stdint.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #include "ncsh_defines.h"
@@ -8,11 +9,10 @@
 #include "eskilib/eskilib_string.h"
 
 int ncsh_char_to_index(char character);
-
 char ncsh_index_to_char(int index);
 
-struct ncsh_Autocompletions* ncsh_autocompletions_malloc() {
-	struct ncsh_Autocompletions* tree = calloc(1, sizeof(struct ncsh_Autocompletions));
+struct ncsh_Autocompletion_Node* ncsh_autocompletions_malloc() {
+	struct ncsh_Autocompletion_Node* tree = calloc(1, sizeof(struct ncsh_Autocompletion_Node));
 	if (tree == NULL)
 		return NULL;
 
@@ -20,12 +20,12 @@ struct ncsh_Autocompletions* ncsh_autocompletions_malloc() {
 	return tree;
 }
 
-void ncsh_autocompletions_free(struct ncsh_Autocompletions* tree) {
+void ncsh_autocompletions_free(struct ncsh_Autocompletion_Node* tree) {
 	assert(tree != NULL);
 	if (tree == NULL)
 		return;
 
-	for (uint_fast32_t i = 0; i < NCSH_LETTERS; ++i) {
+	for (uint_fast8_t i = 0; i < NCSH_LETTERS; ++i) {
 		if (tree->nodes[i] != NULL)
 			ncsh_autocompletions_free(tree->nodes[i]);
 		else
@@ -34,19 +34,16 @@ void ncsh_autocompletions_free(struct ncsh_Autocompletions* tree) {
 	free(tree);
 }
 
-void ncsh_autocompletions_free_values(char **autocompletions, uint_fast32_t count) {
-	assert(autocompletions != NULL);
-	if (autocompletions == NULL)
+void ncsh_autocompletions_free_matches(struct ncsh_Autocompletion* matches, uint_fast8_t matches_count) {
+	assert(matches != NULL);
+	if (matches == NULL)
 		return;
 
-	for (uint_fast32_t i = 0; i < count; ++i) {
-		if (autocompletions[i] != NULL) {
-			free(autocompletions[i]);
-		}
-	}
+	for (uint_fast8_t i = 0; i < matches_count; ++i)
+		free(matches[i].value);
 }
 
-void ncsh_autocompletions_add(char* string, uint_fast32_t length, struct ncsh_Autocompletions* tree) {
+void ncsh_autocompletions_add(char* string, uint_fast32_t length, struct ncsh_Autocompletion_Node* tree) {
 	assert(string != NULL);
 	assert(length > 0);
 	assert(tree != NULL);
@@ -59,8 +56,13 @@ void ncsh_autocompletions_add(char* string, uint_fast32_t length, struct ncsh_Au
 		index = ncsh_char_to_index(string[i]);
 
 		if (tree->nodes[index] == NULL) {
-			tree->nodes[index] = calloc(1, sizeof(struct ncsh_Autocompletions));
+			tree->nodes[index] = calloc(1, sizeof(struct ncsh_Autocompletion_Node));
 			tree->nodes[index]->is_end_of_a_word = false;
+			// tree->nodes[index]->letter = string[i];
+			tree->nodes[index]->weight = 1;
+		}
+		else {
+			++tree->nodes[index]->weight;
 		}
 
 		tree = tree->nodes[index];
@@ -69,30 +71,7 @@ void ncsh_autocompletions_add(char* string, uint_fast32_t length, struct ncsh_Au
 	tree->is_end_of_a_word = true;
 }
 
-void ncsh_autocompletions_add_string(struct eskilib_String string, struct ncsh_Autocompletions* tree) {
-	assert(string.value != NULL);
-	assert(string.length > 0);
-	assert(tree != NULL);
-	if (string.value == NULL || string.length == 0 || tree == NULL || string.length > NCSH_MAX_INPUT)
-		return;
-
-	int index = 0;
-
-	for (uint_fast32_t i = 0; i < string.length - 1; ++i) { //string.length - 1 because it includes null terminator
-		index = ncsh_char_to_index(string.value[i]);
-
-		if (tree->nodes[index] == NULL) {
-			tree->nodes[index] = calloc(1, sizeof(struct ncsh_Autocompletions));
-			tree->nodes[index]->is_end_of_a_word = false;
-		}
-
-		tree = tree->nodes[index];
-	}
-
-	tree->is_end_of_a_word = true;
-}
-
-void ncsh_autocompletions_add_multiple(struct eskilib_String* strings, uint_fast32_t count, struct ncsh_Autocompletions* tree) {
+void ncsh_autocompletions_add_multiple(struct eskilib_String* strings, uint_fast32_t count, struct ncsh_Autocompletion_Node* tree) {
 	assert(strings != NULL);
 	assert(count > 0);
 	assert(tree != NULL);
@@ -100,11 +79,11 @@ void ncsh_autocompletions_add_multiple(struct eskilib_String* strings, uint_fast
 		return;
 
 	for (uint_fast32_t i = 0; i < count; ++i) {
-		ncsh_autocompletions_add_string(strings[i], tree);
+		ncsh_autocompletions_add(strings[i].value, strings[i].length, tree);
 	}
 }
 
-struct ncsh_Autocompletions* ncsh_autocompletions_search(char* string, uint_fast32_t length, struct ncsh_Autocompletions* tree) {
+struct ncsh_Autocompletion_Node* ncsh_autocompletions_search(char* string, uint_fast32_t length, struct ncsh_Autocompletion_Node* tree) {
 	assert(string != NULL);
 	assert(length > 0);
 	assert(tree != NULL);
@@ -128,7 +107,7 @@ struct ncsh_Autocompletions* ncsh_autocompletions_search(char* string, uint_fast
 	return NULL;
 }
 
-struct ncsh_Autocompletions* ncsh_autocompletions_search_string(struct eskilib_String string, struct ncsh_Autocompletions* tree) {
+struct ncsh_Autocompletion_Node* ncsh_autocompletions_search_string(struct eskilib_String string, struct ncsh_Autocompletion_Node* tree) {
 	assert(string.value != NULL);
 	assert(string.length > 0);
 	assert(tree != NULL);
@@ -152,31 +131,37 @@ struct ncsh_Autocompletions* ncsh_autocompletions_search_string(struct eskilib_S
 	return NULL;
 }
 
-void ncsh_autocompletions_match(char* matches[],
+void ncsh_autocompletions_match(struct ncsh_Autocompletion* matches,
 				uint_fast32_t* string_position,
-				uint_fast32_t* matches_position,
-				struct ncsh_Autocompletions* tree) {
+				uint_fast8_t* matches_position,
+				struct ncsh_Autocompletion_Node* tree) {
 	for (uint_fast32_t i = 0; i < NCSH_LETTERS; ++i) {
 		if (tree->nodes[i] != NULL) {
-			if (matches[*matches_position] == NULL) {
-				matches[*matches_position] = malloc(sizeof(char) * NCSH_MAX_INPUT);
-				if (matches[*matches_position] == NULL)
+			if (matches[*matches_position].value == NULL) {
+				matches[*matches_position].value = malloc(sizeof(char) * NCSH_MAX_INPUT);
+				if (matches[*matches_position].value == NULL)
 					return;
 
-				if (*string_position > 0 && *matches_position > 0)
-					eskilib_string_copy(matches[*matches_position], matches[*matches_position - 1], *string_position);
+				if (*string_position > 0 && *matches_position > 0) {
+					eskilib_string_copy(matches[*matches_position].value,
+						matches[*matches_position - 1].value,
+						*string_position);
+				}
 			}
 
-			matches[*matches_position][*string_position] = ncsh_index_to_char(i);
+			// matches[*matches_position].value[*string_position] = tree->nodes[i]->letter;
+			matches[*matches_position].value[*string_position] = ncsh_index_to_char(i);
 			++*string_position;
-			matches[*matches_position][*string_position] = '\0';
+			matches[*matches_position].value[*string_position] = '\0';
 
-			if (tree->nodes[i]->is_end_of_a_word == true && *matches_position + 1 < NCSH_MAX_MATCHES)
+			if (tree->nodes[i]->is_end_of_a_word == true && *matches_position + 1 < NCSH_MAX_AUTOCOMPLETION_MATCHES) {
+				matches[*matches_position].weight = tree->nodes[i]->weight;
 				++*matches_position;
+			}
 
 			ncsh_autocompletions_match(matches, string_position, matches_position, tree->nodes[i]);
 
-			if (matches[*matches_position] != NULL)
+			if (matches[*matches_position].value != NULL)
 				++*matches_position;
 
 			*string_position = *string_position - 1;
@@ -184,23 +169,52 @@ void ncsh_autocompletions_match(char* matches[],
 	}
 }
 
-uint_fast32_t ncsh_autocompletions_matches(char* matches[], struct ncsh_Autocompletions* tree) {
+uint_fast8_t ncsh_autocompletions_matches(struct ncsh_Autocompletion* matches, struct ncsh_Autocompletion_Node* tree) {
 	uint_fast32_t string_position = 0;
-	uint_fast32_t matches_position = 0;
+	uint_fast8_t matches_position = 0;
 
 	ncsh_autocompletions_match(matches, &string_position, &matches_position, tree);
 
 	return matches_position;
 }
 
-uint_fast32_t ncsh_autocompletions_get(char* search,
+uint_fast8_t ncsh_autocompletions_get(char* search,
 				       uint_fast32_t search_length,
-				       char* matches[],
-				       struct ncsh_Autocompletions* tree) {
-	struct ncsh_Autocompletions *search_result = ncsh_autocompletions_search(search, search_length, tree);
+				       struct ncsh_Autocompletion* matches,
+				       struct ncsh_Autocompletion_Node* tree) {
+	struct ncsh_Autocompletion_Node *search_result = ncsh_autocompletions_search(search, search_length, tree);
 	if (search_result == NULL)
 		return 0;
 
-	return ncsh_autocompletions_matches(matches, search_result);
+	uint_fast8_t match_count = ncsh_autocompletions_matches(matches, search_result);
+	if (match_count == 0)
+		return 0;
+
+	return match_count;
+}
+
+uint_fast8_t ncsh_autocompletions_first(char* search,
+				       uint_fast32_t search_length,
+				       char* match,
+				       struct ncsh_Autocompletion_Node* tree) {
+	struct ncsh_Autocompletion_Node *search_result = ncsh_autocompletions_search(search, search_length, tree);
+	if (search_result == NULL)
+		return 0;
+
+	struct ncsh_Autocompletion matches[NCSH_MAX_AUTOCOMPLETION_MATCHES] = {0};
+	uint_fast8_t matches_count = ncsh_autocompletions_matches(matches, search_result);
+	if (matches_count == 0)
+		return 0;
+
+	struct ncsh_Autocompletion potential_match = matches[0];
+	for (uint_fast8_t i = 1; i < matches_count; ++i) {
+		if (matches[i].weight > potential_match.weight)
+			potential_match = matches[i];
+	}
+
+	eskilib_string_copy(match, potential_match.value, NCSH_MAX_INPUT);
+	ncsh_autocompletions_free_matches(matches, matches_count);
+
+	return 1;
 }
 
