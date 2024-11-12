@@ -2,12 +2,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "../ncsh_defines.h"
 #include "../ncsh_autocompletions.h"
 #include "../eskilib/eskilib_test.h"
 #include "../eskilib/eskilib_string.h"
 
 void ncsh_autocompletions_add_length_mismatch_test(void) {
-	struct ncsh_Autocompletions* tree = ncsh_autocompletions_malloc();
+	struct ncsh_Autocompletion_Node* tree = ncsh_autocompletions_malloc();
 	eskilib_assert(tree != NULL);
 
 	struct eskilib_String string = { .value = "and", .length = 3 };
@@ -19,163 +20,95 @@ void ncsh_autocompletions_add_length_mismatch_test(void) {
 }
 
 void ncsh_autocompletions_add_test(void) {
-	struct ncsh_Autocompletions* tree = ncsh_autocompletions_malloc();
+	struct ncsh_Autocompletion_Node* tree = ncsh_autocompletions_malloc();
 	eskilib_assert(tree != NULL);
 
 	struct eskilib_String string = { .value = "and", .length = 4 };
 	ncsh_autocompletions_add(string.value, string.length, tree);
 
 	// sanity check: unrelated letters are null
-	eskilib_assert(tree->nodes[ncsh_autocompletions_map_char('b')] == NULL);
-	eskilib_assert(tree->nodes[ncsh_autocompletions_map_char('c')] == NULL);
-	eskilib_assert(tree->nodes[ncsh_autocompletions_map_char('d')] == NULL);
-	eskilib_assert(tree->nodes[ncsh_autocompletions_map_char('e')] == NULL);
+	eskilib_assert(tree->nodes[ncsh_char_to_index('b')] == NULL);
+	eskilib_assert(tree->nodes[ncsh_char_to_index('c')] == NULL);
+	eskilib_assert(tree->nodes[ncsh_char_to_index('d')] == NULL);
+	eskilib_assert(tree->nodes[ncsh_char_to_index('e')] == NULL);
 
-	struct ncsh_Autocompletions* first_node = tree->nodes[ncsh_autocompletions_map_char('a')];
+	struct ncsh_Autocompletion_Node* first_node = tree->nodes[ncsh_char_to_index('a')];
 	eskilib_assert(first_node != NULL);
 	eskilib_assert(first_node->is_end_of_a_word == false);
-	eskilib_assert(first_node->letter == 'a')
-	eskilib_assert(first_node->nodes[ncsh_autocompletions_map_char('b')] == NULL); //sanity check
-	struct ncsh_Autocompletions* second_node = first_node->nodes[ncsh_autocompletions_map_char('n')];
+	eskilib_assert(first_node->nodes[ncsh_char_to_index('b')] == NULL); //sanity check
+	struct ncsh_Autocompletion_Node* second_node = first_node->nodes[ncsh_char_to_index('n')];
 	eskilib_assert(second_node != NULL);
 	eskilib_assert(second_node->is_end_of_a_word == false);
-	eskilib_assert(second_node->letter == 'n')
-	eskilib_assert(second_node->nodes[ncsh_autocompletions_map_char('b')] == NULL); //sanity check
-	struct ncsh_Autocompletions* third_node = second_node->nodes[ncsh_autocompletions_map_char('d')];
+	eskilib_assert(second_node->nodes[ncsh_char_to_index('b')] == NULL); //sanity check
+	struct ncsh_Autocompletion_Node* third_node = second_node->nodes[ncsh_char_to_index('d')];
 	eskilib_assert(third_node != NULL);
 	eskilib_assert(third_node->is_end_of_a_word == true);
-	eskilib_assert(third_node->letter == 'd');
-	eskilib_assert(third_node->nodes[ncsh_autocompletions_map_char('b')] == NULL); //sanity check
+	eskilib_assert(third_node->nodes[ncsh_char_to_index('b')] == NULL); //sanity check
 
 	ncsh_autocompletions_free(tree);
 }
 
 void ncsh_autocompletions_add_duplicate_test(void) {
-	struct ncsh_Autocompletions* tree = ncsh_autocompletions_malloc();
+	struct ncsh_Autocompletion_Node* tree = ncsh_autocompletions_malloc();
 	eskilib_assert(tree != NULL);
 
 	struct eskilib_String string = { .value = "and", .length = 4 };
 	ncsh_autocompletions_add(string.value, string.length, tree);
-	ncsh_autocompletions_add_string(string, tree);
+	ncsh_autocompletions_add(string.value, string.length, tree);
 
-	struct ncsh_Autocompletions* first_node = tree->nodes[ncsh_autocompletions_map_char('a')];
+	struct ncsh_Autocompletion_Node* first_node = tree->nodes[ncsh_char_to_index('a')];
 	eskilib_assert(first_node != NULL);
 	eskilib_assert(first_node->is_end_of_a_word == false);
-	eskilib_assert(first_node->letter == 'a')
 
-	struct ncsh_Autocompletions* second_node = first_node->nodes[ncsh_autocompletions_map_char('n')];
+	struct ncsh_Autocompletion_Node* second_node = first_node->nodes[ncsh_char_to_index('n')];
 	eskilib_assert(second_node != NULL);
 	eskilib_assert(second_node->is_end_of_a_word == false);
-	eskilib_assert(second_node->letter == 'n');
 
-	struct ncsh_Autocompletions* third_node = second_node->nodes[ncsh_autocompletions_map_char('d')];
+	struct ncsh_Autocompletion_Node* third_node = second_node->nodes[ncsh_char_to_index('d')];
 	eskilib_assert(third_node != NULL);
 	eskilib_assert(third_node->is_end_of_a_word == true);
-	eskilib_assert(third_node->letter == 'd');
+	eskilib_assert(third_node->weight == 2);
 
 	ncsh_autocompletions_free(tree);
 }
 
 void ncsh_autocompletions_add_multiple_unrelated_test(void) {
-	struct ncsh_Autocompletions* tree = ncsh_autocompletions_malloc();
+	struct ncsh_Autocompletion_Node* tree = ncsh_autocompletions_malloc();
 	eskilib_assert(tree != NULL);
 
 	struct eskilib_String string_one = { .value = "ls", .length = 3 };
 	ncsh_autocompletions_add(string_one.value, string_one.length, tree);
 	struct eskilib_String string_two = { .value = "echo", .length = 5 };
-	ncsh_autocompletions_add_string(string_two, tree);
+	ncsh_autocompletions_add(string_two.value, string_two.length, tree);
 
-	struct ncsh_Autocompletions* ls_first_node = tree->nodes[ncsh_autocompletions_map_char('l')];
+	struct ncsh_Autocompletion_Node* ls_first_node = tree->nodes[ncsh_char_to_index('l')];
 	eskilib_assert(ls_first_node != NULL);
 	eskilib_assert(ls_first_node->is_end_of_a_word == false);
-	eskilib_assert(ls_first_node->letter == 'l');
-	struct ncsh_Autocompletions* ls_second_node = ls_first_node->nodes[ncsh_autocompletions_map_char('s')];
+	struct ncsh_Autocompletion_Node* ls_second_node = ls_first_node->nodes[ncsh_char_to_index('s')];
 	eskilib_assert(ls_second_node != NULL);
 	eskilib_assert(ls_second_node->is_end_of_a_word == true);
-	eskilib_assert(ls_second_node->letter == 's');
 
-	struct ncsh_Autocompletions* first_node = tree->nodes[ncsh_autocompletions_map_char('e')];
+	struct ncsh_Autocompletion_Node* first_node = tree->nodes[ncsh_char_to_index('e')];
 	eskilib_assert(first_node != NULL);
 	eskilib_assert(first_node->is_end_of_a_word == false);
-	eskilib_assert(first_node->letter == 'e');
-	struct ncsh_Autocompletions* second_node = first_node->nodes[ncsh_autocompletions_map_char('c')];
+
+	struct ncsh_Autocompletion_Node* second_node = first_node->nodes[ncsh_char_to_index('c')];
 	eskilib_assert(second_node != NULL);
 	eskilib_assert(second_node->is_end_of_a_word == false);
-	eskilib_assert(second_node->letter == 'c');
-	struct ncsh_Autocompletions* third_node = second_node->nodes[ncsh_autocompletions_map_char('h')];
+
+	struct ncsh_Autocompletion_Node* third_node = second_node->nodes[ncsh_char_to_index('h')];
 	eskilib_assert(third_node != NULL);
 	eskilib_assert(third_node->is_end_of_a_word == false);
-	eskilib_assert(third_node->letter == 'h');
-	struct ncsh_Autocompletions* fourth_node = third_node->nodes[ncsh_autocompletions_map_char('o')];
+
+	struct ncsh_Autocompletion_Node* fourth_node = third_node->nodes[ncsh_char_to_index('o')];
 	eskilib_assert(fourth_node != NULL);
 	eskilib_assert(fourth_node->is_end_of_a_word == true);
-	eskilib_assert(fourth_node->letter == 'o');
 
 	ncsh_autocompletions_free(tree);
 }
 
 void ncsh_autocompletions_add_multiple_related_test(void) {
-	struct ncsh_Autocompletions* tree = ncsh_autocompletions_malloc();
-	eskilib_assert(tree != NULL);
-
-	struct eskilib_String string_one = { .value = "gene", .length = 5 };
-	ncsh_autocompletions_add(string_one.value, string_one.length, tree);
-	struct eskilib_String string_two = { .value = "genetic", .length = 8 };
-	ncsh_autocompletions_add_string(string_two, tree);
-	struct eskilib_String string_three = { .value = "genius", .length = 7 };
-	ncsh_autocompletions_add_string(string_three, tree);
-
-	// gene
-	struct ncsh_Autocompletions* first_node = tree->nodes[ncsh_autocompletions_map_char('g')];
-	eskilib_assert(first_node != NULL);
-	eskilib_assert(first_node->is_end_of_a_word == false);
-	eskilib_assert(first_node->letter == 'g');
-	struct ncsh_Autocompletions* second_node = first_node->nodes[ncsh_autocompletions_map_char('e')];
-	eskilib_assert(second_node != NULL);
-	eskilib_assert(second_node->is_end_of_a_word == false);
-	eskilib_assert(second_node->letter == 'e');
-	struct ncsh_Autocompletions* third_node = second_node->nodes[ncsh_autocompletions_map_char('n')];
-	eskilib_assert(third_node != NULL);
-	eskilib_assert(third_node->is_end_of_a_word == false);
-	eskilib_assert(third_node->letter == 'n');
-	struct ncsh_Autocompletions* fourth_node = third_node->nodes[ncsh_autocompletions_map_char('e')];
-	eskilib_assert(fourth_node != NULL);
-	eskilib_assert(fourth_node->is_end_of_a_word == true);
-	eskilib_assert(fourth_node->letter == 'e');
-
-	// genetic
-	struct ncsh_Autocompletions* genetic_fifth_node = fourth_node->nodes[ncsh_autocompletions_map_char('t')];
-	eskilib_assert(genetic_fifth_node  != NULL);
-	eskilib_assert(genetic_fifth_node->is_end_of_a_word == false);
-	eskilib_assert(genetic_fifth_node->letter == 't');
-	struct ncsh_Autocompletions* genetic_sixth_node = genetic_fifth_node->nodes[ncsh_autocompletions_map_char('i')];
-	eskilib_assert(genetic_sixth_node != NULL);
-	eskilib_assert(genetic_sixth_node->is_end_of_a_word == false);
-	eskilib_assert(genetic_sixth_node->letter == 'i');
-	struct ncsh_Autocompletions* genetic_seventh_node = genetic_sixth_node->nodes[ncsh_autocompletions_map_char('c')];
-	eskilib_assert(genetic_seventh_node != NULL);
-	eskilib_assert(genetic_seventh_node->is_end_of_a_word == true);
-	eskilib_assert(genetic_seventh_node->letter == 'c');
-
-	// genius
-	struct ncsh_Autocompletions* genius_fourth_node = third_node->nodes[ncsh_autocompletions_map_char('i')];
-	eskilib_assert(genius_fourth_node != NULL);
-	eskilib_assert(genius_fourth_node->is_end_of_a_word == false);
-	eskilib_assert(genius_fourth_node->letter == 'i');
-	struct ncsh_Autocompletions* genius_fifth_node = genius_fourth_node->nodes[ncsh_autocompletions_map_char('u')];
-	eskilib_assert(genius_fifth_node != NULL);
-	eskilib_assert(genius_fifth_node->is_end_of_a_word == false);
-	eskilib_assert(genius_fifth_node->letter == 'u');
-	struct ncsh_Autocompletions* genius_sixth_node = genius_fifth_node->nodes[ncsh_autocompletions_map_char('s')];
-	eskilib_assert(genius_sixth_node != NULL);
-	eskilib_assert(genius_sixth_node->is_end_of_a_word == true);
-	eskilib_assert(genius_sixth_node->letter == 's');
-
-	ncsh_autocompletions_free(tree);
-}
-
-void ncsh_autocompletions_search_test(void) {
-	struct ncsh_Autocompletions* tree = ncsh_autocompletions_malloc();
+	struct ncsh_Autocompletion_Node* tree = ncsh_autocompletions_malloc();
 	eskilib_assert(tree != NULL);
 
 	struct eskilib_String string_one = { .value = "gene", .length = 5 };
@@ -183,190 +116,240 @@ void ncsh_autocompletions_search_test(void) {
 	struct eskilib_String string_two = { .value = "genetic", .length = 8 };
 	ncsh_autocompletions_add(string_two.value, string_two.length, tree);
 	struct eskilib_String string_three = { .value = "genius", .length = 7 };
-	ncsh_autocompletions_add_string(string_three, tree);
+	ncsh_autocompletions_add(string_three.value, string_three.length, tree);
+
+	// gene
+	struct ncsh_Autocompletion_Node* first_node = tree->nodes[ncsh_char_to_index('g')];
+	eskilib_assert(first_node != NULL);
+	eskilib_assert(first_node->is_end_of_a_word == false);
+
+	struct ncsh_Autocompletion_Node* second_node = first_node->nodes[ncsh_char_to_index('e')];
+	eskilib_assert(second_node != NULL);
+	eskilib_assert(second_node->is_end_of_a_word == false);
+
+	struct ncsh_Autocompletion_Node* third_node = second_node->nodes[ncsh_char_to_index('n')];
+	eskilib_assert(third_node != NULL);
+	eskilib_assert(third_node->is_end_of_a_word == false);
+
+	struct ncsh_Autocompletion_Node* fourth_node = third_node->nodes[ncsh_char_to_index('e')];
+	eskilib_assert(fourth_node != NULL);
+	eskilib_assert(fourth_node->is_end_of_a_word == true);
+
+	// genetic
+	struct ncsh_Autocompletion_Node* genetic_fifth_node = fourth_node->nodes[ncsh_char_to_index('t')];
+	eskilib_assert(genetic_fifth_node  != NULL);
+	eskilib_assert(genetic_fifth_node->is_end_of_a_word == false);
+
+	struct ncsh_Autocompletion_Node* genetic_sixth_node = genetic_fifth_node->nodes[ncsh_char_to_index('i')];
+	eskilib_assert(genetic_sixth_node != NULL);
+	eskilib_assert(genetic_sixth_node->is_end_of_a_word == false);
+
+	struct ncsh_Autocompletion_Node* genetic_seventh_node = genetic_sixth_node->nodes[ncsh_char_to_index('c')];
+	eskilib_assert(genetic_seventh_node != NULL);
+	eskilib_assert(genetic_seventh_node->is_end_of_a_word == true);
+
+	// genius
+	struct ncsh_Autocompletion_Node* genius_fourth_node = third_node->nodes[ncsh_char_to_index('i')];
+	eskilib_assert(genius_fourth_node != NULL);
+	eskilib_assert(genius_fourth_node->is_end_of_a_word == false);
+
+	struct ncsh_Autocompletion_Node* genius_fifth_node = genius_fourth_node->nodes[ncsh_char_to_index('u')];
+	eskilib_assert(genius_fifth_node != NULL);
+	eskilib_assert(genius_fifth_node->is_end_of_a_word == false);
+
+	struct ncsh_Autocompletion_Node* genius_sixth_node = genius_fifth_node->nodes[ncsh_char_to_index('s')];
+	eskilib_assert(genius_sixth_node != NULL);
+	eskilib_assert(genius_sixth_node->is_end_of_a_word == true);
+
+	ncsh_autocompletions_free(tree);
+}
+
+void ncsh_autocompletions_search_test(void) {
+	struct ncsh_Autocompletion_Node* tree = ncsh_autocompletions_malloc();
+	eskilib_assert(tree != NULL);
+
+	struct eskilib_String string_one = { .value = "gene", .length = 5 };
+	ncsh_autocompletions_add(string_one.value, string_one.length, tree);
+	struct eskilib_String string_two = { .value = "genetic", .length = 8 };
+	ncsh_autocompletions_add(string_two.value, string_two.length, tree);
+	struct eskilib_String string_three = { .value = "genius", .length = 7 };
+	ncsh_autocompletions_add(string_three.value, string_three.length, tree);
 
 	struct eskilib_String string_search = { .value = "gen", .length = 4 };
-	struct ncsh_Autocompletions* result = ncsh_autocompletions_search(string_search.value, string_search.length, tree);
+	struct ncsh_Autocompletion_Node* result = ncsh_autocompletions_search(string_search.value, string_search.length, tree);
 	eskilib_assert(result != NULL);
-	struct ncsh_Autocompletions* result_e = result->nodes[ncsh_autocompletions_map_char('e')];
+	struct ncsh_Autocompletion_Node* result_e = result->nodes[ncsh_char_to_index('e')];
 	eskilib_assert(result_e != NULL);
 	eskilib_assert(result_e->is_end_of_a_word == true);
-	eskilib_assert(result_e->letter == 'e');
 
 	ncsh_autocompletions_free(tree);
 }
 
 void ncsh_autocompletions_search_commands_test(void) {
-	struct ncsh_Autocompletions* tree = ncsh_autocompletions_malloc();
+	struct ncsh_Autocompletion_Node* tree = ncsh_autocompletions_malloc();
 	eskilib_assert(tree != NULL);
 
-	ncsh_autocompletions_add_string((struct eskilib_String){ .value = "ls", .length = 3 }, tree);
-	ncsh_autocompletions_add_string((struct eskilib_String){ .value = "ls | sort", .length = 10 }, tree);
-	ncsh_autocompletions_add_string((struct eskilib_String){ .value = "ls | sort | wc -c", .length = 18 }, tree);
-	ncsh_autocompletions_add_string((struct eskilib_String){ .value = "ls > t.txt", .length = 11 }, tree);
-	ncsh_autocompletions_add_string((struct eskilib_String){ .value = "cat t.txt", .length = 10 }, tree);
-	ncsh_autocompletions_add_string((struct eskilib_String){ .value = "rm t.txt", .length = 9 }, tree);
-	ncsh_autocompletions_add_string((struct eskilib_String){ .value = "ss", .length = 3 }, tree);
+	ncsh_autocompletions_add("ls", 3, tree);
+	ncsh_autocompletions_add("ls | sort", 10, tree);
+	ncsh_autocompletions_add("ls | sort | wc -c", 18, tree);
+	ncsh_autocompletions_add("ls > t.txt", 11, tree);
+	ncsh_autocompletions_add("cat t.txt", 10, tree);
+	ncsh_autocompletions_add("rm t.txt", 9, tree);
+	ncsh_autocompletions_add("ss", 3, tree);
 
-	struct ncsh_Autocompletions* result = tree->nodes[ncsh_autocompletions_map_char('l')];
+	struct ncsh_Autocompletion_Node* result = tree->nodes[ncsh_char_to_index('l')];
 	eskilib_assert(result != NULL);
 	eskilib_assert(result->is_end_of_a_word == false);
-	eskilib_assert(result->letter == 'l');
-	result = result->nodes[ncsh_autocompletions_map_char('s')];
+
+	result = result->nodes[ncsh_char_to_index('s')];
 	eskilib_assert(result != NULL);
 	eskilib_assert(result->is_end_of_a_word == true);
-	eskilib_assert(result->letter == 's');
-	result = result->nodes[ncsh_autocompletions_map_char(' ')];
+
+	result = result->nodes[ncsh_char_to_index(' ')];
 	eskilib_assert(result != NULL);
 	eskilib_assert(result->is_end_of_a_word == false);
-	eskilib_assert(result->letter == ' ');
 
-	struct ncsh_Autocompletions* search_result = ncsh_autocompletions_search_string((struct eskilib_String){ .value = "ls | ", .length = 6 }, tree);
+	struct ncsh_Autocompletion_Node* search_result = ncsh_autocompletions_search_string((struct eskilib_String){ .value = "ls | ", .length = 6 }, tree);
 	eskilib_assert(search_result != NULL);
 	eskilib_assert(search_result->is_end_of_a_word == false);
-	eskilib_assert(search_result->letter == ' ');
-	search_result = search_result->nodes[ncsh_autocompletions_map_char('s')];
+
+	search_result = search_result->nodes[ncsh_char_to_index('s')];
 	eskilib_assert(search_result != NULL);
 	eskilib_assert(search_result->is_end_of_a_word == false);
-	eskilib_assert(search_result->letter == 's');
-	search_result = search_result->nodes[ncsh_autocompletions_map_char('o')];
+
+	search_result = search_result->nodes[ncsh_char_to_index('o')];
 	eskilib_assert(search_result != NULL);
 	eskilib_assert(search_result->is_end_of_a_word == false);
-	eskilib_assert(search_result->letter == 'o');
-	search_result = search_result->nodes[ncsh_autocompletions_map_char('r')];
+
+	search_result = search_result->nodes[ncsh_char_to_index('r')];
 	eskilib_assert(search_result != NULL);
 	eskilib_assert(search_result->is_end_of_a_word == false);
-	eskilib_assert(search_result->letter == 'r');
-	search_result = search_result->nodes[ncsh_autocompletions_map_char('t')];
+
+	search_result = search_result->nodes[ncsh_char_to_index('t')];
 	eskilib_assert(search_result != NULL);
 	eskilib_assert(search_result->is_end_of_a_word == true);
-	eskilib_assert(search_result->letter == 't');
 
 	ncsh_autocompletions_free(tree);
 }
 
 void ncsh_autocompletions_search_no_results_test(void) {
-	struct ncsh_Autocompletions* tree = ncsh_autocompletions_malloc();
+	struct ncsh_Autocompletion_Node* tree = ncsh_autocompletions_malloc();
 	eskilib_assert(tree != NULL);
 
 	struct eskilib_String string_one = { .value = "gene", .length = 5 };
-	ncsh_autocompletions_add_string(string_one, tree);
+	ncsh_autocompletions_add(string_one.value, string_one.length, tree);
 	struct eskilib_String string_two = { .value = "genetic", .length = 8 };
-	ncsh_autocompletions_add_string(string_two, tree);
+	ncsh_autocompletions_add(string_two.value, string_two.length, tree);
 	struct eskilib_String string_three = { .value = "genius", .length = 7 };
-	ncsh_autocompletions_add_string(string_three, tree);
+	ncsh_autocompletions_add(string_three.value, string_three.length, tree);
 
 	struct eskilib_String string_search = { .value = "ls", .length = 3 };
-	struct ncsh_Autocompletions* search_result = ncsh_autocompletions_search_string(string_search, tree);
+	struct ncsh_Autocompletion_Node* search_result = ncsh_autocompletions_search_string(string_search, tree);
 	eskilib_assert(search_result == NULL);
 
 	ncsh_autocompletions_free(tree);
 }
 
 void ncsh_autocompletions_matches_test(void) {
-	struct ncsh_Autocompletions* tree = ncsh_autocompletions_malloc();
+	struct ncsh_Autocompletion_Node* tree = ncsh_autocompletions_malloc();
 	eskilib_assert(tree != NULL);
 
-	ncsh_autocompletions_add_string((struct eskilib_String){ .value = "ls", .length = 3 }, tree);
-	ncsh_autocompletions_add_string((struct eskilib_String){ .value = "ls | wc -c", .length = 11 }, tree);
-	ncsh_autocompletions_add_string((struct eskilib_String){ .value = "ls | sort", .length = 10 }, tree);
-	ncsh_autocompletions_add_string((struct eskilib_String){ .value = "ls | sort | wc -c", .length = 18 }, tree);
-	ncsh_autocompletions_add_string((struct eskilib_String){ .value = "ls > t.txt", .length = 11 }, tree);
-	ncsh_autocompletions_add_string((struct eskilib_String){ .value = "cat t.txt", .length = 10 }, tree);
-	ncsh_autocompletions_add_string((struct eskilib_String){ .value = "rm t.txt", .length = 9 }, tree);
-	ncsh_autocompletions_add_string((struct eskilib_String){ .value = "ss", .length = 3 }, tree);
+	ncsh_autocompletions_add("ls", 3, tree);
+	ncsh_autocompletions_add("ls | wc -c", 11, tree);
+	ncsh_autocompletions_add("ls | sort", 10, tree);
+	ncsh_autocompletions_add("ls | sort | wc -c", 18, tree);
+	ncsh_autocompletions_add("ls > t.txt", 11, tree);
+	ncsh_autocompletions_add("cat t.txt", 10, tree);
+	ncsh_autocompletions_add("rm t.txt", 9, tree);
+	ncsh_autocompletions_add("ss", 3, tree);
 
-	struct ncsh_Autocompletions* search_result = ncsh_autocompletions_search_string((struct eskilib_String){ .value = "ls | ", .length = 6 }, tree);
+	struct ncsh_Autocompletion_Node* search_result = ncsh_autocompletions_search_string((struct eskilib_String){ .value = "ls | ", .length = 6 }, tree);
 	eskilib_assert(search_result != NULL);
 
-	constexpr uint_fast32_t max_match_length = 256;
-	char* autocomplete[max_match_length] = {0};
-
-	uint_fast32_t match_count = ncsh_autocompletions_get("ls | ", 6, autocomplete, max_match_length, tree);
+	struct ncsh_Autocompletion autocomplete[NCSH_MAX_AUTOCOMPLETION_MATCHES] = {0};
+	uint_fast32_t match_count = ncsh_autocompletions_get("ls | ", 6, autocomplete, tree);
 
 	eskilib_assert(match_count == 3);
-	eskilib_assert(eskilib_string_equals(autocomplete[0], "sort", 5) == true);
-	eskilib_assert(eskilib_string_equals(autocomplete[1], "sort | wc -c", 13) == true);
-	eskilib_assert(eskilib_string_equals(autocomplete[2], "wc -c", 6) == true);
+	eskilib_assert(eskilib_string_equals(autocomplete[0].value, "sort", 5) == true);
+	eskilib_assert(eskilib_string_equals(autocomplete[1].value, "sort | wc -c", 13) == true);
+	eskilib_assert(eskilib_string_equals(autocomplete[2].value, "wc -c", 6) == true);
 
-	for (uint_fast32_t i = 0; i < max_match_length - 1; i++) {
-		if (autocomplete[i] != NULL) {
+	for (uint_fast32_t i = 0; i < NCSH_MAX_AUTOCOMPLETION_MATCHES - 1; i++) {
+		if (autocomplete[i].value != NULL) {
 			// printf("i:%lu %s\n", i, autocomplete[i]);
-			free(autocomplete[i]);
+			free(autocomplete[i].value);
 		}
 	}
 	ncsh_autocompletions_free(tree);
 }
 
 void ncsh_autocompletions_matches_no_results_test(void) {
-	struct ncsh_Autocompletions* tree = ncsh_autocompletions_malloc();
+	struct ncsh_Autocompletion_Node* tree = ncsh_autocompletions_malloc();
 	eskilib_assert(tree != NULL);
 
-	ncsh_autocompletions_add_string((struct eskilib_String){ .value = "ls", .length = 3 }, tree);
-	ncsh_autocompletions_add_string((struct eskilib_String){ .value = "ls | wc -c", .length = 11 }, tree);
-	ncsh_autocompletions_add_string((struct eskilib_String){ .value = "ls | sort", .length = 10 }, tree);
-	ncsh_autocompletions_add_string((struct eskilib_String){ .value = "ls | sort | wc -c", .length = 18 }, tree);
-	ncsh_autocompletions_add_string((struct eskilib_String){ .value = "ls > t.txt", .length = 11 }, tree);
-	ncsh_autocompletions_add_string((struct eskilib_String){ .value = "cat t.txt", .length = 10 }, tree);
-	ncsh_autocompletions_add_string((struct eskilib_String){ .value = "rm t.txt", .length = 9 }, tree);
-	ncsh_autocompletions_add_string((struct eskilib_String){ .value = "ss", .length = 3 }, tree);
+	ncsh_autocompletions_add("ls", 3, tree);
+	ncsh_autocompletions_add("ls | wc -c", 11, tree);
+	ncsh_autocompletions_add("ls | sort", 10, tree);
+	ncsh_autocompletions_add("ls | sort | wc -c", 18, tree);
+	ncsh_autocompletions_add("ls > t.txt", 11, tree);
+	ncsh_autocompletions_add("cat t.txt", 10, tree);
+	ncsh_autocompletions_add("rm t.txt", 9, tree);
+	ncsh_autocompletions_add("ss", 3, tree);
 
-	constexpr uint_fast32_t max_match_length = 256;
-	char* autocomplete[max_match_length] = {0};
+	struct ncsh_Autocompletion autocomplete[NCSH_MAX_AUTOCOMPLETION_MATCHES] = {0};
 
-	uint_fast32_t match_count = ncsh_autocompletions_get("n", 2, autocomplete, max_match_length, tree);
+	uint_fast32_t match_count = ncsh_autocompletions_get("n", 2, autocomplete, tree);
 
 	eskilib_assert(match_count == 0);
-	eskilib_assert(autocomplete[0] == NULL);
+	eskilib_assert(autocomplete[0].value == NULL);
 
 	ncsh_autocompletions_free(tree);
 }
 
 void ncsh_autocompletions_matches_multiple_test(void) {
-	struct ncsh_Autocompletions* tree = ncsh_autocompletions_malloc();
+	struct ncsh_Autocompletion_Node* tree = ncsh_autocompletions_malloc();
 	eskilib_assert(tree != NULL);
 
-	ncsh_autocompletions_add_string((struct eskilib_String){ .value = "ls", .length = 3 }, tree);
-	ncsh_autocompletions_add_string((struct eskilib_String){ .value = "ls | wc -c", .length = 11 }, tree);
-	ncsh_autocompletions_add_string((struct eskilib_String){ .value = "ls | sort", .length = 10 }, tree);
-	ncsh_autocompletions_add_string((struct eskilib_String){ .value = "ls | sort | wc -c", .length = 18 }, tree);
-	ncsh_autocompletions_add_string((struct eskilib_String){ .value = "ls > t.txt", .length = 11 }, tree);
-	ncsh_autocompletions_add_string((struct eskilib_String){ .value = "cat t.txt", .length = 10 }, tree);
-	ncsh_autocompletions_add_string((struct eskilib_String){ .value = "rm t.txt", .length = 9 }, tree);
-	ncsh_autocompletions_add_string((struct eskilib_String){ .value = "ss", .length = 3 }, tree);
+	ncsh_autocompletions_add("ls", 3, tree);
+	ncsh_autocompletions_add("ls | wc -c", 11, tree);
+	ncsh_autocompletions_add("ls | sort", 10, tree);
+	ncsh_autocompletions_add("ls | sort | wc -c", 18, tree);
+	ncsh_autocompletions_add("ls > t.txt", 11, tree);
+	ncsh_autocompletions_add("cat t.txt", 10, tree);
+	ncsh_autocompletions_add("rm t.txt", 9, tree);
+	ncsh_autocompletions_add("ss", 3, tree);
 
-	constexpr uint_fast32_t max_match_length = 256;
-	char* autocomplete[max_match_length] = {0};
+	struct ncsh_Autocompletion autocomplete[NCSH_MAX_AUTOCOMPLETION_MATCHES] = {0};
 
-	uint_fast32_t match_count = ncsh_autocompletions_get("ls | ", 6, autocomplete, max_match_length, tree);
+	uint_fast32_t match_count = ncsh_autocompletions_get("ls | ", 6, autocomplete, tree);
 
 	eskilib_assert(match_count == 3);
-	eskilib_assert(eskilib_string_equals(autocomplete[0], "sort", 5) == true);
-	eskilib_assert(eskilib_string_equals(autocomplete[1], "sort | wc -c", 13) == true);
-	eskilib_assert(eskilib_string_equals(autocomplete[2], "wc -c", 6) == true);
+	eskilib_assert(eskilib_string_equals(autocomplete[0].value, "sort", 5) == true);
+	eskilib_assert(eskilib_string_equals(autocomplete[1].value, "sort | wc -c", 13) == true);
+	eskilib_assert(eskilib_string_equals(autocomplete[2].value, "wc -c", 6) == true);
 
-	for (uint_fast32_t i = 0; i < max_match_length - 1; i++) {
-		if (autocomplete[i] != NULL) {
+	for (uint_fast32_t i = 0; i < NCSH_MAX_AUTOCOMPLETION_MATCHES - 1; i++) {
+		if (autocomplete[i].value != NULL) {
 			// printf("i:%lu %s\n", i, autocomplete[i]);
-			free(autocomplete[i]);
+			free(autocomplete[i].value);
 		}
 	}
 
-	char* autocomplete_two[max_match_length] = {0};
+	struct ncsh_Autocompletion autocomplete_two[NCSH_MAX_AUTOCOMPLETION_MATCHES] = {0};
 
-	match_count = ncsh_autocompletions_get("l", 2, autocomplete_two, max_match_length, tree);
+	match_count = ncsh_autocompletions_get("l", 2, autocomplete_two, tree);
 
 	eskilib_assert(match_count == 5);
-	eskilib_assert(eskilib_string_equals(autocomplete_two[0], "s", 2) == true);
-	eskilib_assert(eskilib_string_equals(autocomplete_two[1], "s > t.txt", 10) == true);
-	eskilib_assert(eskilib_string_equals(autocomplete_two[2], "s | sort", 9) == true);
-	eskilib_assert(eskilib_string_equals(autocomplete_two[3], "s | sort | wc -c", 17) == true);
-	eskilib_assert(eskilib_string_equals(autocomplete_two[4], "s | wc -c", 10) == true);
+	eskilib_assert(eskilib_string_equals(autocomplete_two[0].value, "s", 2) == true);
+	eskilib_assert(eskilib_string_equals(autocomplete_two[1].value, "s > t.txt", 10) == true);
+	eskilib_assert(eskilib_string_equals(autocomplete_two[2].value, "s | sort", 9) == true);
+	eskilib_assert(eskilib_string_equals(autocomplete_two[3].value, "s | sort | wc -c", 17) == true);
+	eskilib_assert(eskilib_string_equals(autocomplete_two[4].value, "s | wc -c", 10) == true);
 
-	for (uint_fast32_t i = 0; i < max_match_length - 1; i++) {
-		if (autocomplete_two[i] != NULL) {
+	for (uint_fast32_t i = 0; i < NCSH_MAX_AUTOCOMPLETION_MATCHES - 1; i++) {
+		if (autocomplete_two[i].value != NULL) {
 			// printf("i:%lu %s\n", i, autocomplete_two[i]);
-			free(autocomplete_two[i]);
+			free(autocomplete_two[i].value);
 		}
 	}
 
@@ -374,52 +357,52 @@ void ncsh_autocompletions_matches_multiple_test(void) {
 }
 
 void ncsh_autocompletions_matches_multiple_simulation_test(void) {
-	struct ncsh_Autocompletions* tree = ncsh_autocompletions_malloc();
+	struct ncsh_Autocompletion_Node* tree = ncsh_autocompletions_malloc();
 	eskilib_assert(tree != NULL);
 
-	ncsh_autocompletions_add_string((struct eskilib_String){ .value = "ls", .length = 3 }, tree);
-	ncsh_autocompletions_add_string((struct eskilib_String){ .value = "ls | wc -c", .length = 11 }, tree);
-	ncsh_autocompletions_add_string((struct eskilib_String){ .value = "ls | sort", .length = 10 }, tree);
-	ncsh_autocompletions_add_string((struct eskilib_String){ .value = "ls | sort | wc -c", .length = 18 }, tree);
-	ncsh_autocompletions_add_string((struct eskilib_String){ .value = "ls > t.txt", .length = 11 }, tree);
-	ncsh_autocompletions_add_string((struct eskilib_String){ .value = "cat t.txt", .length = 10 }, tree);
-	ncsh_autocompletions_add_string((struct eskilib_String){ .value = "rm t.txt", .length = 9 }, tree);
-	ncsh_autocompletions_add_string((struct eskilib_String){ .value = "ss", .length = 3 }, tree);
+	ncsh_autocompletions_add("ls", 3, tree);
+	ncsh_autocompletions_add("ls | wc -c", 11, tree);
+	ncsh_autocompletions_add("ls | sort", 10, tree);
+	ncsh_autocompletions_add("ls | sort | wc -c", 18, tree);
+	ncsh_autocompletions_add("ls > t.txt", 11, tree);
+	ncsh_autocompletions_add("cat t.txt", 10, tree);
+	ncsh_autocompletions_add("rm t.txt", 9, tree);
+	ncsh_autocompletions_add("ss", 3, tree);
 	ncsh_autocompletions_add("nvim", 5, tree);
 	ncsh_autocompletions_add("nvim .", 7, tree);
 
-	constexpr uint_fast32_t max_match_length = 256;
-	char* autocomplete[max_match_length] = {0};
+	struct ncsh_Autocompletion autocomplete[NCSH_MAX_AUTOCOMPLETION_MATCHES] = {0};
 
-	uint_fast32_t match_count = ncsh_autocompletions_get("l", 2, autocomplete, max_match_length, tree);
+	uint_fast32_t match_count = ncsh_autocompletions_get("l", 2, autocomplete, tree);
 
 	eskilib_assert(match_count == 5);
-	eskilib_assert(eskilib_string_equals(autocomplete[0], "s", 2) == true);
-	eskilib_assert(eskilib_string_equals(autocomplete[1], "s > t.txt", 10) == true);
-	eskilib_assert(eskilib_string_equals(autocomplete[2], "s | sort", 9) == true);
-	eskilib_assert(eskilib_string_equals(autocomplete[3], "s | sort | wc -c", 17) == true);
-	eskilib_assert(eskilib_string_equals(autocomplete[4], "s | wc -c", 10) == true);
-	for (uint_fast32_t i = 0; i < max_match_length - 1; i++) {
-		if (autocomplete[i] != NULL) {
+	eskilib_assert(eskilib_string_equals(autocomplete[0].value, "s", 2) == true);
+	eskilib_assert(eskilib_string_equals(autocomplete[1].value, "s > t.txt", 10) == true);
+	eskilib_assert(eskilib_string_equals(autocomplete[2].value, "s | sort", 9) == true);
+	eskilib_assert(eskilib_string_equals(autocomplete[3].value, "s | sort | wc -c", 17) == true);
+	eskilib_assert(eskilib_string_equals(autocomplete[4].value, "s | wc -c", 10) == true);
+
+	for (uint_fast32_t i = 0; i < NCSH_MAX_AUTOCOMPLETION_MATCHES - 1; i++) {
+		if (autocomplete[i].value != NULL) {
 			// printf("i:%lu %s\n", i, autocomplete[i]);
-			free(autocomplete[i]);
+			free(autocomplete[i].value);
 		}
 	}
 
-	char* autocomplete_two[max_match_length] = {0};
+	struct ncsh_Autocompletion autocomplete_two[NCSH_MAX_AUTOCOMPLETION_MATCHES] = {0};
 
-	match_count = ncsh_autocompletions_get("ls", 3, autocomplete_two, max_match_length, tree);
+	match_count = ncsh_autocompletions_get("ls", 3, autocomplete_two, tree);
 
 	eskilib_assert(match_count == 4);
-	eskilib_assert(eskilib_string_equals(autocomplete_two[0], " > t.txt", 9) == true);
-	eskilib_assert(eskilib_string_equals(autocomplete_two[1], " | sort", 8) == true);
-	eskilib_assert(eskilib_string_equals(autocomplete_two[2], " | sort | wc -c", 16) == true);
-	eskilib_assert(eskilib_string_equals(autocomplete_two[3], " | wc -c", 8) == true);
+	eskilib_assert(eskilib_string_equals(autocomplete_two[0].value, " > t.txt", 9) == true);
+	eskilib_assert(eskilib_string_equals(autocomplete_two[1].value, " | sort", 8) == true);
+	eskilib_assert(eskilib_string_equals(autocomplete_two[2].value, " | sort | wc -c", 16) == true);
+	eskilib_assert(eskilib_string_equals(autocomplete_two[3].value, " | wc -c", 8) == true);
 
-	for (uint_fast32_t i = 0; i < max_match_length - 1; i++) {
-		if (autocomplete_two[i] != NULL) {
+	for (uint_fast32_t i = 0; i < NCSH_MAX_AUTOCOMPLETION_MATCHES - 1; i++) {
+		if (autocomplete_two[i].value != NULL) {
 			// printf("i:%lu %s\n", i, autocomplete_two[i]);
-			free(autocomplete_two[i]);
+			free(autocomplete_two[i].value);
 		}
 	}
 
