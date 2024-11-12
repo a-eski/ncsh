@@ -58,7 +58,6 @@ void ncsh_autocompletions_add(char* string, uint_fast32_t length, struct ncsh_Au
 		if (tree->nodes[index] == NULL) {
 			tree->nodes[index] = calloc(1, sizeof(struct ncsh_Autocompletion_Node));
 			tree->nodes[index]->is_end_of_a_word = false;
-			// tree->nodes[index]->letter = string[i];
 			tree->nodes[index]->weight = 1;
 		}
 		else {
@@ -149,20 +148,26 @@ void ncsh_autocompletions_match(struct ncsh_Autocompletion* matches,
 				}
 			}
 
-			// matches[*matches_position].value[*string_position] = tree->nodes[i]->letter;
 			matches[*matches_position].value[*string_position] = ncsh_index_to_char(i);
 			++*string_position;
 			matches[*matches_position].value[*string_position] = '\0';
 
-			if (tree->nodes[i]->is_end_of_a_word == true && *matches_position + 1 < NCSH_MAX_AUTOCOMPLETION_MATCHES) {
+			if (tree->nodes[i]->is_end_of_a_word == true) {
 				matches[*matches_position].weight = tree->nodes[i]->weight;
-				++*matches_position;
+				if (*matches_position + 1 < NCSH_MAX_AUTOCOMPLETION_MATCHES)
+					++*matches_position;
+				else
+					return;
 			}
 
 			ncsh_autocompletions_match(matches, string_position, matches_position, tree->nodes[i]);
 
-			if (matches[*matches_position].value != NULL)
-				++*matches_position;
+			if (matches[*matches_position].value != NULL) {
+				if (*matches_position + 1 < NCSH_MAX_AUTOCOMPLETION_MATCHES)
+					++*matches_position;
+				else
+					return;
+			}
 
 			*string_position = *string_position - 1;
 		}
