@@ -39,7 +39,7 @@ void ncsh_autocompletions_free_matches(struct ncsh_Autocompletion* matches, uint
 	if (matches == NULL)
 		return;
 
-	for (uint_fast8_t i = 0; i < matches_count; ++i)
+	for (uint_fast8_t i = 0; i <= matches_count; ++i)
 		free(matches[i].value);
 }
 
