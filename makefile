@@ -70,6 +70,9 @@ install : $(target)
 check :
 	chmod +x ./tests_harness.sh
 	chmod +x ./tests.sh
+	chmod +x ./tests_h.sh
+	chmod +x ./tests_p.sh
+	chmod +x ./tests_ac.sh
 	./tests_harness.sh
 
 .PHONY: fuzz_history

@@ -18,13 +18,10 @@
 static char* history_file;
 
 void ncsh_history_file_set(struct eskilib_String config_file) {
-	assert(config_file.value != NULL);
-	assert(config_file.length > 0);
 	if (config_file.value == NULL || config_file.length == 0) {
-		history_file = NULL;
+		history_file = NCSH_HISTORY_FILE;
 		return;
 	}
-
 
 	if (config_file.length + NCSH_HISTORY_FILE_LENGTH > NCSH_MAX_INPUT) {
 		history_file = NULL;

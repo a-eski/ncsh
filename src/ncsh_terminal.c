@@ -12,7 +12,7 @@
 #include "eskilib/eskilib_colors.h"
 
 #define TERMINAL_RETURN 'R'
-#define BUFFER_LENGTH 30
+#define T_BUFFER_LENGTH 30
 
 static struct termios terminal;
 static struct termios original_terminal;
@@ -57,7 +57,7 @@ void ncsh_terminal_move(int x, int y) {
 }
 
 struct ncsh_Coordinates ncsh_terminal_position() {
-	char buffer[BUFFER_LENGTH] = {0};
+	char buffer[T_BUFFER_LENGTH] = {0};
 	int_fast32_t i = 0;
 	int_fast32_t power = 0;
 	char character = 0;
@@ -70,7 +70,7 @@ struct ncsh_Coordinates ncsh_terminal_position() {
 	}
 
 
-	for (i = 0; i < BUFFER_LENGTH && character != TERMINAL_RETURN; ++i) {
+	for (i = 0; i < T_BUFFER_LENGTH && character != TERMINAL_RETURN; ++i) {
 		if (read(STDIN_FILENO, &character, 1) == -1)
 		{
 			perror(RED "ncsh: Could not get cursor position" RESET);
@@ -79,7 +79,7 @@ struct ncsh_Coordinates ncsh_terminal_position() {
 		buffer[i] = character;
 	}
 
-	if (i < 2 || i == BUFFER_LENGTH - 1)
+	if (i < 2 || i == T_BUFFER_LENGTH - 1)
 	{
 		return cursor_position;
 	}
