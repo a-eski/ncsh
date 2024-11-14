@@ -6,7 +6,6 @@
 #include "../eskilib/eskilib_test.h"
 #include "../eskilib/eskilib_string.h"
 
-#define NCSH_HISTORY_TEST
 #include "../ncsh_history.h"
 
 void ncsh_history_load_file_not_exists_test(void) {
@@ -14,6 +13,7 @@ void ncsh_history_load_file_not_exists_test(void) {
 
 	enum eskilib_Result result;
 	struct ncsh_History history = {0};
+	history.config_location = eskilib_String_Empty;
 	result = ncsh_history_malloc(&history);
 	eskilib_assert(result == E_SUCCESS);
 	result = ncsh_history_load(&history);
