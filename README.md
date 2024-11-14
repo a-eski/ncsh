@@ -9,13 +9,13 @@ sudo make install
 
 # notes
 - sudo make install ONLY calls the install command to add the ELF executable to /usr/local.
-- Install directory is by default /usr/local. Pass in DESTDIR if you want to install it somewhere else
+- Install directory is by default /usr/local. Pass in DESTDIR if you want to install it somewhere else.
 - History file .ncsh_history tries to use XDG_CONFIG_HOME if available, or else HOME.
 
 # goals
 1. be able to install the shell and use it - DONE :)
 2. autocomplete - DONE :)
-3. weighted autocomplete
+3. weighted autocomplete - DONE :) but needs some tweaking
 4. basic vm that supports multiple pipes - DONE :)
 5. vm that supports piping, output/input redirection, !, &&, ||, etc.
 6. up/down arrow keys to navigate through history - DONE :)
