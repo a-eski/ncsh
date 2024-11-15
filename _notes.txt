@@ -1,3 +1,5 @@
+./integration_tests/integration_test.rb
+
 references
 https://theasciicode.com.ar/
 
@@ -21,9 +23,6 @@ windows
 fuzzing
 https://llvm.org/docs/LibFuzzer.html#corpus
 https://github.com/google/fuzzing/blob/master/tutorial/libFuzzerTutorial.md#seed-corpus
-
-integration tests
-./integration_tests/integration_test.rb
 
 tests
 ss

@@ -37,6 +37,11 @@
 #define ERASE_CURRENT_LINE "\033[K"
 #define ERASE_CURRENT_LINE_LENGTH 3
 
+#define CLEAR_SCREEN "\033[2J"
+#define CLEAR_SCREEN_LENGTH 4
+#define MOVE_CURSOR_HOME "\033[H"
+#define MOVE_CURSOR_HOME_LENGTH 3
+
 struct ncsh_Directory {
 	char* user;
 	char path[PATH_MAX];
