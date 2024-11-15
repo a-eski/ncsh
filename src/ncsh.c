@@ -303,11 +303,20 @@ int ncsh(void) {
 
 	ncsh_terminal_init();
 
+	int exit = EXIT_SUCCESS;
+	if (write(STDOUT_FILENO,
+	   CLEAR_SCREEN MOVE_CURSOR_HOME,
+	   CLEAR_SCREEN_LENGTH + MOVE_CURSOR_HOME_LENGTH) == -1) {
+		perror(RED NCSH_ERROR_STDOUT RESET);
+		fflush(stderr);
+		exit = EXIT_FAILURE;
+		goto free_all;
+	}
+
 	clock_t end = clock();
 	double elapsed_ms = ((double)(end - start)) / CLOCKS_PER_SEC * 1000;
 	printf("ncsh: startup time: %.2f milliseconds\n", elapsed_ms);
 
-	int exit = EXIT_SUCCESS;
 	if (ncsh_prompt(prompt_info) == NCSH_EXIT_FAILURE) {
 		exit = EXIT_FAILURE;
 		goto free_all;
