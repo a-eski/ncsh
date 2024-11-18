@@ -4,10 +4,7 @@
 require 'ttytest'
 
 def assert_check_new_row(row)
-  if (ENV['USER'] == nil)
-    @tty.assert_row_starts_with(row, "(null)")
-  else
-    @tty.assert_row_starts_with(row, "#{ENV['USER']}:")
+  @tty.assert_row_starts_with(row, "#{ENV['USER']}:")
   @tty.assert_row_like(row, 'ncsh')
   @tty.assert_row_ends_with(row, '$')
   @tty.assert_cursor_position(63, row)
