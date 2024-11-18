@@ -1,6 +1,7 @@
 // Copyright (c) ncsh by Alex Eski 2024
 
 #define _POSIX_SOURCE
+#include <stdint.h>
 #include <linux/limits.h>
 #include <assert.h>
 #include <stdio.h>
@@ -185,14 +186,13 @@ uint_fast32_t ncsh_vm(struct ncsh_Args args) {
 	}
 	++number_of_pipe_commands;
 
-	uint_fast32_t args_count = args.count;
 	if (file != NULL) {
-		args_count = output_redirect_found;
-		// args.values[output_redirect_found] = NULL;
+		free(args.values[output_redirect_found]);
+		args.values[output_redirect_found] = NULL;
 		output_io = ncsh_output_redirection_start(file);
 	}
 
-	for (uint_fast32_t i = 0; i < args_count && end != true; ++i) {
+	while (args.values[args_position] != NULL && end != true) {
 		buffer_position = 0;
 
 		while (args.ops[args_position] == OP_CONSTANT) {

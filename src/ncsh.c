@@ -56,10 +56,7 @@ int_fast32_t ncsh_prompt(struct ncsh_Directory prompt_info) {
 		return NCSH_EXIT_FAILURE;
 	}
 
-	if (prompt_info.user != NULL)
-		printf(ncsh_CYAN "%s" WHITE "$ ", prompt_info.path);
-	else
-		printf(ncsh_GREEN "%s" WHITE ":" ncsh_CYAN "%s" WHITE "$ ", prompt_info.user, prompt_info.path);
+	printf(ncsh_GREEN "%s" WHITE ":" ncsh_CYAN "%s" WHITE "$ ", prompt_info.user, prompt_info.path);
 	fflush(stdout);
 
 	// save cursor position so we can reset cursor when loading history entries
