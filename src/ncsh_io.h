@@ -43,6 +43,7 @@
 #define MOVE_CURSOR_HOME_LENGTH 3
 
 struct ncsh_Directory {
+	bool reprint_prompt;
 	char* user;
 	char path[PATH_MAX];
 };

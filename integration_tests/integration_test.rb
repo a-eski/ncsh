@@ -4,14 +4,13 @@
 require 'ttytest'
 
 def assert_check_new_row(row)
-  @tty.assert_row_starts_with(row, "#{ENV['USER']}:")
+  if (ENV['USER'] == nil)
+    @tty.assert_row_starts_with(row, "(null)")
+  else
+    @tty.assert_row_starts_with(row, "#{ENV['USER']}:")
   @tty.assert_row_like(row, 'ncsh')
   @tty.assert_row_ends_with(row, '$')
   @tty.assert_cursor_position(63, row)
-end
-
-def send_keys_newline
-  @tty.send_keys(%(\n))
 end
 
 @tty = TTYtest.new_terminal(%(PS1='$ ' ./bin/ncsh), width: 80, height: 24)
@@ -24,19 +23,19 @@ puts 'Starting basic tests'
 assert_check_new_row(1)
 @tty.send_keys_one_at_a_time(%(ls))
 @tty.assert_cursor_position(65, 1)
-send_keys_newline
+@tty.send_newline
 @tty.assert_row_ends_with(1, 'ls')
 @tty.assert_row_starts_with(2, 'LICENSE')
 @tty.assert_row_starts_with(8, '_docker.txt')
 
 assert_check_new_row(9)
 @tty.send_keys_one_at_a_time(%(echo hello))
-send_keys_newline
+@tty.send_newline
 @tty.assert_row(10, 'hello')
 
 assert_check_new_row(11)
 @tty.send_keys_one_at_a_time(%(lss)) # send a bad command
-send_keys_newline
+@tty.send_newline
 @tty.assert_row(12, 'ncsh: Could not find command or directory: No such file or directory')
 
 puts 'Starting backspace tests'
@@ -57,7 +56,7 @@ assert_check_new_row(13)
 @tty.send_keys(TTYtest::BACKSPACE)
 @tty.send_keys(TTYtest::BACKSPACE)
 @tty.send_keys_one_at_a_time(%(echo hello)) # make sure buffer is properly formed after backspaces
-send_keys_newline
+@tty.send_newline
 @tty.assert_row(14, 'hello')
 
 # midline backspace
@@ -78,9 +77,41 @@ assert_check_new_row(15)
 @tty.send_keys(TTYtest::BACKSPACE)
 @tty.send_keys(TTYtest::BACKSPACE)
 @tty.send_keys_one_at_a_time(%(echo hello)) # make sure buffer is properly formed after backspaces
-send_keys_newline
+@tty.send_newline
 @tty.assert_row(16, 'hello')
 
+# puts 'Starting delete tests'
+
+# assert_check_new_row(17)
+# @tty.send_keys_one_at_a_time('s')
+# @tty.assert_cursor_position(64, 17)
+# @tty.send_keys(TTYtest::LEFT_ARROW)
+# @tty.assert_cursor_position(63, 17)
+# @tty.send_keys_one_at_a_time('^[[5~')
+# @tty.assert_cursor_position(63, 17)
+
+# assert_check_new_row(17)
+# @tty.send_keys_one_at_a_time(%(lssss))
+# @tty.assert_cursor_position(68, 17)
+# @tty.send_keys(TTYtest::LEFT_ARROW)
+# @tty.send_keys(TTYtest::LEFT_ARROW)
+# @tty.send_keys(TTYtest::LEFT_ARROW)
+# @tty.send_keys(TTYtest::LEFT_ARROW)
+# @tty.send_keys(TTYtest::LEFT_ARROW)
+# @tty.assert_cursor_position(63, 17)
+# @tty.send_keys(TTYtest::DELETE)
+# @tty.assert_cursor_position(63, 17)
+# @tty.send_keys(TTYtest::DELETE)
+# @tty.send_keys(TTYtest::DELETE)
+# @tty.send_keys(TTYtest::DELETE)
+# @tty.send_keys(TTYtest::DELETE)
+# assert_check_new_row(17)
+
+# puts 'Starting multiline tests'
+# puts 'Starting history tests'
+# puts 'Starting autocomplete tests'
+# puts 'Starting pipe tests'
+# puts 'Starting output redirection tests'
 # puts 'Starting arrow tests'
 
 # assert_check_new_row(17)
@@ -88,12 +119,5 @@ send_keys_newline
 # assert_check_new_row(17)
 # @tty.send_keys(TTYtest::LEFT_ARROW)
 # assert_check_new_row(17)
-
-# puts 'Starting delete tests'
-# puts 'Starting multiline tests'
-# puts 'Starting history tests'
-# puts 'Starting autocomplete tests'
-# puts 'Starting pipe tests'
-# puts 'Starting output redirection tests'
 
 puts 'All tests passed!'

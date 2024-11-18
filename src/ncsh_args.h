@@ -6,6 +6,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "eskilib/eskilib_result.h"
+
 #define ncsh_TOKENS 128
 #define ncsh_TOKEN_BUFFER_SIZE 128
 
@@ -29,9 +31,9 @@ struct ncsh_Args {
 	char** values;
 };
 
-bool ncsh_args_is_valid(struct ncsh_Args args);
+bool ncsh_args_is_valid(const struct ncsh_Args args);
 
-bool ncsh_args_malloc(struct ncsh_Args* args);
+enum eskilib_Result ncsh_args_malloc(struct ncsh_Args* args);
 
 void ncsh_args_free(struct ncsh_Args args);
 

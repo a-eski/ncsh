@@ -184,13 +184,15 @@ uint_fast32_t ncsh_vm(struct ncsh_Args args) {
 		}
 	}
 	++number_of_pipe_commands;
+
+	uint_fast32_t args_count = args.count;
 	if (file != NULL) {
-		args.count = output_redirect_found;
-		args.values[output_redirect_found] = NULL;
+		args_count = output_redirect_found;
+		// args.values[output_redirect_found] = NULL;
 		output_io = ncsh_output_redirection_start(file);
 	}
 
-	while (args.values[args_position] != NULL && end != true) {
+	for (uint_fast32_t i = 0; i < args_count && end != true; ++i) {
 		buffer_position = 0;
 
 		while (args.ops[args_position] == OP_CONSTANT) {

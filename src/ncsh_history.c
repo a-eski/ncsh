@@ -18,6 +18,10 @@
 static char* history_file;
 
 void ncsh_history_file_set(struct eskilib_String config_file) {
+	#ifdef NCSH_HISTORY_TEST
+	history_file = NCSH_HISTORY_FILE;
+	return;
+	#endif /* ifdef NCSH_HISTORY_TEST */
 	if (config_file.value == NULL || config_file.length == 0) {
 		history_file = NCSH_HISTORY_FILE;
 		return;
