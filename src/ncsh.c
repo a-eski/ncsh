@@ -256,14 +256,12 @@ int ncsh(void) {
 	uint_fast32_t max_buf_position = 0;
 	enum ncsh_Hotkey key;
 
-	bool reprint_prompt = false;
-	struct ncsh_Directory prompt_info;
+	struct ncsh_Directory prompt_info = {0};
 	prompt_info.user = getenv("USER");
 
 	uint_fast32_t command_result = 0;
 	struct ncsh_Args args = {0};
-	bool did_malloc_succeed = ncsh_args_malloc(&args);
-	if (!did_malloc_succeed)
+	if (ncsh_args_malloc(&args) != E_SUCCESS)
 		return EXIT_FAILURE;
 
 	uint_fast32_t history_position = 0; // current position in history for the current loop, reset every loop
@@ -323,7 +321,7 @@ int ncsh(void) {
 	}
 
 	while (1) {
-		if (buf_position == 0 && reprint_prompt == true) {
+		if (buf_position == 0 && prompt_info.reprint_prompt == true) {
 			if (ncsh_prompt(prompt_info) == NCSH_EXIT_FAILURE) {
 				exit = EXIT_FAILURE;
 				goto free_all;
@@ -331,7 +329,7 @@ int ncsh(void) {
 			history_position = 0;
 		}
 		else {
-			reprint_prompt = true;
+			prompt_info.reprint_prompt = true;
 		}
 
 		if (read(STDIN_FILENO, &character, 1) == -1) {
@@ -347,7 +345,7 @@ int ncsh(void) {
 		}
 
 		if (character == BACKSPACE_KEY) {
-			reprint_prompt = false;
+			prompt_info.reprint_prompt = false;
 			if (buf_position == 0) {
 				continue;
 			}
@@ -377,7 +375,7 @@ int ncsh(void) {
 
 				switch (key) {
 					case RIGHT: {
-						reprint_prompt = false;
+						prompt_info.reprint_prompt = false;
 
 						if (buf_position == max_buf_position && buffer[0]) {
 							printf("%s", current_autocompletion);
@@ -408,7 +406,7 @@ int ncsh(void) {
 						break;
 					}
 					case LEFT: {
-						reprint_prompt = false;
+						prompt_info.reprint_prompt = false;
 
 						if (buf_position == 0 || (!buffer[buf_position] && !buffer[buf_position - 1]))
 							continue;
@@ -424,7 +422,7 @@ int ncsh(void) {
 						break;
 					}
 					case UP: {
-						reprint_prompt = false;
+						prompt_info.reprint_prompt = false;
 
 						history_entry = ncsh_history_get(history_position, &history);
 						if (history_entry.length > 0) {
@@ -450,7 +448,7 @@ int ncsh(void) {
 						break;
 					}
 					case DOWN: {
-						reprint_prompt = false;
+						prompt_info.reprint_prompt = false;
 
 						if (history_position == 0)
 							break;
@@ -494,7 +492,7 @@ int ncsh(void) {
 						if (character != DELETE_KEY)
 							continue;
 
-						reprint_prompt = false;
+						prompt_info.reprint_prompt = false;
 
 						if (ncsh_delete(buffer, &buf_position, &max_buf_position) == NCSH_EXIT_FAILURE) {
 							exit = EXIT_FAILURE;
@@ -539,8 +537,10 @@ int ncsh(void) {
 			#endif /* ifdef NCSH_DEBUG */
 
 			args = ncsh_parse(buffer, buf_position, args);
-			if (!ncsh_args_is_valid(args))
+			if (!ncsh_args_is_valid(args)) {
+				ncsh_args_free_values(args);
 				continue;
+			}
 
 			#ifdef NCSH_DEBUG
 			ncsh_debug_args(args);
@@ -646,7 +646,8 @@ int ncsh(void) {
 		ncsh_args_free(args);
 
 		if (history.history_loaded) {
-			ncsh_history_save(&history);
+			if (history.history_count > 0)
+				ncsh_history_save(&history);
 			ncsh_history_free(&history);
 		}
 

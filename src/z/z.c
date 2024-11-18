@@ -7,6 +7,8 @@
 #include <assert.h>
 #include <time.h>
 #include <string.h>
+#include <dirent.h>
+#include <unistd.h>
 
 #include "z.h"
 #include "../eskilib/eskilib_file.h"
@@ -210,10 +212,49 @@ enum eskilib_Result z_start(const size_t config_path_max, struct eskilib_String 
 	return E_SUCCESS;
 }
 
-struct eskilib_String z_process (const struct eskilib_String target, struct z_Database* database) {
+bool z_directory_matches(const struct eskilib_String target, const char* directory) {
+	struct dirent* directory_entry;
+	DIR* current_directory = opendir(directory);
+	if (current_directory == NULL) {
+		perror("z: could not open directory");
+		return false;
+	}
+
+	while ((directory_entry = readdir(current_directory)) != NULL) {
+		if (eskilib_string_equals(target.value, directory_entry->d_name, PATH_MAX)) {
+			if ((closedir(current_directory)) == -1) {
+				perror("z: could not close directory");
+			}
+
+			return true;
+		}
+	}
+
+	if ((closedir(current_directory)) == -1) {
+		perror("z: could not close directory");
+	}
+	return false;
+}
+
+struct eskilib_String z_process (const struct eskilib_String target, const char* directory, struct z_Database* database) {
 	printf("z_run: %s\n", target.value);
 
+	if (target.length == 1) {
+		if (target.value[0] == '~')
+			chdir("~");
+	}
+	if (target.length == 2) {
+		if (target.value[0] == '.' && target.value[1] == '.')
+			chdir("..");
+	}
+
 	struct eskilib_String match = z_database_get_match(target, database);
+
+	if (match.length == 0) {
+		if (z_directory_matches(target, directory) == true) {
+			chdir(target.value);
+		}
+	}
 
 	return match;
 }

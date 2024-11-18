@@ -1,3 +1,10 @@
 data directory
 max age
 
+try to find any matches which have a score
+	if any matches found, take the one with the highest score
+		update the database to reflect the most recent match
+	if no matches found, try to find if a local directory matches
+		if a local directory matches, change to that directory
+			update the database to reflect the most recent match
+	if no matches found locally, return no matches found
