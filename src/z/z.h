@@ -32,11 +32,11 @@ struct z_Database {
 	struct z_Directory* directories;
 };
 
-enum eskilib_Result z_start (const size_t config_path_max, const struct eskilib_String config_path, struct z_Database* database);
+enum eskilib_Result z_begin (const size_t config_path_max, const struct eskilib_String config_path, struct z_Database* database);
 
 struct eskilib_String z_process (const struct eskilib_String target, const char* directory, struct z_Database* database);
 
-enum eskilib_Result z_finish (struct z_Database* database);
+enum eskilib_Result z_end (struct z_Database* database);
 
 #endif // !z_main_h
 

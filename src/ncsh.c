@@ -47,6 +47,21 @@ enum ncsh_Hotkey ncsh_get_key(char character) {
 	}
 }
 
+void ncsh_prompt_directory(char* cwd, char* output) {
+	int i = 1;
+	int last_slash_pos = 0;
+	int second_to_last_slash = 0;
+
+	for (; cwd[i] != '\n' && cwd[i] != '\0'; i++) {
+		if (cwd[i] == '/') {
+			second_to_last_slash = last_slash_pos;
+			last_slash_pos = i + 1;
+		}
+	}
+
+	strncpy(output, &cwd[second_to_last_slash], i - second_to_last_slash);
+}
+
 [[nodiscard]]
 int_fast32_t ncsh_prompt(struct ncsh_Directory prompt_info) {
 	char* wd_result = getcwd(prompt_info.path, sizeof(prompt_info.path));
@@ -56,7 +71,10 @@ int_fast32_t ncsh_prompt(struct ncsh_Directory prompt_info) {
 		return NCSH_EXIT_FAILURE;
 	}
 
-	printf(ncsh_GREEN "%s" WHITE ":" ncsh_CYAN "%s" WHITE "$ ", prompt_info.user, prompt_info.path);
+	char prompt_directory[PATH_MAX] = {0};
+	ncsh_prompt_directory(prompt_info.path, prompt_directory);
+
+	printf(ncsh_GREEN "%s" WHITE ":" ncsh_CYAN "%s" WHITE "$ ", prompt_info.user, prompt_directory);
 	fflush(stdout);
 
 	// save cursor position so we can reset cursor when loading history entries
@@ -155,7 +173,7 @@ int_fast32_t ncsh_delete(char* buffer, uint_fast32_t* buf_position, uint_fast32_
 	return NCSH_EXIT_SUCCESS;
 }
 
-uint_fast32_t ncsh_config(char* out, size_t max_length) {
+uint_fast32_t ncsh_config(char* out) {
 	const char *const out_original_ptr = out;
 	char *home = getenv("XDG_CONFIG_HOME");
 	bool set_config = false;
@@ -172,7 +190,7 @@ uint_fast32_t ncsh_config(char* out, size_t max_length) {
 	uint_fast32_t length = home_length;
 
 	/* first +1 is "/", second is terminating null */
-	if (home_length + 1 + NCSH_CONFIG_LENGTH + NCSH_LENGTH + 1 > max_length) {
+	if (home_length + 1 + NCSH_CONFIG_LENGTH + NCSH_LENGTH + 1 > NCSH_MAX_INPUT) {
 		out[0] = 0;
 		return 0;
 	}
@@ -259,10 +277,28 @@ int ncsh(void) {
 	struct ncsh_Directory prompt_info = {0};
 	prompt_info.user = getenv("USER");
 
+	struct eskilib_String config_location;
+	config_location.value = malloc(NCSH_MAX_INPUT);
+	if (config_location.value == NULL) {
+		perror(RED "ncsh: Error when allocating memory for config" RESET);
+		fflush(stderr);
+		return EXIT_FAILURE;
+	}
+	config_location.length = ncsh_config(config_location.value);
+	#ifdef  NCSH_DEBUG
+	ncsh_debug_config(config_location);
+	#endif /* ifdef  NCSH_DEBUG */
+
+	// todo: set up config file
+
 	uint_fast32_t command_result = 0;
 	struct ncsh_Args args = {0};
-	if (ncsh_args_malloc(&args) != E_SUCCESS)
+	if (ncsh_args_malloc(&args) != E_SUCCESS) {
+		perror(RED "ncsh: Error when allocating memory for parsing" RESET);
+		fflush(stderr);
+		free(config_location.value);
 		return EXIT_FAILURE;
+	}
 
 	uint_fast32_t history_position = 0; // current position in history for the current loop, reset every loop
 	struct eskilib_String history_entry; // used to hold return value when cycling through history
@@ -270,19 +306,15 @@ int ncsh(void) {
 	if (ncsh_history_malloc(&history) != E_SUCCESS) {
 		perror(RED "ncsh: Error when allocating memory for history" RESET);
 		fflush(stderr);
+		free(config_location.value);
 		ncsh_args_free(args);
 		return EXIT_FAILURE;
 	}
 
-	history.config_location.value = malloc(NCSH_MAX_INPUT);
-	history.config_location.length = ncsh_config(history.config_location.value, NCSH_MAX_INPUT);
-	#ifdef  NCSH_DEBUG
-	ncsh_debug_config(history.config_location);
-	#endif /* ifdef  NCSH_DEBUG */
-
-	if (ncsh_history_load(&history) != E_SUCCESS) {
+	if (ncsh_history_load(config_location, &history) != E_SUCCESS) {
 		perror(RED "ncsh: Error when loading data from history file" RESET);
 		fflush(stderr);
+		free(config_location.value);
 		ncsh_args_free(args);
 		ncsh_history_free(&history);
 		return EXIT_FAILURE;
@@ -643,6 +675,8 @@ int ncsh(void) {
 	}
 
 	free_all:
+		free(config_location.value);
+
 		ncsh_args_free(args);
 
 		if (history.history_loaded) {

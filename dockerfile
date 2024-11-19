@@ -5,6 +5,7 @@ RUN apt update && \
   gem install ttytest2
 
 ENV RUBYOPT="-KU -E utf-8:utf-8"
+ENV USER="alex"
 
 WORKDIR /ncsh
 COPY . /ncsh
