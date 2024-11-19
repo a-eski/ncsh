@@ -18,8 +18,8 @@
 
 #define INPUT_REDIRECTION_APPEND_STRING "<<"
 #define OUTPUT_REDIRECTION_APPEND_STRING ">>"
-#define AND "&&"
-#define OR "||"
+#define AND_STRING "&&"
+#define OR_STRING "||"
 
 bool ncsh_is_delimiter(char ch) {
 	switch (ch) {
@@ -62,6 +62,10 @@ enum ncsh_Ops ncsh_op_get(char line[], uint_fast32_t length) {
 		return OP_OUTPUT_REDIRECTION_APPEND;
 	else if (eskilib_string_equals(line, INPUT_REDIRECTION_APPEND_STRING, length))
 		return OP_INPUT_REDIRECTION_APPEND;
+	else if (eskilib_string_equals(line, AND_STRING, length))
+		return OP_AND;
+	else if (eskilib_string_equals(line, OR_STRING, length))
+		return OP_OR;
 
 	return OP_CONSTANT;
 }

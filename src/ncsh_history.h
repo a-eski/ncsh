@@ -24,13 +24,13 @@ struct ncsh_History {
 	uint_fast32_t history_count;
 	uint_fast32_t file_position;
 	bool history_loaded;
-	struct eskilib_String config_location;
+	char* history_file;
 	struct eskilib_String* entries;
 };
 
 enum eskilib_Result ncsh_history_malloc(struct ncsh_History* history);
 
-enum eskilib_Result ncsh_history_load(struct ncsh_History* history);
+enum eskilib_Result ncsh_history_load(struct eskilib_String config_location, struct ncsh_History* history);
 
 enum eskilib_Result ncsh_history_save(struct ncsh_History* history);
 

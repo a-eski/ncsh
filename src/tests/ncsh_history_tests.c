@@ -13,10 +13,9 @@ void ncsh_history_load_file_not_exists_test(void) {
 
 	enum eskilib_Result result;
 	struct ncsh_History history = {0};
-	history.config_location = eskilib_String_Empty;
 	result = ncsh_history_malloc(&history);
 	eskilib_assert(result == E_SUCCESS);
-	result = ncsh_history_load(&history);
+	result = ncsh_history_load(eskilib_String_Empty, &history);
 	eskilib_assert(result == E_SUCCESS);
 
 	FILE* file = fopen(NCSH_HISTORY_FILE, "r");
@@ -31,7 +30,7 @@ void ncsh_history_load_file_exists_test(void) {
 	struct ncsh_History history = {0};
 	result = ncsh_history_malloc(&history);
 	eskilib_assert(result == E_SUCCESS);
-	result = ncsh_history_load(&history);
+	result = ncsh_history_load(eskilib_String_Empty, &history);
 	eskilib_assert(result == E_SUCCESS);
 
 	FILE* file = fopen(NCSH_HISTORY_FILE, "r");
@@ -46,7 +45,7 @@ void ncsh_history_get_empty_file_test(void) {
 	struct ncsh_History history = {0};
 	result = ncsh_history_malloc(&history);
 	eskilib_assert(result == E_SUCCESS);
-	result = ncsh_history_load(&history);
+	result = ncsh_history_load(eskilib_String_Empty, &history);
 	eskilib_assert(result == E_SUCCESS);
 
 	struct eskilib_String entry = ncsh_history_get(0, &history);
@@ -60,7 +59,7 @@ void ncsh_history_save_adds_to_file(void) {
 	struct ncsh_History history = {0};
 	result = ncsh_history_malloc(&history);
 	eskilib_assert(result == E_SUCCESS);
-	result = ncsh_history_load(&history);
+	result = ncsh_history_load(eskilib_String_Empty, &history);
 	eskilib_assert(result == E_SUCCESS);
 
 	result = ncsh_history_add("ls\0", 3, &history);
@@ -85,7 +84,7 @@ void ncsh_history_save_adds_multiple_to_file(void) {
 	struct ncsh_History history = {0};
 	result = ncsh_history_malloc(&history);
 	eskilib_assert(result == E_SUCCESS);
-	result = ncsh_history_load(&history);
+	result = ncsh_history_load(eskilib_String_Empty, &history);
 	eskilib_assert(result == E_SUCCESS);
 
 	char* existing_command = "ls\n";
@@ -125,7 +124,7 @@ void ncsh_history_load_and_get_entries_test(void) {
 	struct ncsh_History history = {0};
 	result = ncsh_history_malloc(&history);
 	eskilib_assert(result == E_SUCCESS);
-	result = ncsh_history_load(&history);
+	result = ncsh_history_load(eskilib_String_Empty, &history);
 	eskilib_assert(result == E_SUCCESS);
 
 	struct eskilib_String entry = ncsh_history_get(0, &history);
@@ -148,7 +147,7 @@ void ncsh_history_load_and_get_entries_then_add_entries_test(void) {
 	struct ncsh_History history = {0};
 	result = ncsh_history_malloc(&history);
 	eskilib_assert(result == E_SUCCESS);
-	result = ncsh_history_load(&history);
+	result = ncsh_history_load(eskilib_String_Empty, &history);
 	eskilib_assert(result == E_SUCCESS);
 
 	struct eskilib_String entry = ncsh_history_get(0, &history);

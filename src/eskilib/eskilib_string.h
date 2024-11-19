@@ -6,7 +6,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define eskilib_String_Empty (const struct eskilib_String){ .value = NULL, .length = 0 };
+#define eskilib_String_Empty ((const struct eskilib_String){ .value = NULL, .length = 0 })
 
 struct eskilib_String {
 	uint_fast32_t length;

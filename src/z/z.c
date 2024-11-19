@@ -1,3 +1,4 @@
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <linux/limits.h>
@@ -18,11 +19,12 @@
 #define Z_DEBUG
 
 static char* z_database_file;
-static size_t path_max;
 
 void z_database_file_set(const size_t config_path_max, struct eskilib_String config_path) {
-	path_max = config_path_max;
-
+	#ifdef Z_TEST
+	z_database_file = Z_DATABASE_FILE;
+	return;
+	#endif /* ifdef Z_TEST */
 	if (config_path.value == NULL || config_path.length == 0) {
 		z_database_file = NULL;
 		return;
@@ -107,18 +109,17 @@ enum eskilib_Result z_database_load(struct z_Database* database) {
 
 enum eskilib_Result z_database_save(struct z_Database* database) {
 	assert(database != NULL);
-	if (database == NULL || database->count == 0 || database->directories[0].path.value == NULL)
+	if (database == NULL || z_database_file == NULL)
 		return E_FAILURE_NULL_REFERENCE;
 
-	FILE* file;
-	if (z_database_file != NULL)
-		file = fopen(z_database_file, "a");
-	else
-		file = fopen(Z_DATABASE_FILE, "a");
-
+	FILE* file = fopen(z_database_file, "a");
 	if (file == NULL) {
-		perror(RED "z: Could not open database file to save current session" RESET);
-		return E_FAILURE_FILE_OP;
+		file = fopen(z_database_file, "w");
+
+		if (file == NULL) {
+			perror(RED "z: Could not open database file to save current session" RESET);
+			return E_FAILURE_FILE_OP;
+		}
 	}
 
 	fclose(file);
@@ -198,8 +199,10 @@ double z_score(struct z_Directory* directory, clock_t now) {
 		return directory->rank * 0.25;
 }
 
-enum eskilib_Result z_start(const size_t config_path_max, struct eskilib_String config_path, struct z_Database* database) {
+enum eskilib_Result z_begin(const size_t config_path_max, struct eskilib_String config_path, struct z_Database* database) {
 	z_database_file_set(config_path_max, config_path);
+	if (z_database_file == NULL)
+		return E_FAILURE;
 
 	enum eskilib_Result result = z_database_malloc(database);
 	if (result != E_SUCCESS)
@@ -212,12 +215,12 @@ enum eskilib_Result z_start(const size_t config_path_max, struct eskilib_String 
 	return E_SUCCESS;
 }
 
-bool z_directory_matches(const struct eskilib_String target, const char* directory) {
+char* z_directory_matches(const struct eskilib_String target, const char* directory) {
 	struct dirent* directory_entry;
 	DIR* current_directory = opendir(directory);
 	if (current_directory == NULL) {
 		perror("z: could not open directory");
-		return false;
+		return NULL;
 	}
 
 	while ((directory_entry = readdir(current_directory)) != NULL) {
@@ -226,17 +229,21 @@ bool z_directory_matches(const struct eskilib_String target, const char* directo
 				perror("z: could not close directory");
 			}
 
-			return true;
+			return directory_entry->d_name;
 		}
 	}
 
 	if ((closedir(current_directory)) == -1) {
 		perror("z: could not close directory");
 	}
-	return false;
+	return NULL;
 }
 
 struct eskilib_String z_process (const struct eskilib_String target, const char* directory, struct z_Database* database) {
+	assert(target.value != NULL && target.length > 0);
+	if (target.value == NULL || target.length == 0)
+		return eskilib_String_Empty;
+
 	printf("z_run: %s\n", target.value);
 
 	if (target.length == 1) {
@@ -253,13 +260,18 @@ struct eskilib_String z_process (const struct eskilib_String target, const char*
 	if (match.length == 0) {
 		if (z_directory_matches(target, directory) == true) {
 			chdir(target.value);
+			return target;
 		}
+
+		if (match.value == NULL)
+			return eskilib_String_Empty;
 	}
 
+	chdir(match.value);
 	return match;
 }
 
-enum eskilib_Result z_finish(struct z_Database* database) {
+enum eskilib_Result z_end(struct z_Database* database) {
 	enum eskilib_Result result = z_database_save(database);
 	if (result != E_SUCCESS)
 		return result;

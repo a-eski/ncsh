@@ -15,26 +15,25 @@
 #include "eskilib/eskilib_file.h"
 #include "eskilib/eskilib_string.h"
 
-static char* history_file;
-
-void ncsh_history_file_set(struct eskilib_String config_file) {
+void ncsh_history_file_set(struct eskilib_String config_file, struct ncsh_History* history) {
 	#ifdef NCSH_HISTORY_TEST
-	history_file = NCSH_HISTORY_FILE;
+	history->history_file = malloc(NCSH_HISTORY_FILE_LENGTH);
+	memcpy(history->history_file, NCSH_HISTORY_FILE, NCSH_HISTORY_FILE_LENGTH);
 	return;
 	#endif /* ifdef NCSH_HISTORY_TEST */
 	if (config_file.value == NULL || config_file.length == 0) {
-		history_file = NCSH_HISTORY_FILE;
+		history->history_file = NCSH_HISTORY_FILE;
 		return;
 	}
 
 	if (config_file.length + NCSH_HISTORY_FILE_LENGTH > NCSH_MAX_INPUT) {
-		history_file = NULL;
+		history->history_file = NULL;
 		return;
 	}
 
-	history_file = config_file.value;
-
-	strncat(history_file, NCSH_HISTORY_FILE, NCSH_HISTORY_FILE_LENGTH);
+	history->history_file = malloc(config_file.length + NCSH_HISTORY_FILE_LENGTH);
+	memcpy(history->history_file, config_file.value, config_file.length);
+	strncat(history->history_file, NCSH_HISTORY_FILE, NCSH_HISTORY_FILE_LENGTH);
 }
 
 enum eskilib_Result ncsh_history_malloc(struct ncsh_History* history) {
@@ -52,18 +51,18 @@ enum eskilib_Result ncsh_history_malloc(struct ncsh_History* history) {
 	return E_SUCCESS;
 }
 
-enum eskilib_Result ncsh_history_load(struct ncsh_History* history) {
+enum eskilib_Result ncsh_history_load(struct eskilib_String config_location, struct ncsh_History* history) {
 	assert(history != NULL);
 	if (history == NULL)
 		return E_FAILURE_NULL_REFERENCE;
 
-	ncsh_history_file_set(history->config_location);
-	if (history_file == NULL)
+	ncsh_history_file_set(config_location, history);
+	if (history->history_file == NULL)
 		return E_FAILURE;
 
-	FILE* file = fopen(history_file, "r");
+	FILE* file = fopen(history->history_file, "r");
 	if (file == NULL) {
-		file = fopen(history_file, "w");
+		file = fopen(history->history_file, "w");
 		if (file == NULL)
 		{
 			perror(RED "ncsh: Could not load or create history file" RESET);
@@ -102,7 +101,7 @@ enum eskilib_Result ncsh_history_save(struct ncsh_History* history) {
 	if (history == NULL || !history->entries[0].value)
 		return E_FAILURE_NULL_REFERENCE;
 
-	FILE* file = fopen(history_file, "a");
+	FILE* file = fopen(history->history_file, "a");
 	if (file == NULL) {
 		perror(RED "ncsh: Could not open .ncsh_history file to save history" RESET);
 		return E_FAILURE_FILE_OP;
@@ -137,7 +136,7 @@ void ncsh_history_free(struct ncsh_History* history) {
 		free(history->entries[i].value);
 	}
 
-	free(history->config_location.value);
+	free(history->history_file);
 	free(history->entries);
 }
 
