@@ -5,7 +5,7 @@
 
 #include "ncsh_history.h"
 
-uint_fast32_t ncsh_vm_execute(struct ncsh_Args args, struct ncsh_History* history);
+int_fast32_t ncsh_vm_execute(struct ncsh_Args args, struct ncsh_History* history);
 
 #endif // !ncsh_vm_h
 

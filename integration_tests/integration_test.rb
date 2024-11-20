@@ -3,12 +3,12 @@
 
 require 'ttytest'
 
-START_COL = 19
+START_COL = 20
 
 def assert_check_new_row(row)
-  @tty.assert_row_starts_with(row, "#{ENV['USER']}:")
+  @tty.assert_row_starts_with(row, "#{ENV['USER']}->")
   @tty.assert_row_like(row, 'ncsh')
-  @tty.assert_row_ends_with(row, '$')
+  @tty.assert_row_ends_with(row, '>')
   @tty.assert_cursor_position(START_COL, row)
 end
 
@@ -55,13 +55,9 @@ assert_check_new_row(row)
 
 # multiple end of line backspaces
 @tty.send_keys_one_at_a_time(%(lsssss))
-@tty.send_backspace
-@tty.send_backspace
-@tty.send_backspace
-@tty.send_backspace
-@tty.assert_row_ends_with(row, '$ ls')
-@tty.send_backspace
-@tty.send_backspace
+@tty.send_backspaces(4)
+@tty.assert_row_ends_with(row, '> ls')
+@tty.send_backspaces(2)
 @tty.send_keys_one_at_a_time(%(echo hello)) # make sure buffer is properly formed after backspaces
 @tty.send_newline
 row += 1
@@ -75,17 +71,13 @@ assert_check_new_row(row)
 @tty.send_keys(TTYtest::LEFT_ARROW)
 @tty.send_keys(TTYtest::LEFT_ARROW)
 @tty.assert_cursor_position(START_COL + 4, row)
-@tty.send_backspace
-@tty.send_backspace
-@tty.send_backspace
-@tty.send_backspace
+@tty.send_backspaces(4)
 @tty.assert_cursor_position(START_COL, row)
-@tty.assert_row_ends_with(row, '$ ss')
+@tty.assert_row_ends_with(row, '> ss')
 @tty.send_keys(TTYtest::RIGHT_ARROW)
 @tty.send_keys(TTYtest::RIGHT_ARROW)
 @tty.assert_cursor_position(START_COL + 2, row)
-@tty.send_backspace
-@tty.send_backspace
+@tty.send_backspaces(2)
 @tty.assert_cursor_position(START_COL, row)
 @tty.send_keys_one_at_a_time(%(echo hello)) # make sure buffer is properly formed after backspaces
 @tty.send_newline
@@ -93,13 +85,15 @@ row += 1
 @tty.assert_row(row, 'hello')
 row += 1
 
-# puts 'Starting delete tests'
+puts 'Starting delete tests'
 
 assert_check_new_row(row)
 @tty.send_keys_one_at_a_time('s')
 @tty.assert_cursor_position(START_COL + 1, row)
 @tty.send_keys(TTYtest::LEFT_ARROW)
 @tty.assert_cursor_position(START_COL, row)
+@tty.send_delete
+assert_check_new_row(row)
 
 # assert_check_new_row(17)
 # @tty.send_keys_one_at_a_time(%(lssss))

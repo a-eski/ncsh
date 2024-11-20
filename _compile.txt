@@ -16,6 +16,7 @@ n - step over
 gcc -std=c99 -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined *.c -o ncsh
 clang -std=c99 -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined *.c -o ncsh
 valgrind --leak-check=yes ./bin/ncsh
+valgrind --leak-check=full ./bin/ncsh
 valgrind --track-fds=yes ./bin/ncsh
 valgrind --leak-check=yes --track-fds=yes ./bin/ncsh
 

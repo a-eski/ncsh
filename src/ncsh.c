@@ -10,7 +10,6 @@
 #include <unistd.h>
 #include <stdbool.h>
 #include <string.h>
-#include <sys/stat.h>
 
 #include "eskilib/eskilib_result.h"
 #include "ncsh_args.h"
@@ -19,20 +18,13 @@
 #include "ncsh_history.h"
 #include "ncsh_parser.h"
 #include "ncsh_io.h"
+#include "ncsh_config.h"
 #include "ncsh.h"
 #include "ncsh_autocompletions.h"
 #include "ncsh_defines.h"
 #include "eskilib/eskilib_colors.h"
 #include "eskilib/eskilib_string.h"
 
-// #define NCSH_DEBUG
-#ifdef NCSH_DEBUG
-#include "ncsh_debug.h"
-#endif /* ifdef NCSH_DEBUG */
-
-#define NCSH "ncsh"
-#define NCSH_LENGTH 5
-#define NCSH_CONFIG_LENGTH 8 // length for .config
 #define NCSH_ERROR_STDOUT "ncsh: Error writing to stdout"
 #define NCSH_ERROR_STDIN "ncsh: Error writing to stdin"
 
@@ -74,7 +66,8 @@ int_fast32_t ncsh_prompt(struct ncsh_Directory prompt_info) {
 	char prompt_directory[PATH_MAX] = {0};
 	ncsh_prompt_directory(prompt_info.path, prompt_directory);
 
-	printf(ncsh_GREEN "%s" WHITE ":" ncsh_CYAN "%s" WHITE "$ ", prompt_info.user, prompt_directory);
+	printf(ncsh_GREEN "%s" WHITE "->" ncsh_CYAN "%s" WHITE "> ", prompt_info.user, prompt_directory);
+	// printf(ncsh_GREEN "%s" WHITE " " ncsh_CYAN "%s" WHITE "> ", prompt_info.user, prompt_directory);
 	fflush(stdout);
 
 	// save cursor position so we can reset cursor when loading history entries
@@ -173,85 +166,6 @@ int_fast32_t ncsh_delete(char* buffer, uint_fast32_t* buf_position, uint_fast32_
 	return NCSH_EXIT_SUCCESS;
 }
 
-uint_fast32_t ncsh_config(char* out) {
-	const char *const out_original_ptr = out;
-	char *home = getenv("XDG_CONFIG_HOME");
-	bool set_config = false;
-	if (!home) {
-		home = getenv("HOME");
-		if (!home) { // neither HOME or XDG_CONFIG_HOME are available
-			out[0] = 0;
-			return 0;
-		}
-		set_config = true;
-	}
-
-	uint_fast32_t home_length = strlen(home);
-	uint_fast32_t length = home_length;
-
-	/* first +1 is "/", second is terminating null */
-	if (home_length + 1 + NCSH_CONFIG_LENGTH + NCSH_LENGTH + 1 > NCSH_MAX_INPUT) {
-		out[0] = 0;
-		return 0;
-	}
-
-	memcpy(out, home, home_length);
-	out += home_length;
-	*out = '/';
-	++length;
-	++out;
-	if (set_config) {
-		memcpy(out, ".config/", NCSH_CONFIG_LENGTH);
-		out += NCSH_CONFIG_LENGTH;
-		*out = '\0';
-		length += NCSH_CONFIG_LENGTH;
-	}
-	memcpy(out, NCSH, NCSH_LENGTH);
-	out += NCSH_LENGTH;
-	*out = '\0';
-	length += NCSH_LENGTH;
-
-	#ifdef NCSH_DEBUG
-	printf("mkdir %s\n", out_original_ptr);
-	#endif /* ifdef NCSH_DEBUG */
-	mkdir(out_original_ptr, 0755);
-
-	return length;
-}
-
-void ncsh_configure(struct eskilib_String config_location) {
-	if (config_location.length == 0 || config_location.value == NULL) {
-		return;
-	}
-}
-
-/*void ncsh_autocomplete(char* buffer, uint_fast32_t buf_position, char* current_autocompletion, struct ncsh_Autocompletion_Node* autocompletions_tree) {
-	struct ncsh_Autocompletion autocompletion_matches[NCSH_MAX_AUTOCOMPLETION_MATCHES] = {0};
-	uint_fast32_t autocompletions_matches_count = ncsh_autocompletions_get(buffer, buf_position + 1, autocompletion_matches, autocompletions_tree);
-
-	if (autocompletions_matches_count == 0) {
-		current_autocompletion[0] = '\0';
-		return;
-	}
-
-	putchar('\n');
-	for (uint_fast8_t i = 0; i < autocompletions_matches_count; ++i)
-		printf("match[%d] (weight: %d) %s\n", i, autocompletion_matches[i].weight, autocompletion_matches[i].value);
-
-	struct ncsh_Coordinates position = ncsh_terminal_position();
-	if (position.x == 0 && position.y == 0)
-		return;
-
-	eskilib_string_copy(current_autocompletion, autocompletion_matches[0].value, NCSH_MAX_INPUT);
-
-	for (uint_fast32_t i = 0; i < autocompletions_matches_count; ++i)
-		free(autocompletion_matches[i].value);
-
-	printf(WHITE_DIM "%s" RESET, current_autocompletion);
-	ncsh_terminal_move(position.x, position.y);
-	fflush(stdout);
-}*/
-
 void ncsh_autocomplete(char* buffer, uint_fast32_t buf_position, char* current_autocompletion, struct ncsh_Autocompletion_Node* autocompletions_tree) {
 	uint_fast8_t autocompletions_matches_count = ncsh_autocompletions_first(buffer, buf_position + 1, current_autocompletion, autocompletions_tree);
 
@@ -279,30 +193,21 @@ int ncsh(void) {
 	uint_fast32_t buf_position = 0;
 	uint_fast32_t max_buf_position = 0;
 	enum ncsh_Hotkey key;
+	int_fast32_t command_result = 0;
 
 	struct ncsh_Directory prompt_info = {0};
 	prompt_info.user = getenv("USER");
 
-	struct eskilib_String config_location;
-	config_location.value = malloc(NCSH_MAX_INPUT);
-	if (config_location.value == NULL) {
-		perror(RED "ncsh: Error when allocating memory for config" RESET);
-		fflush(stderr);
+	struct ncsh_Config config = {0};
+	if (ncsh_config_init(&config) != E_SUCCESS) {
 		return EXIT_FAILURE;
 	}
-	config_location.length = ncsh_config(config_location.value);
-	#ifdef  NCSH_DEBUG
-	ncsh_debug_config(config_location);
-	#endif /* ifdef  NCSH_DEBUG */
 
-	ncsh_configure(config_location);
-
-	uint_fast32_t command_result = 0;
 	struct ncsh_Args args = {0};
 	if (ncsh_args_malloc(&args) != E_SUCCESS) {
 		perror(RED "ncsh: Error when allocating memory for parsing" RESET);
 		fflush(stderr);
-		free(config_location.value);
+		ncsh_config_free(&config);
 		return EXIT_FAILURE;
 	}
 
@@ -312,15 +217,15 @@ int ncsh(void) {
 	if (ncsh_history_malloc(&history) != E_SUCCESS) {
 		perror(RED "ncsh: Error when allocating memory for history" RESET);
 		fflush(stderr);
-		free(config_location.value);
+		ncsh_config_free(&config);
 		ncsh_args_free(args);
 		return EXIT_FAILURE;
 	}
 
-	if (ncsh_history_load(config_location, &history) != E_SUCCESS) {
+	if (ncsh_history_load(config.config_location, &history) != E_SUCCESS) {
 		perror(RED "ncsh: Error when loading data from history file" RESET);
 		fflush(stderr);
-		free(config_location.value);
+		ncsh_config_free(&config);
 		ncsh_args_free(args);
 		ncsh_history_free(&history);
 		return EXIT_FAILURE;
@@ -331,6 +236,7 @@ int ncsh(void) {
 	if (autocompletions_tree == NULL) {
 		perror(RED "ncsh: Error when loading data from history as autocompletions" RESET);
 		fflush(stderr);
+		ncsh_config_free(&config);
 		free(current_autocompletion);
 		ncsh_history_free(&history);
 		ncsh_args_free(args);
@@ -341,14 +247,14 @@ int ncsh(void) {
 	ncsh_terminal_init();
 
 	int exit = EXIT_SUCCESS;
-	if (write(STDOUT_FILENO,
+	/*if (write(STDOUT_FILENO,
 	   CLEAR_SCREEN MOVE_CURSOR_HOME,
 	   CLEAR_SCREEN_LENGTH + MOVE_CURSOR_HOME_LENGTH) == -1) {
 		perror(RED NCSH_ERROR_STDOUT RESET);
 		fflush(stderr);
 		exit = EXIT_FAILURE;
 		goto free_all;
-	}
+	}*/
 
 	clock_t end = clock();
 	double elapsed_ms = ((double)(end - start)) / CLOCKS_PER_SEC * 1000;
@@ -592,8 +498,12 @@ int ncsh(void) {
 
 			ncsh_args_free_values(args);
 
-			if (command_result == 0) {
+			if (command_result == -1)
+			{
 				exit = EXIT_FAILURE;
+				goto free_all;
+			}
+			else if (command_result == 0) {
 				goto free_all;
 			}
 
@@ -682,7 +592,7 @@ int ncsh(void) {
 	}
 
 	free_all:
-		free(config_location.value);
+		ncsh_config_free(&config);
 
 		ncsh_args_free(args);
 

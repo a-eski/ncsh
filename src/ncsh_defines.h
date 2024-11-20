@@ -4,6 +4,11 @@
 #ifndef ncsh_defines_h
 #define ncsh_defines_h
 
+// #define NCSH_DEBUG
+#ifdef NCSH_DEBUG
+#include "ncsh_debug.h"
+#endif /* ifdef NCSH_DEBUG */
+
 #define NCSH_EXIT_SUCCESS 0
 #define NCSH_EXIT_FAILURE -1
 
