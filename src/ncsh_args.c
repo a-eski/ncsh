@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 #include "ncsh_args.h"
 #include "eskilib/eskilib_result.h"
@@ -30,7 +31,7 @@ enum eskilib_Result ncsh_args_malloc(struct ncsh_Args* args) {
 	if (args->values == NULL)
 		return E_FAILURE_MALLOC;
 
-	args->ops = calloc(ncsh_TOKENS, sizeof(enum ncsh_Ops));
+	args->ops = calloc(ncsh_TOKENS, sizeof(uint_fast8_t));
 	if (args->ops == NULL) {
 		free(args->values);
 		return E_FAILURE_MALLOC;

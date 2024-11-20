@@ -4,7 +4,6 @@
 #define eskilib_trie_h
 
 #include <stdint.h>
-#include <stdbool.h>
 
 #include "eskilib_string.h"
 

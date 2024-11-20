@@ -10,6 +10,7 @@
 #include <string.h>
 #include <dirent.h>
 #include <unistd.h>
+#include <stdbool.h>
 
 #include "z.h"
 #include "../eskilib/eskilib_file.h"

@@ -3,9 +3,6 @@
 #ifndef ncsh_debug_h
 #define ncsh_debug_h
 
-#include <stdint.h>
-#include <stdio.h>
-
 #include "ncsh_args.h"
 #include "eskilib/eskilib_string.h"
 

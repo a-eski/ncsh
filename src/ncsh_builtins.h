@@ -3,8 +3,6 @@
 #ifndef ncsh_builtins_h
 #define ncsh_builtins_h
 
-#include <stdint.h>
-
 #include "ncsh_args.h"
 #include "eskilib/eskilib_string.h"
 

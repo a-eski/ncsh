@@ -1,4 +1,4 @@
-#include "eskilib_trie.h"
+#include <stdbool.h>
 #include <assert.h>
 #include <stdint.h>
 #include <stddef.h>

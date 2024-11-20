@@ -1,8 +1,7 @@
 #ifndef z_main_h
 #define z_main_h
 
-#include <stdint.h>
-#include <time.h>
+#include <stddef.h>
 
 #include "../eskilib/eskilib_string.h"
 #include "../eskilib/eskilib_result.h"
@@ -20,7 +19,7 @@
 
 struct z_Directory {
 	double rank;
-	clock_t last_accessed;
+	__clock_t last_accessed;
 	struct eskilib_String path;
 };
 

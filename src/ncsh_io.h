@@ -3,8 +3,6 @@
 #ifndef ncsh_io_h
 #define ncsh_io_h
 
-#include <stdint.h>
-#include <stdbool.h>
 #include <linux/limits.h>
 
 //input definitions

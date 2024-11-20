@@ -3,10 +3,6 @@
 #ifndef ncsh_history_h
 #define ncsh_history_h
 
-#include <linux/limits.h>
-#include <stdbool.h>
-#include <stdint.h>
-
 #include "eskilib/eskilib_result.h"
 #include "eskilib/eskilib_string.h"
 
