@@ -4,9 +4,6 @@
 #ifndef ncsh_autocompletions_h
 #define ncsh_autocompletions_h
 
-#include <stdint.h>
-#include <stdbool.h>
-
 #include "eskilib/eskilib_string.h"
 
 #define NCSH_LETTERS 96 // ascii printable characters 32-127

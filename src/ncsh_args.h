@@ -4,7 +4,6 @@
 #define ncsh_args_h
 
 #include <stdint.h>
-#include <stdbool.h>
 
 #include "eskilib/eskilib_result.h"
 

@@ -4,7 +4,6 @@
 #define eskilib_string_h
 
 #include <stdint.h>
-#include <stdbool.h>
 
 #define eskilib_String_Empty ((const struct eskilib_String){ .value = NULL, .length = 0 })
 

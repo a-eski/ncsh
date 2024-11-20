@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include <stdlib.h>
 
 #include "ncsh_defines.h"
@@ -28,8 +29,6 @@ void ncsh_autocompletions_free(struct ncsh_Autocompletion_Node* tree) {
 	for (uint_fast8_t i = 0; i < NCSH_LETTERS; ++i) {
 		if (tree->nodes[i] != NULL)
 			ncsh_autocompletions_free(tree->nodes[i]);
-		else
-			continue;
 	}
 	free(tree);
 }
@@ -54,6 +53,8 @@ void ncsh_autocompletions_add(char* string, uint_fast32_t length, struct ncsh_Au
 
 	for (uint_fast32_t i = 0; i < length - 1; ++i) { //string.length - 1 because it includes null terminator
 		index = ncsh_char_to_index(string[i]);
+		if (index < 0 || index > 96)
+			continue;
 
 		if (tree->nodes[index] == NULL) {
 			tree->nodes[index] = calloc(1, sizeof(struct ncsh_Autocompletion_Node));
@@ -137,7 +138,7 @@ void ncsh_autocompletions_match(struct ncsh_Autocompletion* matches,
 	for (uint_fast32_t i = 0; i < NCSH_LETTERS; ++i) {
 		if (tree->nodes[i] != NULL) {
 			if (matches[*matches_position].value == NULL) {
-				matches[*matches_position].value = malloc(sizeof(char) * NCSH_MAX_INPUT);
+				matches[*matches_position].value = malloc(NCSH_MAX_INPUT);
 				if (matches[*matches_position].value == NULL)
 					return;
 

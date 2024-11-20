@@ -48,18 +48,18 @@ enum ncsh_Hotkey ncsh_get_key(char character) {
 }
 
 void ncsh_prompt_directory(char* cwd, char* output) {
-	int i = 1;
-	int last_slash_pos = 0;
-	int second_to_last_slash = 0;
+	uint_fast32_t i = 1;
+	uint_fast32_t last_slash_pos = 0;
+	uint_fast32_t second_to_last_slash = 0;
 
-	for (; cwd[i] != '\n' && cwd[i] != '\0'; i++) {
+	for (; cwd[i] != '\n' && cwd[i] != '\0'; ++i) {
 		if (cwd[i] == '/') {
 			second_to_last_slash = last_slash_pos;
 			last_slash_pos = i + 1;
 		}
 	}
 
-	strncpy(output, &cwd[second_to_last_slash], i - second_to_last_slash);
+	strncpy(output, &cwd[second_to_last_slash] - 1, i - second_to_last_slash + 1);
 }
 
 [[nodiscard]]
@@ -219,6 +219,12 @@ uint_fast32_t ncsh_config(char* out) {
 	return length;
 }
 
+void ncsh_configure(struct eskilib_String config_location) {
+	if (config_location.length == 0 || config_location.value == NULL) {
+		return;
+	}
+}
+
 /*void ncsh_autocomplete(char* buffer, uint_fast32_t buf_position, char* current_autocompletion, struct ncsh_Autocompletion_Node* autocompletions_tree) {
 	struct ncsh_Autocompletion autocompletion_matches[NCSH_MAX_AUTOCOMPLETION_MATCHES] = {0};
 	uint_fast32_t autocompletions_matches_count = ncsh_autocompletions_get(buffer, buf_position + 1, autocompletion_matches, autocompletions_tree);
@@ -289,7 +295,7 @@ int ncsh(void) {
 	ncsh_debug_config(config_location);
 	#endif /* ifdef  NCSH_DEBUG */
 
-	// todo: set up config file
+	ncsh_configure(config_location);
 
 	uint_fast32_t command_result = 0;
 	struct ncsh_Args args = {0};
@@ -325,6 +331,7 @@ int ncsh(void) {
 	if (autocompletions_tree == NULL) {
 		perror(RED "ncsh: Error when loading data from history as autocompletions" RESET);
 		fflush(stderr);
+		free(current_autocompletion);
 		ncsh_history_free(&history);
 		ncsh_args_free(args);
 		return EXIT_FAILURE;
