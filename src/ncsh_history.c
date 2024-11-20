@@ -7,6 +7,7 @@
 #include <linux/limits.h>
 #include <stdio.h>
 #include <assert.h>
+#include <stdbool.h>
 
 #include "ncsh_defines.h"
 #include "ncsh_history.h"
