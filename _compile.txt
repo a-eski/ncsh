@@ -1,10 +1,10 @@
 --compile debug
-make
-make CLANG=1
+make debug
+make debug CC=clang
 
 --compile release
-make RELEASE=1
-make CLANG=1 RELEASE=1
+make
+make CC=clang
 
 --debug
 gdb -tui ./bin/ncsh
@@ -16,6 +16,7 @@ n - step over
 gcc -std=c99 -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined *.c -o ncsh
 clang -std=c99 -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined *.c -o ncsh
 valgrind --leak-check=yes ./bin/ncsh
+valgrind --leak-check=full ./bin/ncsh
 valgrind --track-fds=yes ./bin/ncsh
 valgrind --leak-check=yes --track-fds=yes ./bin/ncsh
 
@@ -24,6 +25,6 @@ gcc -std=c99 -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -O3 -DNDEBUG -pg 
 clang -std=c99 -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -O3 -DNDEBUG -pg *.c -o bin/ncsh
 1. compile with -pg
 2. run program
-3. generate report: gprof ncsh gmon.out > analysis.txt
+3. generate report: gprof gmon.out > analysis.txt
 4. review analysis.txt
 

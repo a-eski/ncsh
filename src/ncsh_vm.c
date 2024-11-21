@@ -68,28 +68,28 @@ void ncsh_output_redirection_stop(struct ncsh_Output_Redirect_IO io) {
 	dup2(io.original_stderr, STDERR_FILENO);
 }
 
-uint_fast32_t ncsh_pipe_start(struct ncsh_Pipe_IO* pipes, uint_fast32_t command_position) {
+int_fast32_t ncsh_pipe_start(struct ncsh_Pipe_IO* pipes, uint_fast32_t command_position) {
 	assert(pipes != NULL);
 
 	if (command_position % 2 != 0) {
 		if (pipe(pipes->fd_one) != 0) {
 			perror(RED "ncsh: Error when piping process" RESET);
 			fflush(stdout);
-			return 0;
+			return -1;
 		}
 	}
 	else {
 		if (pipe(pipes->fd_two) != 0) {
 			perror(RED "ncsh: Error when piping process" RESET);
 			fflush(stdout);
-			return 0;
+			return -1;
 		}
 	}
 
 	return 1;
 }
 
-uint_fast32_t ncsh_pipe_fork_failure(struct ncsh_Pipe_IO* pipes, uint_fast32_t command_position, uint_fast32_t number_of_commands) {
+int_fast32_t ncsh_pipe_fork_failure(struct ncsh_Pipe_IO* pipes, uint_fast32_t command_position, uint_fast32_t number_of_commands) {
 	assert(pipes != NULL);
 
 	if (command_position != number_of_commands - 1) {
@@ -101,7 +101,7 @@ uint_fast32_t ncsh_pipe_fork_failure(struct ncsh_Pipe_IO* pipes, uint_fast32_t c
 
 	perror(RED "ncsh: Error when forking process" RESET);
 	fflush(stdout);
-	return 0;
+	return -1;
 }
 
 void ncsh_pipe_connect(struct ncsh_Pipe_IO* pipes, uint_fast32_t command_position, uint_fast32_t number_of_commands) {
@@ -154,7 +154,7 @@ void ncsh_pipe_stop(struct ncsh_Pipe_IO* pipes, uint_fast32_t command_position, 
 	}
 }
 
-uint_fast32_t ncsh_vm(struct ncsh_Args args) {
+int_fast32_t ncsh_vm(struct ncsh_Args args) {
 	assert(args.values != NULL);
 	assert(args.ops != NULL);
 	assert(args.count != 0);
@@ -221,7 +221,7 @@ uint_fast32_t ncsh_vm(struct ncsh_Args args) {
 
 		if (op_current == OP_PIPE && !end) {
 			if (!ncsh_pipe_start(&pipes_io, command_position))
-				return 0;
+				return -1;
 		}
 
 		pid = fork();
@@ -258,7 +258,7 @@ uint_fast32_t ncsh_vm(struct ncsh_Args args) {
 	return 1;
 }
 
-uint_fast32_t ncsh_vm_execute(struct ncsh_Args args, struct ncsh_History* history) {
+int_fast32_t ncsh_vm_execute(struct ncsh_Args args, struct ncsh_History* history) {
 	assert(args.values != NULL);
 	assert(args.ops != NULL);
 	assert(history != NULL);
@@ -280,7 +280,7 @@ uint_fast32_t ncsh_vm_execute(struct ncsh_Args args, struct ncsh_History* histor
 
 	ncsh_terminal_reset(); //reset terminal settings since a lot of terminal programs use canonical mode
 
-	uint_fast32_t result = ncsh_vm(args);
+	int_fast32_t result = ncsh_vm(args);
 
 	ncsh_terminal_init(); //back to noncanonical mode
 

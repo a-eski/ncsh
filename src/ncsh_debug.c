@@ -23,8 +23,8 @@ void ncsh_debug_args(struct ncsh_Args args) {
 	}
 }
 
-void ncsh_debug_config(struct eskilib_String config_location) {
-	printf("config value: %s\n", config_location.value);
-	printf("config length: %lu\n", config_location.length);
+void ncsh_debug_string(struct eskilib_String string, const char* name) {
+	printf("%s value: %s\n", name, string.value);
+	printf("%s length: %lu\n", name, string.length);
 }
 

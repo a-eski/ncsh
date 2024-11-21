@@ -4,6 +4,7 @@
 #define eskilib_types_h
 
 enum eskilib_Result {
+	E_FAILURE_NOT_FOUND = -7,
 	E_FAILURE_ZERO_LENGTH = -6,
 	E_FAILURE_UNDERFLOW_PROTECTION = -5,
 	E_FAILURE_OVERFLOW_PROTECTION = -4,
