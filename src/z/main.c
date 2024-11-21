@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <unistd.h>
+#include <stdbool.h>
 
 #include "z.h"
 #include "../eskilib/eskilib_string.h"

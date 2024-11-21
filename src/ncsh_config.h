@@ -9,11 +9,17 @@
 #define NCSH "ncsh"
 #define NCSH_LENGTH 5
 #define NCSH_CONFIG_LENGTH 8 // length for .config
+#define NCSH_RC "_rc"
+#define NCSH_RC_LENGTH 10
 
 struct ncsh_Config {
 	struct eskilib_String home_location;
-	struct eskilib_String xdg_config_home_location;
 	struct eskilib_String config_location;
+	char* config_file;
+};
+
+struct ncsh_Configuration {
+	bool short_directory;
 };
 
 enum eskilib_Result ncsh_config_init(struct ncsh_Config* config);

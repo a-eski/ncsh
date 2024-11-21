@@ -200,6 +200,7 @@ int ncsh(void) {
 
 	struct ncsh_Config config = {0};
 	if (ncsh_config_init(&config) != E_SUCCESS) {
+		ncsh_config_free(&config);
 		return EXIT_FAILURE;
 	}
 

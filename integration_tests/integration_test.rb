@@ -1,4 +1,3 @@
-#!/usr/bin/env ruby
 # frozen_string_literal: true
 
 require 'ttytest'
@@ -17,10 +16,11 @@ end
 row = 0
 
 # # # # Basic Tests # # # #
-puts 'Starting basic tests'
+puts '----- Starting basic tests -----'
 
 @tty.assert_row_starts_with(row, 'ncsh: startup time: ')
 row += 1
+puts 'Startup time test passed'
 
 assert_check_new_row(row)
 @tty.send_keys_one_at_a_time(%(ls))
@@ -30,6 +30,7 @@ assert_check_new_row(row)
 row += 1
 @tty.assert_row_starts_with(row, 'LICENSE')
 row = 9
+puts 'Basic input (ls) test passed'
 
 assert_check_new_row(row)
 @tty.send_keys_one_at_a_time(%(echo hello))
@@ -37,6 +38,7 @@ assert_check_new_row(row)
 row += 1
 @tty.assert_row(row, 'hello')
 row += 1
+puts 'echo hello test passed'
 
 assert_check_new_row(row)
 @tty.send_keys_one_at_a_time(%(lss)) # send a bad command
@@ -44,14 +46,16 @@ assert_check_new_row(row)
 row += 1
 @tty.assert_row(row, 'ncsh: Could not find command or directory: No such file or directory')
 row += 1
+puts 'Bad command test passed'
 
-puts 'Starting backspace tests'
+puts '----- Starting backspace tests -----'
 
 # end of line backspace
 assert_check_new_row(row)
 @tty.send_keys_one_at_a_time(%(l))
 @tty.send_backspace
 assert_check_new_row(row)
+puts 'End of line backspace test passed'
 
 # multiple end of line backspaces
 @tty.send_keys_one_at_a_time(%(lsssss))
@@ -63,6 +67,7 @@ assert_check_new_row(row)
 row += 1
 @tty.assert_row(row, 'hello')
 row += 1
+puts 'Multiple end of line backspace test passed'
 
 # midline backspace
 assert_check_new_row(row)
@@ -84,8 +89,9 @@ assert_check_new_row(row)
 row += 1
 @tty.assert_row(row, 'hello')
 row += 1
+puts 'Midline backspace test passed'
 
-puts 'Starting delete tests'
+puts '----- Starting delete tests -----'
 
 assert_check_new_row(row)
 @tty.send_keys_one_at_a_time('s')
@@ -94,23 +100,29 @@ assert_check_new_row(row)
 @tty.assert_cursor_position(START_COL, row)
 @tty.send_delete
 assert_check_new_row(row)
+puts 'End of line delete test passed'
 
-# assert_check_new_row(17)
-# @tty.send_keys_one_at_a_time(%(lssss))
-# @tty.assert_cursor_position(68, 17)
-# @tty.send_keys(TTYtest::LEFT_ARROW)
-# @tty.send_keys(TTYtest::LEFT_ARROW)
-# @tty.send_keys(TTYtest::LEFT_ARROW)
-# @tty.send_keys(TTYtest::LEFT_ARROW)
-# @tty.send_keys(TTYtest::LEFT_ARROW)
-# @tty.assert_cursor_position(63, 17)
-# @tty.send_keys(TTYtest::DELETE)
-# @tty.assert_cursor_position(63, 17)
-# @tty.send_keys(TTYtest::DELETE)
-# @tty.send_keys(TTYtest::DELETE)
-# @tty.send_keys(TTYtest::DELETE)
-# @tty.send_keys(TTYtest::DELETE)
-# assert_check_new_row(17)
+assert_check_new_row(row)
+@tty.send_keys_one_at_a_time(%(lssss))
+@tty.assert_cursor_position(START_COL + 5, row)
+@tty.send_keys(TTYtest::LEFT_ARROW)
+@tty.send_keys(TTYtest::LEFT_ARROW)
+@tty.send_keys(TTYtest::LEFT_ARROW)
+@tty.send_keys(TTYtest::LEFT_ARROW)
+@tty.assert_cursor_position(START_COL + 1, row)
+@tty.send_delete
+@tty.assert_cursor_position(START_COL + 1, row)
+@tty.send_deletes(3)
+@tty.send_keys(TTYtest::LEFT_ARROW)
+@tty.send_delete
+assert_check_new_row(row)
+@tty.send_keys_one_at_a_time(%(echo hello))
+@tty.send_newline
+row += 1
+@tty.assert_row(row, 'hello')
+row += 1
+assert_check_new_row(row)
+puts 'Midline delete test passed'
 
 # puts 'Starting multiline tests'
 # puts 'Starting history tests'
