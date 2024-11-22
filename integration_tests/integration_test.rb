@@ -8,9 +8,10 @@ WC_C_LENGTH = '268'
 SLEEP_TIME = 0.5
 
 def assert_check_new_row(row)
-  @tty.assert_row_starts_with(row, "#{ENV['USER']}->")
+  @tty.assert_row_starts_with(row, "#{ENV['USER']} ")
   @tty.assert_row_like(row, 'ncsh')
-  @tty.assert_row_ends_with(row, '>')
+  @tty.assert_row_ends_with(row, ' ❱ ')
+
   @tty.assert_cursor_position(START_COL, row)
 end
 
@@ -111,7 +112,7 @@ def midline_backspace_test(row)
   @tty.assert_cursor_position(START_COL + 4, row)
   @tty.send_backspaces(4)
   @tty.assert_cursor_position(START_COL, row)
-  @tty.assert_row_ends_with(row, '> ss')
+  @tty.assert_row_ends_with(row, 'ss')
   @tty.send_right_arrows(2)
   @tty.assert_cursor_position(START_COL + 2, row)
   @tty.send_backspaces(2)
