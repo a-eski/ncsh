@@ -66,8 +66,7 @@ int_fast32_t ncsh_prompt(struct ncsh_Directory prompt_info) {
 	char prompt_directory[PATH_MAX] = {0};
 	ncsh_prompt_directory(prompt_info.path, prompt_directory);
 
-	printf(ncsh_GREEN "%s" WHITE "->" ncsh_CYAN "%s" WHITE "> ", prompt_info.user, prompt_directory);
-	// printf(ncsh_GREEN "%s" WHITE " " ncsh_CYAN "%s" WHITE "> ", prompt_info.user, prompt_directory);
+	printf(ncsh_GREEN "%s" WHITE " " ncsh_CYAN "%s" WHITE_BRIGHT " \u2771 ", prompt_info.user, prompt_directory);
 	fflush(stdout);
 
 	// save cursor position so we can reset cursor when loading history entries
@@ -82,8 +81,6 @@ int_fast32_t ncsh_prompt(struct ncsh_Directory prompt_info) {
 
 [[nodiscard]]
 int_fast32_t ncsh_backspace(char* buffer, uint_fast32_t* buf_position, uint_fast32_t* max_buf_position) {
-	uint_fast32_t buf_start;
-
 	if (*buf_position == 0) {
 		return NCSH_EXIT_SUCCESS;
 	}
@@ -98,12 +95,13 @@ int_fast32_t ncsh_backspace(char* buffer, uint_fast32_t* buf_position, uint_fast
 			return NCSH_EXIT_FAILURE;
 		}
 
-		buf_start = *buf_position;
-		for (uint_fast32_t i = *buf_position; buffer[i]; ++i) {
+		uint_fast32_t buf_start = *buf_position;
+		for (uint_fast32_t i = *buf_position; i < *max_buf_position && buffer[i]; ++i)
 			buffer[i] = buffer[i + 1];
-		}
 
-		while (buffer[*buf_position]) {
+		buffer[*max_buf_position] = '\0';
+
+		while (buffer[*buf_position] != '\0') {
 			putchar(buffer[*buf_position]);
 			++*buf_position;
 		}
@@ -141,8 +139,8 @@ int_fast32_t ncsh_delete(char* buffer, uint_fast32_t* buf_position, uint_fast32_
 	if (*max_buf_position > 0)
 		--*max_buf_position;
 
-	for (uint_fast32_t i = *buf_position; i < *max_buf_position && buffer[*buf_position]; ++i) {
-		putchar(buffer[i]);
+	while (*buf_position < *max_buf_position && buffer[*buf_position]) {
+		putchar(buffer[*buf_position]);
 		++*buf_position;
 	}
 
@@ -248,14 +246,14 @@ int ncsh(void) {
 	ncsh_terminal_init();
 
 	int exit = EXIT_SUCCESS;
-	if (write(STDOUT_FILENO,
+	/*if (write(STDOUT_FILENO,
 	   CLEAR_SCREEN MOVE_CURSOR_HOME,
 	   CLEAR_SCREEN_LENGTH + MOVE_CURSOR_HOME_LENGTH) == -1) {
 		perror(RED NCSH_ERROR_STDOUT RESET);
 		fflush(stderr);
 		exit = EXIT_FAILURE;
 		goto free_all;
-	}
+	}*/
 
 	clock_t end = clock();
 	double elapsed_ms = ((double)(end - start)) / CLOCKS_PER_SEC * 1000;
@@ -288,6 +286,11 @@ int ncsh(void) {
 		if (character == CTRL_D) {
 			putchar('\n');
 			goto free_all;
+		}
+
+		if (character == TAB_KEY)
+		{
+			character = ' ';
 		}
 
 		if (character == BACKSPACE_KEY) {

@@ -45,7 +45,7 @@
 
 // ncsh color scheme
 #define ncsh_MAGENTA "\033[38;2;200;8;134m"
-#define ncsh_TURQUOISE "\033[38;2;0;150;154m"
+#define ncsh_TURQUOISE "\033[38;2;0;225;154m"
 #define ncsh_INDIGO "\033[38;2;66;6;84m"
 #define ncsh_BLACK "\033[38;2;2;3;20m"
 
