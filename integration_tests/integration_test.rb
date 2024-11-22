@@ -5,13 +5,12 @@ require 'ttytest'
 
 START_COL = 20
 WC_C_LENGTH = '268'
-SLEEP_TIME = 0.5
+SLEEP_TIME = 0.2
 
 def assert_check_new_row(row)
   @tty.assert_row_starts_with(row, "#{ENV['USER']} ")
   @tty.assert_row_like(row, 'ncsh')
   @tty.assert_row_ends_with(row, ' ❱ ')
-
   @tty.assert_cursor_position(START_COL, row)
 end
 
@@ -207,6 +206,54 @@ def pipe_tests(row)
   multiple_pipes_test row
 end
 
+def basic_history_test(row)
+  assert_check_new_row(row)
+  @tty.send_up_arrow
+  @tty.assert_row_ends_with(row, 'ls | sort | wc -c')
+  @tty.send_up_arrow
+  @tty.assert_row_ends_with(row, 'ls | wc -c')
+  @tty.send_down_arrow
+  @tty.assert_row_ends_with(row, 'ls | sort | wc -c')
+  @tty.send_newline
+  row += 1
+  @tty.assert_row_ends_with(row, WC_C_LENGTH)
+  row += 1
+  puts 'Basic history test passed'
+  row
+end
+
+def history_delete_test(row)
+  assert_check_new_row(row)
+  @tty.send_up_arrow
+  @tty.assert_row_ends_with(row, 'ls | sort | wc -c')
+  @tty.send_left_arrows(12)
+  @tty.send_deletes(7)
+  @tty.send_newline
+  row += 1
+  @tty.assert_row_ends_with(row, WC_C_LENGTH)
+  row += 1
+  puts 'History delete test passed'
+  row
+end
+
+def history_backspace_test(row)
+  puts 'History backspace test passed'
+  row
+end
+
+def history_clear_test(row)
+  puts 'History clear test passed'
+  row
+end
+
+def history_tests(row)
+  starting_tests 'history'
+
+  row = basic_history_test row
+
+  history_delete_test row
+end
+
 def basic_output_redirection_test(row)
   assert_check_new_row(row)
   @tty.send_keys_one_at_a_time(%(ls > t.txt))
@@ -286,11 +333,6 @@ def output_redirection_tests(row)
   multiple_piped_output_redirection_test row
 end
 
-def history_tests(row)
-  starting_tests 'history'
-  row
-end
-
 def autocompletion_tests(row)
   starting_tests 'autocompletion'
   row
@@ -317,6 +359,8 @@ end
 @row = delete_tests @row
 
 @row = pipe_tests @row
+
+@row = history_tests @row
 
 @row = output_redirection_tests @row
 
