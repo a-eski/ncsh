@@ -61,10 +61,29 @@ void z_test_three(struct z_Database* database) {
 	printf("after chdir: %s\n", buffer);
 }
 
-void z_test(struct z_Database* database) {
+void z_test_four(struct z_Database* database) {
+	char buffer[528];
+
+	char* wd = getcwd(buffer, sizeof(buffer));
+	if (wd == NULL)
+		perror("wd error");
+	printf("initial dir %s\n", buffer);
+
+	const struct eskilib_String test = { .value = "src/z", .length = 6 };
+	struct eskilib_String result = z_process(test, buffer, database);
+	printf("result.length: %lu, result.value: %s\n", result.length, result.value);
+
+	wd = getcwd(buffer, sizeof(buffer));
+	if (wd == NULL)
+		perror("wd error");
+	printf("after chdir: %s\n", buffer);
+}
+
+void z_tests(struct z_Database* database) {
 	z_test_one(database);
 	z_test_two(database);
 	z_test_three(database);
+	z_test_four(database);
 }
 
 int main(void) {
@@ -79,7 +98,7 @@ int main(void) {
 		return 1;
 	}
 
-	z_test(&database);
+	z_tests(&database);
 
 	if ((result = z_end(&database)) != E_SUCCESS) {
 		puts("Error ending z");

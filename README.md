@@ -1,18 +1,24 @@
 # ncsh
-An interactive unix shell focused on speed, handy features, and building everything from the ground up.
 
-# to build from source
-make<br />
+An interactive unix shell focused on speed and building everything from the ground up.
 
-# to install
+## to build from source
+
+make
+
+## to install
+
 sudo make install
 
-# notes
-- sudo make install ONLY calls the install command to add the ELF executable to /usr/local.
-- Install directory is by default /usr/local. Pass in DESTDIR if you want to install it somewhere else.
-- History file .ncsh_history tries to use XDG_CONFIG_HOME if available, or else HOME.
+## notes
 
-# goals
+* sudo make install ONLY calls the install command to add the ELF executable to /usr/local.
+* Install directory is by default /usr/local.
+* Pass in DESTDIR if you want to install it somewhere else.
+* History file .ncsh_history tries to use XDG_CONFIG_HOME if available, or else HOME.
+
+## goals
+
 1. be able to install the shell and use it - DONE :)
 2. autocomplete - DONE :)
 3. weighted autocomplete - DONE :) but needs some tweaking
@@ -26,4 +32,3 @@ sudo make install
 11. better prompt line
 12. add non-iteractive mode
 13. incoporate z/autojump/z-oxide like cd command
-14. exclude features at compilation time in case users want lightweight shell without autocompletion or z like cd command

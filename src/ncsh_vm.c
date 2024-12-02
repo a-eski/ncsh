@@ -168,7 +168,7 @@ int_fast32_t ncsh_vm(struct ncsh_Args args) {
 	bool end = false;
 	enum ncsh_Ops op_current = OP_NONE;
 
-	uint_fast32_t number_of_pipe_commands = 0;
+	uint_fast32_t number_of_commands = 0;
 	uint_fast32_t command_position = 0;
 	uint_fast32_t args_position = 0;
 	uint_fast32_t buffer_position = 0;
@@ -181,10 +181,10 @@ int_fast32_t ncsh_vm(struct ncsh_Args args) {
 			output_redirect_found = l;
 		}
 		else if (args.ops[l] == OP_PIPE) {
-			++number_of_pipe_commands;
+			++number_of_commands;
 		}
 	}
-	++number_of_pipe_commands;
+	++number_of_commands;
 
 	if (file != NULL) {
 		free(args.values[output_redirect_found]);
@@ -226,11 +226,11 @@ int_fast32_t ncsh_vm(struct ncsh_Args args) {
 
 		pid = fork();
 		if (pid == -1)
-			return ncsh_pipe_fork_failure(&pipes_io, command_position, number_of_pipe_commands);
+			return ncsh_pipe_fork_failure(&pipes_io, command_position, number_of_commands);
 
 		if (pid == 0) {
 			if (op_current == OP_PIPE)
-				ncsh_pipe_connect(&pipes_io, command_position, number_of_pipe_commands);
+				ncsh_pipe_connect(&pipes_io, command_position, number_of_commands);
 
 
 			if (execvp(buffer[0], buffer) == -1) {
@@ -242,7 +242,7 @@ int_fast32_t ncsh_vm(struct ncsh_Args args) {
 		}
 
 		if (op_current == OP_PIPE)
-			ncsh_pipe_stop(&pipes_io, command_position, number_of_pipe_commands);
+			ncsh_pipe_stop(&pipes_io, command_position, number_of_commands);
 
 		int status;
 		do {

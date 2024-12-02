@@ -79,7 +79,7 @@ enum eskilib_Result ncsh_config(struct ncsh_Config* config) {
 	return E_SUCCESS;
 }
 
-enum eskilib_Result ncsh_config_file(struct ncsh_Config* config) {
+/*enum eskilib_Result ncsh_config_file(struct ncsh_Config* config) {
 	if (!config->config_location.value|| config->config_location.length == 0) {
 		config->config_file = NCSH_RC;
 		return E_SUCCESS;
@@ -99,7 +99,7 @@ enum eskilib_Result ncsh_config_file(struct ncsh_Config* config) {
 
 	#ifdef NCSH_DEBUG
 	printf("config file: %s\n", config->config_file);
-	#endif /* ifdef NCSH_DEBUG */
+	#endif // ifdef NCSH_DEBUG
 
 	return E_SUCCESS;
 }
@@ -122,7 +122,7 @@ enum eskilib_Result ncsh_config_load(struct ncsh_Config *config) {
 	}
 
 	return E_SUCCESS;
-}
+}*/
 
 enum eskilib_Result ncsh_config_init(struct ncsh_Config* config) {
 	enum eskilib_Result result;

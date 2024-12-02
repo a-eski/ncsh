@@ -22,6 +22,7 @@
 #include "ncsh.h"
 #include "ncsh_autocompletions.h"
 #include "ncsh_defines.h"
+#include "ncsh_configurable_defines.h"
 #include "eskilib/eskilib_colors.h"
 #include "eskilib/eskilib_string.h"
 
@@ -39,6 +40,7 @@ enum ncsh_Hotkey ncsh_get_key(char character) {
 	}
 }
 
+#ifdef NCSH_SHORT_DIRECTORY
 void ncsh_prompt_directory(char* cwd, char* output) {
 	uint_fast32_t i = 1;
 	uint_fast32_t last_slash_pos = 0;
@@ -53,6 +55,7 @@ void ncsh_prompt_directory(char* cwd, char* output) {
 
 	strncpy(output, &cwd[second_to_last_slash] - 1, i - second_to_last_slash + 1);
 }
+#endif /* ifdef NCSH_SHORT_DIRECTORY */
 
 [[nodiscard]]
 int_fast32_t ncsh_prompt(struct ncsh_Directory prompt_info) {
@@ -63,10 +66,14 @@ int_fast32_t ncsh_prompt(struct ncsh_Directory prompt_info) {
 		return NCSH_EXIT_FAILURE;
 	}
 
+	#ifdef NCSH_SHORT_DIRECTORY
 	char prompt_directory[PATH_MAX] = {0};
 	ncsh_prompt_directory(prompt_info.path, prompt_directory);
 
 	printf(ncsh_GREEN "%s" WHITE " " ncsh_CYAN "%s" WHITE_BRIGHT " \u2771 ", prompt_info.user, prompt_directory);
+	#else
+	printf(ncsh_GREEN "%s" WHITE " " ncsh_CYAN "%s" WHITE_BRIGHT " \u2771 ", prompt_info.user, prompt_info.path);
+	#endif /* ifdef NCSH_SHORT_DIRECTORY */
 	fflush(stdout);
 
 	// save cursor position so we can reset cursor when loading history entries
@@ -502,13 +509,14 @@ int ncsh(void) {
 
 			ncsh_args_free_values(args);
 
-			if (command_result == -1)
-			{
-				exit = EXIT_FAILURE;
-				goto free_all;
-			}
-			else if (command_result == 0) {
-				goto free_all;
+			switch (command_result) {
+				case -1: {
+					exit = EXIT_FAILURE;
+					goto free_all;
+				}
+				case 0: {
+					goto free_all;
+				}
 			}
 
 			buffer[0] = '\0';

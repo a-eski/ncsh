@@ -18,11 +18,46 @@ def starting_tests(test)
   puts "===== Starting #{test} tests ====="
 end
 
-def basic_startup_time_test(row)
+def startup_time_test(row)
   @tty.assert_row_starts_with(row, 'ncsh: startup time: ')
   row += 1
   puts 'Startup time test passed'
   row
+end
+
+def newline_sanity_test(row)
+  assert_check_new_row(row)
+  @tty.send_newline
+  row += 1
+  assert_check_new_row(row)
+  @tty.send_newline
+  row += 1
+  puts 'Newline sanity test passed'
+  row
+end
+
+def empty_line_sanity_test(row)
+  assert_check_new_row(row)
+  @tty.send_left_arrow
+  assert_check_new_row(row)
+  @tty.send_right_arrow
+  assert_check_new_row(row)
+  @tty.send_backspace
+  assert_check_new_row(row)
+  @tty.send_delete
+  assert_check_new_row(row)
+  puts 'Empty line sanity test passed'
+  row
+end
+
+def sanity_tests(row)
+  starting_tests 'sanity'
+
+  row = startup_time_test row
+
+  row = newline_sanity_test row
+
+  empty_line_sanity_test row
 end
 
 def basic_ls_test(row)
@@ -33,7 +68,7 @@ def basic_ls_test(row)
   @tty.assert_row_ends_with(row, 'ls')
   row += 1
   @tty.assert_row_starts_with(row, 'LICENSE')
-  row = 9
+  row += 7
   puts 'Basic input (ls) test passed'
   row
 end
@@ -66,8 +101,6 @@ end
 
 def basic_tests(row)
   starting_tests 'basic'
-
-  row = basic_startup_time_test row
 
   row = basic_ls_test row
 
@@ -323,6 +356,17 @@ def multiple_piped_output_redirection_test(row)
   row
 end
 
+def basic_arrow_tests(row)
+  puts 'Basic arrows test passed'
+  row
+end
+
+def arrow_tests(row)
+  starting_tests 'arrows'
+
+  basic_arrow_tests row
+end
+
 def output_redirection_tests(row)
   starting_tests 'output redirections'
 
@@ -338,11 +382,6 @@ def autocompletion_tests(row)
   row
 end
 
-def arrow_tests(row)
-  starting_tests 'arrows'
-  row
-end
-
 def multiline_tests(row)
   starting_tests 'multiline'
   row
@@ -351,6 +390,8 @@ end
 @tty = TTYtest.new_terminal(%(PS1='$ ' ./bin/ncsh), width: 80, height: 48)
 
 @row = 0
+
+@row = sanity_tests @row
 
 @row = basic_tests @row
 
@@ -361,6 +402,8 @@ end
 @row = pipe_tests @row
 
 @row = history_tests @row
+
+@row = arrow_tests @row
 
 @row = output_redirection_tests @row
 

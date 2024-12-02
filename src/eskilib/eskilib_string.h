@@ -22,6 +22,7 @@ int_fast32_t eskilib_string_compare(char* stringOne, char* stringTwo, const uint
 
 bool eskilib_string_contains_unsafe(const char* string, const char* substring);
 bool eskilib_string_contains(const struct eskilib_String string, const struct eskilib_String substring);
+bool eskilib_string_contains_s(const char* string, uint32_t string_length, const struct eskilib_String substring);
 
 #endif // !eskilib_string_h
 

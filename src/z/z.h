@@ -1,14 +1,13 @@
-#ifndef z_main_h
-#define z_main_h
+#ifndef z_h
+#define z_h
 
-#include <stddef.h>
-
+#include "time.h"
 #include "../eskilib/eskilib_string.h"
-#include "../eskilib/eskilib_result.h"
+#include <stdint.h>
 
-#define Z_DATABASE_FILE "database.z"
+#define Z_DATABASE_FILE "z_database.bin"
 #define Z_DATABASE_FILE_LENGTH 10
-#define Z_DATABASE_IN_MEMORY_LIMIT 1000
+#define Z_DATABASE_IN_MEMORY_LIMIT 100
 
 #define Z_SECOND 1
 #define Z_MINUTE 60 * Z_SECOND
@@ -19,23 +18,21 @@
 
 struct z_Directory {
 	double rank;
-	__clock_t last_accessed;
-	struct eskilib_String path;
+	time_t last_accessed;
+	char* path;
+	uint32_t path_length;
 };
 
 struct z_Database {
-	bool dirty;
-	uint_fast32_t count;
-	uint_fast32_t start_count;
-	// uint_fast8_t* bytes;
-	struct z_Directory* directories;
+	// bool dirty;
+	uint32_t count;
+	struct z_Directory dirs[Z_DATABASE_IN_MEMORY_LIMIT];
 };
 
-enum eskilib_Result z_begin (const size_t config_path_max, const struct eskilib_String config_path, struct z_Database* database);
+extern void z_init(struct z_Database* database);
 
-struct eskilib_String z_process (const struct eskilib_String target, const char* directory, struct z_Database* database);
+extern void z(const struct eskilib_String target, const char* directory, struct z_Database* database);
 
-enum eskilib_Result z_end (struct z_Database* database);
+extern void z_free(struct z_Database* db);
 
-#endif // !z_main_h
-
+#endif // !z_h

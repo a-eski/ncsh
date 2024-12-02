@@ -107,3 +107,36 @@ bool eskilib_string_contains(const struct eskilib_String string, const struct es
 	return false;
 }
 
+bool eskilib_string_contains_s(const char* string, uint32_t string_length, const struct eskilib_String substring) {
+	if (string_length < substring.length)
+		return false;
+
+	char* stringValue = (char*)string;
+
+	const char* a;
+	const char* b;
+
+	b = substring.value;
+
+	if (*b == '\0')
+		return true;
+
+	for (uint_fast32_t i = 0; i < string_length && *stringValue != '\0'; i++, stringValue += 1) {
+		if (*stringValue != *b)
+			continue;
+
+		a = stringValue;
+		for (uint_fast32_t j = 0; j < substring.length; j++) {
+			if (*b == '\0') {
+				return true;
+			}
+			if (*a++ != *b++) {
+				break;
+			}
+		}
+		b = substring.value;
+	}
+
+	return false;
+}
+
