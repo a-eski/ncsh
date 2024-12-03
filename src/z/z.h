@@ -1,9 +1,11 @@
 #ifndef z_h
 #define z_h
 
-#include "time.h"
-#include "../eskilib/eskilib_string.h"
 #include <stdint.h>
+#include <time.h>
+
+#include "../ncsh_args.h"
+#include "../eskilib/eskilib_string.h"
 
 #define Z_DATABASE_FILE "z_database.bin"
 #define Z_DATABASE_FILE_LENGTH 10
@@ -29,10 +31,24 @@ struct z_Database {
 	struct z_Directory dirs[Z_DATABASE_IN_MEMORY_LIMIT];
 };
 
-extern void z_init(struct z_Database* database);
+enum z_Result {
+	Z_MATCH_NOT_FOUND = -6,
+	Z_NULL_REFERENCE = -5,
+	Z_STDIO_ERROR = -4,
+	Z_MALLOC_ERROR = -3,
+	Z_ZERO_BYTES_READ = -2,
+	Z_FILE_ERROR = -1,
+	Z_FAILURE = 0,
+	Z_SUCCESS = 1
+};
 
-extern void z(const struct eskilib_String target, const char* directory, struct z_Database* database);
+extern enum z_Result z_init(struct z_Database* database);
+
+// extern void z(const struct eskilib_String target, const char* cwd, struct z_Database* db);
+extern void z(char* target, size_t target_length, const char* cwd, struct z_Database* db);
 
 extern void z_free(struct z_Database* db);
+
+extern void z_exit(struct z_Database* db);
 
 #endif // !z_h

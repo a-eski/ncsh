@@ -37,7 +37,7 @@ void eskilib_test_start_internal(char* file) {
 	printf(YELLOW_BRIGHT "Starting tests for %s\n" RESET, file);
 }
 
-void eskilib_test_finish(void) {
-	printf(YELLOW_BRIGHT "Tests finished: %d tests passed, %d tests failed.\n" RESET, tests_passed, tests_failed);
+void eskilib_test_finish_internal(char* file) {
+	printf(YELLOW_BRIGHT "Finished tests for %s: %d tests passed, %d tests failed.\n" RESET, file, tests_passed, tests_failed);
 }
 

@@ -23,11 +23,10 @@
 #include "ncsh_autocompletions.h"
 #include "ncsh_defines.h"
 #include "ncsh_configurable_defines.h"
+#include "ncsh_builtins.h"
 #include "eskilib/eskilib_colors.h"
 #include "eskilib/eskilib_string.h"
-
-#define NCSH_ERROR_STDOUT "ncsh: Error writing to stdout"
-#define NCSH_ERROR_STDIN "ncsh: Error writing to stdin"
+#include "z/z.h"
 
 enum ncsh_Hotkey ncsh_get_key(char character) {
 	switch (character) {
@@ -188,6 +187,44 @@ void ncsh_autocomplete(char* buffer, uint_fast32_t buf_position, char* current_a
 	fflush(stdout);
 }
 
+int_fast32_t ncsh_z(struct ncsh_Args args, struct z_Database* z_db) {
+	size_t length = strlen(args.values[1]) + 1;
+	printf("Calling z with %s length %zu\n", args.values[1], length);
+	char cwd[PATH_MAX] = {0};
+	char* cwd_result = getcwd(cwd, PATH_MAX);
+	if (!cwd_result) {
+		perror("Could not load cwd information");
+		return NCSH_COMMAND_EXIT_FAILURE;
+	}
+	printf("Calling z with cwd %s\n", cwd);
+	z(args.values[1], length, cwd, z_db);
+	return NCSH_COMMAND_CONTINUE;
+}
+
+int_fast32_t ncsh_execute(struct ncsh_Args args,
+			  struct ncsh_History* history,
+			  struct z_Database* z_db) {
+	if (ncsh_is_exit_command(args))
+		return 0;
+
+	if (eskilib_string_equals(args.values[0], "echo", args.max_line_length))
+		return ncsh_echo_command(args);
+
+	if (eskilib_string_equals(args.values[0], "help", args.max_line_length))
+		return ncsh_help_command();
+
+	if (eskilib_string_equals(args.values[0], "cd", args.max_line_length))
+		return ncsh_cd_command(args);
+
+	if (eskilib_string_equals(args.values[0], "z", args.max_line_length))
+		return ncsh_z(args, z_db);
+
+	if (eskilib_string_equals(args.values[0], "history", args.max_line_length))
+		return ncsh_history_command(history);
+
+	return ncsh_vm_execute(args);
+}
+
 int ncsh(void) {
 	clock_t start = clock();
 
@@ -249,6 +286,9 @@ int ncsh(void) {
 		return EXIT_FAILURE;
 	}
 	ncsh_autocompletions_add_multiple(history.entries, history.history_count, autocompletions_tree);
+
+	struct z_Database z_db;
+	z_init(&z_db);
 
 	ncsh_terminal_init();
 
@@ -505,7 +545,7 @@ int ncsh(void) {
 			ncsh_history_add(buffer, buf_position, &history);
 			ncsh_autocompletions_add(buffer, buf_position, autocompletions_tree);
 
-			command_result = ncsh_vm_execute(args, &history);
+			command_result = ncsh_execute(args, &history, &z_db);
 
 			ncsh_args_free_values(args);
 
@@ -616,6 +656,8 @@ int ncsh(void) {
 
 		free(current_autocompletion);
 		ncsh_autocompletions_free(autocompletions_tree);
+
+		z_exit(&z_db);
 
 		ncsh_terminal_reset();
 

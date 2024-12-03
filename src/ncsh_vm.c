@@ -16,9 +16,8 @@
 
 #include "ncsh_terminal.h"
 #include "ncsh_args.h"
-#include "ncsh_builtins.h"
 #include "ncsh_vm.h"
-#include "eskilib/eskilib_string.h"
+#include "ncsh_defines.h"
 #include "eskilib/eskilib_colors.h"
 
 #define PIPE_KEY "|"
@@ -75,18 +74,18 @@ int_fast32_t ncsh_pipe_start(struct ncsh_Pipe_IO* pipes, uint_fast32_t command_p
 		if (pipe(pipes->fd_one) != 0) {
 			perror(RED "ncsh: Error when piping process" RESET);
 			fflush(stdout);
-			return -1;
+			return NCSH_COMMAND_EXIT_FAILURE;
 		}
 	}
 	else {
 		if (pipe(pipes->fd_two) != 0) {
 			perror(RED "ncsh: Error when piping process" RESET);
 			fflush(stdout);
-			return -1;
+			return NCSH_COMMAND_EXIT_FAILURE;
 		}
 	}
 
-	return 1;
+	return NCSH_COMMAND_CONTINUE;
 }
 
 int_fast32_t ncsh_pipe_fork_failure(struct ncsh_Pipe_IO* pipes, uint_fast32_t command_position, uint_fast32_t number_of_commands) {
@@ -101,7 +100,7 @@ int_fast32_t ncsh_pipe_fork_failure(struct ncsh_Pipe_IO* pipes, uint_fast32_t co
 
 	perror(RED "ncsh: Error when forking process" RESET);
 	fflush(stdout);
-	return -1;
+	return NCSH_COMMAND_EXIT_FAILURE;
 }
 
 void ncsh_pipe_connect(struct ncsh_Pipe_IO* pipes, uint_fast32_t command_position, uint_fast32_t number_of_commands) {
@@ -214,14 +213,14 @@ int_fast32_t ncsh_vm(struct ncsh_Args args) {
 
 		buffer[buffer_position] = NULL;
 		if (buffer[0] == NULL) {
-			return 1;
+			return NCSH_COMMAND_CONTINUE;
 		}
 
 		++args_position;
 
 		if (op_current == OP_PIPE && !end) {
 			if (!ncsh_pipe_start(&pipes_io, command_position))
-				return -1;
+				return NCSH_COMMAND_EXIT_FAILURE;
 		}
 
 		pid = fork();
@@ -255,28 +254,13 @@ int_fast32_t ncsh_vm(struct ncsh_Args args) {
 	if (file != NULL)
 		ncsh_output_redirection_stop(output_io);
 
-	return 1;
+	return NCSH_COMMAND_CONTINUE;
 }
 
-int_fast32_t ncsh_vm_execute(struct ncsh_Args args, struct ncsh_History* history) {
+int_fast32_t ncsh_vm_execute(struct ncsh_Args args) {
 	assert(args.values != NULL);
 	assert(args.ops != NULL);
-	assert(history != NULL);
-
-	if (ncsh_is_exit_command(args))
-		return 0;
-
-	if (eskilib_string_equals(args.values[0], "echo", args.max_line_length))
-		return ncsh_echo_command(args);
-
-	if (eskilib_string_equals(args.values[0], "help", args.max_line_length))
-		return ncsh_help_command();
-
-	if (ncsh_is_cd_command(args))
-		return ncsh_cd_command(args);
-
-	if (eskilib_string_equals(args.values[0], "history", args.max_line_length))
-		return ncsh_history_command(history);
+	assert(args.values[0] != NULL);
 
 	ncsh_terminal_reset(); //reset terminal settings since a lot of terminal programs use canonical mode
 

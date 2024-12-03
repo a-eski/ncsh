@@ -19,8 +19,11 @@ extern void eskilib_test_start_internal(char*);
 // Call at the start of a series of tests
 #define eskilib_test_start() eskilib_test_start_internal(__FILE__);
 
-// call at the end of a series of tests for a summary.
-extern void eskilib_test_finish(void);
+// private API: is called at the end of a series of tests for a summary.
+extern void eskilib_test_finish_internal(char* file);
+
+// Call at the end of a series of tests
+#define eskilib_test_finish() eskilib_test_finish_internal(__FILE__);
 
 #endif /* !eskilib_test_h */
 

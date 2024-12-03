@@ -411,6 +411,8 @@ void ncsh_autocompletions_matches_multiple_simulation_test(void) {
 }
 
 void ncsh_autocompletions_tests(void) {
+	eskilib_test_start();
+
 	eskilib_test_run("ncsh_autocompletions_add_length_mismatch_test", ncsh_autocompletions_add_length_mismatch_test);
 	eskilib_test_run("ncsh_autocompletions_add_test", ncsh_autocompletions_add_test);
 	eskilib_test_run("ncsh_autocompletions_add_duplicate_test", ncsh_autocompletions_add_duplicate_test);
@@ -423,6 +425,8 @@ void ncsh_autocompletions_tests(void) {
 	eskilib_test_run("ncsh_autocompletions_matches_no_results_test", ncsh_autocompletions_matches_no_results_test);
 	eskilib_test_run("ncsh_autocompletions_matches_multiple_test", ncsh_autocompletions_matches_multiple_test);
 	eskilib_test_run("ncsh_autocompletions_matches_multiple_simulation_test", ncsh_autocompletions_matches_multiple_simulation_test);
+
+	eskilib_test_finish();
 }
 
 #ifndef ncsh_TEST_ALL

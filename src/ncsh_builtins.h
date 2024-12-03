@@ -12,8 +12,6 @@ uint_fast32_t ncsh_echo_command(struct ncsh_Args args);
 
 uint_fast32_t ncsh_help_command(void);
 
-bool ncsh_is_cd_command(struct ncsh_Args args);
-
 uint_fast32_t ncsh_cd_command(struct ncsh_Args args);
 
 #endif // !ncsh_builtins_h
