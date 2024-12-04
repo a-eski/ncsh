@@ -4,7 +4,7 @@
 require 'ttytest'
 
 START_COL = 20
-WC_C_LENGTH = '268'
+WC_C_LENGTH = '283'
 SLEEP_TIME = 0.2
 
 def assert_check_new_row(row)
@@ -18,10 +18,16 @@ def starting_tests(test)
   puts "===== Starting #{test} tests ====="
 end
 
-def startup_time_test(row)
-  @tty.assert_row_starts_with(row, 'ncsh: startup time: ')
+def startup_test(row)
+  @tty.assert_row(row, 'Error opening z database file: No such file or directory')
   row += 1
   puts 'Startup time test passed'
+  @tty.assert_row(row, 'Trying to create z database file.')
+  row += 1
+  @tty.assert_row(row, 'Created z database file.')
+  row += 1
+  @tty.assert_row_starts_with(row, 'ncsh: startup time: ')
+  row += 1
   row
 end
 
@@ -53,7 +59,7 @@ end
 def sanity_tests(row)
   starting_tests 'sanity'
 
-  row = startup_time_test row
+  row = startup_test row
 
   row = newline_sanity_test row
 
@@ -68,7 +74,7 @@ def basic_ls_test(row)
   @tty.assert_row_ends_with(row, 'ls')
   row += 1
   @tty.assert_row_starts_with(row, 'LICENSE')
-  row += 7
+  row += 8
   puts 'Basic input (ls) test passed'
   row
 end
@@ -323,7 +329,7 @@ def piped_output_redirection_test(row)
   @tty.send_newline
   sleep SLEEP_TIME
   row += 1
-  @tty.assert_row_starts_with(row, 'tests_p.sh')
+  @tty.assert_row_starts_with(row, 'z_database.bin')
   row += 1
   assert_check_new_row(row)
   @tty.send_keys_one_at_a_time(%(rm t2.txt))

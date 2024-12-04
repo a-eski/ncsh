@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <stdbool.h>
 #include <string.h>
+#include <assert.h>
 
 #include "eskilib/eskilib_result.h"
 #include "ncsh_args.h"
@@ -188,15 +189,37 @@ void ncsh_autocomplete(char* buffer, uint_fast32_t buf_position, char* current_a
 }
 
 int_fast32_t ncsh_z(struct ncsh_Args args, struct z_Database* z_db) {
-	size_t length = strlen(args.values[1]) + 1;
-	printf("Calling z with %s length %zu\n", args.values[1], length);
+	assert(z_db != NULL);
+	assert(args.count > 0);
+	if (z_db == NULL)
+		return NCSH_COMMAND_EXIT_FAILURE;
+	if (args.count == 0)
+		return NCSH_COMMAND_CONTINUE;
+
+	if (args.count > 2) {
+		if (!args.values[1] || !args.values[2])
+			return NCSH_COMMAND_EXIT_FAILURE;
+
+		if (eskilib_string_equals(args.values[1], "add", args.max_line_length > 4 ? args.max_line_length : 4)) {
+			size_t length = strlen(args.values[2]) + 1;
+			if (z_add(args.values[2], length, z_db) == Z_SUCCESS)
+				return NCSH_COMMAND_CONTINUE;
+			else
+				return NCSH_COMMAND_EXIT_FAILURE;
+		}
+		else {
+			return NCSH_COMMAND_CONTINUE;
+		}
+	}
+
+	size_t length = args.values[1] == NULL ? 0 : strlen(args.values[1]) + 1;
 	char cwd[PATH_MAX] = {0};
 	char* cwd_result = getcwd(cwd, PATH_MAX);
 	if (!cwd_result) {
 		perror("Could not load cwd information");
 		return NCSH_COMMAND_EXIT_FAILURE;
 	}
-	printf("Calling z with cwd %s\n", cwd);
+
 	z(args.values[1], length, cwd, z_db);
 	return NCSH_COMMAND_CONTINUE;
 }
@@ -287,12 +310,16 @@ int ncsh(void) {
 	}
 	ncsh_autocompletions_add_multiple(history.entries, history.history_count, autocompletions_tree);
 
+	int exit = EXIT_SUCCESS;
 	struct z_Database z_db;
-	z_init(&z_db);
+	enum z_Result result = z_init(config.config_location, &z_db);
+	if (result != Z_SUCCESS) {
+		exit = EXIT_FAILURE;
+		goto free_all;
+	}
 
 	ncsh_terminal_init();
 
-	int exit = EXIT_SUCCESS;
 	/*if (write(STDOUT_FILENO,
 	   CLEAR_SCREEN MOVE_CURSOR_HOME,
 	   CLEAR_SCREEN_LENGTH + MOVE_CURSOR_HOME_LENGTH) == -1) {

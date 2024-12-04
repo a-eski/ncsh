@@ -6,6 +6,7 @@ rm t.txt
 rm t2.txt
 rm t3.txt
 make clean
+rm z_database.bin
 
 set -e
 echo "starting integration tests"

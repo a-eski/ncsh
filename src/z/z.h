@@ -7,8 +7,8 @@
 #include "../ncsh_args.h"
 #include "../eskilib/eskilib_string.h"
 
-#define Z_DATABASE_FILE "z_database.bin"
-#define Z_DATABASE_FILE_LENGTH 10
+#define Z_DATABASE_FILE "_z_database.bin"
+#define Z_DATABASE_FILE_LENGTH 16
 #define Z_DATABASE_IN_MEMORY_LIMIT 100
 
 #define Z_SECOND 1
@@ -28,10 +28,12 @@ struct z_Directory {
 struct z_Database {
 	// bool dirty;
 	uint32_t count;
+	char* database_file;
 	struct z_Directory dirs[Z_DATABASE_IN_MEMORY_LIMIT];
 };
 
 enum z_Result {
+	Z_FILE_LENGTH_TOO_LARGE = -7,
 	Z_MATCH_NOT_FOUND = -6,
 	Z_NULL_REFERENCE = -5,
 	Z_STDIO_ERROR = -4,
@@ -42,13 +44,12 @@ enum z_Result {
 	Z_SUCCESS = 1
 };
 
-extern enum z_Result z_init(struct z_Database* database);
+extern enum z_Result z_init(struct eskilib_String config_location, struct z_Database* database);
 
-// extern void z(const struct eskilib_String target, const char* cwd, struct z_Database* db);
 extern void z(char* target, size_t target_length, const char* cwd, struct z_Database* db);
 
-extern void z_free(struct z_Database* db);
+extern enum z_Result z_add(char* path, size_t path_length, struct z_Database* db);
 
-extern void z_exit(struct z_Database* db);
+extern enum z_Result z_exit(struct z_Database* db);
 
 #endif // !z_h
