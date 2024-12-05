@@ -4,7 +4,7 @@
 require 'ttytest'
 
 START_COL = 20
-WC_C_LENGTH = '283'
+WC_C_LENGTH = '279'
 SLEEP_TIME = 0.2
 
 def assert_check_new_row(row)
@@ -18,16 +18,23 @@ def starting_tests(test)
   puts "===== Starting #{test} tests ====="
 end
 
+def if_z_database_new_test(row)
+  if @tty.rows[0] == 'Error opening z database file: No such file or directory'
+    @tty.assert_row(row, 'Error opening z database file: No such file or directory')
+    row += 1
+    @tty.assert_row(row, 'Trying to create z database file.')
+    row += 1
+    @tty.assert_row(row, 'Created z database file.')
+    row += 1
+    puts 'New z database test passed'
+  end
+  row
+end
+
 def startup_test(row)
-  @tty.assert_row(row, 'Error opening z database file: No such file or directory')
-  row += 1
-  puts 'Startup time test passed'
-  @tty.assert_row(row, 'Trying to create z database file.')
-  row += 1
-  @tty.assert_row(row, 'Created z database file.')
-  row += 1
   @tty.assert_row_starts_with(row, 'ncsh: startup time: ')
   row += 1
+  puts 'Startup time test passed'
   row
 end
 
@@ -42,12 +49,16 @@ def newline_sanity_test(row)
   row
 end
 
-def empty_line_sanity_test(row)
-  assert_check_new_row(row)
+def empty_line_arrow_check(row)
   @tty.send_left_arrow
   assert_check_new_row(row)
   @tty.send_right_arrow
   assert_check_new_row(row)
+end
+
+def empty_line_sanity_test(row)
+  assert_check_new_row(row)
+  empty_line_arrow_check(row)
   @tty.send_backspace
   assert_check_new_row(row)
   @tty.send_delete
@@ -58,6 +69,8 @@ end
 
 def sanity_tests(row)
   starting_tests 'sanity'
+
+  row = if_z_database_new_test row
 
   row = startup_test row
 
@@ -329,7 +342,7 @@ def piped_output_redirection_test(row)
   @tty.send_newline
   sleep SLEEP_TIME
   row += 1
-  @tty.assert_row_starts_with(row, 'z_database.bin')
+  @tty.assert_row_starts_with(row, 'tests_z.sh')
   row += 1
   assert_check_new_row(row)
   @tty.send_keys_one_at_a_time(%(rm t2.txt))
@@ -413,6 +426,8 @@ end
 
 @row = output_redirection_tests @row
 
-# puts "\n#{@tty.capture}"
+# @tty.print
+# @tty.print_rows
+# p @tty.to_s
 
 puts 'All tests passed!'

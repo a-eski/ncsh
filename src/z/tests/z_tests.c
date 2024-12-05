@@ -30,8 +30,9 @@ void z_add_to_database_empty_database_test(void) {
 	struct eskilib_String new_value = { .length = 5 };
 	new_value.value = malloc(new_value.length);
 	strcpy(new_value.value, "ncsh");
+	struct eskilib_String cwd = { .value = "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells", .length = 52 };
 
-	eskilib_assert(add_new_to_database(new_value.value, new_value.length, "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells", &db) == Z_SUCCESS);
+	eskilib_assert(add_new_to_database(new_value.value, new_value.length, cwd.value, cwd.length, &db) == Z_SUCCESS);
 	eskilib_assert(db.count == 1);
 	eskilib_assert(db.dirs[0].path_length == 57);
 	eskilib_assert(eskilib_string_equals(db.dirs[0].path, "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells/ncsh", 57));
@@ -50,7 +51,9 @@ void z_find_match_empty_database_test(void) {
 	eskilib_assert(db.count == 0);
 
 	struct eskilib_String target = { .value = "path", .length = 5 };
-	struct z_Directory* result = find_match(target.value, target.length, db.count, db.dirs);
+	char cwd[528];
+	getcwd(cwd, 528);
+	struct z_Directory* result = find_match(target.value, target.length, cwd, strlen(cwd) + 1, &db);
 	eskilib_assert(result == NULL);
 
 	z_free(&db);
@@ -67,8 +70,9 @@ void z_write_to_database_file_empty_database_test(void) {
 	struct eskilib_String new_value = { .length = 5 };
 	new_value.value = malloc(new_value.length);
 	strcpy(new_value.value, "ncsh");
+	struct eskilib_String cwd = { .value = "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells", .length = 52 };
 
-	eskilib_assert(add_new_to_database(new_value.value, new_value.length, "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells", &db) == Z_SUCCESS);
+	eskilib_assert(add_new_to_database(new_value.value, new_value.length, cwd.value, cwd.length, &db) == Z_SUCCESS);
 	eskilib_assert(db.count == 1);
 	eskilib_assert(db.dirs[0].path_length == 57);
 	eskilib_assert(eskilib_string_equals(db.dirs[0].path, "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells/ncsh", 57));
@@ -89,7 +93,9 @@ void z_read_from_database_file_non_empty_database_test(void) {
 	strcpy(new_value.value, "ncsh");
 
 	double initial_rank = db.dirs[0].rank;
-	struct z_Directory* match = find_match(new_value.value, new_value.length, db.count, db.dirs);
+	char cwd[528];
+	getcwd(cwd, 528);
+	struct z_Directory* match = find_match(new_value.value, new_value.length, cwd, strlen(cwd) + 1, &db);
 	eskilib_assert(match != NULL);
 	eskilib_assert(db.count == 1);
 	eskilib_assert(match->path_length == 57);
@@ -106,8 +112,9 @@ void z_add_to_database_empty_value_test(void) {
 	struct z_Database db = {0};
 	eskilib_assert(z_init(eskilib_String_Empty, &db) == Z_SUCCESS);
 	eskilib_assert(db.count == 1);
+	struct eskilib_String cwd = { .value = "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells", .length = 52 };
 
-	eskilib_assert(add_new_to_database(eskilib_String_Empty.value, eskilib_String_Empty.length, "a value", &db) == Z_NULL_REFERENCE);
+	eskilib_assert(add_new_to_database(eskilib_String_Empty.value, eskilib_String_Empty.length, cwd.value, cwd.length, &db) == Z_NULL_REFERENCE);
 	eskilib_assert(db.count == 1);
 
 	z_free(&db);
@@ -123,8 +130,9 @@ void z_write_to_database_file_nonempty_database_test(void) {
 	struct eskilib_String new_value = { .length = 9 };
 	new_value.value = malloc(new_value.length);
 	strcpy(new_value.value, "ttytest2");
+	struct eskilib_String cwd = { .value = "/mnt/c/Users/Alex/source/repos/PersonalRepos", .length = 45 };
 
-	eskilib_assert(add_new_to_database(new_value.value, new_value.length, "/mnt/c/Users/Alex/source/repos/PersonalRepos", &db) == Z_SUCCESS);
+	eskilib_assert(add_new_to_database(new_value.value, new_value.length, cwd.value, cwd.length, &db) == Z_SUCCESS);
 	eskilib_assert(db.count == 2);
 	eskilib_assert(db.dirs[0].path_length == 57);
 	eskilib_assert(db.dirs[0].rank == start_rank);
@@ -141,7 +149,9 @@ void z_find_match_finds_exact_match_test(void) {
 	eskilib_assert(db.count == 2);
 
 	struct eskilib_String target = { .value = "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells/ncsh", .length = 57 };
-	struct z_Directory* result = find_match(target.value, target.length, db.count, db.dirs);
+	char cwd[528];
+	getcwd(cwd, 528);
+	struct z_Directory* result = find_match(target.value, target.length, cwd, strlen(cwd) + 1, &db);
 	eskilib_assert(result != NULL);
 	eskilib_assert(result->path_length == 57);
 	eskilib_assert(eskilib_string_equals(result->path, "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells/ncsh", 57));
@@ -157,7 +167,9 @@ void z_find_match_finds_match_test(void) {
 	eskilib_assert(db.count == 2);
 
 	struct eskilib_String target = { .value = "ncsh", .length = 5 };
-	struct z_Directory* result = find_match(target.value, target.length, db.count, db.dirs);
+	char cwd[528];
+	getcwd(cwd, 528);
+	struct z_Directory* result = find_match(target.value, target.length, cwd, strlen(cwd) + 1, &db);
 	eskilib_assert(result != NULL);
 	eskilib_assert(result->path_length == 57);
 	eskilib_assert(eskilib_string_equals(result->path, "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells/ncsh", 57));
@@ -173,7 +185,9 @@ void z_find_match_no_match_test(void) {
 	eskilib_assert(db.count == 2);
 
 	struct eskilib_String target = { .value = "path", .length = 5 };
-	struct z_Directory* result = find_match(target.value, target.length, db.count, db.dirs);
+	char cwd[528];
+	getcwd(cwd, 528);
+	struct z_Directory* result = find_match(target.value, target.length, cwd, strlen(cwd) + 1, &db);
 	eskilib_assert(result == NULL);
 
 	z_free(&db);
@@ -186,7 +200,9 @@ void z_find_match_multiple_matches_test(void) {
 	eskilib_assert(db.count == 2);
 
 	struct eskilib_String target = { .value = "PersonalRepos", .length = 14 };
-	struct z_Directory* result = find_match(target.value, target.length, db.count, db.dirs);
+	char cwd[528];
+	getcwd(cwd, 528);
+	struct z_Directory* result = find_match(target.value, target.length, cwd, strlen(cwd) + 1, &db);
 	eskilib_assert(result != NULL);
 	eskilib_assert(result->path_length == 57);
 
@@ -386,9 +402,10 @@ void z_dir_slash_dir_change_directory_test(void) {
 		perror("wd error");
 		eskilib_assert(false);
 	}
+	size_t buffer_length = strlen(buffer) + 1;
 	// printf("initial dir %s\n", buffer);
 	struct eskilib_String target = { .value = "tests/test_dir", .length = 15 };
-	add_new_to_database(target.value, target.length, buffer, &db);
+	add_new_to_database(target.value, target.length, buffer, buffer_length, &db);
 
 	z(target.value, target.length, buffer, &db);
 

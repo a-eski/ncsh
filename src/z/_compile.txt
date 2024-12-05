@@ -1,9 +1,0 @@
-gcc -std=c2x -Wall -pedantic-errors -Wformat=2 -fsanitize=address,undefined,leak -g ../eskilib/eskilib_string.c ../eskilib/eskilib_file.c *.c -o z
-
-gcc -std=c2x -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -g -fsanitize=address,undefined,leak ../eskilib/eskilib_string.c ../eskilib/eskilib_file.c *.c -o z
-
--- once we separate out files
-gcc -std=c2x -Wall -pedantic-errors -Wformat=2 -fsanitize=address,undefined,leak -g ../eskilib/eskilib_string.c ../eskilib/eskilib_file.c *.c -o z
-
-gcc -std=c2x -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -g -fsanitize=address,undefined,leak ../eskilib/eskilib_string.c ../eskilib/eskilib_file.c *.c -o z
-
