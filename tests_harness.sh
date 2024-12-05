@@ -1,6 +1,7 @@
 #!/bin/bash
 
 set -e
+chmod +x ./tests.sh
 echo "starting tests" &&
 ./tests.sh > test_output.txt &&
 echo "made test_ouput" &&
