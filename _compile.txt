@@ -28,3 +28,13 @@ clang -std=c99 -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -O3 -DNDEBUG -p
 3. generate report: gprof gmon.out > analysis.txt
 4. review analysis.txt
 
+--z
+gcc -std=c2x -Wall -pedantic-errors -Wformat=2 -fsanitize=address,undefined,leak -g ../eskilib/eskilib_string.c ../eskilib/eskilib_file.c *.c -o z
+
+gcc -std=c2x -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -g -fsanitize=address,undefined,leak ../eskilib/eskilib_string.c ../eskilib/eskilib_file.c *.c -o z
+
+-- once we separate out files
+gcc -std=c2x -Wall -pedantic-errors -Wformat=2 -fsanitize=address,undefined,leak -g ../eskilib/eskilib_string.c ../eskilib/eskilib_file.c *.c -o z
+
+gcc -std=c2x -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -g -fsanitize=address,undefined,leak ../eskilib/eskilib_string.c ../eskilib/eskilib_file.c *.c -o z
+

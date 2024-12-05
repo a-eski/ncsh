@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <stdbool.h>
 #include <string.h>
+#include <assert.h>
 
 #include "eskilib/eskilib_result.h"
 #include "ncsh_args.h"
@@ -22,11 +23,11 @@
 #include "ncsh.h"
 #include "ncsh_autocompletions.h"
 #include "ncsh_defines.h"
+#include "ncsh_configurable_defines.h"
+#include "ncsh_builtins.h"
 #include "eskilib/eskilib_colors.h"
 #include "eskilib/eskilib_string.h"
-
-#define NCSH_ERROR_STDOUT "ncsh: Error writing to stdout"
-#define NCSH_ERROR_STDIN "ncsh: Error writing to stdin"
+#include "z/z.h"
 
 enum ncsh_Hotkey ncsh_get_key(char character) {
 	switch (character) {
@@ -39,6 +40,7 @@ enum ncsh_Hotkey ncsh_get_key(char character) {
 	}
 }
 
+#ifdef NCSH_SHORT_DIRECTORY
 void ncsh_prompt_directory(char* cwd, char* output) {
 	uint_fast32_t i = 1;
 	uint_fast32_t last_slash_pos = 0;
@@ -53,6 +55,7 @@ void ncsh_prompt_directory(char* cwd, char* output) {
 
 	strncpy(output, &cwd[second_to_last_slash] - 1, i - second_to_last_slash + 1);
 }
+#endif /* ifdef NCSH_SHORT_DIRECTORY */
 
 [[nodiscard]]
 int_fast32_t ncsh_prompt(struct ncsh_Directory prompt_info) {
@@ -63,10 +66,14 @@ int_fast32_t ncsh_prompt(struct ncsh_Directory prompt_info) {
 		return NCSH_EXIT_FAILURE;
 	}
 
+	#ifdef NCSH_SHORT_DIRECTORY
 	char prompt_directory[PATH_MAX] = {0};
 	ncsh_prompt_directory(prompt_info.path, prompt_directory);
 
 	printf(ncsh_GREEN "%s" WHITE " " ncsh_CYAN "%s" WHITE_BRIGHT " \u2771 ", prompt_info.user, prompt_directory);
+	#else
+	printf(ncsh_GREEN "%s" WHITE " " ncsh_CYAN "%s" WHITE_BRIGHT " \u2771 ", prompt_info.user, prompt_info.path);
+	#endif /* ifdef NCSH_SHORT_DIRECTORY */
 	fflush(stdout);
 
 	// save cursor position so we can reset cursor when loading history entries
@@ -181,6 +188,66 @@ void ncsh_autocomplete(char* buffer, uint_fast32_t buf_position, char* current_a
 	fflush(stdout);
 }
 
+int_fast32_t ncsh_z(struct ncsh_Args args, struct z_Database* z_db) {
+	assert(z_db != NULL);
+	assert(args.count > 0);
+	if (z_db == NULL)
+		return NCSH_COMMAND_EXIT_FAILURE;
+	if (args.count == 0)
+		return NCSH_COMMAND_CONTINUE;
+
+	if (args.count > 2) {
+		if (!args.values[1] || !args.values[2])
+			return NCSH_COMMAND_EXIT_FAILURE;
+
+		if (eskilib_string_equals(args.values[1], "add", args.max_line_length > 4 ? args.max_line_length : 4)) {
+			size_t length = strlen(args.values[2]) + 1;
+			if (z_add(args.values[2], length, z_db) == Z_SUCCESS)
+				return NCSH_COMMAND_CONTINUE;
+			else
+				return NCSH_COMMAND_EXIT_FAILURE;
+		}
+		else {
+			return NCSH_COMMAND_CONTINUE;
+		}
+	}
+
+	size_t length = args.values[1] == NULL ? 0 : strlen(args.values[1]) + 1;
+	char cwd[PATH_MAX] = {0};
+	char* cwd_result = getcwd(cwd, PATH_MAX);
+	if (!cwd_result) {
+		perror("Could not load cwd information");
+		return NCSH_COMMAND_EXIT_FAILURE;
+	}
+
+	z(args.values[1], length, cwd, z_db);
+	return NCSH_COMMAND_CONTINUE;
+}
+
+int_fast32_t ncsh_execute(struct ncsh_Args args,
+			  struct ncsh_History* history,
+			  struct z_Database* z_db) {
+	if (ncsh_is_exit_command(args))
+		return 0;
+
+	if (eskilib_string_equals(args.values[0], "echo", args.max_line_length))
+		return ncsh_echo_command(args);
+
+	if (eskilib_string_equals(args.values[0], "help", args.max_line_length))
+		return ncsh_help_command();
+
+	if (eskilib_string_equals(args.values[0], "cd", args.max_line_length))
+		return ncsh_cd_command(args);
+
+	if (eskilib_string_equals(args.values[0], "z", args.max_line_length))
+		return ncsh_z(args, z_db);
+
+	if (eskilib_string_equals(args.values[0], "history", args.max_line_length))
+		return ncsh_history_command(history);
+
+	return ncsh_vm_execute(args);
+}
+
 int ncsh(void) {
 	clock_t start = clock();
 
@@ -243,9 +310,16 @@ int ncsh(void) {
 	}
 	ncsh_autocompletions_add_multiple(history.entries, history.history_count, autocompletions_tree);
 
+	int exit = EXIT_SUCCESS;
+	struct z_Database z_db;
+	enum z_Result result = z_init(config.config_location, &z_db);
+	if (result != Z_SUCCESS) {
+		exit = EXIT_FAILURE;
+		goto free_all;
+	}
+
 	ncsh_terminal_init();
 
-	int exit = EXIT_SUCCESS;
 	/*if (write(STDOUT_FILENO,
 	   CLEAR_SCREEN MOVE_CURSOR_HOME,
 	   CLEAR_SCREEN_LENGTH + MOVE_CURSOR_HOME_LENGTH) == -1) {
@@ -498,17 +572,18 @@ int ncsh(void) {
 			ncsh_history_add(buffer, buf_position, &history);
 			ncsh_autocompletions_add(buffer, buf_position, autocompletions_tree);
 
-			command_result = ncsh_vm_execute(args, &history);
+			command_result = ncsh_execute(args, &history, &z_db);
 
 			ncsh_args_free_values(args);
 
-			if (command_result == -1)
-			{
-				exit = EXIT_FAILURE;
-				goto free_all;
-			}
-			else if (command_result == 0) {
-				goto free_all;
+			switch (command_result) {
+				case -1: {
+					exit = EXIT_FAILURE;
+					goto free_all;
+				}
+				case 0: {
+					goto free_all;
+				}
 			}
 
 			buffer[0] = '\0';
@@ -608,6 +683,8 @@ int ncsh(void) {
 
 		free(current_autocompletion);
 		ncsh_autocompletions_free(autocompletions_tree);
+
+		z_exit(&z_db);
 
 		ncsh_terminal_reset();
 

@@ -192,6 +192,8 @@ void ncsh_parser_double_quotes_test(void) {
 }
 
 void ncsh_parser_tests(void) {
+	eskilib_test_start();
+
 	eskilib_test_run("ncsh_parser_ls_test", ncsh_parser_ls_test);
 	eskilib_test_run("ncsh_parser_ls_dash_l_test", ncsh_parser_ls_dash_l_test);
 	eskilib_test_run("ncsh_parser_pipe_test", ncsh_parser_pipe_test);
@@ -200,6 +202,8 @@ void ncsh_parser_tests(void) {
 	eskilib_test_run("ncsh_parser_output_redirection_test", ncsh_parser_output_redirection_test);
 	eskilib_test_run("ncsh_parser_double_quotes_test", ncsh_parser_double_quotes_test);
 	eskilib_test_run("ncsh_parser_output_redirection_append_test", ncsh_parser_output_redirection_append_test);
+
+	eskilib_test_finish();
 }
 
 #ifndef ncsh_TEST_ALL

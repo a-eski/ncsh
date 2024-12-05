@@ -1,14 +1,15 @@
-#ifndef z_main_h
-#define z_main_h
+#ifndef z_h
+#define z_h
 
-#include <stddef.h>
+#include <stdint.h>
+#include <time.h>
 
+#include "../ncsh_args.h"
 #include "../eskilib/eskilib_string.h"
-#include "../eskilib/eskilib_result.h"
 
-#define Z_DATABASE_FILE "database.z"
-#define Z_DATABASE_FILE_LENGTH 10
-#define Z_DATABASE_IN_MEMORY_LIMIT 1000
+#define Z_DATABASE_FILE "_z_database.bin"
+#define Z_DATABASE_FILE_LENGTH 16
+#define Z_DATABASE_IN_MEMORY_LIMIT 100
 
 #define Z_SECOND 1
 #define Z_MINUTE 60 * Z_SECOND
@@ -19,23 +20,36 @@
 
 struct z_Directory {
 	double rank;
-	__clock_t last_accessed;
-	struct eskilib_String path;
+	time_t last_accessed;
+	char* path;
+	uint32_t path_length;
 };
 
 struct z_Database {
-	bool dirty;
-	uint_fast32_t count;
-	uint_fast32_t start_count;
-	// uint_fast8_t* bytes;
-	struct z_Directory* directories;
+	// bool dirty;
+	uint32_t count;
+	char* database_file;
+	struct z_Directory dirs[Z_DATABASE_IN_MEMORY_LIMIT];
 };
 
-enum eskilib_Result z_begin (const size_t config_path_max, const struct eskilib_String config_path, struct z_Database* database);
+enum z_Result {
+	Z_FILE_LENGTH_TOO_LARGE = -7,
+	Z_MATCH_NOT_FOUND = -6,
+	Z_NULL_REFERENCE = -5,
+	Z_STDIO_ERROR = -4,
+	Z_MALLOC_ERROR = -3,
+	Z_ZERO_BYTES_READ = -2,
+	Z_FILE_ERROR = -1,
+	Z_FAILURE = 0,
+	Z_SUCCESS = 1
+};
 
-struct eskilib_String z_process (const struct eskilib_String target, const char* directory, struct z_Database* database);
+extern enum z_Result z_init(struct eskilib_String config_location, struct z_Database* database);
 
-enum eskilib_Result z_end (struct z_Database* database);
+extern void z(char* target, size_t target_length, const char* cwd, struct z_Database* db);
 
-#endif // !z_main_h
+extern enum z_Result z_add(char* path, size_t path_length, struct z_Database* db);
 
+extern enum z_Result z_exit(struct z_Database* db);
+
+#endif // !z_h

@@ -4,7 +4,7 @@
 require 'ttytest'
 
 START_COL = 20
-WC_C_LENGTH = '268'
+WC_C_LENGTH = '279'
 SLEEP_TIME = 0.2
 
 def assert_check_new_row(row)
@@ -18,11 +18,65 @@ def starting_tests(test)
   puts "===== Starting #{test} tests ====="
 end
 
-def basic_startup_time_test(row)
+def if_z_database_new_test(row)
+  if @tty.rows[0] == 'Error opening z database file: No such file or directory'
+    @tty.assert_row(row, 'Error opening z database file: No such file or directory')
+    row += 1
+    @tty.assert_row(row, 'Trying to create z database file.')
+    row += 1
+    @tty.assert_row(row, 'Created z database file.')
+    row += 1
+    puts 'New z database test passed'
+  end
+  row
+end
+
+def startup_test(row)
   @tty.assert_row_starts_with(row, 'ncsh: startup time: ')
   row += 1
   puts 'Startup time test passed'
   row
+end
+
+def newline_sanity_test(row)
+  assert_check_new_row(row)
+  @tty.send_newline
+  row += 1
+  assert_check_new_row(row)
+  @tty.send_newline
+  row += 1
+  puts 'Newline sanity test passed'
+  row
+end
+
+def empty_line_arrow_check(row)
+  @tty.send_left_arrow
+  assert_check_new_row(row)
+  @tty.send_right_arrow
+  assert_check_new_row(row)
+end
+
+def empty_line_sanity_test(row)
+  assert_check_new_row(row)
+  empty_line_arrow_check(row)
+  @tty.send_backspace
+  assert_check_new_row(row)
+  @tty.send_delete
+  assert_check_new_row(row)
+  puts 'Empty line sanity test passed'
+  row
+end
+
+def sanity_tests(row)
+  starting_tests 'sanity'
+
+  row = if_z_database_new_test row
+
+  row = startup_test row
+
+  row = newline_sanity_test row
+
+  empty_line_sanity_test row
 end
 
 def basic_ls_test(row)
@@ -33,7 +87,7 @@ def basic_ls_test(row)
   @tty.assert_row_ends_with(row, 'ls')
   row += 1
   @tty.assert_row_starts_with(row, 'LICENSE')
-  row = 9
+  row += 8
   puts 'Basic input (ls) test passed'
   row
 end
@@ -66,8 +120,6 @@ end
 
 def basic_tests(row)
   starting_tests 'basic'
-
-  row = basic_startup_time_test row
 
   row = basic_ls_test row
 
@@ -290,7 +342,7 @@ def piped_output_redirection_test(row)
   @tty.send_newline
   sleep SLEEP_TIME
   row += 1
-  @tty.assert_row_starts_with(row, 'tests_p.sh')
+  @tty.assert_row_starts_with(row, 'tests_z.sh')
   row += 1
   assert_check_new_row(row)
   @tty.send_keys_one_at_a_time(%(rm t2.txt))
@@ -323,6 +375,17 @@ def multiple_piped_output_redirection_test(row)
   row
 end
 
+def basic_arrow_tests(row)
+  puts 'Basic arrows test passed'
+  row
+end
+
+def arrow_tests(row)
+  starting_tests 'arrows'
+
+  basic_arrow_tests row
+end
+
 def output_redirection_tests(row)
   starting_tests 'output redirections'
 
@@ -338,11 +401,6 @@ def autocompletion_tests(row)
   row
 end
 
-def arrow_tests(row)
-  starting_tests 'arrows'
-  row
-end
-
 def multiline_tests(row)
   starting_tests 'multiline'
   row
@@ -351,6 +409,8 @@ end
 @tty = TTYtest.new_terminal(%(PS1='$ ' ./bin/ncsh), width: 80, height: 48)
 
 @row = 0
+
+@row = sanity_tests @row
 
 @row = basic_tests @row
 
@@ -362,8 +422,12 @@ end
 
 @row = history_tests @row
 
+@row = arrow_tests @row
+
 @row = output_redirection_tests @row
 
-# puts "\n#{@tty.capture}"
+# @tty.print
+# @tty.print_rows
+# p @tty.to_s
 
 puts 'All tests passed!'

@@ -1,7 +1,7 @@
 std = -std=c2x
 debug_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined,leak -g
 release_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -O3 -DNDEBUG
-objects = obj/main.o obj/ncsh.o obj/ncsh_vm.o obj/ncsh_terminal.o obj/eskilib_string.o obj/eskilib_file.o obj/ncsh_debug.o obj/ncsh_args.o obj/ncsh_parser.o obj/ncsh_builtins.o obj/ncsh_history.o obj/ncsh_autocompletions.o obj/ncsh_config.o
+objects = obj/main.o obj/ncsh.o obj/ncsh_vm.o obj/ncsh_terminal.o obj/eskilib_string.o obj/eskilib_file.o obj/ncsh_debug.o obj/ncsh_args.o obj/ncsh_parser.o obj/ncsh_builtins.o obj/ncsh_history.o obj/ncsh_autocompletions.o obj/ncsh_config.o obj/z.o
 target = bin/ncsh
 
 CC ?= gcc
@@ -43,6 +43,8 @@ obj/ncsh_args.o : src/ncsh_args.c src/ncsh_args.h
 	$(cc_with_flags) -c src/ncsh_args.c -o obj/ncsh_args.o
 obj/ncsh_config.o : src/ncsh_config.c src/ncsh_config.h
 	$(cc_with_flags) -c src/ncsh_config.c -o obj/ncsh_config.o
+obj/z.o : src/z/z.c src/z/z.h src/eskilib/eskilib_string.h
+	$(cc_with_flags) -c src/z/z.c -o obj/z.o
 obj/eskilib_string.o : src/eskilib/eskilib_string.c src/eskilib/eskilib_string.h
 	$(cc_with_flags) -c src/eskilib/eskilib_string.c -o obj/eskilib_string.o
 obj/eskilib_file.o : src/eskilib/eskilib_file.c src/eskilib/eskilib_file.h
@@ -71,10 +73,6 @@ install : $(target)
 .PHONY: check
 check :
 	chmod +x ./tests_harness.sh
-	chmod +x ./tests.sh
-	chmod +x ./tests_h.sh
-	chmod +x ./tests_p.sh
-	chmod +x ./tests_ac.sh
 	./tests_harness.sh
 
 .PHONY: fuzz_history

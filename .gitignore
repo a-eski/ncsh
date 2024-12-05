@@ -14,3 +14,5 @@ NCSH_AUTOCOMPLETIONS_CORPUS/*
 t.txt
 *.out
 database.z
+ztests
+_z_database.bin
