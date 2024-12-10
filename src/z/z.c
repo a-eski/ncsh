@@ -1,3 +1,5 @@
+// Copyright (c) z by Alex Eski 2024
+
 #include <assert.h>
 #include <dirent.h>
 #include <stdint.h>
@@ -14,8 +16,6 @@
 
 double z_score(struct z_Directory* directory, time_t now) {
 	assert(directory);
-	if (!directory)
-		return 0.0;
 
 	time_t duration = now - directory->last_accessed;
 
@@ -31,7 +31,7 @@ double z_score(struct z_Directory* directory, time_t now) {
 
 struct z_Directory* find_match_add(char* target, size_t target_length, struct z_Database* db) {
 	assert(db && target && target_length > 0);
-	if (!db || !target || target_length == 0 || db->count == 0)
+	if (!db || !target || target_length < 2)
 		return NULL;
 
 	struct z_Directory* current_match = NULL;
@@ -56,8 +56,8 @@ struct z_Directory* find_match_add(char* target, size_t target_length, struct z_
 }
 
 struct z_Directory* find_match(char* target, size_t target_length, const char* cwd, size_t cwd_length, struct z_Database* db) {
-	assert(db && target && target_length > 0);
-	if (!db || !target || target_length == 0 || db->count == 0)
+	assert(db);
+	if (!db || !target || target_length == 0 || db->count == 0 || !cwd || cwd_length == 0)
 		return NULL;
 
 	struct z_Directory* current_match = NULL;
@@ -84,6 +84,8 @@ struct z_Directory* find_match(char* target, size_t target_length, const char* c
 }
 
 enum z_Result write_entry_to_file(struct z_Directory* dir, FILE* file) {
+	assert(dir && file);
+
 	size_t bytes_read;
 
 	bytes_read = fwrite(&dir->rank, sizeof(double), 1, file);
@@ -114,13 +116,17 @@ enum z_Result write_entry_to_file(struct z_Directory* dir, FILE* file) {
 }
 
 enum z_Result write_to_database_file(struct z_Database* db) {
-	if (db->count == 0)
+	assert(db);
+	if (!db)
 		return Z_NULL_REFERENCE;
+	if (db->count == 0)
+		return Z_SUCCESS;
 
 	FILE* file = fopen(db->database_file, "wb");
 	if (!file || feof(file) || ferror(file)) {
 		perror("Error writing to z database file");
-		fclose(file);
+		if (file)
+			fclose(file);
 		return Z_FILE_ERROR;
 	}
 
@@ -143,6 +149,8 @@ enum z_Result write_to_database_file(struct z_Database* db) {
 }
 
 enum z_Result read_entry_from_file(struct z_Directory* dir, FILE* file) {
+	assert(dir && file);
+
 	size_t bytes_read;
 	bytes_read = fread(&dir->rank, sizeof(double), 1, file);
 	if (bytes_read == 0 || feof(file))
@@ -185,6 +193,8 @@ enum z_Result read_from_database_file(struct z_Database* db) {
 		if (write(STDOUT_FILENO, "Trying to create z database file.\n", 34) == -1) {
 			perror(RED NCSH_ERROR_STDOUT RESET);
 			fflush(stderr);
+			if (file)
+				fclose(file);
 			return Z_STDIO_ERROR;
 		}
 
@@ -192,16 +202,21 @@ enum z_Result read_from_database_file(struct z_Database* db) {
 
 		if (!file || ferror(file)) {
 			perror("Error creating z database file");
+			if (file)
+				fclose(file);
 		}
 		else {
 			if (write(STDOUT_FILENO, "Created z database file.\n", 25) == -1) {
 				perror(RED NCSH_ERROR_STDOUT RESET);
 				fflush(stderr);
+				if (file)
+					fclose(file);
 				return Z_STDIO_ERROR;
 			}
 		}
 
-		fclose(file);
+		if (file)
+			fclose(file);
         	return Z_SUCCESS;
 	}
 
@@ -246,6 +261,8 @@ enum z_Result read_from_database_file(struct z_Database* db) {
 }
 
 enum z_Result add_new_path_to_database(char* path, size_t path_length, struct z_Database* db) {
+	assert(path && db);
+
 	db->dirs[db->count].path = malloc(path_length);
 	if (!db->dirs[db->count].path)
 		return Z_MALLOC_ERROR;
@@ -260,7 +277,7 @@ enum z_Result add_new_path_to_database(char* path, size_t path_length, struct z_
 }
 
 enum z_Result add_new_to_database(char* path, size_t path_length, const char* cwd, size_t cwd_length, struct z_Database* db) {
-	assert(db && cwd);
+	assert(db);
 	if (!db || !cwd || !path || path_length == 0)
 		return Z_NULL_REFERENCE;
 
@@ -274,11 +291,11 @@ enum z_Result add_new_to_database(char* path, size_t path_length, const char* cw
 
 	memcpy(db->dirs[db->count].path, cwd, cwd_length);
 	// printf("first memcpy %s\n", db->dirs[db->count].path);
-	strcat(db->dirs[db->count].path, "/");
+	strncat(db->dirs[db->count].path, "/", 2);
 	// printf("first strcat %s\n", db->dirs[db->count].path);
-	strcat(db->dirs[db->count].path, path);
+	strncat(db->dirs[db->count].path, path, path_length);
 	// printf("second strcat %s\n", db->dirs[db->count].path);
-	strcat(db->dirs[db->count].path, "\0");
+	strncat(db->dirs[db->count].path, "\0", 2);
 
 	db->dirs[db->count].path_length = total_length;
 	++db->dirs[db->count].rank;
@@ -325,7 +342,11 @@ enum z_Result z_init(struct eskilib_String config_file, struct z_Database* db) {
 	return read_from_database_file(db);
 }
 
-enum z_Result z_directory_matches(char* target, const char* directory, struct eskilib_String* output) {
+enum z_Result z_directory_matches(char* target, size_t target_length, const char* directory, struct eskilib_String* output) {
+	assert(target && directory && target_length > 0);
+	if (!target || target_length == 0 || !directory)
+		return Z_NULL_REFERENCE;
+
 	struct dirent* directory_entry;
 	DIR* current_directory = opendir(directory);
 	if (!current_directory) {
@@ -333,13 +354,17 @@ enum z_Result z_directory_matches(char* target, const char* directory, struct es
 		return Z_FAILURE;
 	}
 
+	size_t directory_length;
+	size_t compare_length;
 	while ((directory_entry = readdir(current_directory))) {
-		if (eskilib_string_equals(target, directory_entry->d_name, PATH_MAX)) {
-			output->length = strlen(directory_entry->d_name) + 1;
-			output->value = malloc(output->length);
+		directory_length = strlen(directory_entry->d_name) + 1;
+		compare_length = directory_length > target_length ? directory_length : target_length;
+		if (eskilib_string_equals(target, directory_entry->d_name, compare_length)) {
+			output->length = directory_length;
+			output->value = malloc(directory_length);
 			if (!output->value)
 				return Z_MALLOC_ERROR;
-			eskilib_string_copy(output->value, directory_entry->d_name, output->length);
+			eskilib_string_copy(output->value, directory_entry->d_name, directory_length);
 
 			if ((closedir(current_directory)) == -1) {
 				perror("z: could not close directory");
@@ -362,17 +387,14 @@ void z(char* target, size_t target_length, const char* cwd, struct z_Database* d
 
 	if (!target) {
 		char* home = getenv("HOME");
-		if (home == NULL || chdir(home) == -1)
+		if (!home || chdir(home) == -1)
 			perror("z: couldn't change directory");
 
 		return;
 	}
 
-	assert(target && target_length > 0);
-	assert(cwd);
-	assert(db);
-
-	if (!cwd || !db || !target || target_length == 0)
+	assert(target && target_length > 0 && cwd && db);
+	if (!cwd || !db || !target || target_length < 2)
 		return;
 
 	if (target_length == 2) {
@@ -402,7 +424,7 @@ void z(char* target, size_t target_length, const char* cwd, struct z_Database* d
 
 	size_t cwd_length = strlen(cwd) + 1;
 	struct eskilib_String output = {0};
-	if (z_directory_matches(target, cwd, &output) == Z_SUCCESS) {
+	if (z_directory_matches(target, target_length, cwd, &output) == Z_SUCCESS) {
 		// printf("dir matches %s\n", output.value);
 		if (add_new_to_database(output.value, output.length, cwd, cwd_length, db) != Z_SUCCESS) {
 			if (output.value)
@@ -430,15 +452,16 @@ void z(char* target, size_t target_length, const char* cwd, struct z_Database* d
 
 	if (chdir(target) == -1) {
 		perror("z: couldn't change directory");
-		if (output.value)
-			free(output.value);
 		return;
 	}
 }
 
 enum z_Result z_add(char* path, size_t path_length, struct z_Database* db) {
-	assert(path && path_length > 0);
-	assert(db);
+	assert(path && path_length > 0 && db);
+	if (!path || !db)
+		return Z_NULL_REFERENCE;
+	if (path[path_length - 1] != '\0' || path_length < 2)
+		return Z_BAD_STRING;
 
 	if (find_match_add(path, path_length, db)) {
 		if (write(STDERR_FILENO, "Entry already exists in z database.\n", 36) == -1) {
@@ -476,6 +499,10 @@ void z_free(struct z_Database* db) {
 }
 
 enum z_Result z_exit(struct z_Database* db) {
+	assert(db);
+	if (!db)
+		return Z_NULL_REFERENCE;
+
 	enum z_Result result;
 	if ((result = write_to_database_file(db)) != Z_SUCCESS) {
 		if (write(STDERR_FILENO, "Error writing to z database file.\n", 34) == -1) {
@@ -487,3 +514,4 @@ enum z_Result z_exit(struct z_Database* db) {
 	z_free(db);
 	return Z_SUCCESS;
 }
+

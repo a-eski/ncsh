@@ -6,6 +6,7 @@ require 'ttytest'
 START_COL = 20
 WC_C_LENGTH = '279'
 SLEEP_TIME = 0.2
+LS_LINES = 8
 
 def assert_check_new_row(row)
   @tty.assert_row_starts_with(row, "#{ENV['USER']} ")
@@ -87,7 +88,7 @@ def basic_ls_test(row)
   @tty.assert_row_ends_with(row, 'ls')
   row += 1
   @tty.assert_row_starts_with(row, 'LICENSE')
-  row += 8
+  row += LS_LINES
   puts 'Basic input (ls) test passed'
   row
 end
@@ -375,6 +376,90 @@ def multiple_piped_output_redirection_test(row)
   row
 end
 
+def output_redirection_tests(row)
+  starting_tests 'output redirections'
+
+  row = basic_output_redirection_test row
+
+  row = piped_output_redirection_test row
+
+  multiple_piped_output_redirection_test row
+end
+
+def basic_input_redirection_test(row)
+  assert_check_new_row(row)
+  @tty.send_keys_one_at_a_time(%(ls > t.txt))
+  @tty.assert_row_ends_with(row, %(ls > t.txt))
+  @tty.send_newline
+  sleep SLEEP_TIME
+  row += 1
+  assert_check_new_row(row)
+  @tty.send_keys_one_at_a_time(%(sort < t.txt))
+  @tty.assert_row_ends_with(row, %(sort < t.txt))
+  @tty.send_newline
+  sleep SLEEP_TIME
+  row += 1
+  @tty.assert_row_starts_with(row, 'LICENSE')
+  row += 23
+  assert_check_new_row(row)
+  @tty.send_keys_one_at_a_time(%(rm t.txt))
+  @tty.send_newline
+  row += 1
+  puts 'Basic input redirection test passed'
+  row
+end
+
+def piped_input_redirection_test(row)
+  assert_check_new_row(row)
+  @tty.send_keys_one_at_a_time(%(ls > t2.txt))
+  @tty.assert_row_ends_with(row, %(ls > t2.txt))
+  @tty.send_newline
+  sleep SLEEP_TIME
+  row += 1
+  assert_check_new_row(row)
+  @tty.send_keys_one_at_a_time(%(sort | wc -c < t2.txt))
+  @tty.assert_row_ends_with(row, %(sort | wc -c < t2.txt))
+  @tty.send_newline
+  sleep SLEEP_TIME
+  row += 1
+  @tty.assert_row_starts_with(row, (WC_C_LENGTH.to_i + 't2.txt'.length + 1).to_s)
+  row += 1
+  assert_check_new_row(row)
+  @tty.send_keys_one_at_a_time(%(rm t2.txt))
+  @tty.send_newline
+  row += 1
+  puts 'Piped input redirection test passed'
+  row
+end
+
+def multiple_piped_input_redirection_test(row)
+  assert_check_new_row(row)
+  @tty.send_keys_one_at_a_time(%(ls > t3.txt))
+  @tty.assert_row_ends_with(row, %(ls > t3.txt))
+  @tty.send_newline
+  sleep SLEEP_TIME
+  row += 1
+  @tty.send_keys_one_at_a_time(%(sort | head -1 | wc -l < t3.txt))
+  @tty.assert_row_ends_with(row, %(sort | head -1 | wc -l < t3.txt))
+  @tty.send_newline
+  sleep SLEEP_TIME
+  row += 1
+  @tty.assert_row(row, '1')
+  row += 1
+  puts 'Multiple piped input redirection test passed'
+  row
+end
+
+def input_redirection_tests(row)
+  starting_tests 'input redirections'
+
+  row = basic_input_redirection_test row
+
+  row = piped_input_redirection_test row
+
+  multiple_piped_input_redirection_test row
+end
+
 def basic_arrow_tests(row)
   puts 'Basic arrows test passed'
   row
@@ -384,16 +469,6 @@ def arrow_tests(row)
   starting_tests 'arrows'
 
   basic_arrow_tests row
-end
-
-def output_redirection_tests(row)
-  starting_tests 'output redirections'
-
-  row = basic_output_redirection_test row
-
-  row = piped_output_redirection_test row
-
-  multiple_piped_output_redirection_test row
 end
 
 def autocompletion_tests(row)
@@ -406,10 +481,13 @@ def multiline_tests(row)
   row
 end
 
+def builtin_tests(row)
+  starting_tests 'builtin'
+  row
+end
+
 @tty = TTYtest.new_terminal(%(PS1='$ ' ./bin/ncsh), width: 80, height: 48)
-
 @row = 0
-
 @row = sanity_tests @row
 
 @row = basic_tests @row
@@ -422,9 +500,18 @@ end
 
 @row = history_tests @row
 
-@row = arrow_tests @row
-
 @row = output_redirection_tests @row
+
+@row = 0
+@tty = TTYtest.new_terminal(%(PS1='$ ' ./bin/ncsh), width: 80, height: 80)
+@row = sanity_tests @row
+
+@row = input_redirection_tests @row
+
+# @row = arrow_tests @row
+# @row = autocompletion_tests @row
+# @row = multiline_tests @row
+# @row = builtin_tests @row
 
 # @tty.print
 # @tty.print_rows

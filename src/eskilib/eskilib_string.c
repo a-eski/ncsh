@@ -182,9 +182,11 @@ bool eskilib_string_contains_s(const char* string, uint32_t string_length, const
 [[nodiscard]]
 bool eskilib_string_contains_s2(const char* string, size_t string_length, const char* string_two, size_t string_two_length) {
 	assert(string != NULL);
+	assert(string_length >= 2);
 	assert(string_two != NULL);
+	assert(string_two_length >= 2);
 
-	if (string_length == 0 || string_two_length == 0)
+	if (!string || !string_two || string_length < 2 || string_two_length < 2)
 		return false;
 
 	assert(string[string_length - 1] == '\0');

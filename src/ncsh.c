@@ -114,6 +114,7 @@ int_fast32_t ncsh_backspace(char* buffer, uint_fast32_t* buf_position, uint_fast
 		}
 
 		fflush(stdout);
+		// memmove(&buffer[buf_position - 1], &buffer[buf_position], strlen(buffer) - buf_position + 1);
 
 		while (*buf_position > buf_start) {
 			if (*buf_position == 0 || !buffer[*buf_position - 1])
@@ -284,7 +285,7 @@ int ncsh(void) {
 		perror(RED "ncsh: Error when allocating memory for history" RESET);
 		fflush(stderr);
 		ncsh_config_free(&config);
-		ncsh_args_free(args);
+		ncsh_args_free(&args);
 		return EXIT_FAILURE;
 	}
 
@@ -292,7 +293,7 @@ int ncsh(void) {
 		perror(RED "ncsh: Error when loading data from history file" RESET);
 		fflush(stderr);
 		ncsh_config_free(&config);
-		ncsh_args_free(args);
+		ncsh_args_free(&args);
 		ncsh_history_free(&history);
 		return EXIT_FAILURE;
 	}
@@ -305,7 +306,7 @@ int ncsh(void) {
 		ncsh_config_free(&config);
 		free(current_autocompletion);
 		ncsh_history_free(&history);
-		ncsh_args_free(args);
+		ncsh_args_free(&args);
 		return EXIT_FAILURE;
 	}
 	ncsh_autocompletions_add_multiple(history.entries, history.history_count, autocompletions_tree);
@@ -560,8 +561,8 @@ int ncsh(void) {
 			#endif /* ifdef NCSH_DEBUG */
 
 			args = ncsh_parse(buffer, buf_position, args);
-			if (!ncsh_args_is_valid(args)) {
-				ncsh_args_free_values(args);
+			if (!ncsh_args_is_valid(&args)) {
+				ncsh_args_free_values(&args);
 				continue;
 			}
 
@@ -574,7 +575,7 @@ int ncsh(void) {
 
 			command_result = ncsh_execute(args, &history, &z_db);
 
-			ncsh_args_free_values(args);
+			ncsh_args_free_values(&args);
 
 			switch (command_result) {
 				case -1: {
@@ -673,7 +674,7 @@ int ncsh(void) {
 	free_all:
 		ncsh_config_free(&config);
 
-		ncsh_args_free(args);
+		ncsh_args_free(&args);
 
 		if (history.history_loaded) {
 			if (history.history_count > 0)
