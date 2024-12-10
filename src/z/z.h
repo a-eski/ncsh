@@ -1,10 +1,11 @@
+// Copyright (c) z by Alex Eski 2024
+
 #ifndef z_h
 #define z_h
 
 #include <stdint.h>
 #include <time.h>
 
-#include "../ncsh_args.h"
 #include "../eskilib/eskilib_string.h"
 
 #define Z_DATABASE_FILE "_z_database.bin"
@@ -33,6 +34,7 @@ struct z_Database {
 };
 
 enum z_Result {
+	Z_BAD_STRING = -8,
 	Z_FILE_LENGTH_TOO_LARGE = -7,
 	Z_MATCH_NOT_FOUND = -6,
 	Z_NULL_REFERENCE = -5,

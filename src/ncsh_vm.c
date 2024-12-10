@@ -20,25 +20,15 @@
 #include "ncsh_defines.h"
 #include "eskilib/eskilib_colors.h"
 
-#define PIPE_KEY "|"
-#define OUTPUT_REDIRECTION_KEY '>'
-#define INPUT_REDIRECTION_KEY '<'
-#define BACKGROUND_JOB_KEY '&'
-
-/*struct ncsh_VM {
-	enum ncsh_Ops op;
-	int original_stdout;
-	int original_stdin;
-	int original_stderr;
-	int fd_one[2];
-	int fd_two[2];
-	char* file;
-};*/
-
 struct ncsh_Output_Redirect_IO {
 	int fd;
 	int original_stdout;
 	int original_stderr;
+};
+
+struct ncsh_Input_Redirect_IO {
+	int fd;
+	int original_stdin;
 };
 
 struct ncsh_Pipe_IO {
@@ -46,28 +36,52 @@ struct ncsh_Pipe_IO {
 	int fd_two[2];
 };
 
-struct ncsh_Output_Redirect_IO ncsh_output_redirection_start(char* file) {
+struct ncsh_Vm {
+	struct ncsh_Output_Redirect_IO output_redirect_io;
+	struct ncsh_Input_Redirect_IO input_redirect_io;
+	struct ncsh_Pipe_IO pipes_io;
+};
+
+void ncsh_output_redirection_start(char* file, struct ncsh_Output_Redirect_IO* io) {
 	assert(file != NULL);
 
 	int file_descriptor = open(file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
-	struct ncsh_Output_Redirect_IO io;
+	if (file_descriptor == -1) {
+		io->fd = -1;
+	}
 
-	io.original_stdout = dup(STDOUT_FILENO);
-	io.original_stderr = dup(STDERR_FILENO);
+	io->original_stdout = dup(STDOUT_FILENO);
+	io->original_stderr = dup(STDERR_FILENO);
 	dup2(file_descriptor, STDOUT_FILENO);
 	dup2(file_descriptor, STDERR_FILENO);
 
 	close(file_descriptor);
-
-	return io;
 }
 
-void ncsh_output_redirection_stop(struct ncsh_Output_Redirect_IO io) {
-	dup2(io.original_stdout, STDOUT_FILENO);
-	dup2(io.original_stderr, STDERR_FILENO);
+void ncsh_output_redirection_stop(struct ncsh_Output_Redirect_IO* io) {
+	dup2(io->original_stdout, STDOUT_FILENO);
+	dup2(io->original_stderr, STDERR_FILENO);
 }
 
-int_fast32_t ncsh_pipe_start(struct ncsh_Pipe_IO* pipes, uint_fast32_t command_position) {
+void ncsh_input_redirection_start(char* file, struct ncsh_Input_Redirect_IO* io) {
+	assert(file != NULL);
+
+	int file_descriptor = open(file, O_RDONLY);
+	if (file_descriptor == -1) {
+		io->fd = -1;
+	}
+
+	io->original_stdin = dup(STDIN_FILENO);
+	dup2(file_descriptor, STDIN_FILENO);
+
+	close(file_descriptor);
+}
+
+void ncsh_input_redirection_stop(int original_stdin) {
+	dup2(original_stdin, STDIN_FILENO);
+}
+
+int_fast32_t ncsh_pipe_start(uint_fast32_t command_position, struct ncsh_Pipe_IO* pipes) {
 	assert(pipes != NULL);
 
 	if (command_position % 2 != 0) {
@@ -88,7 +102,7 @@ int_fast32_t ncsh_pipe_start(struct ncsh_Pipe_IO* pipes, uint_fast32_t command_p
 	return NCSH_COMMAND_CONTINUE;
 }
 
-int_fast32_t ncsh_pipe_fork_failure(struct ncsh_Pipe_IO* pipes, uint_fast32_t command_position, uint_fast32_t number_of_commands) {
+int_fast32_t ncsh_pipe_fork_failure(uint_fast32_t command_position, uint_fast32_t number_of_commands, struct ncsh_Pipe_IO* pipes) {
 	assert(pipes != NULL);
 
 	if (command_position != number_of_commands - 1) {
@@ -103,7 +117,7 @@ int_fast32_t ncsh_pipe_fork_failure(struct ncsh_Pipe_IO* pipes, uint_fast32_t co
 	return NCSH_COMMAND_EXIT_FAILURE;
 }
 
-void ncsh_pipe_connect(struct ncsh_Pipe_IO* pipes, uint_fast32_t command_position, uint_fast32_t number_of_commands) {
+void ncsh_pipe_connect(uint_fast32_t command_position, uint_fast32_t number_of_commands, struct ncsh_Pipe_IO* pipes) {
 	assert(pipes != NULL);
 
 	if (command_position == 0) { //first command
@@ -127,7 +141,7 @@ void ncsh_pipe_connect(struct ncsh_Pipe_IO* pipes, uint_fast32_t command_positio
 	}
 }
 
-void ncsh_pipe_stop(struct ncsh_Pipe_IO* pipes, uint_fast32_t command_position, uint_fast32_t number_of_commands) {
+void ncsh_pipe_stop(uint_fast32_t command_position, uint_fast32_t number_of_commands, struct ncsh_Pipe_IO* pipes) {
 	assert(pipes != NULL);
 
 	if (command_position == 0) {
@@ -153,15 +167,20 @@ void ncsh_pipe_stop(struct ncsh_Pipe_IO* pipes, uint_fast32_t command_position, 
 	}
 }
 
+int_fast32_t ncsh_syntax_error(const char* message, size_t message_length) {
+	if (write(STDIN_FILENO, message, message_length) == -1)
+		return NCSH_COMMAND_EXIT_FAILURE;
+
+	return NCSH_COMMAND_CONTINUE;
+}
+
 int_fast32_t ncsh_vm(struct ncsh_Args args) {
 	assert(args.values != NULL);
 	assert(args.ops != NULL);
 	assert(args.count != 0);
 	assert(args.max_line_length != 0);
 
-	struct ncsh_Pipe_IO pipes_io = {0};
-	struct ncsh_Output_Redirect_IO output_io = {0};
-
+	struct ncsh_Vm vm = {0};
 	char* buffer[MAX_INPUT] = {0};
 	pid_t pid = 0;
 	bool end = false;
@@ -172,12 +191,26 @@ int_fast32_t ncsh_vm(struct ncsh_Args args) {
 	uint_fast32_t args_position = 0;
 	uint_fast32_t buffer_position = 0;
 
-	char* file = NULL;
+	char* output_file = NULL;
+	char* input_file = NULL;
 	uint_fast32_t output_redirect_found = 0;
+	uint_fast32_t input_redirect_found = 0;
 	for (uint_fast32_t l = 0; l < args.count; ++l) {
 		if (args.ops[l] == OP_OUTPUT_REDIRECTION) {
-			file = args.values[l + 1];
+			if (l + 1 >= args.count) {
+				return ncsh_syntax_error("ncsh: Invalid syntax: found no filename after output redirect symbol '>'.\n", 74);
+			}
+
+			output_file = args.values[l + 1];
 			output_redirect_found = l;
+		}
+		else if (args.ops[l] == OP_INPUT_REDIRECTION) {
+			if (l + 1 >= args.count) {
+				return ncsh_syntax_error("ncsh: Invalid syntax: found no filename before input redirect symbol '<'.\n", 74);
+			}
+
+			input_file = args.values[l + 1];
+			input_redirect_found = l;
 		}
 		else if (args.ops[l] == OP_PIPE) {
 			++number_of_commands;
@@ -185,10 +218,27 @@ int_fast32_t ncsh_vm(struct ncsh_Args args) {
 	}
 	++number_of_commands;
 
-	if (file != NULL) {
+	if (output_redirect_found && input_redirect_found) {
+		return ncsh_syntax_error("ncsh: Invalid syntax: found both input and output redirects symbols ('<' and '>', respectively).\n", 97);
+	}
+	else if (output_file && output_redirect_found) {
 		free(args.values[output_redirect_found]);
 		args.values[output_redirect_found] = NULL;
-		output_io = ncsh_output_redirection_start(file);
+		ncsh_output_redirection_start(output_file, &vm.output_redirect_io);
+		if (vm.output_redirect_io.fd == -1) {
+			printf("ncsh: Invalid file handle '%s': could not open file for output redirection, do you have permission to open the file?\n",
+	  			output_file);
+			return NCSH_COMMAND_CONTINUE;
+		}
+	}
+	else if (input_file && input_redirect_found) {
+		free(args.values[input_redirect_found]);
+		args.values[input_redirect_found] = NULL;
+		ncsh_input_redirection_start(input_file, &vm.input_redirect_io);
+		if (vm.input_redirect_io.fd == -1) {
+			printf("ncsh: Invalid file handle '%s': could not open file for input redirection, does the file exist?\n", input_file);
+			return NCSH_COMMAND_CONTINUE;
+		}
 	}
 
 	while (args.values[args_position] != NULL && end != true) {
@@ -219,17 +269,17 @@ int_fast32_t ncsh_vm(struct ncsh_Args args) {
 		++args_position;
 
 		if (op_current == OP_PIPE && !end) {
-			if (!ncsh_pipe_start(&pipes_io, command_position))
+			if (!ncsh_pipe_start(command_position, &vm.pipes_io))
 				return NCSH_COMMAND_EXIT_FAILURE;
 		}
 
 		pid = fork();
 		if (pid == -1)
-			return ncsh_pipe_fork_failure(&pipes_io, command_position, number_of_commands);
+			return ncsh_pipe_fork_failure(command_position, number_of_commands, &vm.pipes_io);
 
 		if (pid == 0) {
 			if (op_current == OP_PIPE)
-				ncsh_pipe_connect(&pipes_io, command_position, number_of_commands);
+				ncsh_pipe_connect(command_position, number_of_commands, &vm.pipes_io);
 
 
 			if (execvp(buffer[0], buffer) == -1) {
@@ -241,7 +291,7 @@ int_fast32_t ncsh_vm(struct ncsh_Args args) {
 		}
 
 		if (op_current == OP_PIPE)
-			ncsh_pipe_stop(&pipes_io, command_position, number_of_commands);
+			ncsh_pipe_stop(command_position, number_of_commands, &vm.pipes_io);
 
 		int status;
 		do {
@@ -251,8 +301,10 @@ int_fast32_t ncsh_vm(struct ncsh_Args args) {
 		++command_position;
 	}
 
-	if (file != NULL)
-		ncsh_output_redirection_stop(output_io);
+	if (output_file && output_redirect_found)
+		ncsh_output_redirection_stop(&vm.output_redirect_io);
+	else if (input_file && input_redirect_found)
+		ncsh_input_redirection_stop(vm.input_redirect_io.original_stdin);
 
 	return NCSH_COMMAND_CONTINUE;
 }

@@ -1,3 +1,5 @@
+// Copyright (c) z by Alex Eski 2024
+
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -506,8 +508,63 @@ void z_empty_database_valid_subdirectory_change_directory_test(void) {
 }
 
 // z add new entry
+void z_add_new_to_database_new_entry(void) {
+	remove(Z_DATABASE_FILE);
+
+	struct z_Database db = {0};
+	eskilib_assert(z_init(eskilib_String_Empty, &db) == Z_SUCCESS);
+	eskilib_assert(db.count == 0);
+
+	eskilib_assert(z_add("/mnt/c/Users/Alex/source/repos/PersonalRepos/shells", 52, &db) == Z_SUCCESS);
+	eskilib_assert(db.count == 1);
+	eskilib_assert(db.dirs[0].path_length == 52);
+	eskilib_assert(eskilib_string_equals(db.dirs[0].path, "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells", 52));
+
+	z_exit(&db);
+}
+
 // z add existing entry
+void z_add_existing_in_database_new_entry(void) {
+	struct z_Database db = {0};
+	eskilib_assert(z_init(eskilib_String_Empty, &db) == Z_SUCCESS);
+	eskilib_assert(db.count == 1);
+
+	double initial_rank = db.dirs[0].rank;
+	eskilib_assert(z_add("/mnt/c/Users/Alex/source/repos/PersonalRepos/shells", 52, &db) == Z_SUCCESS);
+	eskilib_assert(db.count == 1);
+	eskilib_assert(db.dirs[0].path_length == 52);
+	eskilib_assert(eskilib_string_equals(db.dirs[0].path, "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells", 52));
+	eskilib_assert(db.dirs[0].rank > initial_rank);
+
+	z_exit(&db);
+}
+
 // z add null parameters
+void z_add_null_parameters(void) {
+	struct z_Database db = {0};
+	eskilib_assert(z_init(eskilib_String_Empty, &db) == Z_SUCCESS);
+	eskilib_assert(db.count == 1);
+
+	eskilib_assert(z_add(NULL, 0, &db) == Z_NULL_REFERENCE);
+	eskilib_assert(z_add(NULL, 3, &db) == Z_NULL_REFERENCE);
+	eskilib_assert(z_add("..", 3, NULL) == Z_NULL_REFERENCE);
+
+	z_exit(&db);
+}
+
+// z add bad parameters
+void z_add_bad_parameters(void) {
+	struct z_Database db = {0};
+	eskilib_assert(z_init(eskilib_String_Empty, &db) == Z_SUCCESS);
+	eskilib_assert(db.count == 1);
+
+	eskilib_assert(z_add(".", 0, &db) == Z_BAD_STRING);
+	eskilib_assert(z_add(".", 1, &db) == Z_BAD_STRING);
+	eskilib_assert(z_add("..", 1, &db) == Z_BAD_STRING);
+	eskilib_assert(z_add("..", 2, &db) == Z_BAD_STRING);
+
+	z_exit(&db);
+}
 
 int main(void) {
 	eskilib_test_start();
@@ -523,6 +580,7 @@ int main(void) {
 	eskilib_test_run("z_find_match_finds_match_test", z_find_match_finds_match_test);
 	eskilib_test_run("z_find_match_no_match_test", z_find_match_no_match_test);
 	eskilib_test_run("z_find_match_multiple_matches_test", z_find_match_multiple_matches_test);
+
 	eskilib_test_run("z_change_directory_test", z_change_directory_test);
 	eskilib_test_run("z_home_change_directory_test", z_home_change_directory_test);
 	eskilib_test_run("z_home_empty_target_change_directory_test", z_home_empty_target_change_directory_test);
@@ -530,6 +588,11 @@ int main(void) {
 	eskilib_test_run("z_valid_subdirectory_change_directory_test", z_valid_subdirectory_change_directory_test);
 	eskilib_test_run("z_dir_slash_dir_change_directory_test", z_dir_slash_dir_change_directory_test);
 	eskilib_test_run("z_empty_database_valid_subdirectory_change_directory_test", z_empty_database_valid_subdirectory_change_directory_test);
+
+	eskilib_test_run("z_add_new_to_database_new_entry", z_add_new_to_database_new_entry);
+	eskilib_test_run("z_add_existing_in_database_new_entry", z_add_existing_in_database_new_entry);
+	eskilib_test_run("z_add_null_parameters", z_add_null_parameters);
+	eskilib_test_run("z_add_bad_parameters", z_add_bad_parameters);
 
 	eskilib_test_finish();
 
