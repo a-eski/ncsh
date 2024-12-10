@@ -446,6 +446,10 @@ def multiple_piped_input_redirection_test(row)
   row += 1
   @tty.assert_row(row, '1')
   row += 1
+  assert_check_new_row(row)
+  @tty.send_keys_one_at_a_time(%(rm t3.txt))
+  @tty.send_newline
+  row += 1
   puts 'Multiple piped input redirection test passed'
   row
 end
