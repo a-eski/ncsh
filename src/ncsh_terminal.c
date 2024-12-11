@@ -9,7 +9,6 @@
 #include <sys/ioctl.h>
 
 #include "ncsh_terminal.h"
-#include "ncsh_io.h"
 #include "eskilib/eskilib_colors.h"
 
 #define TERMINAL_RETURN 'R'

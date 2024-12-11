@@ -5,7 +5,6 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-#include "ncsh_parser.h"
 #include "ncsh_args.h"
 #include "eskilib/eskilib_string.h"
 
@@ -70,17 +69,17 @@ enum ncsh_Ops ncsh_op_get(char line[], uint_fast32_t length) {
 	return OP_CONSTANT;
 }
 
-struct ncsh_Args ncsh_parse(char line[], uint_fast32_t length, struct ncsh_Args args) {
-	if (line == NULL || args.values == NULL || args.ops == NULL) {
-		args.max_line_length = 0;
-		args.count = 0;
-		return args;
+void ncsh_parse(char line[], uint_fast32_t length, struct ncsh_Args* args) {
+	if (line == NULL || args->values == NULL || args->ops == NULL) {
+		args->max_line_length = 0;
+		args->count = 0;
+		return;
 	}
 
 	if (length == 0 || length > ncsh_TOKEN_BUFFER_SIZE) {
-		args.max_line_length = 0;
-		args.count = 0;
-		return args;
+		args->max_line_length = 0;
+		args->count = 0;
+		return;
 	}
 
 	char buffer[ncsh_TOKEN_BUFFER_SIZE];
@@ -89,22 +88,22 @@ struct ncsh_Args ncsh_parse(char line[], uint_fast32_t length, struct ncsh_Args 
 
 	for (uint_fast32_t line_position = 0; line_position < length + 1; ++line_position) {
 		if (line_position == length || line_position == ncsh_TOKEN_BUFFER_SIZE - 1 ||
-			buffer_position == ncsh_TOKEN_BUFFER_SIZE - 1 || args.count == ncsh_TOKEN_BUFFER_SIZE - 1) {
-			args.values[args.count] = NULL;
+			buffer_position == ncsh_TOKEN_BUFFER_SIZE - 1 || args->count == ncsh_TOKEN_BUFFER_SIZE - 1) {
+			args->values[args->count] = NULL;
 			break;
 		}
 		else if (ncsh_is_delimiter(line[line_position]) && (double_quotes_count == 0 || double_quotes_count == 2)) {
 			buffer[buffer_position] = '\0';
 
-			args.values[args.count] = malloc(buffer_position + 1);
-			eskilib_string_copy(args.values[args.count], buffer, buffer_position + 1);
+			args->values[args->count] = malloc(buffer_position + 1);
+			eskilib_string_copy(args->values[args->count], buffer, buffer_position + 1);
 
-			args.ops[args.count] = ncsh_op_get(buffer, buffer_position);
+			args->ops[args->count] = ncsh_op_get(buffer, buffer_position);
 
-			args.count++;
+			args->count++;
 
-			if (args.max_line_length == 0 || buffer_position > args.max_line_length)
-				args.max_line_length = buffer_position;
+			if (args->max_line_length == 0 || buffer_position > args->max_line_length)
+				args->max_line_length = buffer_position;
 
 			buffer[0] = '\0';
 			buffer_position = 0;
@@ -117,7 +116,5 @@ struct ncsh_Args ncsh_parse(char line[], uint_fast32_t length, struct ncsh_Args 
 				buffer[buffer_position++] = line[line_position];
 		}
 	}
-
-	return args;
 }
 

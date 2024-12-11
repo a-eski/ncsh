@@ -5,7 +5,7 @@
 
 #include <stdint.h>
 
-struct ncsh_Args ncsh_parse(char line[], uint_fast32_t length, struct ncsh_Args args);
+void ncsh_parse(char line[], uint_fast32_t length, struct ncsh_Args* args);
 
 #endif // !ncsh_parser_h
 

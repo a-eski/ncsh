@@ -464,20 +464,49 @@ def input_redirection_tests(row)
   multiple_piped_input_redirection_test row
 end
 
-def basic_arrow_tests(row)
-  puts 'Basic arrows test passed'
+def basic_autocompletion_test(row)
+  assert_check_new_row(row)
+  @tty.send_keys_one_at_a_time(%(l))
+  @tty.send_right_arrow
+  @tty.assert_row_ends_with(row, %(ls))
+
+  @tty.send_keys_one_at_a_time(%( |))
+  @tty.send_right_arrow
+  @tty.assert_row_ends_with(row, %(ls | sort))
+
+  puts 'Basic autocompletion test passed'
   row
 end
 
-def arrow_tests(row)
-  starting_tests 'arrows'
+def backspace_and_delete_autocompletion_test(row)
+  @tty.send_backspaces(4)
+  @tty.send_keys_one_at_a_time(%(s))
+  @tty.send_right_arrow
+  @tty.assert_row_ends_with(row, %(ls | sort))
 
-  basic_arrow_tests row
+  @tty.send_left_arrows(6)
+  @tty.send_deletes(6)
+  @tty.send_keys_one_at_a_time(%(|))
+  @tty.send_right_arrow
+  @tty.assert_row_ends_with(row, %(ls | sort))
+
+  @tty.send_keys_one_at_a_time(%( | wc -c))
+  @tty.assert_row_ends_with(row, %(ls | sort | wc -c))
+  @tty.send_newline
+  row += 1
+  @tty.assert_row(row, WC_C_LENGTH)
+  row += 1
+
+  puts 'Backspace and delete autocompletion test passed'
+  row
 end
 
 def autocompletion_tests(row)
   starting_tests 'autocompletion'
-  row
+
+  row = basic_autocompletion_test row
+
+  backspace_and_delete_autocompletion_test row
 end
 
 def multiline_tests(row)
@@ -485,8 +514,39 @@ def multiline_tests(row)
   row
 end
 
+def help_test(row)
+  assert_check_new_row(row)
+  @tty.send_keys_one_at_a_time(%(help))
+  @tty.assert_row_ends_with(row, %(help))
+  @tty.send_newline
+  row += 1
+  @tty.assert_contents_at row, row + 6, <<~TERM
+    ncsh by Alex Eski: help
+
+    Builtin Commands {command} {args}
+    q:              To exit, type q, exit, or quit and press enter. You can also use Ctrl+D to exit.
+    cd/z:           You can change directory with cd or z.
+    echo:           You can write things to the screen using echo.
+    history:        You can see your command history using the history command.
+    alex /shells/ncsh ❱
+  TERM
+  row += 7
+  puts 'Help test passed'
+  row
+end
+
 def builtin_tests(row)
   starting_tests 'builtin'
+
+  row = help_test row
+
+  assert_check_new_row(row)
+
+  row
+end
+
+def copy_and_paste_tests(row)
+  starting_tests 'copy/paste'
   row
 end
 
@@ -507,15 +567,17 @@ end
 @row = output_redirection_tests @row
 
 @row = 0
-@tty = TTYtest.new_terminal(%(PS1='$ ' ./bin/ncsh), width: 80, height: 80)
+@tty = TTYtest.new_terminal(%(PS1='$ ' ./bin/ncsh), width: 120, height: 80)
 @row = sanity_tests @row
 
 @row = input_redirection_tests @row
 
-# @row = arrow_tests @row
-# @row = autocompletion_tests @row
+@row = autocompletion_tests @row
+
+@row = builtin_tests @row
+
 # @row = multiline_tests @row
-# @row = builtin_tests @row
+# @row = copy_paste_tests @row
 
 # @tty.print
 # @tty.print_rows
