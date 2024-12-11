@@ -18,12 +18,10 @@
 #include "ncsh_vm.h"
 #include "ncsh_history.h"
 #include "ncsh_parser.h"
-#include "ncsh_io.h"
 #include "ncsh_config.h"
 #include "ncsh.h"
 #include "ncsh_autocompletions.h"
 #include "ncsh_defines.h"
-#include "ncsh_configurable_defines.h"
 #include "ncsh_builtins.h"
 #include "eskilib/eskilib_colors.h"
 #include "eskilib/eskilib_string.h"
@@ -560,7 +558,7 @@ int ncsh(void) {
 			ncsh_debug_line(buffer, buf_position, max_buf_position);
 			#endif /* ifdef NCSH_DEBUG */
 
-			args = ncsh_parse(buffer, buf_position, args);
+			ncsh_parse(buffer, buf_position, &args);
 			if (!ncsh_args_is_valid(&args)) {
 				ncsh_args_free_values(&args);
 				continue;

@@ -9,6 +9,9 @@
 #include "ncsh_debug.h"
 #endif /* ifdef NCSH_DEBUG */
 
+// Configurable: use entire directory path (0) or use short directory (1) for prompt line
+#define NCSH_SHORT_DIRECTORY 1
+
 #define NCSH_ERROR_STDOUT "ncsh: Error writing to stdout"
 #define NCSH_ERROR_STDIN "ncsh: Error writing to stdin"
 
