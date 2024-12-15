@@ -1,6 +1,9 @@
 // Copyright (c) ncsh by Alex Eski 2024
 
+#ifdef linux
 #include <linux/limits.h>
+#endif /* ifdef linux */
+
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -247,7 +250,7 @@ int_fast32_t ncsh_execute(struct ncsh_Args args,
 	return ncsh_vm_execute(args);
 }
 
-int ncsh(void) {
+int main(void) {
 	clock_t start = clock();
 
 	char character;
