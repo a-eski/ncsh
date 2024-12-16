@@ -130,6 +130,14 @@ enum eskilib_Result ncsh_history_save(struct ncsh_History* history) {
 	return E_SUCCESS;
 }
 
+void ncsh_history_exit(struct ncsh_History* history) {
+	if (history->history_loaded) {
+		if (history->history_count > 0)
+			ncsh_history_save(history);
+		ncsh_history_free(history);
+	}
+}
+
 void ncsh_history_free(struct ncsh_History* history) {
 	assert(history != NULL);
 

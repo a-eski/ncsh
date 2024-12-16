@@ -16,22 +16,22 @@
 #include "eskilib/eskilib_string.h"
 #include "ncsh_builtins.h"
 
-bool ncsh_is_exit_command(struct ncsh_Args args) {
-	if (eskilib_string_equals(args.values[0], "q", args.max_line_length))
+bool ncsh_is_exit_command(struct ncsh_Args* args) {
+	if (eskilib_string_equals(args->values[0], "q", args->max_line_length))
 		return true;
-	else if (eskilib_string_equals(args.values[0], "exit", args.max_line_length))
+	else if (eskilib_string_equals(args->values[0], "exit", args->max_line_length))
 		return true;
-	else if (eskilib_string_equals(args.values[0], "quit", args.max_line_length))
+	else if (eskilib_string_equals(args->values[0], "quit", args->max_line_length))
 		return true;
 	else
 		return false;
 }
 
-uint_fast32_t ncsh_echo_command(struct ncsh_Args args) {
-	for (uint_fast32_t i = 1; i < args.count; ++i)
-		printf("%s ", args.values[i]);
+uint_fast32_t ncsh_echo_command(struct ncsh_Args* args) {
+	for (uint_fast32_t i = 1; i < args->count; ++i)
+		printf("%s ", args->values[i]);
 
-	if (args.count > 0)
+	if (args->count > 0)
 		putchar('\n');
 
 	return 1;
@@ -71,8 +71,8 @@ uint_fast32_t ncsh_help_command(void) {
 	return 1;
 }
 
-uint_fast32_t ncsh_cd_command(struct ncsh_Args args) {
-	if (args.values[1] == NULL) {
+uint_fast32_t ncsh_cd_command(struct ncsh_Args* args) {
+	if (args->values[1] == NULL) {
 		char* home = getenv("HOME");
 		if (home == NULL || chdir(home) != 0)
 			fputs("ncsh: could not change directory.\n", stderr);
@@ -80,7 +80,7 @@ uint_fast32_t ncsh_cd_command(struct ncsh_Args args) {
 		return 1;
 	}
 
-	if (chdir(args.values[1]) != 0)
+	if (chdir(args->values[1]) != 0)
 		fputs("ncsh: could not change directory.\n", stderr);
 
 	return 1;
