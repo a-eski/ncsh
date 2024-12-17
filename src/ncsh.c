@@ -1,9 +1,6 @@
 // Copyright (c) ncsh by Alex Eski 2024
 
-#ifdef linux
 #include <linux/limits.h>
-#endif /* ifdef linux */
-
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -28,6 +25,21 @@
 #include "eskilib/eskilib_colors.h"
 #include "eskilib/eskilib_string.h"
 #include "z/z.h"
+
+struct ncsh {
+	struct ncsh_Directory prompt_info;
+	struct ncsh_Config config;
+	struct ncsh_Args args;
+
+	uint_fast32_t history_position;
+	struct eskilib_String history_entry;
+	struct ncsh_History history;
+
+	char* current_autocompletion;
+	struct ncsh_Autocompletion_Node* autocompletions_tree;
+
+	struct z_Database z_db;
+};
 
 enum ncsh_Hotkey ncsh_get_key(char character) {
 	switch (character) {
@@ -231,14 +243,18 @@ int_fast32_t ncsh_execute(struct ncsh_Args* args,
 	if (ncsh_is_exit_command(args))
 		return 0;
 
-	if (eskilib_string_equals(args->values[0], "echo", args->max_line_length))
-		return ncsh_echo_command(args);
+	if (eskilib_string_equals(args->values[0], "echo", args->max_line_length)) {
+		ncsh_echo_command(args);
+		return NCSH_COMMAND_CONTINUE;
+	}
 
 	if (eskilib_string_equals(args->values[0], "help", args->max_line_length))
 		return ncsh_help_command();
 
-	if (eskilib_string_equals(args->values[0], "cd", args->max_line_length))
-		return ncsh_cd_command(args);
+	if (eskilib_string_equals(args->values[0], "cd", args->max_line_length)) {
+		ncsh_cd_command(args);
+		return NCSH_COMMAND_CONTINUE;
+	}
 
 	if (eskilib_string_equals(args->values[0], "z", args->max_line_length))
 		return ncsh_z(args, z_db);
@@ -248,21 +264,6 @@ int_fast32_t ncsh_execute(struct ncsh_Args* args,
 
 	return ncsh_vm_execute(args);
 }
-
-struct ncsh {
-	struct ncsh_Directory prompt_info;
-	struct ncsh_Config config;
-	struct ncsh_Args args;
-
-	uint_fast32_t history_position;
-	struct eskilib_String history_entry;
-	struct ncsh_History history;
-
-	char* current_autocompletion;
-	struct ncsh_Autocompletion_Node* autocompletions_tree;
-
-	struct z_Database z_db;
-};
 
 void ncsh_exit(struct ncsh* shell) {
 	ncsh_config_free(&shell->config);
