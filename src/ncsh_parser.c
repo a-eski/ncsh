@@ -14,6 +14,8 @@
 #define INPUT_REDIRECTION '<'
 #define OUTPUT_REDIRECTION '>'
 #define BACKGROUND_JOB '&'
+#define GLOB_STAR '*'
+#define GLOB_QUESTION_MARK '?'
 
 #define INPUT_REDIRECTION_APPEND_STRING "<<"
 #define OUTPUT_REDIRECTION_APPEND_STRING ">>"
@@ -50,6 +52,10 @@ enum ncsh_Ops ncsh_op_get(char line[], uint_fast32_t length) {
 			}
 			case BACKGROUND_JOB: {
 				return OP_BACKGROUND_JOB;
+			}
+			case GLOB_STAR :
+			case GLOB_QUESTION_MARK : {
+				return OP_GLOB;
 			}
 			default: {
 				return OP_CONSTANT;

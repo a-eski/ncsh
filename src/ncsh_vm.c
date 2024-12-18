@@ -175,21 +175,25 @@ int_fast32_t ncsh_syntax_error(const char* message, size_t message_length) {
 }
 
 struct ncsh_Tokens {
-	bool syntax_error;
+	// bool syntax_error;
 	uint_fast32_t output_redirect_found;
 	uint_fast32_t input_redirect_found;
 	uint_fast32_t number_of_pipe_commands;
 	char* output_file;
 	char* input_file;
-	struct ncsh_Args* args;
+	// struct ncsh_Args* args;
 };
 
 int_fast32_t ncsh_tokenize(struct ncsh_Args* args, struct ncsh_Tokens* tokens) {
-	tokens->args = args;
+	if (args->ops[0] == OP_PIPE)
+		return ncsh_syntax_error("ncsh: Invalid syntax: found pipe ('|') as first argument. Correct usage of pipes is 'ls | sort'.\n", 97);
+	else if (args->ops[args->count - 1] == OP_PIPE)
+		return ncsh_syntax_error("ncsh: Invalid syntax: found pipe ('|') as last argument. Correct usage of pipes is 'ls | sort'.\n", 96);
+
 	for (uint_fast32_t l = 0; l < args->count; ++l) {
 		if (args->ops[l] == OP_OUTPUT_REDIRECTION) {
 			if (l + 1 >= args->count) {
-				tokens->syntax_error = true;
+				// tokens->syntax_error = true;
 				return ncsh_syntax_error("ncsh: Invalid syntax: found no filename after output redirect symbol '>'.\n", 74);
 			}
 
@@ -198,7 +202,7 @@ int_fast32_t ncsh_tokenize(struct ncsh_Args* args, struct ncsh_Tokens* tokens) {
 		}
 		else if (args->ops[l] == OP_INPUT_REDIRECTION) {
 			if (l + 1 >= args->count) {
-				tokens->syntax_error = true;
+				// tokens->syntax_error = true;
 				return ncsh_syntax_error("ncsh: Invalid syntax: found no filename before input redirect symbol '<'.\n", 74);
 			}
 
@@ -210,6 +214,10 @@ int_fast32_t ncsh_tokenize(struct ncsh_Args* args, struct ncsh_Tokens* tokens) {
 		}
 	}
 	++tokens->number_of_pipe_commands;
+
+	if (tokens->output_redirect_found && tokens->input_redirect_found) {
+		return ncsh_syntax_error("ncsh: Invalid syntax: found both input and output redirects symbols ('<' and '>', respectively).\n", 97);
+	}
 
 	return NCSH_COMMAND_CONTINUE;
 }
@@ -229,10 +237,7 @@ int_fast32_t ncsh_vm(struct ncsh_Args* args) {
 	uint_fast32_t args_position = 0;
 	uint_fast32_t buffer_position = 0;
 
-	if (tokens.output_redirect_found && tokens.input_redirect_found) {
-		return ncsh_syntax_error("ncsh: Invalid syntax: found both input and output redirects symbols ('<' and '>', respectively).\n", 97);
-	}
-	else if (tokens.output_file && tokens.output_redirect_found) {
+	if (tokens.output_file && tokens.output_redirect_found) {
 		free(args->values[tokens.output_redirect_found]);
 		args->values[tokens.output_redirect_found] = NULL;
 		ncsh_output_redirection_start(tokens.output_file, &vm.output_redirect_io);
