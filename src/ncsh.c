@@ -16,8 +16,8 @@
 #include "ncsh_args.h"
 #include "ncsh_terminal.h"
 #include "ncsh_vm.h"
-#include "ncsh_history.h"
 #include "ncsh_parser.h"
+#include "ncsh_history.h"
 #include "ncsh_config.h"
 #include "ncsh_autocompletions.h"
 #include "ncsh_defines.h"
@@ -126,7 +126,6 @@ int_fast32_t ncsh_backspace(char* buffer, uint_fast32_t* buf_position, uint_fast
 		}
 
 		fflush(stdout);
-		// memmove(&buffer[buf_position - 1], &buffer[buf_position], strlen(buffer) - buf_position + 1);
 
 		while (*buf_position > buf_start) {
 			if (*buf_position == 0 || !buffer[*buf_position - 1])
@@ -199,6 +198,38 @@ void ncsh_autocomplete(char* buffer, uint_fast32_t buf_position, char* current_a
 	printf(WHITE_DIM "%s" RESET, current_autocompletion);
 	ncsh_terminal_move(position.x, position.y);
 	fflush(stdout);
+}
+
+[[nodiscard]]
+int_fast32_t ncsh_tab_autocomplete(char* buffer, uint_fast32_t buf_position, struct ncsh_Autocompletion_Node* autocompletions_tree) {
+	struct ncsh_Autocompletion autocompletion_matches[NCSH_MAX_AUTOCOMPLETION_MATCHES] = {0};
+	uint_fast32_t autocompletions_matches_count = ncsh_autocompletions_get(buffer, buf_position + 1, autocompletion_matches, autocompletions_tree);
+
+	if (autocompletions_matches_count == 0) {
+		return NCSH_EXIT_SUCCESS;
+	}
+
+	if (write(STDOUT_FILENO, ERASE_CURRENT_LINE "\n", ERASE_CURRENT_LINE_LENGTH + 1) == -1) {
+		perror(RED NCSH_ERROR_STDOUT RESET);
+		fflush(stderr);
+		return NCSH_EXIT_FAILURE;
+	}
+	for (uint_fast8_t i = 0; i < autocompletions_matches_count; ++i) {
+		// printf("match[%d] (weight: %d) %s\n", i, autocompletion_matches[i].weight, autocompletion_matches[i].value);
+		puts(autocompletion_matches[i].value);
+	}
+
+	struct ncsh_Coordinates position = ncsh_terminal_position();
+	if (position.x == 0 && position.y == 0)
+		return NCSH_EXIT_FAILURE;
+
+	for (uint_fast32_t i = 0; i < autocompletions_matches_count; ++i) {
+		free(autocompletion_matches[i].value);
+	}
+
+	ncsh_terminal_move(position.x, position.y);
+	fflush(stdout);
+	return NCSH_EXIT_SUCCESS;
 }
 
 int_fast32_t ncsh_z(struct ncsh_Args* args, struct z_Database* z_db) {
@@ -401,7 +432,19 @@ int ncsh(void) {
 
 		if (character == TAB_KEY)
 		{
-			character = ' ';
+			if (ncsh_tab_autocomplete(buffer, buf_position, shell.autocompletions_tree) != NCSH_EXIT_SUCCESS) {
+				exit = EXIT_FAILURE;
+				goto free_all;
+			}
+
+			shell.prompt_info.reprint_prompt = true;
+			buffer[0] = '\0';
+			buf_position = 0;
+			max_buf_position = 0;
+			shell.args.count = 0;
+			shell.args.max_line_length = 0;
+			shell.args.values[0] = NULL;
+			continue;
 		}
 
 		if (character == BACKSPACE_KEY) {

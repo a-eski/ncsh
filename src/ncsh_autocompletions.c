@@ -72,10 +72,7 @@ void ncsh_autocompletions_add(char* string, uint_fast32_t length, struct ncsh_Au
 }
 
 void ncsh_autocompletions_add_multiple(struct eskilib_String* strings, uint_fast32_t count, struct ncsh_Autocompletion_Node* tree) {
-	assert(strings != NULL);
-	assert(count > 0);
-	assert(tree != NULL);
-	if (strings == NULL || count == 0 || tree == NULL)
+	if (!strings || count == 0 || !tree)
 		return;
 
 	for (uint_fast32_t i = 0; i < count; ++i) {

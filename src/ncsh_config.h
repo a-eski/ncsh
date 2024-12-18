@@ -18,10 +18,6 @@ struct ncsh_Config {
 	char* config_file;
 };
 
-struct ncsh_Configuration {
-	bool short_directory;
-};
-
 enum eskilib_Result ncsh_config_init(struct ncsh_Config* config);
 
 void ncsh_config_free(struct ncsh_Config* config);
