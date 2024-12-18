@@ -175,13 +175,11 @@ int_fast32_t ncsh_syntax_error(const char* message, size_t message_length) {
 }
 
 struct ncsh_Tokens {
-	// bool syntax_error;
 	uint_fast32_t output_redirect_found;
 	uint_fast32_t input_redirect_found;
 	uint_fast32_t number_of_pipe_commands;
 	char* output_file;
 	char* input_file;
-	// struct ncsh_Args* args;
 };
 
 int_fast32_t ncsh_tokenize(struct ncsh_Args* args, struct ncsh_Tokens* tokens) {
@@ -193,7 +191,6 @@ int_fast32_t ncsh_tokenize(struct ncsh_Args* args, struct ncsh_Tokens* tokens) {
 	for (uint_fast32_t l = 0; l < args->count; ++l) {
 		if (args->ops[l] == OP_OUTPUT_REDIRECTION) {
 			if (l + 1 >= args->count) {
-				// tokens->syntax_error = true;
 				return ncsh_syntax_error("ncsh: Invalid syntax: found no filename after output redirect symbol '>'.\n", 74);
 			}
 
@@ -202,7 +199,6 @@ int_fast32_t ncsh_tokenize(struct ncsh_Args* args, struct ncsh_Tokens* tokens) {
 		}
 		else if (args->ops[l] == OP_INPUT_REDIRECTION) {
 			if (l + 1 >= args->count) {
-				// tokens->syntax_error = true;
 				return ncsh_syntax_error("ncsh: Invalid syntax: found no filename before input redirect symbol '<'.\n", 74);
 			}
 
