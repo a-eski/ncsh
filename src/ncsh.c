@@ -16,6 +16,7 @@
 #include "ncsh_args.h"
 #include "ncsh_terminal.h"
 #include "ncsh_vm.h"
+#include "ncsh_parser.h"
 #include "ncsh_history.h"
 #include "ncsh_config.h"
 #include "ncsh_autocompletions.h"
@@ -638,7 +639,7 @@ int ncsh(void) {
 			ncsh_debug_line(buffer, buf_position, max_buf_position);
 			#endif /* ifdef NCSH_DEBUG */
 
-			ncsh_vm_parse(buffer, buf_position, &shell.args);
+			ncsh_parse(buffer, buf_position, &shell.args);
 			if (!ncsh_args_is_valid(&shell.args)) {
 				ncsh_args_free_values(&shell.args);
 				continue;
