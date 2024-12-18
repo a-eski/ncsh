@@ -46,7 +46,7 @@ void ncsh_terminal_init(void) {
 	}
 }
 
-struct ncsh_Coordinates ncsh_terminal_size() {
+struct ncsh_Coordinates ncsh_terminal_size(void) {
 	struct winsize w;
 	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
 	return (struct ncsh_Coordinates) { .x = w.ws_col, .y = w.ws_row };
@@ -56,7 +56,7 @@ void ncsh_terminal_move(int x, int y) {
 	printf("\033[%d;%dH", y, x);
 }
 
-struct ncsh_Coordinates ncsh_terminal_position() {
+struct ncsh_Coordinates ncsh_terminal_position(void) {
 	char buffer[T_BUFFER_LENGTH] = {0};
 	int_fast32_t i = 0;
 	int_fast32_t power = 0;

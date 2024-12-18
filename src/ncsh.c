@@ -17,7 +17,6 @@
 #include "ncsh_terminal.h"
 #include "ncsh_vm.h"
 #include "ncsh_history.h"
-#include "ncsh_parser.h"
 #include "ncsh_config.h"
 #include "ncsh_autocompletions.h"
 #include "ncsh_defines.h"
@@ -126,7 +125,6 @@ int_fast32_t ncsh_backspace(char* buffer, uint_fast32_t* buf_position, uint_fast
 		}
 
 		fflush(stdout);
-		// memmove(&buffer[buf_position - 1], &buffer[buf_position], strlen(buffer) - buf_position + 1);
 
 		while (*buf_position > buf_start) {
 			if (*buf_position == 0 || !buffer[*buf_position - 1])
@@ -439,6 +437,12 @@ int ncsh(void) {
 			}
 
 			shell.prompt_info.reprint_prompt = true;
+			buffer[0] = '\0';
+			buf_position = 0;
+			max_buf_position = 0;
+			shell.args.count = 0;
+			shell.args.max_line_length = 0;
+			shell.args.values[0] = NULL;
 			continue;
 		}
 
@@ -634,7 +638,7 @@ int ncsh(void) {
 			ncsh_debug_line(buffer, buf_position, max_buf_position);
 			#endif /* ifdef NCSH_DEBUG */
 
-			ncsh_parse(buffer, buf_position, &shell.args);
+			ncsh_vm_parse(buffer, buf_position, &shell.args);
 			if (!ncsh_args_is_valid(&shell.args)) {
 				ncsh_args_free_values(&shell.args);
 				continue;
