@@ -19,13 +19,27 @@
 #include "ncsh_history.h"
 #include "ncsh_parser.h"
 #include "ncsh_config.h"
-#include "ncsh.h"
 #include "ncsh_autocompletions.h"
 #include "ncsh_defines.h"
 #include "ncsh_builtins.h"
 #include "eskilib/eskilib_colors.h"
 #include "eskilib/eskilib_string.h"
 #include "z/z.h"
+
+struct ncsh {
+	struct ncsh_Directory prompt_info;
+	struct ncsh_Config config;
+	struct ncsh_Args args;
+
+	uint_fast32_t history_position;
+	struct eskilib_String history_entry;
+	struct ncsh_History history;
+
+	char* current_autocompletion;
+	struct ncsh_Autocompletion_Node* autocompletions_tree;
+
+	struct z_Database z_db;
+};
 
 enum ncsh_Hotkey ncsh_get_key(char character) {
 	switch (character) {
@@ -187,21 +201,21 @@ void ncsh_autocomplete(char* buffer, uint_fast32_t buf_position, char* current_a
 	fflush(stdout);
 }
 
-int_fast32_t ncsh_z(struct ncsh_Args args, struct z_Database* z_db) {
+int_fast32_t ncsh_z(struct ncsh_Args* args, struct z_Database* z_db) {
 	assert(z_db != NULL);
-	assert(args.count > 0);
+	assert(args->count > 0);
 	if (z_db == NULL)
 		return NCSH_COMMAND_EXIT_FAILURE;
-	if (args.count == 0)
+	if (args->count == 0)
 		return NCSH_COMMAND_CONTINUE;
 
-	if (args.count > 2) {
-		if (!args.values[1] || !args.values[2])
+	if (args->count > 2) {
+		if (!args->values[1] || !args->values[2])
 			return NCSH_COMMAND_EXIT_FAILURE;
 
-		if (eskilib_string_equals(args.values[1], "add", args.max_line_length > 4 ? args.max_line_length : 4)) {
-			size_t length = strlen(args.values[2]) + 1;
-			if (z_add(args.values[2], length, z_db) == Z_SUCCESS)
+		if (eskilib_string_equals(args->values[1], "add", args->max_line_length > 4 ? args->max_line_length : 4)) {
+			size_t length = strlen(args->values[2]) + 1;
+			if (z_add(args->values[2], length, z_db) == Z_SUCCESS)
 				return NCSH_COMMAND_CONTINUE;
 			else
 				return NCSH_COMMAND_EXIT_FAILURE;
@@ -211,7 +225,7 @@ int_fast32_t ncsh_z(struct ncsh_Args args, struct z_Database* z_db) {
 		}
 	}
 
-	size_t length = args.values[1] == NULL ? 0 : strlen(args.values[1]) + 1;
+	size_t length = args->values[1] == NULL ? 0 : strlen(args->values[1]) + 1;
 	char cwd[PATH_MAX] = {0};
 	char* cwd_result = getcwd(cwd, PATH_MAX);
 	if (!cwd_result) {
@@ -219,32 +233,120 @@ int_fast32_t ncsh_z(struct ncsh_Args args, struct z_Database* z_db) {
 		return NCSH_COMMAND_EXIT_FAILURE;
 	}
 
-	z(args.values[1], length, cwd, z_db);
+	z(args->values[1], length, cwd, z_db);
 	return NCSH_COMMAND_CONTINUE;
 }
 
-int_fast32_t ncsh_execute(struct ncsh_Args args,
+int_fast32_t ncsh_execute(struct ncsh_Args* args,
 			  struct ncsh_History* history,
 			  struct z_Database* z_db) {
 	if (ncsh_is_exit_command(args))
 		return 0;
 
-	if (eskilib_string_equals(args.values[0], "echo", args.max_line_length))
-		return ncsh_echo_command(args);
+	if (eskilib_string_equals(args->values[0], "echo", args->max_line_length)) {
+		ncsh_echo_command(args);
+		return NCSH_COMMAND_CONTINUE;
+	}
 
-	if (eskilib_string_equals(args.values[0], "help", args.max_line_length))
+	if (eskilib_string_equals(args->values[0], "help", args->max_line_length))
 		return ncsh_help_command();
 
-	if (eskilib_string_equals(args.values[0], "cd", args.max_line_length))
-		return ncsh_cd_command(args);
+	if (eskilib_string_equals(args->values[0], "cd", args->max_line_length)) {
+		ncsh_cd_command(args);
+		return NCSH_COMMAND_CONTINUE;
+	}
 
-	if (eskilib_string_equals(args.values[0], "z", args.max_line_length))
+	if (eskilib_string_equals(args->values[0], "z", args->max_line_length))
 		return ncsh_z(args, z_db);
 
-	if (eskilib_string_equals(args.values[0], "history", args.max_line_length))
+	if (eskilib_string_equals(args->values[0], "history", args->max_line_length))
 		return ncsh_history_command(history);
 
 	return ncsh_vm_execute(args);
+}
+
+void ncsh_exit(struct ncsh* shell) {
+	ncsh_config_free(&shell->config);
+
+	ncsh_args_free(&shell->args);
+
+	ncsh_history_exit(&shell->history);
+
+	free(shell->current_autocompletion);
+	ncsh_autocompletions_free(shell->autocompletions_tree);
+
+	z_exit(&shell->z_db);
+
+	ncsh_terminal_reset();
+}
+
+int ncsh_init(struct ncsh* shell) {
+	shell->prompt_info.user = getenv("USER");
+
+	if (ncsh_config_init(&shell->config) != E_SUCCESS) {
+		ncsh_config_free(&shell->config);
+		return EXIT_FAILURE;
+	}
+
+	if (ncsh_args_malloc(&shell->args) != E_SUCCESS) {
+		perror(RED "ncsh: Error when allocating memory for parsing" RESET);
+		fflush(stderr);
+		ncsh_config_free(&shell->config);
+		ncsh_args_free(&shell->args);
+		return EXIT_FAILURE;
+	}
+
+	if (ncsh_history_malloc(&shell->history) != E_SUCCESS) {
+		perror(RED "ncsh: Error when allocating memory for history" RESET);
+		fflush(stderr);
+		ncsh_config_free(&shell->config);
+		ncsh_args_free(&shell->args);
+		ncsh_history_free(&shell->history);
+		return EXIT_FAILURE;
+	}
+
+	if (ncsh_history_load(shell->config.config_location, &shell->history) != E_SUCCESS) {
+		perror(RED "ncsh: Error when loading data from history file" RESET);
+		fflush(stderr);
+		ncsh_config_free(&shell->config);
+		ncsh_args_free(&shell->args);
+		ncsh_history_free(&shell->history);
+		return EXIT_FAILURE;
+	}
+
+	shell->current_autocompletion = malloc(NCSH_MAX_INPUT);
+	shell->autocompletions_tree = ncsh_autocompletions_malloc();
+	if (!shell->autocompletions_tree) {
+		perror(RED "ncsh: Error when loading data from history as autocompletions" RESET);
+		fflush(stderr);
+		ncsh_config_free(&shell->config);
+		ncsh_args_free(&shell->args);
+		ncsh_history_free(&shell->history);
+		ncsh_autocompletions_free(shell->autocompletions_tree);
+		return EXIT_FAILURE;
+	}
+	ncsh_autocompletions_add_multiple(shell->history.entries, shell->history.history_count, shell->autocompletions_tree);
+
+	ncsh_terminal_init();
+
+	enum z_Result result = z_init(shell->config.config_location, &shell->z_db);
+	if (result != Z_SUCCESS) {
+		ncsh_exit(shell);
+		return EXIT_FAILURE;
+	}
+
+	#ifdef NCSH_CLEAR_SCREEN_ON_STARTUP
+	if (write(STDOUT_FILENO,
+	   CLEAR_SCREEN MOVE_CURSOR_HOME,
+	   CLEAR_SCREEN_LENGTH + MOVE_CURSOR_HOME_LENGTH) == -1) {
+		perror(RED NCSH_ERROR_STDOUT RESET);
+		fflush(stderr);
+		ncsh_exit(shell);
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	return EXIT_SUCCESS;
 }
 
 int ncsh(void) {
@@ -259,94 +361,30 @@ int ncsh(void) {
 	enum ncsh_Hotkey key;
 	int_fast32_t command_result = 0;
 
-	struct ncsh_Directory prompt_info = {0};
-	prompt_info.user = getenv("USER");
-
-	struct ncsh_Config config = {0};
-	if (ncsh_config_init(&config) != E_SUCCESS) {
-		ncsh_config_free(&config);
+	struct ncsh shell = {0};
+	if (ncsh_init(&shell) == EXIT_FAILURE)
 		return EXIT_FAILURE;
-	}
-
-	struct ncsh_Args args = {0};
-	if (ncsh_args_malloc(&args) != E_SUCCESS) {
-		perror(RED "ncsh: Error when allocating memory for parsing" RESET);
-		fflush(stderr);
-		ncsh_config_free(&config);
-		return EXIT_FAILURE;
-	}
-
-	uint_fast32_t history_position = 0; // current position in history for the current loop, reset every loop
-	struct eskilib_String history_entry; // used to hold return value when cycling through history
-	struct ncsh_History history;
-	if (ncsh_history_malloc(&history) != E_SUCCESS) {
-		perror(RED "ncsh: Error when allocating memory for history" RESET);
-		fflush(stderr);
-		ncsh_config_free(&config);
-		ncsh_args_free(&args);
-		return EXIT_FAILURE;
-	}
-
-	if (ncsh_history_load(config.config_location, &history) != E_SUCCESS) {
-		perror(RED "ncsh: Error when loading data from history file" RESET);
-		fflush(stderr);
-		ncsh_config_free(&config);
-		ncsh_args_free(&args);
-		ncsh_history_free(&history);
-		return EXIT_FAILURE;
-	}
-
-	char* current_autocompletion = malloc(NCSH_MAX_INPUT);
-	struct ncsh_Autocompletion_Node* autocompletions_tree = ncsh_autocompletions_malloc();
-	if (autocompletions_tree == NULL) {
-		perror(RED "ncsh: Error when loading data from history as autocompletions" RESET);
-		fflush(stderr);
-		ncsh_config_free(&config);
-		free(current_autocompletion);
-		ncsh_history_free(&history);
-		ncsh_args_free(&args);
-		return EXIT_FAILURE;
-	}
-	ncsh_autocompletions_add_multiple(history.entries, history.history_count, autocompletions_tree);
-
-	int exit = EXIT_SUCCESS;
-	struct z_Database z_db;
-	enum z_Result result = z_init(config.config_location, &z_db);
-	if (result != Z_SUCCESS) {
-		exit = EXIT_FAILURE;
-		goto free_all;
-	}
-
-	ncsh_terminal_init();
-
-	/*if (write(STDOUT_FILENO,
-	   CLEAR_SCREEN MOVE_CURSOR_HOME,
-	   CLEAR_SCREEN_LENGTH + MOVE_CURSOR_HOME_LENGTH) == -1) {
-		perror(RED NCSH_ERROR_STDOUT RESET);
-		fflush(stderr);
-		exit = EXIT_FAILURE;
-		goto free_all;
-	}*/
 
 	clock_t end = clock();
 	double elapsed_ms = ((double)(end - start)) / CLOCKS_PER_SEC * 1000;
 	printf("ncsh: startup time: %.2f milliseconds\n", elapsed_ms);
 
-	if (ncsh_prompt(prompt_info) == NCSH_EXIT_FAILURE) {
+	int exit = EXIT_SUCCESS;
+	if (ncsh_prompt(shell.prompt_info) == NCSH_EXIT_FAILURE) {
 		exit = EXIT_FAILURE;
 		goto free_all;
 	}
 
 	while (1) {
-		if (buf_position == 0 && prompt_info.reprint_prompt == true) {
-			if (ncsh_prompt(prompt_info) == NCSH_EXIT_FAILURE) {
+		if (buf_position == 0 && shell.prompt_info.reprint_prompt == true) {
+			if (ncsh_prompt(shell.prompt_info) == NCSH_EXIT_FAILURE) {
 				exit = EXIT_FAILURE;
 				goto free_all;
 			}
-			history_position = 0;
+			shell.history_position = 0;
 		}
 		else {
-			prompt_info.reprint_prompt = true;
+			shell.prompt_info.reprint_prompt = true;
 		}
 
 		if (read(STDIN_FILENO, &character, 1) == -1) {
@@ -367,11 +405,11 @@ int ncsh(void) {
 		}
 
 		if (character == BACKSPACE_KEY) {
-			prompt_info.reprint_prompt = false;
+			shell.prompt_info.reprint_prompt = false;
 			if (buf_position == 0) {
 				continue;
 			}
-			current_autocompletion[0] = '\0';
+			shell.current_autocompletion[0] = '\0';
 			if (ncsh_backspace(buffer, &buf_position, &max_buf_position) == NCSH_EXIT_FAILURE) {
 				exit = EXIT_FAILURE;
 				goto free_all;
@@ -397,12 +435,12 @@ int ncsh(void) {
 
 				switch (key) {
 					case RIGHT: {
-						prompt_info.reprint_prompt = false;
+						shell.prompt_info.reprint_prompt = false;
 
 						if (buf_position == max_buf_position && buffer[0]) {
-							printf("%s", current_autocompletion);
-							for (uint_fast32_t i = 0; current_autocompletion[i] != '\0'; i++) {
-								buffer[buf_position] = current_autocompletion[i];
+							printf("%s", shell.current_autocompletion);
+							for (uint_fast32_t i = 0; shell.current_autocompletion[i] != '\0'; i++) {
+								buffer[buf_position] = shell.current_autocompletion[i];
 								++buf_position;
 							}
 							buffer[buf_position] = '\0';
@@ -410,7 +448,7 @@ int ncsh(void) {
 								max_buf_position = buf_position;
 
 							fflush(stdout);
-							current_autocompletion[0] = '\0';
+							shell.current_autocompletion[0] = '\0';
 							break;
 						}
 
@@ -428,7 +466,7 @@ int ncsh(void) {
 						break;
 					}
 					case LEFT: {
-						prompt_info.reprint_prompt = false;
+						shell.prompt_info.reprint_prompt = false;
 
 						if (buf_position == 0 || (!buffer[buf_position] && !buffer[buf_position - 1]))
 							continue;
@@ -444,11 +482,11 @@ int ncsh(void) {
 						break;
 					}
 					case UP: {
-						prompt_info.reprint_prompt = false;
+						shell.prompt_info.reprint_prompt = false;
 
-						history_entry = ncsh_history_get(history_position, &history);
-						if (history_entry.length > 0) {
-							++history_position;
+						shell.history_entry = ncsh_history_get(shell.history_position, &shell.history);
+						if (shell.history_entry.length > 0) {
+							++shell.history_position;
 							if (write(STDOUT_FILENO, RESTORE_CURSOR_POSITION ERASE_CURRENT_LINE,
 								RESTORE_CURSOR_POSITION_LENGTH + ERASE_CURRENT_LINE_LENGTH) == -1) {
 								perror(RED NCSH_ERROR_STDOUT RESET);
@@ -456,9 +494,9 @@ int ncsh(void) {
 								exit = EXIT_FAILURE;
 								goto free_all;
 							}
-							buf_position = history_entry.length - 1;
-							max_buf_position = history_entry.length - 1;
-							eskilib_string_copy(buffer, history_entry.value, buf_position);
+							buf_position = shell.history_entry.length - 1;
+							max_buf_position = shell.history_entry.length - 1;
+							eskilib_string_copy(buffer, shell.history_entry.value, buf_position);
 							if (write(STDOUT_FILENO, buffer, buf_position) == -1) {
 								perror(RED NCSH_ERROR_STDOUT RESET);
 								fflush(stderr);
@@ -470,12 +508,12 @@ int ncsh(void) {
 						break;
 					}
 					case DOWN: {
-						prompt_info.reprint_prompt = false;
+						shell.prompt_info.reprint_prompt = false;
 
-						if (history_position == 0)
+						if (shell.history_position == 0)
 							break;
 
-						history_entry = ncsh_history_get(history_position - 2, &history);
+						shell.history_entry = ncsh_history_get(shell.history_position - 2, &shell.history);
 						if (write(STDOUT_FILENO, RESTORE_CURSOR_POSITION ERASE_CURRENT_LINE,
 							RESTORE_CURSOR_POSITION_LENGTH + ERASE_CURRENT_LINE_LENGTH) == -1) {
 							perror(RED NCSH_ERROR_STDOUT RESET);
@@ -483,11 +521,11 @@ int ncsh(void) {
 							exit = EXIT_FAILURE;
 							goto free_all;
 						}
-						if (history_entry.length > 0) {
-							--history_position;
-							buf_position = history_entry.length - 1;
-							max_buf_position = history_entry.length - 1;
-							eskilib_string_copy(buffer, history_entry.value, buf_position);
+						if (shell.history_entry.length > 0) {
+							--shell.history_position;
+							buf_position = shell.history_entry.length - 1;
+							max_buf_position = shell.history_entry.length - 1;
+							eskilib_string_copy(buffer, shell.history_entry.value, buf_position);
 							if (write(STDOUT_FILENO, buffer, buf_position) == -1) {
 								perror(RED NCSH_ERROR_STDOUT RESET);
 								fflush(stderr);
@@ -514,7 +552,7 @@ int ncsh(void) {
 						if (character != DELETE_KEY)
 							continue;
 
-						prompt_info.reprint_prompt = false;
+						shell.prompt_info.reprint_prompt = false;
 
 						if (ncsh_delete(buffer, &buf_position, &max_buf_position) == NCSH_EXIT_FAILURE) {
 							exit = EXIT_FAILURE;
@@ -558,9 +596,9 @@ int ncsh(void) {
 			ncsh_debug_line(buffer, buf_position, max_buf_position);
 			#endif /* ifdef NCSH_DEBUG */
 
-			ncsh_parse(buffer, buf_position, &args);
-			if (!ncsh_args_is_valid(&args)) {
-				ncsh_args_free_values(&args);
+			ncsh_parse(buffer, buf_position, &shell.args);
+			if (!ncsh_args_is_valid(&shell.args)) {
+				ncsh_args_free_values(&shell.args);
 				continue;
 			}
 
@@ -568,12 +606,9 @@ int ncsh(void) {
 			ncsh_debug_args(args);
 			#endif /* ifdef NCSH_DEBUG */
 
-			ncsh_history_add(buffer, buf_position, &history);
-			ncsh_autocompletions_add(buffer, buf_position, autocompletions_tree);
+			command_result = ncsh_execute(&shell.args, &shell.history, &shell.z_db);
 
-			command_result = ncsh_execute(args, &history, &z_db);
-
-			ncsh_args_free_values(&args);
+			ncsh_args_free_values(&shell.args);
 
 			switch (command_result) {
 				case -1: {
@@ -585,12 +620,15 @@ int ncsh(void) {
 				}
 			}
 
+			ncsh_history_add(buffer, buf_position, &shell.history);
+			ncsh_autocompletions_add(buffer, buf_position, shell.autocompletions_tree);
+
 			buffer[0] = '\0';
 			buf_position = 0;
 			max_buf_position = 0;
-			args.count = 0;
-			args.max_line_length = 0;
-			args.values[0] = NULL;
+			shell.args.count = 0;
+			shell.args.max_line_length = 0;
+			shell.args.values[0] = NULL;
 		}
 		else {
 			if (buf_position == NCSH_MAX_INPUT - 1) {
@@ -665,27 +703,12 @@ int ncsh(void) {
 			if (buffer[0] == '\0' || buffer[buf_position] != '\0')
 				continue;
 
-			ncsh_autocomplete(buffer, buf_position, current_autocompletion, autocompletions_tree);
+			ncsh_autocomplete(buffer, buf_position, shell.current_autocompletion, shell.autocompletions_tree);
 		}
 	}
 
 	free_all:
-		ncsh_config_free(&config);
-
-		ncsh_args_free(&args);
-
-		if (history.history_loaded) {
-			if (history.history_count > 0)
-				ncsh_history_save(&history);
-			ncsh_history_free(&history);
-		}
-
-		free(current_autocompletion);
-		ncsh_autocompletions_free(autocompletions_tree);
-
-		z_exit(&z_db);
-
-		ncsh_terminal_reset();
+		ncsh_exit(&shell);
 
 	return exit;
 }

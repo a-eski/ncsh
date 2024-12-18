@@ -174,81 +174,93 @@ int_fast32_t ncsh_syntax_error(const char* message, size_t message_length) {
 	return NCSH_COMMAND_CONTINUE;
 }
 
-int_fast32_t ncsh_vm(struct ncsh_Args args) {
-	assert(args.values != NULL);
-	assert(args.ops != NULL);
-	assert(args.count != 0);
-	assert(args.max_line_length != 0);
+struct ncsh_Tokens {
+	bool syntax_error;
+	uint_fast32_t output_redirect_found;
+	uint_fast32_t input_redirect_found;
+	uint_fast32_t number_of_pipe_commands;
+	char* output_file;
+	char* input_file;
+	struct ncsh_Args* args;
+};
 
+int_fast32_t ncsh_tokenize(struct ncsh_Args* args, struct ncsh_Tokens* tokens) {
+	tokens->args = args;
+	for (uint_fast32_t l = 0; l < args->count; ++l) {
+		if (args->ops[l] == OP_OUTPUT_REDIRECTION) {
+			if (l + 1 >= args->count) {
+				tokens->syntax_error = true;
+				return ncsh_syntax_error("ncsh: Invalid syntax: found no filename after output redirect symbol '>'.\n", 74);
+			}
+
+			tokens->output_file = args->values[l + 1];
+			tokens->output_redirect_found = l;
+		}
+		else if (args->ops[l] == OP_INPUT_REDIRECTION) {
+			if (l + 1 >= args->count) {
+				tokens->syntax_error = true;
+				return ncsh_syntax_error("ncsh: Invalid syntax: found no filename before input redirect symbol '<'.\n", 74);
+			}
+
+			tokens->input_file = args->values[l + 1];
+			tokens->input_redirect_found = l;
+		}
+		else if (args->ops[l] == OP_PIPE) {
+			++tokens->number_of_pipe_commands;
+		}
+	}
+	++tokens->number_of_pipe_commands;
+
+	return NCSH_COMMAND_CONTINUE;
+}
+
+int_fast32_t ncsh_vm(struct ncsh_Args* args) {
 	struct ncsh_Vm vm = {0};
 	char* buffer[MAX_INPUT] = {0};
 	pid_t pid = 0;
 	bool end = false;
 	enum ncsh_Ops op_current = OP_NONE;
 
-	uint_fast32_t number_of_commands = 0;
+	struct ncsh_Tokens tokens = {0};
+	if (ncsh_tokenize(args, &tokens) != NCSH_COMMAND_CONTINUE)
+		return NCSH_COMMAND_EXIT_FAILURE;
+
 	uint_fast32_t command_position = 0;
 	uint_fast32_t args_position = 0;
 	uint_fast32_t buffer_position = 0;
 
-	char* output_file = NULL;
-	char* input_file = NULL;
-	uint_fast32_t output_redirect_found = 0;
-	uint_fast32_t input_redirect_found = 0;
-	for (uint_fast32_t l = 0; l < args.count; ++l) {
-		if (args.ops[l] == OP_OUTPUT_REDIRECTION) {
-			if (l + 1 >= args.count) {
-				return ncsh_syntax_error("ncsh: Invalid syntax: found no filename after output redirect symbol '>'.\n", 74);
-			}
-
-			output_file = args.values[l + 1];
-			output_redirect_found = l;
-		}
-		else if (args.ops[l] == OP_INPUT_REDIRECTION) {
-			if (l + 1 >= args.count) {
-				return ncsh_syntax_error("ncsh: Invalid syntax: found no filename before input redirect symbol '<'.\n", 74);
-			}
-
-			input_file = args.values[l + 1];
-			input_redirect_found = l;
-		}
-		else if (args.ops[l] == OP_PIPE) {
-			++number_of_commands;
-		}
-	}
-	++number_of_commands;
-
-	if (output_redirect_found && input_redirect_found) {
+	if (tokens.output_redirect_found && tokens.input_redirect_found) {
 		return ncsh_syntax_error("ncsh: Invalid syntax: found both input and output redirects symbols ('<' and '>', respectively).\n", 97);
 	}
-	else if (output_file && output_redirect_found) {
-		free(args.values[output_redirect_found]);
-		args.values[output_redirect_found] = NULL;
-		ncsh_output_redirection_start(output_file, &vm.output_redirect_io);
+	else if (tokens.output_file && tokens.output_redirect_found) {
+		free(args->values[tokens.output_redirect_found]);
+		args->values[tokens.output_redirect_found] = NULL;
+		ncsh_output_redirection_start(tokens.output_file, &vm.output_redirect_io);
 		if (vm.output_redirect_io.fd == -1) {
 			printf("ncsh: Invalid file handle '%s': could not open file for output redirection, do you have permission to open the file?\n",
-	  			output_file);
+	  			tokens.output_file);
 			return NCSH_COMMAND_CONTINUE;
 		}
 	}
-	else if (input_file && input_redirect_found) {
-		free(args.values[input_redirect_found]);
-		args.values[input_redirect_found] = NULL;
-		ncsh_input_redirection_start(input_file, &vm.input_redirect_io);
+	else if (tokens.input_file && tokens.input_redirect_found) {
+		free(args->values[tokens.input_redirect_found]);
+		args->values[tokens.input_redirect_found] = NULL;
+		ncsh_input_redirection_start(tokens.input_file, &vm.input_redirect_io);
 		if (vm.input_redirect_io.fd == -1) {
-			printf("ncsh: Invalid file handle '%s': could not open file for input redirection, does the file exist?\n", input_file);
+			printf("ncsh: Invalid file handle '%s': could not open file for input redirection, does the file exist?\n",
+				tokens.input_file);
 			return NCSH_COMMAND_CONTINUE;
 		}
 	}
 
-	while (args.values[args_position] != NULL && end != true) {
+	while (args->values[args_position] != NULL && end != true) {
 		buffer_position = 0;
 
-		while (args.ops[args_position] == OP_CONSTANT) {
-			buffer[buffer_position] = args.values[args_position];
+		while (args->ops[args_position] == OP_CONSTANT) {
+			buffer[buffer_position] = args->values[args_position];
 			++args_position;
 
-			if (args.values[args_position] == NULL) {
+			if (args->values[args_position] == NULL) {
 				end = true;
 				++buffer_position;
 				break;
@@ -258,7 +270,7 @@ int_fast32_t ncsh_vm(struct ncsh_Args args) {
 		}
 
 		if (!end) {
-			op_current = args.ops[args_position];
+			op_current = args->ops[args_position];
 		}
 
 		buffer[buffer_position] = NULL;
@@ -275,11 +287,11 @@ int_fast32_t ncsh_vm(struct ncsh_Args args) {
 
 		pid = fork();
 		if (pid == -1)
-			return ncsh_pipe_fork_failure(command_position, number_of_commands, &vm.pipes_io);
+			return ncsh_pipe_fork_failure(command_position, tokens.number_of_pipe_commands, &vm.pipes_io);
 
 		if (pid == 0) {
 			if (op_current == OP_PIPE)
-				ncsh_pipe_connect(command_position, number_of_commands, &vm.pipes_io);
+				ncsh_pipe_connect(command_position, tokens.number_of_pipe_commands, &vm.pipes_io);
 
 
 			if (execvp(buffer[0], buffer) == -1) {
@@ -291,7 +303,7 @@ int_fast32_t ncsh_vm(struct ncsh_Args args) {
 		}
 
 		if (op_current == OP_PIPE)
-			ncsh_pipe_stop(command_position, number_of_commands, &vm.pipes_io);
+			ncsh_pipe_stop(command_position, tokens.number_of_pipe_commands, &vm.pipes_io);
 
 		int status;
 		do {
@@ -301,18 +313,20 @@ int_fast32_t ncsh_vm(struct ncsh_Args args) {
 		++command_position;
 	}
 
-	if (output_file && output_redirect_found)
+	if (tokens.output_file && tokens.output_redirect_found)
 		ncsh_output_redirection_stop(&vm.output_redirect_io);
-	else if (input_file && input_redirect_found)
+	else if (tokens.input_file && tokens.input_redirect_found)
 		ncsh_input_redirection_stop(vm.input_redirect_io.original_stdin);
 
 	return NCSH_COMMAND_CONTINUE;
 }
 
-int_fast32_t ncsh_vm_execute(struct ncsh_Args args) {
-	assert(args.values != NULL);
-	assert(args.ops != NULL);
-	assert(args.values[0] != NULL);
+int_fast32_t ncsh_vm_execute(struct ncsh_Args* args) {
+	assert(args->values != NULL);
+	assert(args->ops != NULL);
+	assert(args->values[0] != NULL);
+	assert(args->count != 0);
+	assert(args->max_line_length != 0);
 
 	ncsh_terminal_reset(); //reset terminal settings since a lot of terminal programs use canonical mode
 

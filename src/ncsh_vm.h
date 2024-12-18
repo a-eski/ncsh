@@ -5,7 +5,7 @@
 
 #include <stdint.h>
 
-int_fast32_t ncsh_vm_execute(struct ncsh_Args args);
+int_fast32_t ncsh_vm_execute(struct ncsh_Args* args);
 
 #endif // !ncsh_vm_h
 

@@ -30,6 +30,8 @@ enum eskilib_Result ncsh_history_load(struct eskilib_String config_location, str
 
 enum eskilib_Result ncsh_history_save(struct ncsh_History* history);
 
+void ncsh_history_exit(struct ncsh_History* history);
+
 void ncsh_history_clean(struct ncsh_History* history);
 
 void ncsh_history_free(struct ncsh_History* history);
