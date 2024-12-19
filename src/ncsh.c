@@ -11,6 +11,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <assert.h>
+// #include <ncurses.h>
 
 #include "eskilib/eskilib_result.h"
 #include "ncsh_args.h"
@@ -26,6 +27,19 @@
 #include "eskilib/eskilib_string.h"
 #include "z/z.h"
 
+#define ncsh_write(str, len) if (write(STDOUT_FILENO, str, len) == -1) {	\
+		perror(RED NCSH_ERROR_STDOUT RESET);				\
+		fflush(stderr);							\
+		return NCSH_EXIT_FAILURE;					\
+	}									\
+
+#define ncsh_write_loop(str, len) if (write(STDOUT_FILENO, str, len) == -1) {	\
+		perror(RED NCSH_ERROR_STDOUT RESET);				\
+		fflush(stderr);							\
+		exit = EXIT_FAILURE;						\
+		goto free_all;							\
+	}									\
+
 struct ncsh {
 	struct ncsh_Directory prompt_info;
 	struct ncsh_Config config;
@@ -40,17 +54,6 @@ struct ncsh {
 
 	struct z_Database z_db;
 };
-
-enum ncsh_Hotkey ncsh_get_key(char character) {
-	switch (character) {
-		case UP_ARROW: { return UP; }
-		case DOWN_ARROW: { return DOWN; }
-		case RIGHT_ARROW: { return RIGHT; }
-		case LEFT_ARROW: { return LEFT; }
-		case DELETE_PREFIX_KEY: { return DELETE_PREFIX; }
-		default: { return NONE; }
-	}
-}
 
 #ifdef NCSH_SHORT_DIRECTORY
 void ncsh_prompt_directory(char* cwd, char* output) {
@@ -89,11 +92,7 @@ int_fast32_t ncsh_prompt(struct ncsh_Directory prompt_info) {
 	fflush(stdout);
 
 	// save cursor position so we can reset cursor when loading history entries
-	if (write(STDOUT_FILENO, SAVE_CURSOR_POSITION, SAVE_CURSOR_POSITION_LENGTH) == -1) {
-		perror(RED NCSH_ERROR_STDOUT RESET);
-		fflush(stderr);
-		return NCSH_EXIT_FAILURE;
-	}
+	ncsh_write(SAVE_CURSOR_POSITION, SAVE_CURSOR_POSITION_LENGTH);
 
 	return NCSH_EXIT_SUCCESS;
 }
@@ -108,11 +107,7 @@ int_fast32_t ncsh_backspace(char* buffer, uint_fast32_t* buf_position, uint_fast
 		if (*max_buf_position > 0)
 			--*max_buf_position;
 
-		if (write(STDOUT_FILENO, BACKSPACE_STRING ERASE_CURRENT_LINE, BACKSPACE_STRING_LENGTH + ERASE_CURRENT_LINE_LENGTH) == -1) {
-			perror(RED NCSH_ERROR_STDOUT RESET);
-			fflush(stderr);
-			return NCSH_EXIT_FAILURE;
-		}
+		ncsh_write(BACKSPACE_STRING ERASE_CURRENT_LINE, BACKSPACE_STRING_LENGTH + ERASE_CURRENT_LINE_LENGTH);
 
 		uint_fast32_t buf_start = *buf_position;
 		for (uint_fast32_t i = *buf_position; i < *max_buf_position && buffer[i]; ++i)
@@ -131,11 +126,8 @@ int_fast32_t ncsh_backspace(char* buffer, uint_fast32_t* buf_position, uint_fast
 			if (*buf_position == 0 || !buffer[*buf_position - 1])
 				break;
 
-			if (write(STDOUT_FILENO, MOVE_CURSOR_LEFT, MOVE_CURSOR_LEFT_LENGTH) == -1) {
-				perror(RED NCSH_ERROR_STDOUT RESET);
-				fflush(stderr);
-				return NCSH_EXIT_FAILURE;
-			}
+			ncsh_write(MOVE_CURSOR_LEFT, MOVE_CURSOR_LEFT_LENGTH);
+
 			--*buf_position;
 		}
 
@@ -145,11 +137,7 @@ int_fast32_t ncsh_backspace(char* buffer, uint_fast32_t* buf_position, uint_fast
 
 [[nodiscard]]
 int_fast32_t ncsh_delete(char* buffer, uint_fast32_t* buf_position, uint_fast32_t* max_buf_position) {
-	if (write(STDOUT_FILENO, DELETE_STRING ERASE_CURRENT_LINE, DELETE_STRING_LENGTH + ERASE_CURRENT_LINE_LENGTH) == -1) {
-		perror(RED NCSH_ERROR_STDOUT RESET);
-		fflush(stderr);
-		return NCSH_EXIT_FAILURE;
-	}
+	ncsh_write(DELETE_STRING ERASE_CURRENT_LINE, DELETE_STRING_LENGTH + ERASE_CURRENT_LINE_LENGTH);
 
 	uint_fast32_t buf_start = *buf_position;
 	for (uint_fast32_t i = *buf_position; i < *max_buf_position && buffer[i]; ++i)
@@ -169,11 +157,8 @@ int_fast32_t ncsh_delete(char* buffer, uint_fast32_t* buf_position, uint_fast32_
 		return NCSH_EXIT_SUCCESS;
 
 	while (*buf_position > buf_start && *buf_position != 0 && buffer[*buf_position - 1]) {
-		if (write(STDOUT_FILENO, MOVE_CURSOR_LEFT, MOVE_CURSOR_LEFT_LENGTH) == -1) {
-			perror(RED NCSH_ERROR_STDOUT RESET);
-			fflush(stderr);
-			return NCSH_EXIT_FAILURE;
-		}
+		ncsh_write(MOVE_CURSOR_LEFT, MOVE_CURSOR_LEFT_LENGTH);
+
 		--*buf_position;
 	}
 
@@ -209,25 +194,13 @@ int_fast32_t ncsh_tab_autocomplete(char* buffer, uint_fast32_t buf_position, str
 		return NCSH_EXIT_SUCCESS;
 	}
 
-	if (write(STDOUT_FILENO, ERASE_CURRENT_LINE "\n", ERASE_CURRENT_LINE_LENGTH + 1) == -1) {
-		perror(RED NCSH_ERROR_STDOUT RESET);
-		fflush(stderr);
-		return NCSH_EXIT_FAILURE;
-	}
+	ncsh_write(ERASE_CURRENT_LINE "\n", ERASE_CURRENT_LINE_LENGTH + 1);
+
 	for (uint_fast8_t i = 0; i < autocompletions_matches_count; ++i) {
-		// printf("match[%d] (weight: %d) %s\n", i, autocompletion_matches[i].weight, autocompletion_matches[i].value);
 		puts(autocompletion_matches[i].value);
-	}
-
-	struct ncsh_Coordinates position = ncsh_terminal_position();
-	if (position.x == 0 && position.y == 0)
-		return NCSH_EXIT_FAILURE;
-
-	for (uint_fast32_t i = 0; i < autocompletions_matches_count; ++i) {
 		free(autocompletion_matches[i].value);
 	}
 
-	ncsh_terminal_move(position.x, position.y);
 	fflush(stdout);
 	return NCSH_EXIT_SUCCESS;
 }
@@ -366,18 +339,7 @@ int ncsh_init(struct ncsh* shell) {
 		return EXIT_FAILURE;
 	}
 
-	#ifdef NCSH_CLEAR_SCREEN_ON_STARTUP
-	if (write(STDOUT_FILENO,
-	   CLEAR_SCREEN MOVE_CURSOR_HOME,
-	   CLEAR_SCREEN_LENGTH + MOVE_CURSOR_HOME_LENGTH) == -1) {
-		perror(RED NCSH_ERROR_STDOUT RESET);
-		fflush(stderr);
-		ncsh_exit(shell);
-		return EXIT_FAILURE;
-	}
-	#endif
-
-	return EXIT_SUCCESS;
+		return EXIT_SUCCESS;
 }
 
 int ncsh(void) {
@@ -389,18 +351,21 @@ int ncsh(void) {
 	uint_fast32_t buf_start = 0;
 	uint_fast32_t buf_position = 0;
 	uint_fast32_t max_buf_position = 0;
-	enum ncsh_Hotkey key;
 	int_fast32_t command_result = 0;
 
 	struct ncsh shell = {0};
 	if (ncsh_init(&shell) == EXIT_FAILURE)
 		return EXIT_FAILURE;
 
+	int exit = EXIT_SUCCESS;
+	#ifdef NCSH_CLEAR_SCREEN_ON_STARTUP
+	ncsh_write_loop(CLEAR_SCREEN MOVE_CURSOR_HOME, CLEAR_SCREEN_LENGTH + MOVE_CURSOR_HOME_LENGTH);
+	#endif
+
 	clock_t end = clock();
 	double elapsed_ms = ((double)(end - start)) / CLOCKS_PER_SEC * 1000;
 	printf("ncsh: startup time: %.2f milliseconds\n", elapsed_ms);
 
-	int exit = EXIT_SUCCESS;
 	if (ncsh_prompt(shell.prompt_info) == NCSH_EXIT_FAILURE) {
 		exit = EXIT_FAILURE;
 		goto free_all;
@@ -429,9 +394,7 @@ int ncsh(void) {
 			putchar('\n');
 			goto free_all;
 		}
-
-		if (character == TAB_KEY)
-		{
+		else if (character == TAB_KEY) {
 			if (ncsh_tab_autocomplete(buffer, buf_position, shell.autocompletions_tree) != NCSH_EXIT_SUCCESS) {
 				exit = EXIT_FAILURE;
 				goto free_all;
@@ -446,8 +409,7 @@ int ncsh(void) {
 			shell.args.values[0] = NULL;
 			continue;
 		}
-
-		if (character == BACKSPACE_KEY) {
+		else if (character == BACKSPACE_KEY) {
 			shell.prompt_info.reprint_prompt = false;
 			if (buf_position == 0) {
 				continue;
@@ -474,10 +436,8 @@ int ncsh(void) {
 					goto free_all;
 				}
 
-				key = ncsh_get_key(character);
-
-				switch (key) {
-					case RIGHT: {
+				switch (character) {
+					case RIGHT_ARROW: {
 						shell.prompt_info.reprint_prompt = false;
 
 						if (buf_position == max_buf_position && buffer[0]) {
@@ -498,83 +458,60 @@ int ncsh(void) {
 						if (buf_position == NCSH_MAX_INPUT - 1 || (!buffer[buf_position] && !buffer[buf_position + 1]))
 							continue;
 
-						if (write(STDOUT_FILENO, MOVE_CURSOR_RIGHT, MOVE_CURSOR_RIGHT_LENGTH) == -1) {
-							perror(RED NCSH_ERROR_STDOUT RESET);
-							fflush(stderr);
-							exit = EXIT_FAILURE;
-							goto free_all;
-						}
+						ncsh_write_loop(MOVE_CURSOR_RIGHT, MOVE_CURSOR_RIGHT_LENGTH);
+
 						++buf_position;
 
 						break;
 					}
-					case LEFT: {
+					case LEFT_ARROW: {
 						shell.prompt_info.reprint_prompt = false;
 
 						if (buf_position == 0 || (!buffer[buf_position] && !buffer[buf_position - 1]))
 							continue;
 
-						if (write(STDOUT_FILENO, MOVE_CURSOR_LEFT, MOVE_CURSOR_LEFT_LENGTH) == -1) {
-							perror(RED NCSH_ERROR_STDOUT RESET);
-							fflush(stderr);
-							exit = EXIT_FAILURE;
-							goto free_all;
-						}
+						ncsh_write_loop(MOVE_CURSOR_LEFT, MOVE_CURSOR_LEFT_LENGTH);
+
 						--buf_position;
 
 						break;
 					}
-					case UP: {
+					case UP_ARROW: {
 						shell.prompt_info.reprint_prompt = false;
 
 						shell.history_entry = ncsh_history_get(shell.history_position, &shell.history);
 						if (shell.history_entry.length > 0) {
 							++shell.history_position;
-							if (write(STDOUT_FILENO, RESTORE_CURSOR_POSITION ERASE_CURRENT_LINE,
-								RESTORE_CURSOR_POSITION_LENGTH + ERASE_CURRENT_LINE_LENGTH) == -1) {
-								perror(RED NCSH_ERROR_STDOUT RESET);
-								fflush(stderr);
-								exit = EXIT_FAILURE;
-								goto free_all;
-							}
+							ncsh_write_loop(RESTORE_CURSOR_POSITION ERASE_CURRENT_LINE,
+		       						RESTORE_CURSOR_POSITION_LENGTH + ERASE_CURRENT_LINE_LENGTH);
+
 							buf_position = shell.history_entry.length - 1;
 							max_buf_position = shell.history_entry.length - 1;
 							eskilib_string_copy(buffer, shell.history_entry.value, buf_position);
-							if (write(STDOUT_FILENO, buffer, buf_position) == -1) {
-								perror(RED NCSH_ERROR_STDOUT RESET);
-								fflush(stderr);
-								exit = EXIT_FAILURE;
-								goto free_all;
-							}
+
+							ncsh_write_loop(buffer, buf_position);
 						}
 
 						break;
 					}
-					case DOWN: {
+					case DOWN_ARROW: {
 						shell.prompt_info.reprint_prompt = false;
 
 						if (shell.history_position == 0)
 							break;
 
 						shell.history_entry = ncsh_history_get(shell.history_position - 2, &shell.history);
-						if (write(STDOUT_FILENO, RESTORE_CURSOR_POSITION ERASE_CURRENT_LINE,
-							RESTORE_CURSOR_POSITION_LENGTH + ERASE_CURRENT_LINE_LENGTH) == -1) {
-							perror(RED NCSH_ERROR_STDOUT RESET);
-							fflush(stderr);
-							exit = EXIT_FAILURE;
-							goto free_all;
-						}
+
+						ncsh_write_loop(RESTORE_CURSOR_POSITION ERASE_CURRENT_LINE,
+		       						RESTORE_CURSOR_POSITION_LENGTH + ERASE_CURRENT_LINE_LENGTH);
+
 						if (shell.history_entry.length > 0) {
 							--shell.history_position;
 							buf_position = shell.history_entry.length - 1;
 							max_buf_position = shell.history_entry.length - 1;
 							eskilib_string_copy(buffer, shell.history_entry.value, buf_position);
-							if (write(STDOUT_FILENO, buffer, buf_position) == -1) {
-								perror(RED NCSH_ERROR_STDOUT RESET);
-								fflush(stderr);
-								exit = EXIT_FAILURE;
-								goto free_all;
-							}
+
+							ncsh_write_loop(buffer, buf_position);
 						}
 						else {
 							buffer[0] = '\0';
@@ -584,7 +521,7 @@ int ncsh(void) {
 
 						break;
 					}
-					case DELETE_PREFIX: {
+					case DELETE_PREFIX_KEY: {
 						if (read(STDIN_FILENO, &character, 1) == -1) {
 							perror(RED NCSH_ERROR_STDIN RESET);
 							fflush(stderr);
@@ -604,8 +541,32 @@ int ncsh(void) {
 
 						break;
 					}
-					case NONE: {
-						continue;
+					case HOME_KEY: {
+						shell.prompt_info.reprint_prompt = false;
+						if (buf_position == 0) {
+							continue;
+						}
+
+						ncsh_write_loop(RESTORE_CURSOR_POSITION, RESTORE_CURSOR_POSITION_LENGTH);
+						buf_position = 0;
+
+						break;
+					}
+					case END_KEY: {
+						shell.prompt_info.reprint_prompt = false;
+						if (buf_position == max_buf_position) {
+							continue;
+						}
+
+						while (buffer[buf_position]) {
+							ncsh_write_loop(MOVE_CURSOR_RIGHT, MOVE_CURSOR_RIGHT_LENGTH)
+							++buf_position;
+						}
+
+						break;
+					}
+					default : {
+						break;
 					}
 				}
 			}
