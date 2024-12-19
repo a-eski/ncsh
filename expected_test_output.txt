@@ -15,7 +15,11 @@
 [32mncsh_parser_double_quotes_test passed.
 [0mncsh_parser_output_redirection_append_test started.
 [32mncsh_parser_output_redirection_append_test passed.
-[0m[93mFinished tests for ./src/tests/ncsh_parser_tests.c: 8 tests passed, 0 tests failed.
+[0mncsh_parser_home_test started.
+[32mncsh_parser_home_test passed.
+[0mncsh_parser_home_at_start_test started.
+[32mncsh_parser_home_at_start_test passed.
+[0m[93mFinished tests for ./src/tests/ncsh_parser_tests.c: 10 tests passed, 0 tests failed.
 [0m[93mStarting tests for ./src/tests/ncsh_history_tests.c
 [0mncsh_history_load_file_not_exists_test started.
 [32mncsh_history_load_file_not_exists_test passed.

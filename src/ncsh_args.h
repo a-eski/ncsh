@@ -3,12 +3,13 @@
 #ifndef ncsh_args_h
 #define ncsh_args_h
 
+#include <stddef.h>
 #include <stdint.h>
 
 #include "eskilib/eskilib_result.h"
 
 #define ncsh_TOKENS 128
-#define ncsh_TOKEN_BUFFER_SIZE 128
+#define ncsh_TOKEN_BUFFER_SIZE 256
 
 enum ncsh_Ops {
 	OP_NONE = 0,
@@ -27,7 +28,7 @@ enum ncsh_Ops {
 
 struct ncsh_Args {
 	uint_fast32_t count;
-	uint_fast32_t max_line_length;
+	size_t max_line_length;
 	uint_fast8_t* ops;
 	char** values;
 };

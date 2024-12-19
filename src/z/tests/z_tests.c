@@ -224,7 +224,6 @@ void z_change_directory_test(void) {
 		perror("wd error");
 		eskilib_assert(false);
 	}
-	// printf("initial dir %s\n", buffer);
 
 	struct eskilib_String target = { .value = "ncsh", .length = 5 };
 	z(target.value, target.length, buffer, &db);
@@ -234,46 +233,8 @@ void z_change_directory_test(void) {
 		perror("wd error");
 		eskilib_assert(false);
 	}
-	// printf("after chdir: %s\n", buffer_after);
 
 	eskilib_assert(strcmp(buffer, buffer_after) != 0);
-
-	if (chdir(buffer) == -1) { // remove when database file location support added
-		perror("Couldn't change back to previous directory");
-		eskilib_assert(false);
-	}
-
-	z_free(&db);
-}
-
-void z_home_change_directory_test(void) {
-	struct z_Database db = {0};
-	eskilib_assert(z_init(eskilib_String_Empty, &db) == Z_SUCCESS);
-	eskilib_assert(db.count == 2);
-
-	char buffer[528];
-	char buffer_after[528];
-
-	char* wd = getcwd(buffer, sizeof(buffer));
-	if (wd == NULL) {
-		perror("wd error");
-		eskilib_assert(false);
-	}
-	// printf("initial dir %s\n", buffer);
-
-	struct eskilib_String target = { .value = "~", .length = 2 };
-	z(target.value, target.length, buffer, &db);
-
-	wd = getcwd(buffer_after, sizeof(buffer_after));
-	if (wd == NULL) {
-		perror("wd error");
-		eskilib_assert(false);
-	}
-
-	// printf("after chdir: %s\n", buffer_after);
-
-	eskilib_assert(strcmp(buffer, buffer_after) != 0);
-	eskilib_assert(strcmp(buffer_after, getenv("HOME")) == 0);
 
 	if (chdir(buffer) == -1) { // remove when database file location support added
 		perror("Couldn't change back to previous directory");
@@ -296,7 +257,6 @@ void z_home_empty_target_change_directory_test(void) {
 		perror("wd error");
 		eskilib_assert(false);
 	}
-	// printf("initial dir %s\n", buffer);
 
 	struct eskilib_String target = eskilib_String_Empty;
 	z(target.value, target.length, buffer, &db);
@@ -306,8 +266,6 @@ void z_home_empty_target_change_directory_test(void) {
 		perror("wd error");
 		eskilib_assert(false);
 	}
-
-	// printf("after chdir: %s\n", buffer_after);
 
 	eskilib_assert(strcmp(buffer, buffer_after) != 0);
 	eskilib_assert(strcmp(buffer_after, getenv("HOME")) == 0);
@@ -333,7 +291,6 @@ void z_no_match_change_directory_test(void) {
 		perror("wd error");
 		eskilib_assert(false);
 	}
-	// printf("initial dir %s\n", buffer);
 
 	struct eskilib_String target = { .value = "zzz", .length = 4 };
 	z(target.value, target.length, buffer, &db);
@@ -343,7 +300,6 @@ void z_no_match_change_directory_test(void) {
 		perror("wd error");
 		eskilib_assert(false);
 	}
-	// printf("after chdir: %s\n", buffer_after);
 
 	eskilib_assert(strcmp(buffer, buffer_after) == 0);
 
@@ -368,7 +324,6 @@ void z_valid_subdirectory_change_directory_test(void) {
 		perror("wd error");
 		eskilib_assert(false);
 	}
-	// printf("initial dir %s\n", buffer);
 
 	struct eskilib_String target = { .value = "tests", .length = 6 };
 	z(target.value, target.length, buffer, &db);
@@ -378,7 +333,6 @@ void z_valid_subdirectory_change_directory_test(void) {
 		perror("wd error");
 		eskilib_assert(false);
 	}
-	// printf("after chdir: %s\n", buffer_after);
 
 	eskilib_assert(strcmp(buffer, buffer_after) != 0);
 
@@ -405,7 +359,6 @@ void z_dir_slash_dir_change_directory_test(void) {
 		eskilib_assert(false);
 	}
 	size_t buffer_length = strlen(buffer) + 1;
-	// printf("initial dir %s\n", buffer);
 	struct eskilib_String target = { .value = "tests/test_dir", .length = 15 };
 	add_new_to_database(target.value, target.length, buffer, buffer_length, &db);
 
@@ -416,7 +369,6 @@ void z_dir_slash_dir_change_directory_test(void) {
 		perror("wd error");
 		eskilib_assert(false);
 	}
-	// printf("after chdir: %s\n", buffer_after);
 
 	eskilib_assert(strcmp(buffer, buffer_after) != 0);
 	eskilib_assert(eskilib_string_contains_unsafe(buffer_after, "tests/test_dir"));
@@ -443,7 +395,6 @@ void z_double_dot_change_directory_test(void) {
 		perror("wd error");
 		eskilib_assert(false);
 	}
-	// printf("initial dir %s\n", buffer);
 
 	struct eskilib_String target = { .value = "..", .length = 3 };
 	z(target.value, target.length, buffer, &db);
@@ -453,7 +404,6 @@ void z_double_dot_change_directory_test(void) {
 		perror("wd error");
 		eskilib_assert(false);
 	}
-	// printf("after chdir: %s\n", buffer_after);
 
 	eskilib_assert(strcmp(buffer, buffer_after) != 0);
 
@@ -468,7 +418,38 @@ void z_double_dot_change_directory_test(void) {
 // normal things like ../..
 
 // relative dirs like ~/.config
-void z_relative_dirs_change_directory_test(void) {}
+void z_relative_dirs_change_directory_test(void) {
+	struct z_Database db = {0};
+	eskilib_assert(z_init(eskilib_String_Empty, &db) == Z_SUCCESS);
+	eskilib_assert(db.count == 3);
+
+	char buffer[528];
+	char buffer_after[528];
+
+	char* wd = getcwd(buffer, sizeof(buffer));
+	if (wd == NULL) {
+		perror("wd error");
+		eskilib_assert(false);
+	}
+
+	struct eskilib_String target = { .value = "~/.config", .length = 10 };
+	z(target.value, target.length, buffer, &db);
+
+	wd = getcwd(buffer_after, sizeof(buffer_after));
+	if (wd == NULL) {
+		perror("wd error");
+		eskilib_assert(false);
+	}
+
+	eskilib_assert(strcmp(buffer, buffer_after) != 0);
+
+	if (chdir(buffer) == -1) { // remove when database file location support added
+		perror("Couldn't change back to previous directory");
+		eskilib_assert(false);
+	}
+
+	z_exit(&db);
+}
 
 void z_empty_database_valid_subdirectory_change_directory_test(void) {
 	remove(Z_DATABASE_FILE);
@@ -485,7 +466,6 @@ void z_empty_database_valid_subdirectory_change_directory_test(void) {
 		perror("wd error");
 		eskilib_assert(false);
 	}
-	// printf("initial dir %s\n", buffer);
 
 	struct eskilib_String target = { .value = "tests", .length = 6 };
 	z(target.value, target.length, buffer, &db);
@@ -495,7 +475,6 @@ void z_empty_database_valid_subdirectory_change_directory_test(void) {
 		perror("wd error");
 		eskilib_assert(false);
 	}
-	// printf("after chdir: %s\n", buffer_after);
 
 	eskilib_assert(strcmp(buffer, buffer_after) != 0);
 
@@ -582,10 +561,11 @@ int main(void) {
 	eskilib_test_run("z_find_match_multiple_matches_test", z_find_match_multiple_matches_test);
 
 	eskilib_test_run("z_change_directory_test", z_change_directory_test);
-	eskilib_test_run("z_home_change_directory_test", z_home_change_directory_test);
 	eskilib_test_run("z_home_empty_target_change_directory_test", z_home_empty_target_change_directory_test);
 	eskilib_test_run("z_no_match_change_directory_test", z_no_match_change_directory_test);
 	eskilib_test_run("z_valid_subdirectory_change_directory_test", z_valid_subdirectory_change_directory_test);
+	// eskilib_test_run("z_relative_dirs_change_directory_test", z_relative_dirs_change_directory_test);
+	// eskilib_test_run("z_double_dot_change_directory_test", z_double_dot_change_directory_test);
 	eskilib_test_run("z_dir_slash_dir_change_directory_test", z_dir_slash_dir_change_directory_test);
 	eskilib_test_run("z_empty_database_valid_subdirectory_change_directory_test", z_empty_database_valid_subdirectory_change_directory_test);
 

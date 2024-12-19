@@ -1,6 +1,7 @@
 // Copyright (c) ncsh by Alex Eski 2024
 
 #define _POSIX_SOURCE
+#include <string.h>
 #include <stdint.h>
 #include <linux/limits.h>
 #include <assert.h>
@@ -175,8 +176,8 @@ int_fast32_t ncsh_syntax_error(const char* message, size_t message_length) {
 }
 
 struct ncsh_Tokens {
-	uint_fast32_t output_redirect_found;
-	uint_fast32_t input_redirect_found;
+	uint_fast32_t output_redirect_found_index;
+	uint_fast32_t input_redirect_found_index;
 	uint_fast32_t number_of_pipe_commands;
 	char* output_file;
 	char* input_file;
@@ -188,30 +189,30 @@ int_fast32_t ncsh_tokenize(struct ncsh_Args* args, struct ncsh_Tokens* tokens) {
 	else if (args->ops[args->count - 1] == OP_PIPE)
 		return ncsh_syntax_error("ncsh: Invalid syntax: found pipe ('|') as last argument. Correct usage of pipes is 'ls | sort'.\n", 96);
 
-	for (uint_fast32_t l = 0; l < args->count; ++l) {
-		if (args->ops[l] == OP_OUTPUT_REDIRECTION) {
-			if (l + 1 >= args->count) {
+	for (uint_fast32_t i = 0; i < args->count; ++i) {
+		if (args->ops[i] == OP_OUTPUT_REDIRECTION) {
+			if (i + 1 >= args->count) {
 				return ncsh_syntax_error("ncsh: Invalid syntax: found no filename after output redirect symbol '>'.\n", 74);
 			}
 
-			tokens->output_file = args->values[l + 1];
-			tokens->output_redirect_found = l;
+			tokens->output_file = args->values[i + 1];
+			tokens->output_redirect_found_index = i;
 		}
-		else if (args->ops[l] == OP_INPUT_REDIRECTION) {
-			if (l + 1 >= args->count) {
+		else if (args->ops[i] == OP_INPUT_REDIRECTION) {
+			if (i + 1 >= args->count) {
 				return ncsh_syntax_error("ncsh: Invalid syntax: found no filename before input redirect symbol '<'.\n", 74);
 			}
 
-			tokens->input_file = args->values[l + 1];
-			tokens->input_redirect_found = l;
+			tokens->input_file = args->values[i + 1];
+			tokens->input_redirect_found_index = i;
 		}
-		else if (args->ops[l] == OP_PIPE) {
+		else if (args->ops[i] == OP_PIPE) {
 			++tokens->number_of_pipe_commands;
 		}
 	}
 	++tokens->number_of_pipe_commands;
 
-	if (tokens->output_redirect_found && tokens->input_redirect_found) {
+	if (tokens->output_redirect_found_index && tokens->input_redirect_found_index) {
 		return ncsh_syntax_error("ncsh: Invalid syntax: found both input and output redirects symbols ('<' and '>', respectively).\n", 97);
 	}
 
@@ -233,9 +234,9 @@ int_fast32_t ncsh_vm(struct ncsh_Args* args) {
 	uint_fast32_t args_position = 0;
 	uint_fast32_t buffer_position = 0;
 
-	if (tokens.output_file && tokens.output_redirect_found) {
-		free(args->values[tokens.output_redirect_found]);
-		args->values[tokens.output_redirect_found] = NULL;
+	if (tokens.output_file && tokens.output_redirect_found_index) {
+		free(args->values[tokens.output_redirect_found_index]);
+		args->values[tokens.output_redirect_found_index] = NULL;
 		ncsh_output_redirection_start(tokens.output_file, &vm.output_redirect_io);
 		if (vm.output_redirect_io.fd == -1) {
 			printf("ncsh: Invalid file handle '%s': could not open file for output redirection, do you have permission to open the file?\n",
@@ -243,9 +244,9 @@ int_fast32_t ncsh_vm(struct ncsh_Args* args) {
 			return NCSH_COMMAND_CONTINUE;
 		}
 	}
-	else if (tokens.input_file && tokens.input_redirect_found) {
-		free(args->values[tokens.input_redirect_found]);
-		args->values[tokens.input_redirect_found] = NULL;
+	else if (tokens.input_file && tokens.input_redirect_found_index) {
+		free(args->values[tokens.input_redirect_found_index]);
+		args->values[tokens.input_redirect_found_index] = NULL;
 		ncsh_input_redirection_start(tokens.input_file, &vm.input_redirect_io);
 		if (vm.input_redirect_io.fd == -1) {
 			printf("ncsh: Invalid file handle '%s': could not open file for input redirection, does the file exist?\n",
@@ -314,9 +315,9 @@ int_fast32_t ncsh_vm(struct ncsh_Args* args) {
 		++command_position;
 	}
 
-	if (tokens.output_file && tokens.output_redirect_found)
+	if (tokens.output_file && tokens.output_redirect_found_index)
 		ncsh_output_redirection_stop(&vm.output_redirect_io);
-	else if (tokens.input_file && tokens.input_redirect_found)
+	else if (tokens.input_file && tokens.input_redirect_found_index)
 		ncsh_input_redirection_stop(vm.input_redirect_io.original_stdin);
 
 	return NCSH_COMMAND_CONTINUE;

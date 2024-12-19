@@ -398,14 +398,7 @@ void z(char* target, size_t target_length, const char* cwd, struct z_Database* d
 		return;
 
 	if (target_length == 2) {
-		if (target[0] == '~') {
-			char* home = getenv("HOME");
-			if (!home || chdir(home) == -1)
-				perror("z: couldn't change directory");
-
-			return;
-		}
-		else if (target[0] == '.') {
+		if (target[0] == '.') {
 			if (chdir(target) == -1)
 				perror("z: couldn't change directory");
 
