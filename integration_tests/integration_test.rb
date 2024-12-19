@@ -469,18 +469,15 @@ def basic_autocompletion_test(row)
   @tty.send_keys_one_at_a_time(%(l))
   @tty.send_right_arrow
   @tty.assert_row_ends_with(row, %(ls))
-
-  @tty.send_keys_one_at_a_time(%( |))
-  @tty.send_right_arrow
-  @tty.assert_row_ends_with(row, %(ls | sort))
+  @tty.send_backspaces(2)
 
   puts 'Basic autocompletion test passed'
   row
 end
 
 def backspace_and_delete_autocompletion_test(row)
-  @tty.send_backspaces(4)
-  @tty.send_keys_one_at_a_time(%(s |))
+  assert_check_new_row(row)
+  @tty.send_keys_one_at_a_time(%(ls |))
   @tty.send_right_arrow
   @tty.assert_row_ends_with(row, %(ls | sort))
 
@@ -539,16 +536,24 @@ def builtin_tests(row)
   starting_tests 'builtin'
 
   row = help_test row
-
   assert_check_new_row(row)
 
   row
 end
 
-def copy_and_paste_tests(row)
-  starting_tests 'copy/paste'
-  row
-end
+# def home_and_end_tests(row)
+#   starting_tests 'home and end'
+#
+#   assert_check_new_row(row)
+#   @tty.send_keys_one_at_a_time(%(ss))
+#   @tty.send_home
+#   @tty.assert_cursor_position(START_COL, row)
+#   @tty.send_end
+#   @tty.assert_cursor_position(START_COL + 2, row)
+#
+#   puts 'Home and End tests passed'
+#   row
+# end
 
 @tty = TTYtest.new_terminal(%(PS1='$ ' ./bin/ncsh), width: 80, height: 48)
 @row = 0
@@ -572,13 +577,11 @@ end
 
 @row = input_redirection_tests @row
 
-# @row = autocompletion_tests @row
+@row = autocompletion_tests @row
 
 @row = builtin_tests @row
 
-# @row = home_tests
-# @row = end_tests
-
+# @row = home_and_end_tests @row
 # @row = multiline_tests @row
 # @row = copy_paste_tests @row
 
