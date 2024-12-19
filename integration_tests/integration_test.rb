@@ -576,6 +576,9 @@ end
 
 @row = builtin_tests @row
 
+# @row = home_tests
+# @row = end_tests
+
 # @row = multiline_tests @row
 # @row = copy_paste_tests @row
 

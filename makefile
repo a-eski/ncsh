@@ -5,6 +5,7 @@ objects = obj/main.o obj/ncsh.o obj/ncsh_vm.o obj/ncsh_terminal.o obj/eskilib_st
 target = bin/ncsh
 
 CC ?= gcc
+# LDFLAGS = -lncurses
 DESTDIR ?= /usr/local
 RELEASE ?= 1
 
@@ -22,6 +23,7 @@ endif
 
 $(target) : $(objects)
 	$(cc_with_flags) -o $(target) $(objects)
+# $(LDFLAGS)
 
 obj/main.o : src/main.c src/ncsh.h
 	$(cc_with_flags) -c src/main.c -o obj/main.o
