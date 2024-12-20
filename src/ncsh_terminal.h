@@ -51,7 +51,6 @@
 struct ncsh_Directory {
 	bool reprint_prompt;
 	char* user;
-	char* home;
 	char path[PATH_MAX];
 };
 

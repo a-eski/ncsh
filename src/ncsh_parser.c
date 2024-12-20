@@ -41,7 +41,7 @@ bool ncsh_is_delimiter(char ch) {
 }
 
 enum ncsh_Ops ncsh_op_get(char line[], size_t length) {
-	if (line == NULL || length == 0)
+	if (!line || length == 0)
 		return OP_NONE;
 
 	if (length == 1) {
@@ -77,12 +77,6 @@ enum ncsh_Ops ncsh_op_get(char line[], size_t length) {
 }
 
 void ncsh_parse(char line[], size_t length, struct ncsh_Args* args) {
-	if (line == NULL || args->values == NULL || args->ops == NULL) {
-		args->max_line_length = 0;
-		args->count = 0;
-		return;
-	}
-
 	if (length == 0 || length > NCSH_MAX_INPUT) {
 		args->max_line_length = 0;
 		args->count = 0;
@@ -98,20 +92,19 @@ void ncsh_parse(char line[], size_t length, struct ncsh_Args* args) {
 		if (line_position == length || line_position == NCSH_MAX_INPUT - 1 ||
 			buf_position == NCSH_MAX_INPUT - 1 || args->count == NCSH_MAX_INPUT - 1) {
 			args->values[args->count] = NULL;
-			glob_found = false;
 			break;
 		}
 		else if (ncsh_is_delimiter(line[line_position]) && (double_quotes_count == 0 || double_quotes_count == 2)) {
 			buffer[buf_position] = '\0';
 
 			if (glob_found) {
-				glob_t globbuf = {0};
-				glob(buffer, GLOB_DOOFFS, NULL, &globbuf);
+				glob_t glob_buf = {0};
+				glob(buffer, GLOB_DOOFFS, NULL, &glob_buf);
 
-				for (size_t i = 0; i < globbuf.gl_pathc; ++i) {
-					buf_position = strlen(globbuf.gl_pathv[i]) + 1;
+				for (size_t i = 0; i < glob_buf.gl_pathc; ++i) {
+					buf_position = strlen(glob_buf.gl_pathv[i]) + 1;
 					args->values[args->count] = malloc(buf_position);
-					strcpy(args->values[args->count], globbuf.gl_pathv[i]);
+					strcpy(args->values[args->count], glob_buf.gl_pathv[i]);
 					args->ops[args->count] = OP_CONSTANT;
 					++args->count;
 
@@ -119,7 +112,8 @@ void ncsh_parse(char line[], size_t length, struct ncsh_Args* args) {
 						args->max_line_length = buf_position;
 				}
 
-				globfree(&globbuf);
+				globfree(&glob_buf);
+				glob_found = false;
 			}
 			else {
 				args->values[args->count] = malloc(buf_position + 1);

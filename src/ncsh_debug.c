@@ -6,7 +6,7 @@
 
 #include "ncsh_debug.h"
 
-void ncsh_debug_line(char* buffer, uint_fast32_t buf_position, uint_fast32_t max_buf_position) {
+void ncsh_debug_line(char* buffer, size_t buf_position, size_t max_buf_position) {
 	printf("buffer: %s\n", buffer);
 	printf("buf_position: %lu\n", buf_position);
 	printf("max_buf_position %lu\n", max_buf_position);

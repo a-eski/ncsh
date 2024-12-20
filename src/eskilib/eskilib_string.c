@@ -117,7 +117,7 @@ bool eskilib_string_contains(const struct eskilib_String string, const struct es
 	if (*b == '\0')
 		return true;
 
-	for (uint_fast32_t i = 0; i < string.length && *stringValue != '\0'; i++, stringValue += 1) {
+	for (size_t i = 0; i < string.length && *stringValue != '\0'; i++, stringValue += 1) {
 		if (*stringValue != *b)
 			continue;
 
@@ -137,7 +137,7 @@ bool eskilib_string_contains(const struct eskilib_String string, const struct es
 }
 
 [[nodiscard]]
-bool eskilib_string_contains_s(const char* string, uint32_t string_length, const struct eskilib_String substring) {
+bool eskilib_string_contains_s(const char* string, size_t string_length, const struct eskilib_String substring) {
 	assert(string != NULL);
 	assert(substring.value != NULL);
 
@@ -160,12 +160,12 @@ bool eskilib_string_contains_s(const char* string, uint32_t string_length, const
 	if (*b == '\0')
 		return true;
 
-	for (uint_fast32_t i = 0; i < string_length && *stringValue != '\0'; i++, stringValue += 1) {
+	for (size_t i = 0; i < string_length && *stringValue != '\0'; i++, stringValue += 1) {
 		if (*stringValue != *b)
 			continue;
 
 		a = stringValue;
-		for (uint_fast32_t j = 0; j < substring.length; j++) {
+		for (size_t j = 0; j < substring.length; j++) {
 			if (*b == '\0') {
 				return true;
 			}
@@ -205,12 +205,12 @@ bool eskilib_string_contains_s2(const char* string, size_t string_length, const 
 	if (*b == '\0')
 		return true;
 
-	for (uint_fast32_t i = 0; i < string_length && *stringValue != '\0'; i++, stringValue += 1) {
+	for (size_t i = 0; i < string_length && *stringValue != '\0'; i++, stringValue += 1) {
 		if (*stringValue != *b)
 			continue;
 
 		a = stringValue;
-		for (uint_fast32_t j = 0; j < string_two_length; j++) {
+		for (size_t j = 0; j < string_two_length; j++) {
 			if (*b == '\0') {
 				return true;
 			}

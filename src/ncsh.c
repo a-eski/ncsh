@@ -289,7 +289,6 @@ void ncsh_exit(struct ncsh* shell) {
 
 int ncsh_init(struct ncsh* shell) {
 	shell->prompt_info.user = getenv("USER");
-	shell->prompt_info.home = getenv("HOME");
 
 	if (ncsh_config_init(&shell->config) != E_SUCCESS) {
 		ncsh_config_free(&shell->config);

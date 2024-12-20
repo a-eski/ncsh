@@ -42,7 +42,7 @@ void ncsh_autocompletions_free_matches(struct ncsh_Autocompletion* matches, uint
 		free(matches[i].value);
 }
 
-void ncsh_autocompletions_add(char* string, uint_fast32_t length, struct ncsh_Autocompletion_Node* tree) {
+void ncsh_autocompletions_add(char* string, size_t length, struct ncsh_Autocompletion_Node* tree) {
 	assert(string);
 	assert(length > 0);
 	assert(tree);
@@ -51,7 +51,7 @@ void ncsh_autocompletions_add(char* string, uint_fast32_t length, struct ncsh_Au
 
 	int index = 0;
 
-	for (uint_fast32_t i = 0; i < length - 1; ++i) { //string.length - 1 because it includes null terminator
+	for (size_t i = 0; i < length - 1; ++i) { //string.length - 1 because it includes null terminator
 		index = ncsh_char_to_index(string[i]);
 		if (index < 0 || index > 96)
 			continue;
@@ -79,7 +79,7 @@ void ncsh_autocompletions_add_multiple(struct eskilib_String* strings, uint_fast
 		ncsh_autocompletions_add(strings[i].value, strings[i].length, tree);
 }
 
-struct ncsh_Autocompletion_Node* ncsh_autocompletions_search(char* string, uint_fast32_t length, struct ncsh_Autocompletion_Node* tree) {
+struct ncsh_Autocompletion_Node* ncsh_autocompletions_search(char* string, size_t length, struct ncsh_Autocompletion_Node* tree) {
 	assert(string);
 	assert(length > 0);
 	assert(tree);
@@ -88,7 +88,7 @@ struct ncsh_Autocompletion_Node* ncsh_autocompletions_search(char* string, uint_
 
 	int index = 0;
 
-	for (uint_fast32_t i = 0; i < length - 1; ++i) {
+	for (size_t i = 0; i < length - 1; ++i) {
 		index = ncsh_char_to_index(string[i]);
 
 		if (!tree->nodes[index])
@@ -109,7 +109,7 @@ struct ncsh_Autocompletion_Node* ncsh_autocompletions_search_string(struct eskil
 
 	int index = 0;
 
-	for (uint_fast32_t i = 0; i < string.length - 1; ++i) {
+	for (size_t i = 0; i < string.length - 1; ++i) {
 		index = ncsh_char_to_index(string.value[i]);
 
 		if (!tree->nodes[index])
@@ -175,7 +175,7 @@ uint_fast8_t ncsh_autocompletions_matches(struct ncsh_Autocompletion* matches, s
 }
 
 uint_fast8_t ncsh_autocompletions_get(char* search,
-				       uint_fast32_t search_length,
+				       size_t search_length,
 				       struct ncsh_Autocompletion* matches,
 				       struct ncsh_Autocompletion_Node* tree) {
 	struct ncsh_Autocompletion_Node *search_result = ncsh_autocompletions_search(search, search_length, tree);
@@ -190,7 +190,7 @@ uint_fast8_t ncsh_autocompletions_get(char* search,
 }
 
 uint_fast8_t ncsh_autocompletions_first(char* search,
-				       uint_fast32_t search_length,
+				       size_t search_length,
 				       char* match,
 				       struct ncsh_Autocompletion_Node* tree) {
 	struct ncsh_Autocompletion_Node *search_result = ncsh_autocompletions_search(search, search_length, tree);

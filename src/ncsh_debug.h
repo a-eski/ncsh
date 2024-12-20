@@ -6,7 +6,7 @@
 #include "ncsh_args.h"
 #include "eskilib/eskilib_string.h"
 
-void ncsh_debug_line(char* buffer, uint_fast32_t buf_position, uint_fast32_t max_buf_position);
+void ncsh_debug_line(char* buffer, size_t buf_position, size_t max_buf_position);
 
 void ncsh_debug_args(struct ncsh_Args args);
 
