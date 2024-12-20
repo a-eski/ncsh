@@ -6,7 +6,7 @@ int_fast32_t eskilib_fgets(char* input_buffer, size_t size_of_input_buffer, FILE
 	register char* buffer = input_buffer;
 	int_fast32_t characters_read = 0;
 
-	while(--size_of_input_buffer > 0 && (character = getc(file_pointer)) != EOF) {
+	while (--size_of_input_buffer > 0 && (character = getc(file_pointer)) != EOF) {
 		++characters_read;
 
 		if((*buffer = character) == '\n')
@@ -24,7 +24,7 @@ int_fast32_t eskilib_fgets_delimited(char* input_buffer, size_t size_of_input_bu
 	register char* buffer = input_buffer;
 	int_fast32_t characters_read = 0;
 
-	while(--size_of_input_buffer > 0 && (character = getc(file_pointer)) != EOF) {
+	while (--size_of_input_buffer > 0 && (character = getc(file_pointer)) != EOF) {
 		++characters_read;
 
 		if((*buffer = character) == delimiter)

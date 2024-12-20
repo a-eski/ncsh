@@ -7,7 +7,7 @@
 
 #include "eskilib_string.h"
 
-char* eskilib_string_copy(char* dest, char* source, const uint_fast32_t maxStringSize) {
+char* eskilib_string_copy(char* dest, char* source, const size_t maxStringSize) {
 	assert(dest != NULL);
 	assert(source != NULL);
 	if (maxStringSize == 0)
@@ -15,7 +15,7 @@ char* eskilib_string_copy(char* dest, char* source, const uint_fast32_t maxStrin
 
 	char* originalStringToSave = source;
 
-	for (uint_fast32_t i = 0;
+	for (size_t i = 0;
 		i < maxStringSize && (*dest = *source) != '\0';
 		i++, ++dest, ++source);
 
@@ -23,7 +23,7 @@ char* eskilib_string_copy(char* dest, char* source, const uint_fast32_t maxStrin
 }
 
 [[nodiscard]]
-bool eskilib_string_equals(char* stringOne, char* stringTwo, const uint_fast32_t maxStringSize) {
+bool eskilib_string_equals(char* stringOne, char* stringTwo, const size_t maxStringSize) {
 	assert(stringOne != NULL);
 	assert(stringTwo != NULL);
 	if (maxStringSize == 0)
@@ -32,7 +32,7 @@ bool eskilib_string_equals(char* stringOne, char* stringTwo, const uint_fast32_t
 	const unsigned char *p1 = (const unsigned char*)stringOne;
 	const unsigned char *p2 = (const unsigned char*)stringTwo;
 
-	for (uint_fast32_t i = 0; i <= maxStringSize && *p1 && *p1 == *p2; i++) {
+	for (size_t i = 0; i <= maxStringSize && *p1 && *p1 == *p2; i++) {
 		if (i == maxStringSize)
 			return -1;
 
@@ -43,7 +43,7 @@ bool eskilib_string_equals(char* stringOne, char* stringTwo, const uint_fast32_t
 }
 
 [[nodiscard]]
-int_fast32_t eskilib_string_compare(char* stringOne, char* stringTwo, const uint_fast32_t maxStringSize) {
+int_fast32_t eskilib_string_compare(char* stringOne, char* stringTwo, const size_t maxStringSize) {
 	assert(stringOne != NULL);
 	assert(stringTwo != NULL);
 	if (maxStringSize == 0)
@@ -52,7 +52,7 @@ int_fast32_t eskilib_string_compare(char* stringOne, char* stringTwo, const uint
 	const unsigned char *p1 = (const unsigned char*)stringOne;
 	const unsigned char *p2 = (const unsigned char*)stringTwo;
 
-	for (uint_fast32_t i = 0; i <= maxStringSize && *p1 && *p1 == *p2; i++) {
+	for (size_t i = 0; i <= maxStringSize && *p1 && *p1 == *p2; i++) {
 		if (i == maxStringSize)
 			return -1;
 

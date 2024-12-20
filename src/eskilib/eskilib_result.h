@@ -1,7 +1,7 @@
 // Copyright (c) eskilib by Alex Eski 2024
 
-#ifndef eskilib_types_h
-#define eskilib_types_h
+#ifndef eskilib_result_h
+#define eskilib_result_h
 
 enum eskilib_Result {
 	E_FAILURE_NOT_FOUND = -7,
@@ -17,5 +17,5 @@ enum eskilib_Result {
 	E_NO_OP_MAX_LIMIT_REACHED = 3
 };
 
-#endif // !eskilib_types_h
+#endif // !eskilib_result_h
 
