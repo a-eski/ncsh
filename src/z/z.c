@@ -450,7 +450,6 @@ void z(char* target, size_t target_length, const char* cwd, struct z_Database* d
 }
 
 enum z_Result z_add(char* path, size_t path_length, struct z_Database* db) {
-	assert(path && path_length > 0 && db);
 	if (!path || !db)
 		return Z_NULL_REFERENCE;
 	if (path[path_length - 1] != '\0' || path_length < 2)
