@@ -1,7 +1,6 @@
 // Copyright (c) ncsh by Alex Eski 2024
 
 #include <stddef.h>
-#include <string.h>
 #include <linux/limits.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -9,11 +8,8 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <time.h>
 #include <unistd.h>
 
-#include "ncsh_args.h"
-#include "eskilib/eskilib_string.h"
 #include "ncsh_defines.h"
 #include "ncsh_builtins.h"
 
@@ -71,10 +67,14 @@ int_fast32_t ncsh_help_command(void) {
 }
 
 void ncsh_cd_command(struct ncsh_Args* args) {
-	if (args->values[1] == NULL) {
+	if (!args->values[1]) {
 		char* home = getenv("HOME");
-		if (home == NULL || chdir(home) != 0)
+		if (!home)
 			fputs("ncsh: could not change directory.\n", stderr);
+		else if (chdir(home) != 0)
+			perror("ncsh: could not change directory");
+
+		return;
 	}
 
 	if (chdir(args->values[1]) != 0)

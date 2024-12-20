@@ -398,14 +398,7 @@ void z(char* target, size_t target_length, const char* cwd, struct z_Database* d
 		return;
 
 	if (target_length == 2) {
-		if (target[0] == '~') {
-			char* home = getenv("HOME");
-			if (!home || chdir(home) == -1)
-				perror("z: couldn't change directory");
-
-			return;
-		}
-		else if (target[0] == '.') {
+		if (target[0] == '.') {
 			if (chdir(target) == -1)
 				perror("z: couldn't change directory");
 
@@ -457,7 +450,6 @@ void z(char* target, size_t target_length, const char* cwd, struct z_Database* d
 }
 
 enum z_Result z_add(char* path, size_t path_length, struct z_Database* db) {
-	assert(path && path_length > 0 && db);
 	if (!path || !db)
 		return Z_NULL_REFERENCE;
 	if (path[path_length - 1] != '\0' || path_length < 2)

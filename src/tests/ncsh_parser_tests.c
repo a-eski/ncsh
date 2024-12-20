@@ -191,6 +191,46 @@ void ncsh_parser_double_quotes_test(void) {
 	ncsh_args_free(&args);
 }
 
+void ncsh_parser_home_test(void) {
+	char* line = "ls ~\0";
+	uint_fast8_t length = 5;
+
+	struct ncsh_Args args;
+	bool result = ncsh_args_malloc(&args);
+	eskilib_assert(result == true);
+	ncsh_parse(line, length, &args);
+
+	eskilib_assert(args.values != NULL);
+	eskilib_assert(args.count == 2);
+	eskilib_assert(args.max_line_length == 10);
+
+	eskilib_assert(eskilib_string_equals(args.values[0], "ls", length));
+	eskilib_assert(eskilib_string_equals(args.values[1], "/home/alex", length));
+
+	ncsh_args_free_values(&args);
+	ncsh_args_free(&args);
+}
+
+void ncsh_parser_home_at_start_test(void) {
+	char* line = "ls ~/snap\0";
+	uint_fast8_t length = 10;
+
+	struct ncsh_Args args;
+	bool result = ncsh_args_malloc(&args);
+	eskilib_assert(result == true);
+	ncsh_parse(line, length, &args);
+
+	eskilib_assert(args.values != NULL);
+	eskilib_assert(args.count == 2);
+	eskilib_assert(args.max_line_length == 15);
+
+	eskilib_assert(eskilib_string_equals(args.values[0], "ls", length));
+	eskilib_assert(eskilib_string_equals(args.values[1], "/home/alex/snap", length));
+
+	ncsh_args_free_values(&args);
+	ncsh_args_free(&args);
+}
+
 void ncsh_parser_tests(void) {
 	eskilib_test_start();
 
@@ -202,6 +242,10 @@ void ncsh_parser_tests(void) {
 	eskilib_test_run("ncsh_parser_output_redirection_test", ncsh_parser_output_redirection_test);
 	eskilib_test_run("ncsh_parser_double_quotes_test", ncsh_parser_double_quotes_test);
 	eskilib_test_run("ncsh_parser_output_redirection_append_test", ncsh_parser_output_redirection_append_test);
+	#ifdef NDEBUG
+	eskilib_test_run("ncsh_parser_home_test", ncsh_parser_home_test);
+	eskilib_test_run("ncsh_parser_home_at_start_test", ncsh_parser_home_at_start_test);
+	#endif /* ifdef NDEBUG */
 
 	eskilib_test_finish();
 }

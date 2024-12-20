@@ -1,12 +1,16 @@
 // Copyright (c) ncsh by Alex Eski 2024
 
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <string.h>
+#include <glob.h>
 
 #include "ncsh_args.h"
 #include "eskilib/eskilib_string.h"
+#include "ncsh_defines.h"
 
 #define DOUBLE_QUOTE_KEY '\"'
 
@@ -16,6 +20,7 @@
 #define BACKGROUND_JOB '&'
 #define GLOB_STAR '*'
 #define GLOB_QUESTION '?'
+#define TILDE '~'
 
 #define INPUT_REDIRECTION_APPEND_STRING "<<"
 #define OUTPUT_REDIRECTION_APPEND_STRING ">>"
@@ -35,8 +40,8 @@ bool ncsh_is_delimiter(char ch) {
 	}
 }
 
-enum ncsh_Ops ncsh_op_get(char line[], uint_fast32_t length) {
-	if (line == NULL || length == 0)
+enum ncsh_Ops ncsh_op_get(char line[], size_t length) {
+	if (!line || length == 0)
 		return OP_NONE;
 
 	if (length == 1) {
@@ -52,12 +57,6 @@ enum ncsh_Ops ncsh_op_get(char line[], uint_fast32_t length) {
 			}
 			case BACKGROUND_JOB: {
 				return OP_BACKGROUND_JOB;
-			}
-			case GLOB_STAR: {
-				return OP_GLOB_STAR;
-			}
-			case GLOB_QUESTION: {
-				return OP_GLOB_QUESTION;
 			}
 			default: {
 				return OP_CONSTANT;
@@ -77,51 +76,84 @@ enum ncsh_Ops ncsh_op_get(char line[], uint_fast32_t length) {
 	return OP_CONSTANT;
 }
 
-void ncsh_parse(char line[], uint_fast32_t length, struct ncsh_Args* args) {
-	if (line == NULL || args->values == NULL || args->ops == NULL) {
+void ncsh_parse(char line[], size_t length, struct ncsh_Args* args) {
+	if (length == 0 || length > NCSH_MAX_INPUT) {
 		args->max_line_length = 0;
 		args->count = 0;
 		return;
 	}
 
-	if (length == 0 || length > ncsh_TOKEN_BUFFER_SIZE) {
-		args->max_line_length = 0;
-		args->count = 0;
-		return;
-	}
-
-	char buffer[ncsh_TOKEN_BUFFER_SIZE];
-	uint_fast32_t buffer_position = 0;
+	char buffer[NCSH_MAX_INPUT];
+	size_t buf_position = 0;
 	uint_fast32_t double_quotes_count = 0;
+	bool glob_found = false;
 
 	for (uint_fast32_t line_position = 0; line_position < length + 1; ++line_position) {
-		if (line_position == length || line_position == ncsh_TOKEN_BUFFER_SIZE - 1 ||
-			buffer_position == ncsh_TOKEN_BUFFER_SIZE - 1 || args->count == ncsh_TOKEN_BUFFER_SIZE - 1) {
+		if (line_position == length || line_position == NCSH_MAX_INPUT - 1 ||
+			buf_position == NCSH_MAX_INPUT - 1 || args->count == NCSH_MAX_INPUT - 1) {
 			args->values[args->count] = NULL;
 			break;
 		}
 		else if (ncsh_is_delimiter(line[line_position]) && (double_quotes_count == 0 || double_quotes_count == 2)) {
-			buffer[buffer_position] = '\0';
+			buffer[buf_position] = '\0';
 
-			args->values[args->count] = malloc(buffer_position + 1);
-			eskilib_string_copy(args->values[args->count], buffer, buffer_position + 1);
+			if (glob_found) {
+				glob_t glob_buf = {0};
+				glob(buffer, GLOB_DOOFFS, NULL, &glob_buf);
 
-			args->ops[args->count] = ncsh_op_get(buffer, buffer_position);
+				for (size_t i = 0; i < glob_buf.gl_pathc; ++i) {
+					buf_position = strlen(glob_buf.gl_pathv[i]) + 1;
+					args->values[args->count] = malloc(buf_position);
+					strcpy(args->values[args->count], glob_buf.gl_pathv[i]);
+					args->ops[args->count] = OP_CONSTANT;
+					++args->count;
 
-			args->count++;
+					if (args->max_line_length == 0 || buf_position > args->max_line_length)
+						args->max_line_length = buf_position;
+				}
 
-			if (args->max_line_length == 0 || buffer_position > args->max_line_length)
-				args->max_line_length = buffer_position;
+				globfree(&glob_buf);
+				glob_found = false;
+			}
+			else {
+				args->values[args->count] = malloc(buf_position + 1);
+				eskilib_string_copy(args->values[args->count], buffer, buf_position + 1);
+
+				args->ops[args->count] = ncsh_op_get(buffer, buf_position);
+
+				++args->count;
+
+				if (args->max_line_length == 0 || buf_position > args->max_line_length)
+					args->max_line_length = buf_position;
+			}
 
 			buffer[0] = '\0';
-			buffer_position = 0;
+			buf_position = 0;
 			double_quotes_count = 0;
 		}
 		else {
-			if (line[line_position] == DOUBLE_QUOTE_KEY)
-				double_quotes_count++;
-			else
-				buffer[buffer_position++] = line[line_position];
+			switch (line[line_position]) {
+				case DOUBLE_QUOTE_KEY: {
+					++double_quotes_count;
+					break;
+				}
+				case TILDE: {
+					char* home = getenv("HOME");
+					strcat(buffer + buf_position, home);
+					buf_position += strlen(home);
+					break;
+				}
+				case GLOB_STAR:
+				case GLOB_QUESTION: {
+					glob_found = true;
+					buffer[buf_position++] = line[line_position];
+					break;
+				}
+				default: {
+					buffer[buf_position++] = line[line_position];
+					break;
+				}
+			}
 		}
 	}
 }

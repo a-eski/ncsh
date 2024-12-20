@@ -109,8 +109,8 @@ int_fast32_t ncsh_backspace(char* buffer, uint_fast32_t* buf_position, uint_fast
 
 		ncsh_write(BACKSPACE_STRING ERASE_CURRENT_LINE, BACKSPACE_STRING_LENGTH + ERASE_CURRENT_LINE_LENGTH);
 
-		uint_fast32_t buf_start = *buf_position;
-		for (uint_fast32_t i = *buf_position; i < *max_buf_position && buffer[i]; ++i)
+		size_t buf_start = *buf_position;
+		for (size_t i = *buf_position; i < *max_buf_position && buffer[i]; ++i)
 			buffer[i] = buffer[i + 1];
 
 		buffer[*max_buf_position] = '\0';
@@ -244,8 +244,11 @@ int_fast32_t ncsh_z(struct ncsh_Args* args, struct z_Database* z_db) {
 int_fast32_t ncsh_execute(struct ncsh_Args* args,
 			  struct ncsh_History* history,
 			  struct z_Database* z_db) {
+	if (args->count == 0 || args->max_line_length == 0)
+		return NCSH_COMMAND_CONTINUE;
+
 	if (ncsh_is_exit_command(args))
-		return 0;
+		return NCSH_COMMAND_EXIT;
 
 	if (eskilib_string_equals(args->values[0], "echo", args->max_line_length)) {
 		ncsh_echo_command(args);
@@ -339,7 +342,7 @@ int ncsh_init(struct ncsh* shell) {
 		return EXIT_FAILURE;
 	}
 
-		return EXIT_SUCCESS;
+	return EXIT_SUCCESS;
 }
 
 int ncsh(void) {
@@ -348,9 +351,9 @@ int ncsh(void) {
 	char character;
 	char temp_character;
 	char buffer[NCSH_MAX_INPUT] = {0};
-	uint_fast32_t buf_start = 0;
-	uint_fast32_t buf_position = 0;
-	uint_fast32_t max_buf_position = 0;
+	size_t buf_start = 0;
+	size_t buf_position = 0;
+	size_t max_buf_position = 0;
 	int_fast32_t command_result = 0;
 
 	struct ncsh shell = {0};
@@ -601,13 +604,9 @@ int ncsh(void) {
 			#endif /* ifdef NCSH_DEBUG */
 
 			ncsh_parse(buffer, buf_position, &shell.args);
-			if (!ncsh_args_is_valid(&shell.args)) {
-				ncsh_args_free_values(&shell.args);
-				continue;
-			}
 
 			#ifdef NCSH_DEBUG
-			ncsh_debug_args(args);
+			ncsh_debug_args(shell.args);
 			#endif /* ifdef NCSH_DEBUG */
 
 			command_result = ncsh_execute(&shell.args, &shell.history, &shell.z_db);

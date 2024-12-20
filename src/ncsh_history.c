@@ -75,13 +75,13 @@ enum eskilib_Result ncsh_history_load(struct eskilib_String config_location, str
 	char buffer[NCSH_MAX_INPUT];
 	int_fast32_t buffer_length = 0;
 
-	for (uint_fast32_t i = 0;
+	for (size_t i = 0;
 		(buffer_length = eskilib_fgets(buffer, sizeof(buffer), file)) != EOF && i < NCSH_MAX_HISTORY_FILE;
 		++i) {
 		if (buffer_length > 0) {
 			++history->file_position;
 			history->entries[i].length = buffer_length;
-			history->entries[i].value = malloc(sizeof(char) * buffer_length);
+			history->entries[i].value = malloc(buffer_length);
 			if (history->entries[i].value == NULL)
 				return E_FAILURE_MALLOC;
 
@@ -149,10 +149,10 @@ void ncsh_history_free(struct ncsh_History* history) {
 	free(history->entries);
 }
 
-enum eskilib_Result ncsh_history_add(char* line, uint_fast32_t length, struct ncsh_History* history) {
-	assert(history != NULL);
-	assert(line != NULL);
-	assert(length != 0);
+enum eskilib_Result ncsh_history_add(char* line, size_t length, struct ncsh_History* history) {
+	assert(history);
+	assert(line);
+	assert(length > 0);
 
 	if (history == NULL || line == NULL)
 		return E_FAILURE_NULL_REFERENCE;
@@ -164,7 +164,7 @@ enum eskilib_Result ncsh_history_add(char* line, uint_fast32_t length, struct nc
 		return E_NO_OP_MAX_LIMIT_REACHED;
 
 	history->entries[history->history_count].length = length;
-	history->entries[history->history_count].value = malloc(sizeof(char) * length);
+	history->entries[history->history_count].value = malloc(length);
 	eskilib_string_copy(history->entries[history->history_count].value, line, length);
 	++history->history_count;
 	return E_SUCCESS;
