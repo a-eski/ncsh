@@ -242,8 +242,10 @@ void ncsh_parser_tests(void) {
 	eskilib_test_run("ncsh_parser_output_redirection_test", ncsh_parser_output_redirection_test);
 	eskilib_test_run("ncsh_parser_double_quotes_test", ncsh_parser_double_quotes_test);
 	eskilib_test_run("ncsh_parser_output_redirection_append_test", ncsh_parser_output_redirection_append_test);
+	#ifdef NDEBUG
 	eskilib_test_run("ncsh_parser_home_test", ncsh_parser_home_test);
 	eskilib_test_run("ncsh_parser_home_at_start_test", ncsh_parser_home_at_start_test);
+	#endif /* ifdef NDEBUG */
 
 	eskilib_test_finish();
 }

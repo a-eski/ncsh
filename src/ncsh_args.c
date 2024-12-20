@@ -36,7 +36,7 @@ void ncsh_args_free(struct ncsh_Args* args) {
 }
 
 void ncsh_args_free_values(struct ncsh_Args* args) {
-	for (size_t i = 0; i < args->count; ++i) {
+	for (uint_fast32_t i = 0; i < args->count; ++i) {
 		if (args->values[i] != NULL) {
 			free(args->values[i]);
 			args->values[i] = NULL;
