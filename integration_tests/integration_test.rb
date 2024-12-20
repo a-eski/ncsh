@@ -4,9 +4,10 @@
 require 'ttytest'
 
 START_COL = 20
-WC_C_LENGTH = '279'
+WC_C_LENGTH = '254'
 SLEEP_TIME = 0.2
-LS_LINES = 8
+LS_LINES = 6
+LS_ITEMS = 22
 
 def assert_check_new_row(row)
   @tty.assert_row_starts_with(row, "#{ENV['USER']} ")
@@ -400,7 +401,7 @@ def basic_input_redirection_test(row)
   sleep SLEEP_TIME
   row += 1
   @tty.assert_row_starts_with(row, 'LICENSE')
-  row += 23
+  row += LS_ITEMS
   assert_check_new_row(row)
   @tty.send_keys_one_at_a_time(%(rm t.txt))
   @tty.send_newline
