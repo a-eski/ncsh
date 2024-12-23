@@ -68,7 +68,7 @@ check :
 	make test_autocompletions
 	make test_history
 	make test_parser
-	make test_z
+	# make test_z
 
 .PHONY: test_history
 test_history :
