@@ -4,10 +4,10 @@
 require 'ttytest'
 
 START_COL = 20
-WC_C_LENGTH = '254'
+WC_C_LENGTH = '194'
 SLEEP_TIME = 0.2
-LS_LINES = 6
-LS_ITEMS = 22
+LS_LINES = 4
+LS_ITEMS = 17
 
 def assert_check_new_row(row)
   @tty.assert_row_starts_with(row, "#{ENV['USER']} ")
@@ -128,6 +128,21 @@ def basic_tests(row)
   row = basic_echo_test row
 
   basic_bad_command_test row
+end
+
+def home_and_end_tests(row)
+  starting_tests 'home and end'
+
+  assert_check_new_row(row)
+  @tty.send_keys_one_at_a_time(%(ss))
+  @tty.send_home
+  @tty.assert_cursor_position(START_COL, row)
+  @tty.send_end
+  @tty.assert_cursor_position(START_COL + 2, row)
+  @tty.send_backspaces(2)
+
+  puts 'Home and End tests passed'
+  row
 end
 
 def end_of_line_backspace_test(row)
@@ -542,25 +557,14 @@ def builtin_tests(row)
   row
 end
 
-# def home_and_end_tests(row)
-#   starting_tests 'home and end'
-#
-#   assert_check_new_row(row)
-#   @tty.send_keys_one_at_a_time(%(ss))
-#   @tty.send_home
-#   @tty.assert_cursor_position(START_COL, row)
-#   @tty.send_end
-#   @tty.assert_cursor_position(START_COL + 2, row)
-#
-#   puts 'Home and End tests passed'
-#   row
-# end
-
 @tty = TTYtest.new_terminal(%(PS1='$ ' ./bin/ncsh), width: 80, height: 48)
 @row = 0
+
 @row = sanity_tests @row
 
 @row = basic_tests @row
+
+@row = home_and_end_tests @row
 
 @row = backspace_tests @row
 
@@ -582,7 +586,6 @@ end
 
 @row = builtin_tests @row
 
-# @row = home_and_end_tests @row
 # @row = multiline_tests @row
 # @row = copy_paste_tests @row
 

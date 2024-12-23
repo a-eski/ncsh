@@ -74,7 +74,10 @@ void ncsh_history_save_adds_to_file(void) {
 	eskilib_assert(file != NULL);
 	int max = MAX_INPUT;
 	char buffer[max];
-	fgets(buffer, sizeof(buffer), file);
+	if (!fgets(buffer, sizeof(buffer), file)) {
+		eskilib_assert(false);
+		fclose(file);
+	}
 	eskilib_assert(eskilib_string_equals(buffer, "ls\n", max));
 	fclose(file);
 }

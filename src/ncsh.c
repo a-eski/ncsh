@@ -11,7 +11,6 @@
 #include <stdbool.h>
 #include <string.h>
 #include <assert.h>
-// #include <ncurses.h>
 
 #include "eskilib/eskilib_result.h"
 #include "ncsh_args.h"
@@ -72,7 +71,7 @@ void ncsh_prompt_directory(char* cwd, char* output) {
 }
 #endif /* ifdef NCSH_SHORT_DIRECTORY */
 
-[[nodiscard]]
+// [[nodiscard]]
 int_fast32_t ncsh_prompt(struct ncsh_Directory prompt_info) {
 	char* wd_result = getcwd(prompt_info.path, sizeof(prompt_info.path));
 	if (wd_result == NULL) {
@@ -97,7 +96,7 @@ int_fast32_t ncsh_prompt(struct ncsh_Directory prompt_info) {
 	return NCSH_EXIT_SUCCESS;
 }
 
-[[nodiscard]]
+// [[nodiscard]]
 int_fast32_t ncsh_backspace(char* buffer, uint_fast32_t* buf_position, uint_fast32_t* max_buf_position) {
 	if (*buf_position == 0) {
 		return NCSH_EXIT_SUCCESS;
@@ -135,7 +134,7 @@ int_fast32_t ncsh_backspace(char* buffer, uint_fast32_t* buf_position, uint_fast
 	}
 }
 
-[[nodiscard]]
+// [[nodiscard]]
 int_fast32_t ncsh_delete(char* buffer, uint_fast32_t* buf_position, uint_fast32_t* max_buf_position) {
 	ncsh_write(DELETE_STRING ERASE_CURRENT_LINE, DELETE_STRING_LENGTH + ERASE_CURRENT_LINE_LENGTH);
 
@@ -185,7 +184,7 @@ void ncsh_autocomplete(char* buffer, uint_fast32_t buf_position, char* current_a
 	fflush(stdout);
 }
 
-[[nodiscard]]
+// [[nodiscard]]
 int_fast32_t ncsh_tab_autocomplete(char* buffer, uint_fast32_t buf_position, struct ncsh_Autocompletion_Node* autocompletions_tree) {
 	struct ncsh_Autocompletion autocompletion_matches[NCSH_MAX_AUTOCOMPLETION_MATCHES] = {0};
 	uint_fast32_t autocompletions_matches_count = ncsh_autocompletions_get(buffer, buf_position + 1, autocompletion_matches, autocompletions_tree);

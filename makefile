@@ -1,4 +1,4 @@
-std = -std=c2x
+std = -std=c99
 debug_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined,leak -g
 release_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -O3 -DNDEBUG
 objects = obj/main.o obj/ncsh.o obj/ncsh_vm.o obj/ncsh_terminal.o obj/eskilib_string.o obj/eskilib_file.o obj/ncsh_debug.o obj/ncsh_args.o obj/ncsh_parser.o obj/ncsh_builtins.o obj/ncsh_history.o obj/ncsh_autocompletions.o obj/ncsh_config.o obj/z.o
@@ -54,19 +54,9 @@ obj/eskilib_file.o : src/eskilib/eskilib_file.c src/eskilib/eskilib_file.h
 obj/ncsh_debug.o : src/ncsh_debug.c src/ncsh_debug.h src/ncsh_args.h
 	$(cc_with_flags) -c src/ncsh_debug.c -o obj/ncsh_debug.o
 
-.PHONY: run
-run:
-	make -B
-	./$(target)
-
 .PHONY: debug
 debug :
 	make -B RELEASE=0
-
-.PHONY: debugrun
-debugrun :
-	make debug
-	./$(target)
 
 .PHONY: install
 install : $(target)
@@ -74,23 +64,44 @@ install : $(target)
 
 .PHONY: check
 check :
-	chmod +x ./tests_harness.sh
-	./tests_harness.sh
+	set -e
+	make test_autocompletions
+	make test_history
+	make test_parser
+	# make test_z
+
+.PHONY: test_history
+test_history :
+	$(cc_with_flags) -DNCSH_HISTORY_TEST ./src/eskilib/eskilib_string.c ./src/eskilib/eskilib_test.c ./src/eskilib/eskilib_file.c ./src/ncsh_history.c ./src/tests/ncsh_history_tests.c -o ./bin/ncsh_history_tests
+	./bin/ncsh_history_tests
 
 .PHONY: fuzz_history
 fuzz_history :
-	clang -std=c2x -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined,fuzzer -O3 -DNDEBUG -DNCSH_HISTORY_TEST ./src/tests/ncsh_history_fuzzing.c ./src/ncsh_history.c ./src/eskilib/eskilib_string.c ./src/eskilib/eskilib_file.c
+	clang $(std) $(CFLAGS) -DNCSH_HISTORY_TEST ./src/tests/ncsh_history_fuzzing.c ./src/ncsh_history.c ./src/eskilib/eskilib_string.c ./src/eskilib/eskilib_file.c
 	./a.out NCSH_HISTORY_CORPUS/ -detect_leaks=0 -rss_limit_mb=4096
+
+.PHONY: test_autocompletions
+test_autocompletions :
+	 $(cc_with_flags) ./src/eskilib/eskilib_string.c ./src/eskilib/eskilib_test.c ./src/ncsh_autocompletions.c ./src/tests/ncsh_autocompletions_tests.c -o ./bin/ncsh_autocompletions_tests
+	 ./bin/ncsh_autocompletions_tests
 
 .PHONY: fuzz_autocompletions
 fuzz_autocompletions :
-	clang -std=c2x -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined,fuzzer -O3 -DNDEBUG ./src/tests/ncsh_autocompletions_fuzzing.c ./src/ncsh_autocompletions.c ./src/eskilib/eskilib_string.c
+	clang $(std) $(CFLAGS) ./src/tests/ncsh_autocompletions_fuzzing.c ./src/ncsh_autocompletions.c ./src/eskilib/eskilib_string.c
 	./a.out NCSH_AUTOCOMPLETIONS_CORPUS/ -detect_leaks=0 -rss_limit_mb=8192
+
+.PHONY test_parser :
+	$(CC) $(std) $(debug_flags) ./src/eskilib/eskilib_string.c ./src/eskilib/eskilib_test.c ./src/ncsh_parser.c ./src/tests/ncsh_parser_tests.c ./src/ncsh_args.c -o ./bin/ncsh_parser_tests
+	./bin/ncsh_parser_tests
 
 .PHONY: fuzz_parser
 fuzz_parser :
-	clang -std=c2x -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined,fuzzer -O3 -DNDEBUG ./src/tests/ncsh_parser_fuzzing.c ./src/ncsh_parser.c ./src/eskilib/eskilib_string.c ./src/ncsh_args.c
+	clang $(std) $(CFLAGS) ./src/tests/ncsh_parser_fuzzing.c ./src/ncsh_parser.c ./src/eskilib/eskilib_string.c ./src/ncsh_args.c
 	./a.out NCSH_PARSER_CORPUS/ -detect_leaks=0 -rss_limit_mb=4096
+
+.PHONY: test_z
+test_z :
+	./tests_z.sh
 
 .PHONY: clean
 clean :

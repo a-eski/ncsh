@@ -41,43 +41,35 @@ bool ncsh_is_delimiter(char ch) {
 }
 
 enum ncsh_Ops ncsh_op_get(char line[], size_t length) {
-	if (!line || length == 0)
-		return OP_NONE;
-
-	if (length == 1) {
-		switch (line[0]) {
-			case PIPE: {
-				return OP_PIPE;
-			}
-			case OUTPUT_REDIRECTION: {
-				return OP_OUTPUT_REDIRECTION;
-			}
-			case INPUT_REDIRECTION: {
-				return OP_INPUT_REDIRECTION;
-			}
-			case BACKGROUND_JOB: {
-				return OP_BACKGROUND_JOB;
-			}
-			default: {
-				return OP_CONSTANT;
+	switch (length) {
+		case 0 : { return OP_NONE; }
+		case 1 : {
+			switch (line[0]) {
+			  case PIPE: { return OP_PIPE; }
+			  case OUTPUT_REDIRECTION: { return OP_OUTPUT_REDIRECTION; }
+			  case INPUT_REDIRECTION: { return OP_INPUT_REDIRECTION; }
+			  case BACKGROUND_JOB: { return OP_BACKGROUND_JOB; }
+			  default: { return OP_CONSTANT; }
 			}
 		}
+		case 2 : {
+			if (eskilib_string_equals(line, OUTPUT_REDIRECTION_APPEND_STRING, length))
+				return OP_OUTPUT_REDIRECTION_APPEND;
+			else if (eskilib_string_equals(line, INPUT_REDIRECTION_APPEND_STRING, length))
+				return OP_INPUT_REDIRECTION_APPEND;
+			/*else if (eskilib_string_equals(line, AND_STRING, length))
+				return OP_AND;
+			else if (eskilib_string_equals(line, OR_STRING, length))
+				return OP_OR;*/
+			else
+				return OP_CONSTANT;
+		}
+		default : { return OP_CONSTANT; }
 	}
-
-	if (eskilib_string_equals(line, OUTPUT_REDIRECTION_APPEND_STRING, length))
-		return OP_OUTPUT_REDIRECTION_APPEND;
-	else if (eskilib_string_equals(line, INPUT_REDIRECTION_APPEND_STRING, length))
-		return OP_INPUT_REDIRECTION_APPEND;
-	else if (eskilib_string_equals(line, AND_STRING, length))
-		return OP_AND;
-	else if (eskilib_string_equals(line, OR_STRING, length))
-		return OP_OR;
-
-	return OP_CONSTANT;
 }
 
 void ncsh_parse(char line[], size_t length, struct ncsh_Args* args) {
-	if (length == 0 || length > NCSH_MAX_INPUT) {
+	if (!line || length == 0 || length > NCSH_MAX_INPUT) {
 		args->max_line_length = 0;
 		args->count = 0;
 		return;
