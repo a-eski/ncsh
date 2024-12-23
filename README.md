@@ -34,4 +34,4 @@ sudo make install
 * better prompt line - DONE (for now) :)
 * add non-iteractive mode
 * incoporate z/autojump/z-oxide like cd command - DONE :)
-* globs (aka wildcard expansion)!
+* globs (aka wildcard expansion)! - DONE :)

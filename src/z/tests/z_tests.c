@@ -10,6 +10,8 @@
 #include "../z_tests.h"
 #include "../../eskilib/eskilib_test.h"
 
+#define CWD_LENGTH 528
+
 // read from empty database file
 void z_read_from_database_file_empty_database_file_test(void) {
 	remove(Z_DATABASE_FILE);
@@ -53,8 +55,12 @@ void z_find_match_empty_database_test(void) {
 	eskilib_assert(db.count == 0);
 
 	struct eskilib_String target = { .value = "path", .length = 5 };
-	char cwd[528];
-	getcwd(cwd, 528);
+	char cwd[CWD_LENGTH];
+	if (!getcwd(cwd, CWD_LENGTH)) {
+		z_free(&db);
+		eskilib_assert(false);
+	}
+
 	struct z_Directory* result = find_match(target.value, target.length, cwd, strlen(cwd) + 1, &db);
 	eskilib_assert(result == NULL);
 
@@ -95,8 +101,11 @@ void z_read_from_database_file_non_empty_database_test(void) {
 	strcpy(new_value.value, "ncsh");
 
 	double initial_rank = db.dirs[0].rank;
-	char cwd[528];
-	getcwd(cwd, 528);
+	char cwd[CWD_LENGTH];
+	if (!getcwd(cwd, CWD_LENGTH)) {
+		z_free(&db);
+		eskilib_assert(false);
+	}
 	struct z_Directory* match = find_match(new_value.value, new_value.length, cwd, strlen(cwd) + 1, &db);
 	eskilib_assert(match != NULL);
 	eskilib_assert(db.count == 1);
@@ -151,8 +160,11 @@ void z_find_match_finds_exact_match_test(void) {
 	eskilib_assert(db.count == 2);
 
 	struct eskilib_String target = { .value = "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells/ncsh", .length = 57 };
-	char cwd[528];
-	getcwd(cwd, 528);
+	char cwd[CWD_LENGTH];
+	if (!getcwd(cwd, CWD_LENGTH)) {
+		z_free(&db);
+		eskilib_assert(false);
+	}
 	struct z_Directory* result = find_match(target.value, target.length, cwd, strlen(cwd) + 1, &db);
 	eskilib_assert(result != NULL);
 	eskilib_assert(result->path_length == 57);
@@ -169,8 +181,11 @@ void z_find_match_finds_match_test(void) {
 	eskilib_assert(db.count == 2);
 
 	struct eskilib_String target = { .value = "ncsh", .length = 5 };
-	char cwd[528];
-	getcwd(cwd, 528);
+	char cwd[CWD_LENGTH];
+	if (!getcwd(cwd, CWD_LENGTH)) {
+		z_free(&db);
+		eskilib_assert(false);
+	}
 	struct z_Directory* result = find_match(target.value, target.length, cwd, strlen(cwd) + 1, &db);
 	eskilib_assert(result != NULL);
 	eskilib_assert(result->path_length == 57);
@@ -187,8 +202,11 @@ void z_find_match_no_match_test(void) {
 	eskilib_assert(db.count == 2);
 
 	struct eskilib_String target = { .value = "path", .length = 5 };
-	char cwd[528];
-	getcwd(cwd, 528);
+	char cwd[CWD_LENGTH];
+	if (!getcwd(cwd, CWD_LENGTH)) {
+		z_free(&db);
+		eskilib_assert(false);
+	}
 	struct z_Directory* result = find_match(target.value, target.length, cwd, strlen(cwd) + 1, &db);
 	eskilib_assert(result == NULL);
 
@@ -202,8 +220,11 @@ void z_find_match_multiple_matches_test(void) {
 	eskilib_assert(db.count == 2);
 
 	struct eskilib_String target = { .value = "PersonalRepos", .length = 14 };
-	char cwd[528];
-	getcwd(cwd, 528);
+	char cwd[CWD_LENGTH];
+	if (!getcwd(cwd, CWD_LENGTH)) {
+		z_free(&db);
+		eskilib_assert(false);
+	}
 	struct z_Directory* result = find_match(target.value, target.length, cwd, strlen(cwd) + 1, &db);
 	eskilib_assert(result != NULL);
 	eskilib_assert(result->path_length == 57);
@@ -216,21 +237,19 @@ void z_change_directory_test(void) {
 	eskilib_assert(z_init(eskilib_String_Empty, &db) == Z_SUCCESS);
 	eskilib_assert(db.count == 2);
 
-	char buffer[528];
-	char buffer_after[528];
+	char buffer[CWD_LENGTH];
+	char buffer_after[CWD_LENGTH];
 
-	char* wd = getcwd(buffer, sizeof(buffer));
-	if (wd == NULL) {
-		perror("wd error");
+	if (!getcwd(buffer, CWD_LENGTH)) {
+		z_free(&db);
 		eskilib_assert(false);
 	}
 
 	struct eskilib_String target = { .value = "ncsh", .length = 5 };
 	z(target.value, target.length, buffer, &db);
 
-	wd = getcwd(buffer_after, sizeof(buffer_after));
-	if (wd == NULL) {
-		perror("wd error");
+	if (!getcwd(buffer_after, CWD_LENGTH)) {
+		z_free(&db);
 		eskilib_assert(false);
 	}
 
@@ -249,21 +268,19 @@ void z_home_empty_target_change_directory_test(void) {
 	eskilib_assert(z_init(eskilib_String_Empty, &db) == Z_SUCCESS);
 	eskilib_assert(db.count == 2);
 
-	char buffer[528];
-	char buffer_after[528];
+	char buffer[CWD_LENGTH];
+	char buffer_after[CWD_LENGTH];
 
-	char* wd = getcwd(buffer, sizeof(buffer));
-	if (wd == NULL) {
-		perror("wd error");
+	if (!getcwd(buffer, CWD_LENGTH)) {
+		z_free(&db);
 		eskilib_assert(false);
 	}
 
 	struct eskilib_String target = eskilib_String_Empty;
 	z(target.value, target.length, buffer, &db);
 
-	wd = getcwd(buffer_after, sizeof(buffer_after));
-	if (wd == NULL) {
-		perror("wd error");
+	if (!getcwd(buffer_after, CWD_LENGTH)) {
+		z_free(&db);
 		eskilib_assert(false);
 	}
 
@@ -283,21 +300,19 @@ void z_no_match_change_directory_test(void) {
 	eskilib_assert(z_init(eskilib_String_Empty, &db) == Z_SUCCESS);
 	eskilib_assert(db.count == 2);
 
-	char buffer[528];
-	char buffer_after[528];
+	char buffer[CWD_LENGTH];
+	char buffer_after[CWD_LENGTH];
 
-	char* wd = getcwd(buffer, sizeof(buffer));
-	if (wd == NULL) {
-		perror("wd error");
+	if (!getcwd(buffer, CWD_LENGTH)) {
+		z_free(&db);
 		eskilib_assert(false);
 	}
 
 	struct eskilib_String target = { .value = "zzz", .length = 4 };
 	z(target.value, target.length, buffer, &db);
 
-	wd = getcwd(buffer_after, sizeof(buffer_after));
-	if (wd == NULL) {
-		perror("wd error");
+	if (!getcwd(buffer_after, CWD_LENGTH)) {
+		z_free(&db);
 		eskilib_assert(false);
 	}
 
@@ -316,21 +331,19 @@ void z_valid_subdirectory_change_directory_test(void) {
 	eskilib_assert(z_init(eskilib_String_Empty, &db) == Z_SUCCESS);
 	eskilib_assert(db.count == 2);
 
-	char buffer[528];
-	char buffer_after[528];
+	char buffer[CWD_LENGTH];
+	char buffer_after[CWD_LENGTH];
 
-	char* wd = getcwd(buffer, sizeof(buffer));
-	if (wd == NULL) {
-		perror("wd error");
+	if (!getcwd(buffer, CWD_LENGTH)) {
+		z_free(&db);
 		eskilib_assert(false);
 	}
 
 	struct eskilib_String target = { .value = "tests", .length = 6 };
 	z(target.value, target.length, buffer, &db);
 
-	wd = getcwd(buffer_after, sizeof(buffer_after));
-	if (wd == NULL) {
-		perror("wd error");
+	if (!getcwd(buffer_after, CWD_LENGTH)) {
+		z_free(&db);
 		eskilib_assert(false);
 	}
 
@@ -350,12 +363,11 @@ void z_dir_slash_dir_change_directory_test(void) {
 	eskilib_assert(z_init(eskilib_String_Empty, &db) == Z_SUCCESS);
 	eskilib_assert(db.count == 2);
 
-	char buffer[528];
-	char buffer_after[528];
+	char buffer[CWD_LENGTH];
+	char buffer_after[CWD_LENGTH];
 
-	char* wd = getcwd(buffer, sizeof(buffer));
-	if (wd == NULL) {
-		perror("wd error");
+	if (!getcwd(buffer, CWD_LENGTH)) {
+		z_free(&db);
 		eskilib_assert(false);
 	}
 	size_t buffer_length = strlen(buffer) + 1;
@@ -364,9 +376,8 @@ void z_dir_slash_dir_change_directory_test(void) {
 
 	z(target.value, target.length, buffer, &db);
 
-	wd = getcwd(buffer_after, sizeof(buffer_after));
-	if (wd == NULL) {
-		perror("wd error");
+	if (!getcwd(buffer_after, CWD_LENGTH)) {
+		z_free(&db);
 		eskilib_assert(false);
 	}
 
@@ -387,21 +398,19 @@ void z_double_dot_change_directory_test(void) {
 	eskilib_assert(z_init(eskilib_String_Empty, &db) == Z_SUCCESS);
 	eskilib_assert(db.count == 3);
 
-	char buffer[528];
-	char buffer_after[528];
+	char buffer[CWD_LENGTH];
+	char buffer_after[CWD_LENGTH];
 
-	char* wd = getcwd(buffer, sizeof(buffer));
-	if (wd == NULL) {
-		perror("wd error");
+	if (!getcwd(buffer, CWD_LENGTH)) {
+		z_free(&db);
 		eskilib_assert(false);
 	}
 
 	struct eskilib_String target = { .value = "..", .length = 3 };
 	z(target.value, target.length, buffer, &db);
 
-	wd = getcwd(buffer_after, sizeof(buffer_after));
-	if (wd == NULL) {
-		perror("wd error");
+	if (!getcwd(buffer_after, CWD_LENGTH)) {
+		z_free(&db);
 		eskilib_assert(false);
 	}
 
@@ -422,21 +431,19 @@ void z_empty_database_valid_subdirectory_change_directory_test(void) {
 	eskilib_assert(z_init(eskilib_String_Empty, &db) == Z_SUCCESS);
 	eskilib_assert(db.count == 0);
 
-	char buffer[528];
-	char buffer_after[528];
+	char buffer[CWD_LENGTH];
+	char buffer_after[CWD_LENGTH];
 
-	char* wd = getcwd(buffer, sizeof(buffer));
-	if (wd == NULL) {
-		perror("wd error");
+	if (!getcwd(buffer, CWD_LENGTH)) {
+		z_free(&db);
 		eskilib_assert(false);
 	}
 
 	struct eskilib_String target = { .value = "tests", .length = 6 };
 	z(target.value, target.length, buffer, &db);
 
-	wd = getcwd(buffer_after, sizeof(buffer_after));
-	if (wd == NULL) {
-		perror("wd error");
+	if (!getcwd(buffer_after, CWD_LENGTH)) {
+		z_free(&db);
 		eskilib_assert(false);
 	}
 

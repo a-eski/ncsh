@@ -417,9 +417,10 @@ void z(char* target, size_t target_length, const char* cwd, struct z_Database* d
 
 	size_t cwd_length = strlen(cwd) + 1;
 	struct eskilib_String output = {0};
+	struct z_Directory* match = find_match(target, target_length, cwd, cwd_length, db);
 	if (z_directory_matches(target, target_length, cwd, &output) == Z_SUCCESS) {
 		// printf("dir matches %s\n", output.value);
-		if (add_new_to_database(output.value, output.length, cwd, cwd_length, db) != Z_SUCCESS) {
+		if (!match && add_new_to_database(output.value, output.length, cwd, cwd_length, db) != Z_SUCCESS) {
 			if (output.value)
 				free(output.value);
 			return;
@@ -435,7 +436,6 @@ void z(char* target, size_t target_length, const char* cwd, struct z_Database* d
 			free(output.value);
 	}
 
-	struct z_Directory* match = find_match(target, target_length, cwd, cwd_length, db);
 	if (match && match->path && match->path_length > 0) {
 		if (chdir(match->path) == -1) {
 			perror("z: couldn't change directory");
