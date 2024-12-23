@@ -91,7 +91,7 @@ fuzz_autocompletions :
 	./a.out NCSH_AUTOCOMPLETIONS_CORPUS/ -detect_leaks=0 -rss_limit_mb=8192
 
 .PHONY test_parser :
-	$(cc_with_flags) ./src/eskilib/eskilib_string.c ./src/eskilib/eskilib_test.c ./src/ncsh_parser.c ./src/tests/ncsh_parser_tests.c ./src/ncsh_args.c -o ./bin/ncsh_parser_tests
+	$(CC) $(std) $(debug_flags) ./src/eskilib/eskilib_string.c ./src/eskilib/eskilib_test.c ./src/ncsh_parser.c ./src/tests/ncsh_parser_tests.c ./src/ncsh_args.c -o ./bin/ncsh_parser_tests
 	./bin/ncsh_parser_tests
 
 .PHONY: fuzz_parser
