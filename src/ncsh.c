@@ -196,11 +196,21 @@ int_fast32_t ncsh_tab_autocomplete(char* buffer, uint_fast32_t buf_position, str
 	ncsh_write(ERASE_CURRENT_LINE "\n", ERASE_CURRENT_LINE_LENGTH + 1);
 
 	for (uint_fast8_t i = 0; i < autocompletions_matches_count; ++i) {
-		puts(autocompletion_matches[i].value);
+		printf("%s%s\n", buffer, autocompletion_matches[i].value);
 		free(autocompletion_matches[i].value);
 	}
-
+	ncsh_terminal_move_up(autocompletions_matches_count);
 	fflush(stdout);
+
+	char character;
+	if (read(STDIN_FILENO, &character, 1) == 0)
+		return NCSH_EXIT_FAILURE;
+	if (character == ESCAPE_CHARACTER)
+		printf("found arrow");
+
+	ncsh_terminal_move_down(autocompletions_matches_count + 1);
+	fflush(stdout);
+
 	return NCSH_EXIT_SUCCESS;
 }
 
@@ -396,6 +406,50 @@ int ncsh(void) {
 			putchar('\n');
 			goto free_all;
 		}
+		else if (character == CTRL_W) { // delete last word
+			shell.prompt_info.reprint_prompt = false;
+			if (buf_position == 0 && max_buf_position == 0)
+				continue;
+
+			ncsh_write_loop(BACKSPACE_STRING ERASE_CURRENT_LINE, BACKSPACE_STRING_LENGTH + ERASE_CURRENT_LINE_LENGTH);
+			buffer[max_buf_position] = '\0';
+			--max_buf_position;
+
+			while (max_buf_position > 0 && buffer[max_buf_position] != ' ') {
+				ncsh_write_loop(BACKSPACE_STRING, BACKSPACE_STRING_LENGTH);
+				buffer[max_buf_position] = '\0';
+				--max_buf_position;
+			}
+			fflush(stdout);
+
+			buffer[0] = '\0';
+			buf_position = 0;
+			shell.args.count = 0;
+			shell.args.max_line_length = 0;
+			shell.args.values[0] = NULL;
+		}
+		else if (character == CTRL_U) { // delete entire line
+			shell.prompt_info.reprint_prompt = false;
+			if (buf_position == 0 && max_buf_position == 0)
+				continue;
+
+			ncsh_write_loop(BACKSPACE_STRING ERASE_CURRENT_LINE, BACKSPACE_STRING_LENGTH + ERASE_CURRENT_LINE_LENGTH);
+			buffer[max_buf_position] = '\0';
+			--max_buf_position;
+
+			while (max_buf_position > 0) {
+				ncsh_write_loop(BACKSPACE_STRING, BACKSPACE_STRING_LENGTH);
+				buffer[max_buf_position] = '\0';
+				--max_buf_position;
+			}
+			fflush(stdout);
+
+			buffer[0] = '\0';
+			buf_position = 0;
+			shell.args.count = 0;
+			shell.args.max_line_length = 0;
+			shell.args.values[0] = NULL;
+		}
 		else if (character == TAB_KEY) {
 			if (ncsh_tab_autocomplete(buffer, buf_position, shell.autocompletions_tree) != NCSH_EXIT_SUCCESS) {
 				exit = EXIT_FAILURE;
@@ -588,14 +642,7 @@ int ncsh(void) {
 
 			buffer[buf_position++] = '\0';
 
-			if (write(STDOUT_FILENO, ERASE_CURRENT_LINE, ERASE_CURRENT_LINE_LENGTH) == -1) {
-				perror(RED NCSH_ERROR_STDOUT RESET);
-				fflush(stderr);
-				exit = EXIT_FAILURE;
-				goto free_all;
-			}
-
-			putchar('\n');
+			ncsh_write_loop(ERASE_CURRENT_LINE "\n", ERASE_CURRENT_LINE_LENGTH + 1);
 			fflush(stdout);
 
 			#ifdef NCSH_DEBUG
@@ -673,12 +720,7 @@ int ncsh(void) {
 					continue;
 
 				while (buf_position > buf_start + 1) {
-					if (write(STDOUT_FILENO, MOVE_CURSOR_LEFT, MOVE_CURSOR_LEFT_LENGTH) == -1) {
-						perror(RED NCSH_ERROR_STDOUT RESET);
-						fflush(stderr);
-						exit = EXIT_FAILURE;
-						goto free_all;
-					}
+					ncsh_write_loop(MOVE_CURSOR_LEFT, MOVE_CURSOR_LEFT_LENGTH)
 					--buf_position;
 				}
 			}
@@ -693,12 +735,7 @@ int ncsh(void) {
 				if (buf_position == max_buf_position)
 					buffer[buf_position] = '\0';
 
-				if (write(STDOUT_FILENO, ERASE_CURRENT_LINE, ERASE_CURRENT_LINE_LENGTH) == -1) {
-					perror(RED NCSH_ERROR_STDOUT RESET);
-					fflush(stderr);
-					exit = EXIT_FAILURE;
-					goto free_all;
-				}
+				ncsh_write_loop(ERASE_CURRENT_LINE, ERASE_CURRENT_LINE_LENGTH);
 			}
 
 			// autocompletion logic

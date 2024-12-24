@@ -2,6 +2,10 @@
 
 An interactive unix shell focused on speed and building everything from the ground up.
 
+## dependencies
+
+none, asides from the C standard library and POSIX extensions.
+
 ## to build from source
 
 make

@@ -94,19 +94,6 @@ def basic_ls_test(row)
   row
 end
 
-def basic_echo_test(row)
-  assert_check_new_row(row)
-  @tty.send_keys_one_at_a_time(%(echo hello))
-  @tty.assert_cursor_position(START_COL + 10, row)
-  @tty.send_newline
-  @tty.assert_row_ends_with(row, 'echo hello')
-  row += 1
-  @tty.assert_row(row, 'hello')
-  row += 1
-  puts 'echo hello test passed'
-  row
-end
-
 def basic_bad_command_test(row)
   assert_check_new_row(row)
   @tty.send_keys_one_at_a_time(%(lss)) # send a bad command
@@ -124,8 +111,6 @@ def basic_tests(row)
   starting_tests 'basic'
 
   row = basic_ls_test row
-
-  row = basic_echo_test row
 
   basic_bad_command_test row
 end
@@ -548,43 +533,81 @@ def help_test(row)
   row
 end
 
+def basic_echo_test(row)
+  assert_check_new_row(row)
+  @tty.send_keys_one_at_a_time(%(echo hello))
+  @tty.assert_cursor_position(START_COL + 10, row)
+  @tty.send_newline
+  @tty.assert_row_ends_with(row, 'echo hello')
+  row += 1
+  @tty.assert_row(row, 'hello')
+  row += 1
+  puts 'echo hello test passed'
+  row
+end
+
+def echo_tests(row)
+  assert_check_new_row(row)
+
+  basic_echo_test row
+end
+
 def builtin_tests(row)
   starting_tests 'builtin'
 
   row = help_test row
-  assert_check_new_row(row)
 
+  echo_tests row
+end
+
+def delete_line_tests(row)
+  starting_tests 'delete line'
+  assert_check_new_row(row)
+  @tty.send_keys_one_at_a_time(%(ls | sort ))
+  @tty.send_keys_exact(21.chr)
+  assert_check_new_row(row)
+  @tty.send_keys_exact(21.chr)
+  puts 'delete line test passed'
   row
 end
 
-@tty = TTYtest.new_terminal(%(PS1='$ ' ./bin/ncsh), width: 80, height: 48)
+def delete_word_tests(row)
+  starting_tests 'delete word'
+  assert_check_new_row(row)
+  @tty.send_keys_one_at_a_time(%(ls | sort ))
+  @tty.send_keys_exact(23.chr)
+  @tty.assert_row_ends_with(row, %(ls | sort))
+  @tty.send_keys_exact(23.chr)
+  @tty.assert_row_ends_with(row, %(ls |))
+  @tty.send_keys_exact(23.chr)
+  @tty.assert_row_ends_with(row, %(ls))
+  @tty.send_keys_exact(23.chr)
+  assert_check_new_row(row)
+  puts 'delete word test passed'
+  row
+end
+
 @row = 0
+@tty = TTYtest.new_terminal(%(PS1='$ ' ./bin/ncsh), width: 80, height: 48)
 
 @row = sanity_tests @row
-
 @row = basic_tests @row
-
 @row = home_and_end_tests @row
-
 @row = backspace_tests @row
-
 @row = delete_tests @row
-
 @row = pipe_tests @row
-
 @row = history_tests @row
-
 @row = output_redirection_tests @row
 
 @row = 0
 @tty = TTYtest.new_terminal(%(PS1='$ ' ./bin/ncsh), width: 120, height: 80)
+
 @row = sanity_tests @row
-
 @row = input_redirection_tests @row
-
 @row = autocompletion_tests @row
-
 @row = builtin_tests @row
+@row = delete_line_tests @row
+@row = delete_word_tests @row
 
 # @row = multiline_tests @row
 # @row = copy_paste_tests @row

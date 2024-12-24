@@ -4,7 +4,8 @@
 #ifndef ncsh_defines_h
 #define ncsh_defines_h
 
-// #define NCSH_DEBUG
+#include "ncsh_configurables.h"
+
 #ifdef NCSH_DEBUG
 #include "ncsh_debug.h"
 #endif /* ifdef NCSH_DEBUG */

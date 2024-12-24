@@ -12,7 +12,7 @@
 int ncsh_char_to_index(char character);
 char ncsh_index_to_char(int index);
 
-struct ncsh_Autocompletion_Node* ncsh_autocompletions_malloc() {
+struct ncsh_Autocompletion_Node* ncsh_autocompletions_malloc(void) {
 	struct ncsh_Autocompletion_Node* tree = calloc(1, sizeof(struct ncsh_Autocompletion_Node));
 	if (!tree)
 		return NULL;
