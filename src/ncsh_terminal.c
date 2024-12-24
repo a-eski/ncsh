@@ -56,6 +56,22 @@ void ncsh_terminal_move(int x, int y) {
 	printf("\033[%d;%dH", y, x);
 }
 
+void ncsh_terminal_move_right(uint_fast32_t i) {
+	printf("\033[%luC", i);
+}
+
+void ncsh_terminal_move_left(uint_fast32_t i) {
+	printf("\033[%luD", i);
+}
+
+void ncsh_terminal_move_up(uint_fast32_t i) {
+	printf("\033[%luA", i);
+}
+
+void ncsh_terminal_move_down(uint_fast32_t i) {
+	printf("\033[%luB", i);
+}
+
 struct ncsh_Coordinates ncsh_terminal_position(void) {
 	char buffer[T_BUFFER_LENGTH] = {0};
 	int_fast32_t i = 0;

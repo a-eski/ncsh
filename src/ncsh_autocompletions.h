@@ -25,7 +25,7 @@ struct ncsh_Autocompletion {
 inline int ncsh_char_to_index(char character) { return (int)character - ' '; }
 inline char ncsh_index_to_char(int index) { return (char)index + ' '; }
 
-struct ncsh_Autocompletion_Node* ncsh_autocompletions_malloc();
+struct ncsh_Autocompletion_Node* ncsh_autocompletions_malloc(void);
 
 void ncsh_autocompletions_free(struct ncsh_Autocompletion_Node* tree);
 
