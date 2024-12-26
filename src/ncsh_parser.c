@@ -8,9 +8,10 @@
 #include <string.h>
 #include <glob.h>
 
-#include "ncsh_args.h"
-#include "eskilib/eskilib_string.h"
+#include "ncsh_parser.h"
 #include "ncsh_defines.h"
+#include "eskilib/eskilib_result.h"
+#include "eskilib/eskilib_string.h"
 
 #define DOUBLE_QUOTE_KEY '\"'
 
@@ -26,6 +27,44 @@
 #define OUTPUT_REDIRECTION_APPEND_STRING ">>"
 #define AND_STRING "&&"
 #define OR_STRING "||"
+
+enum eskilib_Result ncsh_args_malloc(struct ncsh_Args* args) {
+	if (args == NULL)
+		return E_FAILURE_NULL_REFERENCE;
+
+	args->count = 0;
+	args->max_line_length = 0;
+
+	args->values = calloc(ncsh_TOKENS, sizeof(char*));
+	if (args->values == NULL)
+		return E_FAILURE_MALLOC;
+
+	args->ops = calloc(ncsh_TOKENS, sizeof(uint_fast8_t));
+	if (args->ops == NULL) {
+		free(args->values);
+		return E_FAILURE_MALLOC;
+	}
+
+	return E_SUCCESS;
+}
+
+void ncsh_args_free(struct ncsh_Args* args) {
+	free(args->values);
+	args->values = NULL;
+	free(args->ops);
+	args->ops = NULL;
+	args->count = 0;
+}
+
+void ncsh_args_free_values(struct ncsh_Args* args) {
+	for (uint_fast32_t i = 0; i < args->count; ++i) {
+		if (args->values[i] != NULL) {
+			free(args->values[i]);
+			args->values[i] = NULL;
+		}
+	}
+	args->count = 0;
+}
 
 bool ncsh_is_delimiter(char ch) {
 	switch (ch) {

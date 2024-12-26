@@ -73,8 +73,11 @@ void ncsh_terminal_init(void);
 void ncsh_terminal_move(int x, int y);
 
 void ncsh_terminal_move_up(uint_fast32_t i);
+
 void ncsh_terminal_move_down(uint_fast32_t i);
+
 void ncsh_terminal_move_right(uint_fast32_t i);
+
 void ncsh_terminal_move_left(uint_fast32_t i);
 
 struct ncsh_Coordinates ncsh_terminal_size(void);
