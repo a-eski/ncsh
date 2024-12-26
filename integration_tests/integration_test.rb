@@ -4,10 +4,10 @@
 require 'ttytest'
 
 START_COL = 20
-WC_C_LENGTH = '194'
+WC_C_LENGTH = '208'
 SLEEP_TIME = 0.2
-LS_LINES = 4
-LS_ITEMS = 17
+LS_LINES = 5
+LS_ITEMS = 18
 
 def assert_check_new_row(row)
   @tty.assert_row_starts_with(row, "#{ENV['USER']} ")
@@ -564,9 +564,9 @@ def delete_line_tests(row)
   starting_tests 'delete line'
   assert_check_new_row(row)
   @tty.send_keys_one_at_a_time(%(ls | sort ))
-  @tty.send_keys_exact(21.chr)
+  @tty.send_keys_exact(TTYtest::CTRLU)
   assert_check_new_row(row)
-  @tty.send_keys_exact(21.chr)
+  @tty.send_keys_exact(TTYtest::CTRLU)
   puts 'delete line test passed'
   row
 end
@@ -575,13 +575,13 @@ def delete_word_tests(row)
   starting_tests 'delete word'
   assert_check_new_row(row)
   @tty.send_keys_one_at_a_time(%(ls | sort ))
-  @tty.send_keys_exact(23.chr)
+  @tty.send_keys_exact(TTYtest::CTRLW)
   @tty.assert_row_ends_with(row, %(ls | sort))
-  @tty.send_keys_exact(23.chr)
+  @tty.send_keys_exact(TTYtest::CTRLW)
   @tty.assert_row_ends_with(row, %(ls |))
-  @tty.send_keys_exact(23.chr)
+  @tty.send_keys_exact(TTYtest::CTRLW)
   @tty.assert_row_ends_with(row, %(ls))
-  @tty.send_keys_exact(23.chr)
+  @tty.send_keys_exact(TTYtest::CTRLW)
   assert_check_new_row(row)
   puts 'delete word test passed'
   row

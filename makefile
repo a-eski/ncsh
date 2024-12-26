@@ -1,11 +1,10 @@
 std = -std=c99
 debug_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined,leak -g
 release_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -O3 -DNDEBUG
-objects = obj/main.o obj/ncsh.o obj/ncsh_vm.o obj/ncsh_terminal.o obj/eskilib_string.o obj/eskilib_file.o obj/ncsh_debug.o obj/ncsh_args.o obj/ncsh_parser.o obj/ncsh_builtins.o obj/ncsh_history.o obj/ncsh_autocompletions.o obj/ncsh_config.o obj/z.o
+objects = obj/ncsh.o obj/ncsh_vm.o obj/ncsh_terminal.o obj/eskilib_string.o obj/eskilib_file.o obj/ncsh_debug.o obj/ncsh_parser.o obj/ncsh_builtins.o obj/ncsh_history.o obj/ncsh_autocompletions.o obj/ncsh_config.o obj/z.o
 target = bin/ncsh
 
 CC ?= gcc
-# LDFLAGS = -lncurses
 DESTDIR ?= /usr/local
 RELEASE ?= 1
 
@@ -23,11 +22,8 @@ endif
 
 $(target) : $(objects)
 	$(cc_with_flags) -o $(target) $(objects)
-# $(LDFLAGS)
 
-obj/main.o : src/main.c src/ncsh.h
-	$(cc_with_flags) -c src/main.c -o obj/main.o
-obj/ncsh.o : src/ncsh.c src/ncsh.h src/ncsh_vm.h src/ncsh_terminal.h src/eskilib/eskilib_string.h src/eskilib/eskilib_colors.h src/ncsh_parser.h src/ncsh_args.h src/ncsh_autocompletions.h
+obj/ncsh.o : src/ncsh.c src/ncsh_vm.h src/ncsh_terminal.h src/eskilib/eskilib_string.h src/eskilib/eskilib_colors.h src/ncsh_parser.h src/ncsh_args.h src/ncsh_autocompletions.h
 	$(cc_with_flags) -c src/ncsh.c -o obj/ncsh.o
 obj/ncsh_vm.o : src/ncsh_vm.h src/eskilib/eskilib_string.h src/eskilib/eskilib_colors.h src/ncsh_terminal.h src/ncsh_args.h src/ncsh_builtins.h
 	$(cc_with_flags) -c src/ncsh_vm.c -o obj/ncsh_vm.o
@@ -41,8 +37,6 @@ obj/ncsh_terminal.o : src/ncsh_terminal.c src/ncsh_terminal.h
 	$(cc_with_flags) -c src/ncsh_terminal.c -o obj/ncsh_terminal.o
 obj/ncsh_parser.o : src/ncsh_parser.c src/ncsh_args.h
 	$(cc_with_flags) -c src/ncsh_parser.c -o obj/ncsh_parser.o
-obj/ncsh_args.o : src/ncsh_args.c src/ncsh_args.h
-	$(cc_with_flags) -c src/ncsh_args.c -o obj/ncsh_args.o
 obj/ncsh_config.o : src/ncsh_config.c src/ncsh_config.h
 	$(cc_with_flags) -c src/ncsh_config.c -o obj/ncsh_config.o
 obj/z.o : src/z/z.c src/z/z.h src/eskilib/eskilib_string.h
@@ -91,7 +85,7 @@ fuzz_autocompletions :
 	./a.out NCSH_AUTOCOMPLETIONS_CORPUS/ -detect_leaks=0 -rss_limit_mb=8192
 
 .PHONY test_parser :
-	$(CC) $(std) $(debug_flags) ./src/eskilib/eskilib_string.c ./src/eskilib/eskilib_test.c ./src/ncsh_parser.c ./src/tests/ncsh_parser_tests.c ./src/ncsh_args.c -o ./bin/ncsh_parser_tests
+	$(CC) $(std) $(debug_flags) ./src/eskilib/eskilib_string.c ./src/eskilib/eskilib_test.c ./src/ncsh_parser.c ./src/tests/ncsh_parser_tests.c -o ./bin/ncsh_parser_tests
 	./bin/ncsh_parser_tests
 
 .PHONY: fuzz_parser

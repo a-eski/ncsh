@@ -100,7 +100,7 @@ int_fast32_t ncsh_pipe_start(uint_fast32_t command_position, struct ncsh_Pipe_IO
 		}
 	}
 
-	return NCSH_COMMAND_CONTINUE;
+	return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
 int_fast32_t ncsh_pipe_fork_failure(uint_fast32_t command_position, uint_fast32_t number_of_commands, struct ncsh_Pipe_IO* pipes) {
@@ -172,7 +172,7 @@ int_fast32_t ncsh_syntax_error(const char* message, size_t message_length) {
 	if (write(STDIN_FILENO, message, message_length) == -1)
 		return NCSH_COMMAND_EXIT_FAILURE;
 
-	return NCSH_COMMAND_CONTINUE;
+	return NCSH_COMMAND_SYNTAX_ERROR;
 }
 
 struct ncsh_Tokens {
@@ -216,7 +216,7 @@ int_fast32_t ncsh_tokenize(struct ncsh_Args* args, struct ncsh_Tokens* tokens) {
 		return ncsh_syntax_error("ncsh: Invalid syntax: found both input and output redirects symbols ('<' and '>', respectively).\n", 97);
 	}
 
-	return NCSH_COMMAND_CONTINUE;
+	return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
 int_fast32_t ncsh_vm(struct ncsh_Args* args) {
@@ -227,8 +227,9 @@ int_fast32_t ncsh_vm(struct ncsh_Args* args) {
 	enum ncsh_Ops op_current = OP_NONE;
 
 	struct ncsh_Tokens tokens = {0};
-	if (ncsh_tokenize(args, &tokens) != NCSH_COMMAND_CONTINUE)
-		return NCSH_COMMAND_EXIT_FAILURE;
+	int_fast32_t tokenize_result = ncsh_tokenize(args, &tokens);
+	if (tokenize_result != NCSH_COMMAND_SUCCESS_CONTINUE)
+		return tokenize_result;
 
 	uint_fast32_t command_position = 0;
 	uint_fast32_t args_position = 0;
@@ -241,7 +242,7 @@ int_fast32_t ncsh_vm(struct ncsh_Args* args) {
 		if (vm.output_redirect_io.fd == -1) {
 			printf("ncsh: Invalid file handle '%s': could not open file for output redirection, do you have permission to open the file?\n",
 	  			tokens.output_file);
-			return NCSH_COMMAND_CONTINUE;
+			return NCSH_COMMAND_FAILED_CONTINUE;
 		}
 	}
 	else if (tokens.input_file && tokens.input_redirect_found_index) {
@@ -251,7 +252,7 @@ int_fast32_t ncsh_vm(struct ncsh_Args* args) {
 		if (vm.input_redirect_io.fd == -1) {
 			printf("ncsh: Invalid file handle '%s': could not open file for input redirection, does the file exist?\n",
 				tokens.input_file);
-			return NCSH_COMMAND_CONTINUE;
+			return NCSH_COMMAND_FAILED_CONTINUE;
 		}
 	}
 
@@ -277,7 +278,7 @@ int_fast32_t ncsh_vm(struct ncsh_Args* args) {
 
 		buffer[buffer_position] = NULL;
 		if (buffer[0] == NULL) {
-			return NCSH_COMMAND_CONTINUE;
+			return NCSH_COMMAND_FAILED_CONTINUE;
 		}
 
 		++args_position;
@@ -320,7 +321,7 @@ int_fast32_t ncsh_vm(struct ncsh_Args* args) {
 	else if (tokens.input_file && tokens.input_redirect_found_index)
 		ncsh_input_redirection_stop(vm.input_redirect_io.original_stdin);
 
-	return NCSH_COMMAND_CONTINUE;
+	return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
 int_fast32_t ncsh_vm_execute(struct ncsh_Args* args) {

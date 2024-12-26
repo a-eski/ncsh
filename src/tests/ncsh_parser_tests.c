@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../ncsh_args.h"
 #include "../ncsh_parser.h"
 #include "../eskilib/eskilib_string.h"
 #include "../eskilib/eskilib_test.h"

@@ -63,7 +63,7 @@ int_fast32_t ncsh_help_command(void) {
 		return NCSH_COMMAND_EXIT_FAILURE;
 	}
 
-	return NCSH_COMMAND_CONTINUE;
+	return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
 void ncsh_cd_command(struct ncsh_Args* args) {

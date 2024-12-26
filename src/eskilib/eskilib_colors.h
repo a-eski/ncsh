@@ -1,7 +1,7 @@
 /* Copyright eskilib by Alex Eski 2024 */
 
-#ifndef eskilib_output_h
-#define eskilib_output_h
+#ifndef eskilib_colors_h
+#define eskilib_colors_h
 
 #define RESET	"\x1B[0m"
 
@@ -49,5 +49,5 @@
 #define ncsh_INDIGO "\033[38;2;66;6;84m"
 #define ncsh_BLACK "\033[38;2;2;3;20m"
 
-#endif // !eskilib_output_h
+#endif // !eskilib_colors_h
 
