@@ -26,6 +26,7 @@
 #include "eskilib/eskilib_string.h"
 #include "z/z.h"
 
+#define EXIT_IO_FAILURE -1
 #define EXIT_SUCCESS_END 2
 #define EXIT_SUCCESS_EXECUTE 3
 
@@ -190,18 +191,18 @@ void ncsh_autocomplete(char* buffer, uint_fast32_t buf_position, char* current_a
 char ncsh_read() {
 	char character = 0;
 	if (read(STDIN_FILENO, &character, 1) == 0)
-			return EXIT_FAILURE;
+			return EXIT_IO_FAILURE;
 
 	if (character == ESCAPE_CHARACTER) {
 		if (read(STDIN_FILENO, &character, 1) == -1) {
 			perror(RED NCSH_ERROR_STDIN RESET);
-			return NCSH_COMMAND_EXIT_FAILURE;
+			return EXIT_IO_FAILURE;
 		}
 
 		if (character == '[') {
 			if (read(STDIN_FILENO, &character, 1) == -1) {
 				perror(RED NCSH_ERROR_STDIN RESET);
-				return NCSH_COMMAND_EXIT_FAILURE;
+				return EXIT_IO_FAILURE;
 			}
 
 			return character;
@@ -235,7 +236,7 @@ int_fast32_t ncsh_tab_autocomplete(struct ncsh_Input* input, struct ncsh_Autocom
 	int_fast32_t exit = EXIT_SUCCESS;
 	bool continue_input = true;
 	while (continue_input) {
-		if ((character = ncsh_read()) == -1) {
+		if ((character = ncsh_read()) == EXIT_IO_FAILURE) {
 			return EXIT_FAILURE;
 		}
 		switch (character) {
@@ -460,7 +461,6 @@ int_fast32_t ncsh_read_input(struct ncsh_Input* input, struct ncsh* shell) {
 			}
 			fflush(stdout);
 
-			// input->buffer[0] = '\0';
 			input->pos = 0;
 			shell->args.count = 0;
 			shell->args.max_line_length = 0;
@@ -482,7 +482,6 @@ int_fast32_t ncsh_read_input(struct ncsh_Input* input, struct ncsh* shell) {
 			}
 			fflush(stdout);
 
-			// input->buffer[0] = '\0';
 			input->pos = 0;
 			shell->args.count = 0;
 			shell->args.max_line_length = 0;
