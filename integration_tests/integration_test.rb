@@ -4,10 +4,10 @@
 require 'ttytest'
 
 START_COL = 20
-WC_C_LENGTH = '194'
+WC_C_LENGTH = '208'
 SLEEP_TIME = 0.2
-LS_LINES = 4
-LS_ITEMS = 17
+LS_LINES = 5
+LS_ITEMS = 18
 
 def assert_check_new_row(row)
   @tty.assert_row_starts_with(row, "#{ENV['USER']} ")
