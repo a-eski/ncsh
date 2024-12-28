@@ -44,7 +44,6 @@ enum eskilib_Result ncsh_history_malloc(struct ncsh_History* history) {
 
 	history->history_count = 0;
 	history->file_position = 0;
-	history->history_loaded = false;
 	history->entries = malloc(sizeof(struct eskilib_String) * NCSH_MAX_HISTORY_FILE);
 	if (history->entries == NULL)
 		return E_FAILURE_MALLOC;
@@ -93,7 +92,6 @@ enum eskilib_Result ncsh_history_load(struct eskilib_String config_location, str
 
 	fclose(file);
 
-	history->history_loaded = true;
 	return E_SUCCESS;
 }
 
@@ -131,7 +129,7 @@ enum eskilib_Result ncsh_history_save(struct ncsh_History* history) {
 }
 
 void ncsh_history_exit(struct ncsh_History* history) {
-	if (history->history_loaded) {
+	if (history) {
 		if (history->history_count > 0)
 			ncsh_history_save(history);
 		ncsh_history_free(history);
@@ -179,8 +177,6 @@ enum eskilib_Result ncsh_history_add(char* line, size_t length, struct ncsh_Hist
 		return E_FAILURE_NULL_REFERENCE;
 	else if (length == 0)
 		return E_FAILURE_ZERO_LENGTH;
-	else if (history->history_loaded == false)
-		return E_NO_OP;
 
 	bool entry_found = false;
 	int_fast32_t max_length;
@@ -221,9 +217,6 @@ struct eskilib_String ncsh_history_get(uint_fast32_t position, struct ncsh_Histo
 		return eskilib_String_Empty;
 	}
 	else if (history->entries == NULL) {
-		return eskilib_String_Empty;
-	}
-	else if (!history->history_loaded) {
 		return eskilib_String_Empty;
 	}
 	else if (history->history_count == 0 && position == 0) {

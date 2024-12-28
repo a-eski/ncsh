@@ -1,7 +1,7 @@
 std = -std=c99
 debug_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined,leak -g
 release_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -O3 -DNDEBUG
-objects = obj/ncsh.o obj/ncsh_vm.o obj/ncsh_terminal.o obj/eskilib_string.o obj/eskilib_file.o obj/ncsh_debug.o obj/ncsh_parser.o obj/ncsh_builtins.o obj/ncsh_history.o obj/ncsh_autocompletions.o obj/ncsh_config.o obj/z.o
+objects = obj/ncsh.o obj/ncsh_vm.o obj/ncsh_terminal.o obj/eskilib_string.o obj/eskilib_file.o obj/ncsh_parser.o obj/ncsh_builtins.o obj/ncsh_history.o obj/ncsh_autocompletions.o obj/ncsh_config.o obj/z.o
 target = bin/ncsh
 
 CC ?= gcc
@@ -45,8 +45,6 @@ obj/eskilib_string.o : src/eskilib/eskilib_string.c src/eskilib/eskilib_string.h
 	$(cc_with_flags) -c src/eskilib/eskilib_string.c -o obj/eskilib_string.o
 obj/eskilib_file.o : src/eskilib/eskilib_file.c src/eskilib/eskilib_file.h
 	$(cc_with_flags) -c src/eskilib/eskilib_file.c -o obj/eskilib_file.o
-obj/ncsh_debug.o : src/ncsh_debug.c src/ncsh_debug.h src/ncsh_args.h
-	$(cc_with_flags) -c src/ncsh_debug.c -o obj/ncsh_debug.o
 
 .PHONY: debug
 debug :

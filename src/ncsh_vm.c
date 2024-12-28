@@ -199,7 +199,7 @@ int_fast32_t ncsh_tokenize(struct ncsh_Args* args, struct ncsh_Tokens* tokens) {
 			tokens->output_redirect_found_index = i;
 		}
 		else if (args->ops[i] == OP_INPUT_REDIRECTION) {
-			if (i + 1 >= args->count) {
+			if (i == 0 || i + 1 >= args->count) {
 				return ncsh_syntax_error("ncsh: Invalid syntax: found no filename before input redirect symbol '<'.\n", 74);
 			}
 
@@ -220,9 +220,9 @@ int_fast32_t ncsh_tokenize(struct ncsh_Args* args, struct ncsh_Tokens* tokens) {
 }
 
 int_fast32_t ncsh_vm(struct ncsh_Args* args) {
+	pid_t pid = 0;
 	struct ncsh_Vm vm = {0};
 	char* buffer[MAX_INPUT] = {0};
-	pid_t pid = 0;
 	bool end = false;
 	enum ncsh_Ops op_current = OP_NONE;
 

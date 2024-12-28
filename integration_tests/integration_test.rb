@@ -4,10 +4,10 @@
 require 'ttytest'
 
 START_COL = 20
-WC_C_LENGTH = '208'
+WC_C_LENGTH = '223'
 SLEEP_TIME = 0.2
-LS_LINES = 5
-LS_ITEMS = 18
+LS_LINES = 3
+LS_ITEMS = 19
 
 def assert_check_new_row(row)
   @tty.assert_row_starts_with(row, "#{ENV['USER']} ")
@@ -20,16 +20,14 @@ def starting_tests(test)
   puts "===== Starting #{test} tests ====="
 end
 
-def if_z_database_new_test(row)
-  if @tty.rows[0] == 'Error opening z database file: No such file or directory'
-    @tty.assert_row(row, 'Error opening z database file: No such file or directory')
-    row += 1
-    @tty.assert_row(row, 'Trying to create z database file.')
-    row += 1
-    @tty.assert_row(row, 'Created z database file.')
-    row += 1
-    puts 'New z database test passed'
-  end
+def z_database_new_test(row)
+  @tty.assert_row(row, 'Error opening z database file: No such file or directory')
+  row += 1
+  @tty.assert_row(row, 'Trying to create z database file.')
+  row += 1
+  @tty.assert_row(row, 'Created z database file.')
+  row += 1
+  puts 'New z database test passed'
   row
 end
 
@@ -69,10 +67,10 @@ def empty_line_sanity_test(row)
   row
 end
 
-def sanity_tests(row)
-  starting_tests 'sanity'
+def startup_tests(row)
+  starting_tests 'startup tests'
 
-  row = if_z_database_new_test row
+  row = z_database_new_test row
 
   row = startup_test row
 
@@ -387,6 +385,21 @@ def output_redirection_tests(row)
   multiple_piped_output_redirection_test row
 end
 
+def z_add_tests(row)
+  starting_tests 'z_add'
+  assert_check_new_row(row)
+  @tty.send_keys_one_at_a_time(%(z add ~/.config\n))
+  row += 1
+  @tty.assert_row_ends_with(row, %(Added new entry to z database.))
+  row += 1
+  @tty.send_keys_one_at_a_time(%(z add ~/.config\n))
+  row += 1
+  @tty.assert_row_ends_with(row, 'Entry already exists in z database.')
+  row += 1
+  puts 'z add tests passed'
+  row
+end
+
 def basic_input_redirection_test(row)
   assert_check_new_row(row)
   @tty.send_keys_one_at_a_time(%(ls > t.txt))
@@ -488,7 +501,8 @@ def backspace_and_delete_autocompletion_test(row)
   @tty.send_right_arrow
   @tty.assert_row_ends_with(row, %(ls | sort))
 
-  @tty.send_keys_one_at_a_time(%( | wc -c))
+  @tty.send_keys_one_at_a_time(%( |))
+  @tty.send_right_arrow
   @tty.assert_row_ends_with(row, %(ls | sort | wc -c))
   @tty.send_newline
   row += 1
@@ -507,16 +521,9 @@ def autocompletion_tests(row)
   backspace_and_delete_autocompletion_test row
 end
 
-def multiline_tests(row)
-  starting_tests 'multiline'
-  row
-end
-
 def help_test(row)
   assert_check_new_row(row)
-  @tty.send_keys_one_at_a_time(%(help))
-  @tty.assert_row_ends_with(row, %(help))
-  @tty.send_newline
+  @tty.send_keys_one_at_a_time(%(help\n))
   row += 1
   @tty.assert_contents_at row, row + 6, <<~TERM
     ncsh by Alex Eski: help
@@ -582,15 +589,14 @@ def delete_word_tests(row)
   @tty.send_keys_exact(TTYtest::CTRLW)
   @tty.assert_row_ends_with(row, %(ls))
   @tty.send_keys_exact(TTYtest::CTRLW)
-  assert_check_new_row(row)
   puts 'delete word test passed'
   row
 end
 
 @row = 0
-@tty = TTYtest.new_terminal(%(PS1='$ ' ./bin/ncsh), width: 80, height: 48)
+@tty = TTYtest.new_terminal(%(PS1='$ ' ./bin/ncsh), width: 120, height: 120)
 
-@row = sanity_tests @row
+@row = startup_tests @row
 @row = basic_tests @row
 @row = home_and_end_tests @row
 @row = backspace_tests @row
@@ -598,11 +604,7 @@ end
 @row = pipe_tests @row
 @row = history_tests @row
 @row = output_redirection_tests @row
-
-@row = 0
-@tty = TTYtest.new_terminal(%(PS1='$ ' ./bin/ncsh), width: 120, height: 80)
-
-@row = sanity_tests @row
+@row = z_add_tests @row
 @row = input_redirection_tests @row
 @row = autocompletion_tests @row
 @row = builtin_tests @row

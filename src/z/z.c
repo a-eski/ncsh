@@ -261,7 +261,9 @@ enum z_Result read_from_database_file(struct z_Database* db) {
 }
 
 enum z_Result add_new_path_to_database(char* path, size_t path_length, struct z_Database* db) {
-	assert(path && db);
+	assert(path && db && path_length > 1);
+	if (db->count == Z_DATABASE_IN_MEMORY_LIMIT)
+		return Z_FAILURE;
 
 	db->dirs[db->count].path = malloc(path_length);
 	if (!db->dirs[db->count].path)
@@ -400,7 +402,7 @@ void z(char* target, size_t target_length, const char* cwd, struct z_Database* d
 	if (target_length == 2) {
 		if (target[0] == '.') {
 			if (chdir(target) == -1)
-				perror("z: couldn't change directory");
+				perror("z: couldn't change directory (1)");
 
 			return;
 		}
@@ -409,7 +411,7 @@ void z(char* target, size_t target_length, const char* cwd, struct z_Database* d
 	else if (target_length == 3) {
 		if (target[0] == '.' && target[1] == '.') {
 			if (chdir(target) == -1)
-				perror("z: couldn't change directory");
+				perror("z: couldn't change directory (2)");
 
 			return;
 		}
@@ -419,26 +421,23 @@ void z(char* target, size_t target_length, const char* cwd, struct z_Database* d
 	struct eskilib_String output = {0};
 	struct z_Directory* match = find_match(target, target_length, cwd, cwd_length, db);
 	if (z_directory_matches(target, target_length, cwd, &output) == Z_SUCCESS) {
-		// printf("dir matches %s\n", output.value);
+		printf("dir matches %s\n", output.value);
 		if (!match && add_new_to_database(output.value, output.length, cwd, cwd_length, db) != Z_SUCCESS) {
 			if (output.value)
 				free(output.value);
 			return;
 		}
 
-		if (chdir(output.value) == -1) {
-			perror("z: couldn't change directory");
-			if (output.value)
-				free(output.value);
-			return;
-		}
+		if (chdir(output.value) == -1)
+			perror("z: couldn't change directory (3)");
 		if (output.value)
 			free(output.value);
+		return;
 	}
 
 	if (match && match->path && match->path_length > 0) {
 		if (chdir(match->path) == -1) {
-			perror("z: couldn't change directory");
+			perror("z: couldn't change directory (4)");
 		}
 		return;
 	}
@@ -452,7 +451,7 @@ void z(char* target, size_t target_length, const char* cwd, struct z_Database* d
 enum z_Result z_add(char* path, size_t path_length, struct z_Database* db) {
 	if (!path || !db)
 		return Z_NULL_REFERENCE;
-	if (path[path_length - 1] != '\0' || path_length < 2)
+	if (path_length < 2 || path[path_length - 1] != '\0')
 		return Z_BAD_STRING;
 
 	if (find_match_add(path, path_length, db)) {
