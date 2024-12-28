@@ -6,6 +6,10 @@
 
 #include "ncsh_configurables.h"
 
+#ifdef NCSH_DEBUG
+#include "ncsh_debug.h"
+#endif /* ifdef NCSH_DEBUG */
+
 #define NCSH_ERROR_STDOUT "ncsh: Error writing to stdout"
 #define NCSH_ERROR_STDIN "ncsh: Error writing to stdin"
 

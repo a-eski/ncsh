@@ -15,7 +15,7 @@ void ncsh_parser_ls_test(void) {
 	struct ncsh_Args args;
 	bool result = ncsh_args_malloc(&args);
 	eskilib_assert(result == true);
-	ncsh_parse(line, length, &args);
+	ncsh_parser_parse(line, length, &args);
 
 	eskilib_assert(args.values != NULL);
 	eskilib_assert(args.count == 1);
@@ -35,7 +35,7 @@ void ncsh_parser_ls_dash_l_test(void) {
 	struct ncsh_Args args;
 	bool result = ncsh_args_malloc(&args);
 	eskilib_assert(result == true);
-	ncsh_parse(line, length, &args);
+	ncsh_parser_parse(line, length, &args);
 
 	eskilib_assert(args.values != NULL);
 	eskilib_assert(args.count == 2);
@@ -56,7 +56,7 @@ void ncsh_parser_pipe_test(void) {
 	struct ncsh_Args args;
 	bool result = ncsh_args_malloc(&args);
 	eskilib_assert(result == true);
-	ncsh_parse(line, length, &args);
+	ncsh_parser_parse(line, length, &args);
 
 	eskilib_assert(args.values != NULL);
 	eskilib_assert(args.count == 3);
@@ -79,7 +79,7 @@ void ncsh_parser_multiple_pipe_test(void) {
 	struct ncsh_Args args;
 	bool result = ncsh_args_malloc(&args);
 	eskilib_assert(result == true);
-	ncsh_parse(line, length, &args);
+	ncsh_parser_parse(line, length, &args);
 
 	eskilib_assert(args.values != NULL);
 	eskilib_assert(args.count == 5);
@@ -107,7 +107,7 @@ void ncsh_parser_background_job_test(void) {
 	struct ncsh_Args args;
 	bool result = ncsh_args_malloc(&args);
 	eskilib_assert(result == true);
-	ncsh_parse(line, length, &args);
+	ncsh_parser_parse(line, length, &args);
 
 	eskilib_assert(args.values != NULL);
 	eskilib_assert(args.count == 2);
@@ -129,7 +129,7 @@ void ncsh_parser_output_redirection_test(void) {
 	struct ncsh_Args args;
 	bool result = ncsh_args_malloc(&args);
 	eskilib_assert(result == true);
-	ncsh_parse(line, length, &args);
+	ncsh_parser_parse(line, length, &args);
 
 	eskilib_assert(args.values != NULL);
 	eskilib_assert(args.count == 3);
@@ -153,7 +153,7 @@ void ncsh_parser_output_redirection_append_test(void) {
 	struct ncsh_Args args;
 	bool result = ncsh_args_malloc(&args);
 	eskilib_assert(result == true);
-	ncsh_parse(line, length, &args);
+	ncsh_parser_parse(line, length, &args);
 
 	eskilib_assert(args.values != NULL);
 	eskilib_assert(args.count == 3);
@@ -177,7 +177,7 @@ void ncsh_parser_double_quotes_test(void) {
 	struct ncsh_Args args;
 	bool result = ncsh_args_malloc(&args);
 	eskilib_assert(result == true);
-	ncsh_parse(line, length, &args);
+	ncsh_parser_parse(line, length, &args);
 
 	eskilib_assert(args.values != NULL);
 	eskilib_assert(args.count == 2);
@@ -197,7 +197,7 @@ void ncsh_parser_home_test(void) {
 	struct ncsh_Args args;
 	bool result = ncsh_args_malloc(&args);
 	eskilib_assert(result == true);
-	ncsh_parse(line, length, &args);
+	ncsh_parser_parse(line, length, &args);
 
 	eskilib_assert(args.values != NULL);
 	eskilib_assert(args.count == 2);
@@ -217,7 +217,7 @@ void ncsh_parser_home_at_start_test(void) {
 	struct ncsh_Args args;
 	bool result = ncsh_args_malloc(&args);
 	eskilib_assert(result == true);
-	ncsh_parse(line, length, &args);
+	ncsh_parser_parse(line, length, &args);
 
 	eskilib_assert(args.values != NULL);
 	eskilib_assert(args.count == 2);

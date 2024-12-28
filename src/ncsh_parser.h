@@ -15,7 +15,7 @@ void ncsh_args_free(struct ncsh_Args* args);
 
 void ncsh_args_free_values(struct ncsh_Args* args);
 
-void ncsh_parse(char line[], size_t length, struct ncsh_Args* args);
+void ncsh_parser_parse(char line[], size_t length, struct ncsh_Args* args);
 
 #endif // !ncsh_parser_h
 

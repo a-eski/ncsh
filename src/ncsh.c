@@ -370,6 +370,13 @@ int_fast32_t ncsh_init(struct ncsh* shell) {
 		ncsh_config_free(&shell->config);
 		return EXIT_FAILURE;
 	}
+	#ifdef NCSH_DEBUG
+	printf("config_file: %s\n", shell->config.config_file);
+	if (shell->config.home_location.value)
+		printf("home_location.value: %s\n", shell->config.home_location.value);
+	if (shell->config.config_location.value)
+		printf("config_location.value: %s\n", shell->config.config_location.value);
+	#endif /* ifdef NCSH_DEBUG */
 
 	if (ncsh_args_malloc(&shell->args) != E_SUCCESS) {
 		perror(RED "ncsh: Error when allocating memory for parsing" RESET);
@@ -659,10 +666,6 @@ int_fast32_t ncsh_read_input(struct ncsh_Input* input, struct ncsh* shell) {
 
 						break;
 					}
-					/*default : {*/
-					/*	shell->prompt_info.reprint_prompt = false;*/
-					/*	break;*/
-					/*}*/
 				}
 			}
 		}
@@ -683,7 +686,6 @@ int_fast32_t ncsh_read_input(struct ncsh_Input* input, struct ncsh* shell) {
 
 			ncsh_write(ERASE_CURRENT_LINE "\n", ERASE_CURRENT_LINE_LENGTH + 1);
 			fflush(stdout);
-
 
 			return EXIT_SUCCESS_EXECUTE;
 		}
@@ -755,6 +757,16 @@ int_fast32_t ncsh_read_input(struct ncsh_Input* input, struct ncsh* shell) {
 	}
 }
 
+void ncsh_parse(struct ncsh_Input* input, struct ncsh* shell) {
+	#ifdef NCSH_DEBUG
+	ncsh_debug_line(input.buffer, input.pos, input.max_pos);
+	#endif /* ifdef NCSH_DEBUG */
+	ncsh_parser_parse(input->buffer, input->pos, &shell->args);
+	#ifdef NCSH_DEBUG
+	ncsh_debug_args(shell.args);
+	#endif /* ifdef NCSH_DEBUG */
+}
+
 int main(void) {
 	#ifdef NCSH_START_TIME
 	clock_t start = clock();
@@ -811,7 +823,7 @@ int main(void) {
 			}
 		}
 
-		ncsh_parse(input.buffer, input.pos, &shell.args);
+		ncsh_parse(&input, &shell);
 		command_result = ncsh_execute(&shell.args, &shell.history, &shell.z_db);
 		ncsh_args_free_values(&shell.args);
 

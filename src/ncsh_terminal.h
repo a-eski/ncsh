@@ -85,7 +85,5 @@ struct ncsh_Coordinates ncsh_terminal_size(void);
 
 struct ncsh_Coordinates ncsh_terminal_position(void);
 
-void ncsh_terminal_interrupt();
-
 #endif // !ncsh_terminal_h
 
