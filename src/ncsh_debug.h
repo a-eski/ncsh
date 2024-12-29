@@ -1,5 +1,7 @@
 // Copyright (c) ncsh by Alex Eski 2024
 
+#ifdef NCSH_DEBUG
+
 #ifndef ncsh_debug_h
 #define ncsh_debug_h
 
@@ -34,4 +36,6 @@ ncsh_debug_string(struct eskilib_String string, const char* name) {
 }
 
 #endif // !ncsh_debug_h
+
+#endif // NCSH_DEBUG
 

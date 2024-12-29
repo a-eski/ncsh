@@ -187,7 +187,7 @@ void ncsh_autocomplete(char* buffer, uint_fast32_t buf_position, char* current_a
 	fflush(stdout);
 }
 
-char ncsh_read() {
+char ncsh_read(void) {
 	char character = 0;
 	if (read(STDIN_FILENO, &character, 1) == 0)  {
 		perror(RED NCSH_ERROR_STDIN RESET);
