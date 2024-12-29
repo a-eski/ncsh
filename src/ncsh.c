@@ -27,6 +27,8 @@
 #include "z/z.h"
 
 #define EXIT_IO_FAILURE -1
+// #define EXIT_SUCCESS 0 // From stdlib.h
+// #define EXIT_FAILURE 1 // From stdlib.h
 #define EXIT_SUCCESS_END 2
 #define EXIT_SUCCESS_EXECUTE 3
 
@@ -35,6 +37,13 @@
 		fflush(stderr);							\
 		return EXIT_FAILURE;						\
 	}									\
+
+struct ncsh_Input {
+	size_t start_pos;
+	size_t pos;
+	size_t max_pos;
+	char* buffer;
+};
 
 struct ncsh {
 	struct ncsh_Directory prompt_info;
@@ -49,13 +58,6 @@ struct ncsh {
 	struct ncsh_Autocompletion_Node* autocompletions_tree;
 
 	struct z_Database z_db;
-};
-
-struct ncsh_Input {
-	size_t start_pos;
-	size_t pos;
-	size_t max_pos;
-	char* buffer;
 };
 
 #ifdef NCSH_SHORT_DIRECTORY
@@ -77,8 +79,7 @@ void ncsh_prompt_directory(char* cwd, char* output) {
 
 // [[nodiscard]]
 int_fast32_t ncsh_prompt(struct ncsh_Directory prompt_info) {
-	char* wd_result = getcwd(prompt_info.path, sizeof(prompt_info.path));
-	if (wd_result == NULL) {
+	if (!getcwd(prompt_info.path, sizeof(prompt_info.path))) {
 		perror(RED "ncsh: Error when getting current directory" RESET);
 		fflush(stderr);
 		return EXIT_FAILURE;
@@ -87,13 +88,12 @@ int_fast32_t ncsh_prompt(struct ncsh_Directory prompt_info) {
 	#ifdef NCSH_SHORT_DIRECTORY
 	char prompt_directory[PATH_MAX] = {0};
 	ncsh_prompt_directory(prompt_info.path, prompt_directory);
-
 	printf(ncsh_GREEN "%s" WHITE " " ncsh_CYAN "%s" WHITE_BRIGHT " \u2771 ", prompt_info.user, prompt_directory);
 	#else
 	printf(ncsh_GREEN "%s" WHITE " " ncsh_CYAN "%s" WHITE_BRIGHT " \u2771 ", prompt_info.user, prompt_info.path);
 	#endif /* ifdef NCSH_SHORT_DIRECTORY */
-	fflush(stdout);
 
+	fflush(stdout);
 	// save cursor position so we can reset cursor when loading history entries
 	ncsh_write(SAVE_CURSOR_POSITION, SAVE_CURSOR_POSITION_LENGTH);
 
@@ -161,7 +161,6 @@ int_fast32_t ncsh_delete(struct ncsh_Input* input) {
 
 	while (input->pos > input->start_pos && input->pos != 0 && input->buffer[input->pos - 1]) {
 		ncsh_write(MOVE_CURSOR_LEFT, MOVE_CURSOR_LEFT_LENGTH);
-
 		--input->pos;
 	}
 
@@ -188,28 +187,36 @@ void ncsh_autocomplete(char* buffer, uint_fast32_t buf_position, char* current_a
 	fflush(stdout);
 }
 
-char ncsh_read() {
+char ncsh_read(void) {
 	char character = 0;
-	if (read(STDIN_FILENO, &character, 1) == 0)
-			return EXIT_IO_FAILURE;
+	if (read(STDIN_FILENO, &character, 1) == 0)  {
+		perror(RED NCSH_ERROR_STDIN RESET);
+		return EXIT_IO_FAILURE;
+	}
 
-	if (character == ESCAPE_CHARACTER) {
-		if (read(STDIN_FILENO, &character, 1) == -1) {
-			perror(RED NCSH_ERROR_STDIN RESET);
-			return EXIT_IO_FAILURE;
-		}
-
-		if (character == '[') {
+	switch (character) {
+		case ESCAPE_CHARACTER: {
 			if (read(STDIN_FILENO, &character, 1) == -1) {
 				perror(RED NCSH_ERROR_STDIN RESET);
 				return EXIT_IO_FAILURE;
 			}
 
+			if (character == '[') {
+				if (read(STDIN_FILENO, &character, 1) == -1) {
+					perror(RED NCSH_ERROR_STDIN RESET);
+					return EXIT_IO_FAILURE;
+				}
+
+				return character;
+			}
+
+			break;
+		}
+		case '\n':
+		case '\r': {
 			return character;
 		}
 	}
-	else if (character == '\n' || character == '\r')
-		return character;
 
 	return '\0';
 }
@@ -219,9 +226,8 @@ int_fast32_t ncsh_tab_autocomplete(struct ncsh_Input* input, struct ncsh_Autocom
 	struct ncsh_Autocompletion autocompletion_matches[NCSH_MAX_AUTOCOMPLETION_MATCHES] = {0};
 	uint_fast32_t autocompletions_matches_count = ncsh_autocompletions_get(input->buffer, input->pos + 1, autocompletion_matches, autocompletions_tree);
 
-	if (autocompletions_matches_count == 0) {
+	if (autocompletions_matches_count == 0)
 		return EXIT_SUCCESS;
-	}
 
 	ncsh_write(ERASE_CURRENT_LINE "\n", ERASE_CURRENT_LINE_LENGTH + 1);
 
@@ -272,21 +278,16 @@ int_fast32_t ncsh_tab_autocomplete(struct ncsh_Input* input, struct ncsh_Autocom
 	}
 
 	ncsh_terminal_move_down(autocompletions_matches_count + 1 - position);
-	#ifdef NCSH_DEBUG
-	printf("Result of tab completion: %s\n", input->buffer);
-	#endif
+	if (exit == EXIT_SUCCESS_EXECUTE)
+		printf(ncsh_YELLOW "%s\n" RESET, input->buffer);
 	fflush(stdout);
 
 	return exit;
 }
 
 int_fast32_t ncsh_z(struct ncsh_Args* args, struct z_Database* z_db) {
-	assert(z_db != NULL);
+	assert(z_db);
 	assert(args->count > 0);
-	if (z_db == NULL)
-		return NCSH_COMMAND_EXIT_FAILURE;
-	if (args->count == 0)
-		return NCSH_COMMAND_SUCCESS_CONTINUE;
 
 	if (args->count > 2) {
 		if (!args->values[1] || !args->values[2])
@@ -304,7 +305,7 @@ int_fast32_t ncsh_z(struct ncsh_Args* args, struct z_Database* z_db) {
 		}
 	}
 
-	size_t length = args->values[1] == NULL ? 0 : strlen(args->values[1]) + 1;
+	size_t length = !args->values[1] ? 0 : strlen(args->values[1]) + 1;
 	char cwd[PATH_MAX] = {0};
 	char* cwd_result = getcwd(cwd, PATH_MAX);
 	if (!cwd_result) {
@@ -369,6 +370,13 @@ int_fast32_t ncsh_init(struct ncsh* shell) {
 		ncsh_config_free(&shell->config);
 		return EXIT_FAILURE;
 	}
+	#ifdef NCSH_DEBUG
+	printf("config_file: %s\n", shell->config.config_file);
+	if (shell->config.home_location.value)
+		printf("home_location.value: %s\n", shell->config.home_location.value);
+	if (shell->config.config_location.value)
+		printf("config_location.value: %s\n", shell->config.config_location.value);
+	#endif /* ifdef NCSH_DEBUG */
 
 	if (ncsh_args_malloc(&shell->args) != E_SUCCESS) {
 		perror(RED "ncsh: Error when allocating memory for parsing" RESET);
@@ -441,7 +449,7 @@ int_fast32_t ncsh_read_input(struct ncsh_Input* input, struct ncsh* shell) {
 			return EXIT_FAILURE;
 		}
 
-		if (character == CTRL_D) {
+		if (character == CTRL_C || character == CTRL_D) {
 			putchar('\n');
 			return EXIT_SUCCESS_END;
 		}
@@ -658,10 +666,6 @@ int_fast32_t ncsh_read_input(struct ncsh_Input* input, struct ncsh* shell) {
 
 						break;
 					}
-					default : {
-						shell->prompt_info.reprint_prompt = false;
-						break;
-					}
 				}
 			}
 		}
@@ -682,7 +686,6 @@ int_fast32_t ncsh_read_input(struct ncsh_Input* input, struct ncsh* shell) {
 
 			ncsh_write(ERASE_CURRENT_LINE "\n", ERASE_CURRENT_LINE_LENGTH + 1);
 			fflush(stdout);
-
 
 			return EXIT_SUCCESS_EXECUTE;
 		}
@@ -754,12 +757,22 @@ int_fast32_t ncsh_read_input(struct ncsh_Input* input, struct ncsh* shell) {
 	}
 }
 
+void ncsh_parse(struct ncsh_Input* input, struct ncsh* shell) {
+	#ifdef NCSH_DEBUG
+	ncsh_debug_line(input.buffer, input.pos, input.max_pos);
+	#endif /* ifdef NCSH_DEBUG */
+	ncsh_parser_parse(input->buffer, input->pos, &shell->args);
+	#ifdef NCSH_DEBUG
+	ncsh_debug_args(shell.args);
+	#endif /* ifdef NCSH_DEBUG */
+}
+
 int main(void) {
 	#ifdef NCSH_START_TIME
 	clock_t start = clock();
 	#endif
 
-	int_fast32_t exit = EXIT_SUCCESS;
+	int_fast32_t exit_code = EXIT_SUCCESS;
 	int_fast32_t input_result = 0;
 	int_fast32_t command_result = 0;
 
@@ -790,6 +803,8 @@ int main(void) {
 	#endif
 
 	if (ncsh_prompt(shell.prompt_info) == EXIT_FAILURE) {
+		ncsh_exit(&shell);
+		free(input.buffer);
 		return EXIT_FAILURE;
 	}
 
@@ -797,38 +812,28 @@ int main(void) {
 		input_result = ncsh_read_input(&input, &shell);
 		switch (input_result) {
 			case EXIT_FAILURE: {
-				exit = EXIT_FAILURE;
+				exit_code = EXIT_FAILURE;
 				break;
 			}
 			case EXIT_SUCCESS: {
-				goto cleanup;
+				goto reset;
 			}
 			case EXIT_SUCCESS_END: {
 				break;
 			}
 		}
 
-		#ifdef NCSH_DEBUG
-		ncsh_debug_line(input.buffer, input.pos, input.max_pos);
-		#endif /* ifdef NCSH_DEBUG */
-
-		ncsh_parse(input.buffer, input.pos, &shell.args);
-
-		#ifdef NCSH_DEBUG
-		ncsh_debug_args(shell.args);
-		#endif /* ifdef NCSH_DEBUG */
-
+		ncsh_parse(&input, &shell);
 		command_result = ncsh_execute(&shell.args, &shell.history, &shell.z_db);
-
 		ncsh_args_free_values(&shell.args);
 
 		switch (command_result) {
 			case NCSH_COMMAND_EXIT_FAILURE: {
-				exit = EXIT_FAILURE;
-				break;
+				exit_code = EXIT_FAILURE;
+				goto exit;
 			}
 			case NCSH_COMMAND_EXIT: {
-				break;
+				goto exit;
 			}
 		}
 
@@ -837,7 +842,7 @@ int main(void) {
 			ncsh_autocompletions_add(input.buffer, input.pos, shell.autocompletions_tree);
 		}
 
-		cleanup:
+		reset:
 			memset(input.buffer, '\0', input.max_pos);
 			input.pos = 0;
 			input.max_pos = 0;
@@ -846,9 +851,10 @@ int main(void) {
 			shell.args.values[0] = NULL;
 	}
 
-	free(input.buffer);
-	ncsh_exit(&shell);
+	exit:
+		free(input.buffer);
+		ncsh_exit(&shell);
 
-	return (int)exit;
+	return exit_code;
 }
 

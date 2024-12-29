@@ -31,10 +31,6 @@ enum eskilib_Result ncsh_config_home(struct ncsh_Config* config) {
 	}
 	memcpy(config->home_location.value, home, config->home_location.length + 1);
 
-	#ifdef NCSH_DEBUG
-	ncsh_debug_string(config->home_location, "home");
-	#endif /* ifdef NCSH_DEBUG */
-
 	return E_SUCCESS;
 }
 
@@ -70,10 +66,6 @@ enum eskilib_Result ncsh_config(struct ncsh_Config* config) {
 
 	config->config_location.value = (char*)config_original_ptr;
 
-	#ifdef NCSH_DEBUG
-	ncsh_debug_string(config->config_location, "config");
-	printf("Creating config directory %s\n", config->config_location.value);
-	#endif /* ifdef NCSH_DEBUG */
 	mkdir(config->config_location.value, 0755);
 
 	return E_SUCCESS;
@@ -96,10 +88,6 @@ enum eskilib_Result ncsh_config(struct ncsh_Config* config) {
 	}
 	memcpy(config->config_file, config->config_location.value, config->config_location.length);
 	strncat(config->config_file, NCSH_RC, NCSH_RC_LENGTH);
-
-	#ifdef NCSH_DEBUG
-	printf("config file: %s\n", config->config_file);
-	#endif // ifdef NCSH_DEBUG
 
 	return E_SUCCESS;
 }

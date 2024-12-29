@@ -24,19 +24,6 @@ fuzzing
 https://llvm.org/docs/LibFuzzer.html#corpus
 https://github.com/google/fuzzing/blob/master/tutorial/libFuzzerTutorial.md#seed-corpus
 
-tests
-ss
-ls
-ls -l
-ls | sort
-ls | sort > t.txt
-cat t.txt
-rm t.txt
-ls | sort | wc -c
-ls | sort | wc -c > t.txt
-cat t.txt
-rm t.txt
-
 z add /mnt/c/Users/Alex/source/repos/PersonalRepos/shells/ncsh
 z add /mnt/c/Users/Alex/source/repos/PersonalRepos/ttytest2
 

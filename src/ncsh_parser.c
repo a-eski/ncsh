@@ -107,7 +107,7 @@ enum ncsh_Ops ncsh_op_get(char line[], size_t length) {
 	}
 }
 
-void ncsh_parse(char line[], size_t length, struct ncsh_Args* args) {
+void ncsh_parser_parse(char line[], size_t length, struct ncsh_Args* args) {
 	if (!line || length == 0 || length > NCSH_MAX_INPUT) {
 		args->max_line_length = 0;
 		args->count = 0;

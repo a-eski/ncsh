@@ -1,5 +1,6 @@
 // Copyright (c) ncsh by Alex Eski 2024
 
+#include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -40,13 +41,19 @@ void ncsh_terminal_init(void) {
 	terminal.c_lflag &= ~(ICANON|ECHO);
 	terminal.c_cc[VMIN] = 1;
 	terminal.c_cc[VTIME] = 0;
+	// terminal.c_cc[VEOF] = CTRL_D;
+	// terminal.c_cc[VINTR] = CTRL_C;
+	// terminal.c_cc[VKILL] = CTRL_U;
 
 	if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &terminal) != 0) {
 		perror(RED "ncsh: Could not set terminal settings" RESET);
 	}
+
+	signal(SIGHUP, SIG_DFL); // Stops the process if the terminal is closed
 }
 
 struct ncsh_Coordinates ncsh_terminal_size(void) {
+	// todo: look at getenv("LINES"), getenv("COLUMNS") since ioctl is not portable
 	struct winsize w;
 	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
 	return (struct ncsh_Coordinates) { .x = w.ws_col, .y = w.ws_row };
