@@ -4,10 +4,11 @@
 require 'ttytest'
 
 START_COL = 20
-WC_C_LENGTH = '223'
+WC_C_LENGTH = '225'
 SLEEP_TIME = 0.2
 LS_LINES = 3
 LS_ITEMS = 19
+LS_FIRST_ITEM = 'CMakeLists.txt'
 
 def assert_check_new_row(row)
   @tty.assert_row_starts_with(row, "#{ENV['USER']} ")
@@ -86,7 +87,7 @@ def basic_ls_test(row)
   @tty.send_newline
   @tty.assert_row_ends_with(row, 'ls')
   row += 1
-  @tty.assert_row_starts_with(row, 'LICENSE')
+  @tty.assert_row_starts_with(row, LS_FIRST_ITEM)
   row += LS_LINES
   puts 'Basic input (ls) test passed'
   row
@@ -319,7 +320,7 @@ def basic_output_redirection_test(row)
   @tty.send_newline
   sleep SLEEP_TIME
   row += 1
-  @tty.assert_row_starts_with(row, 'LICENSE')
+  @tty.assert_row_starts_with(row, LS_FIRST_ITEM)
   row += 1
   assert_check_new_row(row)
   @tty.send_keys_one_at_a_time(%(rm t.txt))
@@ -413,7 +414,7 @@ def basic_input_redirection_test(row)
   @tty.send_newline
   sleep SLEEP_TIME
   row += 1
-  @tty.assert_row_starts_with(row, 'LICENSE')
+  @tty.assert_row_starts_with(row, LS_FIRST_ITEM)
   row += LS_ITEMS
   assert_check_new_row(row)
   @tty.send_keys_one_at_a_time(%(rm t.txt))

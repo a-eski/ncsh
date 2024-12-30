@@ -7,7 +7,6 @@
 #include <stdint.h>
 
 #define ncsh_TOKENS 128
-#define ncsh_TOKEN_BUFFER_SIZE 256
 
 enum ncsh_Ops {
 	OP_NONE = 0,

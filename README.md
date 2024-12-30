@@ -15,11 +15,24 @@ none, asides from the C standard library and POSIX extensions.
 
 ## to build from source
 
+``` sh
 make
+
+# or can use cmake, in process of migrating over
+cmake build -S ./ -B ./bin
+cd bin
+make
+```
 
 ## to install
 
+``` sh
 sudo make install
+
+# or can use cmake
+cd bin
+make install
+```
 
 ## installation notes
 

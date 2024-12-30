@@ -17,8 +17,7 @@
 #define NCSH_MAX_HISTORY_FILE 2000
 
 struct ncsh_History {
-	uint_fast32_t history_count;
-	uint_fast32_t file_position;
+	uint_fast32_t count;
 	char* history_file;
 	struct eskilib_String* entries;
 };
@@ -31,7 +30,7 @@ enum eskilib_Result ncsh_history_save(struct ncsh_History* history);
 
 void ncsh_history_exit(struct ncsh_History* history);
 
-void ncsh_history_clean(struct ncsh_History* history);
+// void ncsh_history_clean(struct ncsh_History* history);
 
 void ncsh_history_free(struct ncsh_History* history);
 

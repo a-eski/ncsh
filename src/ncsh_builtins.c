@@ -24,12 +24,14 @@ bool ncsh_is_exit_command(struct ncsh_Args* args) {
 		return false;
 }
 
-void ncsh_echo_command(struct ncsh_Args* args) {
+int_fast32_t ncsh_echo_command(struct ncsh_Args* args) {
 	for (uint_fast32_t i = 1; i < args->count; ++i)
 		printf("%s ", args->values[i]);
 
 	if (args->count > 0)
 		putchar('\n');
+
+	return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
 int_fast32_t ncsh_help_command(void) {
@@ -66,7 +68,7 @@ int_fast32_t ncsh_help_command(void) {
 	return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
-void ncsh_cd_command(struct ncsh_Args* args) {
+int_fast32_t ncsh_cd_command(struct ncsh_Args* args) {
 	if (!args->values[1]) {
 		char* home = getenv("HOME");
 		if (!home)
@@ -74,10 +76,12 @@ void ncsh_cd_command(struct ncsh_Args* args) {
 		else if (chdir(home) != 0)
 			perror("ncsh: could not change directory");
 
-		return;
+		return NCSH_COMMAND_SUCCESS_CONTINUE;
 	}
 
 	if (chdir(args->values[1]) != 0)
 		fputs("ncsh: could not change directory.\n", stderr);
+
+	return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 

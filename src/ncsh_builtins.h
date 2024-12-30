@@ -10,11 +10,11 @@
 
 bool ncsh_is_exit_command(struct ncsh_Args* args);
 
-void ncsh_echo_command(struct ncsh_Args* args);
+int_fast32_t ncsh_echo_command(struct ncsh_Args* args);
 
 int_fast32_t ncsh_help_command(void);
 
-void ncsh_cd_command(struct ncsh_Args* args);
+int_fast32_t ncsh_cd_command(struct ncsh_Args* args);
 
 #endif // !ncsh_builtins_h
 
