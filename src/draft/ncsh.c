@@ -11,6 +11,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <assert.h>
+#include <ncurses.h>
 
 #include "eskilib/eskilib_result.h"
 #include "ncsh_args.h"
@@ -37,6 +38,27 @@
 		fflush(stderr);							\
 		return EXIT_FAILURE;						\
 	}									\
+
+#define PAIR_USER 1
+#define PAIR_DIRECTORY 2
+#define PAIR_AUTOCOMPLETE 3
+
+void ncurses_init(void) {
+	initscr();
+	raw();
+	cbreak();
+	keypad(stdscr, true);
+	noecho();
+	curs_set(1);
+	start_color();
+	init_pair(PAIR_USER, COLOR_GREEN, COLOR_BLACK);
+	init_pair(PAIR_DIRECTORY, COLOR_CYAN, COLOR_BLACK);
+	init_pair(PAIR_AUTOCOMPLETE, COLOR_YELLOW, COLOR_BLACK);
+}
+
+void ncurses_exit(void) {
+	endwin();
+}
 
 struct ncsh_Input {
 	size_t start_pos;
@@ -88,14 +110,26 @@ int_fast32_t ncsh_prompt(struct ncsh_Directory prompt_info) {
 	#ifdef NCSH_SHORT_DIRECTORY
 	char prompt_directory[PATH_MAX] = {0};
 	ncsh_prompt_directory(prompt_info.path, prompt_directory);
-	printf(ncsh_GREEN "%s" WHITE " " ncsh_CYAN "%s" WHITE_BRIGHT " \u2771 ", prompt_info.user, prompt_directory);
+	// printw(ncsh_GREEN "%s" WHITE " " ncsh_CYAN "%s" WHITE_BRIGHT " \u2771 ", prompt_info.user, prompt_directory);
+	attron(COLOR_PAIR(PAIR_USER));
+	printw("%s ", prompt_info.user);
+	attroff(COLOR_PAIR(PAIR_USER));
+	attron(COLOR_PAIR(PAIR_DIRECTORY));
+	printw("%s ", prompt_directory);
+	attroff(COLOR_PAIR(PAIR_DIRECTORY));
 	#else
-	printf(ncsh_GREEN "%s" WHITE " " ncsh_CYAN "%s" WHITE_BRIGHT " \u2771 ", prompt_info.user, prompt_info.path);
+	attron(COLOR_PAIR(PAIR_USER));
+	printw("%s ", prompt_info.user);
+	attroff(COLOR_PAIR(PAIR_USER));
+	attron(COLOR_PAIR(PAIR_DIRECTORY));
+	printw("%s ", prompt_info.path);
+	attroff(COLOR_PAIR(PAIR_DIRECTORY));
 	#endif /* ifdef NCSH_SHORT_DIRECTORY */
 
-	fflush(stdout);
+	refresh();
+
 	// save cursor position so we can reset cursor when loading history entries
-	ncsh_write(SAVE_CURSOR_POSITION, SAVE_CURSOR_POSITION_LENGTH);
+	// ncsh_write(SAVE_CURSOR_POSITION, SAVE_CURSOR_POSITION_LENGTH);
 
 	return EXIT_SUCCESS;
 }
@@ -110,7 +144,9 @@ int_fast32_t ncsh_backspace(struct ncsh_Input* input) {
 		if (input->max_pos > 0)
 			--input->max_pos;
 
-		ncsh_write(BACKSPACE_STRING ERASE_CURRENT_LINE, BACKSPACE_STRING_LENGTH + ERASE_CURRENT_LINE_LENGTH);
+		addstr(BACKSPACE_STRING);
+		clrtoeol();
+		// ncsh_write(BACKSPACE_STRING ERASE_CURRENT_LINE, BACKSPACE_STRING_LENGTH + ERASE_CURRENT_LINE_LENGTH);
 
 		input->start_pos = input->pos;
 		for (size_t i = input->pos; i < input->max_pos && input->buffer[i]; ++i)
@@ -119,11 +155,12 @@ int_fast32_t ncsh_backspace(struct ncsh_Input* input) {
 		input->buffer[input->max_pos] = '\0';
 
 		while (input->buffer[input->pos] != '\0') {
-			putchar(input->buffer[input->pos]);
+			addch(input->buffer[input->pos]); //putchar
 			++input->pos;
 		}
 
-		fflush(stdout);
+		//fflush(stdout);
+		refresh();
 
 		while (input->pos > input->start_pos) {
 			if (input->pos == 0 || !input->buffer[input->pos - 1])
@@ -140,7 +177,9 @@ int_fast32_t ncsh_backspace(struct ncsh_Input* input) {
 
 // [[nodiscard]]
 int_fast32_t ncsh_delete(struct ncsh_Input* input) {
-	ncsh_write(DELETE_STRING ERASE_CURRENT_LINE, DELETE_STRING_LENGTH + ERASE_CURRENT_LINE_LENGTH);
+	// ncsh_write(DELETE_STRING ERASE_CURRENT_LINE, DELETE_STRING_LENGTH + ERASE_CURRENT_LINE_LENGTH);
+	addstr(DELETE_STRING);
+	clrtoeol();
 
 	input->start_pos = input->pos;
 	for (uint_fast32_t i = input->pos; i < input->max_pos && input->buffer[i]; ++i)
@@ -150,11 +189,11 @@ int_fast32_t ncsh_delete(struct ncsh_Input* input) {
 		--input->max_pos;
 
 	while (input->pos < input->max_pos && input->buffer[input->pos]) {
-		putchar(input->buffer[input->pos]);
+		addch(input->buffer[input->pos]); //putchar
 		++input->pos;
 	}
 
-	fflush(stdout);
+	refresh();// fflush(stdout);
 
 	if (input->pos == 0)
 		return EXIT_SUCCESS;
@@ -182,30 +221,24 @@ void ncsh_autocomplete(char* buffer, uint_fast32_t buf_position, char* current_a
 	if (position.x == 0 && position.y == 0)
 		return;
 
-	printf(WHITE_DIM "%s" RESET, current_autocompletion);
-	ncsh_terminal_move(position.x, position.y);
-	fflush(stdout);
+	attron(PAIR_AUTOCOMPLETE);
+	printw("%s", current_autocompletion);
+	attroff(PAIR_AUTOCOMPLETE);
+	refresh();
+	// printf(WHITE_DIM "%s" RESET, current_autocompletion);
+	// ncsh_terminal_move(position.x, position.y);
+	// fflush(stdout);
 }
 
 char ncsh_read(void) {
-	char character = 0;
-	if (read(STDIN_FILENO, &character, 1) == 0)  {
-		perror(RED NCSH_ERROR_STDIN RESET);
-		return EXIT_IO_FAILURE;
-	}
+	char character = getch();
 
 	switch (character) {
 		case ESCAPE_CHARACTER: {
-			if (read(STDIN_FILENO, &character, 1) == -1) {
-				perror(RED NCSH_ERROR_STDIN RESET);
-				return EXIT_IO_FAILURE;
-			}
+			character = getch();
 
 			if (character == '[') {
-				if (read(STDIN_FILENO, &character, 1) == -1) {
-					perror(RED NCSH_ERROR_STDIN RESET);
-					return EXIT_IO_FAILURE;
-				}
+				character = getch();
 
 				return character;
 			}
@@ -226,15 +259,18 @@ int_fast32_t ncsh_tab_autocomplete(struct ncsh_Input* input, struct ncsh_Autocom
 	struct ncsh_Autocompletion autocompletion_matches[NCSH_MAX_AUTOCOMPLETION_MATCHES] = {0};
 	uint_fast32_t autocompletions_matches_count = ncsh_autocompletions_get(input->buffer, input->pos + 1, autocompletion_matches, autocompletions_tree);
 
-	ncsh_write(ERASE_CURRENT_LINE "\n", ERASE_CURRENT_LINE_LENGTH + 1);
-
 	if (autocompletions_matches_count == 0)
 		return EXIT_SUCCESS;
 
+	clrtoeol();
+	addch('\n');
+	refresh();
+	// ncsh_write(ERASE_CURRENT_LINE "\n", ERASE_CURRENT_LINE_LENGTH + 1);
+
 	for (uint_fast8_t i = 0; i < autocompletions_matches_count; ++i)
 		printf("%s%s\n", input->buffer, autocompletion_matches[i].value);
-	ncsh_terminal_move_up(autocompletions_matches_count);
-	fflush(stdout);
+	// ncsh_terminal_move_up(autocompletions_matches_count);
+	// fflush(stdout);
 
 	uint_fast32_t position = 0;
 	char character;
@@ -242,9 +278,10 @@ int_fast32_t ncsh_tab_autocomplete(struct ncsh_Input* input, struct ncsh_Autocom
 	int_fast32_t exit = EXIT_SUCCESS;
 	bool continue_input = true;
 	while (continue_input) {
-		if ((character = ncsh_read()) == EXIT_IO_FAILURE) {
-			return EXIT_FAILURE;
-		}
+		character = ncsh_read();
+		/*if ((character = ncsh_read()) == EXIT_IO_FAILURE) {*/
+		/*	return EXIT_FAILURE;*/
+		/*}*/
 		switch (character) {
 			case UP_ARROW: {
 				if (position == 0)
@@ -277,11 +314,16 @@ int_fast32_t ncsh_tab_autocomplete(struct ncsh_Input* input, struct ncsh_Autocom
 		free(autocompletion_matches[i].value);
 	}
 
-	ncsh_terminal_move_down(autocompletions_matches_count + 1 - position);
+	// ncsh_terminal_move_down(autocompletions_matches_count + 1 - position);
 	if (exit == EXIT_SUCCESS_EXECUTE) {
-		printf(ncsh_YELLOW "%s\n" RESET, input->buffer);
+		// printf(ncsh_YELLOW "%s\n" RESET, input->buffer);
+		attron(PAIR_AUTOCOMPLETE);
+		printw("%s", input->buffer);
+		attroff(PAIR_AUTOCOMPLETE);
 	}
-	fflush(stdout);
+
+	refresh();
+	// fflush(stdout);
 
 	return exit;
 }
@@ -328,14 +370,16 @@ int_fast32_t ncsh_execute(struct ncsh_Args* args,
 		return NCSH_COMMAND_EXIT;
 
 	if (eskilib_string_equals(args->values[0], "echo", args->max_line_length)) {
-		return ncsh_echo_command(args);
+		ncsh_echo_command(args);
+		return NCSH_COMMAND_SUCCESS_CONTINUE;
 	}
 
 	if (eskilib_string_equals(args->values[0], "help", args->max_line_length))
 		return ncsh_help_command();
 
 	if (eskilib_string_equals(args->values[0], "cd", args->max_line_length)) {
-		return ncsh_cd_command(args);
+		ncsh_cd_command(args);
+		return NCSH_COMMAND_SUCCESS_CONTINUE;
 	}
 
 	if (eskilib_string_equals(args->values[0], "z", args->max_line_length))
@@ -359,7 +403,8 @@ void ncsh_exit(struct ncsh* shell) {
 
 	z_exit(&shell->z_db);
 
-	ncsh_terminal_reset();
+	// ncsh_terminal_reset();
+	ncurses_exit();
 }
 
 int_fast32_t ncsh_init(struct ncsh* shell) {
@@ -416,13 +461,15 @@ int_fast32_t ncsh_init(struct ncsh* shell) {
 	}
 	ncsh_autocompletions_add_multiple(shell->history.entries, shell->history.count, shell->autocompletions_tree);
 
-	ncsh_terminal_init();
+	// ncsh_terminal_init();
 
 	enum z_Result result = z_init(shell->config.config_location, &shell->z_db);
 	if (result != Z_SUCCESS) {
 		ncsh_exit(shell);
 		return EXIT_FAILURE;
 	}
+
+	ncurses_init();
 
 	return EXIT_SUCCESS;
 }

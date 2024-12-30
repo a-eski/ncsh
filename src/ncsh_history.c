@@ -42,8 +42,7 @@ enum eskilib_Result ncsh_history_malloc(struct ncsh_History* history) {
 	if (history == NULL)
 		return E_FAILURE_NULL_REFERENCE;
 
-	history->history_count = 0;
-	history->file_position = 0;
+	history->count = 0;
 	history->entries = malloc(sizeof(struct eskilib_String) * NCSH_MAX_HISTORY_FILE);
 	if (history->entries == NULL)
 		return E_FAILURE_MALLOC;
@@ -78,7 +77,7 @@ enum eskilib_Result ncsh_history_load(struct eskilib_String config_location, str
 		(buffer_length = eskilib_fgets(buffer, sizeof(buffer), file)) != EOF && i < NCSH_MAX_HISTORY_FILE;
 		++i) {
 		if (buffer_length > 0) {
-			++history->file_position;
+			++history->count;
 			history->entries[i].length = buffer_length;
 			history->entries[i].value = malloc(buffer_length);
 			if (history->entries[i].value == NULL)
@@ -87,8 +86,6 @@ enum eskilib_Result ncsh_history_load(struct eskilib_String config_location, str
 			eskilib_string_copy(history->entries[i].value, buffer, buffer_length);
 		}
 	}
-
-	history->history_count = history->file_position;
 
 	fclose(file);
 
@@ -100,15 +97,15 @@ enum eskilib_Result ncsh_history_save(struct ncsh_History* history) {
 	if (history == NULL || !history->entries[0].value)
 		return E_FAILURE_NULL_REFERENCE;
 
-	FILE* file = fopen(history->history_file, "a");
+	uint_fast32_t pos = history->count > NCSH_MAX_HISTORY_FILE ? NCSH_MAX_HISTORY_FILE - history->count : 0;
+
+	FILE* file = fopen(history->history_file, pos > 0 ? "w" : "a"); // write over entire file from new if file full
 	if (file == NULL) {
 		perror(RED "ncsh: Could not open .ncsh_history file to save history" RESET);
 		return E_FAILURE_FILE_OP;
 	}
 
-	for (uint_fast32_t i = history->file_position == 0 ? 0 : history->file_position - 1;
-		i < history->history_count;
-		++i) {
+	for (uint_fast32_t i = pos; i < history->count; ++i) {
 		if (history->entries[i].length == 0 || history->entries[i].value == NULL)
 			continue;
 
@@ -128,9 +125,62 @@ enum eskilib_Result ncsh_history_save(struct ncsh_History* history) {
 	return E_SUCCESS;
 }
 
+/*enum eskilib_Result history_write_entry_to_file(struct eskilib_String* entry, FILE* file) {
+	assert(file);
+
+	size_t bytes_written;
+
+	bytes_written = fwrite(&entry->length, sizeof(size_t), 1, file);
+	if (bytes_written == 0 || feof(file))
+		return E_FAILURE;
+	else if (ferror(file))
+		return E_FAILURE_FILE_OP;
+
+	bytes_written = fwrite(entry->value, sizeof(char), entry->length, file);
+	if (bytes_written == 0)
+		return E_FAILURE;
+	else if (ferror(file))
+		return E_FAILURE_FILE_OP;
+
+	return E_SUCCESS;
+}
+
+enum eskilib_Result ncsh_history_save_v2(struct ncsh_History* history) {
+	assert(history);
+	if (!history)
+		return E_FAILURE_NULL_REFERENCE;
+	if (history->count == 0)
+		return E_SUCCESS;
+
+	FILE* file = fopen(history->history_file, "wb");
+	if (!file || feof(file) || ferror(file)) {
+		perror("Error writing to history file");
+		if (file)
+			fclose(file);
+		return E_FAILURE_FILE_OP;
+	}
+
+	if (fwrite(&history->count, sizeof(uint32_t), 1, file) == 0 || feof(file) || ferror(file)) {
+		perror("Error writing number of entries to history file, could not write to file");
+		fclose(file);
+		return E_FAILURE_FILE_OP;
+	}
+
+	enum eskilib_Result result;
+	for (uint_fast32_t i = 0; i < history->count; ++i) {
+		if ((result = history_write_entry_to_file((history->entries + i), file)) != E_SUCCESS) {
+			fclose(file);
+			return result;
+		}
+	}
+
+	fclose(file);
+	return E_SUCCESS;
+}*/
+
 void ncsh_history_exit(struct ncsh_History* history) {
 	if (history) {
-		if (history->history_count > 0)
+		if (history->count > 0)
 			ncsh_history_save(history);
 		ncsh_history_free(history);
 	}
@@ -139,7 +189,7 @@ void ncsh_history_exit(struct ncsh_History* history) {
 void ncsh_history_free(struct ncsh_History* history) {
 	assert(history != NULL);
 
-	for (uint_fast32_t i = 0; i < history->history_count; ++i) {
+	for (uint_fast32_t i = 0; i < history->count; ++i) {
 		free(history->entries[i].value);
 	}
 
@@ -156,15 +206,15 @@ enum eskilib_Result ncsh_history_add(char* line, size_t length, struct ncsh_Hist
 		return E_FAILURE_NULL_REFERENCE;
 	else if (length == 0)
 		return E_FAILURE_ZERO_LENGTH;
-	else if (history->history_count + 1 < history->history_count)
+	else if (history->count + 1 < history->count)
 		return E_FAILURE_OVERFLOW_PROTECTION;
-	else if (history->history_count >= NCSH_MAX_HISTORY_FILE)
+	else if (history->count >= NCSH_MAX_HISTORY_FILE)
 		return E_NO_OP_MAX_LIMIT_REACHED;
 
-	history->entries[history->history_count].length = length;
-	history->entries[history->history_count].value = malloc(length);
-	eskilib_string_copy(history->entries[history->history_count].value, line, length);
-	++history->history_count;
+	history->entries[history->count].length = length;
+	history->entries[history->count].value = malloc(length);
+	eskilib_string_copy(history->entries[history->count].value, line, length);
+	++history->count;
 	return E_SUCCESS;
 }
 
@@ -219,26 +269,26 @@ struct eskilib_String ncsh_history_get(uint_fast32_t position, struct ncsh_Histo
 	else if (history->entries == NULL) {
 		return eskilib_String_Empty;
 	}
-	else if (history->history_count == 0 && position == 0) {
+	else if (history->count == 0 && position == 0) {
 		return eskilib_String_Empty;
 	}
-	else if (position >= history->history_count) {
+	else if (position >= history->count) {
 		return eskilib_String_Empty;
 	}
 	else if (position > NCSH_MAX_HISTORY_FILE) {
 		return history->entries[NCSH_MAX_HISTORY_FILE];
 	}
 	else {
-		return history->entries[history->history_count - position - 1];
+		return history->entries[history->count - position - 1];
 	}
 }
 
 uint_fast32_t ncsh_history_command(struct ncsh_History* history) {
 	assert(history != NULL);
-	if (history == NULL || history->history_count == 0)
+	if (history == NULL || history->count == 0)
 		return 1;
 
-	for (uint_fast32_t i = 0; i < history->history_count; ++i) {
+	for (uint_fast32_t i = 0; i < history->count; ++i) {
 		printf("%lu %s\n", i + 1, history->entries[i].value);
 	}
 	return 1;

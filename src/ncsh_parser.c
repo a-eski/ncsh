@@ -9,6 +9,7 @@
 #include <glob.h>
 
 #include "ncsh_parser.h"
+#include "ncsh_args.h"
 #include "ncsh_defines.h"
 #include "eskilib/eskilib_result.h"
 #include "eskilib/eskilib_string.h"
@@ -120,8 +121,11 @@ void ncsh_parser_parse(char line[], size_t length, struct ncsh_Args* args) {
 	bool glob_found = false;
 
 	for (uint_fast32_t line_position = 0; line_position < length + 1; ++line_position) {
-		if (line_position == length || line_position == NCSH_MAX_INPUT - 1 ||
-			buf_position == NCSH_MAX_INPUT - 1 || args->count == NCSH_MAX_INPUT - 1) {
+		if (line_position == length ||
+			line_position == NCSH_MAX_INPUT - 1 ||
+			buf_position == NCSH_MAX_INPUT - 1 ||
+			args->count == ncsh_TOKENS)
+		{
 			args->values[args->count] = NULL;
 			break;
 		}

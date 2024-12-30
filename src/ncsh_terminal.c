@@ -8,13 +8,14 @@
 #include <unistd.h>
 #include <termios.h>
 #include <sys/ioctl.h>
+// #include <uv.h>
 
 #include "ncsh_terminal.h"
 #include "eskilib/eskilib_colors.h"
-
 #define TERMINAL_RETURN 'R'
 #define T_BUFFER_LENGTH 30
 
+// #if defined(HAVE_TERMIOS_H)
 static struct termios terminal;
 static struct termios original_terminal;
 
@@ -26,6 +27,7 @@ void ncsh_terminal_reset(void) {
 }
 
 void ncsh_terminal_init(void) {
+	// if (uv_guess_handle(fileno(stream)) != UV_TTY)
 	if (!isatty(STDIN_FILENO)) {
 		fprintf(stderr, "Not running in a terminal.\n");
 		exit(EXIT_FAILURE);
