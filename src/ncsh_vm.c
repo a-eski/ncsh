@@ -1,7 +1,6 @@
 // Copyright (c) ncsh by Alex Eski 2024
 
 #define _POSIX_SOURCE
-#include <string.h>
 #include <stdint.h>
 #include <linux/limits.h>
 #include <assert.h>

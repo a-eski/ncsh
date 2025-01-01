@@ -1,5 +1,6 @@
 // Copyright (c) ncsh by Alex Eski 2024
 
+#include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -70,11 +71,11 @@ void ncsh_args_free_values(struct ncsh_Args* args) {
 bool ncsh_is_delimiter(char ch) {
 	switch (ch) {
 		case ' ':  { return true; }
-		case '\t': { return true; }
+		// case '\t': { return true; }
 		case '\r': { return true; }
 		case '\n': { return true; }
-		case '\a': { return true; }
-		case EOF:  { return true; }
+		// case '\a': { return true; }
+		// case EOF:  { return true; }
 		case '\0': { return true; }
 		default:   { return false; }
 	}
@@ -109,6 +110,8 @@ enum ncsh_Ops ncsh_op_get(char line[], size_t length) {
 }
 
 void ncsh_parser_parse(char line[], size_t length, struct ncsh_Args* args) {
+	assert(line);
+	assert(length > 0);
 	if (!line || length == 0 || length > NCSH_MAX_INPUT) {
 		args->max_line_length = 0;
 		args->count = 0;
@@ -134,12 +137,14 @@ void ncsh_parser_parse(char line[], size_t length, struct ncsh_Args* args) {
 
 			if (glob_found) {
 				glob_t glob_buf = {0};
+				size_t glob_len;
 				glob(buffer, GLOB_DOOFFS, NULL, &glob_buf);
 
 				for (size_t i = 0; i < glob_buf.gl_pathc; ++i) {
-					buf_position = strlen(glob_buf.gl_pathv[i]) + 1;
+					glob_len = strlen(glob_buf.gl_pathv[i]) + 1;
+					buf_position = glob_len;
 					args->values[args->count] = malloc(buf_position);
-					strcpy(args->values[args->count], glob_buf.gl_pathv[i]);
+					memcpy(args->values[args->count], glob_buf.gl_pathv[i], glob_len);
 					args->ops[args->count] = OP_CONSTANT;
 					++args->count;
 
@@ -174,8 +179,9 @@ void ncsh_parser_parse(char line[], size_t length, struct ncsh_Args* args) {
 				}
 				case TILDE: {
 					char* home = getenv("HOME");
-					strcat(buffer + buf_position, home);
-					buf_position += strlen(home);
+					size_t home_length = strlen(home);
+					memcpy(buffer + buf_position, home, home_length);
+					buf_position += home_length;
 					break;
 				}
 				case GLOB_STAR:

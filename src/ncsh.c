@@ -73,7 +73,7 @@ void ncsh_prompt_directory(char* cwd, char* output) {
 		}
 	}
 
-	strncpy(output, &cwd[second_to_last_slash] - 1, i - second_to_last_slash + 1);
+	memcpy(output, &cwd[second_to_last_slash] - 1, i - second_to_last_slash + 1);
 }
 #endif /* ifdef NCSH_SHORT_DIRECTORY */
 
@@ -263,8 +263,9 @@ int_fast32_t ncsh_tab_autocomplete(struct ncsh_Input* input, struct ncsh_Autocom
 			case '\n':
 			case '\r': {
 				continue_input = false;
-				strcat(input->buffer, autocompletion_matches[position].value);
 				size_t length = strlen(autocompletion_matches[position].value);
+				memcpy(input->buffer + input->pos,
+					autocompletion_matches[position].value, length);
 				input->pos += length + 1;
 				exit = EXIT_SUCCESS_EXECUTE;
 				break;
