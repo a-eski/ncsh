@@ -6,6 +6,11 @@ make debug CC=clang
 make
 make CC=clang
 
+--cmake
+cmake build -S ./ -B bin/
+cd bin
+make
+
 --debug
 gdb -tui ./bin/ncsh
 c - continue

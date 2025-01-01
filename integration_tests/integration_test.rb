@@ -9,6 +9,7 @@ SLEEP_TIME = 0.2
 LS_LINES = 3
 LS_ITEMS = 19
 LS_FIRST_ITEM = 'CMakeLists.txt'
+TAB_AUTOCOMPLETE_ROWS = 10
 
 def assert_check_new_row(row)
   @tty.assert_row_starts_with(row, "#{ENV['USER']} ")
@@ -575,7 +576,7 @@ def delete_line_tests(row)
   @tty.send_keys_exact(TTYtest::CTRLU)
   assert_check_new_row(row)
   @tty.send_keys_exact(TTYtest::CTRLU)
-  puts 'delete line test passed'
+  puts 'Delete line test passed'
   row
 end
 
@@ -583,37 +584,97 @@ def delete_word_tests(row)
   starting_tests 'delete word'
   assert_check_new_row(row)
   @tty.send_keys_one_at_a_time(%(ls | sort ))
-  @tty.send_keys_exact(TTYtest::CTRLW)
+  @tty.send_keys(TTYtest::CTRLW)
   @tty.assert_row_ends_with(row, %(ls | sort))
-  @tty.send_keys_exact(TTYtest::CTRLW)
+  @tty.send_keys(TTYtest::CTRLW)
   @tty.assert_row_ends_with(row, %(ls |))
-  @tty.send_keys_exact(TTYtest::CTRLW)
+  @tty.send_keys(TTYtest::CTRLW)
   @tty.assert_row_ends_with(row, %(ls))
-  @tty.send_keys_exact(TTYtest::CTRLW)
-  puts 'delete word test passed'
+  @tty.send_keys(TTYtest::CTRLW)
+  puts 'Delete word test passed'
   row
 end
 
-@row = 0
+def tab_out_autocompletion_test(row)
+  assert_check_new_row(row)
+  @tty.send_keys_one_at_a_time(%(ls))
+  @tty.send_keys(TTYtest::TAB)
+  row += 1
+  @tty.assert_row_ends_with(row, %(ls > t.txt))
+  @tty.send_keys(TTYtest::TAB)
+  row += TAB_AUTOCOMPLETE_ROWS
+  assert_check_new_row(row)
+
+  puts 'Tab out of autocompletion test passed'
+  row
+end
+
+def arrows_move_tab_autocompletion_test(row)
+  assert_check_new_row(row)
+  @tty.send_keys_one_at_a_time(%(ls))
+  @tty.send_keys(TTYtest::TAB)
+  row += 1
+  cursor_x_before = @tty.cursor_x
+  cursor_y_before = @tty.cursor_y
+  @tty.send_up_arrow
+  @tty.assert_cursor_position(cursor_x_before, cursor_y_before)
+  @tty.send_down_arrow
+  @tty.assert_cursor_position(cursor_x_before, cursor_y_before + 1)
+  @tty.send_down_arrows(11)
+  @tty.assert_cursor_position(cursor_x_before, cursor_y_before + 8)
+  @tty.send_keys(TTYtest::TAB)
+  row += 10
+
+  puts 'Arrows autocompletion test passed'
+  row
+end
+
+def select_tab_autocompletion_test(row)
+  assert_check_new_row(row)
+  @tty.send_keys_one_at_a_time(%(ls))
+  @tty.send_keys(TTYtest::TAB)
+  row += 1
+  @tty.send_down_arrows(5)
+  @tty.send_newline
+  row += 11
+  @tty.assert_row_ends_with(row, WC_C_LENGTH)
+
+  puts 'Select tab autocompletion test passed'
+  row
+end
+
+def tab_autocompletion_tests(row)
+  starting_tests 'tab autocompletion'
+
+  row = tab_out_autocompletion_test row
+  row = arrows_move_tab_autocompletion_test row
+  select_tab_autocompletion_test row
+end
+
+row = 0
 @tty = TTYtest.new_terminal(%(PS1='$ ' ./bin/ncsh), width: 120, height: 120)
 
-@row = startup_tests @row
-@row = basic_tests @row
-@row = home_and_end_tests @row
-@row = backspace_tests @row
-@row = delete_tests @row
-@row = pipe_tests @row
-@row = history_tests @row
-@row = output_redirection_tests @row
-@row = z_add_tests @row
-@row = input_redirection_tests @row
-@row = autocompletion_tests @row
-@row = builtin_tests @row
-@row = delete_line_tests @row
-@row = delete_word_tests @row
+row = startup_tests row
+row = basic_tests row
+row = home_and_end_tests row
+row = backspace_tests row
+row = delete_tests row
+row = pipe_tests row
+row = history_tests row
+row = output_redirection_tests row
+row = z_add_tests row
+row = input_redirection_tests row
+row = autocompletion_tests row
+row = builtin_tests row
+row = delete_line_tests row
+row = delete_word_tests row
+tab_autocompletion_tests row
 
-# @row = multiline_tests @row
-# @row = copy_paste_tests @row
+# row = home_expansion_tests row
+# row = star_expansion_tests row
+# row = question_expansion_tests row
+# row = multiline_tests row
+# row = copy_paste_tests row
 
 # @tty.print
 # @tty.print_rows

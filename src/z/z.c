@@ -315,6 +315,7 @@ enum z_Result z_database_file_set(struct eskilib_String config_file, struct z_Da
 	memcpy(db->database_file, Z_DATABASE_FILE, Z_DATABASE_FILE_LENGTH);
 	return Z_SUCCESS;
 	#endif /* ifdef Z_TEST */
+
 	if (!config_file.value || config_file.length == 0) {
 		return Z_NULL_REFERENCE;
 	}
@@ -328,7 +329,12 @@ enum z_Result z_database_file_set(struct eskilib_String config_file, struct z_Da
 		return Z_MALLOC_ERROR;
 
 	memcpy(db->database_file, config_file.value, config_file.length);
-	strncat(db->database_file, Z_DATABASE_FILE, Z_DATABASE_FILE_LENGTH);
+	memcpy(db->database_file + config_file.length - 1, Z_DATABASE_FILE, Z_DATABASE_FILE_LENGTH);
+
+	#ifdef Z_DEBUG
+	printf("db->database_file :%s\n", db->database_file);
+	#endif /* ifdef Z_DEBUG */
+
 	return Z_SUCCESS;
 }
 

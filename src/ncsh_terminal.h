@@ -5,6 +5,7 @@
 
 #include <linux/limits.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 // input definitions
 #define ESCAPE_CHARACTER 27	// "\033" or '^'

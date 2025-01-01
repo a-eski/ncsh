@@ -18,23 +18,27 @@
 
 void ncsh_history_file_set(struct eskilib_String config_file, struct ncsh_History* history) {
 	#ifdef NCSH_HISTORY_TEST
-	history->history_file = malloc(NCSH_HISTORY_FILE_LENGTH);
-	memcpy(history->history_file, NCSH_HISTORY_FILE, NCSH_HISTORY_FILE_LENGTH);
+	history->file = malloc(NCSH_HISTORY_FILE_LENGTH);
+	memcpy(history->file, NCSH_HISTORY_FILE, NCSH_HISTORY_FILE_LENGTH);
 	return;
 	#endif /* ifdef NCSH_HISTORY_TEST */
 	if (config_file.value == NULL || config_file.length == 0) {
-		history->history_file = NCSH_HISTORY_FILE;
+		history->file = NCSH_HISTORY_FILE;
 		return;
 	}
 
 	if (config_file.length + NCSH_HISTORY_FILE_LENGTH > NCSH_MAX_INPUT) {
-		history->history_file = NULL;
+		history->file = NULL;
 		return;
 	}
 
-	history->history_file = malloc(config_file.length + NCSH_HISTORY_FILE_LENGTH);
-	memcpy(history->history_file, config_file.value, config_file.length);
-	strncat(history->history_file, NCSH_HISTORY_FILE, NCSH_HISTORY_FILE_LENGTH);
+	history->file = malloc(config_file.length + NCSH_HISTORY_FILE_LENGTH);
+	memcpy(history->file, config_file.value, config_file.length);
+	memcpy(history->file + config_file.length, NCSH_HISTORY_FILE, NCSH_HISTORY_FILE_LENGTH);
+
+	#ifdef NCSH_DEBUG
+	printf("history->file: %s\n", history->file);
+	#endif /* ifdef NCSH_DEBUG */
 }
 
 enum eskilib_Result ncsh_history_malloc(struct ncsh_History* history) {
@@ -56,12 +60,12 @@ enum eskilib_Result ncsh_history_load(struct eskilib_String config_location, str
 		return E_FAILURE_NULL_REFERENCE;
 
 	ncsh_history_file_set(config_location, history);
-	if (history->history_file == NULL)
+	if (history->file == NULL)
 		return E_FAILURE;
 
-	FILE* file = fopen(history->history_file, "r");
+	FILE* file = fopen(history->file, "r");
 	if (file == NULL) {
-		file = fopen(history->history_file, "w");
+		file = fopen(history->file, "w");
 		if (file == NULL)
 		{
 			perror(RED "ncsh: Could not load or create history file" RESET);
@@ -99,7 +103,7 @@ enum eskilib_Result ncsh_history_save(struct ncsh_History* history) {
 
 	uint_fast32_t pos = history->count > NCSH_MAX_HISTORY_FILE ? NCSH_MAX_HISTORY_FILE - history->count : 0;
 
-	FILE* file = fopen(history->history_file, pos > 0 ? "w" : "a"); // write over entire file from new if file full
+	FILE* file = fopen(history->file, pos > 0 ? "w" : "a"); // write over entire file from new if file full
 	if (file == NULL) {
 		perror(RED "ncsh: Could not open .ncsh_history file to save history" RESET);
 		return E_FAILURE_FILE_OP;
@@ -193,7 +197,7 @@ void ncsh_history_free(struct ncsh_History* history) {
 		free(history->entries[i].value);
 	}
 
-	free(history->history_file);
+	free(history->file);
 	free(history->entries);
 }
 

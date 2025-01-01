@@ -18,7 +18,7 @@
 
 struct ncsh_History {
 	uint_fast32_t count;
-	char* history_file;
+	char* file;
 	struct eskilib_String* entries;
 };
 
