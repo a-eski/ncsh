@@ -8,7 +8,7 @@
 #include <stdbool.h>
 
 // input definitions
-#define ESCAPE_CHARACTER 27	// "\033" or '^'
+#define ESCAPE_CHARACTER 27	// "\033" or "^["
 #define DOUBLE_QUOTE_KEY '\"'
 #define CTRL_C '\003'
 #define CTRL_D '\004'

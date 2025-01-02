@@ -18,7 +18,7 @@ none, asides from the C standard library and POSIX extensions.
 ``` sh
 make
 
-# or can use cmake, in process of migrating over
+# or can use cmake, in process of migrating over from makefile
 cmake build -S ./ -B ./bin
 cd bin
 make
@@ -31,7 +31,7 @@ sudo make install
 
 # or can use cmake
 cd bin
-make install
+sudo make install
 ```
 
 ## installation notes

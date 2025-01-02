@@ -35,7 +35,6 @@ void ncsh_terminal_init(void) {
 		perror(RED "ncsh: Could not get terminal settings" RESET);
 		exit(EXIT_FAILURE);
 	}
-	atexit(ncsh_terminal_reset);
 
 	terminal = original_terminal;
 	terminal.c_lflag &= ~(ICANON|ECHO);

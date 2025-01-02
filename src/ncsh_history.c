@@ -22,6 +22,7 @@ void ncsh_history_file_set(struct eskilib_String config_file, struct ncsh_Histor
 	memcpy(history->file, NCSH_HISTORY_FILE, NCSH_HISTORY_FILE_LENGTH);
 	return;
 	#endif /* ifdef NCSH_HISTORY_TEST */
+
 	if (config_file.value == NULL || config_file.length == 0) {
 		history->file = NCSH_HISTORY_FILE;
 		return;
@@ -34,7 +35,7 @@ void ncsh_history_file_set(struct eskilib_String config_file, struct ncsh_Histor
 
 	history->file = malloc(config_file.length + NCSH_HISTORY_FILE_LENGTH);
 	memcpy(history->file, config_file.value, config_file.length);
-	memcpy(history->file + config_file.length, NCSH_HISTORY_FILE, NCSH_HISTORY_FILE_LENGTH);
+	memcpy(history->file + config_file.length - 1, NCSH_HISTORY_FILE, NCSH_HISTORY_FILE_LENGTH);
 
 	#ifdef NCSH_DEBUG
 	printf("history->file: %s\n", history->file);
@@ -42,8 +43,8 @@ void ncsh_history_file_set(struct eskilib_String config_file, struct ncsh_Histor
 }
 
 enum eskilib_Result ncsh_history_malloc(struct ncsh_History* history) {
-	assert(history != NULL);
-	if (history == NULL)
+	assert(history);
+	if (!history)
 		return E_FAILURE_NULL_REFERENCE;
 
 	history->count = 0;
@@ -96,9 +97,26 @@ enum eskilib_Result ncsh_history_load(struct eskilib_String config_location, str
 	return E_SUCCESS;
 }
 
+enum eskilib_Result ncsh_history_init(struct eskilib_String config_location, struct ncsh_History* history) {
+	enum eskilib_Result result;
+	if ((result = ncsh_history_malloc(history)) != E_SUCCESS) {
+		perror(RED "ncsh: Error when allocating memory for history" RESET);
+		fflush(stderr);
+		return result;
+	}
+
+	if ((result = ncsh_history_load(config_location, history)) != E_SUCCESS) {
+		perror(RED "ncsh: Error when loading data from history file" RESET);
+		fflush(stderr);
+		return result;
+	}
+
+	return E_SUCCESS;
+}
+
 enum eskilib_Result ncsh_history_save(struct ncsh_History* history) {
-	assert(history != NULL);
-	if (history == NULL || !history->entries[0].value)
+	assert(history->count > 0);
+	if (history->count == 0 || !history->entries[0].value)
 		return E_FAILURE_NULL_REFERENCE;
 
 	uint_fast32_t pos = history->count > NCSH_MAX_HISTORY_FILE ? NCSH_MAX_HISTORY_FILE - history->count : 0;
@@ -182,16 +200,8 @@ enum eskilib_Result ncsh_history_save_v2(struct ncsh_History* history) {
 	return E_SUCCESS;
 }*/
 
-void ncsh_history_exit(struct ncsh_History* history) {
-	if (history) {
-		if (history->count > 0)
-			ncsh_history_save(history);
-		ncsh_history_free(history);
-	}
-}
-
 void ncsh_history_free(struct ncsh_History* history) {
-	assert(history != NULL);
+	assert(history);
 
 	for (uint_fast32_t i = 0; i < history->count; ++i) {
 		free(history->entries[i].value);
@@ -199,6 +209,14 @@ void ncsh_history_free(struct ncsh_History* history) {
 
 	free(history->file);
 	free(history->entries);
+}
+
+void ncsh_history_exit(struct ncsh_History* history) {
+	if (history) {
+		if (history->count > 0)
+			ncsh_history_save(history);
+		ncsh_history_free(history);
+	}
 }
 
 enum eskilib_Result ncsh_history_add(char* line, size_t length, struct ncsh_History* history) {
@@ -288,13 +306,13 @@ struct eskilib_String ncsh_history_get(uint_fast32_t position, struct ncsh_Histo
 }
 
 uint_fast32_t ncsh_history_command(struct ncsh_History* history) {
-	assert(history != NULL);
-	if (history == NULL || history->count == 0)
-		return 1;
+	assert(history);
+	if (!history || history->count == 0)
+		return NCSH_COMMAND_SUCCESS_CONTINUE;
 
 	for (uint_fast32_t i = 0; i < history->count; ++i) {
 		printf("%lu %s\n", i + 1, history->entries[i].value);
 	}
-	return 1;
+	return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 

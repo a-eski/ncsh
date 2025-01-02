@@ -66,11 +66,12 @@ void ncsh_prompt_directory(char* cwd, char* output) {
 	uint_fast32_t last_slash_pos = 0;
 	uint_fast32_t second_to_last_slash = 0;
 
-	for (; cwd[i] != '\n' && cwd[i] != '\0'; ++i) {
+	while (cwd[i] != '\n' && cwd[i] != '\0') {
 		if (cwd[i] == '/') {
 			second_to_last_slash = last_slash_pos;
 			last_slash_pos = i + 1;
 		}
+		++i;
 	}
 
 	memcpy(output, &cwd[second_to_last_slash] - 1, i - second_to_last_slash + 1);
@@ -113,9 +114,7 @@ int_fast32_t ncsh_backspace(struct ncsh_Input* input) {
 		ncsh_write(BACKSPACE_STRING ERASE_CURRENT_LINE, BACKSPACE_STRING_LENGTH + ERASE_CURRENT_LINE_LENGTH);
 
 		input->start_pos = input->pos;
-		for (size_t i = input->pos; i < input->max_pos && input->buffer[i]; ++i)
-			input->buffer[i] = input->buffer[i + 1];
-
+		memmove(input->buffer + input->pos, input->buffer + input->pos + 1, input->max_pos);
 		input->buffer[input->max_pos] = '\0';
 
 		while (input->buffer[input->pos] != '\0') {
@@ -143,8 +142,7 @@ int_fast32_t ncsh_delete(struct ncsh_Input* input) {
 	ncsh_write(DELETE_STRING ERASE_CURRENT_LINE, DELETE_STRING_LENGTH + ERASE_CURRENT_LINE_LENGTH);
 
 	input->start_pos = input->pos;
-	for (uint_fast32_t i = input->pos; i < input->max_pos && input->buffer[i]; ++i)
-		input->buffer[i] = input->buffer[i + 1];
+	memmove(input->buffer + input->pos, input->buffer + input->pos + 1, input->max_pos);
 
 	if (input->max_pos > 0)
 		--input->max_pos;
@@ -366,8 +364,10 @@ void ncsh_exit(struct ncsh* shell) {
 int_fast32_t ncsh_init(struct ncsh* shell) {
 	shell->prompt_info.user = getenv("USER");
 
-	if (ncsh_config_init(&shell->config) != E_SUCCESS) {
-		ncsh_config_free(&shell->config);
+	enum eskilib_Result result;
+	if ((result = ncsh_config_init(&shell->config)) != E_SUCCESS) {
+		if (result != E_FAILURE_MALLOC)
+			ncsh_config_free(&shell->config);
 		return EXIT_FAILURE;
 	}
 	#ifdef NCSH_DEBUG
@@ -378,52 +378,57 @@ int_fast32_t ncsh_init(struct ncsh* shell) {
 		printf("config_location.value: %s\n", shell->config.config_location.value);
 	#endif /* ifdef NCSH_DEBUG */
 
-	if (ncsh_args_malloc(&shell->args) != E_SUCCESS) {
+	if ((result = ncsh_args_malloc(&shell->args)) != E_SUCCESS) {
 		perror(RED "ncsh: Error when allocating memory for parsing" RESET);
 		fflush(stderr);
 		ncsh_config_free(&shell->config);
-		ncsh_args_free(&shell->args);
+		if (result != E_FAILURE_MALLOC)
+			ncsh_args_free(&shell->args);
 		return EXIT_FAILURE;
 	}
 
-	if (ncsh_history_malloc(&shell->history) != E_SUCCESS) {
-		perror(RED "ncsh: Error when allocating memory for history" RESET);
-		fflush(stderr);
+	if ((result = ncsh_history_init(shell->config.config_location, &shell->history)) != E_SUCCESS) {
 		ncsh_config_free(&shell->config);
 		ncsh_args_free(&shell->args);
-		ncsh_history_free(&shell->history);
-		return EXIT_FAILURE;
-	}
-
-	if (ncsh_history_load(shell->config.config_location, &shell->history) != E_SUCCESS) {
-		perror(RED "ncsh: Error when loading data from history file" RESET);
-		fflush(stderr);
-		ncsh_config_free(&shell->config);
-		ncsh_args_free(&shell->args);
-		ncsh_history_free(&shell->history);
+		if (result != E_FAILURE_MALLOC)
+			ncsh_history_exit(&shell->history);
 		return EXIT_FAILURE;
 	}
 
 	shell->current_autocompletion = malloc(NCSH_MAX_INPUT);
+	if (!shell->current_autocompletion) {
+		perror(RED "ncsh: Error when allocating data for autocompletion results" RESET);
+		fflush(stderr);
+		ncsh_config_free(&shell->config);
+		ncsh_args_free(&shell->args);
+		ncsh_history_exit(&shell->history);
+	}
+
 	shell->autocompletions_tree = ncsh_autocompletions_malloc();
 	if (!shell->autocompletions_tree) {
 		perror(RED "ncsh: Error when loading data from history as autocompletions" RESET);
 		fflush(stderr);
 		ncsh_config_free(&shell->config);
 		ncsh_args_free(&shell->args);
-		ncsh_history_free(&shell->history);
+		ncsh_history_exit(&shell->history);
 		ncsh_autocompletions_free(shell->autocompletions_tree);
 		return EXIT_FAILURE;
 	}
 	ncsh_autocompletions_add_multiple(shell->history.entries, shell->history.count, shell->autocompletions_tree);
 
-	ncsh_terminal_init();
-
-	enum z_Result result = z_init(shell->config.config_location, &shell->z_db);
-	if (result != Z_SUCCESS) {
-		ncsh_exit(shell);
+	enum z_Result z_result = z_init(shell->config.config_location, &shell->z_db);
+	if (z_result != Z_SUCCESS) {
+		ncsh_config_free(&shell->config);
+		ncsh_args_free(&shell->args);
+		ncsh_history_exit(&shell->history);
+		free(shell->current_autocompletion);
+		ncsh_autocompletions_free(shell->autocompletions_tree);
+		if (z_result != Z_MALLOC_ERROR)
+			z_exit(&shell->z_db);
 		return EXIT_FAILURE;
 	}
+
+	ncsh_terminal_init();
 
 	return EXIT_SUCCESS;
 }
