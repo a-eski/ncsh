@@ -38,6 +38,16 @@
 		return EXIT_FAILURE;						\
 	}									\
 
+#if __has_c_attribute(nodiscard)
+#if __STDC_VERSION__ >= 202000
+#define ncsh_nodiscard [[nodiscard]]
+#else
+#define ncsh_nodiscard
+#endif
+#else
+#define ncsh_nodiscard
+#endif
+
 struct ncsh_Input {
 	size_t start_pos;
 	size_t pos;
@@ -78,7 +88,7 @@ void ncsh_prompt_directory(char* cwd, char* output) {
 }
 #endif /* ifdef NCSH_SHORT_DIRECTORY */
 
-// [[nodiscard]]
+ncsh_nodiscard
 int_fast32_t ncsh_prompt(struct ncsh_Directory prompt_info) {
 	if (!getcwd(prompt_info.path, sizeof(prompt_info.path))) {
 		perror(RED "ncsh: Error when getting current directory" RESET);
@@ -101,7 +111,7 @@ int_fast32_t ncsh_prompt(struct ncsh_Directory prompt_info) {
 	return EXIT_SUCCESS;
 }
 
-// [[nodiscard]]
+ncsh_nodiscard
 int_fast32_t ncsh_backspace(struct ncsh_Input* input) {
 	if (input->pos == 0) {
 		return EXIT_SUCCESS;
@@ -137,7 +147,7 @@ int_fast32_t ncsh_backspace(struct ncsh_Input* input) {
 	}
 }
 
-// [[nodiscard]]
+ncsh_nodiscard
 int_fast32_t ncsh_delete(struct ncsh_Input* input) {
 	ncsh_write(DELETE_STRING ERASE_CURRENT_LINE, DELETE_STRING_LENGTH + ERASE_CURRENT_LINE_LENGTH);
 
@@ -219,7 +229,8 @@ char ncsh_read(void) {
 	return '\0';
 }
 
-// [[nodiscard]]
+
+ncsh_nodiscard
 int_fast32_t ncsh_tab_autocomplete(struct ncsh_Input* input, struct ncsh_Autocompletion_Node* autocompletions_tree) {
 	struct ncsh_Autocompletion autocompletion_matches[NCSH_MAX_AUTOCOMPLETION_MATCHES] = {0};
 	uint_fast32_t autocompletions_matches_count = ncsh_autocompletions_get(input->buffer, input->pos + 1, autocompletion_matches, autocompletions_tree);
@@ -285,6 +296,7 @@ int_fast32_t ncsh_tab_autocomplete(struct ncsh_Input* input, struct ncsh_Autocom
 	return exit;
 }
 
+ncsh_nodiscard
 int_fast32_t ncsh_z(struct ncsh_Args* args, struct z_Database* z_db) {
 	assert(z_db);
 	assert(args->count > 0);
@@ -317,6 +329,7 @@ int_fast32_t ncsh_z(struct ncsh_Args* args, struct z_Database* z_db) {
 	return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
+ncsh_nodiscard
 int_fast32_t ncsh_execute(struct ncsh_Args* args,
 			  struct ncsh_History* history,
 			  struct z_Database* z_db) {
@@ -361,6 +374,7 @@ void ncsh_exit(struct ncsh* shell) {
 	ncsh_terminal_reset();
 }
 
+ncsh_nodiscard
 int_fast32_t ncsh_init(struct ncsh* shell) {
 	shell->prompt_info.user = getenv("USER");
 
@@ -433,6 +447,7 @@ int_fast32_t ncsh_init(struct ncsh* shell) {
 	return EXIT_SUCCESS;
 }
 
+ncsh_nodiscard
 int_fast32_t ncsh_read_input(struct ncsh_Input* input, struct ncsh* shell) {
 	char character;
 	char temp_character;
