@@ -22,21 +22,11 @@ struct ncsh_History {
 	struct eskilib_String* entries;
 };
 
-enum eskilib_Result ncsh_history_malloc(struct ncsh_History* history);
-
-enum eskilib_Result ncsh_history_load(struct eskilib_String config_location, struct ncsh_History* history);
-
-enum eskilib_Result ncsh_history_save(struct ncsh_History* history);
+enum eskilib_Result ncsh_history_init(struct eskilib_String config_location, struct ncsh_History* history);
 
 void ncsh_history_exit(struct ncsh_History* history);
 
-// void ncsh_history_clean(struct ncsh_History* history);
-
-void ncsh_history_free(struct ncsh_History* history);
-
 enum eskilib_Result ncsh_history_add(char* line, size_t length, struct ncsh_History* history);
-
-// enum eskilib_Result ncsh_history_remove(char* line, uint_fast32_t length, struct ncsh_History* history);
 
 struct eskilib_String ncsh_history_get(uint_fast32_t position, struct ncsh_History* history);
 

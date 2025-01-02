@@ -262,6 +262,7 @@ enum z_Result z_read_from_database_file(struct z_Database* db) {
 
 enum z_Result z_add_new_path_to_database(char* path, size_t path_length, struct z_Database* db) {
 	assert(path && db && path_length > 1);
+	assert(path[path_length - 1] == '\0');
 	if (db->count == Z_DATABASE_IN_MEMORY_LIMIT)
 		return Z_FAILURE;
 
@@ -270,6 +271,8 @@ enum z_Result z_add_new_path_to_database(char* path, size_t path_length, struct 
 		return Z_MALLOC_ERROR;
 
 	memcpy(db->dirs[db->count].path, path, path_length);
+	assert(db->dirs[db->count].path[path_length - 1] == '\0');
+
 	db->dirs[db->count].path_length = path_length;
 	++db->dirs[db->count].rank;
 	db->dirs[db->count].last_accessed = time(NULL);
@@ -279,12 +282,20 @@ enum z_Result z_add_new_path_to_database(char* path, size_t path_length, struct 
 }
 
 enum z_Result z_add_new_to_database(char* path, size_t path_length, const char* cwd, size_t cwd_length, struct z_Database* db) {
-	assert(db);
-	if (!db || !cwd || !path || path_length == 0)
+	if (!path || path_length == 0)
 		return Z_NULL_REFERENCE;
 
-	// printf("add to database cwd %s\n", cwd);
-	// printf("add new to database path %s\n", path);
+	assert(path[path_length - 1] == '\0');
+	assert(strlen(path) + 1 == path_length);
+	assert(cwd[cwd_length - 1] == '\0');
+	assert(strlen(cwd) + 1 == cwd_length);
+
+	#ifdef  Z_DEBUG
+	printf("add to database cwd %s\n", cwd);
+	printf("add to database cwd length %zu\n", cwd_length);
+	printf("add new to database path %s\n", path);
+	printf("add new to database path length %zu\n", path_length);
+	#endif /* ifdef  Z_DEBUG */
 
 	size_t total_length = path_length + cwd_length;
 	db->dirs[db->count].path = malloc(total_length);
@@ -292,12 +303,14 @@ enum z_Result z_add_new_to_database(char* path, size_t path_length, const char* 
 		return Z_MALLOC_ERROR;
 
 	memcpy(db->dirs[db->count].path, cwd, cwd_length);
-	// printf("first memcpy %s\n", db->dirs[db->count].path);
-	strncat(db->dirs[db->count].path, "/", 2);
-	// printf("first strcat %s\n", db->dirs[db->count].path);
-	strncat(db->dirs[db->count].path, path, path_length);
-	// printf("second strcat %s\n", db->dirs[db->count].path);
-	strncat(db->dirs[db->count].path, "\0", 2);
+	memcpy(db->dirs[db->count].path + cwd_length - 1, "/", 2);
+	memcpy(db->dirs[db->count].path + cwd_length, path, path_length);
+	assert(strlen(db->dirs[db->count].path) + 1 == total_length);
+	assert(db->dirs[db->count].path[total_length - 1] == '\0');
+
+	#ifdef Z_DEBUG
+	printf("after memcpys %s\n", db->dirs[db->count].path);
+	#endif /* ifdef Z_DEBUG */
 
 	db->dirs[db->count].path_length = total_length;
 	++db->dirs[db->count].rank;
@@ -395,8 +408,10 @@ void z(char* target, size_t target_length, const char* cwd, struct z_Database* d
 
 	if (!target) {
 		char* home = getenv("HOME");
-		if (!home || chdir(home) == -1)
-			perror("z: couldn't change directory");
+		if (!home)
+			perror("z: couldn't get HOME from environment");
+		else if (chdir(home) == -1)
+			perror("z: couldn't change directory to home");
 
 		return;
 	}
