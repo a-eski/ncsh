@@ -66,11 +66,12 @@ void ncsh_prompt_directory(char* cwd, char* output) {
 	uint_fast32_t last_slash_pos = 0;
 	uint_fast32_t second_to_last_slash = 0;
 
-	for (; cwd[i] != '\n' && cwd[i] != '\0'; ++i) {
+	while (cwd[i] != '\n' && cwd[i] != '\0') {
 		if (cwd[i] == '/') {
 			second_to_last_slash = last_slash_pos;
 			last_slash_pos = i + 1;
 		}
+		++i;
 	}
 
 	memcpy(output, &cwd[second_to_last_slash] - 1, i - second_to_last_slash + 1);
@@ -113,9 +114,7 @@ int_fast32_t ncsh_backspace(struct ncsh_Input* input) {
 		ncsh_write(BACKSPACE_STRING ERASE_CURRENT_LINE, BACKSPACE_STRING_LENGTH + ERASE_CURRENT_LINE_LENGTH);
 
 		input->start_pos = input->pos;
-		for (size_t i = input->pos; i < input->max_pos && input->buffer[i]; ++i)
-			input->buffer[i] = input->buffer[i + 1];
-
+		memmove(input->buffer + input->pos, input->buffer + input->pos + 1, input->max_pos);
 		input->buffer[input->max_pos] = '\0';
 
 		while (input->buffer[input->pos] != '\0') {
@@ -143,8 +142,7 @@ int_fast32_t ncsh_delete(struct ncsh_Input* input) {
 	ncsh_write(DELETE_STRING ERASE_CURRENT_LINE, DELETE_STRING_LENGTH + ERASE_CURRENT_LINE_LENGTH);
 
 	input->start_pos = input->pos;
-	for (uint_fast32_t i = input->pos; i < input->max_pos && input->buffer[i]; ++i)
-		input->buffer[i] = input->buffer[i + 1];
+	memmove(input->buffer + input->pos, input->buffer + input->pos + 1, input->max_pos);
 
 	if (input->max_pos > 0)
 		--input->max_pos;

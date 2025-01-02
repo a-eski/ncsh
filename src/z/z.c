@@ -31,8 +31,6 @@ double z_score(struct z_Directory* directory, time_t now) {
 
 struct z_Directory* z_find_match_add(char* target, size_t target_length, struct z_Database* db) {
 	assert(db && target && target_length > 0);
-	if (!db || !target || target_length < 2)
-		return NULL;
 
 	struct z_Directory* current_match = NULL;
 	time_t now = time(NULL);
@@ -48,8 +46,10 @@ struct z_Directory* z_find_match_add(char* target, size_t target_length, struct 
 	if (current_match) {
 		++current_match->rank;
 		current_match->last_accessed = time(NULL);
-		// printf("Best match: %s\n", current_match->path);
-		// printf("Best match score: %f\n", current_match->rank);
+		#ifdef Z_DEBUG
+		printf("Best match: %s\n", current_match->path);
+		printf("Best match score: %f\n", current_match->rank);
+		#endif /* ifdef Z_DEBUG */
 	}
 
 	return current_match;
@@ -282,22 +282,17 @@ enum z_Result z_add_new_path_to_database(char* path, size_t path_length, struct 
 }
 
 enum z_Result z_add_new_to_database(char* path, size_t path_length, const char* cwd, size_t cwd_length, struct z_Database* db) {
-	if (!path || path_length == 0)
+	if (path_length == 0)
 		return Z_NULL_REFERENCE;
 
-	assert(path[path_length - 1] == '\0');
+	assert(path && path[path_length - 1] == '\0');
 	assert(strlen(path) + 1 == path_length);
-	assert(cwd[cwd_length - 1] == '\0');
+	assert(cwd && cwd[cwd_length - 1] == '\0');
 	assert(strlen(cwd) + 1 == cwd_length);
 
-	#ifdef  Z_DEBUG
-	printf("add to database cwd %s\n", cwd);
-	printf("add to database cwd length %zu\n", cwd_length);
-	printf("add new to database path %s\n", path);
-	printf("add new to database path length %zu\n", path_length);
-	#endif /* ifdef  Z_DEBUG */
-
 	size_t total_length = path_length + cwd_length;
+	assert(total_length > 0);
+
 	db->dirs[db->count].path = malloc(total_length);
 	if (!db->dirs[db->count].path)
 		return Z_MALLOC_ERROR;
@@ -305,11 +300,12 @@ enum z_Result z_add_new_to_database(char* path, size_t path_length, const char* 
 	memcpy(db->dirs[db->count].path, cwd, cwd_length);
 	memcpy(db->dirs[db->count].path + cwd_length - 1, "/", 2);
 	memcpy(db->dirs[db->count].path + cwd_length, path, path_length);
+
 	assert(strlen(db->dirs[db->count].path) + 1 == total_length);
 	assert(db->dirs[db->count].path[total_length - 1] == '\0');
 
 	#ifdef Z_DEBUG
-	printf("after memcpys %s\n", db->dirs[db->count].path);
+	printf("adding new value to db after memcpys %s\n", db->dirs[db->count].path);
 	#endif /* ifdef Z_DEBUG */
 
 	db->dirs[db->count].path_length = total_length;
@@ -363,13 +359,11 @@ enum z_Result z_init(struct eskilib_String config_file, struct z_Database* db) {
 	return z_read_from_database_file(db);
 }
 
-enum z_Result z_directory_matches(char* target, size_t target_length, const char* directory, struct eskilib_String* output) {
-	assert(target && directory && target_length > 0);
-	if (!target || target_length == 0 || !directory)
-		return Z_NULL_REFERENCE;
+enum z_Result z_directory_matches(char* target, size_t target_length, const char* cwd, struct eskilib_String* output) {
+	assert(target && cwd && target_length > 0);
 
 	struct dirent* directory_entry;
-	DIR* current_directory = opendir(directory);
+	DIR* current_directory = opendir(cwd);
 	if (!current_directory) {
 		perror("z: could not open directory");
 		return Z_FAILURE;
@@ -381,10 +375,10 @@ enum z_Result z_directory_matches(char* target, size_t target_length, const char
 		directory_length = strlen(directory_entry->d_name) + 1;
 		compare_length = directory_length > target_length ? directory_length : target_length;
 		if (eskilib_string_equals(target, directory_entry->d_name, compare_length)) {
-			output->length = directory_length;
 			output->value = malloc(directory_length);
 			if (!output->value)
 				return Z_MALLOC_ERROR;
+			output->length = directory_length;
 			eskilib_string_copy(output->value, directory_entry->d_name, directory_length);
 
 			if ((closedir(current_directory)) == -1) {
@@ -400,11 +394,14 @@ enum z_Result z_directory_matches(char* target, size_t target_length, const char
 		perror("z: could not close directory");
 		return Z_FAILURE;
 	}
+
 	return Z_MATCH_NOT_FOUND;
 }
 
 void z(char* target, size_t target_length, const char* cwd, struct z_Database* db) {
-	// printf("z_run: %s\n", target.value);
+	#ifdef Z_DEBUG
+	printf("z: %s\n", target.value);
+	#endif /* ifdef Z_DEBUG */
 
 	if (!target) {
 		char* home = getenv("HOME");
@@ -436,6 +433,7 @@ void z(char* target, size_t target_length, const char* cwd, struct z_Database* d
 	size_t cwd_length = strlen(cwd) + 1;
 	struct eskilib_String output = {0};
 	struct z_Directory* match = z_find_match(target, target_length, cwd, cwd_length, db);
+
 	if (z_directory_matches(target, target_length, cwd, &output) == Z_SUCCESS) {
 		// printf("dir matches %s\n", output.value);
 		if (!match && z_add_new_to_database(output.value, output.length, cwd, cwd_length, db) != Z_SUCCESS) {
@@ -500,8 +498,6 @@ enum z_Result z_add(char* path, size_t path_length, struct z_Database* db) {
 
 void z_free(struct z_Database* db) {
 	assert(db);
-	if (!db)
-		return;
 
 	if (db->database_file)
 		free(db->database_file);
