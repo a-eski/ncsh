@@ -1,13 +1,11 @@
 // Copyright (c) ncsh by Alex Eski 2024
 
 #include <stddef.h>
-#include <linux/limits.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <sys/types.h>
-#include <sys/wait.h>
 #include <unistd.h>
 
 #include "ncsh_defines.h"

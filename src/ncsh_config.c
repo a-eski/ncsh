@@ -73,7 +73,11 @@ enum eskilib_Result ncsh_config(struct ncsh_Config* config) {
 	printf("config->config_location.value: %s\n", config->config_location.value);
 	#endif /* ifdef NCSH_DEBUG */
 
+	#if defined(linux) || defined(__unix__)
 	mkdir(config->config_location.value, 0755);
+	#else
+	mkdir(config->config_location.value);
+	#endif /* ifdef  defined(linux) || defined(__unix__) */
 
 	return E_SUCCESS;
 }

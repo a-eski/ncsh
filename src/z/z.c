@@ -8,7 +8,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <unistd.h>
-#include <linux/limits.h>
+
 
 #include "z.h"
 #include "../eskilib/eskilib_colors.h"

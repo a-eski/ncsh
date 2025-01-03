@@ -2,13 +2,11 @@
 
 #define _POSIX_SOURCE
 #include <stdint.h>
-#include <linux/limits.h>
 #include <assert.h>
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <sys/types.h>
-#include <sys/wait.h>
 #include <signal.h>
 #include <time.h>
 #include <unistd.h>
@@ -18,6 +16,7 @@
 #include "ncsh_args.h"
 #include "ncsh_vm.h"
 #include "ncsh_defines.h"
+#include "ncsh_platform.h"
 #include "eskilib/eskilib_colors.h"
 
 struct ncsh_Output_Redirect_IO {

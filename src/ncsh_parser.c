@@ -7,11 +7,11 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
-#include <glob.h>
 
 #include "ncsh_parser.h"
 #include "ncsh_args.h"
 #include "ncsh_defines.h"
+#include "ncsh_platform.h"
 #include "eskilib/eskilib_result.h"
 #include "eskilib/eskilib_string.h"
 
@@ -136,7 +136,7 @@ void ncsh_parser_parse(char line[], size_t length, struct ncsh_Args* args) {
 			buffer[buf_position] = '\0';
 
 			if (glob_found) {
-				glob_t glob_buf = {0};
+				/*glob_t glob_buf = {0};
 				size_t glob_len;
 				glob(buffer, GLOB_DOOFFS, NULL, &glob_buf);
 
@@ -153,7 +153,7 @@ void ncsh_parser_parse(char line[], size_t length, struct ncsh_Args* args) {
 				}
 
 				globfree(&glob_buf);
-				glob_found = false;
+				glob_found = false;*/
 			}
 			else {
 				args->values[args->count] = malloc(buf_position + 1);

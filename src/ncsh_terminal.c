@@ -1,61 +1,38 @@
 // Copyright (c) ncsh by Alex Eski 2024
 
-#include <signal.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <unistd.h>
-#include <termios.h>
-#include <sys/ioctl.h>
-// #include <uv.h>
 
 #include "ncsh_terminal.h"
 #include "eskilib/eskilib_colors.h"
+
+#if defined(linux) || defined(__unix__)
+#include "linux/ncsh_terminal_linux.c"
+#else
+#include "ncsh_terminal_msys2.c"
+#endif
+
 #define TERMINAL_RETURN 'R'
 #define T_BUFFER_LENGTH 30
 
-// #if defined(HAVE_TERMIOS_H)
-static struct termios terminal;
-static struct termios original_terminal;
-
 void ncsh_terminal_reset(void) {
-	fflush(stdout);
-	if (tcsetattr(STDIN_FILENO, TCSANOW, &original_terminal) != 0) {
-		perror(RED "ncsh: Could not restore terminal settings" RESET);
-	}
+	#if defined(linux) || defined(__unix__)
+		ncsh_terminal_linux_reset();
+	#endif
 }
 
 void ncsh_terminal_init(void) {
-	// if (uv_guess_handle(fileno(stream)) != UV_TTY)
-	if (!isatty(STDIN_FILENO)) {
-		fprintf(stderr, "Not running in a terminal.\n");
-		exit(EXIT_FAILURE);
-	}
-
-	if (tcgetattr(STDIN_FILENO, &original_terminal) != 0) {
-		perror(RED "ncsh: Could not get terminal settings" RESET);
-		exit(EXIT_FAILURE);
-	}
-
-	terminal = original_terminal;
-	terminal.c_lflag &= ~(ICANON|ECHO);
-	terminal.c_cc[VMIN] = 1;
-	terminal.c_cc[VTIME] = 0;
-	// terminal.c_cc[VEOF] = CTRL_D;
-	// terminal.c_cc[VINTR] = CTRL_C;
-	// terminal.c_cc[VKILL] = CTRL_U;
-
-	if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &terminal) != 0) {
-		perror(RED "ncsh: Could not set terminal settings" RESET);
-	}
-
-	signal(SIGHUP, SIG_DFL); // Stops the process if the terminal is closed
+	#if defined(linux) || defined(__unix__)
+		ncsh_terminal_linux_init();
+	#endif
 }
 
 struct ncsh_Coordinates ncsh_terminal_size(void) {
-	// todo: look at getenv("LINES"), getenv("COLUMNS") since ioctl is not portable
-	struct winsize w;
-	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
-	return (struct ncsh_Coordinates) { .x = w.ws_col, .y = w.ws_row };
+	#if defined(linux) || defined(__unix__)
+		return ncsh_terminal_linux_size();
+	#else
+		return (struct ncsh_Coordinates){ .x = 0, .y = 0 };
+	#endif
 }
 
 void ncsh_terminal_move(int x, int y) {

@@ -1,11 +1,8 @@
 // Copyright (c) ncsh by Alex Eski 2024
 
-#include <linux/limits.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <sys/types.h>
-#include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
 #include <stdbool.h>
@@ -20,6 +17,7 @@
 #include "ncsh_history.h"
 #include "ncsh_config.h"
 #include "ncsh_autocompletions.h"
+#include "ncsh_platform.h"
 #include "ncsh_defines.h"
 #include "ncsh_builtins.h"
 #include "eskilib/eskilib_colors.h"

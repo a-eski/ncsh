@@ -3,9 +3,11 @@
 #ifndef ncsh_terminal_h
 #define ncsh_terminal_h
 
-#include <linux/limits.h>
 #include <stdint.h>
 #include <stdbool.h>
+
+#include "ncsh_terminal_base.h"
+#include "ncsh_platform.h"
 
 // input definitions
 #define ESCAPE_CHARACTER 27	// "\033" or "^["
@@ -61,11 +63,6 @@ struct ncsh_Directory {
 	bool reprint_prompt;
 	char* user;
 	char path[PATH_MAX];
-};
-
-struct ncsh_Coordinates {
-	int x;
-	int y;
 };
 
 void ncsh_terminal_reset(void);
