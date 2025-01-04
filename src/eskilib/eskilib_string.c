@@ -5,17 +5,8 @@
 #include <stdbool.h>
 #include <assert.h>
 
+#include "eskilib_defines.h"
 #include "eskilib_string.h"
-
-#if __has_c_attribute(nodiscard)
-#if __STDC_VERSION__ >= 202000
-#define eskilib_nodiscard [[nodiscard]]
-#else
-#define eskilib_nodiscard
-#endif
-#else
-#define eskilib_nodiscard
-#endif
 
 eskilib_nodiscard
 char* eskilib_string_copy(char* dest, char* source, const size_t maxStringSize) {
