@@ -9,14 +9,15 @@
 
 #if __has_c_attribute(nodiscard)
 #if __STDC_VERSION__ >= 202000
-#define eskilib_no_discard [[nodiscard]]
+#define eskilib_nodiscard [[nodiscard]]
 #else
-#define eskilib_no_discard
+#define eskilib_nodiscard
 #endif
 #else
-#define eskilib_no_discard
+#define eskilib_nodiscard
 #endif
 
+eskilib_nodiscard
 char* eskilib_string_copy(char* dest, char* source, const size_t maxStringSize) {
 	assert(dest != NULL);
 	assert(source != NULL);
@@ -32,7 +33,7 @@ char* eskilib_string_copy(char* dest, char* source, const size_t maxStringSize) 
 	return (originalStringToSave);
 }
 
-eskilib_no_discard
+eskilib_nodiscard
 bool eskilib_string_equals(char* stringOne, char* stringTwo, const size_t maxStringSize) {
 	assert(stringOne != NULL);
 	assert(stringTwo != NULL);
@@ -53,7 +54,7 @@ bool eskilib_string_equals(char* stringOne, char* stringTwo, const size_t maxStr
 }
 
 
-eskilib_no_discard
+eskilib_nodiscard
 int_fast32_t eskilib_string_compare(char* stringOne, char* stringTwo, const size_t maxStringSize) {
 	assert(stringOne != NULL);
 	assert(stringTwo != NULL);
@@ -74,7 +75,7 @@ int_fast32_t eskilib_string_compare(char* stringOne, char* stringTwo, const size
 }
 
 
-eskilib_no_discard
+eskilib_nodiscard
 bool eskilib_string_contains_unsafe(const char* string, const char* substring) {
 	assert(string != NULL);
 	assert(substring != NULL);
@@ -107,7 +108,7 @@ bool eskilib_string_contains_unsafe(const char* string, const char* substring) {
 }
 
 
-eskilib_no_discard
+eskilib_nodiscard
 bool eskilib_string_contains(const struct eskilib_String string, const struct eskilib_String substring) {
 	assert(string.value != NULL);
 	assert(substring.value != NULL);
@@ -150,7 +151,7 @@ bool eskilib_string_contains(const struct eskilib_String string, const struct es
 }
 
 
-eskilib_no_discard
+eskilib_nodiscard
 bool eskilib_string_contains_s(const char* string, size_t string_length, const struct eskilib_String substring) {
 	assert(string != NULL);
 	assert(substring.value != NULL);
@@ -194,7 +195,7 @@ bool eskilib_string_contains_s(const char* string, size_t string_length, const s
 }
 
 
-eskilib_no_discard
+eskilib_nodiscard
 bool eskilib_string_contains_s2(const char* string, size_t string_length, const char* string_two, size_t string_two_length) {
 	assert(string != NULL);
 	assert(string_length >= 2);

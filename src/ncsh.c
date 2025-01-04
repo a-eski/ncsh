@@ -161,7 +161,6 @@ int_fast32_t ncsh_delete(struct ncsh_Input* input) {
 		putchar(input->buffer[input->pos]);
 		++input->pos;
 	}
-
 	fflush(stdout);
 
 	if (input->pos == 0)
@@ -228,7 +227,6 @@ char ncsh_read(void) {
 
 	return '\0';
 }
-
 
 ncsh_nodiscard
 int_fast32_t ncsh_tab_autocomplete(struct ncsh_Input* input, struct ncsh_Autocompletion_Node* autocompletions_tree) {
@@ -384,13 +382,6 @@ int_fast32_t ncsh_init(struct ncsh* shell) {
 			ncsh_config_free(&shell->config);
 		return EXIT_FAILURE;
 	}
-	#ifdef NCSH_DEBUG
-	printf("config_file: %s\n", shell->config.config_file);
-	if (shell->config.home_location.value)
-		printf("home_location.value: %s\n", shell->config.home_location.value);
-	if (shell->config.config_location.value)
-		printf("config_location.value: %s\n", shell->config.config_location.value);
-	#endif /* ifdef NCSH_DEBUG */
 
 	if ((result = ncsh_args_malloc(&shell->args)) != E_SUCCESS) {
 		perror(RED "ncsh: Error when allocating memory for parsing" RESET);
@@ -469,7 +460,7 @@ int_fast32_t ncsh_read_input(struct ncsh_Input* input, struct ncsh* shell) {
 			return EXIT_FAILURE;
 		}
 
-		if (character == CTRL_C || character == CTRL_D) {
+		if (character == CTRL_D) {
 			putchar('\n');
 			return EXIT_SUCCESS_END;
 		}
@@ -779,15 +770,15 @@ int_fast32_t ncsh_read_input(struct ncsh_Input* input, struct ncsh* shell) {
 
 void ncsh_parse(struct ncsh_Input* input, struct ncsh* shell) {
 	#ifdef NCSH_DEBUG
-	ncsh_debug_line(input.buffer, input.pos, input.max_pos);
+	ncsh_debug_line(input->buffer, input->pos, input->max_pos);
 	#endif /* ifdef NCSH_DEBUG */
 	ncsh_parser_parse(input->buffer, input->pos, &shell->args);
 	#ifdef NCSH_DEBUG
-	ncsh_debug_args(shell.args);
+	ncsh_debug_args(shell->args);
 	#endif /* ifdef NCSH_DEBUG */
 }
 
-int main(void) {
+int_fast32_t ncsh() {
 	#ifdef NCSH_START_TIME
 	clock_t start = clock();
 	#endif
@@ -839,7 +830,7 @@ int main(void) {
 				goto reset;
 			}
 			case EXIT_SUCCESS_END: {
-				break;
+				goto exit;
 			}
 		}
 
@@ -876,5 +867,39 @@ int main(void) {
 		ncsh_exit(&shell);
 
 	return exit_code;
+}
+
+int_fast32_t ncsh_noninteractive(int argc, char** argv) {
+	#ifdef NCSH_DEBUG
+	printf("ncsh running in non-interactive mode.\n");
+	printf("argc: %d\n", argc);
+	for (int_fast32_t i = 0; i < argc; ++i)
+		printf("argv[%lu]: %s\n", i, argv[i]);
+	#endif /* ifdef NCSH_DEBUG */
+
+	struct ncsh_Args args = {0};
+
+	enum eskilib_Result result;
+	if ((result = ncsh_args_malloc_count(argc - 1, &args)) != E_SUCCESS) {
+		perror(RED "ncsh: Error when allocating memory for parsing" RESET);
+		fflush(stderr);
+		if (result != E_FAILURE_MALLOC)
+			ncsh_args_free(&args);
+		return EXIT_FAILURE;
+	}
+
+	ncsh_parser_parse_noninteractive(argc - 1, argv + 1, &args);
+	#ifdef NCSH_DEBUG
+	ncsh_debug_args(shell->args);
+	#endif /* ifdef NCSH_DEBUG */
+
+	return EXIT_SUCCESS;
+}
+
+int main(int argc, char** argv) {
+	if (argc > 1 || !ncsh_terminal_is_interactive())
+		return ncsh_noninteractive(argc, argv);
+	else
+		return ncsh();
 }
 

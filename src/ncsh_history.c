@@ -48,7 +48,7 @@ enum eskilib_Result ncsh_history_malloc(struct ncsh_History* history) {
 		return E_FAILURE_NULL_REFERENCE;
 
 	history->count = 0;
-	history->entries = malloc(sizeof(struct eskilib_String) * NCSH_MAX_HISTORY_FILE);
+	history->entries = malloc(sizeof(struct eskilib_String) * NCSH_MAX_HISTORY_IN_MEMORY);
 	if (history->entries == NULL)
 		return E_FAILURE_MALLOC;
 
@@ -114,14 +114,33 @@ enum eskilib_Result ncsh_history_init(struct eskilib_String config_location, str
 	return E_SUCCESS;
 }
 
+enum eskilib_Result ncsh_history_clean(struct ncsh_History* history) {
+	(void)history;
+	// struct eskilib_HashTable ht = {0};
+	// malloc hashtable
+	// open file
+	// for all entries in memory for history, check if exists in hashtable
+		// if not exists, add to hashtable, add to file
+		// if exists, continue
+
+	return E_SUCCESS;
+}
+
 enum eskilib_Result ncsh_history_save(struct ncsh_History* history) {
 	assert(history->count > 0);
 	if (history->count == 0 || !history->entries[0].value)
 		return E_FAILURE_NULL_REFERENCE;
 
-	uint_fast32_t pos = history->count > NCSH_MAX_HISTORY_FILE ? NCSH_MAX_HISTORY_FILE - history->count : 0;
+	uint_fast32_t pos = history->count > NCSH_MAX_HISTORY_FILE ? history->count - NCSH_MAX_HISTORY_FILE : 0;
+	#ifdef NCSH_DEBUG
+	printf("history->count %lu\n", history->count);
+	printf("pos %lu\n", pos);
+	#endif /* ifdef NCSH_DEBUG */
 
-	FILE* file = fopen(history->file, pos > 0 ? "w" : "a"); // write over entire file from new if file full
+	// history file is full.. ask user if they would like to remove duplicates before saving to condense size of history file
+	// removing duplicates saves entries for future autocompletions, but decreases size of overall history file when lots of duplicates exists
+
+	FILE* file = fopen(history->file, pos == 0 ? "a" : "w"); // write over entire file from new if file full
 	if (file == NULL) {
 		perror(RED "ncsh: Could not open .ncsh_history file to save history" RESET);
 		return E_FAILURE_FILE_OP;
@@ -230,7 +249,7 @@ enum eskilib_Result ncsh_history_add(char* line, size_t length, struct ncsh_Hist
 		return E_FAILURE_ZERO_LENGTH;
 	else if (history->count + 1 < history->count)
 		return E_FAILURE_OVERFLOW_PROTECTION;
-	else if (history->count >= NCSH_MAX_HISTORY_FILE)
+	else if (history->count >= NCSH_MAX_HISTORY_IN_MEMORY)
 		return E_NO_OP_MAX_LIMIT_REACHED;
 
 	history->entries[history->count].length = length;
@@ -297,8 +316,8 @@ struct eskilib_String ncsh_history_get(uint_fast32_t position, struct ncsh_Histo
 	else if (position >= history->count) {
 		return eskilib_String_Empty;
 	}
-	else if (position > NCSH_MAX_HISTORY_FILE) {
-		return history->entries[NCSH_MAX_HISTORY_FILE];
+	else if (position > NCSH_MAX_HISTORY_IN_MEMORY) {
+		return history->entries[NCSH_MAX_HISTORY_IN_MEMORY];
 	}
 	else {
 		return history->entries[history->count - position - 1];

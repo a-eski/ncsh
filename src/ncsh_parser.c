@@ -15,20 +15,35 @@
 #include "eskilib/eskilib_result.h"
 #include "eskilib/eskilib_string.h"
 
-#define DOUBLE_QUOTE_KEY '\"'
+#define STRCMP_2CHAR(in, out) (in[0] == out[0] && in[1] == out[1] ? true : false)
 
+// supported quotes
+#define DOUBLE_QUOTE_KEY '\"'
+#define SINGLE_QUOTE_KEY '\''
+#define BACKTICK_KEY '\`'
+
+// ops
 #define PIPE '|'
-#define INPUT_REDIRECTION '<'
-#define OUTPUT_REDIRECTION '>'
+#define STDIN_REDIRECTION '<'
+#define STDOUT_REDIRECTION '>'
 #define BACKGROUND_JOB '&'
+
+#define STDIN_REDIRECTION_APPEND_STRING "<<"
+#define STDOUT_REDIRECTION_APPEND_STRING ">>"
+#define STDERR_REDIRECTION "2>"
+#define STDERR_REDIRECTION_APPEND "2>>"
+#define STDOUT_AND_STDERR_REDIRECTION "&>"
+#define STDOUT_AND_STDERR_REDIRECTION_APPEND "&>>"
+#define AND_STRING "&&"
+#define OR_STRING "||"
+
+// expansions
 #define GLOB_STAR '*'
 #define GLOB_QUESTION '?'
 #define TILDE '~'
 
-#define INPUT_REDIRECTION_APPEND_STRING "<<"
-#define OUTPUT_REDIRECTION_APPEND_STRING ">>"
-#define AND_STRING "&&"
-#define OR_STRING "||"
+// currently unsupported
+#define BANG '!'
 
 enum eskilib_Result ncsh_args_malloc(struct ncsh_Args* args) {
 	if (args == NULL)
@@ -42,6 +57,26 @@ enum eskilib_Result ncsh_args_malloc(struct ncsh_Args* args) {
 		return E_FAILURE_MALLOC;
 
 	args->ops = calloc(ncsh_TOKENS, sizeof(uint_fast8_t));
+	if (args->ops == NULL) {
+		free(args->values);
+		return E_FAILURE_MALLOC;
+	}
+
+	return E_SUCCESS;
+}
+
+enum eskilib_Result ncsh_args_malloc_count(int_fast32_t count, struct ncsh_Args* args) {
+	if (args == NULL)
+		return E_FAILURE_NULL_REFERENCE;
+
+	args->count = count;
+	args->max_line_length = 0;
+
+	args->values = calloc(count, sizeof(char*));
+	if (args->values == NULL)
+		return E_FAILURE_MALLOC;
+
+	args->ops = calloc(count, sizeof(uint_fast8_t));
 	if (args->ops == NULL) {
 		free(args->values);
 		return E_FAILURE_MALLOC;
@@ -81,35 +116,56 @@ bool ncsh_is_delimiter(char ch) {
 	}
 }
 
-enum ncsh_Ops ncsh_op_get(char line[], size_t length) {
+enum ncsh_Ops ncsh_op_get_2char(const char* line) {
+	if (STRCMP_2CHAR(line, STDIN_REDIRECTION_APPEND_STRING)) {
+		return OP_STDIN_REDIRECTION_APPEND;
+	}
+	else if (STRCMP_2CHAR(line, STDOUT_REDIRECTION_APPEND_STRING)) {
+		return OP_STDOUT_REDIRECTION_APPEND;
+	}
+	else if (STRCMP_2CHAR(line, STDERR_REDIRECTION)) {
+		return OP_STDERR_REDIRECTION;
+	}
+	else if (STRCMP_2CHAR(line, STDERR_REDIRECTION_APPEND)) {
+		return OP_STDERR_REDIRECTION_APPEND;
+	}
+	else if (STRCMP_2CHAR(line, STDOUT_AND_STDERR_REDIRECTION)) {
+		return OP_STDOUT_AND_STDERR_REDIRECTION;
+	}
+	else if (STRCMP_2CHAR(line, STDOUT_AND_STDERR_REDIRECTION_APPEND)) {
+		return OP_STDOUT_AND_STDERR_REDIRECTION_APPEND;
+	}
+	else if (STRCMP_2CHAR(line, AND_STRING)) {
+		return OP_AND;
+	}
+	else if (STRCMP_2CHAR(line, OR_STRING)) {
+		return OP_OR;
+	}
+	else {
+		return OP_CONSTANT;
+	}
+}
+
+enum ncsh_Ops ncsh_op_get(const char* line, size_t length) {
 	switch (length) {
 		case 0 : { return OP_NONE; }
 		case 1 : {
 			switch (line[0]) {
 			  case PIPE: { return OP_PIPE; }
-			  case OUTPUT_REDIRECTION: { return OP_OUTPUT_REDIRECTION; }
-			  case INPUT_REDIRECTION: { return OP_INPUT_REDIRECTION; }
+			  case STDOUT_REDIRECTION: { return OP_STDOUT_REDIRECTION; }
+			  case STDIN_REDIRECTION: { return OP_STDIN_REDIRECTION; }
 			  case BACKGROUND_JOB: { return OP_BACKGROUND_JOB; }
 			  default: { return OP_CONSTANT; }
 			}
 		}
 		case 2 : {
-			if (eskilib_string_equals(line, OUTPUT_REDIRECTION_APPEND_STRING, length))
-				return OP_OUTPUT_REDIRECTION_APPEND;
-			else if (eskilib_string_equals(line, INPUT_REDIRECTION_APPEND_STRING, length))
-				return OP_INPUT_REDIRECTION_APPEND;
-			/*else if (eskilib_string_equals(line, AND_STRING, length))
-				return OP_AND;
-			else if (eskilib_string_equals(line, OR_STRING, length))
-				return OP_OR;*/
-			else
-				return OP_CONSTANT;
+			return ncsh_op_get_2char(line);
 		}
 		default : { return OP_CONSTANT; }
 	}
 }
 
-void ncsh_parser_parse(char line[], size_t length, struct ncsh_Args* args) {
+void ncsh_parser_parse(const char* line, size_t length, struct ncsh_Args* args) {
 	assert(line);
 	assert(length > 0);
 	if (!line || length == 0 || length > NCSH_MAX_INPUT) {
@@ -197,5 +253,11 @@ void ncsh_parser_parse(char line[], size_t length, struct ncsh_Args* args) {
 			}
 		}
 	}
+}
+
+void ncsh_parser_parse_noninteractive(int argc, char** argv, struct ncsh_Args* args) {
+	(void)argc;
+	(void)argv;
+	(void)args;
 }
 

@@ -68,6 +68,8 @@ struct ncsh_Coordinates {
 	int y;
 };
 
+bool ncsh_terminal_is_interactive(void);
+
 void ncsh_terminal_reset(void);
 
 void ncsh_terminal_init(void);

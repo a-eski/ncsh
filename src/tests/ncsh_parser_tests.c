@@ -138,7 +138,7 @@ void ncsh_parser_output_redirection_test(void) {
 	eskilib_assert(eskilib_string_equals(args.values[0], "ls", length));
 	eskilib_assert(args.ops[0] == OP_CONSTANT);
 	eskilib_assert(eskilib_string_equals(args.values[1], ">", length));
-	eskilib_assert(args.ops[1] == OP_OUTPUT_REDIRECTION);
+	eskilib_assert(args.ops[1] == OP_STDOUT_REDIRECTION);
 	eskilib_assert(eskilib_string_equals(args.values[2], "text.txt", length));
 	eskilib_assert(args.ops[2] == OP_CONSTANT);
 
@@ -162,7 +162,7 @@ void ncsh_parser_output_redirection_append_test(void) {
 	eskilib_assert(eskilib_string_equals(args.values[0], "ls", length));
 	eskilib_assert(args.ops[0] == OP_CONSTANT);
 	eskilib_assert(eskilib_string_equals(args.values[1], ">>", length));
-	eskilib_assert(args.ops[1] == OP_OUTPUT_REDIRECTION_APPEND);
+	eskilib_assert(args.ops[1] == OP_STDOUT_REDIRECTION_APPEND);
 	eskilib_assert(eskilib_string_equals(args.values[2], "text.txt", length));
 	eskilib_assert(args.ops[2] == OP_CONSTANT);
 

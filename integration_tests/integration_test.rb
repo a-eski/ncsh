@@ -648,7 +648,20 @@ def tab_autocompletion_tests(row)
 
   row = tab_out_autocompletion_test row
   row = arrows_move_tab_autocompletion_test row
-  select_tab_autocompletion_test row
+  row = select_tab_autocompletion_test row
+  row += 1
+  row
+end
+
+def home_expansion_tests(row)
+  starting_tests 'home expansion'
+
+  assert_check_new_row(row)
+  @tty.send_keys_one_at_a_time(%(ls ~ | head -1\n))
+  row += 2
+
+  puts 'Home expansion test passed'
+  row
 end
 
 row = 0
@@ -669,8 +682,8 @@ row = builtin_tests row
 row = delete_line_tests row
 row = delete_word_tests row
 tab_autocompletion_tests row
+# home_expansion_tests row
 
-# row = home_expansion_tests row
 # row = star_expansion_tests row
 # row = question_expansion_tests row
 # row = multiline_tests row
