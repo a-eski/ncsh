@@ -5,9 +5,9 @@ https://theasciicode.com.ar/
 
 bugs
 history entries when its full already
-history file when its full already
 handle deleting when input is over multiple lines
 handle copying/pasting when input is multiple lines
+handle copying/pasting when input has spaces
 
 windows
 #ifdef WIN32 || _WIN32 || _WIN64
@@ -27,86 +27,3 @@ https://github.com/google/fuzzing/blob/master/tutorial/libFuzzerTutorial.md#seed
 z add /mnt/c/Users/Alex/source/repos/PersonalRepos/shells/ncsh
 z add /mnt/c/Users/Alex/source/repos/PersonalRepos/ttytest2
 
-#include <ncurses.h>
-#include <stdlib.h>
-#include <string.h>
-
-#define BUFFER_SIZE 1024
-
-void init_ncurses() {
-    initscr();
-    cbreak();
-    keypad(stdscr, TRUE);
-    noecho();
-}
-
-void close_ncurses() {
-    endwin();
-}
-
-void handle_input() {
-    char buffer[BUFFER_SIZE] = {0};
-    int pos = 0; // Position in the buffer
-    int ch;
-
-    printw("Enter input: ");
-    refresh();
-
-    while ((ch = getch()) != '\n') {
-        switch (ch) {
-            case KEY_BACKSPACE:
-            case 127: // Handle backspace (ASCII 127)
-                if (pos > 0) {
-                    memmove(&buffer[pos-1], &buffer[pos], strlen(buffer) - pos + 1);
-                    pos--;
-                    mvdelch(0, pos + 13); // 13 accounts for the "Enter input: " prompt
-                }
-                break;
-            case KEY_DC: // Handle delete
-                if (buffer[pos] != '\0') {
-                    memmove(&buffer[pos], &buffer[pos+1], strlen(buffer) - pos);
-                    mvdelch(0, pos + 13); // 13 accounts for the "Enter input: " prompt
-                }
-                break;
-            case KEY_LEFT: // Handle left arrow key
-                if (pos > 0) pos--;
-                move(0, pos + 13); // 13 accounts for the "Enter input: " prompt
-                break;
-            case KEY_RIGHT: // Handle right arrow key
-                if (pos < strlen(buffer)) pos++;
-                move(0, pos + 13); // 13 accounts for the "Enter input: " prompt
-                break;
-            default: // Handle other keys (insertion)
-                if (pos < BUFFER_SIZE - 1) {
-                    memmove(&buffer[pos+1], &buffer[pos], strlen(buffer) - pos + 1);
-                    buffer[pos] = ch;
-                    pos++;
-                    mvinsch(0, pos + 12, ch); // 12 accounts for the "Enter input: " prompt
-                }
-                break;
-        }
-        refresh();
-    }
-
-    // Print the final buffer
-    mvprintw(1, 0, "Input: %s\n", buffer);
-    refresh();
-}
-
-int main() {
-    init_ncurses();
-
-    handle_input();
-
-    close_ncurses();
-    return 0;
-}
-
-/*int result = sqlite3_open_v2("ncsh_history", &history->history_db, SQLITE_OPEN_READONLY | SQLITE_OPEN_CREATE, NULL);
-	if (result != SQLITE_OK) {
-		sqlite3_close(history->history_db);
-		if (write(STDERR_FILENO, "Error returned when trying to open ncsh history database.", 58) == -1) {
-			return E_FAILURE;
-		}
-		return E_FAILURE_FILE_OP;
-	}*/

@@ -36,14 +36,12 @@
 #define CYAN_BRIGHT		"\x1B[96m"
 #define WHITE_BRIGHT		"\x1B[97m"
 
-// original ncsh color scheme
 #define ncsh_GREEN		"\x1B[38;5;46m"
 #define ncsh_CYAN		"\x1B[38;5;36m"
 #define ncsh_BLUE		"\x1B[38;5;39m"
 #define ncsh_PURPLE		"\x1B[38;5;57m"
 #define ncsh_YELLOW		"\x1B[38;5;226m"
 
-// ncsh color scheme
 #define ncsh_MAGENTA "\033[38;2;200;8;134m"
 #define ncsh_TURQUOISE "\033[38;2;0;225;154m"
 #define ncsh_INDIGO "\033[38;2;66;6;84m"

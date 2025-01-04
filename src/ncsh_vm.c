@@ -1,6 +1,6 @@
 // Copyright (c) ncsh by Alex Eski 2024
 
-#define _POSIX_SOURCE
+#define _POSIX_C_SOURCE 200809L
 #include <stdint.h>
 #include <linux/limits.h>
 #include <assert.h>
@@ -10,9 +10,11 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <signal.h>
+#include <bits/types/siginfo_t.h>
 #include <time.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <errno.h>
 
 #include "ncsh_terminal.h"
 #include "ncsh_args.h"
@@ -42,7 +44,85 @@ struct ncsh_Vm {
 	struct ncsh_Pipe_IO pipes_io;
 };
 
-void ncsh_output_redirection_start(char* file, struct ncsh_Output_Redirect_IO* io) {
+struct ncsh_Tokens {
+	uint_fast32_t output_redirect_found_index;
+	uint_fast32_t input_redirect_found_index;
+	uint_fast32_t number_of_pipe_commands;
+	char* output_file;
+	char* input_file;
+};
+
+static pid_t ncsh_internal_child_pid = 0;
+
+static inline void  ncsh_set_child_pid(pid_t p) {
+	__atomic_store_n(&ncsh_internal_child_pid, p, __ATOMIC_SEQ_CST);
+}
+
+static inline pid_t ncsh_get_child_pid(void) {
+	return __atomic_load_n(&ncsh_internal_child_pid, __ATOMIC_SEQ_CST);
+}
+
+static void ncsh_vm_signal_handler(int signum, siginfo_t* info, void* context) {
+	(void)context;
+	const pid_t target = ncsh_get_child_pid();
+
+	if (target != 0 && info->si_pid != target) {
+		if (kill(target, signum) == 0) {
+			if (write(STDOUT_FILENO, "\n", 1) == -1) //write is async safe, do not use fflush, putchar, prinft
+				perror("ncsh: Error writing to standard output while processing a signal");
+		}
+	}
+}
+
+static int ncsh_vm_signal_forward(const int signum) {
+    struct sigaction act = {0};
+    sigemptyset(&act.sa_mask);
+    act.sa_sigaction = ncsh_vm_signal_handler;
+    act.sa_flags = SA_SIGINFO | SA_RESTART;
+
+    if (sigaction(signum, &act, NULL))
+        return errno;
+
+    return 0;
+}
+
+void ncsh_stdout_redirection_start(char* file, struct ncsh_Output_Redirect_IO* io) {
+	assert(file != NULL);
+
+	int file_descriptor = open(file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+	if (file_descriptor == -1) {
+		io->fd = -1;
+	}
+
+	io->original_stdout = dup(STDOUT_FILENO);
+	dup2(file_descriptor, STDOUT_FILENO);
+
+	close(file_descriptor);
+}
+
+void ncsh_stdout_redirection_stop(struct ncsh_Output_Redirect_IO* io) {
+	dup2(io->original_stdout, STDOUT_FILENO);
+}
+
+void ncsh_stderr_redirection_start(char* file, struct ncsh_Output_Redirect_IO* io) {
+	assert(file != NULL);
+
+	int file_descriptor = open(file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+	if (file_descriptor == -1) {
+		io->fd = -1;
+	}
+
+	io->original_stderr = dup(STDERR_FILENO);
+	dup2(file_descriptor, STDERR_FILENO);
+
+	close(file_descriptor);
+}
+
+void ncsh_stderr_redirection_stop(struct ncsh_Output_Redirect_IO* io) {
+	dup2(io->original_stderr, STDERR_FILENO);
+}
+
+void ncsh_stdout_and_stderr_redirection_start(char* file, struct ncsh_Output_Redirect_IO* io) {
 	assert(file != NULL);
 
 	int file_descriptor = open(file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
@@ -58,12 +138,12 @@ void ncsh_output_redirection_start(char* file, struct ncsh_Output_Redirect_IO* i
 	close(file_descriptor);
 }
 
-void ncsh_output_redirection_stop(struct ncsh_Output_Redirect_IO* io) {
+void ncsh_stdout_and_stderr_redirection_stop(struct ncsh_Output_Redirect_IO* io) {
 	dup2(io->original_stdout, STDOUT_FILENO);
 	dup2(io->original_stderr, STDERR_FILENO);
 }
 
-void ncsh_input_redirection_start(char* file, struct ncsh_Input_Redirect_IO* io) {
+void ncsh_stdin_redirection_start(char* file, struct ncsh_Input_Redirect_IO* io) {
 	assert(file != NULL);
 
 	int file_descriptor = open(file, O_RDONLY);
@@ -77,7 +157,7 @@ void ncsh_input_redirection_start(char* file, struct ncsh_Input_Redirect_IO* io)
 	close(file_descriptor);
 }
 
-void ncsh_input_redirection_stop(int original_stdin) {
+void ncsh_stdin_redirection_stop(int original_stdin) {
 	dup2(original_stdin, STDIN_FILENO);
 }
 
@@ -102,7 +182,7 @@ int_fast32_t ncsh_pipe_start(uint_fast32_t command_position, struct ncsh_Pipe_IO
 	return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
-int_fast32_t ncsh_pipe_fork_failure(uint_fast32_t command_position, uint_fast32_t number_of_commands, struct ncsh_Pipe_IO* pipes) {
+int_fast32_t ncsh_fork_failure(uint_fast32_t command_position, uint_fast32_t number_of_commands, struct ncsh_Pipe_IO* pipes) {
 	assert(pipes != NULL);
 
 	if (command_position != number_of_commands - 1) {
@@ -174,14 +254,6 @@ int_fast32_t ncsh_syntax_error(const char* message, size_t message_length) {
 	return NCSH_COMMAND_SYNTAX_ERROR;
 }
 
-struct ncsh_Tokens {
-	uint_fast32_t output_redirect_found_index;
-	uint_fast32_t input_redirect_found_index;
-	uint_fast32_t number_of_pipe_commands;
-	char* output_file;
-	char* input_file;
-};
-
 int_fast32_t ncsh_tokenize(struct ncsh_Args* args, struct ncsh_Tokens* tokens) {
 	if (args->ops[0] == OP_PIPE)
 		return ncsh_syntax_error("ncsh: Invalid syntax: found pipe ('|') as first argument. Correct usage of pipes is 'ls | sort'.\n", 97);
@@ -189,7 +261,7 @@ int_fast32_t ncsh_tokenize(struct ncsh_Args* args, struct ncsh_Tokens* tokens) {
 		return ncsh_syntax_error("ncsh: Invalid syntax: found pipe ('|') as last argument. Correct usage of pipes is 'ls | sort'.\n", 96);
 
 	for (uint_fast32_t i = 0; i < args->count; ++i) {
-		if (args->ops[i] == OP_OUTPUT_REDIRECTION) {
+		if (args->ops[i] == OP_STDOUT_REDIRECTION) {
 			if (i + 1 >= args->count) {
 				return ncsh_syntax_error("ncsh: Invalid syntax: found no filename after output redirect symbol '>'.\n", 74);
 			}
@@ -197,7 +269,7 @@ int_fast32_t ncsh_tokenize(struct ncsh_Args* args, struct ncsh_Tokens* tokens) {
 			tokens->output_file = args->values[i + 1];
 			tokens->output_redirect_found_index = i;
 		}
-		else if (args->ops[i] == OP_INPUT_REDIRECTION) {
+		else if (args->ops[i] == OP_STDIN_REDIRECTION) {
 			if (i == 0 || i + 1 >= args->count) {
 				return ncsh_syntax_error("ncsh: Invalid syntax: found no filename before input redirect symbol '<'.\n", 74);
 			}
@@ -220,6 +292,7 @@ int_fast32_t ncsh_tokenize(struct ncsh_Args* args, struct ncsh_Tokens* tokens) {
 
 int_fast32_t ncsh_vm(struct ncsh_Args* args) {
 	pid_t pid = 0;
+	int status;
 	struct ncsh_Vm vm = {0};
 	char* buffer[MAX_INPUT] = {0};
 	bool end = false;
@@ -237,7 +310,7 @@ int_fast32_t ncsh_vm(struct ncsh_Args* args) {
 	if (tokens.output_file && tokens.output_redirect_found_index) {
 		free(args->values[tokens.output_redirect_found_index]);
 		args->values[tokens.output_redirect_found_index] = NULL;
-		ncsh_output_redirection_start(tokens.output_file, &vm.output_redirect_io);
+		ncsh_stdout_redirection_start(tokens.output_file, &vm.output_redirect_io);
 		if (vm.output_redirect_io.fd == -1) {
 			printf("ncsh: Invalid file handle '%s': could not open file for output redirection, do you have permission to open the file?\n",
 	  			tokens.output_file);
@@ -247,7 +320,7 @@ int_fast32_t ncsh_vm(struct ncsh_Args* args) {
 	else if (tokens.input_file && tokens.input_redirect_found_index) {
 		free(args->values[tokens.input_redirect_found_index]);
 		args->values[tokens.input_redirect_found_index] = NULL;
-		ncsh_input_redirection_start(tokens.input_file, &vm.input_redirect_io);
+		ncsh_stdin_redirection_start(tokens.input_file, &vm.input_redirect_io);
 		if (vm.input_redirect_io.fd == -1) {
 			printf("ncsh: Invalid file handle '%s': could not open file for input redirection, does the file exist?\n",
 				tokens.input_file);
@@ -271,14 +344,12 @@ int_fast32_t ncsh_vm(struct ncsh_Args* args) {
 			++buffer_position;
 		}
 
-		if (!end) {
+		if (!end)
 			op_current = args->ops[args_position];
-		}
 
 		buffer[buffer_position] = NULL;
-		if (buffer[0] == NULL) {
+		if (buffer[0] == NULL)
 			return NCSH_COMMAND_FAILED_CONTINUE;
-		}
 
 		++args_position;
 
@@ -287,38 +358,99 @@ int_fast32_t ncsh_vm(struct ncsh_Args* args) {
 				return NCSH_COMMAND_EXIT_FAILURE;
 		}
 
-		pid = fork();
-		if (pid == -1)
-			return ncsh_pipe_fork_failure(command_position, tokens.number_of_pipe_commands, &vm.pipes_io);
+		/*if (ncsh_vm_signal_forward(SIGINT) ||
+			ncsh_vm_signal_forward(SIGHUP) ||
+			ncsh_vm_signal_forward(SIGTERM) ||
+			ncsh_vm_signal_forward(SIGQUIT) ||
+			ncsh_vm_signal_forward(SIGUSR1) ||
+			ncsh_vm_signal_forward(SIGUSR2)) {
+			perror("ncsh: Error setting up signal handlers");
+			return NCSH_COMMAND_EXIT_FAILURE;
+		}*/
+		if (ncsh_vm_signal_forward(SIGINT)) {
+			perror("ncsh: Error setting up signal handlers");
+			return NCSH_COMMAND_EXIT_FAILURE;
+		}
 
+		pid = fork();
+
+		if (pid == -1)
+			return ncsh_fork_failure(command_position, tokens.number_of_pipe_commands, &vm.pipes_io);
+
+		int execvp_result = 0;
 		if (pid == 0) {
 			if (op_current == OP_PIPE)
 				ncsh_pipe_connect(command_position, tokens.number_of_pipe_commands, &vm.pipes_io);
 
+			/*if (setpgid(pid, pid) == 0)
+				perror(RED "ncsh: Error setting up process group ID for child process" RESET);*/
 
 			if (execvp(buffer[0], buffer) == -1) {
 				end = true;
 				perror(RED "ncsh: Could not find command or directory" RESET);
 				fflush(stdout);
 				kill(getpid(), SIGTERM);
+				execvp_result = -1;
 			}
 		}
 
 		if (op_current == OP_PIPE)
 			ncsh_pipe_stop(command_position, tokens.number_of_pipe_commands, &vm.pipes_io);
 
-		int status;
-		do {
-			waitpid(pid, &status, WUNTRACED);
-		} while (!WIFEXITED(status) && !WIFSIGNALED(status));
+		ncsh_set_child_pid(pid);
+
+		if (execvp_result != 0)
+			break;
+
+		int result;
+		while (1) {
+			status = 0;
+			result = waitpid(pid, &status, WUNTRACED);
+
+			// check for errors
+			if (result == -1) {
+				/* ignore EINTR, occurs when SA_RESTART is not specified in sigaction flags */
+				if (errno == EINTR)
+					continue;
+
+				perror(RED "ncsh: Error waiting for child process to exit" RESET);
+				status = EXIT_FAILURE;
+				break;
+			}
+
+			// check if child process has exited
+			if (result == pid) {
+				#ifdef NCSH_DEBUG
+				if (WIFEXITED(status)) {
+					if (WEXITSTATUS(status))
+						fprintf(stderr, "ncsh: Command child process failed with status %d\n", WEXITSTATUS(status));
+					else
+						fprintf(stderr, "ncsh: Command child process exited successfully.\n");
+				}
+				else if (WIFSIGNALED(status)) {
+					fprintf(stderr, "ncsh: Command child process died from signal #%d\n", WTERMSIG(status));
+				}
+				else {
+					if (write(STDERR_FILENO, "ncsh: Command child process died, cause unknown.\n", 49) == -1) {
+						perror("ncsh: Error writing to stderr");
+					}
+				}
+				#endif /* ifdef NCSH_DEBUG */
+
+				break;
+			}
+		}
 
 		++command_position;
 	}
 
 	if (tokens.output_file && tokens.output_redirect_found_index)
-		ncsh_output_redirection_stop(&vm.output_redirect_io);
+		ncsh_stdout_redirection_stop(&vm.output_redirect_io);
 	else if (tokens.input_file && tokens.input_redirect_found_index)
-		ncsh_input_redirection_stop(vm.input_redirect_io.original_stdin);
+		ncsh_stdin_redirection_stop(vm.input_redirect_io.original_stdin);
+
+	if (status == EXIT_FAILURE)
+		return NCSH_COMMAND_EXIT_FAILURE;
 
 	return NCSH_COMMAND_SUCCESS_CONTINUE;
 }

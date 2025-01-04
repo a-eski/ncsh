@@ -15,6 +15,7 @@
 #endif
 
 #define NCSH_MAX_HISTORY_FILE 2000
+#define NCSH_MAX_HISTORY_IN_MEMORY 2400
 
 struct ncsh_History {
 	uint_fast32_t count;

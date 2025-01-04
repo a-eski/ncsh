@@ -17,6 +17,10 @@
 static struct termios terminal;
 static struct termios original_terminal;
 
+bool ncsh_terminal_is_interactive(void) {
+	return isatty(STDIN_FILENO);
+}
+
 void ncsh_terminal_reset(void) {
 	fflush(stdout);
 	if (tcsetattr(STDIN_FILENO, TCSANOW, &original_terminal) != 0) {
@@ -26,7 +30,7 @@ void ncsh_terminal_reset(void) {
 
 void ncsh_terminal_init(void) {
 	// if (uv_guess_handle(fileno(stream)) != UV_TTY)
-	if (!isatty(STDIN_FILENO)) {
+	if (!ncsh_terminal_is_interactive()) {
 		fprintf(stderr, "Not running in a terminal.\n");
 		exit(EXIT_FAILURE);
 	}

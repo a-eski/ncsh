@@ -7,7 +7,6 @@ target = bin/ncsh
 CC ?= gcc
 DESTDIR ?= /usr/local
 RELEASE ?= 1
-# LDLIBS=-lncurses
 
 ifeq ($(CC), gcc)
 	release_flags += -s
@@ -23,7 +22,6 @@ endif
 
 $(target) : $(objects)
 	$(cc_with_flags) -o $(target) $(objects)
-	# $(cc_with_flags) $(LDLIBS) -o $(target) $(objects)
 
 obj/ncsh.o : src/ncsh.c src/ncsh_vm.h src/ncsh_terminal.h src/eskilib/eskilib_string.h src/eskilib/eskilib_colors.h src/ncsh_parser.h src/ncsh_args.h src/ncsh_autocompletions.h
 	$(cc_with_flags) -c src/ncsh.c -o obj/ncsh.o

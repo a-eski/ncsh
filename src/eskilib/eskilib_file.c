@@ -1,6 +1,8 @@
+#include "eskilib_defines.h"
 #include "eskilib_file.h"
 
 //simple fgets implementation that returns the number of characters read
+eskilib_nodiscard
 int_fast32_t eskilib_fgets(char* input_buffer, size_t size_of_input_buffer, FILE* file_pointer) {
 	register int character;
 	register char* buffer = input_buffer;
@@ -19,6 +21,7 @@ int_fast32_t eskilib_fgets(char* input_buffer, size_t size_of_input_buffer, FILE
 	return characters_read;
 }
 
+eskilib_nodiscard
 int_fast32_t eskilib_fgets_delimited(char* input_buffer, size_t size_of_input_buffer, FILE* file_pointer, char delimiter) {
 	register int character;
 	register char* buffer = input_buffer;
