@@ -8,7 +8,6 @@
 #include "eskilib_defines.h"
 #include "eskilib_string.h"
 
-eskilib_nodiscard
 char* eskilib_string_copy(char* dest, char* source, const size_t maxStringSize) {
 	assert(dest != NULL);
 	assert(source != NULL);

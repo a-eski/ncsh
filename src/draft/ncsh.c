@@ -423,7 +423,7 @@ int_fast32_t ncsh_init(struct ncsh* shell) {
 	#endif /* ifdef NCSH_DEBUG */
 
 	if (ncsh_args_malloc(&shell->args) != E_SUCCESS) {
-		perror(RED "ncsh: Error when allocating memory for parsing" RESET);
+		perror(RED "ncsh: Error when allocating memory for parser" RESET);
 		fflush(stderr);
 		ncsh_config_free(&shell->config);
 		ncsh_args_free(&shell->args);

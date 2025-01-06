@@ -17,7 +17,7 @@
 #include <errno.h>
 
 #include "ncsh_terminal.h"
-#include "ncsh_args.h"
+#include "ncsh_parser.h"
 #include "ncsh_vm.h"
 #include "ncsh_defines.h"
 #include "eskilib/eskilib_colors.h"
@@ -53,6 +53,7 @@ struct ncsh_Tokens {
 };
 
 static pid_t ncsh_internal_child_pid = 0;
+// static _Atomic pid_t ncsh_internal_child_pid = 0;
 
 static inline void  ncsh_set_child_pid(pid_t p) {
 	__atomic_store_n(&ncsh_internal_child_pid, p, __ATOMIC_SEQ_CST);
@@ -456,11 +457,11 @@ int_fast32_t ncsh_vm(struct ncsh_Args* args) {
 }
 
 int_fast32_t ncsh_vm_execute(struct ncsh_Args* args) {
-	assert(args->values != NULL);
-	assert(args->ops != NULL);
-	assert(args->values[0] != NULL);
+	assert(args->values);
+	assert(args->ops);
+	assert(args->lengths);
+	assert(args->values[0]);
 	assert(args->count != 0);
-	assert(args->max_line_length != 0);
 
 	ncsh_terminal_reset(); //reset terminal settings since a lot of terminal programs use canonical mode
 
