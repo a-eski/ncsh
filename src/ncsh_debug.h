@@ -7,7 +7,7 @@
 
 #include <stdio.h>
 
-#include "ncsh_args.h"
+#include "ncsh_parser.h"
 #include "eskilib/eskilib_string.h"
 
 static inline void
@@ -21,11 +21,11 @@ ncsh_debug_line(char* buffer, size_t buf_position, size_t max_buf_position) {
 static inline void
 ncsh_debug_args(struct ncsh_Args args) {
 	printf("args.count: %lu\n", args.count);
-	printf("args.max_line_length: %lu\n", args.max_line_length);
 
 	for (uint_fast32_t i = 0; i < args.count; ++i) {
 		printf("args.values[%lu] %s\n", i, args.values[i]);
 		printf("args.ops[%lu] %d\n", i, args.ops[i]);
+		printf("args.lengths[%lu] %zu\n", i, args.lengths[i]);
 	}
 }
 

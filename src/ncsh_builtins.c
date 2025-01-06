@@ -14,11 +14,11 @@
 #include "ncsh_builtins.h"
 
 bool ncsh_is_exit_command(struct ncsh_Args* args) {
-	if (eskilib_string_equals(args->values[0], "q", args->max_line_length))
+	if (eskilib_string_equals(args->values[0], "q", args->lengths[0]))
 		return true;
-	else if (eskilib_string_equals(args->values[0], "exit", args->max_line_length))
+	else if (eskilib_string_equals(args->values[0], "exit", args->lengths[0]))
 		return true;
-	else if (eskilib_string_equals(args->values[0], "quit", args->max_line_length))
+	else if (eskilib_string_equals(args->values[0], "quit", args->lengths[0]))
 		return true;
 	else
 		return false;

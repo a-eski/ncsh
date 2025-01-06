@@ -4,7 +4,7 @@
 require 'ttytest'
 
 START_COL = 20
-WC_C_LENGTH = '225'
+WC_C_LENGTH = '226'
 SLEEP_TIME = 0.2
 LS_LINES = 3
 LS_ITEMS = 19

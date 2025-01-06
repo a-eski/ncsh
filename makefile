@@ -1,12 +1,12 @@
-std = -std=c2x
-debug_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined,leak -g
-release_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -O3 -DNDEBUG
-objects = obj/ncsh.o obj/ncsh_vm.o obj/ncsh_terminal.o obj/eskilib_string.o obj/eskilib_file.o obj/ncsh_parser.o obj/ncsh_builtins.o obj/ncsh_history.o obj/ncsh_autocompletions.o obj/ncsh_config.o obj/z.o
-target = bin/ncsh
-
+STD = c2x
+std = -std=$(STD)
 CC ?= gcc
 DESTDIR ?= /usr/local
 RELEASE ?= 1
+debug_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined,leak -g
+release_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -O3 -DNDEBUG
+objects = obj/main.o obj/ncsh.o obj/ncsh_noninteractive.o obj/ncsh_vm.o obj/ncsh_terminal.o obj/eskilib_string.o obj/eskilib_file.o obj/ncsh_parser.o obj/ncsh_builtins.o obj/ncsh_history.o obj/ncsh_autocompletions.o obj/ncsh_config.o obj/z.o
+target = bin/ncsh
 
 ifeq ($(CC), gcc)
 	release_flags += -s
@@ -23,11 +23,15 @@ endif
 $(target) : $(objects)
 	$(cc_with_flags) -o $(target) $(objects)
 
-obj/ncsh.o : src/ncsh.c src/ncsh_vm.h src/ncsh_terminal.h src/eskilib/eskilib_string.h src/eskilib/eskilib_colors.h src/ncsh_parser.h src/ncsh_args.h src/ncsh_autocompletions.h
+obj/main.o : src/ncsh.h src/ncsh_noninteractive.h
+	$(cc_with_flags) -c src/main.c -o obj/main.o
+obj/ncsh.o : src/ncsh.c src/ncsh_vm.h src/ncsh_terminal.h src/eskilib/eskilib_string.h src/eskilib/eskilib_colors.h src/ncsh_parser.h src/ncsh_autocompletions.h
 	$(cc_with_flags) -c src/ncsh.c -o obj/ncsh.o
-obj/ncsh_vm.o : src/ncsh_vm.h src/eskilib/eskilib_string.h src/eskilib/eskilib_colors.h src/ncsh_terminal.h src/ncsh_args.h src/ncsh_builtins.h
+obj/ncsh_noninteractive.o : src/ncsh_noninteractive.c src/ncsh_parser.h
+	$(cc_with_flags) -c src/ncsh_noninteractive.c -o obj/ncsh_noninteractive.o
+obj/ncsh_vm.o : src/ncsh_vm.h src/eskilib/eskilib_string.h src/eskilib/eskilib_colors.h src/ncsh_terminal.h src/ncsh_builtins.h
 	$(cc_with_flags) -c src/ncsh_vm.c -o obj/ncsh_vm.o
-obj/ncsh_builtins.o : src/ncsh_builtins.h src/ncsh_args.h src/eskilib/eskilib_string.h
+obj/ncsh_builtins.o : src/ncsh_builtins.h src/eskilib/eskilib_string.h
 	$(cc_with_flags) -c src/ncsh_builtins.c -o obj/ncsh_builtins.o
 obj/ncsh_history.o : src/ncsh_history.h src/eskilib/eskilib_string.h src/eskilib/eskilib_file.h
 	$(cc_with_flags) -c src/ncsh_history.c -o obj/ncsh_history.o
@@ -35,7 +39,7 @@ obj/ncsh_autocompletions.o : src/ncsh_autocompletions.h src/eskilib/eskilib_stri
 	$(cc_with_flags) -c src/ncsh_autocompletions.c -o obj/ncsh_autocompletions.o
 obj/ncsh_terminal.o : src/ncsh_terminal.c src/ncsh_terminal.h
 	$(cc_with_flags) -c src/ncsh_terminal.c -o obj/ncsh_terminal.o
-obj/ncsh_parser.o : src/ncsh_parser.c src/ncsh_args.h
+obj/ncsh_parser.o : src/ncsh_parser.c src/ncsh_parser.h src/eskilib/eskilib_string.h
 	$(cc_with_flags) -c src/ncsh_parser.c -o obj/ncsh_parser.o
 obj/ncsh_config.o : src/ncsh_config.c src/ncsh_config.h
 	$(cc_with_flags) -c src/ncsh_config.c -o obj/ncsh_config.o
@@ -49,6 +53,14 @@ obj/eskilib_file.o : src/eskilib/eskilib_file.c src/eskilib/eskilib_file.h
 .PHONY: debug
 debug :
 	make -B RELEASE=0
+
+.PHONY: unity
+unity :
+	$(CC) $(std) $(release_flags) src/unity.c -o $(target)
+
+.PHONY: unity_debug
+unity_debug :
+	$(CC) $(std) $(debug_flags) src/unity.c -o $(target)
 
 .PHONY: install
 install : $(target)

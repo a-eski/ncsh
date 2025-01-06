@@ -372,6 +372,9 @@ enum z_Result z_directory_matches(char* target, size_t target_length, const char
 	size_t directory_length;
 	size_t compare_length;
 	while ((directory_entry = readdir(current_directory))) {
+		if (directory_entry->d_name[0] == '\0')
+			continue;
+
 		directory_length = strlen(directory_entry->d_name) + 1;
 		compare_length = directory_length > target_length ? directory_length : target_length;
 		if (eskilib_string_equals(target, directory_entry->d_name, compare_length)) {

@@ -5,7 +5,7 @@
 
 #include <stdbool.h>
 
-#include "ncsh_args.h"
+#include "ncsh_parser.h"
 #include "eskilib/eskilib_string.h"
 
 bool ncsh_is_exit_command(struct ncsh_Args* args);

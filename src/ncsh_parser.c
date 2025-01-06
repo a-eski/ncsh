@@ -10,12 +10,12 @@
 #include <glob.h>
 
 #include "ncsh_parser.h"
-#include "ncsh_args.h"
 #include "ncsh_defines.h"
 #include "eskilib/eskilib_result.h"
 #include "eskilib/eskilib_string.h"
 
-#define STRCMP_2CHAR(in, out) (in[0] == out[0] && in[1] == out[1] ? true : false)
+// #define STRCMP_1CHAR(val1, val2) (val1[0] == val2[0])
+#define STRCMP_2CHAR(in, out) (in[0] == out[0] && in[1] == out[1])
 
 // supported quotes
 #define DOUBLE_QUOTE_KEY '\"'
@@ -45,57 +45,79 @@
 // currently unsupported
 #define BANG '!'
 
-enum eskilib_Result ncsh_args_malloc(struct ncsh_Args* args) {
+enum eskilib_Result ncsh_parser_args_malloc(struct ncsh_Args* args) {
 	if (args == NULL)
 		return E_FAILURE_NULL_REFERENCE;
 
 	args->count = 0;
-	args->max_line_length = 0;
 
 	args->values = calloc(ncsh_TOKENS, sizeof(char*));
-	if (args->values == NULL)
+	if (!args->values)
 		return E_FAILURE_MALLOC;
 
 	args->ops = calloc(ncsh_TOKENS, sizeof(uint_fast8_t));
-	if (args->ops == NULL) {
+	if (!args->ops) {
 		free(args->values);
+		return E_FAILURE_MALLOC;
+	}
+
+	args->lengths = calloc(ncsh_TOKENS, sizeof(size_t));
+	if (!args->lengths) {
+		free(args->values);
+		free(args->ops);
 		return E_FAILURE_MALLOC;
 	}
 
 	return E_SUCCESS;
 }
 
-enum eskilib_Result ncsh_args_malloc_count(int_fast32_t count, struct ncsh_Args* args) {
+enum eskilib_Result ncsh_parser_args_malloc_count(int_fast32_t count, struct ncsh_Args* args) {
 	if (args == NULL)
 		return E_FAILURE_NULL_REFERENCE;
 
 	args->count = count;
-	args->max_line_length = 0;
 
 	args->values = calloc(count, sizeof(char*));
-	if (args->values == NULL)
+	if (!args->values)
 		return E_FAILURE_MALLOC;
 
 	args->ops = calloc(count, sizeof(uint_fast8_t));
-	if (args->ops == NULL) {
+	if (!args->ops) {
 		free(args->values);
+		return E_FAILURE_MALLOC;
+	}
+
+	args->lengths = calloc(count, sizeof(size_t));
+	if (!args->lengths) {
+		free(args->values);
+		free(args->ops);
 		return E_FAILURE_MALLOC;
 	}
 
 	return E_SUCCESS;
 }
 
-void ncsh_args_free(struct ncsh_Args* args) {
-	free(args->values);
-	args->values = NULL;
-	free(args->ops);
-	args->ops = NULL;
+void ncsh_parser_args_free(struct ncsh_Args* args) {
+	if (!args)
+		return;
+	if (args->values) {
+		free(args->values);
+		args->values = NULL;
+	}
+	if (args->ops) {
+		free(args->ops);
+		args->ops = NULL;
+	}
+	if (args->lengths) {
+		free(args->lengths);
+		args->lengths = NULL;
+	}
 	args->count = 0;
 }
 
-void ncsh_args_free_values(struct ncsh_Args* args) {
+void ncsh_parser_args_free_values(struct ncsh_Args* args) {
 	for (uint_fast32_t i = 0; i < args->count; ++i) {
-		if (args->values[i] != NULL) {
+		if (args->values[i]) {
 			free(args->values[i]);
 			args->values[i] = NULL;
 		}
@@ -166,30 +188,30 @@ enum ncsh_Ops ncsh_op_get(const char* line, size_t length) {
 }
 
 void ncsh_parser_parse(const char* line, size_t length, struct ncsh_Args* args) {
+	assert(args);
 	assert(line);
 	assert(length > 0);
 	if (!line || length == 0 || length > NCSH_MAX_INPUT) {
-		args->max_line_length = 0;
 		args->count = 0;
 		return;
 	}
 
 	char buffer[NCSH_MAX_INPUT];
-	size_t buf_position = 0;
+	size_t buf_pos = 0;
 	uint_fast32_t double_quotes_count = 0;
 	bool glob_found = false;
 
 	for (uint_fast32_t line_position = 0; line_position < length + 1; ++line_position) {
 		if (line_position == length ||
 			line_position == NCSH_MAX_INPUT - 1 ||
-			buf_position == NCSH_MAX_INPUT - 1 ||
+			buf_pos == NCSH_MAX_INPUT - 1 ||
 			args->count == ncsh_TOKENS)
 		{
 			args->values[args->count] = NULL;
 			break;
 		}
 		else if (ncsh_is_delimiter(line[line_position]) && (double_quotes_count == 0 || double_quotes_count == 2)) {
-			buffer[buf_position] = '\0';
+			buffer[buf_pos] = '\0';
 
 			if (glob_found) {
 				glob_t glob_buf = {0};
@@ -198,33 +220,27 @@ void ncsh_parser_parse(const char* line, size_t length, struct ncsh_Args* args) 
 
 				for (size_t i = 0; i < glob_buf.gl_pathc; ++i) {
 					glob_len = strlen(glob_buf.gl_pathv[i]) + 1;
-					buf_position = glob_len;
-					args->values[args->count] = malloc(buf_position);
+					buf_pos = glob_len;
+					args->values[args->count] = malloc(buf_pos);
 					memcpy(args->values[args->count], glob_buf.gl_pathv[i], glob_len);
 					args->ops[args->count] = OP_CONSTANT;
+					args->lengths[args->count] = buf_pos + 1; // + 1 for null terminator
 					++args->count;
-
-					if (args->max_line_length == 0 || buf_position > args->max_line_length)
-						args->max_line_length = buf_position;
 				}
 
 				globfree(&glob_buf);
 				glob_found = false;
 			}
 			else {
-				args->values[args->count] = malloc(buf_position + 1);
-				eskilib_string_copy(args->values[args->count], buffer, buf_position + 1);
-
-				args->ops[args->count] = ncsh_op_get(buffer, buf_position);
-
+				args->values[args->count] = malloc(buf_pos + 1);
+				eskilib_string_copy(args->values[args->count], buffer, buf_pos + 1);
+				args->ops[args->count] = ncsh_op_get(buffer, buf_pos);
+				args->lengths[args->count] = buf_pos + 1; // + 1 for null terminator
 				++args->count;
-
-				if (args->max_line_length == 0 || buf_position > args->max_line_length)
-					args->max_line_length = buf_position;
 			}
 
 			buffer[0] = '\0';
-			buf_position = 0;
+			buf_pos = 0;
 			double_quotes_count = 0;
 		}
 		else {
@@ -236,18 +252,18 @@ void ncsh_parser_parse(const char* line, size_t length, struct ncsh_Args* args) 
 				case TILDE: {
 					char* home = getenv("HOME");
 					size_t home_length = strlen(home);
-					memcpy(buffer + buf_position, home, home_length);
-					buf_position += home_length;
+					memcpy(buffer + buf_pos, home, home_length);
+					buf_pos += home_length;
 					break;
 				}
 				case GLOB_STAR:
 				case GLOB_QUESTION: {
 					glob_found = true;
-					buffer[buf_position++] = line[line_position];
+					buffer[buf_pos++] = line[line_position];
 					break;
 				}
 				default: {
-					buffer[buf_position++] = line[line_position];
+					buffer[buf_pos++] = line[line_position];
 					break;
 				}
 			}
@@ -256,8 +272,24 @@ void ncsh_parser_parse(const char* line, size_t length, struct ncsh_Args* args) 
 }
 
 void ncsh_parser_parse_noninteractive(int argc, char** argv, struct ncsh_Args* args) {
-	(void)argc;
-	(void)argv;
-	(void)args;
+	assert(args);
+	assert(argc > 0);
+	assert(argv);
+	if (argc == 0 || !argv) {
+		args->count = 0;
+		return;
+	}
+
+	size_t len = 0;
+
+	for (int_fast32_t i = 0; i < argc; ++i) {
+		len = strlen(argv[i]);
+		args->values[i] = malloc(len + 1);
+		eskilib_string_copy(args->values[i], argv[i], len + 1);
+		args->ops[i] = ncsh_op_get(argv[i], len);
+		args->lengths[i] = len + 1;
+	}
+
+	args->count = argc;
 }
 
