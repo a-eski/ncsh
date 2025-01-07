@@ -15,7 +15,8 @@
 #include "eskilib/eskilib_string.h"
 
 // #define STRCMP_1CHAR(val1, val2) (val1[0] == val2[0])
-#define STRCMP_2CHAR(in, out) (in[0] == out[0] && in[1] == out[1])
+#define STRCMP_2CHAR(val1, val2) (val1[0] == val2[0] && val1[1] == val2[1])
+#define STRCMP_3CHAR(val1, val2) (val1[0] == val2[0] && val1[1] == val2[1] && val1[2] == val2[2])
 
 // supported quotes
 #define DOUBLE_QUOTE_KEY '\"'
@@ -28,7 +29,6 @@
 #define STDOUT_REDIRECTION '>'
 #define BACKGROUND_JOB '&'
 
-#define STDIN_REDIRECTION_APPEND_STRING "<<"
 #define STDOUT_REDIRECTION_APPEND_STRING ">>"
 #define STDERR_REDIRECTION "2>"
 #define STDERR_REDIRECTION_APPEND "2>>"
@@ -138,36 +138,6 @@ bool ncsh_is_delimiter(char ch) {
 	}
 }
 
-enum ncsh_Ops ncsh_op_get_2char(const char* line) {
-	if (STRCMP_2CHAR(line, STDIN_REDIRECTION_APPEND_STRING)) {
-		return OP_STDIN_REDIRECTION_APPEND;
-	}
-	else if (STRCMP_2CHAR(line, STDOUT_REDIRECTION_APPEND_STRING)) {
-		return OP_STDOUT_REDIRECTION_APPEND;
-	}
-	else if (STRCMP_2CHAR(line, STDERR_REDIRECTION)) {
-		return OP_STDERR_REDIRECTION;
-	}
-	else if (STRCMP_2CHAR(line, STDERR_REDIRECTION_APPEND)) {
-		return OP_STDERR_REDIRECTION_APPEND;
-	}
-	else if (STRCMP_2CHAR(line, STDOUT_AND_STDERR_REDIRECTION)) {
-		return OP_STDOUT_AND_STDERR_REDIRECTION;
-	}
-	else if (STRCMP_2CHAR(line, STDOUT_AND_STDERR_REDIRECTION_APPEND)) {
-		return OP_STDOUT_AND_STDERR_REDIRECTION_APPEND;
-	}
-	else if (STRCMP_2CHAR(line, AND_STRING)) {
-		return OP_AND;
-	}
-	else if (STRCMP_2CHAR(line, OR_STRING)) {
-		return OP_OR;
-	}
-	else {
-		return OP_CONSTANT;
-	}
-}
-
 enum ncsh_Ops ncsh_op_get(const char* line, size_t length) {
 	switch (length) {
 		case 0 : { return OP_NONE; }
@@ -181,7 +151,33 @@ enum ncsh_Ops ncsh_op_get(const char* line, size_t length) {
 			}
 		}
 		case 2 : {
-			return ncsh_op_get_2char(line);
+			if (STRCMP_2CHAR(line, STDOUT_REDIRECTION_APPEND_STRING)) {
+				return OP_STDOUT_REDIRECTION_APPEND;
+			}
+			else if (STRCMP_2CHAR(line, STDERR_REDIRECTION)) {
+				return OP_STDERR_REDIRECTION;
+			}
+			else if (STRCMP_2CHAR(line, STDOUT_AND_STDERR_REDIRECTION)) {
+				return OP_STDOUT_AND_STDERR_REDIRECTION;
+			}
+			else if (STRCMP_2CHAR(line, AND_STRING)) {
+				return OP_AND;
+			}
+			else if (STRCMP_2CHAR(line, OR_STRING)) {
+				return OP_OR;
+			}
+
+			return OP_CONSTANT;
+		}
+		case 3 : {
+			if (STRCMP_3CHAR(line, STDERR_REDIRECTION_APPEND)) {
+				return OP_STDERR_REDIRECTION_APPEND;
+			}
+			else if (STRCMP_3CHAR(line, STDOUT_AND_STDERR_REDIRECTION_APPEND)) {
+				return OP_STDOUT_AND_STDERR_REDIRECTION_APPEND;
+			}
+
+			return OP_CONSTANT;
 		}
 		default : { return OP_CONSTANT; }
 	}
@@ -195,6 +191,10 @@ void ncsh_parser_parse(const char* line, size_t length, struct ncsh_Args* args) 
 		args->count = 0;
 		return;
 	}
+
+	#ifdef NCSH_DEBUG
+	ncsh_debug_line(input.buffer, input.pos, input.max_pos);
+	#endif /* ifdef NCSH_DEBUG */
 
 	char buffer[NCSH_MAX_INPUT];
 	size_t buf_pos = 0;
@@ -269,6 +269,10 @@ void ncsh_parser_parse(const char* line, size_t length, struct ncsh_Args* args) 
 			}
 		}
 	}
+
+	#ifdef NCSH_DEBUG
+	ncsh_debug_args(shell.args);
+	#endif /* ifdef NCSH_DEBUG */
 }
 
 void ncsh_parser_parse_noninteractive(int argc, char** argv, struct ncsh_Args* args) {

@@ -69,10 +69,10 @@ def empty_line_sanity_test(row)
   row
 end
 
-def startup_tests(row)
+def startup_tests(row, run_z_database_new_tests)
   starting_tests 'startup tests'
 
-  row = z_database_new_test row
+  row = z_database_new_test row if run_z_database_new_tests
 
   row = startup_test row
 
@@ -638,6 +638,7 @@ def select_tab_autocompletion_test(row)
   @tty.send_newline
   row += 11
   @tty.assert_row_ends_with(row, WC_C_LENGTH)
+  row += 1
 
   puts 'Select tab autocompletion test passed'
   row
@@ -648,9 +649,53 @@ def tab_autocompletion_tests(row)
 
   row = tab_out_autocompletion_test row
   row = arrows_move_tab_autocompletion_test row
-  row = select_tab_autocompletion_test row
+  select_tab_autocompletion_test row
+end
+
+def assert_check_syntax_error(row, input)
+  assert_check_new_row(row)
+  @tty.send_keys_one_at_a_time(input)
+  @tty.send_newline
+  row += 1
+  @tty.assert_row_starts_with(row, 'ncsh: Invalid syntax:')
   row += 1
   row
+end
+
+def operators_invalid_syntax_first_position_test(row)
+  # tries sending operator as only character to ensure invalid syntax is shown to user
+  row = assert_check_syntax_error(row, '|') # pipe
+  row = assert_check_syntax_error(row, '>') # output redirection
+  row = assert_check_syntax_error(row, '>>') # output redirection append
+  row = assert_check_syntax_error(row, '<') # input redirection
+  row = assert_check_syntax_error(row, '2>') # error redirection
+  row = assert_check_syntax_error(row, '2>>') # error redirection append
+  row = assert_check_syntax_error(row, '&>') # output and error redirection
+  row = assert_check_syntax_error(row, '&>>') # output and error redirection append
+  row = assert_check_syntax_error(row, '&') # background job
+  puts 'Invalid syntax in first position test passed'
+  row
+end
+
+def operators_invalid_syntax_last_position_test(row)
+  row = assert_check_syntax_error(row, 'ls |') # pipe
+  row = assert_check_syntax_error(row, 'ls >') # output redirection
+  row = assert_check_syntax_error(row, 'ls >>') # output redirection append
+  row = assert_check_syntax_error(row, 'sort <') # input redirection
+  row = assert_check_syntax_error(row, 'ls 2>') # error redirection
+  row = assert_check_syntax_error(row, 'ls 2>>') # error redirection append
+  row = assert_check_syntax_error(row, 'ls &>') # output and error redirection
+  row = assert_check_syntax_error(row, 'ls &>>') # output and error redirection append
+  puts 'Invalid syntax in last position test passed'
+  row
+end
+
+# invalid operator usage to ensure invalid syntax is shown to user
+def syntax_error_tests(row)
+  starting_tests 'syntax errors'
+
+  row = operators_invalid_syntax_first_position_test row
+  operators_invalid_syntax_last_position_test row
 end
 
 def home_expansion_tests(row)
@@ -667,7 +712,7 @@ end
 row = 0
 @tty = TTYtest.new_terminal(%(PS1='$ ' ./bin/ncsh), width: 120, height: 120)
 
-row = startup_tests row
+row = startup_tests(row, true)
 row = basic_tests row
 row = home_and_end_tests row
 row = backspace_tests row
@@ -682,8 +727,16 @@ row = builtin_tests row
 row = delete_line_tests row
 row = delete_word_tests row
 tab_autocompletion_tests row
-# home_expansion_tests row
+@tty.send_keys_exact(%(quit))
+@tty.send_newline
 
+row = 0
+@tty = TTYtest.new_terminal(%(PS1='$ ' ./bin/ncsh), width: 180, height: 120)
+row = startup_tests(row, false)
+# row =
+syntax_error_tests row
+
+# row = home_expansion_tests row
 # row = star_expansion_tests row
 # row = question_expansion_tests row
 # row = multiline_tests row

@@ -13,7 +13,6 @@
 #include "ncsh_autocompletions.c"
 #include "ncsh_terminal.c"
 #include "ncsh_builtins.c"
-// #include "ncsh_tokenize.c"
 #include "ncsh_vm.c"
 #include "ncsh_noninteractive.c"
 #include "ncsh.c"
