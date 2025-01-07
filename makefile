@@ -29,7 +29,7 @@ obj/ncsh.o : src/ncsh.c src/ncsh_vm.h src/ncsh_terminal.h src/eskilib/eskilib_st
 	$(cc_with_flags) -c src/ncsh.c -o obj/ncsh.o
 obj/ncsh_noninteractive.o : src/ncsh_noninteractive.c src/ncsh_parser.h
 	$(cc_with_flags) -c src/ncsh_noninteractive.c -o obj/ncsh_noninteractive.o
-obj/ncsh_vm.o : src/ncsh_vm.h src/eskilib/eskilib_string.h src/eskilib/eskilib_colors.h src/ncsh_terminal.h src/ncsh_builtins.h
+obj/ncsh_vm.o : src/ncsh_vm.h src/eskilib/eskilib_string.h src/eskilib/eskilib_colors.h src/ncsh_terminal.h src/ncsh_builtins.h src/ncsh_parser.h
 	$(cc_with_flags) -c src/ncsh_vm.c -o obj/ncsh_vm.o
 obj/ncsh_builtins.o : src/ncsh_builtins.h src/eskilib/eskilib_string.h
 	$(cc_with_flags) -c src/ncsh_builtins.c -o obj/ncsh_builtins.o

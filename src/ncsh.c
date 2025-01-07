@@ -49,12 +49,12 @@ struct ncsh_Input {
 struct ncsh {
 	struct ncsh_Directory prompt_info;
 	struct ncsh_Config config;
+
 	struct ncsh_Args args;
 
 	uint_fast32_t history_position;
 	struct eskilib_String history_entry;
 	struct ncsh_History history;
-
 	char* current_autocompletion;
 	struct ncsh_Autocompletion_Node* autocompletions_tree;
 
@@ -319,33 +319,31 @@ int_fast32_t ncsh_z(struct ncsh_Args* args, struct z_Database* z_db) {
 }
 
 eskilib_nodiscard
-int_fast32_t ncsh_execute(struct ncsh_Args* args,
-			  struct ncsh_History* history,
-			  struct z_Database* z_db) {
-	if (args->count == 0)
+int_fast32_t ncsh_execute(struct ncsh* shell) {
+	if (shell->args.count == 0)
 		return NCSH_COMMAND_SUCCESS_CONTINUE;
 
-	if (ncsh_is_exit_command(args))
+	if (ncsh_is_exit_command(&shell->args))
 		return NCSH_COMMAND_EXIT;
 
-	if (eskilib_string_equals(args->values[0], "echo", args->lengths[0])) {
-		return ncsh_echo_command(args);
+	if (eskilib_string_equals(shell->args.values[0], "echo", shell->args.lengths[0])) {
+		return ncsh_echo_command(&shell->args);
 	}
 
-	if (eskilib_string_equals(args->values[0], "help", args->lengths[0]))
+	if (eskilib_string_equals(shell->args.values[0], "help", shell->args.lengths[0]))
 		return ncsh_help_command();
 
-	if (eskilib_string_equals(args->values[0], "cd", args->lengths[0])) {
-		return ncsh_cd_command(args);
+	if (eskilib_string_equals(shell->args.values[0], "cd", shell->args.lengths[0])) {
+		return ncsh_cd_command(&shell->args);
 	}
 
-	if (eskilib_string_equals(args->values[0], "z", args->lengths[0]))
-		return ncsh_z(args, z_db);
+	if (eskilib_string_equals(shell->args.values[0], "z", shell->args.lengths[0]))
+		return ncsh_z(&shell->args, &shell->z_db);
 
-	if (eskilib_string_equals(args->values[0], "history", args->lengths[0]))
-		return ncsh_history_command(history);
+	if (eskilib_string_equals(shell->args.values[0], "history", shell->args.lengths[0]))
+		return ncsh_history_command(&shell->history);
 
-	return ncsh_vm_execute(args);
+	return ncsh_vm_execute(&shell->args);
 }
 
 void ncsh_exit(struct ncsh* shell) {
@@ -812,14 +810,9 @@ int_fast32_t ncsh(void) {
 			}
 		}
 
-		#ifdef NCSH_DEBUG
-		ncsh_debug_line(input.buffer, input.pos, input.max_pos);
-		#endif /* ifdef NCSH_DEBUG */
+
 		ncsh_parser_parse(input.buffer, input.pos, &shell.args);
-		#ifdef NCSH_DEBUG
-		ncsh_debug_args(shell.args);
-		#endif /* ifdef NCSH_DEBUG */
-		command_result = ncsh_execute(&shell.args, &shell.history, &shell.z_db);
+		command_result = ncsh_execute(&shell);
 		ncsh_parser_args_free_values(&shell.args);
 
 		switch (command_result) {
