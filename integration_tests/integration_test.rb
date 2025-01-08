@@ -9,7 +9,7 @@ SLEEP_TIME = 0.2
 LS_LINES = 3
 LS_ITEMS = 19
 LS_FIRST_ITEM = 'CMakeLists.txt'
-TAB_AUTOCOMPLETE_ROWS = 10
+TAB_AUTOCOMPLETE_ROWS = 11
 
 def assert_check_new_row(row)
   @tty.assert_row_starts_with(row, "#{ENV['USER']} ")
@@ -363,7 +363,7 @@ def multiple_piped_stdout_redirection_test(row)
   @tty.send_newline
   sleep SLEEP_TIME
   row += 1
-  @tty.assert_row_starts_with(row, (WC_C_LENGTH.to_i + 't3.txt'.length + 1).to_s)
+  @tty.assert_row(row, (WC_C_LENGTH.to_i + 't3.txt'.length + 1).to_s)
   row += 1
   assert_check_new_row(row)
   @tty.send_keys_one_at_a_time(%(rm t3.txt))
@@ -373,12 +373,32 @@ def multiple_piped_stdout_redirection_test(row)
   row
 end
 
+def stdout_redirection_append_test(row)
+  assert_check_new_row(row)
+  @tty.send_line_then_sleep('ls | sort | wc -c > t3.txt', SLEEP_TIME)
+  row += 1
+  @tty.send_line_then_sleep('ls | sort | wc -c >> t3.txt', SLEEP_TIME)
+  row += 1
+  @tty.send_line('cat t3.txt')
+  row += 1
+  @tty.assert_row(row, (WC_C_LENGTH.to_i + 't3.txt'.length + 1).to_s)
+  row += 1
+  @tty.assert_row(row, (WC_C_LENGTH.to_i + 't3.txt'.length + 1).to_s)
+  row += 1
+  @tty.send_line('rm t3.txt')
+  row += 1
+
+  puts 'Stdout redirection append test passed'
+  row
+end
+
 def stdout_redirection_tests(row)
   starting_tests 'stdout redirection'
 
   row = basic_stdout_redirection_test row
   row = piped_stdout_redirection_test row
-  multiple_piped_stdout_redirection_test row
+  row = multiple_piped_stdout_redirection_test row
+  stdout_redirection_append_test row
 end
 
 def z_add_tests(row)
@@ -751,7 +771,7 @@ def stdout_and_stderr_redirection_tests(row)
 end
 
 row = 0
-@tty = TTYtest.new_terminal(%(PS1='$ ' ./bin/ncsh), width: 120, height: 120)
+@tty = TTYtest.new_terminal(%(PS1='$ ' ./bin/ncsh), width: 120, height: 140)
 
 row = startup_tests(row, true)
 row = basic_tests row
@@ -776,7 +796,8 @@ row = 0
 row = startup_tests(row, false)
 row = syntax_error_tests row
 row = stderr_redirection_tests row
-row = stdout_and_stderr_redirection_tests row
+# row =
+stdout_and_stderr_redirection_tests row
 
 # row = home_expansion_tests row
 # row = star_expansion_tests row
