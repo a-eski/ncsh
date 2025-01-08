@@ -19,13 +19,20 @@ ncsh_debug_line(char* buffer, size_t buf_position, size_t max_buf_position) {
 }
 
 static inline void
-ncsh_debug_args(struct ncsh_Args args) {
-	printf("args.count: %lu\n", args.count);
+ncsh_debug_parser_input(const char* buffer, size_t buf_position) {
+	printf("buffer: %s\n", buffer);
+	printf("buf_position: %lu\n", buf_position);
+	fflush(stdout);
+}
 
-	for (uint_fast32_t i = 0; i < args.count; ++i) {
-		printf("args.values[%lu] %s\n", i, args.values[i]);
-		printf("args.ops[%lu] %d\n", i, args.ops[i]);
-		printf("args.lengths[%lu] %zu\n", i, args.lengths[i]);
+static inline void
+ncsh_debug_args(struct ncsh_Args* args) {
+	printf("args.count: %lu\n", args->count);
+
+	for (uint_fast32_t i = 0; i < args->count; ++i) {
+		printf("args.values[%lu] %s\n", i, args->values[i]);
+		printf("args.ops[%lu] %d\n", i, args->ops[i]);
+		printf("args.lengths[%lu] %zu\n", i, args->lengths[i]);
 	}
 }
 

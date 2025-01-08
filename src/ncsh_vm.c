@@ -20,6 +20,9 @@
 #include "ncsh_parser.h"
 #include "ncsh_vm.h"
 #include "ncsh_defines.h"
+#ifdef NCSH_DEBUG
+#include "eskilib/eskilib_defines.h"
+#endif /* ifdef NCSH_DEBUG */
 #include "eskilib/eskilib_colors.h"
 
 /* Types */
@@ -637,12 +640,6 @@ int_fast32_t ncsh_vm(struct ncsh_Args* args) {
 }
 
 int_fast32_t ncsh_vm_execute(struct ncsh_Args* args) {
-	assert(args->values);
-	assert(args->ops);
-	assert(args->lengths);
-	assert(args->values[0]);
-	assert(args->count > 0);
-
 	ncsh_terminal_reset(); //reset terminal settings since a lot of terminal programs use canonical mode
 
 	int_fast32_t result = ncsh_vm(args);
@@ -650,5 +647,9 @@ int_fast32_t ncsh_vm_execute(struct ncsh_Args* args) {
 	ncsh_terminal_init(); //back to noncanonical mode
 
 	return result;
+}
+
+int_fast32_t ncsh_vm_execute_noninteractive(struct ncsh_Args* args) {
+	return ncsh_vm(args);
 }
 

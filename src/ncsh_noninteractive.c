@@ -4,30 +4,110 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <string.h>
+#include <unistd.h>
 
+#include "eskilib/eskilib_defines.h"
+#include "ncsh_builtins.h"
 #include "ncsh_parser.h"
 #include "ncsh_noninteractive.h"
 #include "ncsh_defines.h" // used when NCSH_DEBUG defined
 #include "eskilib/eskilib_colors.h"
 #include "eskilib/eskilib_result.h"
+#include "ncsh_vm.h"
+
+enum ncsh_Flags {
+	F_COMMAND = 0x01, // -c
+	F_EXIT_IMMEDIATELY_ON_FAILURE = 0x02 // -e
+};
+
+#define FLAG_COMMAND_CHAR 'c'
+#define FLAG_EXIT_IMMEDIATELY_ON_FAILURE_CHAR 'e'
+
+int_fast32_t ncsh_flag_error(const char* message, size_t message_length) {
+	if (write(STDIN_FILENO, message, message_length) == -1)
+		return EXIT_FAILURE;
+
+	return EXIT_SUCCESS;
+}
+
+#define NO_FLAG_COMMAND_MESSAGE "ncsh: Running in noninteractive mode but no command flag ('-c') included. Please use './ncsh -c 'your commands'\n"
+
+/* #define ALLOW_READ_FROM_STDIN_NONINTERACTIVE // -s
+#define RUN_INTERACTIVE // -i
+#define DEBUG_EXECUTION // -x
+#define DEBUG_INPUT // -v
+#define DEBUG_TOKENIZATION // -n*/
+
+/*void ncsh_noninteractive_flags(int argc, char** argv) {
+	int_fast32_t i;
+	int_fast32_t j = 0;
+	int flags = 0;
+	for (i = 0; i < argc - 1 && argv[i + 1][0] == '-'; ++i) {
+		while (argv[i + 1][j] != '\0') {
+			switch (argv[i + 1][j]) {
+				case FLAG_COMMAND_CHAR: {
+					flags |= F_COMMAND;
+					break;
+				}
+				case FLAG_EXIT_IMMEDIATELY_ON_FAILURE_CHAR: {
+					flags |= F_EXIT_IMMEDIATELY_ON_FAILURE;
+				}
+			}
+		}
+	}
+
+	printf("argc: %d, i: %zu ", argc, i);
+	printf("argv[i]: %s ", argv[i]);
+	printf("buffer : %s\n", argv[i + 1]);
+
+	if (!(flags & F_COMMAND)) { // don't try to run binaries for now, force user to pass in -c
+		ncsh_flag_error(NO_FLAG_COMMAND_MESSAGE, sizeof(NO_FLAG_COMMAND_MESSAGE) - 1);
+		return EXIT_FAILURE;
+	}
+
+	return EXIT_SUCCESS
+}*/
+
+eskilib_nodiscard
+int_fast32_t ncsh_noninteractive_execute(struct ncsh_Args* args) {
+	if (args->count == 0)
+		return NCSH_COMMAND_SUCCESS_CONTINUE;
+
+	if (ncsh_is_exit_command(args))
+		return NCSH_COMMAND_EXIT;
+
+	if (eskilib_string_equals(args->values[0], "echo", args->lengths[0])) {
+		return ncsh_echo_command(args);
+	}
+
+	if (eskilib_string_equals(args->values[0], "help", args->lengths[0]))
+		return ncsh_help_command();
+
+	if (eskilib_string_equals(args->values[0], "cd", args->lengths[0])) {
+		return ncsh_cd_command(args);
+	}
+
+	/*if (eskilib_string_equals(args->values[0], "z", args->lengths[0]))
+		return ncsh_z(&args, &z_db);*/
+
+	/*if (eskilib_string_equals(args->values[0], "history", args->lengths[0]))
+		return ncsh_history_command(&history);*/
+
+	return ncsh_vm_execute_noninteractive(args);
+}
 
 int_fast32_t ncsh_noninteractive(int argc, char** argv) {
 	#ifdef NCSH_DEBUG
-	printf("ncsh running in non-interactive mode.\n");
-	printf("argc: %d\n", argc);
-	for (int_fast32_t i = 0; i < argc; ++i)
-		printf("argv[%lu]: %s\n", i, argv[i]);
-
-	puts("input to process:");
-	printf("argc: %d\n", argc - 1);
-	for (int_fast32_t i = 0; i < argc - 1; ++i)
-		printf("argv[%lu]: %s\n", i, argv[i + 1]);
+	printf("ncsh running in noninteractive mode.\n")
 	#endif /* ifdef NCSH_DEBUG */
+	if (argc > 2) {
+		printf("ncsh currently only supports passing in one command at a time in interactive mode!\n");
+	}
 
 	struct ncsh_Args args = {0};
-
 	enum eskilib_Result result;
-	if ((result = ncsh_parser_args_malloc_count(argc - 1, &args)) != E_SUCCESS) {
+	if ((result = ncsh_parser_args_malloc(&args)) != E_SUCCESS) {
 		perror(RED "ncsh: Error when allocating memory for parser" RESET);
 		fflush(stderr);
 		if (result != E_FAILURE_MALLOC)
@@ -35,12 +115,30 @@ int_fast32_t ncsh_noninteractive(int argc, char** argv) {
 		return EXIT_FAILURE;
 	}
 
-	ncsh_parser_parse_noninteractive(argc - 1, &argv[1], &args);
+	size_t length = strlen(argv[1]) + 1;
+
 	#ifdef NCSH_DEBUG
-	ncsh_debug_args(args);
+	printf("length : %lu\n", length);
+	printf("buffer : %s\n", argv[1]);
 	#endif /* ifdef NCSH_DEBUG */
 
+	ncsh_parser_parse(argv[1], length, &args);
+	int_fast32_t command_result = ncsh_noninteractive_execute(&args);
+
+	int_fast32_t exit_code = EXIT_SUCCESS;
+	switch (command_result) {
+		case NCSH_COMMAND_EXIT_FAILURE: {
+			exit_code = EXIT_FAILURE;
+			// goto exit;
+		}
+		/*case NCSH_COMMAND_EXIT: {
+			goto exit;
+		}*/
+	}
+
+	//exit:
+	ncsh_parser_args_free_values(&args);
 	ncsh_parser_args_free(&args);
 
-	return EXIT_SUCCESS;
+	return exit_code;
 }

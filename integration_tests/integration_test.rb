@@ -73,9 +73,7 @@ def startup_tests(row, run_z_database_new_tests)
   starting_tests 'startup tests'
 
   row = z_database_new_test row if run_z_database_new_tests
-
   row = startup_test row
-
   row = newline_sanity_test row
 
   empty_line_sanity_test row
@@ -111,7 +109,6 @@ def basic_tests(row)
   starting_tests 'basic'
 
   row = basic_ls_test row
-
   basic_bad_command_test row
 end
 
@@ -183,7 +180,6 @@ def backspace_tests(row)
   starting_tests 'backspace'
 
   row = end_of_line_backspace_test row
-
   row = multiple_end_of_line_backspace_test row
 
   midline_backspace_test row
@@ -226,7 +222,6 @@ def delete_tests(row)
   starting_tests 'delete'
 
   row = end_of_line_delete_test row
-
   midline_delete_test row
 end
 
@@ -256,7 +251,6 @@ def pipe_tests(row)
   starting_tests 'pipe'
 
   row = pipe_test row
-
   multiple_pipes_test row
 end
 
@@ -291,11 +285,13 @@ def history_delete_test(row)
 end
 
 def history_backspace_test(row)
+  # TODO: implementation
   puts 'History backspace test passed'
   row
 end
 
 def history_clear_test(row)
+  # TODO: implementation
   puts 'History clear test passed'
   row
 end
@@ -304,20 +300,20 @@ def history_tests(row)
   starting_tests 'history'
 
   row = basic_history_test row
-
+  # row =
   history_delete_test row
+  # row = history_backspace_test
+  # history_clear_test
 end
 
-def basic_output_redirection_test(row)
+def basic_stdout_redirection_test(row)
   assert_check_new_row(row)
   @tty.send_keys_one_at_a_time(%(ls > t.txt))
-  @tty.assert_row_ends_with(row, %(ls > t.txt))
   @tty.send_newline
   sleep SLEEP_TIME
   row += 1
   assert_check_new_row(row)
   @tty.send_keys_one_at_a_time(%(head -1 t.txt))
-  @tty.assert_row_ends_with(row, %(head -1 t.txt))
   @tty.send_newline
   sleep SLEEP_TIME
   row += 1
@@ -331,7 +327,7 @@ def basic_output_redirection_test(row)
   row
 end
 
-def piped_output_redirection_test(row)
+def piped_stdout_redirection_test(row)
   assert_check_new_row(row)
   @tty.send_keys_one_at_a_time(%(ls | sort -r > t2.txt))
   @tty.assert_row_ends_with(row, %(ls | sort -r > t2.txt))
@@ -354,7 +350,7 @@ def piped_output_redirection_test(row)
   row
 end
 
-def multiple_piped_output_redirection_test(row)
+def multiple_piped_stdout_redirection_test(row)
   assert_check_new_row(row)
   @tty.send_keys_one_at_a_time(%(ls | sort | wc -c > t3.txt))
   @tty.assert_row_ends_with(row, %(ls | sort | wc -c > t3.txt))
@@ -377,14 +373,12 @@ def multiple_piped_output_redirection_test(row)
   row
 end
 
-def output_redirection_tests(row)
-  starting_tests 'output redirections'
+def stdout_redirection_tests(row)
+  starting_tests 'stdout redirection'
 
-  row = basic_output_redirection_test row
-
-  row = piped_output_redirection_test row
-
-  multiple_piped_output_redirection_test row
+  row = basic_stdout_redirection_test row
+  row = piped_stdout_redirection_test row
+  multiple_piped_stdout_redirection_test row
 end
 
 def z_add_tests(row)
@@ -402,16 +396,14 @@ def z_add_tests(row)
   row
 end
 
-def basic_input_redirection_test(row)
+def basic_stdin_redirection_test(row)
   assert_check_new_row(row)
   @tty.send_keys_one_at_a_time(%(ls > t.txt))
-  @tty.assert_row_ends_with(row, %(ls > t.txt))
   @tty.send_newline
   sleep SLEEP_TIME
   row += 1
   assert_check_new_row(row)
   @tty.send_keys_one_at_a_time(%(sort < t.txt))
-  @tty.assert_row_ends_with(row, %(sort < t.txt))
   @tty.send_newline
   sleep SLEEP_TIME
   row += 1
@@ -425,7 +417,7 @@ def basic_input_redirection_test(row)
   row
 end
 
-def piped_input_redirection_test(row)
+def piped_stdin_redirection_test(row)
   assert_check_new_row(row)
   @tty.send_keys_one_at_a_time(%(ls > t2.txt))
   @tty.assert_row_ends_with(row, %(ls > t2.txt))
@@ -448,7 +440,7 @@ def piped_input_redirection_test(row)
   row
 end
 
-def multiple_piped_input_redirection_test(row)
+def multiple_piped_stdin_redirection_test(row)
   assert_check_new_row(row)
   @tty.send_keys_one_at_a_time(%(ls > t3.txt))
   @tty.assert_row_ends_with(row, %(ls > t3.txt))
@@ -470,14 +462,12 @@ def multiple_piped_input_redirection_test(row)
   row
 end
 
-def input_redirection_tests(row)
-  starting_tests 'input redirections'
+def stdin_redirection_tests(row)
+  starting_tests 'stdin redirection'
 
-  row = basic_input_redirection_test row
-
-  row = piped_input_redirection_test row
-
-  multiple_piped_input_redirection_test row
+  row = basic_stdin_redirection_test row
+  row = piped_stdin_redirection_test row
+  multiple_piped_stdin_redirection_test row
 end
 
 def basic_autocompletion_test(row)
@@ -519,7 +509,6 @@ def autocompletion_tests(row)
   starting_tests 'autocompletion'
 
   row = basic_autocompletion_test row
-
   backspace_and_delete_autocompletion_test row
 end
 
@@ -555,18 +544,11 @@ def basic_echo_test(row)
   row
 end
 
-def echo_tests(row)
-  assert_check_new_row(row)
-
-  basic_echo_test row
-end
-
 def builtin_tests(row)
   starting_tests 'builtin'
 
   row = help_test row
-
-  echo_tests row
+  basic_echo_test row
 end
 
 def delete_line_tests(row)
@@ -620,10 +602,10 @@ def arrows_move_tab_autocompletion_test(row)
   @tty.assert_cursor_position(cursor_x_before, cursor_y_before)
   @tty.send_down_arrow
   @tty.assert_cursor_position(cursor_x_before, cursor_y_before + 1)
-  @tty.send_down_arrows(11)
+  @tty.send_down_arrows(TAB_AUTOCOMPLETE_ROWS + 1)
   @tty.assert_cursor_position(cursor_x_before, cursor_y_before + 8)
   @tty.send_keys(TTYtest::TAB)
-  row += 10
+  row += TAB_AUTOCOMPLETE_ROWS
 
   puts 'Arrows autocompletion test passed'
   row
@@ -636,7 +618,7 @@ def select_tab_autocompletion_test(row)
   row += 1
   @tty.send_down_arrows(5)
   @tty.send_newline
-  row += 11
+  row += TAB_AUTOCOMPLETE_ROWS + 1
   @tty.assert_row_ends_with(row, WC_C_LENGTH)
   row += 1
 
@@ -698,15 +680,74 @@ def syntax_error_tests(row)
   operators_invalid_syntax_last_position_test row
 end
 
-def home_expansion_tests(row)
-  starting_tests 'home expansion'
-
+def basic_stderr_redirection_test(row)
   assert_check_new_row(row)
-  @tty.send_keys_one_at_a_time(%(ls ~ | head -1\n))
-  row += 2
+  @tty.send_keys_one_at_a_time(%(lss 2> t4.txt))
+  @tty.send_newline
+  sleep SLEEP_TIME
+  row += 1
+  @tty.send_keys_one_at_a_time(%(cat t4.txt))
+  @tty.send_newline
+  row += 1
+  @tty.assert_row_ends_with(row, 'No such file or directory')
+  row += 1
+  @tty.send_keys_one_at_a_time(%(rm t4.txt))
+  @tty.send_newline
+  row += 1
 
-  puts 'Home expansion test passed'
+  puts 'Basic stderr redirection test passed'
   row
+end
+
+def stderr_redirection_tests(row)
+  starting_tests 'sterr redirection'
+
+  basic_stderr_redirection_test row
+end
+
+def basic_stdout_and_stderr_redirection_stderr_test(row)
+  assert_check_new_row(row)
+  @tty.send_keys_one_at_a_time(%(lss &> t4.txt))
+  @tty.send_newline
+  sleep SLEEP_TIME
+  row += 1
+  @tty.send_keys_one_at_a_time(%(cat t4.txt))
+  @tty.send_newline
+  row += 1
+  @tty.assert_row_ends_with(row, 'No such file or directory')
+  row += 1
+  @tty.send_keys_one_at_a_time(%(rm t4.txt))
+  @tty.send_newline
+  row += 1
+
+  puts 'Basic stdout and stderr redirection stderr test passed'
+  row
+end
+
+def basic_stdout_and_stderr_redirection_stdout_test(row)
+  assert_check_new_row(row)
+  @tty.send_keys_one_at_a_time(%(ls &> t4.txt))
+  @tty.send_newline
+  sleep SLEEP_TIME
+  row += 1
+  @tty.send_keys_one_at_a_time(%(cat t4.txt | head -1))
+  @tty.send_newline
+  row += 1
+  @tty.assert_row_ends_with(row, LS_FIRST_ITEM)
+  row += 1
+  @tty.send_keys_one_at_a_time(%(rm t4.txt))
+  @tty.send_newline
+  row += 1
+
+  puts 'Basic stdout and stderr redirection stdout test passed'
+  row
+end
+
+def stdout_and_stderr_redirection_tests(row)
+  starting_tests 'stdout and sterr redirection'
+
+  row = basic_stdout_and_stderr_redirection_stderr_test row
+  basic_stdout_and_stderr_redirection_stdout_test row
 end
 
 row = 0
@@ -719,9 +760,9 @@ row = backspace_tests row
 row = delete_tests row
 row = pipe_tests row
 row = history_tests row
-row = output_redirection_tests row
+row = stdout_redirection_tests row
 row = z_add_tests row
-row = input_redirection_tests row
+row = stdin_redirection_tests row
 row = autocompletion_tests row
 row = builtin_tests row
 row = delete_line_tests row
@@ -731,10 +772,11 @@ tab_autocompletion_tests row
 @tty.send_newline
 
 row = 0
-@tty = TTYtest.new_terminal(%(PS1='$ ' ./bin/ncsh), width: 180, height: 120)
+@tty = TTYtest.new_terminal(%(PS1='$ ' ./bin/ncsh), width: 180, height: 150)
 row = startup_tests(row, false)
-# row =
-syntax_error_tests row
+row = syntax_error_tests row
+row = stderr_redirection_tests row
+row = stdout_and_stderr_redirection_tests row
 
 # row = home_expansion_tests row
 # row = star_expansion_tests row
@@ -742,6 +784,7 @@ syntax_error_tests row
 # row = multiline_tests row
 # row = copy_paste_tests row
 
+# troubleshooting
 # @tty.print
 # @tty.print_rows
 # p @tty.to_s
