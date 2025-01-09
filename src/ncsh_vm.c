@@ -20,6 +20,9 @@
 #include "ncsh_parser.h"
 #include "ncsh_vm.h"
 #include "ncsh_defines.h"
+#ifdef NCSH_DEBUG
+#include "eskilib/eskilib_defines.h"
+#endif /* ifdef NCSH_DEBUG */
 #include "eskilib/eskilib_colors.h"
 
 /* Types */
@@ -493,6 +496,8 @@ int_fast32_t ncsh_fork_failure(uint_fast32_t command_position, uint_fast32_t num
 }
 
 /* VM */
+#define EXECVP_FAILED -1
+
 int_fast32_t ncsh_vm(struct ncsh_Args* args) {
 	struct ncsh_Tokens tokens = {0};
 	int_fast32_t result = ncsh_vm_tokenize(args, &tokens);
@@ -501,6 +506,7 @@ int_fast32_t ncsh_vm(struct ncsh_Args* args) {
 
 	pid_t pid = 0;
 	int status;
+	int execvp_result = 0;
 	struct ncsh_Vm vm = {0};
 	char* buffer[MAX_INPUT] = {0};
 	bool end = false;
@@ -561,7 +567,6 @@ int_fast32_t ncsh_vm(struct ncsh_Args* args) {
 		if (pid == -1)
 			return ncsh_fork_failure(command_position, tokens.number_of_pipe_commands, &vm.pipes_io);
 
-		int execvp_result = 0;
 		if (pid == 0) {
 			if (op_current == OP_PIPE)
 				ncsh_pipe_connect(command_position, tokens.number_of_pipe_commands, &vm.pipes_io);
@@ -569,22 +574,21 @@ int_fast32_t ncsh_vm(struct ncsh_Args* args) {
 			/*if (setpgid(pid, pid) == 0)
 				perror(RED "ncsh: Error setting up process group ID for child process" RESET);*/
 
-			if (execvp(buffer[0], buffer) == -1) {
+			if ((execvp_result = execvp(buffer[0], buffer)) == EXECVP_FAILED) {
 				end = true;
 				perror(RED "ncsh: Could not find command or directory" RESET);
 				fflush(stdout);
 				kill(getpid(), SIGTERM);
-				execvp_result = -1;
 			}
 		}
 
 		if (op_current == OP_PIPE)
 			ncsh_pipe_stop(command_position, tokens.number_of_pipe_commands, &vm.pipes_io);
 
-		ncsh_vm_atomic_child_pid_set(pid);
-
 		if (execvp_result != 0)
 			break;
+
+		ncsh_vm_atomic_child_pid_set(pid);
 
 		int result;
 		while (1) {
@@ -630,6 +634,8 @@ int_fast32_t ncsh_vm(struct ncsh_Args* args) {
 
 	ncsh_vm_redirection_stop_if_needed(&tokens, &vm);
 
+	if (execvp_result == EXECVP_FAILED)
+		return NCSH_COMMAND_FAILED_CONTINUE;
 	if (status == EXIT_FAILURE)
 		return NCSH_COMMAND_EXIT_FAILURE;
 
@@ -637,12 +643,6 @@ int_fast32_t ncsh_vm(struct ncsh_Args* args) {
 }
 
 int_fast32_t ncsh_vm_execute(struct ncsh_Args* args) {
-	assert(args->values);
-	assert(args->ops);
-	assert(args->lengths);
-	assert(args->values[0]);
-	assert(args->count > 0);
-
 	ncsh_terminal_reset(); //reset terminal settings since a lot of terminal programs use canonical mode
 
 	int_fast32_t result = ncsh_vm(args);
@@ -650,5 +650,9 @@ int_fast32_t ncsh_vm_execute(struct ncsh_Args* args) {
 	ncsh_terminal_init(); //back to noncanonical mode
 
 	return result;
+}
+
+int_fast32_t ncsh_vm_execute_noninteractive(struct ncsh_Args* args) {
+	return ncsh_vm(args);
 }
 

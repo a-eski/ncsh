@@ -242,6 +242,7 @@ enum eskilib_Result ncsh_history_add(char* line, size_t length, struct ncsh_Hist
 	assert(history);
 	assert(line);
 	assert(length > 0);
+	assert(line[length - 1] == '\0');
 
 	if (history == NULL || line == NULL)
 		return E_FAILURE_NULL_REFERENCE;
@@ -249,7 +250,7 @@ enum eskilib_Result ncsh_history_add(char* line, size_t length, struct ncsh_Hist
 		return E_FAILURE_ZERO_LENGTH;
 	else if (history->count + 1 < history->count)
 		return E_FAILURE_OVERFLOW_PROTECTION;
-	else if (history->count >= NCSH_MAX_HISTORY_IN_MEMORY)
+	else if (history->count + 1 >= NCSH_MAX_HISTORY_IN_MEMORY)
 		return E_NO_OP_MAX_LIMIT_REACHED;
 
 	history->entries[history->count].length = length;

@@ -1,9 +1,9 @@
 #include <assert.h>
 #include <stdint.h>
-#include <stddef.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#include "ncsh_arena.h"
 
 struct ncsh_Arena {
 	size_t size;
@@ -11,7 +11,9 @@ struct ncsh_Arena {
 	void* ptr;
 };
 
-int_fast8_t ncsh_shell_lifetime_init(size_t size, struct ncsh_Arena* arena) {
+static struct ncsh_Arena* arena;
+
+int_fast8_t ncsh_arena_init(size_t size) {
 	arena = malloc(sizeof(struct ncsh_Arena));
 	if (!arena)
 		return EXIT_FAILURE;
@@ -25,17 +27,23 @@ int_fast8_t ncsh_shell_lifetime_init(size_t size, struct ncsh_Arena* arena) {
 	return EXIT_SUCCESS;
 }
 
-void* ncsh_shell_lifetime_malloc(size_t size, struct ncsh_Arena* arena) {
+void* ncsh_arena_malloc(size_t size) {
 	if (arena->offset + size > arena->size)
 		return NULL;
+	else if (arena->offset + size < size)
+		return NULL;
 
+	#pragma GCC diagnostic push // disable pointer arith warnings for this line
+	#pragma GCC diagnostic ignored "-Wpointer-arith"
 	void* ptr = arena->ptr + arena->offset;
+	#pragma GCC diagnostic pop
+
 	arena->offset += size;
-	printf("used %zu bytes of arena", arena->offset);
+	printf("used %zu bytes of arena\n", arena->offset);
 	return ptr;
 }
 
-void ncsh_shell_lifetime_exit(struct ncsh_Arena* arena) {
+void ncsh_arena_exit() {
 	if (arena) {
 		if (arena->ptr)
 			free(arena->ptr);

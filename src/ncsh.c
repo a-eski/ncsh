@@ -59,6 +59,9 @@ struct ncsh {
 	struct ncsh_Autocompletion_Node* autocompletions_tree;
 
 	struct z_Database z_db;
+
+	struct ncsh_Coordinates terminal_size;
+	struct ncsh_Coordinates terminal_position;
 };
 
 #ifdef NCSH_SHORT_DIRECTORY
@@ -168,20 +171,37 @@ int_fast32_t ncsh_delete(struct ncsh_Input* input) {
 	return EXIT_SUCCESS;
 }
 
-void ncsh_autocomplete(char* buffer, uint_fast32_t buf_position, char* current_autocompletion, struct ncsh_Autocompletion_Node* autocompletions_tree) {
-	uint_fast8_t autocompletions_matches_count = ncsh_autocompletions_first(buffer, buf_position + 1, current_autocompletion, autocompletions_tree);
+void ncsh_autocomplete(struct ncsh_Input* input, struct ncsh* shell) {
+	uint_fast8_t autocompletions_matches_count =
+		ncsh_autocompletions_first(input->buffer, input->pos + 1, shell->current_autocompletion, shell->autocompletions_tree);
 
 	if (autocompletions_matches_count == 0) {
-		current_autocompletion[0] = '\0';
+		shell->current_autocompletion[0] = '\0';
 		return;
 	}
 
-	struct ncsh_Coordinates position = ncsh_terminal_position();
-	if (position.x == 0 && position.y == 0)
-		return;
+	shell->terminal_position = ncsh_terminal_position();
 
-	printf(WHITE_DIM "%s" RESET, current_autocompletion);
-	ncsh_terminal_move(position.x, position.y);
+	int length = strlen(shell->current_autocompletion) + 1;
+	if (shell->terminal_position.x + length >= shell->terminal_size.x) {
+		/*if (write(STDOUT_FILENO, WHITE_DIM, sizeof(WHITE_DIM) - 1) == -1)
+			return;
+
+		for (int_fast32_t i = 0; i < shell->terminal_size.x - shell->terminal_position.x; ++i) {
+			putchar(shell->current_autocompletion[i]);
+		}
+		putchar('\n');
+		for (int_fast32_t i = shell->terminal_size.x - shell->terminal_position.x; i < length; ++i) {
+			putchar(shell->current_autocompletion[i]);
+		}
+
+		if (write(STDOUT_FILENO, RESET, sizeof(RESET) - 1) == -1)
+			return;
+		fflush(stdout);*/
+		return;
+	}
+	printf(WHITE_DIM "%s" RESET, shell->current_autocompletion);
+	ncsh_terminal_move(shell->terminal_position.x, shell->terminal_position.y);
 	fflush(stdout);
 }
 
@@ -688,7 +708,7 @@ int_fast32_t ncsh_read_input(struct ncsh_Input* input, struct ncsh* shell) {
 		}
 		else {
 			if (input->pos == NCSH_MAX_INPUT - 1) {
-				fputs(RED "\nHit max input.\n" RESET, stderr);
+				fputs(RED "\nncsh: Hit max input.\n" RESET, stderr);
 				input->buffer[0] = '\0';
 				input->pos = 0;
 				input->max_pos = 0;
@@ -745,11 +765,18 @@ int_fast32_t ncsh_read_input(struct ncsh_Input* input, struct ncsh* shell) {
 				ncsh_write(ERASE_CURRENT_LINE, ERASE_CURRENT_LINE_LENGTH);
 			}
 
+			shell->terminal_position = ncsh_terminal_position();
+			shell->terminal_size = ncsh_terminal_size();
+			if (shell->terminal_position.x >= shell->terminal_size.x) {
+				putchar('\n');
+				fflush(stdout);
+			}
+
 			// autocompletion logic
 			if (input->buffer[0] == '\0' || input->buffer[input->pos] != '\0')
 				continue;
 
-			ncsh_autocomplete(input->buffer, input->pos, shell->current_autocompletion, shell->autocompletions_tree);
+			ncsh_autocomplete(input, shell);
 		}
 	}
 }

@@ -193,7 +193,7 @@ void ncsh_parser_parse(const char* line, size_t length, struct ncsh_Args* args) 
 	}
 
 	#ifdef NCSH_DEBUG
-	ncsh_debug_line(input.buffer, input.pos, input.max_pos);
+	ncsh_debug_parser_input(line, length);
 	#endif /* ifdef NCSH_DEBUG */
 
 	char buffer[NCSH_MAX_INPUT];
@@ -271,29 +271,7 @@ void ncsh_parser_parse(const char* line, size_t length, struct ncsh_Args* args) 
 	}
 
 	#ifdef NCSH_DEBUG
-	ncsh_debug_args(shell.args);
+	ncsh_debug_args(args);
 	#endif /* ifdef NCSH_DEBUG */
-}
-
-void ncsh_parser_parse_noninteractive(int argc, char** argv, struct ncsh_Args* args) {
-	assert(args);
-	assert(argc > 0);
-	assert(argv);
-	if (argc == 0 || !argv) {
-		args->count = 0;
-		return;
-	}
-
-	size_t len = 0;
-
-	for (int_fast32_t i = 0; i < argc; ++i) {
-		len = strlen(argv[i]);
-		args->values[i] = malloc(len + 1);
-		eskilib_string_copy(args->values[i], argv[i], len + 1);
-		args->ops[i] = ncsh_op_get(argv[i], len);
-		args->lengths[i] = len + 1;
-	}
-
-	args->count = argc;
 }
 
