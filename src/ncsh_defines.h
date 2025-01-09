@@ -21,7 +21,6 @@
 #define NCSH_COMMAND_FAILED_CONTINUE 2
 
 #define NCSH_MAX_AUTOCOMPLETION_MATCHES 32 // max number of matches for autocompletion
-#define NCSH_MAX_INPUT 528 // max input for reading in a line
+#define NCSH_MAX_INPUT 528                 // max input for reading in a line
 
 #endif // !ncsh_defines_h
-
