@@ -27,3 +27,5 @@ https://github.com/google/fuzzing/blob/master/tutorial/libFuzzerTutorial.md#seed
 z add /mnt/c/Users/Alex/source/repos/PersonalRepos/shells/ncsh
 z add /mnt/c/Users/Alex/source/repos/PersonalRepos/ttytest2
 
+remove duplicates from history file
+sort -o .ncsh_history -u .ncsh_history
