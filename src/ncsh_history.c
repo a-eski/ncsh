@@ -153,7 +153,7 @@ enum eskilib_Result ncsh_history_save(struct ncsh_History *history)
     // file removing duplicates saves entries for future autocompletions, but decreases size of overall history file
     // when lots of duplicates exists
 
-    FILE *file = fopen(history->file, pos == 0 ? "a" : "w"); // write over entire file from new if file full
+    FILE *file = fopen(history->file, "w"); // write over entire file each time for now
     if (file == NULL)
     {
         perror(RED "ncsh: Could not open .ncsh_history file to save history" RESET);
