@@ -86,7 +86,7 @@ l :
 
 .PHONY: test_history
 test_history :
-	$(cc_with_flags) -DNCSH_HISTORY_TEST ./src/eskilib/eskilib_string.c ./src/eskilib/eskilib_test.c ./src/eskilib/eskilib_file.c ./src/ncsh_history.c ./src/tests/ncsh_history_tests.c -o ./bin/ncsh_history_tests
+	$(CC) $(std) $(debug_flags) -DNCSH_HISTORY_TEST ./src/eskilib/eskilib_string.c ./src/eskilib/eskilib_test.c ./src/eskilib/eskilib_file.c ./src/ncsh_history.c ./src/tests/ncsh_history_tests.c -o ./bin/ncsh_history_tests
 	./bin/ncsh_history_tests
 
 .PHONY: fuzz_history
@@ -96,7 +96,7 @@ fuzz_history :
 
 .PHONY: test_autocompletions
 test_autocompletions :
-	 $(cc_with_flags) ./src/eskilib/eskilib_string.c ./src/eskilib/eskilib_test.c ./src/ncsh_autocompletions.c ./src/tests/ncsh_autocompletions_tests.c -o ./bin/ncsh_autocompletions_tests
+	 $(CC) $(std) $(debug_flags) ./src/eskilib/eskilib_string.c ./src/eskilib/eskilib_test.c ./src/ncsh_autocompletions.c ./src/tests/ncsh_autocompletions_tests.c -o ./bin/ncsh_autocompletions_tests
 	 ./bin/ncsh_autocompletions_tests
 
 .PHONY: fuzz_autocompletions
@@ -105,7 +105,7 @@ fuzz_autocompletions :
 	./a.out NCSH_AUTOCOMPLETIONS_CORPUS/ -detect_leaks=0 -rss_limit_mb=8192
 
 .PHONY test_parser :
-	$(cc_with_flags) ./src/eskilib/eskilib_string.c ./src/eskilib/eskilib_test.c ./src/ncsh_parser.c ./src/tests/ncsh_parser_tests.c -o ./bin/ncsh_parser_tests
+	$(CC) $(std) $(debug_flags) ./src/eskilib/eskilib_string.c ./src/eskilib/eskilib_test.c ./src/ncsh_parser.c ./src/tests/ncsh_parser_tests.c -o ./bin/ncsh_parser_tests
 	./bin/ncsh_parser_tests
 
 .PHONY: fuzz_parser

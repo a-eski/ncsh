@@ -4,6 +4,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define NCSH_DEBUG
+#include "../ncsh_defines.h"
+
 #include "../eskilib/eskilib_string.h"
 #include "../eskilib/eskilib_test.h"
 #include "../ncsh_parser.h"
@@ -272,6 +275,85 @@ void ncsh_parser_parse_home_at_start_test(void)
     ncsh_parser_args_free(&args);
 }
 
+void ncsh_parser_parse_glob_star_shouldnt_crash(void)
+{
+    // found from fuzzer crashing inputs
+    char *line = "* * * * * * * * * * * * * * * * * *";
+    size_t length = strlen(line) + 1;
+
+    struct ncsh_Args args;
+    bool result = ncsh_parser_args_malloc(&args);
+    eskilib_assert(result == true);
+    ncsh_parser_parse(line, length, &args);
+
+    eskilib_assert(args.count == 0);
+
+    ncsh_parser_args_free_values(&args);
+    ncsh_parser_args_free(&args);
+}
+
+void ncsh_parser_parse_tilde_home_shouldnt_crash(void)
+{
+    // found from fuzzer crashing inputs
+    char *line =
+        "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~?~";
+    size_t length = strlen(line) + 1;
+
+    struct ncsh_Args args;
+    bool result = ncsh_parser_args_malloc(&args);
+    eskilib_assert(result == true);
+    ncsh_parser_parse(line, length, &args);
+
+    eskilib_assert(args.count == 0);
+
+    ncsh_parser_args_free_values(&args);
+    ncsh_parser_args_free(&args);
+}
+
+void ncsh_parser_parse_glob_question_and_tilde_home_shouldnt_crash(void)
+{
+    // found from fuzzer crashing inputs
+    char *line = "??~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+                 "~~~~?~>w?";
+    size_t length = strlen(line) + 1;
+
+    struct ncsh_Args args;
+    bool result = ncsh_parser_args_malloc(&args);
+    eskilib_assert(result == true);
+    ncsh_parser_parse(line, length, &args);
+
+    eskilib_assert(args.count == 0);
+
+    ncsh_parser_args_free_values(&args);
+    ncsh_parser_args_free(&args);
+}
+
+void ncsh_parser_parse_bad_input_shouldnt_crash(void)
+{
+    char *line = "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~C~~~~~~~~~~~~~k~"
+                 "~~~~>ÿÿ> >ÿ>\w\>ÿ> >ÿ> \> >";
+    size_t length = strlen(line) + 1;
+
+    struct ncsh_Args args;
+    bool result = ncsh_parser_args_malloc(&args);
+    eskilib_assert(result == true);
+    ncsh_parser_parse(line, length, &args);
+
+    // eskilib_assert(args.count == 0);
+    ncsh_debug_args(&args);
+
+    ncsh_parser_args_free_values(&args);
+    ncsh_parser_args_free(&args);
+}
+
+#ifdef NDEBUG
+void ncsh_parser_release_tests(void)
+{
+    eskilib_test_run("ncsh_parser_parse_home_test", ncsh_parser_parse_home_test);
+    eskilib_test_run("ncsh_parser_parse_home_at_start_test", ncsh_parser_parse_home_at_start_test);
+}
+#endif /* ifdef NDEBUG */
+
 void ncsh_parser_parse_tests(void)
 {
     eskilib_test_start();
@@ -285,6 +367,12 @@ void ncsh_parser_parse_tests(void)
     eskilib_test_run("ncsh_parser_parse_double_quotes_test", ncsh_parser_parse_double_quotes_test);
     eskilib_test_run("ncsh_parser_parse_output_redirection_append_test",
                      ncsh_parser_parse_output_redirection_append_test);
+    eskilib_test_run("ncsh_parser_parse_glob_star_shouldnt_crash", ncsh_parser_parse_glob_star_shouldnt_crash);
+    eskilib_test_run("ncsh_parser_parse_tilde_home_shouldnt_crash", ncsh_parser_parse_tilde_home_shouldnt_crash);
+    eskilib_test_run("ncsh_parser_parse_glob_question_and_tilde_home_shouldnt_crash",
+                     ncsh_parser_parse_glob_question_and_tilde_home_shouldnt_crash);
+    eskilib_test_run("ncsh_parser_parse_bad_input_shouldnt_crash", ncsh_parser_parse_bad_input_shouldnt_crash);
+
 #ifdef NDEBUG
     eskilib_test_run("ncsh_parser_parse_home_test", ncsh_parser_parse_home_test);
     eskilib_test_run("ncsh_parser_parse_home_at_start_test", ncsh_parser_parse_home_at_start_test);

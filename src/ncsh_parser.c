@@ -236,12 +236,14 @@ void ncsh_parser_parse(const char *line, size_t length, struct ncsh_Args *args)
 {
     assert(args);
     assert(line);
-    assert(length > 0);
-    if (!line || length == 0 || length > NCSH_MAX_INPUT)
+
+    if (!line || length < 2 || length > NCSH_MAX_INPUT)
     {
         args->count = 0;
         return;
     }
+
+    assert(length > 1);
 
 #ifdef NCSH_DEBUG
     ncsh_debug_parser_input(line, length);
@@ -254,8 +256,14 @@ void ncsh_parser_parse(const char *line, size_t length, struct ncsh_Args *args)
 
     for (uint_fast32_t line_position = 0; line_position < length + 1; ++line_position)
     {
-        if (line_position == length || line_position == NCSH_MAX_INPUT - 1 || buf_pos == NCSH_MAX_INPUT - 1 ||
-            args->count == ncsh_TOKENS)
+        if (args->count == ncsh_TOKENS - 1 && line_position < length)
+        { // can't parse all of the args
+            ncsh_parser_args_free_values(args);
+            args->count = 0;
+            break;
+        }
+        else if (line_position == length || line_position >= NCSH_MAX_INPUT - 1 || buf_pos >= NCSH_MAX_INPUT - 1 ||
+                 args->count == ncsh_TOKENS - 1)
         {
             args->values[args->count] = NULL;
             break;
@@ -273,12 +281,16 @@ void ncsh_parser_parse(const char *line, size_t length, struct ncsh_Args *args)
                 for (size_t i = 0; i < glob_buf.gl_pathc; ++i)
                 {
                     glob_len = strlen(glob_buf.gl_pathv[i]) + 1;
+                    if (glob_len == 0 || glob_len >= NCSH_MAX_INPUT)
+                        break;
                     buf_pos = glob_len;
                     args->values[args->count] = malloc(buf_pos);
                     memcpy(args->values[args->count], glob_buf.gl_pathv[i], glob_len);
                     args->ops[args->count] = OP_CONSTANT;
-                    args->lengths[args->count] = buf_pos + 1; // + 1 for null terminator
+                    args->lengths[args->count] = buf_pos;
                     ++args->count;
+                    if (args->count >= ncsh_TOKENS - 1)
+                        break;
                 }
 
                 globfree(&glob_buf);
@@ -308,6 +320,13 @@ void ncsh_parser_parse(const char *line, size_t length, struct ncsh_Args *args)
             case TILDE: {
                 char *home = getenv("HOME");
                 size_t home_length = strlen(home);
+                if (buf_pos + home_length > NCSH_MAX_INPUT)
+                {
+                    // protect from overflow
+                    ncsh_parser_args_free_values(args);
+                    args->count = 0;
+                    return;
+                }
                 memcpy(buffer + buf_pos, home, home_length);
                 buf_pos += home_length;
                 break;

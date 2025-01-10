@@ -309,9 +309,9 @@ eskilib_nodiscard int_fast32_t ncsh_tab_autocomplete(struct ncsh_Input *input,
         case '\n':
         case '\r': {
             continue_input = false;
-            size_t length = strlen(autocompletion_matches[position].value);
+            size_t length = strlen(autocompletion_matches[position].value) + 1;
             memcpy(input->buffer + input->pos, autocompletion_matches[position].value, length);
-            input->pos += length + 1;
+            input->pos += length;
             exit = EXIT_SUCCESS_EXECUTE;
             break;
         }
@@ -328,7 +328,7 @@ eskilib_nodiscard int_fast32_t ncsh_tab_autocomplete(struct ncsh_Input *input,
     }
 
     ncsh_terminal_move_down(autocompletions_matches_count + 1 - position);
-    if (exit == EXIT_SUCCESS_EXECUTE)
+    if (input->buffer && exit == EXIT_SUCCESS_EXECUTE)
     {
         printf(ncsh_YELLOW "%s\n" RESET, input->buffer);
     }
@@ -399,7 +399,15 @@ eskilib_nodiscard int_fast32_t ncsh_execute(struct ncsh *shell)
         return ncsh_z(&shell->args, &shell->z_db);
 
     if (eskilib_string_equals(shell->args.values[0], "history", shell->args.lengths[0]))
+    {
+        if (shell->args.values[1] && shell->args.lengths[1] == 6 &&
+            eskilib_string_equals(shell->args.values[1], "count", 6))
+        {
+            printf("history count: %lu\n", shell->history.count);
+            return NCSH_COMMAND_SUCCESS_CONTINUE;
+        }
         return ncsh_history_command(&shell->history);
+    }
 
     return ncsh_vm_execute(&shell->args);
 }
