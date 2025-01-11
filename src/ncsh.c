@@ -119,38 +119,36 @@ eskilib_nodiscard int_fast32_t ncsh_backspace(struct ncsh_Input *input)
     {
         return EXIT_SUCCESS;
     }
-    else
+
+    --input->pos;
+    if (input->max_pos > 0)
+        --input->max_pos;
+
+    ncsh_write(BACKSPACE_STRING ERASE_CURRENT_LINE, BACKSPACE_STRING_LENGTH + ERASE_CURRENT_LINE_LENGTH);
+
+    input->start_pos = input->pos;
+    memmove(input->buffer + input->pos, input->buffer + input->pos + 1, input->max_pos);
+    input->buffer[input->max_pos] = '\0';
+
+    while (input->buffer[input->pos] != '\0')
     {
-        --input->pos;
-        if (input->max_pos > 0)
-            --input->max_pos;
-
-        ncsh_write(BACKSPACE_STRING ERASE_CURRENT_LINE, BACKSPACE_STRING_LENGTH + ERASE_CURRENT_LINE_LENGTH);
-
-        input->start_pos = input->pos;
-        memmove(input->buffer + input->pos, input->buffer + input->pos + 1, input->max_pos);
-        input->buffer[input->max_pos] = '\0';
-
-        while (input->buffer[input->pos] != '\0')
-        {
-            putchar(input->buffer[input->pos]);
-            ++input->pos;
-        }
-
-        fflush(stdout);
-
-        while (input->pos > input->start_pos)
-        {
-            if (input->pos == 0 || !input->buffer[input->pos - 1])
-                break;
-
-            ncsh_write(MOVE_CURSOR_LEFT, MOVE_CURSOR_LEFT_LENGTH);
-
-            --input->pos;
-        }
-
-        return EXIT_SUCCESS;
+        putchar(input->buffer[input->pos]);
+        ++input->pos;
     }
+
+    fflush(stdout);
+
+    while (input->pos > input->start_pos)
+    {
+        if (input->pos == 0 || !input->buffer[input->pos - 1])
+            break;
+
+        ncsh_write(MOVE_CURSOR_LEFT, MOVE_CURSOR_LEFT_LENGTH);
+
+        --input->pos;
+    }
+
+    return EXIT_SUCCESS;
 }
 
 eskilib_nodiscard int_fast32_t ncsh_delete(struct ncsh_Input *input)
@@ -694,13 +692,13 @@ eskilib_nodiscard int_fast32_t ncsh_read_input(struct ncsh_Input *input, struct 
                         ncsh_write(input->buffer, input->pos);
                     }
 
-                    break;
+                    continue;
                 }
                 case DOWN_ARROW: {
                     shell->prompt_info.reprint_prompt = false;
 
                     if (shell->history_position == 0)
-                        break;
+                        continue;
 
                     shell->history_entry = ncsh_history_get(shell->history_position - 2, &shell->history);
 
@@ -723,7 +721,7 @@ eskilib_nodiscard int_fast32_t ncsh_read_input(struct ncsh_Input *input, struct 
                         input->max_pos = 0;
                     }
 
-                    break;
+                    continue;
                 }
                 case DELETE_PREFIX_KEY: {
                     if (read(STDIN_FILENO, &character, 1) == -1)
@@ -866,13 +864,13 @@ eskilib_nodiscard int_fast32_t ncsh_read_input(struct ncsh_Input *input, struct 
                 putchar('\n');
                 fflush(stdout);
             }
-
-            // autocompletion logic
-            if (input->buffer[0] == '\0' || input->buffer[input->pos] != '\0')
-                continue;
-
-            ncsh_autocomplete(input, shell);
         }
+
+        // autocompletion logic
+        if (input->buffer[0] == '\0' || input->buffer[input->pos] != '\0')
+            continue;
+
+        ncsh_autocomplete(input, shell);
     }
 }
 
@@ -893,21 +891,20 @@ int_fast32_t ncsh(void)
         return EXIT_FAILURE;
     }
 
+#ifdef NCSH_CLEAR_SCREEN_ON_STARTUP
+    if (write(STDOUT_FILENO, CLEAR_SCREEN MOVE_CURSOR_HOME, CLEAR_SCREEN_LENGTH + MOVE_CURSOR_HOME_LENGTH) == -1)
+    {
+        free(input.buffer);
+        return EXIT_FAILURE;
+    }
+#endif
+
     struct ncsh shell = {0};
     if (ncsh_init(&shell) == EXIT_FAILURE)
     {
         free(input.buffer);
         return EXIT_FAILURE;
     }
-
-#ifdef NCSH_CLEAR_SCREEN_ON_STARTUP
-    if (write(STDOUT_FILENO, CLEAR_SCREEN MOVE_CURSOR_HOME, CLEAR_SCREEN_LENGTH + MOVE_CURSOR_HOME_LENGTH) == -1)
-    {
-        ncsh_exit(&shell);
-        free(input.buffer);
-        return EXIT_FAILURE;
-    }
-#endif
 
 #ifdef NCSH_START_TIME
     clock_t end = clock();
@@ -952,13 +949,14 @@ int_fast32_t ncsh(void)
         case NCSH_COMMAND_EXIT: {
             goto exit;
         }
+        case NCSH_COMMAND_SYNTAX_ERROR:
+        case NCSH_COMMAND_FAILED_CONTINUE: {
+            goto reset;
+        }
         }
 
-        if (command_result == NCSH_COMMAND_SUCCESS_CONTINUE)
-        {
-            ncsh_history_add(input.buffer, input.pos, &shell.history);
-            ncsh_autocompletions_add(input.buffer, input.pos, shell.autocompletions_tree);
-        }
+        ncsh_history_add(input.buffer, input.pos, &shell.history);
+        ncsh_autocompletions_add(input.buffer, input.pos, shell.autocompletions_tree);
 
     reset:
         memset(input.buffer, '\0', input.max_pos);
