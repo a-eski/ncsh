@@ -691,7 +691,7 @@ int_fast32_t ncsh_vm(struct ncsh_Args *args)
         if (op_current == OP_PIPE)
             ncsh_pipe_stop(command_position, tokens.number_of_pipe_commands, &vm.pipes_io);
 
-        if (execvp_result != 0)
+        if (execvp_result == EXECVP_FAILED)
             break;
 
         ncsh_vm_atomic_child_pid_set(pid);
