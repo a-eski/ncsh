@@ -16,7 +16,7 @@
 
 int_fast32_t ncsh_builtins_exit_command(struct ncsh_Args *args)
 {
-    (void)args;
+    (void)args; // to not get compiler warnings
     return NCSH_COMMAND_EXIT;
 }
 
@@ -33,7 +33,7 @@ int_fast32_t ncsh_builtins_echo_command(struct ncsh_Args *args)
 
 int_fast32_t ncsh_builtins_help_command(struct ncsh_Args *args)
 {
-    (void)args; // to not get compiler warnings, may have further ops for help in future
+    (void)args; // to not get compiler warnings
 
     if (write(STDOUT_FILENO, "ncsh by Alex Eski: help\n\n", 25) == -1)
     {
