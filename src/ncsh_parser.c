@@ -29,13 +29,21 @@
 #define STDOUT_REDIRECTION '>'
 #define BACKGROUND_JOB '&'
 
-#define STDOUT_REDIRECTION_APPEND_STRING ">>"
+#define STDOUT_REDIRECTION_APPEND ">>"
 #define STDERR_REDIRECTION "2>"
 #define STDERR_REDIRECTION_APPEND "2>>"
 #define STDOUT_AND_STDERR_REDIRECTION "&>"
 #define STDOUT_AND_STDERR_REDIRECTION_APPEND "&>>"
-#define AND_STRING "&&"
-#define OR_STRING "||"
+#define AND "&&"
+#define OR "||"
+
+// ops: numeric
+#define ADD '+'
+#define SUBTRACT '-'
+#define MULTIPLY '*'
+#define DIVIDE '/'
+#define MODULO '%'
+#define EXPONENTIATION "**"
 
 // expansions
 #define GLOB_STAR '*'
@@ -163,6 +171,24 @@ bool ncsh_is_delimiter(char ch)
     }
 }
 
+char *ops_2char_str[] = {
+    STDOUT_REDIRECTION_APPEND,
+    STDERR_REDIRECTION,
+    STDOUT_AND_STDERR_REDIRECTION,
+    AND,
+    OR,
+    EXPONENTIATION
+};
+
+enum ncsh_Ops ops_2char[] = {
+    OP_STDOUT_REDIRECTION_APPEND,
+    OP_STDERR_REDIRECTION,
+    OP_STDOUT_AND_STDERR_REDIRECTION,
+    OP_AND,
+    OP_OR,
+    OP_EXPONENTIATION
+};
+
 enum ncsh_Ops ncsh_op_get(const char *line, size_t length)
 {
     switch (length)
@@ -173,43 +199,23 @@ enum ncsh_Ops ncsh_op_get(const char *line, size_t length)
     case 1: {
         switch (line[0])
         {
-        case PIPE: {
-            return OP_PIPE;
-        }
-        case STDOUT_REDIRECTION: {
-            return OP_STDOUT_REDIRECTION;
-        }
-        case STDIN_REDIRECTION: {
-            return OP_STDIN_REDIRECTION;
-        }
-        case BACKGROUND_JOB: {
-            return OP_BACKGROUND_JOB;
-        }
-        default: {
-            return OP_CONSTANT;
-        }
+        case PIPE: { return OP_PIPE; }
+        case STDOUT_REDIRECTION: { return OP_STDOUT_REDIRECTION; }
+        case STDIN_REDIRECTION: { return OP_STDIN_REDIRECTION; }
+        case BACKGROUND_JOB: { return OP_BACKGROUND_JOB; }
+        case ADD: { return OP_ADD; }
+        case SUBTRACT: { return OP_SUBTRACT; }
+        case MULTIPLY: { return OP_MULTIPLY; }
+        case DIVIDE: { return OP_DIVIDE; }
+        case MODULO: { return OP_MODULO; }
+        default: { return OP_CONSTANT; }
         }
     }
     case 2: {
-        if (STRCMP_2CHAR(line, STDOUT_REDIRECTION_APPEND_STRING))
+        for (uint_fast32_t i = 0; i < sizeof(ops_2char_str) / sizeof(char*); ++i)
         {
-            return OP_STDOUT_REDIRECTION_APPEND;
-        }
-        else if (STRCMP_2CHAR(line, STDERR_REDIRECTION))
-        {
-            return OP_STDERR_REDIRECTION;
-        }
-        else if (STRCMP_2CHAR(line, STDOUT_AND_STDERR_REDIRECTION))
-        {
-            return OP_STDOUT_AND_STDERR_REDIRECTION;
-        }
-        else if (STRCMP_2CHAR(line, AND_STRING))
-        {
-            return OP_AND;
-        }
-        else if (STRCMP_2CHAR(line, OR_STRING))
-        {
-            return OP_OR;
+            if (STRCMP_2CHAR(line, ops_2char_str[i]))
+                return ops_2char[i];
         }
 
         return OP_CONSTANT;
@@ -231,6 +237,14 @@ enum ncsh_Ops ncsh_op_get(const char *line, size_t length)
     }
     }
 }
+
+enum ncsh_Parser_State
+{
+    NONE = 0x00,
+    IN_QUOTES = 0x01,
+    IN_DOUBLE_QUOTES = 0x02,
+    IN_MATHEMATICAL_EXPRESSION = 0x04
+};
 
 void ncsh_parser_parse(const char *line, size_t length, struct ncsh_Args *args)
 {

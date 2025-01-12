@@ -16,11 +16,12 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "eskilib/eskilib_colors.h"
 #include "ncsh_defines.h"
 #include "ncsh_parser.h"
 #include "ncsh_terminal.h"
 #include "ncsh_vm.h"
+#include "ncsh_builtins.h"
+#include "eskilib/eskilib_colors.h"
 
 /* Types */
 struct ncsh_Output_Redirect_IO
@@ -117,6 +118,7 @@ int ncsh_output_redirection_oflags_get(bool append)
 void ncsh_stdout_redirection_start(char *file, bool append, struct ncsh_Output_Redirect_IO *io)
 {
     assert(file);
+    assert(io);
 
     int file_descriptor = open(file, ncsh_output_redirection_oflags_get(append), 0644);
     if (file_descriptor == -1)
@@ -138,6 +140,7 @@ void ncsh_stdout_redirection_stop(int original_stdout)
 void ncsh_stdin_redirection_start(char *file, struct ncsh_Input_Redirect_IO *io)
 {
     assert(file);
+    assert(io);
 
     int file_descriptor = open(file, O_RDONLY);
     if (file_descriptor == -1)
@@ -159,6 +162,7 @@ void ncsh_stdin_redirection_stop(int original_stdin)
 void ncsh_stderr_redirection_start(char *file, bool append, struct ncsh_Output_Redirect_IO *io)
 {
     assert(file);
+    assert(io);
 
     int file_descriptor = open(file, ncsh_output_redirection_oflags_get(append), 0644);
     if (file_descriptor == -1)
@@ -180,6 +184,7 @@ void ncsh_stderr_redirection_stop(int original_stderr)
 void ncsh_stdout_and_stderr_redirection_start(char *file, bool append, struct ncsh_Output_Redirect_IO *io)
 {
     assert(file);
+    assert(io);
 
     int file_descriptor = open(file, ncsh_output_redirection_oflags_get(append), 0644);
     if (file_descriptor == -1)
@@ -198,16 +203,22 @@ void ncsh_stdout_and_stderr_redirection_start(char *file, bool append, struct nc
 
 void ncsh_stdout_and_stderr_redirection_stop(struct ncsh_Output_Redirect_IO *io)
 {
+    assert(io);
+
     dup2(io->original_stdout, STDOUT_FILENO);
     dup2(io->original_stderr, STDERR_FILENO);
 }
 
 int_fast32_t ncsh_vm_redirection_start_if_needed(struct ncsh_Args *args, struct ncsh_Tokens *tokens, struct ncsh_Vm *vm)
 {
+    assert(args);
+    assert(tokens);
+    assert(vm);
+
     if (tokens->stdout_redirect_index && tokens->stdout_file)
     {
-        free(args->values[tokens->stdout_redirect_index]);
-        args->values[tokens->stdout_redirect_index] = NULL;
+        free(args->values[tokens->stdout_redirect_index]); // free the arg to remove it from list of args passed to the vm.
+        args->values[tokens->stdout_redirect_index] = NULL; // set the arg to null to prevent double free
         ncsh_stdout_redirection_start(tokens->stdout_file, tokens->output_append, &vm->output_redirect_io);
         if (vm->output_redirect_io.fd_stdout == -1)
         {
@@ -264,6 +275,9 @@ int_fast32_t ncsh_vm_redirection_start_if_needed(struct ncsh_Args *args, struct 
 
 void ncsh_vm_redirection_stop_if_needed(struct ncsh_Tokens *tokens, struct ncsh_Vm *vm)
 {
+    assert(tokens);
+    assert(vm);
+
     if (tokens->stdout_redirect_index)
         ncsh_stdout_redirection_stop(vm->output_redirect_io.original_stdout);
 
@@ -280,7 +294,7 @@ void ncsh_vm_redirection_stop_if_needed(struct ncsh_Tokens *tokens, struct ncsh_
 /* Pipes */
 int_fast32_t ncsh_pipe_start(uint_fast32_t command_position, struct ncsh_Pipe_IO *pipes)
 {
-    assert(pipes != NULL);
+    assert(pipes);
 
     if (command_position % 2 != 0)
     {
@@ -306,7 +320,7 @@ int_fast32_t ncsh_pipe_start(uint_fast32_t command_position, struct ncsh_Pipe_IO
 
 void ncsh_pipe_connect(uint_fast32_t command_position, uint_fast32_t number_of_commands, struct ncsh_Pipe_IO *pipes)
 {
-    assert(pipes != NULL);
+    assert(pipes);
 
     if (command_position == 0)
     { // first command
@@ -336,7 +350,7 @@ void ncsh_pipe_connect(uint_fast32_t command_position, uint_fast32_t number_of_c
 
 void ncsh_pipe_stop(uint_fast32_t command_position, uint_fast32_t number_of_commands, struct ncsh_Pipe_IO *pipes)
 {
-    assert(pipes != NULL);
+    assert(pipes);
 
     if (command_position == 0)
     {
@@ -441,6 +455,8 @@ int_fast32_t ncsh_syntax_error(const char *message, size_t message_length)
 
 int_fast32_t ncsh_vm_args_check(struct ncsh_Args *args)
 {
+    assert(args);
+
     switch (args->ops[0])
     {
     case OP_PIPE: {
@@ -504,6 +520,8 @@ int_fast32_t ncsh_vm_args_check(struct ncsh_Args *args)
 }
 
 /*int_fast32_t ncsh_vm_tokens_check(struct ncsh_Tokens* tokens) {
+    assert(tokens);
+
     if (tokens->stdout_redirect_index && tokens->stdin_redirect_index) {
         return ncsh_syntax_error("ncsh: Invalid syntax: found both input and output redirects operators ('<' and '>',
 respectively).\n", 97);
@@ -514,6 +532,9 @@ respectively).\n", 97);
 
 int_fast32_t ncsh_vm_tokenize(struct ncsh_Args *args, struct ncsh_Tokens *tokens)
 {
+    assert(args);
+    assert(tokens);
+
     int_fast32_t syntax_check;
     if ((syntax_check = ncsh_vm_args_check(args)) != NCSH_COMMAND_SUCCESS_CONTINUE)
         return syntax_check;
@@ -578,7 +599,7 @@ int_fast32_t ncsh_vm_tokenize(struct ncsh_Args *args, struct ncsh_Tokens *tokens
 int_fast32_t ncsh_fork_failure(uint_fast32_t command_position, uint_fast32_t number_of_commands,
                                struct ncsh_Pipe_IO *pipes)
 {
-    assert(pipes != NULL);
+    assert(pipes);
 
     if (command_position != number_of_commands - 1)
     {
@@ -598,6 +619,8 @@ int_fast32_t ncsh_fork_failure(uint_fast32_t command_position, uint_fast32_t num
 
 int_fast32_t ncsh_vm(struct ncsh_Args *args)
 {
+    assert(args);
+
     struct ncsh_Tokens tokens = {0};
     int_fast32_t result = ncsh_vm_tokenize(args, &tokens);
     if (result != NCSH_COMMAND_SUCCESS_CONTINUE)
@@ -755,8 +778,31 @@ int_fast32_t ncsh_vm(struct ncsh_Args *args)
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
+char *builtins[] = { "exit", "quit", "q", "echo", "help", "cd", "set" };
+
+int_fast32_t (*builtin_func[]) (struct ncsh_Args *) =
+{
+    &ncsh_builtins_exit_command,
+    &ncsh_builtins_exit_command,
+    &ncsh_builtins_exit_command,
+    &ncsh_builtins_echo_command,
+    &ncsh_builtins_help_command,
+    &ncsh_builtins_cd_command,
+    &ncsh_builtins_set_command
+};
+
 int_fast32_t ncsh_vm_execute(struct ncsh_Args *args)
 {
+    assert(args);
+
+    for (uint_fast32_t i = 0; i < sizeof(builtins) / sizeof(char *); ++i)
+    {
+        if (eskilib_string_equals(args->values[0], builtins[i], args->lengths[0]))
+        {
+            return (*builtin_func[i])(args);
+        }
+    }
+
     ncsh_terminal_reset(); // reset terminal settings since a lot of terminal programs use canonical mode
 
     int_fast32_t result = ncsh_vm(args);
@@ -768,5 +814,18 @@ int_fast32_t ncsh_vm_execute(struct ncsh_Args *args)
 
 int_fast32_t ncsh_vm_execute_noninteractive(struct ncsh_Args *args)
 {
+    assert(args);
+    if (!args->count)
+        return NCSH_COMMAND_SUCCESS_CONTINUE;
+
+    for (uint_fast32_t i = 0; i < sizeof(builtins) / sizeof(char *); ++i)
+    {
+        if (eskilib_string_equals(args->values[0], builtins[i], args->lengths[0]))
+        {
+            return (*builtin_func[i])(args);
+        }
+    }
+
     return ncsh_vm(args);
 }
+

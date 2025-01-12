@@ -3,6 +3,8 @@
 #ifndef ncsh_history_h
 #define ncsh_history_h
 
+#include <stdint.h>
+
 #include "eskilib/eskilib_result.h"
 #include "eskilib/eskilib_string.h"
 
@@ -32,6 +34,6 @@ enum eskilib_Result ncsh_history_add(char *line, size_t length, struct ncsh_Hist
 
 struct eskilib_String ncsh_history_get(uint_fast32_t position, struct ncsh_History *history);
 
-uint_fast32_t ncsh_history_command(struct ncsh_History *history);
+int_fast32_t ncsh_history_command(struct ncsh_History *history);
 
 #endif // !ncsh_history_h

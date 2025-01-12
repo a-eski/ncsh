@@ -14,7 +14,7 @@
 void ncsh_parser_parse_ls_test(void)
 {
     char *line = "ls\0";
-    uint_fast8_t length = 3;
+    size_t length = 3;
 
     struct ncsh_Args args;
     bool result = ncsh_parser_args_malloc(&args);
@@ -35,7 +35,7 @@ void ncsh_parser_parse_ls_test(void)
 void ncsh_parser_parse_ls_dash_l_test(void)
 {
     char *line = "ls -l\0";
-    uint_fast8_t length = 6;
+    size_t length = 6;
 
     struct ncsh_Args args;
     bool result = ncsh_parser_args_malloc(&args);
@@ -60,7 +60,7 @@ void ncsh_parser_parse_ls_dash_l_test(void)
 void ncsh_parser_parse_pipe_test(void)
 {
     char *line = "ls | sort\0";
-    uint_fast8_t length = 10;
+    size_t length = 10;
 
     struct ncsh_Args args;
     bool result = ncsh_parser_args_malloc(&args);
@@ -89,7 +89,7 @@ void ncsh_parser_parse_pipe_test(void)
 void ncsh_parser_parse_multiple_pipe_test(void)
 {
     char *line = "ls | sort | table";
-    uint_fast8_t length = 18;
+    size_t length = 18;
 
     struct ncsh_Args args;
     bool result = ncsh_parser_args_malloc(&args);
@@ -126,7 +126,7 @@ void ncsh_parser_parse_multiple_pipe_test(void)
 void ncsh_parser_parse_background_job_test(void)
 {
     char *line = "longrunningprogram &\0";
-    uint_fast8_t length = 21;
+    size_t length = 21;
 
     struct ncsh_Args args;
     bool result = ncsh_parser_args_malloc(&args);
@@ -151,7 +151,7 @@ void ncsh_parser_parse_background_job_test(void)
 void ncsh_parser_parse_output_redirection_test(void)
 {
     char *line = "ls > text.txt\0";
-    uint_fast8_t length = 14;
+    size_t length = 14;
 
     struct ncsh_Args args;
     bool result = ncsh_parser_args_malloc(&args);
@@ -180,7 +180,7 @@ void ncsh_parser_parse_output_redirection_test(void)
 void ncsh_parser_parse_output_redirection_append_test(void)
 {
     char *line = "ls >> text.txt\0";
-    uint_fast8_t length = 15;
+    size_t length = 15;
 
     struct ncsh_Args args;
     bool result = ncsh_parser_args_malloc(&args);
@@ -209,7 +209,7 @@ void ncsh_parser_parse_output_redirection_append_test(void)
 void ncsh_parser_parse_double_quotes_test(void)
 {
     char *line = "echo \"hello\"\0";
-    uint_fast8_t length = 13;
+    size_t length = 13;
 
     struct ncsh_Args args;
     bool result = ncsh_parser_args_malloc(&args);
@@ -232,7 +232,7 @@ void ncsh_parser_parse_double_quotes_test(void)
 void ncsh_parser_parse_home_test(void)
 {
     char *line = "ls ~\0";
-    uint_fast8_t length = 5;
+    size_t length = 5;
 
     struct ncsh_Args args;
     bool result = ncsh_parser_args_malloc(&args);
@@ -255,7 +255,7 @@ void ncsh_parser_parse_home_test(void)
 void ncsh_parser_parse_home_at_start_test(void)
 {
     char *line = "ls ~/snap\0";
-    uint_fast8_t length = 10;
+    size_t length = 10;
 
     struct ncsh_Args args;
     bool result = ncsh_parser_args_malloc(&args);
@@ -270,6 +270,36 @@ void ncsh_parser_parse_home_at_start_test(void)
 
     eskilib_assert(eskilib_string_equals(args.values[1], "/home/alex/snap", length));
     eskilib_assert(args.lengths[1] == 16);
+
+    ncsh_parser_args_free_values(&args);
+    ncsh_parser_args_free(&args);
+}
+
+void ncsh_parser_parse_math_operators(void)
+{
+    // char* line = "1 + 1 - 1 * 1 / 1 % 1 ** 1";
+    char* line = "1 + 1 - 1 + 1 / 1 % 1 - 1";
+    size_t length = strlen(line);
+    struct ncsh_Args args;
+    bool result = ncsh_parser_args_malloc(&args);
+    eskilib_assert(result == true);
+    ncsh_parser_parse(line, length, &args);
+
+    eskilib_assert(args.ops[0] == OP_CONSTANT);
+    eskilib_assert(args.ops[2] == OP_CONSTANT);
+    eskilib_assert(args.ops[4] == OP_CONSTANT);
+    eskilib_assert(args.ops[6] == OP_CONSTANT);
+    eskilib_assert(args.ops[8] == OP_CONSTANT);
+    eskilib_assert(args.ops[10] == OP_CONSTANT);
+
+    eskilib_assert(args.ops[1] == OP_ADD);
+    eskilib_assert(args.ops[3] == OP_SUBTRACT);
+    // eskilib_assert(args.ops[5] == OP_MULTIPLY); // needs further work bc clashes with glob
+    eskilib_assert(args.ops[5] == OP_ADD);
+    eskilib_assert(args.ops[7] == OP_DIVIDE);
+    eskilib_assert(args.ops[9] == OP_MODULO);
+    // eskilib_assert(args.ops[11] == OP_EXPONENTIATION); // needs further work bc clashes with glob
+    eskilib_assert(args.ops[11] == OP_SUBTRACT);
 
     ncsh_parser_args_free_values(&args);
     ncsh_parser_args_free(&args);
@@ -328,23 +358,8 @@ void ncsh_parser_parse_glob_question_and_tilde_home_shouldnt_crash(void)
     ncsh_parser_args_free(&args);
 }
 
-void ncsh_parser_parse_bad_input_shouldnt_crash(void)
-{
-    char *line = "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~C~~~~~~~~~~~~~k~"
-                 "~~~~>ÿÿ> >ÿ>\w\>ÿ> >ÿ> \> >";
-    size_t length = strlen(line) + 1;
-
-    struct ncsh_Args args;
-    bool result = ncsh_parser_args_malloc(&args);
-    eskilib_assert(result == true);
-    ncsh_parser_parse(line, length, &args);
-
-    // eskilib_assert(args.count == 0);
-    ncsh_debug_args(&args);
-
-    ncsh_parser_args_free_values(&args);
-    ncsh_parser_args_free(&args);
-}
+// forward declaration: implementation put at the end because it messes with clangd lsp
+void ncsh_parser_parse_bad_input_shouldnt_crash(void);
 
 #ifdef NDEBUG
 void ncsh_parser_release_tests(void)
@@ -367,16 +382,19 @@ void ncsh_parser_parse_tests(void)
     eskilib_test_run("ncsh_parser_parse_double_quotes_test", ncsh_parser_parse_double_quotes_test);
     eskilib_test_run("ncsh_parser_parse_output_redirection_append_test",
                      ncsh_parser_parse_output_redirection_append_test);
-    eskilib_test_run("ncsh_parser_parse_glob_star_shouldnt_crash", ncsh_parser_parse_glob_star_shouldnt_crash);
-    eskilib_test_run("ncsh_parser_parse_tilde_home_shouldnt_crash", ncsh_parser_parse_tilde_home_shouldnt_crash);
-    eskilib_test_run("ncsh_parser_parse_glob_question_and_tilde_home_shouldnt_crash",
-                     ncsh_parser_parse_glob_question_and_tilde_home_shouldnt_crash);
-    eskilib_test_run("ncsh_parser_parse_bad_input_shouldnt_crash", ncsh_parser_parse_bad_input_shouldnt_crash);
 
 #ifdef NDEBUG
     eskilib_test_run("ncsh_parser_parse_home_test", ncsh_parser_parse_home_test);
     eskilib_test_run("ncsh_parser_parse_home_at_start_test", ncsh_parser_parse_home_at_start_test);
 #endif /* ifdef NDEBUG */
+
+    eskilib_test_run("ncsh_parser_parse_math_operators", ncsh_parser_parse_math_operators);
+
+    eskilib_test_run("ncsh_parser_parse_glob_star_shouldnt_crash", ncsh_parser_parse_glob_star_shouldnt_crash);
+    eskilib_test_run("ncsh_parser_parse_tilde_home_shouldnt_crash", ncsh_parser_parse_tilde_home_shouldnt_crash);
+    eskilib_test_run("ncsh_parser_parse_glob_question_and_tilde_home_shouldnt_crash",
+                     ncsh_parser_parse_glob_question_and_tilde_home_shouldnt_crash);
+    eskilib_test_run("ncsh_parser_parse_bad_input_shouldnt_crash", ncsh_parser_parse_bad_input_shouldnt_crash);
 
     eskilib_test_finish();
 }
@@ -389,3 +407,21 @@ int main(void)
     return EXIT_SUCCESS;
 }
 #endif /* ifndef ncsh_TEST_ALL */
+
+// put at the end because it messes with clangd lsp
+void ncsh_parser_parse_bad_input_shouldnt_crash(void)
+{
+    char *line = "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~C~~~~~~~~~~~~~k~"
+                 "~~~~>ÿÿ> >ÿ>\w\>ÿ> >ÿ> \> >";
+    size_t length = strlen(line) + 1;
+
+    struct ncsh_Args args;
+    bool result = ncsh_parser_args_malloc(&args);
+    eskilib_assert(result == true);
+    ncsh_parser_parse(line, length, &args);
+
+    // eskilib_assert(args.count == 0);
+
+    ncsh_parser_args_free_values(&args);
+    ncsh_parser_args_free(&args);
+}

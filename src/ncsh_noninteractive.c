@@ -8,15 +8,13 @@
 #include <unistd.h>
 
 #include "eskilib/eskilib_colors.h"
-#include "eskilib/eskilib_defines.h"
 #include "eskilib/eskilib_result.h"
-#include "ncsh_builtins.h"
 #include "ncsh_defines.h" // used when NCSH_DEBUG defined
 #include "ncsh_noninteractive.h"
 #include "ncsh_parser.h"
 #include "ncsh_vm.h"
 
-enum ncsh_Flags
+/*enum ncsh_Flags
 {
     F_COMMAND = 0x01,                    // -c
     F_EXIT_IMMEDIATELY_ON_FAILURE = 0x02 // -e
@@ -37,7 +35,7 @@ int_fast32_t ncsh_flag_error(const char *message, size_t message_length)
     "ncsh: Running in noninteractive mode but no command flag ('-c') included. Please use './ncsh -c 'your "           \
     "commands'\n"
 
-/* #define ALLOW_READ_FROM_STDIN_NONINTERACTIVE // -s
+#define ALLOW_READ_FROM_STDIN_NONINTERACTIVE // -s
 #define RUN_INTERACTIVE // -i
 #define DEBUG_EXECUTION // -x
 #define DEBUG_INPUT // -v
@@ -73,36 +71,6 @@ int_fast32_t ncsh_flag_error(const char *message, size_t message_length)
     return EXIT_SUCCESS
 }*/
 
-eskilib_nodiscard int_fast32_t ncsh_noninteractive_execute(struct ncsh_Args *args)
-{
-    if (args->count == 0)
-        return NCSH_COMMAND_SUCCESS_CONTINUE;
-
-    if (ncsh_is_exit_command(args))
-        return NCSH_COMMAND_EXIT;
-
-    if (eskilib_string_equals(args->values[0], "echo", args->lengths[0]))
-    {
-        return ncsh_echo_command(args);
-    }
-
-    if (eskilib_string_equals(args->values[0], "help", args->lengths[0]))
-        return ncsh_help_command();
-
-    if (eskilib_string_equals(args->values[0], "cd", args->lengths[0]))
-    {
-        return ncsh_cd_command(args);
-    }
-
-    /*if (eskilib_string_equals(args->values[0], "z", args->lengths[0]))
-        return ncsh_z(&args, &z_db);*/
-
-    /*if (eskilib_string_equals(args->values[0], "history", args->lengths[0]))
-        return ncsh_history_command(&history);*/
-
-    return ncsh_vm_execute_noninteractive(args);
-}
-
 int_fast32_t ncsh_noninteractive(int argc, char **argv)
 {
 #ifdef NCSH_DEBUG
@@ -132,7 +100,7 @@ int_fast32_t ncsh_noninteractive(int argc, char **argv)
 #endif /* ifdef NCSH_DEBUG */
 
     ncsh_parser_parse(argv[1], length, &args);
-    int_fast32_t command_result = ncsh_noninteractive_execute(&args);
+    int_fast32_t command_result = ncsh_vm_execute_noninteractive(&args);
 
     int_fast32_t exit_code = EXIT_SUCCESS;
     switch (command_result)
