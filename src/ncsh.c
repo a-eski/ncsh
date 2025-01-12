@@ -18,7 +18,6 @@
 #include "eskilib/eskilib_string.h"
 #include "ncsh.h"
 #include "ncsh_autocompletions.h"
-#include "ncsh_builtins.h"
 #include "ncsh_config.h"
 #include "ncsh_defines.h"
 #include "ncsh_history.h"
@@ -376,22 +375,6 @@ eskilib_nodiscard int_fast32_t ncsh_execute(struct ncsh *shell)
 {
     if (shell->args.count == 0)
         return NCSH_COMMAND_SUCCESS_CONTINUE;
-
-    if (ncsh_is_exit_command(&shell->args))
-        return NCSH_COMMAND_EXIT;
-
-    if (eskilib_string_equals(shell->args.values[0], "echo", shell->args.lengths[0]))
-    {
-        return ncsh_echo_command(&shell->args);
-    }
-
-    if (eskilib_string_equals(shell->args.values[0], "help", shell->args.lengths[0]))
-        return ncsh_help_command();
-
-    if (eskilib_string_equals(shell->args.values[0], "cd", shell->args.lengths[0]))
-    {
-        return ncsh_cd_command(&shell->args);
-    }
 
     if (eskilib_string_equals(shell->args.values[0], "z", shell->args.lengths[0]))
         return ncsh_z(&shell->args, &shell->z_db);
@@ -883,7 +866,6 @@ int_fast32_t ncsh(void)
     int_fast32_t exit_code = EXIT_SUCCESS;
     int_fast32_t input_result = 0;
     int_fast32_t command_result = 0;
-
     struct ncsh_Input input = {0};
     input.buffer = malloc(NCSH_MAX_INPUT);
     if (!input.buffer)

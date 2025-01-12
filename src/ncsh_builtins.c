@@ -12,20 +12,15 @@
 
 #include "ncsh_builtins.h"
 #include "ncsh_defines.h"
+#include "ncsh_parser.h"
 
-bool ncsh_is_exit_command(struct ncsh_Args *args)
+int_fast32_t ncsh_builtins_exit_command(struct ncsh_Args *args)
 {
-    if (eskilib_string_equals(args->values[0], "q", args->lengths[0]))
-        return true;
-    else if (eskilib_string_equals(args->values[0], "exit", args->lengths[0]))
-        return true;
-    else if (eskilib_string_equals(args->values[0], "quit", args->lengths[0]))
-        return true;
-    else
-        return false;
+    (void)args;
+    return NCSH_COMMAND_EXIT;
 }
 
-int_fast32_t ncsh_echo_command(struct ncsh_Args *args)
+int_fast32_t ncsh_builtins_echo_command(struct ncsh_Args *args)
 {
     for (uint_fast32_t i = 1; i < args->count; ++i)
         printf("%s ", args->values[i]);
@@ -36,8 +31,10 @@ int_fast32_t ncsh_echo_command(struct ncsh_Args *args)
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
-int_fast32_t ncsh_help_command(void)
+int_fast32_t ncsh_builtins_help_command(struct ncsh_Args *args)
 {
+    (void)args; // to not get compiler warnings, may have further ops for help in future
+
     if (write(STDOUT_FILENO, "ncsh by Alex Eski: help\n\n", 25) == -1)
     {
         perror("ncsh: Error writing to stdout");
@@ -78,7 +75,7 @@ int_fast32_t ncsh_help_command(void)
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
-int_fast32_t ncsh_cd_command(struct ncsh_Args *args)
+int_fast32_t ncsh_builtins_cd_command(struct ncsh_Args *args)
 {
     if (!args->values[1])
     {
@@ -96,3 +93,43 @@ int_fast32_t ncsh_cd_command(struct ncsh_Args *args)
 
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
+
+int_fast32_t ncsh_builtins_set_e()
+{
+	puts("sets e detected");
+	return NCSH_COMMAND_SUCCESS_CONTINUE;
+}
+
+#define NOTHING_TO_SET "ncsh set: nothing to set"
+#define VALID_SET_OPERATIONS "ncsh set: valid set operations are in the form '-e', '-c', etc."
+int_fast32_t ncsh_builtins_set_command(struct ncsh_Args *args)
+{
+    if (!args->values[1])
+    {
+        if (write(STDOUT_FILENO, NOTHING_TO_SET, sizeof(NOTHING_TO_SET) - 1) == -1)
+        {
+            return NCSH_COMMAND_EXIT_FAILURE;
+        }
+
+        return NCSH_COMMAND_SUCCESS_CONTINUE;
+    }
+
+    if (args->lengths[1] > 3 || args->values[1][0] != '-')
+    {
+        if (write(STDOUT_FILENO, VALID_SET_OPERATIONS, sizeof(VALID_SET_OPERATIONS) - 1) == -1)
+        {
+            return NCSH_COMMAND_EXIT_FAILURE;
+        }
+
+        return NCSH_COMMAND_SUCCESS_CONTINUE;
+    }
+
+    switch (args->values[1][1])
+    {
+    case 'e': { return ncsh_builtins_set_e();}
+    default: { break; }
+    }
+
+    return NCSH_COMMAND_SUCCESS_CONTINUE;
+}
+

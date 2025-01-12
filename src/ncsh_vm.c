@@ -16,11 +16,12 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "eskilib/eskilib_colors.h"
 #include "ncsh_defines.h"
 #include "ncsh_parser.h"
 #include "ncsh_terminal.h"
 #include "ncsh_vm.h"
+#include "ncsh_builtins.h"
+#include "eskilib/eskilib_colors.h"
 
 /* Types */
 struct ncsh_Output_Redirect_IO
@@ -755,8 +756,31 @@ int_fast32_t ncsh_vm(struct ncsh_Args *args)
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
+char *builtins[] = { "exit", "quit", "q", "echo", "help", "cd", "set" };
+
+#define SIZE_OF_BUILTINS (sizeof(builtins) / sizeof(char *))
+
+int_fast32_t (*builtin_func[]) (struct ncsh_Args *) =
+{
+    &ncsh_builtins_exit_command,
+    &ncsh_builtins_exit_command,
+    &ncsh_builtins_exit_command,
+    &ncsh_builtins_echo_command,
+    &ncsh_builtins_help_command,
+    &ncsh_builtins_cd_command,
+    &ncsh_builtins_set_command
+};
+
 int_fast32_t ncsh_vm_execute(struct ncsh_Args *args)
 {
+    for (uint_fast32_t i = 0; i < SIZE_OF_BUILTINS; ++i)
+    {
+        if (eskilib_string_equals(args->values[0], builtins[i], args->lengths[0]))
+        {
+            return (*builtin_func[i])(args);
+        }
+    }
+
     ncsh_terminal_reset(); // reset terminal settings since a lot of terminal programs use canonical mode
 
     int_fast32_t result = ncsh_vm(args);
@@ -768,5 +792,14 @@ int_fast32_t ncsh_vm_execute(struct ncsh_Args *args)
 
 int_fast32_t ncsh_vm_execute_noninteractive(struct ncsh_Args *args)
 {
+    for (uint_fast32_t i = 0; i < SIZE_OF_BUILTINS; ++i)
+    {
+        if (eskilib_string_equals(args->values[0], builtins[i], args->lengths[0]))
+        {
+            return (*builtin_func[i])(args);
+        }
+    }
+
     return ncsh_vm(args);
 }
+

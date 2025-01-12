@@ -354,7 +354,7 @@ struct eskilib_String ncsh_history_get(uint_fast32_t position, struct ncsh_Histo
     }
 }
 
-uint_fast32_t ncsh_history_command(struct ncsh_History *history)
+int_fast32_t ncsh_history_command(struct ncsh_History *history)
 {
     assert(history);
     if (!history || history->count == 0)

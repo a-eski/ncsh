@@ -7,8 +7,12 @@
 
 #include "ncsh_parser.h"
 
+// int_fast32_t ncsh_vm_init();
+
 int_fast32_t ncsh_vm_execute(struct ncsh_Args *args);
 
 int_fast32_t ncsh_vm_execute_noninteractive(struct ncsh_Args *args);
+
+// void ncsh_vm_exit();
 
 #endif // !ncsh_vm_h

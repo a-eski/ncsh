@@ -27,6 +27,12 @@ enum ncsh_Ops
     OP_BACKGROUND_JOB = 11,                       // &
     OP_AND = 12,                                  // &&
     OP_OR = 13,                                   // ||
+    OP_ADD = 14,                                  // +
+    OP_SUBTRACT = 15,                             // -
+    OP_MULTIPLY = 16,                             // *
+    OP_DIVIDE = 17,                               // /
+    OP_MODULO = 18,                               // %
+    OP_EXPONENTIATION = 19,                       // **
 };
 
 struct ncsh_Args
