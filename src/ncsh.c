@@ -67,6 +67,8 @@ struct ncsh
     struct ncsh_Coordinates terminal_position;
 };
 
+// SIGWINCH handler for terminal resize
+
 #ifdef NCSH_SHORT_DIRECTORY
 void ncsh_prompt_directory(char *cwd, char *output)
 {

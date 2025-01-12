@@ -238,6 +238,14 @@ enum ncsh_Ops ncsh_op_get(const char *line, size_t length)
     }
 }
 
+enum ncsh_Parser_State
+{
+    NONE = 0x00,
+    IN_QUOTES = 0x01,
+    IN_DOUBLE_QUOTES = 0x02,
+    IN_MATHEMATICAL_EXPRESSION = 0x04
+};
+
 void ncsh_parser_parse(const char *line, size_t length, struct ncsh_Args *args)
 {
     assert(args);
