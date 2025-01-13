@@ -86,35 +86,6 @@ eskilib_nodiscard enum eskilib_Result ncsh_parser_args_malloc(struct ncsh_Args *
     return E_SUCCESS;
 }
 
-eskilib_nodiscard enum eskilib_Result ncsh_parser_args_malloc_count(int_fast32_t count, struct ncsh_Args *args)
-{
-    if (args == NULL)
-        return E_FAILURE_NULL_REFERENCE;
-
-    args->count = count;
-
-    args->values = calloc(count, sizeof(char *));
-    if (!args->values)
-        return E_FAILURE_MALLOC;
-
-    args->ops = calloc(count, sizeof(uint_fast8_t));
-    if (!args->ops)
-    {
-        free(args->values);
-        return E_FAILURE_MALLOC;
-    }
-
-    args->lengths = calloc(count, sizeof(size_t));
-    if (!args->lengths)
-    {
-        free(args->values);
-        free(args->ops);
-        return E_FAILURE_MALLOC;
-    }
-
-    return E_SUCCESS;
-}
-
 void ncsh_parser_args_free(struct ncsh_Args *args)
 {
     if (!args)
@@ -193,6 +164,16 @@ enum ncsh_Ops ops_2char[] = {
     OP_EXPONENTIATION
 };
 
+char *ops_3char_str[] = {
+    STDERR_REDIRECTION_APPEND,
+    STDOUT_AND_STDERR_REDIRECTION_APPEND
+};
+
+enum ncsh_Ops ops_3char[] = {
+    OP_STDERR_REDIRECTION_APPEND,
+    OP_STDOUT_AND_STDERR_REDIRECTION_APPEND
+};
+
 eskilib_nodiscard enum ncsh_Ops ncsh_op_get(const char *line, size_t length)
 {
     switch (length)
@@ -212,11 +193,13 @@ eskilib_nodiscard enum ncsh_Ops ncsh_op_get(const char *line, size_t length)
         case MULTIPLY: { return OP_MULTIPLY; }
         case DIVIDE: { return OP_DIVIDE; }
         case MODULO: { return OP_MODULO; }
+        case OPENING_PARAN: { return OP_MATH_EXPRESSION_START; }
+        case CLOSING_PARAN: { return OP_MATH_EXPRESSION_END; }
         default: { return OP_CONSTANT; }
         }
     }
     case 2: {
-        for (uint_fast32_t i = 0; i < sizeof(ops_2char_str) / sizeof(char*); ++i)
+        for (uint_fast32_t i = 0; i < sizeof(ops_2char_str) / sizeof(char *); ++i)
         {
             if (STRCMP_2CHAR(line, ops_2char_str[i]))
                 return ops_2char[i];
@@ -225,13 +208,10 @@ eskilib_nodiscard enum ncsh_Ops ncsh_op_get(const char *line, size_t length)
         return OP_CONSTANT;
     }
     case 3: {
-        if (STRCMP_3CHAR(line, STDERR_REDIRECTION_APPEND))
+        for (uint_fast32_t i = 0; i < sizeof(ops_3char_str) / sizeof(char *); ++i)
         {
-            return OP_STDERR_REDIRECTION_APPEND;
-        }
-        else if (STRCMP_3CHAR(line, STDOUT_AND_STDERR_REDIRECTION_APPEND))
-        {
-            return OP_STDOUT_AND_STDERR_REDIRECTION_APPEND;
+            if (STRCMP_3CHAR(line, ops_3char_str[i]))
+                return ops_3char[i];
         }
 
         return OP_CONSTANT;
@@ -286,24 +266,8 @@ void ncsh_parser_parse(const char *line, size_t length, struct ncsh_Args *args)
             args->values[args->count] = NULL;
             break;
         }
-        else if (ncsh_is_delimiter(line[line_position]) && state == 0)
+        else if (ncsh_is_delimiter(line[line_position]) && (state == 0 || state & IN_MATHEMATICAL_EXPRESSION))
         {
-            if (!state)
-            {
-                if (line_position == length)
-                { // missing closing quote or end of mathematical expression
-
-                    ncsh_parser_args_free_values(args);
-                    args->count = 0;
-                    break;
-                }
-                // check if quotes not closed, overlap, etc.
-                // if (state & IN_DOUBLE_QUOTES)
-                // if (state & IN_SINGLE_QUOTES)
-                // if (state & IN_BACKTICK_QUOTES)
-                // if (state & IN_MATHEMATICAL_EXPRESSION)
-            }
-
             buffer[buf_pos] = '\0';
 
             if (glob_found)
@@ -370,11 +334,15 @@ void ncsh_parser_parse(const char *line, size_t length, struct ncsh_Args *args)
 	    case OPENING_PARAN: {
 		if (!(state & IN_MATHEMATICAL_EXPRESSION))
 		    state |= IN_MATHEMATICAL_EXPRESSION;
+
+                buffer[buf_pos++] = line[line_position];
 	        break;
 	    }
 	    case CLOSING_PARAN: {
 		if (state & IN_MATHEMATICAL_EXPRESSION)
 		    state &= ~IN_MATHEMATICAL_EXPRESSION;
+
+                buffer[buf_pos++] = line[line_position];
 		break;
 	    }
             case TILDE: {
@@ -393,7 +361,8 @@ void ncsh_parser_parse(const char *line, size_t length, struct ncsh_Args *args)
             }
             case GLOB_STAR:
             case GLOB_QUESTION: {
-                glob_found = true;
+                if (!(state & IN_MATHEMATICAL_EXPRESSION))
+                    glob_found = true;
                 buffer[buf_pos++] = line[line_position];
                 break;
             }
@@ -409,3 +378,19 @@ void ncsh_parser_parse(const char *line, size_t length, struct ncsh_Args *args)
     ncsh_debug_args(args);
 #endif /* ifdef NCSH_DEBUG */
 }
+
+            /*if (!state)
+            {
+                if (line_position == length)
+                { // missing closing quote or end of mathematical expression
+
+                    ncsh_parser_args_free_values(args);
+                    args->count = 0;
+                    break;
+                }
+                // check if quotes not closed, overlap, etc.
+                // if (state & IN_DOUBLE_QUOTES)
+                // if (state & IN_SINGLE_QUOTES)
+                // if (state & IN_BACKTICK_QUOTES)
+                // if (state & IN_MATHEMATICAL_EXPRESSION)
+            }*/

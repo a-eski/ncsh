@@ -1,5 +1,7 @@
 // Copyright (c) ncsh by Alex Eski 2025
 
+// Still under dev.
+
 #ifndef ncsh_arena_h
 #define ncsh_arena_h
 

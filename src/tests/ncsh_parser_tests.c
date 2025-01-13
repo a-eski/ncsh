@@ -4,9 +4,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define NCSH_DEBUG
-#include "../ncsh_defines.h"
-
 #include "../eskilib/eskilib_string.h"
 #include "../eskilib/eskilib_test.h"
 #include "../ncsh_parser.h"
@@ -229,6 +226,52 @@ void ncsh_parser_parse_double_quotes_test(void)
     ncsh_parser_args_free(&args);
 }
 
+void ncsh_parser_parse_single_quotes_test(void)
+{
+    char *line = "echo \'hello\'\0";
+    size_t length = 13;
+
+    struct ncsh_Args args;
+    bool result = ncsh_parser_args_malloc(&args);
+    eskilib_assert(result == true);
+    ncsh_parser_parse(line, length, &args);
+
+    eskilib_assert(args.values != NULL);
+    eskilib_assert(args.count == 2);
+
+    eskilib_assert(eskilib_string_equals(args.values[0], "echo", length));
+    eskilib_assert(args.lengths[0] == 5);
+
+    eskilib_assert(eskilib_string_equals(args.values[1], "hello", length));
+    eskilib_assert(args.lengths[1] == 6);
+
+    ncsh_parser_args_free_values(&args);
+    ncsh_parser_args_free(&args);
+}
+
+void ncsh_parser_parse_backtick_quotes_test(void)
+{
+    char *line = "echo `hello`\0";
+    size_t length = 13;
+
+    struct ncsh_Args args;
+    bool result = ncsh_parser_args_malloc(&args);
+    eskilib_assert(result == true);
+    ncsh_parser_parse(line, length, &args);
+
+    eskilib_assert(args.values != NULL);
+    eskilib_assert(args.count == 2);
+
+    eskilib_assert(eskilib_string_equals(args.values[0], "echo", length));
+    eskilib_assert(args.lengths[0] == 5);
+
+    eskilib_assert(eskilib_string_equals(args.values[1], "hello", length));
+    eskilib_assert(args.lengths[1] == 6);
+
+    ncsh_parser_args_free_values(&args);
+    ncsh_parser_args_free(&args);
+}
+
 void ncsh_parser_parse_home_test(void)
 {
     char *line = "ls ~\0";
@@ -277,29 +320,32 @@ void ncsh_parser_parse_home_at_start_test(void)
 
 void ncsh_parser_parse_math_operators(void)
 {
-    // char* line = "1 + 1 - 1 * 1 / 1 % 1 ** 1";
-    char* line = "1 + 1 - 1 + 1 / 1 % 1 - 1";
-    size_t length = strlen(line);
+    char* line = "( 1 + 1 - 1 * 1 / 1 % 1 ** 1 )";
+    // char* line = "1 + 1 - 1 + 1 / 1 % 1 - 1";
+    size_t length = strlen(line) + 1;
     struct ncsh_Args args;
     bool result = ncsh_parser_args_malloc(&args);
     eskilib_assert(result == true);
     ncsh_parser_parse(line, length, &args);
 
-    eskilib_assert(args.ops[0] == OP_CONSTANT);
-    eskilib_assert(args.ops[2] == OP_CONSTANT);
-    eskilib_assert(args.ops[4] == OP_CONSTANT);
-    eskilib_assert(args.ops[6] == OP_CONSTANT);
-    eskilib_assert(args.ops[8] == OP_CONSTANT);
-    eskilib_assert(args.ops[10] == OP_CONSTANT);
+    eskilib_assert(args.ops[0] == OP_MATH_EXPRESSION_START);
 
-    eskilib_assert(args.ops[1] == OP_ADD);
-    eskilib_assert(args.ops[3] == OP_SUBTRACT);
-    // eskilib_assert(args.ops[5] == OP_MULTIPLY); // needs further work bc clashes with glob
-    eskilib_assert(args.ops[5] == OP_ADD);
-    eskilib_assert(args.ops[7] == OP_DIVIDE);
-    eskilib_assert(args.ops[9] == OP_MODULO);
-    // eskilib_assert(args.ops[11] == OP_EXPONENTIATION); // needs further work bc clashes with glob
-    eskilib_assert(args.ops[11] == OP_SUBTRACT);
+    eskilib_assert(args.ops[1] == OP_CONSTANT);
+    eskilib_assert(args.ops[3] == OP_CONSTANT);
+    eskilib_assert(args.ops[5] == OP_CONSTANT);
+    eskilib_assert(args.ops[7] == OP_CONSTANT);
+    eskilib_assert(args.ops[9] == OP_CONSTANT);
+    eskilib_assert(args.ops[11] == OP_CONSTANT);
+    eskilib_assert(args.ops[13] == OP_CONSTANT);
+
+    eskilib_assert(args.ops[2] == OP_ADD);
+    eskilib_assert(args.ops[4] == OP_SUBTRACT);
+    eskilib_assert(args.ops[6] == OP_MULTIPLY);
+    eskilib_assert(args.ops[8] == OP_DIVIDE);
+    eskilib_assert(args.ops[10] == OP_MODULO);
+    eskilib_assert(args.ops[12] == OP_EXPONENTIATION);
+
+    eskilib_assert(args.ops[14] == OP_MATH_EXPRESSION_END);
 
     ncsh_parser_args_free_values(&args);
     ncsh_parser_args_free(&args);
@@ -380,6 +426,8 @@ void ncsh_parser_parse_tests(void)
     eskilib_test_run("ncsh_parser_parse_background_job_test", ncsh_parser_parse_background_job_test);
     eskilib_test_run("ncsh_parser_parse_output_redirection_test", ncsh_parser_parse_output_redirection_test);
     eskilib_test_run("ncsh_parser_parse_double_quotes_test", ncsh_parser_parse_double_quotes_test);
+    eskilib_test_run("ncsh_parser_parse_single_quotes_test", ncsh_parser_parse_single_quotes_test);
+    eskilib_test_run("ncsh_parser_parse_backtick_quotes_test", ncsh_parser_parse_backtick_quotes_test);
     eskilib_test_run("ncsh_parser_parse_output_redirection_append_test",
                      ncsh_parser_parse_output_redirection_append_test);
 

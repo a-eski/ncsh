@@ -12,10 +12,6 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "eskilib/eskilib_colors.h"
-#include "eskilib/eskilib_defines.h"
-#include "eskilib/eskilib_result.h"
-#include "eskilib/eskilib_string.h"
 #include "ncsh.h"
 #include "ncsh_autocompletions.h"
 #include "ncsh_config.h"
@@ -25,6 +21,10 @@
 #include "ncsh_terminal.h"
 #include "ncsh_vm.h"
 #include "z/z.h"
+#include "eskilib/eskilib_colors.h"
+#include "eskilib/eskilib_defines.h"
+#include "eskilib/eskilib_result.h"
+#include "eskilib/eskilib_string.h"
 
 #define EXIT_IO_FAILURE -1
 // #define EXIT_SUCCESS 0 // From stdlib.h

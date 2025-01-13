@@ -7,6 +7,7 @@ debug_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=addre
 release_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -O3 -DNDEBUG
 fuzz_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,leak,fuzzer -DNDEBUG -g
 objects = obj/main.o obj/ncsh.o obj/ncsh_noninteractive.o obj/ncsh_vm.o obj/ncsh_terminal.o obj/eskilib_string.o obj/eskilib_file.o obj/ncsh_parser.o obj/ncsh_builtins.o obj/ncsh_history.o obj/ncsh_autocompletions.o obj/ncsh_config.o obj/z.o
+# obj/ncsh_arena.o
 target = bin/ncsh
 
 ifeq ($(CC), gcc)
@@ -50,6 +51,8 @@ obj/eskilib_string.o : src/eskilib/eskilib_string.c src/eskilib/eskilib_string.h
 	$(cc_with_flags) -c src/eskilib/eskilib_string.c -o obj/eskilib_string.o
 obj/eskilib_file.o : src/eskilib/eskilib_file.c src/eskilib/eskilib_file.h
 	$(cc_with_flags) -c src/eskilib/eskilib_file.c -o obj/eskilib_file.o
+# obj/ncsh_arena.o : src/ncsh_arena.c src/ncsh_arena.h
+	# $(cc_with_flags) -c src/ncsh_arena.c -o obj/ncsh_arena.o
 
 .PHONY: debug
 debug :
@@ -117,6 +120,11 @@ fuzz_parser :
 test_z :
 	chmod +x ./tests_z.sh
 	./tests_z.sh
+
+.PHONY: test_arena
+test_arena :
+	$(CC) $(std) $(debug_flags) ./src/eskilib/eskilib_test.c ./src/ncsh_arena.c ./src/tests/ncsh_arena_tests.c -o ./bin/ncsh_arena_tests
+	./bin/ncsh_arena_tests
 
 .PHONY: clean
 clean :

@@ -9,15 +9,17 @@
 #include "eskilib/eskilib_string.h"
 #include "ncsh_parser.h"
 
-int_fast32_t ncsh_builtins_exit_command(struct ncsh_Args *args);
+int_fast32_t ncsh_builtins_exit(struct ncsh_Args *args);
 
-int_fast32_t ncsh_builtins_echo_command(struct ncsh_Args *args);
+int_fast32_t ncsh_builtins_echo(struct ncsh_Args *args);
 
-int_fast32_t ncsh_builtins_help_command(struct ncsh_Args *args);
+int_fast32_t ncsh_builtins_help(struct ncsh_Args *args);
 
-int_fast32_t ncsh_builtins_cd_command(struct ncsh_Args *args);
+int_fast32_t ncsh_builtins_cd(struct ncsh_Args *args);
 
-int_fast32_t ncsh_builtins_set_command(struct ncsh_Args *args);
+int_fast32_t ncsh_builtins_pwd(struct ncsh_Args *args);
+
+int_fast32_t ncsh_builtins_set(struct ncsh_Args *args);
 
 #endif // !ncsh_builtins_h
 
