@@ -43,12 +43,15 @@ sudo make install
 
 ## goals
 
-* rc file and move configurations
+* rc file and more configurations
 * more compile-time configurations
-* frecency-based autocomplete
+* aliasing
+* frecency-based autocomplete (currently is a simple weight of how many times it has been used).
 * vm that supports !, &&, ||, etc.
-* support removing entries from history and autocompletions
+* support removing entries from history and autocompletions (use sqlite??)
 * move built-in commands like export, kill, setting environment variables, etc.
 * aliasing for user-defined commands, user configuration
 * better prompt line and configurable prompt line
-* add non-iteractive mode
+* support scripts through a non-iteractive mode 
+* build for and test on mac (I don't have one)
+* build for and test on windows with msys2
