@@ -286,7 +286,7 @@ void ncsh_parser_parse(const char *line, size_t length, struct ncsh_Args *args)
             args->values[args->count] = NULL;
             break;
         }
-        else if (ncsh_is_delimiter(line[line_position]))
+        else if (ncsh_is_delimiter(line[line_position]) && state == 0)
         {
             if (!state)
             {
