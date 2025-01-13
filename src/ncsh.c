@@ -483,7 +483,7 @@ eskilib_nodiscard int_fast32_t ncsh_init(struct ncsh *shell)
     return EXIT_SUCCESS;
 }
 
-eskilib_nodiscard int_fast32_t ncsh_read_input(struct ncsh_Input *input, struct ncsh *shell)
+eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input *input, struct ncsh *shell)
 {
     char character;
     char temp_character;
@@ -645,6 +645,8 @@ eskilib_nodiscard int_fast32_t ncsh_read_input(struct ncsh_Input *input, struct 
                     ncsh_write(MOVE_CURSOR_RIGHT, MOVE_CURSOR_RIGHT_LENGTH);
 
                     ++input->pos;
+                    if (input->pos > input->max_pos)
+                        input->max_pos = input->pos;
 
                     break;
                 }
@@ -765,10 +767,15 @@ eskilib_nodiscard int_fast32_t ncsh_read_input(struct ncsh_Input *input, struct 
             }
 
             while (input->pos < input->max_pos && input->buffer[input->pos])
+	    {
                 ++input->pos;
+                ncsh_write(MOVE_CURSOR_RIGHT, MOVE_CURSOR_RIGHT_LENGTH);
+	    }
 
             while (input->pos > 1 && input->buffer[input->pos - 1] == ' ')
+            {
                 --input->pos;
+            }
 
             input->buffer[input->pos++] = '\0';
 
@@ -905,7 +912,7 @@ int_fast32_t ncsh(void)
 
     while (1)
     {
-        input_result = ncsh_read_input(&input, &shell);
+        input_result = ncsh_readline(&input, &shell);
         switch (input_result)
         {
         case EXIT_FAILURE: {

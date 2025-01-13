@@ -9,8 +9,9 @@
 
 #include "eskilib/eskilib_result.h"
 
-#define ncsh_TOKENS 128
+#define NCSH_PARSER_TOKENS 128
 
+/* ncsh_Ops: bytecodes which get sent to the VM */
 enum ncsh_Ops
 {
     OP_NONE = 0,
@@ -35,12 +36,13 @@ enum ncsh_Ops
     OP_EXPONENTIATION = 19,                       // **
 };
 
+/* ncsh_Args: Output of the parser, contains bytecode input which gets sent to the VM */
 struct ncsh_Args
 {
-    uint_fast32_t count;
-    size_t *lengths;
-    uint_fast8_t *ops;
-    char **values;
+    uint_fast32_t count; // Number of lengths/values/ops
+    size_t *lengths;     // Length of the constants stored in values
+    uint_fast8_t *ops;   // The bytecode
+    char **values;       // Constant values needed to be referenced by the VM
 };
 
 bool ncsh_parser_args_is_valid(const struct ncsh_Args *args);
@@ -56,3 +58,4 @@ void ncsh_parser_args_free_values(struct ncsh_Args *args);
 void ncsh_parser_parse(const char *line, size_t length, struct ncsh_Args *args);
 
 #endif // !ncsh_parser_h
+
