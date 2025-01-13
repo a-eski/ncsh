@@ -18,6 +18,6 @@
 
 /* NCSH_START_TIME: display the amount of milliseconds it took to startup ncsh */
 #ifndef NCSH_START_TIME
-// #define NCSH_START_TIME
+#define NCSH_START_TIME
 #endif // !NCSH_START_TIME
 

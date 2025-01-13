@@ -21,6 +21,7 @@
 #include "ncsh_terminal.h"
 #include "ncsh_vm.h"
 #include "ncsh_builtins.h"
+#include "eskilib/eskilib_defines.h"
 #include "eskilib/eskilib_colors.h"
 
 /* Types */
@@ -209,7 +210,7 @@ void ncsh_stdout_and_stderr_redirection_stop(struct ncsh_Output_Redirect_IO *io)
     dup2(io->original_stderr, STDERR_FILENO);
 }
 
-int_fast32_t ncsh_vm_redirection_start_if_needed(struct ncsh_Args *args, struct ncsh_Tokens *tokens, struct ncsh_Vm *vm)
+eskilib_nodiscard int_fast32_t ncsh_vm_redirection_start_if_needed(struct ncsh_Args *args, struct ncsh_Tokens *tokens, struct ncsh_Vm *vm)
 {
     assert(args);
     assert(tokens);
@@ -292,7 +293,7 @@ void ncsh_vm_redirection_stop_if_needed(struct ncsh_Tokens *tokens, struct ncsh_
 }
 
 /* Pipes */
-int_fast32_t ncsh_pipe_start(uint_fast32_t command_position, struct ncsh_Pipe_IO *pipes)
+eskilib_nodiscard int_fast32_t ncsh_pipe_start(uint_fast32_t command_position, struct ncsh_Pipe_IO *pipes)
 {
     assert(pipes);
 
@@ -383,7 +384,7 @@ void ncsh_pipe_stop(uint_fast32_t command_position, uint_fast32_t number_of_comm
 }
 
 /* Tokenizing and Syntax Validation */
-int_fast32_t ncsh_syntax_error(const char *message, size_t message_length)
+eskilib_nodiscard int_fast32_t ncsh_syntax_error(const char *message, size_t message_length)
 {
     if (write(STDIN_FILENO, message, message_length) == -1)
         return NCSH_COMMAND_EXIT_FAILURE;
@@ -453,7 +454,7 @@ int_fast32_t ncsh_syntax_error(const char *message, size_t message_length)
 
 #define INVALID_SYNTAX(message) ncsh_syntax_error(message, sizeof(message) - 1)
 
-int_fast32_t ncsh_vm_args_check(struct ncsh_Args *args)
+eskilib_nodiscard int_fast32_t ncsh_vm_args_check(struct ncsh_Args *args)
 {
     assert(args);
 
@@ -519,7 +520,7 @@ int_fast32_t ncsh_vm_args_check(struct ncsh_Args *args)
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
-/*int_fast32_t ncsh_vm_tokens_check(struct ncsh_Tokens* tokens) {
+/*eskilib_nodiscard int_fast32_t ncsh_vm_tokens_check(struct ncsh_Tokens* tokens) {
     assert(tokens);
 
     if (tokens->stdout_redirect_index && tokens->stdin_redirect_index) {
@@ -530,7 +531,7 @@ respectively).\n", 97);
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }*/
 
-int_fast32_t ncsh_vm_tokenize(struct ncsh_Args *args, struct ncsh_Tokens *tokens)
+eskilib_nodiscard int_fast32_t ncsh_vm_tokenize(struct ncsh_Args *args, struct ncsh_Tokens *tokens)
 {
     assert(args);
     assert(tokens);
@@ -596,7 +597,7 @@ int_fast32_t ncsh_vm_tokenize(struct ncsh_Args *args, struct ncsh_Tokens *tokens
 }
 
 /* Failure Handling */
-int_fast32_t ncsh_fork_failure(uint_fast32_t command_position, uint_fast32_t number_of_commands,
+eskilib_nodiscard int_fast32_t ncsh_fork_failure(uint_fast32_t command_position, uint_fast32_t number_of_commands,
                                struct ncsh_Pipe_IO *pipes)
 {
     assert(pipes);
@@ -617,7 +618,7 @@ int_fast32_t ncsh_fork_failure(uint_fast32_t command_position, uint_fast32_t num
 /* VM */
 #define EXECVP_FAILED -1
 
-int_fast32_t ncsh_vm(struct ncsh_Args *args)
+eskilib_nodiscard int_fast32_t ncsh_vm(struct ncsh_Args *args)
 {
     assert(args);
 
@@ -638,7 +639,8 @@ int_fast32_t ncsh_vm(struct ncsh_Args *args)
     uint_fast32_t args_position = 0;
     uint_fast32_t buffer_position = 0;
 
-    ncsh_vm_redirection_start_if_needed(args, &tokens, &vm);
+    if ((result = ncsh_vm_redirection_start_if_needed(args, &tokens, &vm)) != NCSH_COMMAND_SUCCESS_CONTINUE)
+        return result;
 
     while (args->values[args_position] != NULL && end != true)
     {
@@ -791,7 +793,7 @@ int_fast32_t (*builtin_func[]) (struct ncsh_Args *) =
     &ncsh_builtins_set_command
 };
 
-int_fast32_t ncsh_vm_execute(struct ncsh_Args *args)
+eskilib_nodiscard int_fast32_t ncsh_vm_execute(struct ncsh_Args *args)
 {
     assert(args);
 
@@ -812,7 +814,7 @@ int_fast32_t ncsh_vm_execute(struct ncsh_Args *args)
     return result;
 }
 
-int_fast32_t ncsh_vm_execute_noninteractive(struct ncsh_Args *args)
+eskilib_nodiscard int_fast32_t ncsh_vm_execute_noninteractive(struct ncsh_Args *args)
 {
     assert(args);
     if (!args->count)

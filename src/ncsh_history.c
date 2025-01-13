@@ -10,6 +10,7 @@
 #include <string.h>
 
 #include "eskilib/eskilib_colors.h"
+#include "eskilib/eskilib_defines.h"
 #include "eskilib/eskilib_file.h"
 #include "eskilib/eskilib_result.h"
 #include "eskilib/eskilib_string.h"
@@ -45,7 +46,7 @@ void ncsh_history_file_set(struct eskilib_String config_file, struct ncsh_Histor
 #endif /* ifdef NCSH_DEBUG */
 }
 
-enum eskilib_Result ncsh_history_malloc(struct ncsh_History *history)
+eskilib_nodiscard enum eskilib_Result ncsh_history_malloc(struct ncsh_History *history)
 {
     assert(history);
     if (!history)
@@ -59,7 +60,7 @@ enum eskilib_Result ncsh_history_malloc(struct ncsh_History *history)
     return E_SUCCESS;
 }
 
-enum eskilib_Result ncsh_history_load(struct eskilib_String config_location, struct ncsh_History *history)
+eskilib_nodiscard enum eskilib_Result ncsh_history_load(struct eskilib_String config_location, struct ncsh_History *history)
 {
     assert(history != NULL);
     if (history == NULL)
@@ -104,7 +105,7 @@ enum eskilib_Result ncsh_history_load(struct eskilib_String config_location, str
     return E_SUCCESS;
 }
 
-enum eskilib_Result ncsh_history_init(struct eskilib_String config_location, struct ncsh_History *history)
+eskilib_nodiscard enum eskilib_Result ncsh_history_init(struct eskilib_String config_location, struct ncsh_History *history)
 {
     enum eskilib_Result result;
     if ((result = ncsh_history_malloc(history)) != E_SUCCESS)
@@ -124,7 +125,7 @@ enum eskilib_Result ncsh_history_init(struct eskilib_String config_location, str
     return E_SUCCESS;
 }
 
-enum eskilib_Result ncsh_history_clean(struct ncsh_History *history)
+eskilib_nodiscard enum eskilib_Result ncsh_history_clean(struct ncsh_History *history)
 {
     (void)history;
     // struct eskilib_HashTable ht = {0};
@@ -183,7 +184,8 @@ enum eskilib_Result ncsh_history_save(struct ncsh_History *history)
     return E_SUCCESS;
 }
 
-/*enum eskilib_Result history_write_entry_to_file(struct eskilib_String* entry, FILE* file) {
+/*eskilib_nodiscard enum eskilib_Result history_write_entry_to_file(struct eskilib_String* entry, FILE* file)
+{
     assert(file);
 
     size_t bytes_written;
@@ -203,7 +205,8 @@ enum eskilib_Result ncsh_history_save(struct ncsh_History *history)
     return E_SUCCESS;
 }
 
-enum eskilib_Result ncsh_history_save_v2(struct ncsh_History* history) {
+eskilib_nodiscard enum eskilib_Result ncsh_history_save_v2(struct ncsh_History* history)
+{
     assert(history);
     if (!history)
         return E_FAILURE_NULL_REFERENCE;
@@ -249,6 +252,7 @@ void ncsh_history_free(struct ncsh_History *history)
     free(history->entries);
 }
 
+#define NCSH_HISTORY_SAVE_ERROR "ncsh history: could not save history."
 void ncsh_history_exit(struct ncsh_History *history)
 {
     if (history)
@@ -259,7 +263,7 @@ void ncsh_history_exit(struct ncsh_History *history)
     }
 }
 
-enum eskilib_Result ncsh_history_add(char *line, size_t length, struct ncsh_History *history)
+eskilib_nodiscard enum eskilib_Result ncsh_history_add(char *line, size_t length, struct ncsh_History *history)
 {
     assert(history);
     assert(line);
@@ -282,7 +286,8 @@ enum eskilib_Result ncsh_history_add(char *line, size_t length, struct ncsh_Hist
     return E_SUCCESS;
 }
 
-/*enum eskilib_Result ncsh_history_remove(char* line, uint_fast32_t length, struct ncsh_History* history) {
+/*eskilib_nodiscard enum eskilib_Result ncsh_history_remove(char* line, uint_fast32_t length, struct ncsh_History* history)
+{
     assert(history != NULL);
     assert(line != NULL);
     assert(length != 0);
@@ -354,7 +359,7 @@ struct eskilib_String ncsh_history_get(uint_fast32_t position, struct ncsh_Histo
     }
 }
 
-int_fast32_t ncsh_history_command(struct ncsh_History *history)
+eskilib_nodiscard int_fast32_t ncsh_history_command(struct ncsh_History *history)
 {
     assert(history);
     if (!history || history->count == 0)

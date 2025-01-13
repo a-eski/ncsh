@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "eskilib/eskilib_defines.h"
 #include "eskilib/eskilib_result.h"
 #include "eskilib/eskilib_string.h"
 #include "ncsh_defines.h"
@@ -19,9 +20,12 @@
 #define STRCMP_3CHAR(val1, val2) (val1[0] == val2[0] && val1[1] == val2[1] && val1[2] == val2[2])
 
 // supported quotes
+#define SINGLE_QUOTE_KEY '\''
 #define DOUBLE_QUOTE_KEY '\"'
 #define SINGLE_QUOTE_KEY '\''
-#define BACKTICK_KEY '\`'
+#define BACKTICK_QUOTE_KEY '`'
+#define OPENING_PARAN '('
+#define CLOSING_PARAN ')'
 
 // ops
 #define PIPE '|'
@@ -53,25 +57,25 @@
 // currently unsupported
 #define BANG '!'
 
-enum eskilib_Result ncsh_parser_args_malloc(struct ncsh_Args *args)
+eskilib_nodiscard enum eskilib_Result ncsh_parser_args_malloc(struct ncsh_Args *args)
 {
     if (args == NULL)
         return E_FAILURE_NULL_REFERENCE;
 
     args->count = 0;
 
-    args->values = calloc(ncsh_TOKENS, sizeof(char *));
+    args->values = calloc(NCSH_PARSER_TOKENS, sizeof(char *));
     if (!args->values)
         return E_FAILURE_MALLOC;
 
-    args->ops = calloc(ncsh_TOKENS, sizeof(uint_fast8_t));
+    args->ops = calloc(NCSH_PARSER_TOKENS, sizeof(uint_fast8_t));
     if (!args->ops)
     {
         free(args->values);
         return E_FAILURE_MALLOC;
     }
 
-    args->lengths = calloc(ncsh_TOKENS, sizeof(size_t));
+    args->lengths = calloc(NCSH_PARSER_TOKENS, sizeof(size_t));
     if (!args->lengths)
     {
         free(args->values);
@@ -82,7 +86,7 @@ enum eskilib_Result ncsh_parser_args_malloc(struct ncsh_Args *args)
     return E_SUCCESS;
 }
 
-enum eskilib_Result ncsh_parser_args_malloc_count(int_fast32_t count, struct ncsh_Args *args)
+eskilib_nodiscard enum eskilib_Result ncsh_parser_args_malloc_count(int_fast32_t count, struct ncsh_Args *args)
 {
     if (args == NULL)
         return E_FAILURE_NULL_REFERENCE;
@@ -146,7 +150,7 @@ void ncsh_parser_args_free_values(struct ncsh_Args *args)
     args->count = 0;
 }
 
-bool ncsh_is_delimiter(char ch)
+eskilib_nodiscard bool ncsh_is_delimiter(char ch)
 {
     switch (ch)
     {
@@ -189,7 +193,7 @@ enum ncsh_Ops ops_2char[] = {
     OP_EXPONENTIATION
 };
 
-enum ncsh_Ops ncsh_op_get(const char *line, size_t length)
+eskilib_nodiscard enum ncsh_Ops ncsh_op_get(const char *line, size_t length)
 {
     switch (length)
     {
@@ -240,10 +244,10 @@ enum ncsh_Ops ncsh_op_get(const char *line, size_t length)
 
 enum ncsh_Parser_State
 {
-    NONE = 0x00,
-    IN_QUOTES = 0x01,
+    IN_SINGLE_QUOTES = 0x01,
     IN_DOUBLE_QUOTES = 0x02,
-    IN_MATHEMATICAL_EXPRESSION = 0x04
+    IN_BACKTICK_QUOTES = 0x04,
+    IN_MATHEMATICAL_EXPRESSION = 0x08
 };
 
 void ncsh_parser_parse(const char *line, size_t length, struct ncsh_Args *args)
@@ -257,7 +261,7 @@ void ncsh_parser_parse(const char *line, size_t length, struct ncsh_Args *args)
         return;
     }
 
-    assert(length > 1);
+    assert(length >= 2);
 
 #ifdef NCSH_DEBUG
     ncsh_debug_parser_input(line, length);
@@ -265,25 +269,41 @@ void ncsh_parser_parse(const char *line, size_t length, struct ncsh_Args *args)
 
     char buffer[NCSH_MAX_INPUT];
     size_t buf_pos = 0;
-    uint_fast32_t double_quotes_count = 0;
     bool glob_found = false;
+    int state = 0;
 
     for (uint_fast32_t line_position = 0; line_position < length + 1; ++line_position)
     {
-        if (args->count == ncsh_TOKENS - 1 && line_position < length)
+        if (args->count == NCSH_PARSER_TOKENS - 1 && line_position < length)
         { // can't parse all of the args
             ncsh_parser_args_free_values(args);
             args->count = 0;
             break;
         }
         else if (line_position == length || line_position >= NCSH_MAX_INPUT - 1 || buf_pos >= NCSH_MAX_INPUT - 1 ||
-                 args->count == ncsh_TOKENS - 1)
+                 args->count == NCSH_PARSER_TOKENS - 1)
         {
             args->values[args->count] = NULL;
             break;
         }
-        else if (ncsh_is_delimiter(line[line_position]) && (double_quotes_count == 0 || double_quotes_count == 2))
+        else if (ncsh_is_delimiter(line[line_position]))
         {
+            if (!state)
+            {
+                if (line_position == length)
+                { // missing closing quote or end of mathematical expression
+
+                    ncsh_parser_args_free_values(args);
+                    args->count = 0;
+                    break;
+                }
+                // check if quotes not closed, overlap, etc.
+                // if (state & IN_DOUBLE_QUOTES)
+                // if (state & IN_SINGLE_QUOTES)
+                // if (state & IN_BACKTICK_QUOTES)
+                // if (state & IN_MATHEMATICAL_EXPRESSION)
+            }
+
             buffer[buf_pos] = '\0';
 
             if (glob_found)
@@ -303,7 +323,7 @@ void ncsh_parser_parse(const char *line, size_t length, struct ncsh_Args *args)
                     args->ops[args->count] = OP_CONSTANT;
                     args->lengths[args->count] = buf_pos;
                     ++args->count;
-                    if (args->count >= ncsh_TOKENS - 1)
+                    if (args->count >= NCSH_PARSER_TOKENS- 1)
                         break;
                 }
 
@@ -321,16 +341,42 @@ void ncsh_parser_parse(const char *line, size_t length, struct ncsh_Args *args)
 
             buffer[0] = '\0';
             buf_pos = 0;
-            double_quotes_count = 0;
         }
         else
         {
             switch (line[line_position])
             {
             case DOUBLE_QUOTE_KEY: {
-                ++double_quotes_count;
+                if (!(state & IN_DOUBLE_QUOTES))
+                    state |= IN_DOUBLE_QUOTES;
+                else
+                    state &= ~IN_DOUBLE_QUOTES;
                 break;
             }
+            case SINGLE_QUOTE_KEY: {
+                if (!(state & IN_SINGLE_QUOTES))
+                    state |= IN_SINGLE_QUOTES;
+                else
+                    state &= ~IN_SINGLE_QUOTES;
+                break;
+            }
+            case BACKTICK_QUOTE_KEY: {
+                if (!(state & IN_BACKTICK_QUOTES))
+                    state |= IN_BACKTICK_QUOTES;
+                else
+                    state &= ~IN_BACKTICK_QUOTES;
+                break;
+            }
+	    case OPENING_PARAN: {
+		if (!(state & IN_MATHEMATICAL_EXPRESSION))
+		    state |= IN_MATHEMATICAL_EXPRESSION;
+	        break;
+	    }
+	    case CLOSING_PARAN: {
+		if (state & IN_MATHEMATICAL_EXPRESSION)
+		    state &= ~IN_MATHEMATICAL_EXPRESSION;
+		break;
+	    }
             case TILDE: {
                 char *home = getenv("HOME");
                 size_t home_length = strlen(home);
