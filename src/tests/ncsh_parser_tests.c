@@ -272,6 +272,39 @@ void ncsh_parser_parse_backtick_quotes_test(void)
     ncsh_parser_args_free(&args);
 }
 
+void ncsh_parser_parse_git_commit_test(void)
+{
+    char *line = "git commit -m \"this is a commit message\"\0";
+    size_t length = strlen(line) + 1;
+
+    struct ncsh_Args args;
+    bool result = ncsh_parser_args_malloc(&args);
+    eskilib_assert(result == true);
+    ncsh_parser_parse(line, length, &args);
+
+    eskilib_assert(args.values != NULL);
+    eskilib_assert(args.count == 4);
+
+    eskilib_assert(eskilib_string_equals(args.values[0], "git", length));
+    eskilib_assert(args.lengths[0] == 4);
+    eskilib_assert(args.ops[0] == OP_CONSTANT);
+
+    eskilib_assert(eskilib_string_equals(args.values[1], "commit", length));
+    eskilib_assert(args.lengths[1] == 7);
+    eskilib_assert(args.ops[1] == OP_CONSTANT);
+
+    eskilib_assert(eskilib_string_equals(args.values[2], "-m", length));
+    eskilib_assert(args.lengths[2] == 3);
+    eskilib_assert(args.ops[2] == OP_CONSTANT);
+
+    eskilib_assert(eskilib_string_equals(args.values[3], "this is a commit message", length));
+    eskilib_assert(args.lengths[3] == 25);
+    eskilib_assert(args.ops[3] == OP_CONSTANT);
+
+    ncsh_parser_args_free_values(&args);
+    ncsh_parser_args_free(&args);
+}
+
 void ncsh_parser_parse_home_test(void)
 {
     char *line = "ls ~\0";
@@ -430,6 +463,7 @@ void ncsh_parser_parse_tests(void)
     eskilib_test_run("ncsh_parser_parse_backtick_quotes_test", ncsh_parser_parse_backtick_quotes_test);
     eskilib_test_run("ncsh_parser_parse_output_redirection_append_test",
                      ncsh_parser_parse_output_redirection_append_test);
+    eskilib_test_run("ncsh_parser_parse_git_commit_test", ncsh_parser_parse_git_commit_test);
 
 #ifdef NDEBUG
     eskilib_test_run("ncsh_parser_parse_home_test", ncsh_parser_parse_home_test);
