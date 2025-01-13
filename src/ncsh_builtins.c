@@ -10,11 +10,11 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#include "ncsh_builtins.h"
 #include "eskilib/eskilib_colors.h"
 #include "eskilib/eskilib_defines.h"
 #include "ncsh_defines.h"
 #include "ncsh_parser.h"
+#include "ncsh_builtins.h"
 
 eskilib_nodiscard int_fast32_t ncsh_builtins_exit(struct ncsh_Args *args)
 {

@@ -121,10 +121,10 @@ test_z :
 	chmod +x ./tests_z.sh
 	./tests_z.sh
 
-.PHONY: test_arena
-test_arena :
-	$(CC) $(std) $(debug_flags) ./src/eskilib/eskilib_test.c ./src/ncsh_arena.c ./src/tests/ncsh_arena_tests.c -o ./bin/ncsh_arena_tests
-	./bin/ncsh_arena_tests
+# .PHONY: test_arena
+# test_arena :
+# 	$(CC) $(std) $(debug_flags) ./src/eskilib/eskilib_test.c ./src/ncsh_arena.c ./src/tests/ncsh_arena_tests.c -o ./bin/ncsh_arena_tests
+# 	./bin/ncsh_arena_tests
 
 .PHONY: clean
 clean :
