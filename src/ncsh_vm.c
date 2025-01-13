@@ -780,17 +780,18 @@ eskilib_nodiscard int_fast32_t ncsh_vm(struct ncsh_Args *args)
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
-char *builtins[] = { "exit", "quit", "q", "echo", "help", "cd", "set" };
+char *builtins[] = { "exit", "quit", "q", "echo", "help", "cd", "set", "pwd" };
 
 int_fast32_t (*builtin_func[]) (struct ncsh_Args *) =
 {
-    &ncsh_builtins_exit_command,
-    &ncsh_builtins_exit_command,
-    &ncsh_builtins_exit_command,
-    &ncsh_builtins_echo_command,
-    &ncsh_builtins_help_command,
-    &ncsh_builtins_cd_command,
-    &ncsh_builtins_set_command
+    &ncsh_builtins_exit,
+    &ncsh_builtins_exit,
+    &ncsh_builtins_exit,
+    &ncsh_builtins_echo,
+    &ncsh_builtins_help,
+    &ncsh_builtins_cd,
+    &ncsh_builtins_set,
+    &ncsh_builtins_pwd
 };
 
 eskilib_nodiscard int_fast32_t ncsh_vm_execute(struct ncsh_Args *args)

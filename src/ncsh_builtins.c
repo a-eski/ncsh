@@ -10,18 +10,19 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#include "ncsh_builtins.h"
+#include "eskilib/eskilib_colors.h"
 #include "eskilib/eskilib_defines.h"
 #include "ncsh_defines.h"
 #include "ncsh_parser.h"
+#include "ncsh_builtins.h"
 
-eskilib_nodiscard int_fast32_t ncsh_builtins_exit_command(struct ncsh_Args *args)
+eskilib_nodiscard int_fast32_t ncsh_builtins_exit(struct ncsh_Args *args)
 {
     (void)args; // to not get compiler warnings
     return NCSH_COMMAND_EXIT;
 }
 
-eskilib_nodiscard int_fast32_t ncsh_builtins_echo_command(struct ncsh_Args *args)
+eskilib_nodiscard int_fast32_t ncsh_builtins_echo(struct ncsh_Args *args)
 {
     for (uint_fast32_t i = 1; i < args->count; ++i)
         printf("%s ", args->values[i]);
@@ -32,7 +33,7 @@ eskilib_nodiscard int_fast32_t ncsh_builtins_echo_command(struct ncsh_Args *args
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
-eskilib_nodiscard int_fast32_t ncsh_builtins_help_command(struct ncsh_Args *args)
+eskilib_nodiscard int_fast32_t ncsh_builtins_help(struct ncsh_Args *args)
 {
     (void)args; // to not get compiler warnings
 
@@ -76,7 +77,7 @@ eskilib_nodiscard int_fast32_t ncsh_builtins_help_command(struct ncsh_Args *args
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
-eskilib_nodiscard int_fast32_t ncsh_builtins_cd_command(struct ncsh_Args *args)
+eskilib_nodiscard int_fast32_t ncsh_builtins_cd(struct ncsh_Args *args)
 {
     if (!args->values[1])
     {
@@ -95,6 +96,21 @@ eskilib_nodiscard int_fast32_t ncsh_builtins_cd_command(struct ncsh_Args *args)
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
+eskilib_nodiscard int_fast32_t ncsh_builtins_pwd(struct ncsh_Args *args)
+{
+    (void)args;
+    char path[PATH_MAX];
+    if (!getcwd(path, sizeof(path)))
+    {
+        perror(RED "ncsh pwd: Error when getting current directory" RESET);
+        fflush(stderr);
+        return NCSH_COMMAND_EXIT_FAILURE;
+    }
+
+    puts(path);
+    return NCSH_COMMAND_SUCCESS_CONTINUE;
+}
+
 eskilib_nodiscard int_fast32_t ncsh_builtins_set_e()
 {
 	puts("sets e detected");
@@ -103,7 +119,7 @@ eskilib_nodiscard int_fast32_t ncsh_builtins_set_e()
 
 #define NOTHING_TO_SET "ncsh set: nothing to set"
 #define VALID_SET_OPERATIONS "ncsh set: valid set operations are in the form '-e', '-c', etc."
-eskilib_nodiscard int_fast32_t ncsh_builtins_set_command(struct ncsh_Args *args)
+eskilib_nodiscard int_fast32_t ncsh_builtins_set(struct ncsh_Args *args)
 {
     if (!args->values[1])
     {
