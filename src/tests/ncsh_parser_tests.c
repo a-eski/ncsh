@@ -354,7 +354,6 @@ void ncsh_parser_parse_home_at_start_test(void)
 void ncsh_parser_parse_math_operators(void)
 {
     char* line = "( 1 + 1 - 1 * 1 / 1 % 1 ** 1 )";
-    // char* line = "1 + 1 - 1 + 1 / 1 % 1 - 1";
     size_t length = strlen(line) + 1;
     struct ncsh_Args args;
     bool result = ncsh_parser_args_malloc(&args);

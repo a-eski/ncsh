@@ -359,10 +359,14 @@ void ncsh_parser_parse(const char *line, size_t length, struct ncsh_Args *args)
                 buf_pos += home_length;
                 break;
             }
-            case GLOB_STAR:
-            case GLOB_QUESTION: {
+            case GLOB_STAR: {
                 if (!(state & IN_MATHEMATICAL_EXPRESSION))
                     glob_found = true;
+                buffer[buf_pos++] = line[line_position];
+                break;
+            }
+            case GLOB_QUESTION: {
+                glob_found = true;
                 buffer[buf_pos++] = line[line_position];
                 break;
             }
