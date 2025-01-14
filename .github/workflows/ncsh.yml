@@ -15,12 +15,14 @@ jobs:
     - uses: actions/checkout@v4
       with:
         ref: ${{ github.ref }}
-    - name: make new test
+    - name: make
       run: make
-    - name: make debug test
+    - name: make debug
       run: make debug
     - name: make check
       run: make check
+    - name: make debug clang
+      run: make debug CC=clang
     - name: make clang
       run: make -B CC=clang
     - name: make check clang
