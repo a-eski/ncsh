@@ -11,4 +11,3 @@ chmod +x ./z.sh
 
 rm ztests
 rm _z_database.bin
-

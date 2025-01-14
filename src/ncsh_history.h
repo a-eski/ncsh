@@ -21,7 +21,7 @@
 
 struct ncsh_History
 {
-    uint_fast32_t count;
+    int count;
     char *file;
     struct eskilib_String *entries;
 };
@@ -32,7 +32,7 @@ void ncsh_history_exit(struct ncsh_History *history);
 
 enum eskilib_Result ncsh_history_add(char *line, size_t length, struct ncsh_History *history);
 
-struct eskilib_String ncsh_history_get(uint_fast32_t position, struct ncsh_History *history);
+struct eskilib_String ncsh_history_get(int position, struct ncsh_History *history);
 
 int_fast32_t ncsh_history_command(struct ncsh_History *history);
 

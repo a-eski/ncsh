@@ -831,4 +831,3 @@ eskilib_nodiscard int_fast32_t ncsh_vm_execute_noninteractive(struct ncsh_Args *
 
     return ncsh_vm(args);
 }
-

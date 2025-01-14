@@ -20,4 +20,3 @@
 #ifndef NCSH_START_TIME
 #define NCSH_START_TIME
 #endif // !NCSH_START_TIME
-

@@ -24,13 +24,13 @@ struct z_Directory
     double rank;
     time_t last_accessed;
     char *path;
-    uint32_t path_length;
+    size_t path_length;
 };
 
 struct z_Database
 {
     // bool dirty;
-    uint32_t count;
+    size_t count;
     char *database_file;
     struct z_Directory dirs[Z_DATABASE_IN_MEMORY_LIMIT];
 };

@@ -90,6 +90,8 @@ void ncsh_parser_args_free(struct ncsh_Args *args)
 {
     if (!args)
         return;
+
+    ncsh_parser_args_free_values(args);
     if (args->values)
     {
         free(args->values);
@@ -110,6 +112,9 @@ void ncsh_parser_args_free(struct ncsh_Args *args)
 
 void ncsh_parser_args_free_values(struct ncsh_Args *args)
 {
+    if (args->count == 0)
+        return;
+
     for (uint_fast32_t i = 0; i < args->count; ++i)
     {
         if (args->values[i])

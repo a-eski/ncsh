@@ -12,7 +12,7 @@
 #define NCSH_PARSER_TOKENS 128
 
 /* ncsh_Ops: bytecodes which get sent to the VM */
-enum ncsh_Ops
+enum ncsh_Ops : uint_fast8_t
 {
     // Default value, indicative of an issue parsing when found during execution
     OP_NONE = 0,

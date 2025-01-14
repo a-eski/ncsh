@@ -9,7 +9,7 @@ SLEEP_TIME = 0.2
 LS_LINES = 4
 LS_ITEMS = 21
 LS_FIRST_ITEM = 'CMakeLists.txt'
-TAB_AUTOCOMPLETE_ROWS = 10
+TAB_AUTOCOMPLETE_ROWS = 11
 
 def assert_check_new_row(row)
   @tty.assert_row_starts_with(row, "#{ENV['USER']} ")
@@ -281,13 +281,25 @@ def history_delete_test(row)
 end
 
 def history_backspace_test(row)
-  # TODO: implementation
+  assert_check_new_row(row)
+  @tty.send_up_arrow
+  @tty.assert_row_ends_with(row, 'ls | wc -c')
+  @tty.send_backspaces(5)
+  @tty.send_line('head -1')
+  @tty.assert_row_ends_with(row, 'ls | head -1')
+  row += 1
+  @tty.assert_row_ends_with(row, LS_FIRST_ITEM)
+  row += 1
   puts 'History backspace test passed'
   row
 end
 
 def history_clear_test(row)
-  # TODO: implementation
+  assert_check_new_row(row)
+  @tty.send_up_arrow
+  @tty.assert_row_ends_with(row, 'ls | head -1')
+  @tty.send_down_arrow
+  assert_check_new_row(row)
   puts 'History clear test passed'
   row
 end
@@ -296,10 +308,9 @@ def history_tests(row)
   starting_tests 'history'
 
   row = basic_history_test row
-  # row =
-  history_delete_test row
-  # row = history_backspace_test
-  # history_clear_test
+  row = history_delete_test row
+  row = history_backspace_test row
+  history_clear_test row
 end
 
 def basic_stdout_redirection_test(row)
@@ -586,7 +597,7 @@ def arrows_move_tab_autocompletion_test(row)
   @tty.send_down_arrow
   @tty.assert_cursor_position(cursor_x_before, cursor_y_before + 1)
   @tty.send_down_arrows(TAB_AUTOCOMPLETE_ROWS)
-  @tty.assert_cursor_position(cursor_x_before, cursor_y_before + 8)
+  @tty.assert_cursor_position(cursor_x_before, cursor_y_before + TAB_AUTOCOMPLETE_ROWS - 2)
   @tty.send_keys(TTYtest::TAB)
   row += TAB_AUTOCOMPLETE_ROWS
 
@@ -755,7 +766,6 @@ row = tab_autocompletion_tests row
 row = syntax_error_tests row
 row = stderr_redirection_tests row
 row = stdout_and_stderr_redirection_tests row
-# stdin_and_stdout_redirections_tests row
 
 # row = 0
 # @tty = TTYtest.new_terminal(%(PS1='$ ' ./bin/ncsh), width: 20, height: 5)

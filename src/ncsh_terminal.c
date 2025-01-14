@@ -42,7 +42,7 @@ void ncsh_terminal_init(void)
     }
 
     terminal = original_terminal;
-    terminal.c_lflag &= ~(ICANON | ECHO);
+    terminal.c_lflag &= (tcflag_t)~(ICANON | ECHO);
     terminal.c_cc[VMIN] = 1;
     terminal.c_cc[VTIME] = 0;
     // terminal.c_cc[VEOF] = CTRL_D;
@@ -70,31 +70,31 @@ void ncsh_terminal_move(int x, int y)
     printf("\033[%d;%dH", y, x);
 }
 
-void ncsh_terminal_move_right(uint_fast32_t i)
+void ncsh_terminal_move_right(int i)
 {
-    printf("\033[%luC", i);
+    printf("\033[%dC", i);
 }
 
-void ncsh_terminal_move_left(uint_fast32_t i)
+void ncsh_terminal_move_left(int i)
 {
-    printf("\033[%luD", i);
+    printf("\033[%dD", i);
 }
 
-void ncsh_terminal_move_up(uint_fast32_t i)
+void ncsh_terminal_move_up(int i)
 {
-    printf("\033[%luA", i);
+    printf("\033[%dA", i);
 }
 
-void ncsh_terminal_move_down(uint_fast32_t i)
+void ncsh_terminal_move_down(int i)
 {
-    printf("\033[%luB", i);
+    printf("\033[%dB", i);
 }
 
 struct ncsh_Coordinates ncsh_terminal_position(void)
 {
     char buffer[T_BUFFER_LENGTH] = {0};
-    int_fast32_t i = 0;
-    int_fast32_t power = 0;
+    int i = 0;
+    int power = 0;
     char character = 0;
     struct ncsh_Coordinates cursor_position = {0};
 

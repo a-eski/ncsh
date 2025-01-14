@@ -1,6 +1,7 @@
 // Copyright (c) ncsh by Alex Eski 2024
 
 #include <assert.h>
+#include <limits.h>
 #include <linux/limits.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -55,7 +56,7 @@ struct ncsh
 
     struct ncsh_Args args;
 
-    uint_fast32_t history_position;
+    int history_position;
     struct eskilib_String history_entry;
     struct ncsh_History history;
     char *current_autocompletion;
@@ -197,7 +198,7 @@ void ncsh_autocomplete(struct ncsh_Input *input, struct ncsh *shell)
 
     shell->terminal_position = ncsh_terminal_position();
 
-    int length = strlen(shell->current_autocompletion) + 1;
+    int length = (int)strlen(shell->current_autocompletion) + 1;
     if (shell->terminal_position.x + length >= shell->terminal_size.x)
     {
         /*if (write(STDOUT_FILENO, WHITE_DIM, sizeof(WHITE_DIM) - 1) == -1)
@@ -265,7 +266,7 @@ eskilib_nodiscard int_fast32_t ncsh_tab_autocomplete(struct ncsh_Input *input,
                                                      struct ncsh_Autocompletion_Node *autocompletions_tree)
 {
     struct ncsh_Autocompletion autocompletion_matches[NCSH_MAX_AUTOCOMPLETION_MATCHES] = {0};
-    uint_fast32_t autocompletions_matches_count =
+    int autocompletions_matches_count =
         ncsh_autocompletions_get(input->buffer, input->pos + 1, autocompletion_matches, autocompletions_tree);
 
     ncsh_write(ERASE_CURRENT_LINE "\n", ERASE_CURRENT_LINE_LENGTH + 1);
@@ -278,7 +279,7 @@ eskilib_nodiscard int_fast32_t ncsh_tab_autocomplete(struct ncsh_Input *input,
     ncsh_terminal_move_up(autocompletions_matches_count);
     fflush(stdout);
 
-    uint_fast32_t position = 0;
+    int position = 0;
     char character;
 
     int_fast32_t exit = EXIT_SUCCESS;
@@ -386,7 +387,7 @@ eskilib_nodiscard int_fast32_t ncsh_execute(struct ncsh *shell)
         if (shell->args.values[1] && shell->args.lengths[1] == 6 &&
             eskilib_string_equals(shell->args.values[1], "count", 6))
         {
-            printf("history count: %lu\n", shell->history.count);
+            printf("history count: %d\n", shell->history.count);
             return NCSH_COMMAND_SUCCESS_CONTINUE;
         }
         return ncsh_history_command(&shell->history);
@@ -928,9 +929,8 @@ int_fast32_t ncsh(void)
         }
 
         ncsh_parser_parse(input.buffer, input.pos, &shell.args);
-        command_result = ncsh_execute(&shell);
-        ncsh_parser_args_free_values(&shell.args);
 
+        command_result = ncsh_execute(&shell);
         switch (command_result)
         {
         case NCSH_COMMAND_EXIT_FAILURE: {
@@ -950,6 +950,7 @@ int_fast32_t ncsh(void)
         ncsh_autocompletions_add(input.buffer, input.pos, shell.autocompletions_tree);
 
     reset:
+        ncsh_parser_args_free_values(&shell.args);
         memset(input.buffer, '\0', input.max_pos);
         input.pos = 0;
         input.max_pos = 0;
