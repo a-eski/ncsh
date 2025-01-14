@@ -79,13 +79,13 @@ void ncsh_autocompletions_add(char *string, size_t length, struct ncsh_Autocompl
     tree->is_end_of_a_word = true;
 }
 
-void ncsh_autocompletions_add_multiple(struct eskilib_String *strings, uint_fast32_t count,
+void ncsh_autocompletions_add_multiple(struct eskilib_String *strings, int count,
                                        struct ncsh_Autocompletion_Node *tree)
 {
-    if (!strings || count == 0 || !tree)
+    if (!strings || count <= 0 || !tree)
         return;
 
-    for (uint_fast32_t i = 0; i < count; ++i)
+    for (int i = 0; i < count; ++i)
         ncsh_autocompletions_add(strings[i].value, strings[i].length, tree);
 }
 
@@ -140,7 +140,7 @@ struct ncsh_Autocompletion_Node *ncsh_autocompletions_search_string(struct eskil
 void ncsh_autocompletions_match(struct ncsh_Autocompletion *matches, uint_fast32_t *string_position,
                                 uint_fast8_t *matches_position, struct ncsh_Autocompletion_Node *tree)
 {
-    for (uint_fast32_t i = 0; i < NCSH_LETTERS; ++i)
+    for (int i = 0; i < NCSH_LETTERS; ++i)
     {
         if (tree->nodes[i])
         {

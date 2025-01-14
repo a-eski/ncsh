@@ -38,7 +38,7 @@ struct ncsh_Autocompletion_Node *ncsh_autocompletions_malloc(void);
 void ncsh_autocompletions_free(struct ncsh_Autocompletion_Node *tree);
 
 void ncsh_autocompletions_add(char *string, size_t length, struct ncsh_Autocompletion_Node *tree);
-void ncsh_autocompletions_add_multiple(struct eskilib_String *strings, uint_fast32_t count,
+void ncsh_autocompletions_add_multiple(struct eskilib_String *strings, int count,
                                        struct ncsh_Autocompletion_Node *tree);
 
 struct ncsh_Autocompletion_Node *ncsh_autocompletions_search(char *string, size_t length,

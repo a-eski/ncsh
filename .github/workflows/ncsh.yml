@@ -21,3 +21,9 @@ jobs:
       run: make debug
     - name: make check
       run: make check
+    - name: make debug clang
+      run: make debug CC=clang
+    - name: make clang
+      run: make -B CC=clang
+    - name: make check clang
+      run: make check CC=clang

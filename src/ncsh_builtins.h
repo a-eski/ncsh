@@ -22,4 +22,3 @@ int_fast32_t ncsh_builtins_pwd(struct ncsh_Args *args);
 int_fast32_t ncsh_builtins_set(struct ncsh_Args *args);
 
 #endif // !ncsh_builtins_h
-

@@ -721,14 +721,14 @@ eskilib_nodiscard int_fast32_t ncsh_vm(struct ncsh_Args *args)
 
         ncsh_vm_atomic_child_pid_set(pid);
 
-        int result;
+        __pid_t waitpid_result;
         while (1)
         {
             status = 0;
-            result = waitpid(pid, &status, WUNTRACED);
+            waitpid_result = waitpid(pid, &status, WUNTRACED);
 
             // check for errors
-            if (result == -1)
+            if (waitpid_result == -1)
             {
                 /* ignore EINTR, occurs when SA_RESTART is not specified in sigaction flags */
                 if (errno == EINTR)
@@ -740,7 +740,7 @@ eskilib_nodiscard int_fast32_t ncsh_vm(struct ncsh_Args *args)
             }
 
             // check if child process has exited
-            if (result == pid)
+            if (waitpid_result == pid)
             {
 #ifdef NCSH_DEBUG
                 if (WIFEXITED(status))
@@ -831,4 +831,3 @@ eskilib_nodiscard int_fast32_t ncsh_vm_execute_noninteractive(struct ncsh_Args *
 
     return ncsh_vm(args);
 }
-
