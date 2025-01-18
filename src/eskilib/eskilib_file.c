@@ -1,3 +1,5 @@
+// Copyright (c) eskilib by Alex Eski 2024
+
 #include "eskilib_file.h"
 #include "eskilib_defines.h"
 

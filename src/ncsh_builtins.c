@@ -33,6 +33,14 @@ eskilib_nodiscard int_fast32_t ncsh_builtins_echo(struct ncsh_Args *args)
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
+#define NCSH_COPYRIGHT \
+"ncsh Copyright (C) 2025 Alex Eski\n"                                 \
+"This program comes with ABSOLUTELY NO WARRANTY.\n"                     \
+"This is free software, and you are welcome to redistribute it"         \
+"under certain conditions.\n\n"                                           \
+
+#define NCSH_HELP "ncsh help:"
+
 eskilib_nodiscard int_fast32_t ncsh_builtins_help(struct ncsh_Args *args)
 {
     (void)args; // to not get compiler warnings
@@ -73,6 +81,9 @@ eskilib_nodiscard int_fast32_t ncsh_builtins_help(struct ncsh_Args *args)
         perror("ncsh: Error writing to stdout");
         return NCSH_COMMAND_EXIT_FAILURE;
     }
+
+    // history count
+    // pwd
 
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
@@ -117,13 +128,13 @@ eskilib_nodiscard int_fast32_t ncsh_builtins_set_e()
 	return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
-#define NOTHING_TO_SET "ncsh set: nothing to set"
-#define VALID_SET_OPERATIONS "ncsh set: valid set operations are in the form '-e', '-c', etc."
+#define SET_NOTHING_TO_SET_MESSAGE "ncsh set: nothing to set"
+#define SET_VALID_OPERATIONS_MESSAGE "ncsh set: valid set operations are in the form '-e', '-c', etc."
 eskilib_nodiscard int_fast32_t ncsh_builtins_set(struct ncsh_Args *args)
 {
     if (!args->values[1])
     {
-        if (write(STDOUT_FILENO, NOTHING_TO_SET, sizeof(NOTHING_TO_SET) - 1) == -1)
+        if (write(STDOUT_FILENO, SET_NOTHING_TO_SET_MESSAGE, sizeof(NOTHING_TO_SET) - 1) == -1)
         {
             return NCSH_COMMAND_EXIT_FAILURE;
         }
@@ -133,7 +144,7 @@ eskilib_nodiscard int_fast32_t ncsh_builtins_set(struct ncsh_Args *args)
 
     if (args->lengths[1] > 3 || args->values[1][0] != '-')
     {
-        if (write(STDOUT_FILENO, VALID_SET_OPERATIONS, sizeof(VALID_SET_OPERATIONS) - 1) == -1)
+        if (write(STDOUT_FILENO, SET_VALID_OPERATIONS_MESSAGE, sizeof(VALID_SET_OPERATIONS) - 1) == -1)
         {
             return NCSH_COMMAND_EXIT_FAILURE;
         }
