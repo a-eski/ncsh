@@ -41,6 +41,14 @@
         return EXIT_FAILURE;                                                                                           \
     }
 
+#define ncsh_write_literal(str)                                                                                        \
+    if (write(STDOUT_FILENO, str, sizeof(str) - 1) == -1)                                                              \
+    {                                                                                                                  \
+        perror(RED NCSH_ERROR_STDOUT RESET);                                                                           \
+        fflush(stderr);                                                                                                \
+        return EXIT_FAILURE;                                                                                           \
+    }
+
 struct ncsh_Input
 {
     size_t start_pos;
@@ -110,7 +118,7 @@ eskilib_nodiscard int_fast32_t ncsh_prompt(struct ncsh_Directory prompt_info)
 
     fflush(stdout);
     // save cursor position so we can reset cursor when loading history entries
-    ncsh_write(SAVE_CURSOR_POSITION, SAVE_CURSOR_POSITION_LENGTH);
+    ncsh_write_literal(SAVE_CURSOR_POSITION);
 
     return EXIT_SUCCESS;
 }
@@ -126,7 +134,7 @@ eskilib_nodiscard int_fast32_t ncsh_backspace(struct ncsh_Input *input)
     if (input->max_pos > 0)
         --input->max_pos;
 
-    ncsh_write(BACKSPACE_STRING ERASE_CURRENT_LINE, BACKSPACE_STRING_LENGTH + ERASE_CURRENT_LINE_LENGTH);
+    ncsh_write_literal(BACKSPACE_STRING ERASE_CURRENT_LINE);
 
     input->start_pos = input->pos;
     memmove(input->buffer + input->pos, input->buffer + input->pos + 1, input->max_pos);
@@ -145,7 +153,7 @@ eskilib_nodiscard int_fast32_t ncsh_backspace(struct ncsh_Input *input)
         if (input->pos == 0 || !input->buffer[input->pos - 1])
             break;
 
-        ncsh_write(MOVE_CURSOR_LEFT, MOVE_CURSOR_LEFT_LENGTH);
+        ncsh_write_literal(MOVE_CURSOR_LEFT);
 
         --input->pos;
     }
@@ -155,7 +163,7 @@ eskilib_nodiscard int_fast32_t ncsh_backspace(struct ncsh_Input *input)
 
 eskilib_nodiscard int_fast32_t ncsh_delete(struct ncsh_Input *input)
 {
-    ncsh_write(DELETE_STRING ERASE_CURRENT_LINE, DELETE_STRING_LENGTH + ERASE_CURRENT_LINE_LENGTH);
+    ncsh_write_literal(DELETE_STRING ERASE_CURRENT_LINE);
 
     input->start_pos = input->pos;
     memmove(input->buffer + input->pos, input->buffer + input->pos + 1, input->max_pos);
@@ -175,7 +183,7 @@ eskilib_nodiscard int_fast32_t ncsh_delete(struct ncsh_Input *input)
 
     while (input->pos > input->start_pos && input->pos != 0 && input->buffer[input->pos - 1])
     {
-        ncsh_write(MOVE_CURSOR_LEFT, MOVE_CURSOR_LEFT_LENGTH);
+        ncsh_write_literal(MOVE_CURSOR_LEFT);
         --input->pos;
     }
 
@@ -269,7 +277,7 @@ eskilib_nodiscard int_fast32_t ncsh_tab_autocomplete(struct ncsh_Input *input,
     int autocompletions_matches_count =
         ncsh_autocompletions_get(input->buffer, input->pos + 1, autocompletion_matches, autocompletions_tree);
 
-    ncsh_write(ERASE_CURRENT_LINE "\n", ERASE_CURRENT_LINE_LENGTH + 1);
+    ncsh_write_literal(ERASE_CURRENT_LINE "\n");
 
     if (autocompletions_matches_count == 0)
         return EXIT_SUCCESS;
@@ -295,14 +303,14 @@ eskilib_nodiscard int_fast32_t ncsh_tab_autocomplete(struct ncsh_Input *input,
         case UP_ARROW: {
             if (position == 0)
                 break;
-            ncsh_write(MOVE_CURSOR_UP, MOVE_CURSOR_UP_LENGTH);
+            ncsh_write_literal(MOVE_CURSOR_UP);
             --position;
             break;
         }
         case DOWN_ARROW: {
             if (position == autocompletions_matches_count - 1)
                 break;
-            ncsh_write(MOVE_CURSOR_DOWN, MOVE_CURSOR_DOWN_LENGTH);
+            ncsh_write_literal(MOVE_CURSOR_DOWN);
             ++position;
             break;
         }
@@ -522,13 +530,13 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input *input, struct nc
             if (input->pos == 0 && input->max_pos == 0)
                 continue;
 
-            ncsh_write(BACKSPACE_STRING ERASE_CURRENT_LINE, BACKSPACE_STRING_LENGTH + ERASE_CURRENT_LINE_LENGTH);
+            ncsh_write_literal(BACKSPACE_STRING ERASE_CURRENT_LINE);
             input->buffer[input->max_pos] = '\0';
             --input->max_pos;
 
             while (input->max_pos > 0 && input->buffer[input->max_pos] != ' ')
             {
-                ncsh_write(BACKSPACE_STRING, BACKSPACE_STRING_LENGTH);
+                ncsh_write_literal(BACKSPACE_STRING);
                 input->buffer[input->max_pos] = '\0';
                 --input->max_pos;
             }
@@ -544,13 +552,13 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input *input, struct nc
             if (input->pos == 0 && input->max_pos == 0)
                 continue;
 
-            ncsh_write(BACKSPACE_STRING ERASE_CURRENT_LINE, BACKSPACE_STRING_LENGTH + ERASE_CURRENT_LINE_LENGTH);
+            ncsh_write_literal(BACKSPACE_STRING ERASE_CURRENT_LINE);
             input->buffer[input->max_pos] = '\0';
             --input->max_pos;
 
             while (input->max_pos > 0)
             {
-                ncsh_write(BACKSPACE_STRING, BACKSPACE_STRING_LENGTH);
+                ncsh_write_literal(BACKSPACE_STRING);
                 input->buffer[input->max_pos] = '\0';
                 --input->max_pos;
             }
@@ -643,7 +651,7 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input *input, struct nc
                         (!input->buffer[input->pos] && !input->buffer[input->pos + 1]))
                         continue;
 
-                    ncsh_write(MOVE_CURSOR_RIGHT, MOVE_CURSOR_RIGHT_LENGTH);
+                    ncsh_write_literal(MOVE_CURSOR_RIGHT);
 
                     ++input->pos;
                     if (input->pos > input->max_pos)
@@ -657,7 +665,7 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input *input, struct nc
                     if (input->pos == 0 || (!input->buffer[input->pos] && !input->buffer[input->pos - 1]))
                         continue;
 
-                    ncsh_write(MOVE_CURSOR_LEFT, MOVE_CURSOR_LEFT_LENGTH);
+                    ncsh_write_literal(MOVE_CURSOR_LEFT);
 
                     --input->pos;
 
@@ -670,8 +678,7 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input *input, struct nc
                     if (shell->history_entry.length > 0)
                     {
                         ++shell->history_position;
-                        ncsh_write(RESTORE_CURSOR_POSITION ERASE_CURRENT_LINE,
-                                   RESTORE_CURSOR_POSITION_LENGTH + ERASE_CURRENT_LINE_LENGTH);
+                        ncsh_write_literal(RESTORE_CURSOR_POSITION ERASE_CURRENT_LINE);
 
                         input->pos = shell->history_entry.length - 1;
                         input->max_pos = shell->history_entry.length - 1;
@@ -690,8 +697,7 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input *input, struct nc
 
                     shell->history_entry = ncsh_history_get(shell->history_position - 2, &shell->history);
 
-                    ncsh_write(RESTORE_CURSOR_POSITION ERASE_CURRENT_LINE,
-                               RESTORE_CURSOR_POSITION_LENGTH + ERASE_CURRENT_LINE_LENGTH);
+                    ncsh_write_literal(RESTORE_CURSOR_POSITION ERASE_CURRENT_LINE);
 
                     if (shell->history_entry.length > 0)
                     {
@@ -736,7 +742,7 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input *input, struct nc
                         continue;
                     }
 
-                    ncsh_write(RESTORE_CURSOR_POSITION, RESTORE_CURSOR_POSITION_LENGTH);
+                    ncsh_write_literal(RESTORE_CURSOR_POSITION);
                     input->pos = 0;
 
                     break;
@@ -750,7 +756,8 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input *input, struct nc
 
                     while (input->buffer[input->pos])
                     {
-                        ncsh_write(MOVE_CURSOR_RIGHT, MOVE_CURSOR_RIGHT_LENGTH)++ input->pos;
+                        ncsh_write_literal(MOVE_CURSOR_RIGHT);
+			++input->pos;
                     }
 
                     break;
@@ -770,7 +777,7 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input *input, struct nc
             while (input->pos < input->max_pos && input->buffer[input->pos])
 	    {
                 ++input->pos;
-                ncsh_write(MOVE_CURSOR_RIGHT, MOVE_CURSOR_RIGHT_LENGTH);
+                ncsh_write_literal(MOVE_CURSOR_RIGHT);
 	    }
 
             while (input->pos > 1 && input->buffer[input->pos - 1] == ' ')
@@ -780,7 +787,7 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input *input, struct nc
 
             input->buffer[input->pos++] = '\0';
 
-            ncsh_write(ERASE_CURRENT_LINE "\n", ERASE_CURRENT_LINE_LENGTH + 1);
+            ncsh_write_literal(ERASE_CURRENT_LINE "\n");
             fflush(stdout);
 
             return EXIT_SUCCESS_EXECUTE;
@@ -832,7 +839,8 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input *input, struct nc
 
                 while (input->pos > input->start_pos + 1)
                 {
-                    ncsh_write(MOVE_CURSOR_LEFT, MOVE_CURSOR_LEFT_LENGTH)-- input->pos;
+                    ncsh_write_literal(MOVE_CURSOR_LEFT);
+		    --input->pos;
                 }
             }
             else
@@ -847,7 +855,7 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input *input, struct nc
                 if (input->pos == input->max_pos)
                     input->buffer[input->pos] = '\0';
 
-                ncsh_write(ERASE_CURRENT_LINE, ERASE_CURRENT_LINE_LENGTH);
+                ncsh_write_literal(ERASE_CURRENT_LINE);
             }
 
             shell->terminal_position = ncsh_terminal_position();

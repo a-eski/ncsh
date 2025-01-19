@@ -1,3 +1,5 @@
+// Copyright (c) eskilib by Alex Eski 2024
+
 #ifndef eskilib_file_h
 #define eskilib_file_h
 

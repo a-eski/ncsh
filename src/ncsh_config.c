@@ -151,3 +151,22 @@ void ncsh_config_free(struct ncsh_Config *config)
     if (config->config_file)
         free(config->config_file);
 }
+
+char *aliased[] = { "git", "nvim" };
+char *aliases[] = { "g",   "n" };
+
+char *ncsh_config_alias_check(char *buffer, size_t buf_len)
+{
+    if (!buffer || buf_len < 2)
+        return NULL;
+
+    for (uint_fast32_t i = 0; i < sizeof(aliased) / sizeof(char *); ++i)
+    {
+        if (eskilib_string_equals(buffer, aliased[i], buf_len))
+        {
+            return aliases[i];
+        }
+    }
+
+    return NULL;
+}
