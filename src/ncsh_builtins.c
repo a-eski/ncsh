@@ -134,7 +134,7 @@ eskilib_nodiscard int_fast32_t ncsh_builtins_set(struct ncsh_Args *args)
 {
     if (!args->values[1])
     {
-        if (write(STDOUT_FILENO, SET_NOTHING_TO_SET_MESSAGE, sizeof(NOTHING_TO_SET) - 1) == -1)
+        if (write(STDOUT_FILENO, SET_NOTHING_TO_SET_MESSAGE, sizeof(SET_NOTHING_TO_SET_MESSAGE) - 1) == -1)
         {
             return NCSH_COMMAND_EXIT_FAILURE;
         }
@@ -144,7 +144,7 @@ eskilib_nodiscard int_fast32_t ncsh_builtins_set(struct ncsh_Args *args)
 
     if (args->lengths[1] > 3 || args->values[1][0] != '-')
     {
-        if (write(STDOUT_FILENO, SET_VALID_OPERATIONS_MESSAGE, sizeof(VALID_SET_OPERATIONS) - 1) == -1)
+        if (write(STDOUT_FILENO, SET_VALID_OPERATIONS_MESSAGE, sizeof(SET_VALID_OPERATIONS_MESSAGE) - 1) == -1)
         {
             return NCSH_COMMAND_EXIT_FAILURE;
         }

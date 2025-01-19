@@ -98,7 +98,7 @@ struct ncsh_Coordinates ncsh_terminal_position(void)
     char character = 0;
     struct ncsh_Coordinates cursor_position = {0};
 
-    if (write(STDOUT_FILENO, GET_CURSOR_POSITION, GET_CURSOR_POSITION_LENGTH) == -1)
+    if (write(STDOUT_FILENO, GET_CURSOR_POSITION, sizeof(GET_CURSOR_POSITION) - 1) == -1)
     {
         perror(RED "ncsh: Error writing to stdout" RESET);
         fflush(stdout);
