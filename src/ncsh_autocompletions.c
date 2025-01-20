@@ -144,6 +144,9 @@ void ncsh_autocompletions_match(struct ncsh_Autocompletion *matches, uint_fast32
     {
         if (tree->nodes[i])
         {
+            if (*matches_position + 1 >= NCSH_MAX_AUTOCOMPLETION_MATCHES)
+                return;
+
             if (!matches[*matches_position].value)
             {
                 matches[*matches_position].value = malloc(NCSH_MAX_INPUT);
@@ -164,10 +167,7 @@ void ncsh_autocompletions_match(struct ncsh_Autocompletion *matches, uint_fast32
             if (tree->nodes[i]->is_end_of_a_word)
             {
                 matches[*matches_position].weight = tree->nodes[i]->weight;
-                if (*matches_position + 1 < NCSH_MAX_AUTOCOMPLETION_MATCHES)
-                    ++*matches_position;
-                else
-                    return;
+                ++*matches_position;
             }
 
             ncsh_autocompletions_match(matches, string_position, matches_position, tree->nodes[i]);

@@ -36,54 +36,45 @@ eskilib_nodiscard int_fast32_t ncsh_builtins_echo(struct ncsh_Args *args)
 #define NCSH_COPYRIGHT \
 "ncsh Copyright (C) 2025 Alex Eski\n"                                 \
 "This program comes with ABSOLUTELY NO WARRANTY.\n"                     \
-"This is free software, and you are welcome to redistribute it"         \
+"This is free software, and you are welcome to redistribute it "         \
 "under certain conditions.\n\n"                                           \
 
-#define NCSH_HELP "ncsh help:"
+#define NCSH_HELP "ncsh help:\n"
+#define NCSH_HELP_FORMAT \
+"Builtin Commands: {command} {args}\n"
+#define NCSH_HELP_QUIT \
+"q:		      To exit, type q, exit, or quit and press enter. You can also use Ctrl+D to exit.\n"
+#define NCSH_HELP_CHANGEDIR \
+"cd/z:		      You can change directory with cd or z.\n"
+#define NCSH_HELP_ECHO \
+"echo:		      You can write things to the screen using echo.\n"
+#define NCSH_HELP_HISTORY \
+"history:	      You can see your command history using the history command.\n"
+#define NCSH_HELP_HISTORY_COUNT \
+"history count:        You can see the number of entries in your history with history count command.\n"
+#define NCSH_HELP_PWD \
+"pwd:         	      Prints the current working directory.\n"
+
+#define NCSH_HELP_WRITE(str) \
+if (write(STDOUT_FILENO, str, sizeof(str) - 1) == -1)   \
+{                                                       \
+    perror(RED NCSH_ERROR_STDOUT RESET);                \
+    return NCSH_COMMAND_EXIT_FAILURE;                   \
+}
 
 eskilib_nodiscard int_fast32_t ncsh_builtins_help(struct ncsh_Args *args)
 {
     (void)args; // to not get compiler warnings
 
-    if (write(STDOUT_FILENO, "ncsh by Alex Eski: help\n\n", 25) == -1)
-    {
-        perror("ncsh: Error writing to stdout");
-        return NCSH_COMMAND_EXIT_FAILURE;
-    }
-
-    if (write(STDOUT_FILENO, "Builtin Commands {command} {args}\n", 34) == -1)
-    {
-        perror("ncsh: Error writing to stdout");
-        return NCSH_COMMAND_EXIT_FAILURE;
-    }
-
-    if (write(STDOUT_FILENO,
-              "q:		To exit, type q, exit, or quit and press enter. You can also use Ctrl+D to exit.\n", 85) == -1)
-    {
-        perror("ncsh: Error writing to stdout");
-        return NCSH_COMMAND_EXIT_FAILURE;
-    }
-
-    if (write(STDOUT_FILENO, "cd/z:		You can change directory with cd or z.\n", 46) == -1)
-    {
-        perror("ncsh: Error writing to stdout");
-        return NCSH_COMMAND_EXIT_FAILURE;
-    }
-
-    if (write(STDOUT_FILENO, "echo:		You can write things to the screen using echo.\n", 54) == -1)
-    {
-        perror("ncsh: Error writing to stdout");
-        return NCSH_COMMAND_EXIT_FAILURE;
-    }
-
-    if (write(STDOUT_FILENO, "history:	You can see your command history using the history command.\n", 69) == -1)
-    {
-        perror("ncsh: Error writing to stdout");
-        return NCSH_COMMAND_EXIT_FAILURE;
-    }
-
-    // history count
-    // pwd
+    NCSH_HELP_WRITE(NCSH_COPYRIGHT);
+    NCSH_HELP_WRITE(NCSH_HELP);
+    NCSH_HELP_WRITE(NCSH_HELP_FORMAT);
+    NCSH_HELP_WRITE(NCSH_HELP_QUIT);
+    NCSH_HELP_WRITE(NCSH_HELP_CHANGEDIR);
+    NCSH_HELP_WRITE(NCSH_HELP_ECHO);
+    NCSH_HELP_WRITE(NCSH_HELP_HISTORY);
+    NCSH_HELP_WRITE(NCSH_HELP_HISTORY_COUNT);
+    NCSH_HELP_WRITE(NCSH_HELP_PWD);
 
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }

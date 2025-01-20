@@ -92,7 +92,7 @@ static void ncsh_vm_signal_handler(int signum, siginfo_t *info, void *context)
         if (kill(target, signum) == 0)
         {
             if (write(STDOUT_FILENO, "\n", 1) == -1) // write is async safe, do not use fflush, putchar, prinft
-                perror("ncsh: Error writing to standard output while processing a signal");
+                perror(RED "ncsh: Error writing to standard output while processing a signal" RESET);
         }
     }
 }
@@ -773,7 +773,7 @@ eskilib_nodiscard int_fast32_t ncsh_vm(struct ncsh_Args *args)
     ncsh_vm_redirection_stop_if_needed(&tokens, &vm);
 
     if (execvp_result == EXECVP_FAILED)
-        return NCSH_COMMAND_FAILED_CONTINUE;
+        return NCSH_COMMAND_EXIT_FAILURE;
     if (status == EXIT_FAILURE)
         return NCSH_COMMAND_EXIT_FAILURE;
 

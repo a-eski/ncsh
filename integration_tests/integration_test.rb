@@ -510,17 +510,22 @@ def help_test(row)
   assert_check_new_row(row)
   @tty.send_keys_one_at_a_time(%(help\n))
   row += 1
-  @tty.assert_contents_at row, row + 6, <<~TERM
-    ncsh by Alex Eski: help
+  @tty.assert_contents_at row, row + 13, <<~TERM
+    ncsh Copyright (C) 2025 Alex Eski
+    This program comes with ABSOLUTELY NO WARRANTY.
+    This is free software, and you are welcome to redistribute it under certain conditions.
 
-    Builtin Commands {command} {args}
-    q:              To exit, type q, exit, or quit and press enter. You can also use Ctrl+D to exit.
-    cd/z:           You can change directory with cd or z.
-    echo:           You can write things to the screen using echo.
-    history:        You can see your command history using the history command.
+    ncsh help:
+    Builtin Commands: {command} {args}
+    q:                    To exit, type q, exit, or quit and press enter. You can also use Ctrl+D to exit.
+    cd/z:                 You can change directory with cd or z.
+    echo:                 You can write things to the screen using echo.
+    history:              You can see your command history using the history command.
+    history count:        You can see the number of entries in your history with history count command.
+    pwd:                  Prints the current working directory.
     alex /shells/ncsh ❱
   TERM
-  row += 7
+  row += 12
   puts 'Help test passed'
   row
 end

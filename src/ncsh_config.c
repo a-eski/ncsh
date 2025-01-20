@@ -9,6 +9,7 @@
 #include "eskilib/eskilib_defines.h"
 #include "eskilib/eskilib_result.h"
 #include "ncsh_config.h"
+#include "eskilib/eskilib_string.h"
 #include "ncsh_defines.h"
 
 eskilib_nodiscard enum eskilib_Result ncsh_config_home(struct ncsh_Config *config)
@@ -152,21 +153,22 @@ void ncsh_config_free(struct ncsh_Config *config)
         free(config->config_file);
 }
 
-char *aliased[] = { "git", "nvim" };
-char *aliases[] = { "g",   "n" };
+char *aliases[] = { "git", "nvim" };
+size_t aliases_len[] = { sizeof("git"), sizeof("nvim") };
+char *aliased[] = { "g",   "n" };
 
-char *ncsh_config_alias_check(char *buffer, size_t buf_len)
+struct eskilib_String ncsh_config_alias_check(char *buffer, size_t buf_len)
 {
     if (!buffer || buf_len < 2)
-        return NULL;
+        return eskilib_String_Empty;
 
     for (uint_fast32_t i = 0; i < sizeof(aliased) / sizeof(char *); ++i)
     {
         if (eskilib_string_equals(buffer, aliased[i], buf_len))
         {
-            return aliases[i];
+            return (struct eskilib_String){ .value = aliases[i], .length = aliases_len[i] };
         }
     }
 
-    return NULL;
+    return eskilib_String_Empty;
 }
