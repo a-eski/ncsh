@@ -49,7 +49,7 @@ struct ncsh_Directory
 {
     bool reprint_prompt;
     char *user;
-    char path[PATH_MAX];
+    char cwd[PATH_MAX];
 };
 
 struct ncsh_Coordinates
@@ -74,7 +74,8 @@ void ncsh_terminal_move_right(int i);
 
 void ncsh_terminal_move_left(int i);
 
-struct ncsh_Coordinates ncsh_terminal_size(void);
+void ncsh_terminal_size_set(void);
+struct ncsh_Coordinates ncsh_terminal_size_get(void);
 
 struct ncsh_Coordinates ncsh_terminal_position(void);
 

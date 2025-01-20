@@ -27,6 +27,7 @@
 #include "ncsh_vm.h"
 #include "z/z.h"
 
+/* Macros */
 #define EXIT_IO_FAILURE -1
 // #define EXIT_SUCCESS 0 // From stdlib.h
 // #define EXIT_FAILURE 1 // From stdlib.h
@@ -49,6 +50,7 @@
         return EXIT_FAILURE;                                                                                           \
     }
 
+/* Types */
 struct ncsh_Input
 {
     size_t start_pos;
@@ -76,8 +78,7 @@ struct ncsh
     struct ncsh_Coordinates terminal_position;
 };
 
-// SIGWINCH handler for terminal resize
-
+/* Prompt */
 #ifdef NCSH_SHORT_DIRECTORY
 void ncsh_prompt_directory(char *cwd, char *output)
 {
@@ -101,7 +102,7 @@ void ncsh_prompt_directory(char *cwd, char *output)
 
 eskilib_nodiscard int_fast32_t ncsh_prompt(struct ncsh_Directory prompt_info)
 {
-    if (!getcwd(prompt_info.path, sizeof(prompt_info.path)))
+    if (!getcwd(prompt_info.cwd, sizeof(prompt_info.cwd)))
     {
         perror(RED "ncsh: Error when getting current directory" RESET);
         fflush(stderr);
@@ -110,7 +111,7 @@ eskilib_nodiscard int_fast32_t ncsh_prompt(struct ncsh_Directory prompt_info)
 
 #ifdef NCSH_SHORT_DIRECTORY
     char prompt_directory[PATH_MAX] = {0};
-    ncsh_prompt_directory(prompt_info.path, prompt_directory);
+    ncsh_prompt_directory(prompt_info.cwd, prompt_directory);
     printf(ncsh_GREEN "%s" WHITE " " ncsh_CYAN "%s" WHITE_BRIGHT " \u2771 ", prompt_info.user, prompt_directory);
 #else
     printf(ncsh_GREEN "%s" WHITE " " ncsh_CYAN "%s" WHITE_BRIGHT " \u2771 ", prompt_info.user, prompt_info.path);
@@ -273,17 +274,26 @@ char ncsh_read(void)
 eskilib_nodiscard int_fast32_t ncsh_tab_autocomplete(struct ncsh_Input *input,
                                                      struct ncsh_Autocompletion_Node *autocompletions_tree)
 {
+    ncsh_write_literal(ERASE_CURRENT_LINE "\n");
+
     struct ncsh_Autocompletion autocompletion_matches[NCSH_MAX_AUTOCOMPLETION_MATCHES] = {0};
     int autocompletions_matches_count =
         ncsh_autocompletions_get(input->buffer, input->pos + 1, autocompletion_matches, autocompletions_tree);
 
-    ncsh_write_literal(ERASE_CURRENT_LINE "\n");
-
     if (autocompletions_matches_count == 0)
         return EXIT_SUCCESS;
 
-    for (uint_fast8_t i = 0; i < autocompletions_matches_count; ++i)
-        printf("%s%s\n", input->buffer, autocompletion_matches[i].value);
+    if (input->buffer)
+    {
+        for (int i = 0; i < autocompletions_matches_count; ++i)
+            printf("%s%s\n", input->buffer, autocompletion_matches[i].value);
+    }
+    else
+    {
+        for (int i = 0; i < autocompletions_matches_count; ++i)
+            printf("%s\n", autocompletion_matches[i].value);
+    }
+
     ncsh_terminal_move_up(autocompletions_matches_count);
     fflush(stdout);
 
@@ -330,10 +340,8 @@ eskilib_nodiscard int_fast32_t ncsh_tab_autocomplete(struct ncsh_Input *input,
         }
     }
 
-    for (uint_fast8_t i = 0; i < autocompletions_matches_count; ++i)
-    {
+    for (int i = 0; i < autocompletions_matches_count; ++i)
         free(autocompletion_matches[i].value);
-    }
 
     ncsh_terminal_move_down(autocompletions_matches_count + 1 - position);
     if (input->buffer && exit == EXIT_SUCCESS_EXECUTE)
@@ -401,6 +409,15 @@ eskilib_nodiscard int_fast32_t ncsh_execute(struct ncsh *shell)
         return ncsh_history_command(&shell->history);
     }
 
+    struct eskilib_String alias = ncsh_config_alias_check(shell->args.values[0], shell->args.lengths[0]);
+    if (alias.length)
+    {
+        shell->args.values[0] = realloc(shell->args.values[0], alias.length);
+        memcpy(shell->args.values[0], alias.value, alias.length - 1);
+        shell->args.values[0][alias.length - 1] = '\0';
+        shell->args.lengths[0] = alias.length;
+    }
+
     return ncsh_vm_execute(&shell->args);
 }
 
@@ -451,7 +468,7 @@ eskilib_nodiscard int_fast32_t ncsh_init(struct ncsh *shell)
         return EXIT_FAILURE;
     }
 
-    shell->current_autocompletion = malloc(NCSH_MAX_INPUT);
+    shell->current_autocompletion = calloc(NCSH_MAX_INPUT, sizeof(char));
     if (!shell->current_autocompletion)
     {
         perror(RED "ncsh: Error when allocating data for autocompletion results" RESET);
@@ -488,6 +505,8 @@ eskilib_nodiscard int_fast32_t ncsh_init(struct ncsh *shell)
     }
 
     ncsh_terminal_init();
+    ncsh_terminal_size_set();
+    shell->terminal_size = ncsh_terminal_size_get();
 
     return EXIT_SUCCESS;
 }
@@ -857,14 +876,6 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input *input, struct nc
 
                 ncsh_write_literal(ERASE_CURRENT_LINE);
             }
-
-            shell->terminal_position = ncsh_terminal_position();
-            shell->terminal_size = ncsh_terminal_size();
-            if (shell->terminal_position.x >= shell->terminal_size.x)
-            {
-                putchar('\n');
-                fflush(stdout);
-            }
         }
 
         // autocompletion logic
@@ -885,7 +896,7 @@ int_fast32_t ncsh(void)
     int_fast32_t input_result = 0;
     int_fast32_t command_result = 0;
     struct ncsh_Input input = {0};
-    input.buffer = malloc(NCSH_MAX_INPUT);
+    input.buffer = calloc(NCSH_MAX_INPUT, sizeof(char));
     if (!input.buffer)
     {
         return EXIT_FAILURE;

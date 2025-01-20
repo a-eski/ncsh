@@ -6,7 +6,6 @@
 #include <sys/ioctl.h>
 #include <termios.h>
 #include <unistd.h>
-// #include <uv.h>
 
 #include "eskilib/eskilib_colors.h"
 #include "ncsh_terminal.h"
@@ -16,6 +15,7 @@
 // #if defined(HAVE_TERMIOS_H)
 static struct termios terminal;
 static struct termios original_terminal;
+static struct winsize window;
 
 void ncsh_terminal_reset(void)
 {
@@ -28,7 +28,6 @@ void ncsh_terminal_reset(void)
 
 void ncsh_terminal_init(void)
 {
-    // if (uv_guess_handle(fileno(stream)) != UV_TTY)
     if (!isatty(STDIN_FILENO))
     {
         fprintf(stderr, "Not running in a terminal.\n");
@@ -57,12 +56,15 @@ void ncsh_terminal_init(void)
     signal(SIGHUP, SIG_DFL); // Stops the process if the terminal is closed
 }
 
-struct ncsh_Coordinates ncsh_terminal_size(void)
+void ncsh_terminal_size_set(void)
 {
     // todo: look at getenv("LINES"), getenv("COLUMNS") since ioctl is not portable
-    struct winsize w;
-    ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
-    return (struct ncsh_Coordinates){.x = w.ws_col, .y = w.ws_row};
+    ioctl(STDOUT_FILENO, TIOCGWINSZ, &window);
+}
+
+struct ncsh_Coordinates ncsh_terminal_size_get(void)
+{
+    return (struct ncsh_Coordinates){ .x = window.ws_col, .y = window.ws_row };
 }
 
 void ncsh_terminal_move(int x, int y)
