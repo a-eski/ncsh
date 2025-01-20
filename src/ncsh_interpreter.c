@@ -33,7 +33,7 @@ int_fast32_t (*builtin_func[]) (struct ncsh_Args *) =
     &ncsh_builtins_set
 };
 
-eskilib_nodiscard int_fast32_t ncsh_z(struct ncsh_Args *args, struct z_Database *z_db)
+eskilib_nodiscard int_fast32_t ncsh_interpreter_z(struct ncsh_Args *args, struct z_Database *z_db)
 {
     assert(z_db);
     assert(args->count > 0);
@@ -70,13 +70,25 @@ eskilib_nodiscard int_fast32_t ncsh_z(struct ncsh_Args *args, struct z_Database 
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
+void ncsh_interpreter_alias(struct ncsh_Args *args)
+{
+    struct eskilib_String alias = ncsh_config_alias_check(args->values[0], args->lengths[0]);
+    if (alias.length)
+    {
+        args->values[0] = realloc(args->values[0], alias.length);
+        memcpy(args->values[0], alias.value, alias.length - 1);
+        args->values[0][alias.length - 1] = '\0';
+        args->lengths[0] = alias.length;
+    }
+}
+
 eskilib_nodiscard int_fast32_t ncsh_interpreter_execute(struct ncsh_Shell *shell)
 {
     if (shell->args.count == 0)
         return NCSH_COMMAND_SUCCESS_CONTINUE;
 
     if (eskilib_string_equals(shell->args.values[0], "z", shell->args.lengths[0]))
-        return ncsh_z(&shell->args, &shell->z_db);
+        return ncsh_interpreter_z(&shell->args, &shell->z_db);
 
     if (eskilib_string_equals(shell->args.values[0], "history", shell->args.lengths[0]))
     {
@@ -89,14 +101,7 @@ eskilib_nodiscard int_fast32_t ncsh_interpreter_execute(struct ncsh_Shell *shell
         return ncsh_history_command(&shell->history);
     }
 
-    struct eskilib_String alias = ncsh_config_alias_check(shell->args.values[0], shell->args.lengths[0]);
-    if (alias.length)
-    {
-        shell->args.values[0] = realloc(shell->args.values[0], alias.length);
-        memcpy(shell->args.values[0], alias.value, alias.length - 1);
-        shell->args.values[0][alias.length - 1] = '\0';
-        shell->args.lengths[0] = alias.length;
-    }
+    ncsh_interpreter_alias(&shell->args);
 
     for (uint_fast32_t i = 0; i < sizeof(builtins) / sizeof(char *); ++i)
     {
@@ -111,6 +116,8 @@ eskilib_nodiscard int_fast32_t ncsh_interpreter_execute(struct ncsh_Shell *shell
 
 eskilib_nodiscard int_fast32_t ncsh_interpreter_execute_noninteractive(struct ncsh_Args *args)
 {
+    ncsh_interpreter_alias(args);
+
     for (uint_fast32_t i = 0; i < sizeof(builtins) / sizeof(char *); ++i)
     {
         if (eskilib_string_equals(args->values[0], builtins[i], args->lengths[0]))
@@ -118,5 +125,6 @@ eskilib_nodiscard int_fast32_t ncsh_interpreter_execute_noninteractive(struct nc
             return (*builtin_func[i])(args);
         }
     }
+
     return ncsh_vm_execute_noninteractive(args);
 }

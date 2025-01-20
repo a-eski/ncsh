@@ -206,49 +206,6 @@ enum z_Result z_read_entry_from_file(struct z_Directory *dir, FILE *file)
     return Z_SUCCESS;
 }
 
-enum z_Result z_open_or_create_database_file(FILE *file, struct z_Database *db)
-{
-    file = fopen(db->database_file, "rb");
-    if (!file || feof(file) || ferror(file))
-    {
-        perror("Error opening z database file");
-        if (write(STDOUT_FILENO, "Trying to create z database file.\n", 34) == -1)
-        {
-            perror(RED NCSH_ERROR_STDOUT RESET);
-            fflush(stderr);
-            if (file)
-                fclose(file);
-            return Z_STDIO_ERROR;
-        }
-
-        file = fopen(db->database_file, "wb");
-
-        if (!file || ferror(file))
-        {
-            perror("Error creating z database file");
-            if (file)
-                fclose(file);
-        }
-        else
-        {
-            if (write(STDOUT_FILENO, "Created z database file.\n", 25) == -1)
-            {
-                perror(RED NCSH_ERROR_STDOUT RESET);
-                fflush(stderr);
-                if (file)
-                    fclose(file);
-                return Z_STDIO_ERROR;
-            }
-        }
-
-        if (file)
-            fclose(file);
-        return Z_SUCCESS;
-    }
-
-    return Z_SUCCESS;
-}
-
 enum z_Result z_read_from_database_file(struct z_Database *db)
 {
     FILE *file = fopen(db->database_file, "rb");
