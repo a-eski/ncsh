@@ -20,7 +20,6 @@
 #include "ncsh_parser.h"
 #include "ncsh_terminal.h"
 #include "ncsh_vm.h"
-#include "ncsh_builtins.h"
 #include "eskilib/eskilib_defines.h"
 #include "eskilib/eskilib_colors.h"
 
@@ -780,31 +779,9 @@ eskilib_nodiscard int_fast32_t ncsh_vm(struct ncsh_Args *args)
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
-char *builtins[] = { "exit", "quit", "q", "echo", "help", "cd", "set", "pwd" };
-
-int_fast32_t (*builtin_func[]) (struct ncsh_Args *) =
-{
-    &ncsh_builtins_exit,
-    &ncsh_builtins_exit,
-    &ncsh_builtins_exit,
-    &ncsh_builtins_echo,
-    &ncsh_builtins_help,
-    &ncsh_builtins_cd,
-    &ncsh_builtins_set,
-    &ncsh_builtins_pwd
-};
-
 eskilib_nodiscard int_fast32_t ncsh_vm_execute(struct ncsh_Args *args)
 {
     assert(args);
-
-    for (uint_fast32_t i = 0; i < sizeof(builtins) / sizeof(char *); ++i)
-    {
-        if (eskilib_string_equals(args->values[0], builtins[i], args->lengths[0]))
-        {
-            return (*builtin_func[i])(args);
-        }
-    }
 
     ncsh_terminal_reset(); // reset terminal settings since a lot of terminal programs use canonical mode
 
@@ -820,14 +797,6 @@ eskilib_nodiscard int_fast32_t ncsh_vm_execute_noninteractive(struct ncsh_Args *
     assert(args);
     if (!args->count)
         return NCSH_COMMAND_SUCCESS_CONTINUE;
-
-    for (uint_fast32_t i = 0; i < sizeof(builtins) / sizeof(char *); ++i)
-    {
-        if (eskilib_string_equals(args->values[0], builtins[i], args->lengths[0]))
-        {
-            return (*builtin_func[i])(args);
-        }
-    }
 
     return ncsh_vm(args);
 }

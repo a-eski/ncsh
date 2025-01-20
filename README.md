@@ -47,7 +47,6 @@ sudo make install
 * more compile-time configurations
 * aliasing
 * frecency-based autocomplete (currently is a simple weight of how many times it has been used).
-* vm that supports !, &&, ||, etc.
 * support removing entries from history and autocompletions (use sqlite??)
 * move built-in commands like export, kill, setting environment variables, etc.
 * aliasing for user-defined commands, user configuration
@@ -55,3 +54,4 @@ sudo make install
 * support scripts through a non-iteractive mode
 * build for and test on mac (I don't have one)
 * build for and test on windows with msys2
+* math

@@ -8,9 +8,10 @@
 
 #define NCSH_LETTERS 96 // ascii printable characters 32-127
 
-// prefix tree for storing autocomplete posibilities
+// Forward Declaration: prefix tree for storing autocomplete posibilities
 struct ncsh_Autocompletion_Node;
 
+// Type Declaration: prefix tree for storing autocomplete possibilities
 struct ncsh_Autocompletion_Node
 {
     bool is_end_of_a_word;

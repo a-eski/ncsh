@@ -22,10 +22,10 @@
 #include "ncsh_config.h"
 #include "ncsh_defines.h"
 #include "ncsh_history.h"
+#include "ncsh_interpreter.h"
 #include "ncsh_parser.h"
 #include "ncsh_terminal.h"
-#include "ncsh_vm.h"
-#include "z/z.h"
+#include "ncsh_types.h"
 
 /* Macros */
 #define EXIT_IO_FAILURE -1
@@ -57,25 +57,6 @@ struct ncsh_Input
     size_t pos;
     size_t max_pos;
     char *buffer;
-};
-
-struct ncsh
-{
-    struct ncsh_Directory prompt_info;
-    struct ncsh_Config config;
-
-    struct ncsh_Args args;
-
-    int history_position;
-    struct eskilib_String history_entry;
-    struct ncsh_History history;
-    char *current_autocompletion;
-    struct ncsh_Autocompletion_Node *autocompletions_tree;
-
-    struct z_Database z_db;
-
-    struct ncsh_Coordinates terminal_size;
-    struct ncsh_Coordinates terminal_position;
 };
 
 /* Prompt */
@@ -155,7 +136,6 @@ eskilib_nodiscard int_fast32_t ncsh_backspace(struct ncsh_Input *input)
             break;
 
         ncsh_write_literal(MOVE_CURSOR_LEFT);
-
         --input->pos;
     }
 
@@ -194,7 +174,7 @@ eskilib_nodiscard int_fast32_t ncsh_delete(struct ncsh_Input *input)
     return EXIT_SUCCESS;
 }
 
-void ncsh_autocomplete(struct ncsh_Input *input, struct ncsh *shell)
+void ncsh_autocomplete(struct ncsh_Input *input, struct ncsh_Shell *shell)
 {
     uint_fast8_t autocompletions_matches_count = ncsh_autocompletions_first(
         input->buffer, input->pos + 1, shell->current_autocompletion, shell->autocompletions_tree);
@@ -353,75 +333,7 @@ eskilib_nodiscard int_fast32_t ncsh_tab_autocomplete(struct ncsh_Input *input,
     return exit;
 }
 
-eskilib_nodiscard int_fast32_t ncsh_z(struct ncsh_Args *args, struct z_Database *z_db)
-{
-    assert(z_db);
-    assert(args->count > 0);
-
-    if (args->count > 2)
-    {
-        if (!args->values[1] || !args->values[2])
-            return NCSH_COMMAND_EXIT_FAILURE;
-
-        if (eskilib_string_equals(args->values[1], "add", args->lengths[1]))
-        {
-            size_t length = strlen(args->values[2]) + 1;
-            if (z_add(args->values[2], length, z_db) == Z_SUCCESS)
-                return NCSH_COMMAND_SUCCESS_CONTINUE;
-            else
-                return NCSH_COMMAND_EXIT_FAILURE;
-        }
-        else
-        {
-            return NCSH_COMMAND_SUCCESS_CONTINUE;
-        }
-    }
-
-    size_t length = !args->values[1] ? 0 : strlen(args->values[1]) + 1;
-    char cwd[PATH_MAX] = {0};
-    char *cwd_result = getcwd(cwd, PATH_MAX);
-    if (!cwd_result)
-    {
-        perror("Could not load cwd information");
-        return NCSH_COMMAND_EXIT_FAILURE;
-    }
-
-    z(args->values[1], length, cwd, z_db);
-    return NCSH_COMMAND_SUCCESS_CONTINUE;
-}
-
-eskilib_nodiscard int_fast32_t ncsh_execute(struct ncsh *shell)
-{
-    if (shell->args.count == 0)
-        return NCSH_COMMAND_SUCCESS_CONTINUE;
-
-    if (eskilib_string_equals(shell->args.values[0], "z", shell->args.lengths[0]))
-        return ncsh_z(&shell->args, &shell->z_db);
-
-    if (eskilib_string_equals(shell->args.values[0], "history", shell->args.lengths[0]))
-    {
-        if (shell->args.values[1] && shell->args.lengths[1] == 6 &&
-            eskilib_string_equals(shell->args.values[1], "count", 6))
-        {
-            printf("history count: %d\n", shell->history.count);
-            return NCSH_COMMAND_SUCCESS_CONTINUE;
-        }
-        return ncsh_history_command(&shell->history);
-    }
-
-    struct eskilib_String alias = ncsh_config_alias_check(shell->args.values[0], shell->args.lengths[0]);
-    if (alias.length)
-    {
-        shell->args.values[0] = realloc(shell->args.values[0], alias.length);
-        memcpy(shell->args.values[0], alias.value, alias.length - 1);
-        shell->args.values[0][alias.length - 1] = '\0';
-        shell->args.lengths[0] = alias.length;
-    }
-
-    return ncsh_vm_execute(&shell->args);
-}
-
-void ncsh_exit(struct ncsh *shell)
+void ncsh_exit(struct ncsh_Shell *shell)
 {
     ncsh_config_free(&shell->config);
 
@@ -437,7 +349,7 @@ void ncsh_exit(struct ncsh *shell)
     ncsh_terminal_reset();
 }
 
-eskilib_nodiscard int_fast32_t ncsh_init(struct ncsh *shell)
+eskilib_nodiscard int_fast32_t ncsh_init(struct ncsh_Shell *shell)
 {
     shell->prompt_info.user = getenv("USER");
 
@@ -511,7 +423,7 @@ eskilib_nodiscard int_fast32_t ncsh_init(struct ncsh *shell)
     return EXIT_SUCCESS;
 }
 
-eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input *input, struct ncsh *shell)
+eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input *input, struct ncsh_Shell *shell)
 {
     char character;
     char temp_character;
@@ -540,7 +452,9 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input *input, struct nc
 
         if (character == CTRL_D)
         {
+	    ncsh_write_literal(ERASE_CURRENT_LINE);
             putchar('\n');
+	    fflush(stdout);
             return EXIT_SUCCESS_END;
         }
         else if (character == CTRL_W)
@@ -561,7 +475,7 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input *input, struct nc
             }
             fflush(stdout);
 
-            input->pos = 0;
+            input->pos = input->max_pos;
             shell->args.count = 0;
             shell->args.values[0] = NULL;
         }
@@ -903,14 +817,14 @@ int_fast32_t ncsh(void)
     }
 
 #ifdef NCSH_CLEAR_SCREEN_ON_STARTUP
-    if (write(STDOUT_FILENO, CLEAR_SCREEN MOVE_CURSOR_HOME, CLEAR_SCREEN_LENGTH + MOVE_CURSOR_HOME_LENGTH) == -1)
+    if (write(STDOUT_FILENO, CLEAR_SCREEN MOVE_CURSOR_HOME, sizeof(CLEAR_SCREEN MOVE_CURSOR_HOME) - 1) == -1)
     {
         free(input.buffer);
         return EXIT_FAILURE;
     }
 #endif
 
-    struct ncsh shell = {0};
+    struct ncsh_Shell shell = {0};
     if (ncsh_init(&shell) == EXIT_FAILURE)
     {
         free(input.buffer);
@@ -937,7 +851,7 @@ int_fast32_t ncsh(void)
         {
         case EXIT_FAILURE: {
             exit_code = EXIT_FAILURE;
-            break;
+            goto exit;
         }
         case EXIT_SUCCESS: {
             goto reset;
@@ -949,7 +863,7 @@ int_fast32_t ncsh(void)
 
         ncsh_parser_parse(input.buffer, input.pos, &shell.args);
 
-        command_result = ncsh_execute(&shell);
+        command_result = ncsh_interpreter_execute(&shell);
         switch (command_result)
         {
         case NCSH_COMMAND_EXIT_FAILURE: {
