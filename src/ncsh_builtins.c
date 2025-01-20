@@ -1,5 +1,7 @@
 // Copyright (c) ncsh by Alex Eski 2024
 
+#define _POSIX_C_SOURCE 200809L
+#include <fcntl.h>
 #include <linux/limits.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -113,13 +115,46 @@ eskilib_nodiscard int_fast32_t ncsh_builtins_pwd(struct ncsh_Args *args)
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
+#define KILL_NOTHING_TO_KILL_MESSAGE "ncsh kill: nothing to kill, please pass in a process ID (PID).\n"
+#define KILL_COULDNT_PARSE_PID_MESSAGE "ncsh kill: could not parse process ID (PID) from arguments.\n"
+eskilib_nodiscard int_fast32_t ncsh_builtins_kill(struct ncsh_Args *args)
+{
+    if (!args->values[1])
+    {
+        if (write(STDOUT_FILENO, KILL_NOTHING_TO_KILL_MESSAGE, sizeof(KILL_NOTHING_TO_KILL_MESSAGE) - 1) == -1)
+        {
+            return NCSH_COMMAND_EXIT_FAILURE;
+        }
+
+        return NCSH_COMMAND_SUCCESS_CONTINUE;
+    }
+
+
+    pid_t pid = atoi(args->values[1]);
+    if (!pid)
+    {
+        if (write(STDOUT_FILENO, KILL_COULDNT_PARSE_PID_MESSAGE, sizeof(KILL_COULDNT_PARSE_PID_MESSAGE) - 1) == -1)
+        {
+            return NCSH_COMMAND_EXIT_FAILURE;
+        }
+        return NCSH_COMMAND_FAILED_CONTINUE;
+    }
+    if (kill(pid, SIGTERM) != 0)
+    {
+        printf("ncsh kill: could not kill process with process ID (PID): %d\n", pid);
+        return NCSH_COMMAND_FAILED_CONTINUE;
+    }
+
+    return NCSH_COMMAND_SUCCESS_CONTINUE;
+}
+
 eskilib_nodiscard int_fast32_t ncsh_builtins_set_e()
 {
 	puts("sets e detected");
 	return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
-#define SET_NOTHING_TO_SET_MESSAGE "ncsh set: nothing to set"
+#define SET_NOTHING_TO_SET_MESSAGE "ncsh set: nothing to set, please pass in a value to set (i.e. '-e', '-c')"
 #define SET_VALID_OPERATIONS_MESSAGE "ncsh set: valid set operations are in the form '-e', '-c', etc."
 eskilib_nodiscard int_fast32_t ncsh_builtins_set(struct ncsh_Args *args)
 {

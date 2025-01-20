@@ -20,8 +20,8 @@
 void ncsh_history_file_set(struct eskilib_String config_file, struct ncsh_History *history)
 {
 #ifdef NCSH_HISTORY_TEST
-    history->file = malloc(NCSH_HISTORY_FILE_LENGTH);
-    memcpy(history->file, NCSH_HISTORY_FILE, NCSH_HISTORY_FILE_LENGTH);
+    history->file = malloc(sizeof(NCSH_HISTORY_FILE));
+    memcpy(history->file, NCSH_HISTORY_FILE, sizeof(NCSH_HISTORY_FILE));
     return;
 #endif /* ifdef NCSH_HISTORY_TEST */
 
@@ -31,15 +31,15 @@ void ncsh_history_file_set(struct eskilib_String config_file, struct ncsh_Histor
         return;
     }
 
-    if (config_file.length + NCSH_HISTORY_FILE_LENGTH > NCSH_MAX_INPUT)
+    if (config_file.length + sizeof(NCSH_HISTORY_FILE) > NCSH_MAX_INPUT)
     {
         history->file = NULL;
         return;
     }
 
-    history->file = malloc(config_file.length + NCSH_HISTORY_FILE_LENGTH);
+    history->file = malloc(config_file.length + sizeof(NCSH_HISTORY_FILE));
     memcpy(history->file, config_file.value, config_file.length);
-    memcpy(history->file + config_file.length - 1, NCSH_HISTORY_FILE, NCSH_HISTORY_FILE_LENGTH);
+    memcpy(history->file + config_file.length - 1, NCSH_HISTORY_FILE, sizeof(NCSH_HISTORY_FILE));
 
 #ifdef NCSH_DEBUG
     printf("history->file: %s\n", history->file);
@@ -147,8 +147,8 @@ enum eskilib_Result ncsh_history_save(struct ncsh_History *history)
     int pos = history->count > NCSH_MAX_HISTORY_FILE ? history->count - NCSH_MAX_HISTORY_FILE : 0;
     assert(pos >= 0);
 #ifdef NCSH_DEBUG
-    printf("history->count %lu\n", history->count);
-    printf("pos %lu\n", pos);
+    printf("history->count %d\n", history->count);
+    printf("pos %d\n", pos);
 #endif /* ifdef NCSH_DEBUG */
 
     // history file is full.. ask user if they would like to remove duplicates before saving to condense size of history

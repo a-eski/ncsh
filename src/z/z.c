@@ -65,7 +65,7 @@ struct z_Directory *z_find_match(char *target, size_t target_length, const char 
                                  struct z_Database *db)
 {
     assert(db);
-    if (!db || !target || target_length == 0 || db->count == 0 || !cwd || cwd_length == 0)
+    if (db->count == 0 || cwd_length < 2)
         return NULL;
 
     struct z_Directory *current_match = NULL;
@@ -203,6 +203,49 @@ enum z_Result z_read_entry_from_file(struct z_Directory *dir, FILE *file)
         return Z_FILE_ERROR;
 
     dir->path[dir->path_length] = '\0'; // Null-terminate the string
+    return Z_SUCCESS;
+}
+
+enum z_Result z_open_or_create_database_file(FILE *file, struct z_Database *db)
+{
+    file = fopen(db->database_file, "rb");
+    if (!file || feof(file) || ferror(file))
+    {
+        perror("Error opening z database file");
+        if (write(STDOUT_FILENO, "Trying to create z database file.\n", 34) == -1)
+        {
+            perror(RED NCSH_ERROR_STDOUT RESET);
+            fflush(stderr);
+            if (file)
+                fclose(file);
+            return Z_STDIO_ERROR;
+        }
+
+        file = fopen(db->database_file, "wb");
+
+        if (!file || ferror(file))
+        {
+            perror("Error creating z database file");
+            if (file)
+                fclose(file);
+        }
+        else
+        {
+            if (write(STDOUT_FILENO, "Created z database file.\n", 25) == -1)
+            {
+                perror(RED NCSH_ERROR_STDOUT RESET);
+                fflush(stderr);
+                if (file)
+                    fclose(file);
+                return Z_STDIO_ERROR;
+            }
+        }
+
+        if (file)
+            fclose(file);
+        return Z_SUCCESS;
+    }
+
     return Z_SUCCESS;
 }
 
@@ -355,10 +398,10 @@ enum z_Result z_add_new_to_database(char *path, size_t path_length, const char *
 enum z_Result z_database_file_set(struct eskilib_String config_file, struct z_Database *db)
 {
 #ifdef Z_TEST
-    db->database_file = malloc(Z_DATABASE_FILE_LENGTH);
+    db->database_file = malloc(sizeof(Z_DATABASE_FILE));
     if (!db->database_file)
         return Z_MALLOC_ERROR;
-    memcpy(db->database_file, Z_DATABASE_FILE, Z_DATABASE_FILE_LENGTH);
+    memcpy(db->database_file, Z_DATABASE_FILE, sizeof(Z_DATABASE_FILE));
     return Z_SUCCESS;
 #endif /* ifdef Z_TEST */
 
@@ -367,17 +410,17 @@ enum z_Result z_database_file_set(struct eskilib_String config_file, struct z_Da
         return Z_NULL_REFERENCE;
     }
 
-    if (config_file.length + Z_DATABASE_FILE_LENGTH > NCSH_MAX_INPUT)
+    if (config_file.length + sizeof(Z_DATABASE_FILE) > NCSH_MAX_INPUT)
     {
         return Z_FILE_LENGTH_TOO_LARGE;
     }
 
-    db->database_file = malloc(config_file.length + Z_DATABASE_FILE_LENGTH);
+    db->database_file = malloc(config_file.length + sizeof(Z_DATABASE_FILE));
     if (!db->database_file)
         return Z_MALLOC_ERROR;
 
     memcpy(db->database_file, config_file.value, config_file.length);
-    memcpy(db->database_file + config_file.length - 1, Z_DATABASE_FILE, Z_DATABASE_FILE_LENGTH);
+    memcpy(db->database_file + config_file.length - 1, Z_DATABASE_FILE, sizeof(Z_DATABASE_FILE));
 
 #ifdef Z_DEBUG
     printf("db->database_file :%s\n", db->database_file);

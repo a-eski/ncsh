@@ -5,7 +5,7 @@ RELEASE ?= 1
 debug_flags = -Wall -Wextra -Werror -Wpedantic -pedantic-errors -Wconversion -Wsign-conversion -Wformat=2 -Wshadow -Wvla -fstack-protector-all -fsanitize=address,undefined,leak -g
 release_flags = -Wall -Wextra -Werror -pedantic-errors -Wconversion -Wsign-conversion -Wformat=2 -O3 -DNDEBUG
 fuzz_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,leak,fuzzer -DNDEBUG -g
-objects = obj/main.o obj/ncsh.o obj/ncsh_noninteractive.o obj/ncsh_vm.o obj/ncsh_terminal.o obj/eskilib_string.o obj/eskilib_file.o obj/ncsh_parser.o obj/ncsh_builtins.o obj/ncsh_history.o obj/ncsh_autocompletions.o obj/ncsh_config.o obj/z.o
+objects = obj/main.o obj/ncsh.o obj/ncsh_noninteractive.o obj/ncsh_vm.o obj/ncsh_terminal.o obj/eskilib_string.o obj/eskilib_file.o obj/ncsh_parser.o obj/ncsh_builtins.o obj/ncsh_history.o obj/ncsh_autocompletions.o obj/ncsh_config.o obj/z.o obj/ncsh_interpreter.o
 # obj/ncsh_arena.o
 target = bin/ncsh
 
@@ -30,6 +30,8 @@ obj/ncsh.o : src/ncsh.c src/ncsh_vm.h src/ncsh_terminal.h src/eskilib/eskilib_st
 	$(cc_with_flags) -c src/ncsh.c -o obj/ncsh.o
 obj/ncsh_noninteractive.o : src/ncsh_noninteractive.c src/ncsh_parser.h
 	$(cc_with_flags) -c src/ncsh_noninteractive.c -o obj/ncsh_noninteractive.o
+obj/ncsh_interpreter.o : src/ncsh_interpreter.c
+	$(cc_with_flags) -c src/ncsh_interpreter.c -o obj/ncsh_interpreter.o
 obj/ncsh_vm.o : src/ncsh_vm.h src/eskilib/eskilib_string.h src/eskilib/eskilib_colors.h src/ncsh_terminal.h src/ncsh_builtins.h src/ncsh_parser.h
 	$(cc_with_flags) -c src/ncsh_vm.c -o obj/ncsh_vm.o
 obj/ncsh_builtins.o : src/ncsh_builtins.h src/eskilib/eskilib_string.h

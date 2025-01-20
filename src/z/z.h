@@ -9,7 +9,6 @@
 #include "../eskilib/eskilib_string.h"
 
 #define Z_DATABASE_FILE "_z_database.bin"
-#define Z_DATABASE_FILE_LENGTH 16
 #define Z_DATABASE_IN_MEMORY_LIMIT 100
 
 #define Z_SECOND 1
@@ -49,12 +48,12 @@ enum z_Result
     Z_SUCCESS = 1
 };
 
-extern enum z_Result z_init(struct eskilib_String config_location, struct z_Database *database);
+enum z_Result z_init(struct eskilib_String config_location, struct z_Database *database);
 
-extern void z(char *target, size_t target_length, const char *cwd, struct z_Database *db);
+void z(char *target, size_t target_length, const char *cwd, struct z_Database *db);
 
-extern enum z_Result z_add(char *path, size_t path_length, struct z_Database *db);
+enum z_Result z_add(char *path, size_t path_length, struct z_Database *db);
 
-extern enum z_Result z_exit(struct z_Database *db);
+enum z_Result z_exit(struct z_Database *db);
 
 #endif // !z_h
