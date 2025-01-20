@@ -21,3 +21,4 @@ make clean
 rm _z_database.bin
 rm .ncsh_history
 rm .ncsh_history_test
+rm t4.txt
