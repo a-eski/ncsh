@@ -84,6 +84,9 @@ void ncsh_interpreter_alias(struct ncsh_Args *args)
 
 eskilib_nodiscard int_fast32_t ncsh_interpreter_execute(struct ncsh_Shell *shell)
 {
+    assert(shell);
+    assert(&shell->args);
+
     if (shell->args.count == 0)
         return NCSH_COMMAND_SUCCESS_CONTINUE;
 
@@ -91,15 +94,7 @@ eskilib_nodiscard int_fast32_t ncsh_interpreter_execute(struct ncsh_Shell *shell
         return ncsh_interpreter_z(&shell->args, &shell->z_db);
 
     if (eskilib_string_equals(shell->args.values[0], "history", shell->args.lengths[0]))
-    {
-        if (shell->args.values[1] && shell->args.lengths[1] == 6 &&
-            eskilib_string_equals(shell->args.values[1], "count", 6))
-        {
-            printf("history count: %d\n", shell->history.count);
-            return NCSH_COMMAND_SUCCESS_CONTINUE;
-        }
-        return ncsh_history_command(&shell->history);
-    }
+        return ncsh_history_command(&shell->args, &shell->history);
 
     ncsh_interpreter_alias(&shell->args);
 
@@ -116,6 +111,8 @@ eskilib_nodiscard int_fast32_t ncsh_interpreter_execute(struct ncsh_Shell *shell
 
 eskilib_nodiscard int_fast32_t ncsh_interpreter_execute_noninteractive(struct ncsh_Args *args)
 {
+    assert(args);
+
     ncsh_interpreter_alias(args);
 
     for (uint_fast32_t i = 0; i < sizeof(builtins) / sizeof(char *); ++i)

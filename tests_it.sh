@@ -18,6 +18,8 @@ make CFLAGS="-Wall -Wextra -Werror -pedantic-errors -Wformat=2 -Wconversion -Wsi
 ./integration_tests/integration_test.rb
 make clean
 
+set +e
+
 rm _z_database.bin
 rm .ncsh_history
 rm .ncsh_history_test

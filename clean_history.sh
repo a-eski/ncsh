@@ -1,5 +1,7 @@
 #!/bin/env bash
 
+# not needed anymore after 'history clean' command added :)
+
 echo 'before'
 wc -l /home/alex/.config/ncsh/.ncsh_history
 
