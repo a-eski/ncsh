@@ -194,6 +194,7 @@ eskilib_nodiscard enum eskilib_Result ncsh_history_clean(struct ncsh_History *hi
     if (file == NULL)
     {
         perror(RED "ncsh: Could not open .ncsh_history file to clean history" RESET);
+	eskilib_hashtable_free(&ht);
         return E_FAILURE_FILE_OP;
     }
 
@@ -208,13 +209,15 @@ eskilib_nodiscard enum eskilib_Result ncsh_history_clean(struct ncsh_History *hi
 
             if (!fputs(history->entries[i].value, file))
             {
-                perror(RED "ncsh: Error writing to file" RESET);
+                perror(RED "ncsh history: Error writing to file" RESET);
+		eskilib_hashtable_free(&ht);
                 fclose(file);
                 return E_FAILURE_FILE_OP;
             }
             if (!fputc('\n', file))
             {
-                perror(RED "ncsh: Error writing to file" RESET);
+                perror(RED "ncsh history: Error writing to file" RESET);
+		eskilib_hashtable_free(&ht);
                 fclose(file);
                 return E_FAILURE_FILE_OP;
             }
@@ -231,7 +234,6 @@ eskilib_nodiscard enum eskilib_Result ncsh_history_clean(struct ncsh_History *hi
         fflush(stderr);
         return result;
     }
-
 
     printf("ncsh history: finished cleaning history, history now has %d entries.\n", history->count);
 
@@ -334,7 +336,6 @@ eskilib_nodiscard enum eskilib_Result ncsh_history_add(char *line, size_t length
 struct eskilib_String ncsh_history_get(int position, struct ncsh_History *history)
 {
     assert(history != NULL);
-    // assert(position >= 0);
 
     if (history == NULL || history->count == 0 || history->entries == NULL)
     {
