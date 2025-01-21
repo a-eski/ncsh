@@ -1,6 +1,3 @@
-gcc -std=c2x -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined,leak ./eskilib/eskilib_string.c ./eskilib/eskilib_test.c ncsh_parser.c ./tests/ncsh_parser_v2_tests.c ncsh_args.c -o ncsh_parser_v2_tests &&
-./ncsh_parser_v2_tests
-
 gcc -std=c2x -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined,leak ./eskilib/eskilib_string.c ./eskilib/eskilib_test.c ncsh_tokenize.c ./tests/ncsh_tokenize_tests.c ncsh_args.c ncsh_parser.c -o ncsh_tokenize_tests &&
 ./ncsh_tokenize_tests
 

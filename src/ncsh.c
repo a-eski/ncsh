@@ -806,6 +806,13 @@ int_fast32_t ncsh(void)
     clock_t start = clock();
 #endif
 
+#ifdef NCSH_CLEAR_SCREEN_ON_STARTUP
+    if (write(STDOUT_FILENO, CLEAR_SCREEN MOVE_CURSOR_HOME, sizeof(CLEAR_SCREEN MOVE_CURSOR_HOME) - 1) == -1)
+    {
+        return EXIT_FAILURE;
+    }
+#endif
+
     int_fast32_t exit_code = EXIT_SUCCESS;
     int_fast32_t input_result = 0;
     int_fast32_t command_result = 0;
@@ -815,14 +822,6 @@ int_fast32_t ncsh(void)
     {
         return EXIT_FAILURE;
     }
-
-#ifdef NCSH_CLEAR_SCREEN_ON_STARTUP
-    if (write(STDOUT_FILENO, CLEAR_SCREEN MOVE_CURSOR_HOME, sizeof(CLEAR_SCREEN MOVE_CURSOR_HOME) - 1) == -1)
-    {
-        free(input.buffer);
-        return EXIT_FAILURE;
-    }
-#endif
 
     struct ncsh_Shell shell = {0};
     if (ncsh_init(&shell) == EXIT_FAILURE)

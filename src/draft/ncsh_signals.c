@@ -1,5 +1,7 @@
 // Copyright (c) ncsh by Alex Eski 2024
 
+/* Need to figure out how to handle SIGWINCH signal */
+
 #define _POSIX_C_SOURCE 200809L
 // #include <signal.h>
 /* Signals */

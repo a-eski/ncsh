@@ -5,7 +5,7 @@ RELEASE ?= 1
 debug_flags = -Wall -Wextra -Werror -Wpedantic -pedantic-errors -Wconversion -Wsign-conversion -Wformat=2 -Wshadow -Wvla -fstack-protector-all -fsanitize=address,undefined,leak -g
 release_flags = -Wall -Wextra -Werror -pedantic-errors -Wconversion -Wsign-conversion -Wformat=2 -O3 -DNDEBUG
 fuzz_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,leak,fuzzer -DNDEBUG -g
-objects = obj/main.o obj/ncsh.o obj/ncsh_noninteractive.o obj/ncsh_vm.o obj/ncsh_terminal.o obj/eskilib_string.o obj/eskilib_file.o obj/ncsh_parser.o obj/ncsh_builtins.o obj/ncsh_history.o obj/ncsh_autocompletions.o obj/ncsh_config.o obj/z.o obj/ncsh_interpreter.o
+objects = obj/main.o obj/ncsh.o obj/ncsh_noninteractive.o obj/ncsh_vm.o obj/ncsh_terminal.o obj/eskilib_string.o obj/eskilib_file.o obj/eskilib_hashtable.o obj/ncsh_parser.o obj/ncsh_builtins.o obj/ncsh_history.o obj/ncsh_autocompletions.o obj/ncsh_config.o obj/z.o obj/ncsh_interpreter.o
 # obj/ncsh_arena.o
 target = bin/ncsh
 
@@ -24,35 +24,37 @@ endif
 $(target) : $(objects)
 	$(cc_with_flags) -o $(target) $(objects)
 
-obj/main.o : src/ncsh.h src/ncsh_noninteractive.h
+obj/main.o :
 	$(cc_with_flags) -c src/main.c -o obj/main.o
-obj/ncsh.o : src/ncsh.c src/ncsh_vm.h src/ncsh_terminal.h src/eskilib/eskilib_string.h src/eskilib/eskilib_colors.h src/ncsh_parser.h src/ncsh_autocompletions.h
+obj/ncsh.o :
 	$(cc_with_flags) -c src/ncsh.c -o obj/ncsh.o
-obj/ncsh_noninteractive.o : src/ncsh_noninteractive.c src/ncsh_parser.h
+obj/ncsh_noninteractive.o :
 	$(cc_with_flags) -c src/ncsh_noninteractive.c -o obj/ncsh_noninteractive.o
-obj/ncsh_interpreter.o : src/ncsh_interpreter.c
+obj/ncsh_interpreter.o :
 	$(cc_with_flags) -c src/ncsh_interpreter.c -o obj/ncsh_interpreter.o
-obj/ncsh_vm.o : src/ncsh_vm.h src/eskilib/eskilib_string.h src/eskilib/eskilib_colors.h src/ncsh_terminal.h src/ncsh_builtins.h src/ncsh_parser.h
+obj/ncsh_vm.o :
 	$(cc_with_flags) -c src/ncsh_vm.c -o obj/ncsh_vm.o
-obj/ncsh_builtins.o : src/ncsh_builtins.h src/eskilib/eskilib_string.h
+obj/ncsh_builtins.o :
 	$(cc_with_flags) -c src/ncsh_builtins.c -o obj/ncsh_builtins.o
-obj/ncsh_history.o : src/ncsh_history.h src/eskilib/eskilib_string.h src/eskilib/eskilib_file.h
+obj/ncsh_history.o :
 	$(cc_with_flags) -c src/ncsh_history.c -o obj/ncsh_history.o
-obj/ncsh_autocompletions.o : src/ncsh_autocompletions.h src/eskilib/eskilib_string.h
+obj/ncsh_autocompletions.o :
 	$(cc_with_flags) -c src/ncsh_autocompletions.c -o obj/ncsh_autocompletions.o
-obj/ncsh_terminal.o : src/ncsh_terminal.c src/ncsh_terminal.h
+obj/ncsh_terminal.o :
 	$(cc_with_flags) -c src/ncsh_terminal.c -o obj/ncsh_terminal.o
-obj/ncsh_parser.o : src/ncsh_parser.c src/ncsh_parser.h src/eskilib/eskilib_string.h
+obj/ncsh_parser.o :
 	$(cc_with_flags) -c src/ncsh_parser.c -o obj/ncsh_parser.o
-obj/ncsh_config.o : src/ncsh_config.c src/ncsh_config.h
+obj/ncsh_config.o :
 	$(cc_with_flags) -c src/ncsh_config.c -o obj/ncsh_config.o
-obj/z.o : src/z/z.c src/z/z.h src/eskilib/eskilib_string.h
+obj/z.o :
 	$(cc_with_flags) -c src/z/z.c -o obj/z.o
-obj/eskilib_string.o : src/eskilib/eskilib_string.c src/eskilib/eskilib_string.h
+obj/eskilib_hashtable.o :
+	$(cc_with_flags) -c src/eskilib/eskilib_hashtable.c -o obj/eskilib_hashtable.o
+obj/eskilib_string.o :
 	$(cc_with_flags) -c src/eskilib/eskilib_string.c -o obj/eskilib_string.o
-obj/eskilib_file.o : src/eskilib/eskilib_file.c src/eskilib/eskilib_file.h
+obj/eskilib_file.o :
 	$(cc_with_flags) -c src/eskilib/eskilib_file.c -o obj/eskilib_file.o
-# obj/ncsh_arena.o : src/ncsh_arena.c src/ncsh_arena.h
+# obj/ncsh_arena.o :
 	# $(cc_with_flags) -c src/ncsh_arena.c -o obj/ncsh_arena.o
 
 .PHONY: debug
@@ -92,7 +94,7 @@ l :
 
 .PHONY: test_history
 test_history :
-	$(CC) $(STD) $(debug_flags) -DNCSH_HISTORY_TEST ./src/eskilib/eskilib_string.c ./src/eskilib/eskilib_test.c ./src/eskilib/eskilib_file.c ./src/ncsh_history.c ./src/tests/ncsh_history_tests.c -o ./bin/ncsh_history_tests
+	$(CC) $(STD) $(debug_flags) -DNCSH_HISTORY_TEST ./src/eskilib/eskilib_string.c ./src/eskilib/eskilib_test.c ./src/eskilib/eskilib_file.c ./src/eskilib/eskilib_hashtable.c ./src/ncsh_history.c ./src/tests/ncsh_history_tests.c -o ./bin/ncsh_history_tests
 	./bin/ncsh_history_tests
 
 .PHONY: fuzz_history
