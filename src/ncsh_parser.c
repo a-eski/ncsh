@@ -11,7 +11,6 @@
 
 #include "eskilib/eskilib_defines.h"
 #include "eskilib/eskilib_result.h"
-#include "eskilib/eskilib_string.h"
 #include "ncsh_defines.h"
 #include "ncsh_parser.h"
 
@@ -302,7 +301,7 @@ void ncsh_parser_parse(const char *line, size_t length, struct ncsh_Args *args)
             else
             {
                 args->values[args->count] = malloc(buf_pos + 1);
-                eskilib_string_copy(args->values[args->count], buffer, buf_pos + 1);
+                memcpy(args->values[args->count], buffer, buf_pos + 1);
                 args->ops[args->count] = ncsh_op_get(buffer, buf_pos);
                 args->lengths[args->count] = buf_pos + 1; // + 1 for null terminator
                 ++args->count;

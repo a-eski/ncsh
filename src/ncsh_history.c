@@ -92,7 +92,7 @@ eskilib_nodiscard enum eskilib_Result ncsh_history_load(struct ncsh_History *his
             if (history->entries[i].value == NULL)
                 return E_FAILURE_MALLOC;
 
-            eskilib_string_copy(history->entries[i].value, buffer, (size_t)buffer_length);
+            memcpy(history->entries[i].value, buffer, (size_t)buffer_length);
         }
     }
 
@@ -134,7 +134,7 @@ eskilib_nodiscard enum eskilib_Result ncsh_history_reload(struct ncsh_History *h
             if (history->entries[i].value == NULL)
                 return E_FAILURE_MALLOC;
 
-            eskilib_string_copy(history->entries[i].value, buffer, (size_t)buffer_length);
+            memcpy(history->entries[i].value, buffer, (size_t)buffer_length);
         }
     }
 
@@ -328,7 +328,7 @@ eskilib_nodiscard enum eskilib_Result ncsh_history_add(char *line, size_t length
 
     history->entries[history->count].length = length;
     history->entries[history->count].value = malloc(length);
-    eskilib_string_copy(history->entries[history->count].value, line, length);
+    memcpy(history->entries[history->count].value, line, length);
     ++history->count;
     return E_SUCCESS;
 }
@@ -392,9 +392,9 @@ eskilib_nodiscard int_fast32_t ncsh_history_command(struct ncsh_Args *args, stru
 {
     if (args->values[1])
     {
-        if (eskilib_string_equals(args->values[1], HISTORY_COUNT_COMMAND, sizeof(HISTORY_COUNT_COMMAND)))
+        if (memcmp(args->values[1], HISTORY_COUNT_COMMAND, sizeof(HISTORY_COUNT_COMMAND)) == 0)
             return ncsh_history_command_count(history);
-        else if (eskilib_string_equals(args->values[1], HISTORY_CLEAN_COMMAND, sizeof(HISTORY_CLEAN_COMMAND)))
+        else if (memcmp(args->values[1], HISTORY_CLEAN_COMMAND, sizeof(HISTORY_CLEAN_COMMAND)) == 0)
             return ncsh_history_command_clean(history);
     }
 

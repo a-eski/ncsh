@@ -15,13 +15,13 @@ struct eskilib_String
     char *value;
 };
 
-char *eskilib_string_copy(char *dest, char *source, const size_t maxStringSize);
+// char *eskilib_string_copy(char *dest, char *source, const size_t maxStringSize);
 
 // checks if two strings are equivalent and returns true if they are, false otherwise.
 bool eskilib_string_equals(char *stringOne, char *stringTwo, const size_t maxStringSize);
 
 // returns values similar to strcmp from string.h, return value == 0 if strings match.
-int_fast32_t eskilib_string_compare(char *stringOne, char *stringTwo, const size_t maxStringSize);
+// int_fast32_t eskilib_string_compare(char *stringOne, char *stringTwo, const size_t maxStringSize);
 
 bool eskilib_string_contains_unsafe(const char *string, const char *substring);
 bool eskilib_string_contains(const struct eskilib_String string, const struct eskilib_String substring);

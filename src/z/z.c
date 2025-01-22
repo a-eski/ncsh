@@ -99,28 +99,28 @@ enum z_Result z_write_entry_to_file(struct z_Directory *dir, FILE *file)
 {
     assert(dir && file);
 
-    size_t bytes_read;
+    size_t bytes_written;
 
-    bytes_read = fwrite(&dir->rank, sizeof(double), 1, file);
-    if (bytes_read == 0 || feof(file))
+    bytes_written = fwrite(&dir->rank, sizeof(double), 1, file);
+    if (bytes_written == 0 || feof(file))
         return Z_ZERO_BYTES_READ;
     else if (ferror(file))
         return Z_FILE_ERROR;
 
-    bytes_read = fwrite(&dir->last_accessed, sizeof(time_t), 1, file);
-    if (bytes_read == 0 || feof(file))
+    bytes_written = fwrite(&dir->last_accessed, sizeof(time_t), 1, file);
+    if (bytes_written == 0 || feof(file))
         return Z_ZERO_BYTES_READ;
     else if (ferror(file))
         return Z_FILE_ERROR;
 
-    bytes_read = fwrite(&dir->path_length, sizeof(uint32_t), 1, file);
-    if (bytes_read == 0 || feof(file))
+    bytes_written = fwrite(&dir->path_length, sizeof(uint32_t), 1, file);
+    if (bytes_written == 0 || feof(file))
         return Z_ZERO_BYTES_READ;
     else if (ferror(file))
         return Z_FILE_ERROR;
 
-    bytes_read = fwrite(dir->path, sizeof(char), dir->path_length, file);
-    if (bytes_read == 0)
+    bytes_written = fwrite(dir->path, sizeof(char), dir->path_length, file);
+    if (bytes_written == 0)
         return Z_ZERO_BYTES_READ;
     else if (ferror(file))
         return Z_FILE_ERROR;
@@ -426,7 +426,7 @@ enum z_Result z_directory_matches(char *target, size_t target_length, const char
             if (!output->value)
                 return Z_MALLOC_ERROR;
             output->length = directory_length;
-            eskilib_string_copy(output->value, directory_entry->d_name, directory_length);
+            memcpy(output->value, directory_entry->d_name, directory_length);
 
             if ((closedir(current_directory)) == -1)
             {

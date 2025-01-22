@@ -23,4 +23,7 @@
 #define NCSH_MAX_AUTOCOMPLETION_MATCHES 32 // max number of matches for autocompletion
 #define NCSH_MAX_INPUT 1024                // max input for reading in a line
 
+// #define MIN(val1, val2) (val1 > val2 ? val2 : val1)
+// #define MAX(val1, val2) (val1 > val2 ? val1 : val2)
+
 #endif // !ncsh_defines_h

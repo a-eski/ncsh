@@ -1,7 +1,9 @@
+/* Copyright eskilib by Alex Eski 2025 */
+
 #ifndef eskilib_defines_h
 #define eskilib_defines_h
 
-// eskilib_nodiscard: an attribute qualifier wrapper for [[nodiscard]].
+// INFO: eskilib_nodiscard: an attribute qualifier wrapper for [[nodiscard]].
 // If not using c2x/c23, does nothing, otherwise use [[nodiscard]] attribute.
 // Useful to help with refactors and preventing bugs from not checking return values.
 

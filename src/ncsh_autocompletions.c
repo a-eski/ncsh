@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "eskilib/eskilib_string.h"
 #include "ncsh_autocompletions.h"
@@ -155,8 +156,7 @@ void ncsh_autocompletions_match(struct ncsh_Autocompletion *matches, uint_fast32
 
                 if (*string_position > 0 && *matches_position > 0)
                 {
-                    eskilib_string_copy(matches[*matches_position].value, matches[*matches_position - 1].value,
-                                        *string_position);
+                    memcpy(matches[*matches_position].value, matches[*matches_position - 1].value, *string_position);
                 }
             }
 
@@ -228,7 +228,7 @@ uint_fast8_t ncsh_autocompletions_first(char *search, size_t search_length, char
             potential_match = matches[i];
     }
 
-    eskilib_string_copy(match, potential_match.value, NCSH_MAX_INPUT);
+    memcpy(match, potential_match.value, NCSH_MAX_INPUT);
     ncsh_autocompletions_free_matches(matches, matches_count);
 
     return 1;

@@ -316,7 +316,7 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input *input, struct nc
 
                         input->pos = shell->history_entry.length - 1;
                         input->max_pos = shell->history_entry.length - 1;
-                        eskilib_string_copy(input->buffer, shell->history_entry.value, input->pos);
+                        memcpy(input->buffer, shell->history_entry.value, input->pos);
 
                         ncsh_write(input->buffer, input->pos);
                     }
@@ -338,7 +338,7 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input *input, struct nc
                         --shell->history_position;
                         input->pos = shell->history_entry.length - 1;
                         input->max_pos = shell->history_entry.length - 1;
-                        eskilib_string_copy(input->buffer, shell->history_entry.value, input->pos);
+                        memcpy(input->buffer, shell->history_entry.value, input->pos);
 
                         ncsh_write(input->buffer, input->pos);
                     }

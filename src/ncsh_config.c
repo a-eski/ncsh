@@ -1,3 +1,5 @@
+// Copyright (c) ncsh by Alex Eski 2025
+
 #include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -181,6 +183,7 @@ char *aliases[] = {GIT, NEOVIM, MAKE};
 size_t aliases_len[] = {sizeof(GIT), sizeof(NEOVIM), sizeof(MAKE)};
 
 char *aliased[] = {GIT_ALIAS, NEOVIM_ALIAS, MAKE_ALIAS};
+size_t aliased_len[] = {sizeof(GIT_ALIAS), sizeof(NEOVIM_ALIAS), sizeof(MAKE_ALIAS)};
 
 struct eskilib_String ncsh_config_alias_check(char *buffer, size_t buf_len)
 {
@@ -189,7 +192,7 @@ struct eskilib_String ncsh_config_alias_check(char *buffer, size_t buf_len)
 
     for (uint_fast32_t i = 0; i < sizeof(aliased) / sizeof(char *); ++i)
     {
-        if (eskilib_string_equals(buffer, aliased[i], buf_len))
+        if (buf_len == aliased_len[i] && memcmp(buffer, aliased[i], buf_len) == 0)
         {
             return (struct eskilib_String){.value = aliases[i], .length = aliases_len[i]};
         }

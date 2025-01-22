@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <string.h>
 
 #include "eskilib_defines.h"
 #include "eskilib_string.h"
@@ -27,7 +28,7 @@ eskilib_nodiscard bool eskilib_string_equals(char *stringOne, char *stringTwo, c
 {
     assert(stringOne != NULL);
     assert(stringTwo != NULL);
-    if (maxStringSize == 0)
+    /*if (maxStringSize == 0)
         return false;
 
     const unsigned char *p1 = (const unsigned char *)stringOne;
@@ -41,7 +42,9 @@ eskilib_nodiscard bool eskilib_string_equals(char *stringOne, char *stringTwo, c
         ++p1, ++p2;
     }
 
-    return ((*p1 > *p2) - (*p2 > *p1)) == 0;
+    return ((*p1 > *p2) - (*p2 > *p1)) == 0;*/
+    (void)maxStringSize;
+    return strcmp(stringOne, stringTwo) == 0;
 }
 
 eskilib_nodiscard int_fast32_t eskilib_string_compare(char *stringOne, char *stringTwo, const size_t maxStringSize)

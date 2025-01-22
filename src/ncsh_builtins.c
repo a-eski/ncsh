@@ -41,7 +41,7 @@ eskilib_nodiscard int_fast32_t ncsh_builtins_echo(struct ncsh_Args *args)
 "This is free software, and you are welcome to redistribute it "         \
 "under certain conditions.\n\n"                                           \
 
-#define NCSH_HELP "ncsh help:\n"
+#define NCSH_HELP_MESSAGE "ncsh help:\n"
 #define NCSH_HELP_FORMAT \
 "Builtin Commands: {command} {args}\n"
 #define NCSH_HELP_QUIT \
@@ -69,14 +69,16 @@ eskilib_nodiscard int_fast32_t ncsh_builtins_help(struct ncsh_Args *args)
     (void)args; // to not get compiler warnings
 
     NCSH_HELP_WRITE(NCSH_COPYRIGHT);
-    NCSH_HELP_WRITE(NCSH_HELP);
+    NCSH_HELP_WRITE(NCSH_HELP_MESSAGE);
     NCSH_HELP_WRITE(NCSH_HELP_FORMAT);
     NCSH_HELP_WRITE(NCSH_HELP_QUIT);
     NCSH_HELP_WRITE(NCSH_HELP_CHANGEDIR);
     NCSH_HELP_WRITE(NCSH_HELP_ECHO);
     NCSH_HELP_WRITE(NCSH_HELP_HISTORY);
     NCSH_HELP_WRITE(NCSH_HELP_HISTORY_COUNT);
+    // history clean
     NCSH_HELP_WRITE(NCSH_HELP_PWD);
+    // kill
 
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
