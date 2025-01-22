@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "../eskilib/eskilib_string.h"
 #include "../eskilib/eskilib_test.h"
@@ -141,7 +142,8 @@ void ncsh_history_save_adds_to_file(void)
     result = ncsh_history_init(eskilib_String_Empty, &history);
     eskilib_assert(result == E_SUCCESS);
 
-    result = ncsh_history_add("ls\0", 3, &history);
+    size_t len = 3;
+    result = ncsh_history_add("ls\0", len, &history);
     eskilib_assert(result == E_SUCCESS);
 
     ncsh_history_exit(&history);
@@ -154,7 +156,7 @@ void ncsh_history_save_adds_to_file(void)
         eskilib_assert(false);
         fclose(file);
     }
-    eskilib_assert(eskilib_string_equals(buffer, "ls\n", MAX_INPUT));
+    eskilib_assert(memcmp(buffer, "ls\n", len) == 0);
     fclose(file);
 }
 
@@ -165,10 +167,13 @@ void ncsh_history_save_adds_multiple_to_file(void)
     result = ncsh_history_init(eskilib_String_Empty, &history);
     eskilib_assert(result == E_SUCCESS);
 
+    size_t existing_command_len = 3;
     char *existing_command = "ls\n";
-    result = ncsh_history_add("ls | sort\0", 10, &history);
+    size_t ls_sort_len = 10;
+    result = ncsh_history_add("ls | sort\0", ls_sort_len, &history);
     eskilib_assert(result == E_SUCCESS);
-    result = ncsh_history_add("echo hello\0", 11, &history);
+    size_t echo_hello_len = 11;
+    result = ncsh_history_add("echo hello\0", echo_hello_len, &history);
     eskilib_assert(result == E_SUCCESS);
 
     ncsh_history_exit(&history);
@@ -180,15 +185,15 @@ void ncsh_history_save_adds_multiple_to_file(void)
     {
         if (i == 0)
         {
-            eskilib_assert(eskilib_string_equals(buffer, existing_command, MAX_INPUT));
+            eskilib_assert(memcmp(buffer, existing_command, existing_command_len) == 0);
         }
         else if (i == 1)
         {
-            eskilib_assert(eskilib_string_equals(buffer, "ls | sort\n", MAX_INPUT));
+            eskilib_assert(memcmp(buffer, "ls | sort\n", ls_sort_len) == 0);
         }
         if (i == 2)
         {
-            eskilib_assert(eskilib_string_equals(buffer, "echo hello\n", MAX_INPUT));
+            eskilib_assert(memcmp(buffer, "echo hello\n", echo_hello_len) == 0);
         }
         else
         {
@@ -225,15 +230,15 @@ void ncsh_history_load_and_get_entries_test(void)
 
     struct eskilib_String entry = ncsh_history_get(0, &history);
     eskilib_assert(entry.length == 11);
-    eskilib_assert(eskilib_string_equals(entry.value, "echo hello\0", entry.length));
+    eskilib_assert(memcmp(entry.value, "echo hello\0", entry.length) == 0);
 
     entry = ncsh_history_get(1, &history);
     eskilib_assert(entry.length == 10);
-    eskilib_assert(eskilib_string_equals(entry.value, "ls | sort\0", entry.length));
+    eskilib_assert(memcmp(entry.value, "ls | sort\0", entry.length) == 0);
 
     entry = ncsh_history_get(2, &history);
     eskilib_assert(entry.length == 3);
-    eskilib_assert(eskilib_string_equals(entry.value, "ls\0", entry.length));
+    eskilib_assert(memcmp(entry.value, "ls\0", entry.length) == 0);
 
     ncsh_history_exit(&history);
 }
@@ -247,26 +252,26 @@ void ncsh_history_load_and_get_entries_then_add_entries_test(void)
 
     struct eskilib_String entry = ncsh_history_get(0, &history);
     eskilib_assert(entry.length == 11);
-    eskilib_assert(eskilib_string_equals(entry.value, "echo hello\0", entry.length));
+    eskilib_assert(memcmp(entry.value, "echo hello\0", entry.length) == 0);
 
     entry = ncsh_history_get(1, &history);
     eskilib_assert(entry.length == 10);
-    eskilib_assert(eskilib_string_equals(entry.value, "ls | sort\0", entry.length));
+    eskilib_assert(memcmp(entry.value, "ls | sort\0", entry.length) == 0);
 
     entry = ncsh_history_get(2, &history);
     eskilib_assert(entry.length == 3);
-    eskilib_assert(eskilib_string_equals(entry.value, "ls\0", entry.length));
+    eskilib_assert(memcmp(entry.value, "ls\0", entry.length) == 0);
 
     result = ncsh_history_add("ls > t.txt\0", 11, &history);
     eskilib_assert(result == E_SUCCESS);
 
     entry = ncsh_history_get(0, &history);
     eskilib_assert(entry.length == 11);
-    eskilib_assert(eskilib_string_equals(entry.value, "ls > t.txt\0", entry.length));
+    eskilib_assert(memcmp(entry.value, "ls > t.txt\0", entry.length) == 0);
 
     entry = ncsh_history_get(1, &history);
     eskilib_assert(entry.length == 11);
-    eskilib_assert(eskilib_string_equals(entry.value, "echo hello\0", entry.length));
+    eskilib_assert(memcmp(entry.value, "echo hello\0", entry.length) == 0);
 
     ncsh_history_exit(&history);
 }

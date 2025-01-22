@@ -39,7 +39,7 @@ struct z_Directory *z_find_match_add(char *target, size_t target_length, struct 
 
     for (uint_fast32_t i = 0; i < db->count; ++i)
     {
-        if (eskilib_string_contains_s2((db->dirs + i)->path, (db->dirs + i)->path_length, target, target_length))
+        if (eskilib_string_contains((db->dirs + i)->path, (db->dirs + i)->path_length, target, target_length))
         {
             if (!current_match || z_score(current_match, now) < z_score((db->dirs + i), now))
             {
@@ -73,9 +73,8 @@ struct z_Directory *z_find_match(char *target, size_t target_length, const char 
 
     for (uint_fast32_t i = 0; i < db->count; ++i)
     {
-        size_t compare_length = cwd_length > (db->dirs + i)->path_length ? cwd_length : (db->dirs + i)->path_length;
-        if (eskilib_string_contains_s2((db->dirs + i)->path, (db->dirs + i)->path_length, target, target_length) &&
-            !eskilib_string_equals((db->dirs + i)->path, (char *)cwd, compare_length))
+        if (eskilib_string_contains((db->dirs + i)->path, (db->dirs + i)->path_length, target, target_length) &&
+            !eskilib_string_compare((db->dirs + i)->path, (db->dirs + i)->path_length, (char *)cwd, cwd_length))
         {
             if (!current_match || z_score(current_match, now) < z_score((db->dirs + i), now))
             {
@@ -412,15 +411,13 @@ enum z_Result z_directory_matches(char *target, size_t target_length, const char
     }
 
     size_t directory_length;
-    size_t compare_length;
     while ((directory_entry = readdir(current_directory)))
     {
         if (directory_entry->d_name[0] == '\0')
             continue;
 
         directory_length = strlen(directory_entry->d_name) + 1;
-        compare_length = directory_length > target_length ? directory_length : target_length;
-        if (eskilib_string_equals(target, directory_entry->d_name, compare_length))
+        if (eskilib_string_compare(target, target_length, directory_entry->d_name, directory_length))
         {
             output->value = malloc(directory_length);
             if (!output->value)

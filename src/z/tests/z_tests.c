@@ -42,7 +42,7 @@ void z_add_to_database_empty_database_test(void)
     eskilib_assert(db.count == 1);
     eskilib_assert(db.dirs[0].path_length == 57);
     eskilib_assert(
-        eskilib_string_equals(db.dirs[0].path, "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells/ncsh", 57));
+        memcmp(db.dirs[0].path, "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells/ncsh", 57) == 0);
     eskilib_assert(db.dirs[0].rank > 0 && db.dirs[0].last_accessed > 0);
 
     z_free(&db);
@@ -90,7 +90,7 @@ void z_write_to_database_file_empty_database_test(void)
     eskilib_assert(db.count == 1);
     eskilib_assert(db.dirs[0].path_length == 57);
     eskilib_assert(
-        eskilib_string_equals(db.dirs[0].path, "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells/ncsh", 57));
+        memcmp(db.dirs[0].path, "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells/ncsh", 57) == 0);
     eskilib_assert(db.dirs[0].rank > 0 && db.dirs[0].last_accessed > 0);
 
     eskilib_assert(z_exit(&db) == Z_SUCCESS);
@@ -121,7 +121,7 @@ void z_read_from_database_file_non_empty_database_test(void)
     eskilib_assert(db.count == 1);
     eskilib_assert(match->path_length == 57);
     eskilib_assert(match->rank > initial_rank);
-    eskilib_assert(eskilib_string_equals(match->path, "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells/ncsh", 57));
+    eskilib_assert(memcmp(match->path, "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells/ncsh", 57) == 0);
     eskilib_assert(match->last_accessed > 0);
 
     eskilib_assert(z_exit(&db) == Z_SUCCESS);
@@ -184,7 +184,7 @@ void z_find_match_finds_exact_match_test(void)
     struct z_Directory *result = z_find_match(target.value, target.length, cwd, strlen(cwd) + 1, &db);
     eskilib_assert(result != NULL);
     eskilib_assert(result->path_length == 57);
-    eskilib_assert(eskilib_string_equals(result->path, "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells/ncsh", 57));
+    eskilib_assert(memcmp(result->path, "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells/ncsh", 57) == 0);
     eskilib_assert(result->rank > 0 && result->last_accessed > 0);
 
     z_free(&db);
@@ -208,7 +208,7 @@ void z_find_match_finds_match_test(void)
     struct z_Directory *result = z_find_match(target.value, target.length, cwd, strlen(cwd) + 1, &db);
     eskilib_assert(result != NULL);
     eskilib_assert(result->path_length == 57);
-    eskilib_assert(eskilib_string_equals(result->path, "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells/ncsh", 57));
+    eskilib_assert(memcmp(result->path, "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells/ncsh", 57) == 0);
     eskilib_assert(result->rank > 0 && result->last_accessed > 0);
 
     z_free(&db);
@@ -424,7 +424,7 @@ void z_dir_slash_dir_change_directory_test(void)
     }
 
     eskilib_assert(strcmp(buffer, buffer_after) != 0);
-    eskilib_assert(eskilib_string_contains_unsafe(buffer_after, "tests/test_dir"));
+    eskilib_assert(eskilib_string_contains(buffer_after, buffer_length, "tests/test_dir", 15));
 
     if (chdir(buffer) == -1)
     { // remove when database file location support added
@@ -520,7 +520,7 @@ void z_add_new_to_database_new_entry(void)
     eskilib_assert(z_add("/mnt/c/Users/Alex/source/repos/PersonalRepos/shells", 52, &db) == Z_SUCCESS);
     eskilib_assert(db.count == 1);
     eskilib_assert(db.dirs[0].path_length == 52);
-    eskilib_assert(eskilib_string_equals(db.dirs[0].path, "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells", 52));
+    eskilib_assert(memcmp(db.dirs[0].path, "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells", 52) == 0);
 
     z_exit(&db);
 }
@@ -536,7 +536,7 @@ void z_add_existing_in_database_new_entry(void)
     eskilib_assert(z_add("/mnt/c/Users/Alex/source/repos/PersonalRepos/shells", 52, &db) == Z_SUCCESS);
     eskilib_assert(db.count == 1);
     eskilib_assert(db.dirs[0].path_length == 52);
-    eskilib_assert(eskilib_string_equals(db.dirs[0].path, "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells", 52));
+    eskilib_assert(memcmp(db.dirs[0].path, "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells", 52) == 0);
     eskilib_assert(db.dirs[0].rank > initial_rank);
 
     z_exit(&db);
