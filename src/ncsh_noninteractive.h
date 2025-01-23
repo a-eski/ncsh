@@ -1,3 +1,5 @@
+// Copyright (c) ncsh by Alex Eski 2025
+
 #ifndef ncsh_noninteractive_h
 #define ncsh_noninteractive_h
 

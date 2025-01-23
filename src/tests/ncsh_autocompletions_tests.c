@@ -283,9 +283,9 @@ void ncsh_autocompletions_matches_test(void)
     uint_fast32_t match_count = ncsh_autocompletions_get("ls | ", 6, autocomplete, tree);
 
     eskilib_assert(match_count == 3);
-    eskilib_assert(eskilib_string_equals(autocomplete[0].value, "sort", 5) == true);
-    eskilib_assert(eskilib_string_equals(autocomplete[1].value, "sort | wc -c", 13) == true);
-    eskilib_assert(eskilib_string_equals(autocomplete[2].value, "wc -c", 6) == true);
+    eskilib_assert(memcmp(autocomplete[0].value, "sort", 5) == 0);
+    eskilib_assert(memcmp(autocomplete[1].value, "sort | wc -c", 13) == 0);
+    eskilib_assert(memcmp(autocomplete[2].value, "wc -c", 6) == 0);
 
     for (uint_fast32_t i = 0; i < NCSH_MAX_AUTOCOMPLETION_MATCHES - 1; i++)
     {
@@ -341,9 +341,9 @@ void ncsh_autocompletions_matches_multiple_test(void)
     uint_fast32_t match_count = ncsh_autocompletions_get("ls | ", 6, autocomplete, tree);
 
     eskilib_assert(match_count == 3);
-    eskilib_assert(eskilib_string_equals(autocomplete[0].value, "sort", 5) == true);
-    eskilib_assert(eskilib_string_equals(autocomplete[1].value, "sort | wc -c", 13) == true);
-    eskilib_assert(eskilib_string_equals(autocomplete[2].value, "wc -c", 6) == true);
+    eskilib_assert(memcmp(autocomplete[0].value, "sort", 5) == 0);
+    eskilib_assert(memcmp(autocomplete[1].value, "sort | wc -c", 13) == 0);
+    eskilib_assert(memcmp(autocomplete[2].value, "wc -c", 6) == 0);
 
     for (uint_fast32_t i = 0; i < NCSH_MAX_AUTOCOMPLETION_MATCHES - 1; i++)
     {
@@ -359,11 +359,11 @@ void ncsh_autocompletions_matches_multiple_test(void)
     match_count = ncsh_autocompletions_get("l", 2, autocomplete_two, tree);
 
     eskilib_assert(match_count == 5);
-    eskilib_assert(eskilib_string_equals(autocomplete_two[0].value, "s", 2) == true);
-    eskilib_assert(eskilib_string_equals(autocomplete_two[1].value, "s > t.txt", 10) == true);
-    eskilib_assert(eskilib_string_equals(autocomplete_two[2].value, "s | sort", 9) == true);
-    eskilib_assert(eskilib_string_equals(autocomplete_two[3].value, "s | sort | wc -c", 17) == true);
-    eskilib_assert(eskilib_string_equals(autocomplete_two[4].value, "s | wc -c", 10) == true);
+    eskilib_assert(memcmp(autocomplete_two[0].value, "s", 2) == 0);
+    eskilib_assert(memcmp(autocomplete_two[1].value, "s > t.txt", 10) == 0);
+    eskilib_assert(memcmp(autocomplete_two[2].value, "s | sort", 9) == 0);
+    eskilib_assert(memcmp(autocomplete_two[3].value, "s | sort | wc -c", 17) == 0);
+    eskilib_assert(memcmp(autocomplete_two[4].value, "s | wc -c", 10) == 0);
 
     for (uint_fast32_t i = 0; i < NCSH_MAX_AUTOCOMPLETION_MATCHES - 1; i++)
     {
@@ -398,11 +398,11 @@ void ncsh_autocompletions_matches_multiple_simulation_test(void)
     uint_fast32_t match_count = ncsh_autocompletions_get("l", 2, autocomplete, tree);
 
     eskilib_assert(match_count == 5);
-    eskilib_assert(eskilib_string_equals(autocomplete[0].value, "s", 2) == true);
-    eskilib_assert(eskilib_string_equals(autocomplete[1].value, "s > t.txt", 10) == true);
-    eskilib_assert(eskilib_string_equals(autocomplete[2].value, "s | sort", 9) == true);
-    eskilib_assert(eskilib_string_equals(autocomplete[3].value, "s | sort | wc -c", 17) == true);
-    eskilib_assert(eskilib_string_equals(autocomplete[4].value, "s | wc -c", 10) == true);
+    eskilib_assert(memcmp(autocomplete[0].value, "s", 2) == 0);
+    eskilib_assert(memcmp(autocomplete[1].value, "s > t.txt", 10) == 0);
+    eskilib_assert(memcmp(autocomplete[2].value, "s | sort", 9) == 0);
+    eskilib_assert(memcmp(autocomplete[3].value, "s | sort | wc -c", 17) == 0);
+    eskilib_assert(memcmp(autocomplete[4].value, "s | wc -c", 10) == 0);
 
     for (uint_fast32_t i = 0; i < NCSH_MAX_AUTOCOMPLETION_MATCHES - 1; i++)
     {
@@ -418,10 +418,10 @@ void ncsh_autocompletions_matches_multiple_simulation_test(void)
     match_count = ncsh_autocompletions_get("ls", 3, autocomplete_two, tree);
 
     eskilib_assert(match_count == 4);
-    eskilib_assert(eskilib_string_equals(autocomplete_two[0].value, " > t.txt", 9) == true);
-    eskilib_assert(eskilib_string_equals(autocomplete_two[1].value, " | sort", 8) == true);
-    eskilib_assert(eskilib_string_equals(autocomplete_two[2].value, " | sort | wc -c", 16) == true);
-    eskilib_assert(eskilib_string_equals(autocomplete_two[3].value, " | wc -c", 8) == true);
+    eskilib_assert(memcmp(autocomplete_two[0].value, " > t.txt", 9) == 0);
+    eskilib_assert(memcmp(autocomplete_two[1].value, " | sort", 8) == 0);
+    eskilib_assert(memcmp(autocomplete_two[2].value, " | sort | wc -c", 16) == 0);
+    eskilib_assert(memcmp(autocomplete_two[3].value, " | wc -c", 8) == 0);
 
     for (uint_fast32_t i = 0; i < NCSH_MAX_AUTOCOMPLETION_MATCHES - 1; i++)
     {

@@ -42,7 +42,7 @@ void z_add_to_database_empty_database_test(void)
     eskilib_assert(db.count == 1);
     eskilib_assert(db.dirs[0].path_length == 57);
     eskilib_assert(
-        eskilib_string_equals(db.dirs[0].path, "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells/ncsh", 57));
+        memcmp(db.dirs[0].path, "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells/ncsh", 57) == 0);
     eskilib_assert(db.dirs[0].rank > 0 && db.dirs[0].last_accessed > 0);
 
     z_free(&db);
@@ -90,7 +90,7 @@ void z_write_to_database_file_empty_database_test(void)
     eskilib_assert(db.count == 1);
     eskilib_assert(db.dirs[0].path_length == 57);
     eskilib_assert(
-        eskilib_string_equals(db.dirs[0].path, "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells/ncsh", 57));
+        memcmp(db.dirs[0].path, "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells/ncsh", 57) == 0);
     eskilib_assert(db.dirs[0].rank > 0 && db.dirs[0].last_accessed > 0);
 
     eskilib_assert(z_exit(&db) == Z_SUCCESS);
@@ -121,7 +121,7 @@ void z_read_from_database_file_non_empty_database_test(void)
     eskilib_assert(db.count == 1);
     eskilib_assert(match->path_length == 57);
     eskilib_assert(match->rank > initial_rank);
-    eskilib_assert(eskilib_string_equals(match->path, "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells/ncsh", 57));
+    eskilib_assert(memcmp(match->path, "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells/ncsh", 57) == 0);
     eskilib_assert(match->last_accessed > 0);
 
     eskilib_assert(z_exit(&db) == Z_SUCCESS);
@@ -184,7 +184,7 @@ void z_find_match_finds_exact_match_test(void)
     struct z_Directory *result = z_find_match(target.value, target.length, cwd, strlen(cwd) + 1, &db);
     eskilib_assert(result != NULL);
     eskilib_assert(result->path_length == 57);
-    eskilib_assert(eskilib_string_equals(result->path, "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells/ncsh", 57));
+    eskilib_assert(memcmp(result->path, "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells/ncsh", 57) == 0);
     eskilib_assert(result->rank > 0 && result->last_accessed > 0);
 
     z_free(&db);
@@ -208,7 +208,7 @@ void z_find_match_finds_match_test(void)
     struct z_Directory *result = z_find_match(target.value, target.length, cwd, strlen(cwd) + 1, &db);
     eskilib_assert(result != NULL);
     eskilib_assert(result->path_length == 57);
-    eskilib_assert(eskilib_string_equals(result->path, "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells/ncsh", 57));
+    eskilib_assert(memcmp(result->path, "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells/ncsh", 57) == 0);
     eskilib_assert(result->rank > 0 && result->last_accessed > 0);
 
     z_free(&db);
@@ -262,7 +262,7 @@ void z_change_directory_test(void)
     eskilib_assert(db.count == 2);
 
     char buffer[CWD_LENGTH];
-    char buffer_after[CWD_LENGTH];
+    char buffer_after[CWD_LENGTH]; // need to change directory back after test so next tests work
 
     if (!getcwd(buffer, CWD_LENGTH))
     {
@@ -297,7 +297,7 @@ void z_home_empty_target_change_directory_test(void)
     eskilib_assert(db.count == 2);
 
     char buffer[CWD_LENGTH];
-    char buffer_after[CWD_LENGTH];
+    char buffer_after[CWD_LENGTH]; // need to change directory back after test so next tests work
 
     if (!getcwd(buffer, CWD_LENGTH))
     {
@@ -333,7 +333,7 @@ void z_no_match_change_directory_test(void)
     eskilib_assert(db.count == 2);
 
     char buffer[CWD_LENGTH];
-    char buffer_after[CWD_LENGTH];
+    char buffer_after[CWD_LENGTH]; // need to change directory back after test so next tests work
 
     if (!getcwd(buffer, CWD_LENGTH))
     {
@@ -368,7 +368,7 @@ void z_valid_subdirectory_change_directory_test(void)
     eskilib_assert(db.count == 2);
 
     char buffer[CWD_LENGTH];
-    char buffer_after[CWD_LENGTH];
+    char buffer_after[CWD_LENGTH]; // need to change directory back after test so next tests work
 
     if (!getcwd(buffer, CWD_LENGTH))
     {
@@ -404,7 +404,7 @@ void z_dir_slash_dir_change_directory_test(void)
     eskilib_assert(db.count == 2);
 
     char buffer[CWD_LENGTH];
-    char buffer_after[CWD_LENGTH];
+    char buffer_after[CWD_LENGTH]; // need to change directory back after test so next tests work
 
     if (!getcwd(buffer, CWD_LENGTH))
     {
@@ -424,7 +424,7 @@ void z_dir_slash_dir_change_directory_test(void)
     }
 
     eskilib_assert(strcmp(buffer, buffer_after) != 0);
-    eskilib_assert(eskilib_string_contains_unsafe(buffer_after, "tests/test_dir"));
+    eskilib_assert(eskilib_string_contains(buffer_after, buffer_length, "tests/test_dir", 15));
 
     if (chdir(buffer) == -1)
     { // remove when database file location support added
@@ -443,7 +443,7 @@ void z_double_dot_change_directory_test(void)
     eskilib_assert(db.count == 3);
 
     char buffer[CWD_LENGTH];
-    char buffer_after[CWD_LENGTH];
+    char buffer_after[CWD_LENGTH]; // need to change directory back after test so next tests work
 
     if (!getcwd(buffer, CWD_LENGTH))
     {
@@ -480,7 +480,7 @@ void z_empty_database_valid_subdirectory_change_directory_test(void)
     eskilib_assert(db.count == 0);
 
     char buffer[CWD_LENGTH];
-    char buffer_after[CWD_LENGTH];
+    char buffer_after[CWD_LENGTH]; // need to change directory back after test so next tests work
 
     if (!getcwd(buffer, CWD_LENGTH))
     {
@@ -520,7 +520,7 @@ void z_add_new_to_database_new_entry(void)
     eskilib_assert(z_add("/mnt/c/Users/Alex/source/repos/PersonalRepos/shells", 52, &db) == Z_SUCCESS);
     eskilib_assert(db.count == 1);
     eskilib_assert(db.dirs[0].path_length == 52);
-    eskilib_assert(eskilib_string_equals(db.dirs[0].path, "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells", 52));
+    eskilib_assert(memcmp(db.dirs[0].path, "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells", 52) == 0);
 
     z_exit(&db);
 }
@@ -536,7 +536,7 @@ void z_add_existing_in_database_new_entry(void)
     eskilib_assert(z_add("/mnt/c/Users/Alex/source/repos/PersonalRepos/shells", 52, &db) == Z_SUCCESS);
     eskilib_assert(db.count == 1);
     eskilib_assert(db.dirs[0].path_length == 52);
-    eskilib_assert(eskilib_string_equals(db.dirs[0].path, "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells", 52));
+    eskilib_assert(memcmp(db.dirs[0].path, "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells", 52) == 0);
     eskilib_assert(db.dirs[0].rank > initial_rank);
 
     z_exit(&db);
@@ -569,6 +569,63 @@ void z_add_bad_parameters(void)
     eskilib_assert(z_add("..", 2, &db) == Z_BAD_STRING);
 
     z_exit(&db);
+}
+
+void z_add_new_entry_contained_in_another_entry_but_different_test(void)
+{
+    struct z_Database db = {0};
+    eskilib_assert(z_init(eskilib_String_Empty, &db) == Z_SUCCESS);
+    eskilib_assert(db.count == 1);
+
+    eskilib_assert(z_add("/mnt/c/Users/Alex/source/repos/PersonalRepos", 45, &db) == Z_SUCCESS);
+
+    eskilib_assert(db.count == 2);
+    eskilib_assert(db.dirs[1].path_length == 45);
+
+    // z_print(&db);
+
+    z_exit(&db);
+}
+
+// checks that when multiple entries are contained in another, it chooses the correct entry.
+void z_contains_correct_match_test(void)
+{
+    struct z_Database db = {0};
+    eskilib_assert(z_init(eskilib_String_Empty, &db) == Z_SUCCESS);
+    eskilib_assert(db.count == 2);
+
+    // "/mnt/c/Users/Alex/source/repos/PersonalRepos"
+    // "/mnt/c/Users/Alex/source/repos" ??
+    // "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells"
+
+    char buffer[CWD_LENGTH];
+    char buffer_after[CWD_LENGTH]; // need to change directory back after test so next tests work
+
+    if (!getcwd(buffer, CWD_LENGTH))
+    {
+        z_free(&db);
+        eskilib_assert(false);
+    }
+
+    struct eskilib_String target = {.value = "PersonalRepos", .length = 14};
+    z(target.value, target.length, buffer, &db);
+
+    if (!getcwd(buffer_after, CWD_LENGTH))
+    {
+        z_free(&db);
+        eskilib_assert(false);
+    }
+
+    eskilib_assert(strcmp(buffer, buffer_after) != 0);
+    eskilib_assert(strcmp(buffer_after, "/mnt/c/Users/Alex/source/repos/PersonalRepos") == 0);
+
+    if (chdir(buffer) == -1)
+    { // remove when database file location support added
+        perror("Couldn't change back to previous directory");
+        eskilib_assert(false);
+    }
+
+    z_free(&db);
 }
 
 int main(void)
@@ -606,6 +663,9 @@ int main(void)
     eskilib_test_run("z_add_existing_in_database_new_entry", z_add_existing_in_database_new_entry);
     eskilib_test_run("z_add_null_parameters", z_add_null_parameters);
     eskilib_test_run("z_add_bad_parameters", z_add_bad_parameters);
+    eskilib_test_run("z_add_new_entry_contained_in_another_entry_but_different_test",
+                     z_add_new_entry_contained_in_another_entry_but_different_test);
+    // eskilib_test_run("z_contains_correct_match_test", z_contains_correct_match_test);
 
     eskilib_test_finish();
 

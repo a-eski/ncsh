@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/ioctl.h>
+// #if defined(HAVE_TERMIOS_H)
 #include <termios.h>
 #include <unistd.h>
 
@@ -12,10 +13,21 @@
 #define TERMINAL_RETURN 'R'
 #define T_BUFFER_LENGTH 30
 
-// #if defined(HAVE_TERMIOS_H)
+/* Static Variables */
 static struct termios terminal;
 static struct termios original_terminal;
 static struct winsize window;
+
+/* Signal Handling */
+/*static void ncsh_terminal_signal_handler(int signum)
+{
+    if (signum != SIGWINCH)
+        return;
+
+    ncsh_terminal_size_set();
+    if (write(STDOUT_FILENO, "ncsh window change handled\n", sizeof("ncsh window change handled\n")) == -1)
+        perror("sighandler error");
+}*/
 
 void ncsh_terminal_reset(void)
 {
@@ -54,6 +66,7 @@ void ncsh_terminal_init(void)
     }
 
     signal(SIGHUP, SIG_DFL); // Stops the process if the terminal is closed
+    // signal(SIGWINCH, ncsh_terminal_signal_handler); // Sets window size when window size changed
 }
 
 void ncsh_terminal_size_set(void)

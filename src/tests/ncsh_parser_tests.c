@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../eskilib/eskilib_string.h"
 #include "../eskilib/eskilib_test.h"
 #include "../ncsh_parser.h"
 
@@ -21,7 +20,7 @@ void ncsh_parser_parse_ls_test(void)
     eskilib_assert(args.values != NULL);
     eskilib_assert(args.count == 1);
 
-    eskilib_assert(eskilib_string_equals(args.values[0], line, length));
+    eskilib_assert(memcmp(args.values[0], line, length) == 0);
     eskilib_assert(args.ops[0] == OP_CONSTANT);
     eskilib_assert(args.lengths[0] == length);
 
@@ -42,11 +41,11 @@ void ncsh_parser_parse_ls_dash_l_test(void)
     eskilib_assert(args.values != NULL);
     eskilib_assert(args.count == 2);
 
-    eskilib_assert(eskilib_string_equals(args.values[0], "ls", length));
+    eskilib_assert(memcmp(args.values[0], "ls", 3) == 0);
     eskilib_assert(args.ops[0] == OP_CONSTANT);
     eskilib_assert(args.lengths[0] == 3);
 
-    eskilib_assert(eskilib_string_equals(args.values[1], "-l", length));
+    eskilib_assert(memcmp(args.values[1], "-l", 3) == 0);
     eskilib_assert(args.ops[1] == OP_CONSTANT);
     eskilib_assert(args.lengths[1] == 3);
 
@@ -67,15 +66,15 @@ void ncsh_parser_parse_pipe_test(void)
     eskilib_assert(args.values != NULL);
     eskilib_assert(args.count == 3);
 
-    eskilib_assert(eskilib_string_equals(args.values[0], "ls", length));
+    eskilib_assert(memcmp(args.values[0], "ls", 3) == 0);
     eskilib_assert(args.ops[0] == OP_CONSTANT);
     eskilib_assert(args.lengths[0] == 3);
 
-    eskilib_assert(eskilib_string_equals(args.values[1], "|", length));
+    eskilib_assert(memcmp(args.values[1], "|", 2) == 0);
     eskilib_assert(args.ops[1] == OP_PIPE);
     eskilib_assert(args.lengths[1] == 2);
 
-    eskilib_assert(eskilib_string_equals(args.values[2], "sort", length));
+    eskilib_assert(memcmp(args.values[2], "sort", 5) == 0);
     eskilib_assert(args.ops[2] == OP_CONSTANT);
     eskilib_assert(args.lengths[2] == 5);
 
@@ -96,23 +95,23 @@ void ncsh_parser_parse_multiple_pipe_test(void)
     eskilib_assert(args.values != NULL);
     eskilib_assert(args.count == 5);
 
-    eskilib_assert(eskilib_string_equals(args.values[0], "ls", length));
+    eskilib_assert(memcmp(args.values[0], "ls", 3) == 0);
     eskilib_assert(args.ops[0] == OP_CONSTANT);
     eskilib_assert(args.lengths[0] == 3);
 
-    eskilib_assert(eskilib_string_equals(args.values[1], "|", length));
+    eskilib_assert(memcmp(args.values[1], "|", 2) == 0);
     eskilib_assert(args.ops[1] == OP_PIPE);
     eskilib_assert(args.lengths[1] == 2);
 
-    eskilib_assert(eskilib_string_equals(args.values[2], "sort", length));
+    eskilib_assert(memcmp(args.values[2], "sort", 5) == 0);
     eskilib_assert(args.ops[2] == OP_CONSTANT);
     eskilib_assert(args.lengths[2] == 5);
 
-    eskilib_assert(eskilib_string_equals(args.values[3], "|", length));
+    eskilib_assert(memcmp(args.values[3], "|", 2) == 0);
     eskilib_assert(args.ops[3] == OP_PIPE);
     eskilib_assert(args.lengths[3] == 2);
 
-    eskilib_assert(eskilib_string_equals(args.values[4], "table", length));
+    eskilib_assert(memcmp(args.values[4], "table", 6) == 0);
     eskilib_assert(args.ops[4] == OP_CONSTANT);
     eskilib_assert(args.lengths[4] == 6);
 
@@ -133,11 +132,11 @@ void ncsh_parser_parse_background_job_test(void)
     eskilib_assert(args.values != NULL);
     eskilib_assert(args.count == 2);
 
-    eskilib_assert(eskilib_string_equals(args.values[0], "longrunningprogram", length));
+    eskilib_assert(memcmp(args.values[0], "longrunningprogram", 19) == 0);
     eskilib_assert(args.ops[0] == OP_CONSTANT);
     eskilib_assert(args.lengths[0] == 19);
 
-    eskilib_assert(eskilib_string_equals(args.values[1], "&", length));
+    eskilib_assert(memcmp(args.values[1], "&", 2) == 0);
     eskilib_assert(args.ops[1] == OP_BACKGROUND_JOB);
     eskilib_assert(args.lengths[1] == 2);
 
@@ -158,15 +157,15 @@ void ncsh_parser_parse_output_redirection_test(void)
     eskilib_assert(args.values != NULL);
     eskilib_assert(args.count == 3);
 
-    eskilib_assert(eskilib_string_equals(args.values[0], "ls", length));
+    eskilib_assert(memcmp(args.values[0], "ls", 3) == 0);
     eskilib_assert(args.ops[0] == OP_CONSTANT);
     eskilib_assert(args.lengths[0] == 3);
 
-    eskilib_assert(eskilib_string_equals(args.values[1], ">", length));
+    eskilib_assert(memcmp(args.values[1], ">", 2) == 0);
     eskilib_assert(args.ops[1] == OP_STDOUT_REDIRECTION);
     eskilib_assert(args.lengths[1] == 2);
 
-    eskilib_assert(eskilib_string_equals(args.values[2], "text.txt", length));
+    eskilib_assert(memcmp(args.values[2], "text.txt", 9) == 0);
     eskilib_assert(args.ops[2] == OP_CONSTANT);
     eskilib_assert(args.lengths[2] == 9);
 
@@ -187,15 +186,15 @@ void ncsh_parser_parse_output_redirection_append_test(void)
     eskilib_assert(args.values != NULL);
     eskilib_assert(args.count == 3);
 
-    eskilib_assert(eskilib_string_equals(args.values[0], "ls", length));
+    eskilib_assert(memcmp(args.values[0], "ls", 3) == 0);
     eskilib_assert(args.ops[0] == OP_CONSTANT);
     eskilib_assert(args.lengths[0] == 3);
 
-    eskilib_assert(eskilib_string_equals(args.values[1], ">>", length));
+    eskilib_assert(memcmp(args.values[1], ">>", 3) == 0);
     eskilib_assert(args.ops[1] == OP_STDOUT_REDIRECTION_APPEND);
     eskilib_assert(args.lengths[1] == 3);
 
-    eskilib_assert(eskilib_string_equals(args.values[2], "text.txt", length));
+    eskilib_assert(memcmp(args.values[2], "text.txt", 9) == 0);
     eskilib_assert(args.ops[2] == OP_CONSTANT);
     eskilib_assert(args.lengths[2] == 9);
 
@@ -216,10 +215,10 @@ void ncsh_parser_parse_double_quotes_test(void)
     eskilib_assert(args.values != NULL);
     eskilib_assert(args.count == 2);
 
-    eskilib_assert(eskilib_string_equals(args.values[0], "echo", length));
+    eskilib_assert(memcmp(args.values[0], "echo", 5) == 0);
     eskilib_assert(args.lengths[0] == 5);
 
-    eskilib_assert(eskilib_string_equals(args.values[1], "hello", length));
+    eskilib_assert(memcmp(args.values[1], "hello", 6) == 0);
     eskilib_assert(args.lengths[1] == 6);
 
     ncsh_parser_args_free_values(&args);
@@ -239,10 +238,10 @@ void ncsh_parser_parse_single_quotes_test(void)
     eskilib_assert(args.values != NULL);
     eskilib_assert(args.count == 2);
 
-    eskilib_assert(eskilib_string_equals(args.values[0], "echo", length));
+    eskilib_assert(memcmp(args.values[0], "echo", 5) == 0);
     eskilib_assert(args.lengths[0] == 5);
 
-    eskilib_assert(eskilib_string_equals(args.values[1], "hello", length));
+    eskilib_assert(memcmp(args.values[1], "hello", 6) == 0);
     eskilib_assert(args.lengths[1] == 6);
 
     ncsh_parser_args_free_values(&args);
@@ -262,10 +261,10 @@ void ncsh_parser_parse_backtick_quotes_test(void)
     eskilib_assert(args.values != NULL);
     eskilib_assert(args.count == 2);
 
-    eskilib_assert(eskilib_string_equals(args.values[0], "echo", length));
+    eskilib_assert(memcmp(args.values[0], "echo", 5) == 0);
     eskilib_assert(args.lengths[0] == 5);
 
-    eskilib_assert(eskilib_string_equals(args.values[1], "hello", length));
+    eskilib_assert(memcmp(args.values[1], "hello", 6) == 0);
     eskilib_assert(args.lengths[1] == 6);
 
     ncsh_parser_args_free_values(&args);
@@ -285,19 +284,19 @@ void ncsh_parser_parse_git_commit_test(void)
     eskilib_assert(args.values != NULL);
     eskilib_assert(args.count == 4);
 
-    eskilib_assert(eskilib_string_equals(args.values[0], "git", length));
+    eskilib_assert(memcmp(args.values[0], "git", 4) == 0);
     eskilib_assert(args.lengths[0] == 4);
     eskilib_assert(args.ops[0] == OP_CONSTANT);
 
-    eskilib_assert(eskilib_string_equals(args.values[1], "commit", length));
+    eskilib_assert(memcmp(args.values[1], "commit", 7) == 0);
     eskilib_assert(args.lengths[1] == 7);
     eskilib_assert(args.ops[1] == OP_CONSTANT);
 
-    eskilib_assert(eskilib_string_equals(args.values[2], "-m", length));
+    eskilib_assert(memcmp(args.values[2], "-m", 3) == 0);
     eskilib_assert(args.lengths[2] == 3);
     eskilib_assert(args.ops[2] == OP_CONSTANT);
 
-    eskilib_assert(eskilib_string_equals(args.values[3], "this is a commit message", length));
+    eskilib_assert(memcmp(args.values[3], "this is a commit message", 25) == 0);
     eskilib_assert(args.lengths[3] == 25);
     eskilib_assert(args.ops[3] == OP_CONSTANT);
 
@@ -318,10 +317,10 @@ void ncsh_parser_parse_home_test(void)
     eskilib_assert(args.values != NULL);
     eskilib_assert(args.count == 2);
 
-    eskilib_assert(eskilib_string_equals(args.values[0], "ls", length));
+    eskilib_assert(memcmp(args.values[0], "ls", 3) == 0);
     eskilib_assert(args.lengths[0] == 3);
 
-    eskilib_assert(eskilib_string_equals(args.values[1], "/home/alex", length));
+    eskilib_assert(memcmp(args.values[1], "/home/alex", 11) == 0);
     eskilib_assert(args.lengths[1] == 11);
 
     ncsh_parser_args_free_values(&args);
@@ -341,10 +340,10 @@ void ncsh_parser_parse_home_at_start_test(void)
     eskilib_assert(args.values != NULL);
     eskilib_assert(args.count == 2);
 
-    eskilib_assert(eskilib_string_equals(args.values[0], "ls", length));
+    eskilib_assert(memcmp(args.values[0], "ls", 3) == 0);
     eskilib_assert(args.lengths[0] == 3);
 
-    eskilib_assert(eskilib_string_equals(args.values[1], "/home/alex/snap", length));
+    eskilib_assert(memcmp(args.values[1], "/home/alex/snap", 16) == 0);
     eskilib_assert(args.lengths[1] == 16);
 
     ncsh_parser_args_free_values(&args);

@@ -274,7 +274,7 @@ void ncsh_parser_parse(const char *line, size_t length, struct ncsh_Args *args)
             buffer[buf_pos] = '\0';
 
                 args->values[args->count] = malloc(buf_pos + 1);
-                eskilib_string_copy(args->values[args->count], buffer, buf_pos + 1);
+                memcpy(args->values[args->count], buffer, buf_pos + 1);
                 args->ops[args->count] = ncsh_op_get(buffer, buf_pos);
                 args->lengths[args->count] = buf_pos + 1; // + 1 for null terminator
                 ++args->count;
@@ -313,7 +313,7 @@ void ncsh_parser_parse(const char *line, size_t length, struct ncsh_Args *args)
 
                 buffer[buf_pos++] = line[line_position];
                 args->values[args->count] = malloc(buf_pos + 1);
-                eskilib_string_copy(args->values[args->count], buffer, buf_pos + 1);
+                memcpy(args->values[args->count], buffer, buf_pos + 1);
                 args->ops[args->count] = ncsh_op_get(buffer, buf_pos);
                 args->lengths[args->count] = buf_pos + 1; // + 1 for null terminator
                 ++args->count;
@@ -327,7 +327,7 @@ void ncsh_parser_parse(const char *line, size_t length, struct ncsh_Args *args)
 		    state &= ~IN_MATHEMATICAL_EXPRESSION;
 
                 args->values[args->count] = malloc(buf_pos + 1);
-                eskilib_string_copy(args->values[args->count], buffer, buf_pos + 1);
+                memcpy(args->values[args->count], buffer, buf_pos + 1);
                 args->ops[args->count] = ncsh_op_get(buffer, buf_pos);
                 args->lengths[args->count] = buf_pos + 1; // + 1 for null terminator
                 ++args->count;
