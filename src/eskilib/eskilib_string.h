@@ -15,6 +15,7 @@ struct eskilib_String
     char *value;
 };
 
+// A simple wrapper for memcmp that checks if lengths match before calling memcmp.
 bool eskilib_string_compare(char *str, size_t str_len, char *str_two, size_t str_two_len);
 
 bool eskilib_string_contains(const char *string, size_t string_length, const char *string_two, size_t string_two_length);

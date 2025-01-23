@@ -392,9 +392,9 @@ eskilib_nodiscard int_fast32_t ncsh_history_command(struct ncsh_Args *args, stru
 {
     if (args->values[1])
     {
-        if (memcmp(args->values[1], HISTORY_COUNT_COMMAND, sizeof(HISTORY_COUNT_COMMAND)) == 0)
+        if (eskilib_string_compare(args->values[1], args->lengths[1], HISTORY_COUNT_COMMAND, sizeof(HISTORY_COUNT_COMMAND)))
             return ncsh_history_command_count(history);
-        else if (memcmp(args->values[1], HISTORY_CLEAN_COMMAND, sizeof(HISTORY_CLEAN_COMMAND)) == 0)
+        else if (eskilib_string_compare(args->values[1], args->lengths[1], HISTORY_CLEAN_COMMAND, sizeof(HISTORY_CLEAN_COMMAND)))
             return ncsh_history_command_clean(history);
     }
 

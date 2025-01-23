@@ -18,8 +18,12 @@
 #include "ncsh_parser.h"
 #include "ncsh_types.h"
 #include "ncsh_vm.h"
+#include "z/z.h"
 
 #define NCSH_Z "z"
+#define NCSH_Z_ADD "add"
+#define NCSH_Z_PRINT "print"
+
 #define NCSH_HISTORY "history"
 
 #define NCSH_EXIT "exit" // ncsh_builtins_exit
@@ -55,12 +59,19 @@ eskilib_nodiscard int_fast32_t ncsh_interpreter_z(struct ncsh_Args *args, struct
     assert(z_db);
     assert(args->count > 0);
 
+    if (args->values[1] &&
+        eskilib_string_compare(args->values[1], args->lengths[1], NCSH_Z_PRINT, sizeof(NCSH_Z_PRINT)))
+    {
+        z_print(z_db);
+        return NCSH_COMMAND_SUCCESS_CONTINUE;
+    }
+
     if (args->count > 2)
     {
         if (!args->values[1] || !args->values[2])
-            return NCSH_COMMAND_EXIT_FAILURE;
+            return NCSH_COMMAND_FAILED_CONTINUE;
 
-        if (memcmp(args->values[1], "add", args->lengths[1]) == 0)
+        if (eskilib_string_compare(args->values[1], args->lengths[1], NCSH_Z_ADD, sizeof(NCSH_Z_ADD)))
         {
             size_t length = strlen(args->values[2]) + 1;
             if (z_add(args->values[2], length, z_db) == Z_SUCCESS)
@@ -107,17 +118,17 @@ eskilib_nodiscard int_fast32_t ncsh_interpreter_execute(struct ncsh_Shell *shell
     if (shell->args.count == 0)
         return NCSH_COMMAND_SUCCESS_CONTINUE;
 
-    if (sizeof(NCSH_Z) == shell->args.lengths[0] && memcmp(shell->args.values[0], NCSH_Z, sizeof(NCSH_Z)) == 0)
+    if (eskilib_string_compare(shell->args.values[0], shell->args.lengths[0], NCSH_Z, sizeof(NCSH_Z)))
         return ncsh_interpreter_z(&shell->args, &shell->z_db);
 
-    if (sizeof(NCSH_HISTORY) == shell->args.lengths[0] && memcmp(shell->args.values[0], NCSH_HISTORY, sizeof(NCSH_HISTORY)) == 0)
+    if (eskilib_string_compare(shell->args.values[0], shell->args.lengths[0], NCSH_HISTORY, sizeof(NCSH_HISTORY)))
         return ncsh_history_command(&shell->args, &shell->history);
 
     ncsh_interpreter_alias(&shell->args);
 
     for (uint_fast32_t i = 0; i < sizeof(builtins) / sizeof(char *); ++i)
     {
-        if (builtins_len[i] == shell->args.lengths[0] && memcmp(shell->args.values[0], builtins[i], builtins_len[i]) == 0)
+        if (eskilib_string_compare(shell->args.values[0], shell->args.lengths[0], builtins[i], builtins_len[i]))
         {
             return (*builtin_func[i])(&shell->args);
         }
@@ -134,7 +145,7 @@ eskilib_nodiscard int_fast32_t ncsh_interpreter_execute_noninteractive(struct nc
 
     for (uint_fast32_t i = 0; i < sizeof(builtins) / sizeof(char *); ++i)
     {
-        if (builtins_len[i] == args->lengths[0] && memcmp(args->values[0], builtins[i], builtins_len[i]) == 0)
+        if (eskilib_string_compare(args->values[0], args->lengths[0], builtins[i], builtins_len[i]))
         {
             return (*builtin_func[i])(args);
         }

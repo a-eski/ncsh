@@ -192,7 +192,7 @@ struct eskilib_String ncsh_config_alias_check(char *buffer, size_t buf_len)
 
     for (uint_fast32_t i = 0; i < sizeof(aliased) / sizeof(char *); ++i)
     {
-        if (buf_len == aliased_len[i] && memcmp(buffer, aliased[i], buf_len) == 0)
+        if (eskilib_string_compare(buffer, buf_len, aliased[i], aliased_len[i]))
         {
             return (struct eskilib_String){.value = aliases[i], .length = aliases_len[i]};
         }

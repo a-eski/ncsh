@@ -56,4 +56,6 @@ enum z_Result z_add(char *path, size_t path_length, struct z_Database *db);
 
 enum z_Result z_exit(struct z_Database *db);
 
+void z_print(struct z_Database *db);
+
 #endif // !z_h

@@ -39,7 +39,7 @@ struct z_Directory *z_find_match_add(char *target, size_t target_length, struct 
 
     for (uint_fast32_t i = 0; i < db->count; ++i)
     {
-        if (eskilib_string_contains((db->dirs + i)->path, (db->dirs + i)->path_length, target, target_length))
+        if (eskilib_string_compare((db->dirs + i)->path, (db->dirs + i)->path_length, target, target_length))
         {
             if (!current_match || z_score(current_match, now) < z_score((db->dirs + i), now))
             {
@@ -87,8 +87,10 @@ struct z_Directory *z_find_match(char *target, size_t target_length, const char 
     {
         ++current_match->rank;
         current_match->last_accessed = time(NULL);
-        // printf("Best match: %s\n", current_match->path);
-        // printf("Best match score: %f\n", current_match->rank);
+	#ifdef Z_DEBUG
+	printf("Best match: %s\n", current_match->path);
+        printf("Best match score: %f\n", current_match->rank);
+	#endif /* ifdef Z_DEBUG */
     }
 
     return current_match;
@@ -281,9 +283,11 @@ enum z_Result z_read_from_database_file(struct z_Database *db)
             fclose(file);
             return result;
         }
-        // printf("Rank: %f\n", (dirs + i)->rank);
-        // printf("Last accessed: %ld\n", (dirs + i)->last_accessed);
-        // printf("Path: %s\n", (dirs + i)->path);
+	#ifdef Z_DEBUG
+	printf("Rank: %f\n", (db->dirs + i)->rank);
+        printf("Last accessed: %ld\n", (db->dirs + i)->last_accessed);
+        printf("Path: %s\n", (db->dirs + i)->path);
+	#endif /* ifdef Z_DEBUG */
     }
 
     fclose(file);
@@ -486,7 +490,10 @@ void z(char *target, size_t target_length, const char *cwd, struct z_Database *d
 
     if (z_directory_matches(target, target_length, cwd, &output) == Z_SUCCESS)
     {
-        // printf("dir matches %s\n", output.value);
+	#ifdef Z_DEBUG
+	printf("dir matches %s\n", output.value);
+	#endif /* ifdef Z_DEBUG */
+
         if (!match && z_add_new_to_database(output.value, output.length, cwd, cwd_length, db) != Z_SUCCESS)
         {
             if (output.value)
@@ -593,4 +600,24 @@ enum z_Result z_exit(struct z_Database *db)
 
     z_free(db);
     return Z_SUCCESS;
+}
+
+void z_print(struct z_Database *db)
+{
+    puts(RED_BRIGHT "z: autojump/z implementation in C for ncsh." RESET);
+    puts("z database (db) details:");
+    printf("z db count: %zu\n", db->count);
+    if (db->count == 0)
+    {
+        puts("no other z db details to print because db count is 0.");
+        return;
+    }
+
+    for (size_t i = 0; i < db->count; ++i)
+    {
+        printf("z_db.entries[%zu].path: %s\n", i, db->dirs[i].path);
+        printf("z_db.entries[%zu].path_length: %zu\n", i, db->dirs[i].path_length);
+        printf("z_db.entries[%zu].last_accessed: %zu\n", i, db->dirs[i].last_accessed);
+        printf("z_db.entries[%zu].rank: %f\n", i, db->dirs[i].rank);
+    }
 }
