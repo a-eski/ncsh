@@ -10,14 +10,13 @@
 
 #include "ncsh_arena.h"
 
-struct ncsh_Arena
-{
+struct ncsh_Arena {
     size_t size;
     size_t offset;
-    void *ptr;
+    void* ptr;
 };
 
-static struct ncsh_Arena *arena;
+static struct ncsh_Arena* arena;
 
 int_fast8_t ncsh_arena_init(size_t size)
 {
@@ -37,27 +36,24 @@ int_fast8_t ncsh_arena_init(size_t size)
     return 1;
 }
 
-void *ncsh_arena_malloc(size_t size)
+void* ncsh_arena_malloc(size_t size)
 {
-    if ((ptrdiff_t)size <= 0)
-    {
+    if ((ptrdiff_t)size <= 0) {
         puts("ncsh arena: Invalid arena size");
         return NULL;
     }
-    else if (arena->offset + size > arena->size)
-    {
+    else if (arena->offset + size > arena->size) {
         puts("ncsh arena: Ran out of room");
         return NULL;
     }
-    else if (arena->offset + size < size)
-    {
+    else if (arena->offset + size < size) {
         puts("ncsh arena: Overflow protection");
         return NULL;
     }
 
 #pragma GCC diagnostic push // disable pointer arith warnings for this line
 #pragma GCC diagnostic ignored "-Wpointer-arith"
-    void *ptr = arena->ptr + arena->offset;
+    void* ptr = arena->ptr + arena->offset;
 #pragma GCC diagnostic pop
 
     arena->offset += size;
@@ -67,8 +63,7 @@ void *ncsh_arena_malloc(size_t size)
 
 void ncsh_arena_exit()
 {
-    if (arena)
-    {
+    if (arena) {
         if (arena->ptr)
             free(arena->ptr);
         free(arena);

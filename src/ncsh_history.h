@@ -18,21 +18,20 @@
 #define NCSH_MAX_HISTORY_FILE 2000
 #define NCSH_MAX_HISTORY_IN_MEMORY 2400
 
-struct ncsh_History
-{
+struct ncsh_History {
     int count;
-    char *file;
-    struct eskilib_String *entries;
+    char* file;
+    struct eskilib_String* entries;
 };
 
-enum eskilib_Result ncsh_history_init(struct eskilib_String config_location, struct ncsh_History *history);
+enum eskilib_Result ncsh_history_init(struct eskilib_String config_location, struct ncsh_History* history);
 
-void ncsh_history_exit(struct ncsh_History *history);
+void ncsh_history_exit(struct ncsh_History* history);
 
-enum eskilib_Result ncsh_history_add(char *line, size_t length, struct ncsh_History *history);
+enum eskilib_Result ncsh_history_add(char* line, size_t length, struct ncsh_History* history);
 
-struct eskilib_String ncsh_history_get(int position, struct ncsh_History *history);
+struct eskilib_String ncsh_history_get(int position, struct ncsh_History* history);
 
-int_fast32_t ncsh_history_command(struct ncsh_Args *args, struct ncsh_History *history);
+int_fast32_t ncsh_history_command(struct ncsh_Args* args, struct ncsh_History* history);
 
 #endif // !ncsh_history_h

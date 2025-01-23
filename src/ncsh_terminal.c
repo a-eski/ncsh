@@ -32,36 +32,32 @@ static struct winsize window;
 void ncsh_terminal_reset(void)
 {
     fflush(stdout);
-    if (tcsetattr(STDIN_FILENO, TCSANOW, &original_terminal) != 0)
-    {
+    if (tcsetattr(STDIN_FILENO, TCSANOW, &original_terminal) != 0) {
         perror(RED "ncsh: Could not restore terminal settings" RESET);
     }
 }
 
 void ncsh_terminal_init(void)
 {
-    if (!isatty(STDIN_FILENO))
-    {
+    if (!isatty(STDIN_FILENO)) {
         fprintf(stderr, "Not running in a terminal.\n");
         exit(EXIT_FAILURE);
     }
 
-    if (tcgetattr(STDIN_FILENO, &original_terminal) != 0)
-    {
+    if (tcgetattr(STDIN_FILENO, &original_terminal) != 0) {
         perror(RED "ncsh: Could not get terminal settings" RESET);
         exit(EXIT_FAILURE);
     }
 
     terminal = original_terminal;
-    terminal.c_lflag &= (tcflag_t)~(ICANON | ECHO);
+    terminal.c_lflag &= (tcflag_t) ~(ICANON | ECHO);
     terminal.c_cc[VMIN] = 1;
     terminal.c_cc[VTIME] = 0;
     // terminal.c_cc[VEOF] = CTRL_D;
     // terminal.c_cc[VINTR] = CTRL_C;
     // terminal.c_cc[VKILL] = CTRL_U;
 
-    if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &terminal) != 0)
-    {
+    if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &terminal) != 0) {
         perror(RED "ncsh: Could not set terminal settings" RESET);
     }
 
@@ -77,7 +73,7 @@ void ncsh_terminal_size_set(void)
 
 struct ncsh_Coordinates ncsh_terminal_size_get(void)
 {
-    return (struct ncsh_Coordinates){ .x = window.ws_col, .y = window.ws_row };
+    return (struct ncsh_Coordinates){.x = window.ws_col, .y = window.ws_row};
 }
 
 void ncsh_terminal_move(int x, int y)
@@ -113,33 +109,31 @@ struct ncsh_Coordinates ncsh_terminal_position(void)
     char character = 0;
     struct ncsh_Coordinates cursor_position = {0};
 
-    if (write(STDOUT_FILENO, GET_CURSOR_POSITION, sizeof(GET_CURSOR_POSITION) - 1) == -1)
-    {
+    if (write(STDOUT_FILENO, GET_CURSOR_POSITION, sizeof(GET_CURSOR_POSITION) - 1) == -1) {
         perror(RED "ncsh: Error writing to stdout" RESET);
         fflush(stdout);
         return cursor_position;
     }
 
-    for (i = 0; i < T_BUFFER_LENGTH && character != TERMINAL_RETURN; ++i)
-    {
-        if (read(STDIN_FILENO, &character, 1) == -1)
-        {
+    for (i = 0; i < T_BUFFER_LENGTH && character != TERMINAL_RETURN; ++i) {
+        if (read(STDIN_FILENO, &character, 1) == -1) {
             perror(RED "ncsh: Could not get cursor position" RESET);
             return cursor_position;
         }
         buffer[i] = character;
     }
 
-    if (i < 2 || i == T_BUFFER_LENGTH - 1)
-    {
+    if (i < 2 || i == T_BUFFER_LENGTH - 1) {
         return cursor_position;
     }
 
-    for (i -= 2, power = 1; buffer[i] != ';'; i--, power *= 10)
+    for (i -= 2, power = 1; buffer[i] != ';'; i--, power *= 10) {
         cursor_position.x += (buffer[i] - '0') * power;
+    }
 
-    for (i--, power = 1; buffer[i] != '['; i--, power *= 10)
+    for (i--, power = 1; buffer[i] != '['; i--, power *= 10) {
         cursor_position.y += (buffer[i] - '0') * power;
+    }
 
     return cursor_position;
 }

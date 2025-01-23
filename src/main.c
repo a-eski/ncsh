@@ -5,10 +5,12 @@
 #include "ncsh.h"
 #include "ncsh_noninteractive.h"
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
-    if (argc > 1 || !isatty(STDIN_FILENO))
+    if (argc > 1 || !isatty(STDIN_FILENO)) {
         return (int)ncsh_noninteractive(argc, argv);
-    else
+    }
+    else {
         return (int)ncsh();
+    }
 }

@@ -3,8 +3,7 @@
 #ifndef eskilib_result_h
 #define eskilib_result_h
 
-enum eskilib_Result
-{
+enum eskilib_Result {
     E_FAILURE_BAD_STRING = -8,
     E_FAILURE_NOT_FOUND = -7,
     E_FAILURE_ZERO_LENGTH = -6,

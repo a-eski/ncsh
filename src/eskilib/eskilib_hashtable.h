@@ -32,4 +32,3 @@ bool eskilib_hashtable_exists(const char* key, struct eskilib_HashTable* table);
 const char* eskilib_hashtable_set(const char* key, struct eskilib_String value, struct eskilib_HashTable* table);
 
 #endif // eskilib_hashtable_h
-

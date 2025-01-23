@@ -9,7 +9,7 @@
 
 void ncsh_parser_parse_ls_test(void)
 {
-    char *line = "ls\0";
+    char* line = "ls\0";
     size_t length = 3;
 
     struct ncsh_Args args;
@@ -30,7 +30,7 @@ void ncsh_parser_parse_ls_test(void)
 
 void ncsh_parser_parse_ls_dash_l_test(void)
 {
-    char *line = "ls -l\0";
+    char* line = "ls -l\0";
     size_t length = 6;
 
     struct ncsh_Args args;
@@ -55,7 +55,7 @@ void ncsh_parser_parse_ls_dash_l_test(void)
 
 void ncsh_parser_parse_pipe_test(void)
 {
-    char *line = "ls | sort\0";
+    char* line = "ls | sort\0";
     size_t length = 10;
 
     struct ncsh_Args args;
@@ -84,7 +84,7 @@ void ncsh_parser_parse_pipe_test(void)
 
 void ncsh_parser_parse_multiple_pipe_test(void)
 {
-    char *line = "ls | sort | table";
+    char* line = "ls | sort | table";
     size_t length = 18;
 
     struct ncsh_Args args;
@@ -121,7 +121,7 @@ void ncsh_parser_parse_multiple_pipe_test(void)
 
 void ncsh_parser_parse_background_job_test(void)
 {
-    char *line = "longrunningprogram &\0";
+    char* line = "longrunningprogram &\0";
     size_t length = 21;
 
     struct ncsh_Args args;
@@ -146,7 +146,7 @@ void ncsh_parser_parse_background_job_test(void)
 
 void ncsh_parser_parse_output_redirection_test(void)
 {
-    char *line = "ls > text.txt\0";
+    char* line = "ls > text.txt\0";
     size_t length = 14;
 
     struct ncsh_Args args;
@@ -175,7 +175,7 @@ void ncsh_parser_parse_output_redirection_test(void)
 
 void ncsh_parser_parse_output_redirection_append_test(void)
 {
-    char *line = "ls >> text.txt\0";
+    char* line = "ls >> text.txt\0";
     size_t length = 15;
 
     struct ncsh_Args args;
@@ -204,7 +204,7 @@ void ncsh_parser_parse_output_redirection_append_test(void)
 
 void ncsh_parser_parse_double_quotes_test(void)
 {
-    char *line = "echo \"hello\"\0";
+    char* line = "echo \"hello\"\0";
     size_t length = 13;
 
     struct ncsh_Args args;
@@ -227,7 +227,7 @@ void ncsh_parser_parse_double_quotes_test(void)
 
 void ncsh_parser_parse_single_quotes_test(void)
 {
-    char *line = "echo \'hello\'\0";
+    char* line = "echo \'hello\'\0";
     size_t length = 13;
 
     struct ncsh_Args args;
@@ -250,7 +250,7 @@ void ncsh_parser_parse_single_quotes_test(void)
 
 void ncsh_parser_parse_backtick_quotes_test(void)
 {
-    char *line = "echo `hello`\0";
+    char* line = "echo `hello`\0";
     size_t length = 13;
 
     struct ncsh_Args args;
@@ -273,7 +273,7 @@ void ncsh_parser_parse_backtick_quotes_test(void)
 
 void ncsh_parser_parse_git_commit_test(void)
 {
-    char *line = "git commit -m \"this is a commit message\"\0";
+    char* line = "git commit -m \"this is a commit message\"\0";
     size_t length = strlen(line) + 1;
 
     struct ncsh_Args args;
@@ -306,7 +306,7 @@ void ncsh_parser_parse_git_commit_test(void)
 
 void ncsh_parser_parse_home_test(void)
 {
-    char *line = "ls ~\0";
+    char* line = "ls ~\0";
     size_t length = 5;
 
     struct ncsh_Args args;
@@ -329,7 +329,7 @@ void ncsh_parser_parse_home_test(void)
 
 void ncsh_parser_parse_home_at_start_test(void)
 {
-    char *line = "ls ~/snap\0";
+    char* line = "ls ~/snap\0";
     size_t length = 10;
 
     struct ncsh_Args args;
@@ -385,7 +385,7 @@ void ncsh_parser_parse_math_operators(void)
 void ncsh_parser_parse_glob_star_shouldnt_crash(void)
 {
     // found from fuzzer crashing inputs
-    char *line = "* * * * * * * * * * * * * * * * * *";
+    char* line = "* * * * * * * * * * * * * * * * * *";
     size_t length = strlen(line) + 1;
 
     struct ncsh_Args args;
@@ -402,7 +402,7 @@ void ncsh_parser_parse_glob_star_shouldnt_crash(void)
 void ncsh_parser_parse_tilde_home_shouldnt_crash(void)
 {
     // found from fuzzer crashing inputs
-    char *line =
+    char* line =
         "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~?~";
     size_t length = strlen(line) + 1;
 
@@ -420,7 +420,7 @@ void ncsh_parser_parse_tilde_home_shouldnt_crash(void)
 void ncsh_parser_parse_glob_question_and_tilde_home_shouldnt_crash(void)
 {
     // found from fuzzer crashing inputs
-    char *line = "??~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+    char* line = "??~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
                  "~~~~?~>w?";
     size_t length = strlen(line) + 1;
 
@@ -491,7 +491,7 @@ int main(void)
 // put at the end because it messes with clangd lsp
 void ncsh_parser_parse_bad_input_shouldnt_crash(void)
 {
-    char *line = "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~C~~~~~~~~~~~~~k~"
+    char* line = "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~C~~~~~~~~~~~~~k~"
                  "~~~~>ÿÿ> >ÿ>\w\>ÿ> >ÿ> \> >";
     size_t length = strlen(line) + 1;
 

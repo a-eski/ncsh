@@ -1,8 +1,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include "../ncsh_arena.h"
 #include "../eskilib/eskilib_test.h"
+#include "../ncsh_arena.h"
 
 void ncsh_arena_init_zero_test(void)
 {

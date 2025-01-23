@@ -56,27 +56,25 @@
 // currently unsupported
 #define BANG '!'
 
-eskilib_nodiscard enum eskilib_Result ncsh_parser_args_malloc(struct ncsh_Args *args)
+eskilib_nodiscard enum eskilib_Result ncsh_parser_args_malloc(struct ncsh_Args* args)
 {
     if (args == NULL)
         return E_FAILURE_NULL_REFERENCE;
 
     args->count = 0;
 
-    args->values = calloc(NCSH_PARSER_TOKENS, sizeof(char *));
+    args->values = calloc(NCSH_PARSER_TOKENS, sizeof(char*));
     if (!args->values)
         return E_FAILURE_MALLOC;
 
     args->ops = calloc(NCSH_PARSER_TOKENS, sizeof(uint_fast8_t));
-    if (!args->ops)
-    {
+    if (!args->ops) {
         free(args->values);
         return E_FAILURE_MALLOC;
     }
 
     args->lengths = calloc(NCSH_PARSER_TOKENS, sizeof(size_t));
-    if (!args->lengths)
-    {
+    if (!args->lengths) {
         free(args->values);
         free(args->ops);
         return E_FAILURE_MALLOC;
@@ -85,39 +83,34 @@ eskilib_nodiscard enum eskilib_Result ncsh_parser_args_malloc(struct ncsh_Args *
     return E_SUCCESS;
 }
 
-void ncsh_parser_args_free(struct ncsh_Args *args)
+void ncsh_parser_args_free(struct ncsh_Args* args)
 {
     if (!args)
         return;
 
     ncsh_parser_args_free_values(args);
-    if (args->values)
-    {
+    if (args->values) {
         free(args->values);
         args->values = NULL;
     }
-    if (args->ops)
-    {
+    if (args->ops) {
         free(args->ops);
         args->ops = NULL;
     }
-    if (args->lengths)
-    {
+    if (args->lengths) {
         free(args->lengths);
         args->lengths = NULL;
     }
     args->count = 0;
 }
 
-void ncsh_parser_args_free_values(struct ncsh_Args *args)
+void ncsh_parser_args_free_values(struct ncsh_Args* args)
 {
     if (args->count == 0)
         return;
 
-    for (uint_fast32_t i = 0; i < args->count; ++i)
-    {
-        if (args->values[i])
-        {
+    for (uint_fast32_t i = 0; i < args->count; ++i) {
+        if (args->values[i]) {
             free(args->values[i]);
             args->values[i] = NULL;
         }
@@ -127,8 +120,7 @@ void ncsh_parser_args_free_values(struct ncsh_Args *args)
 
 eskilib_nodiscard bool ncsh_is_delimiter(char ch)
 {
-    switch (ch)
-    {
+    switch (ch) {
     case ' ': {
         return true;
     }
@@ -150,61 +142,68 @@ eskilib_nodiscard bool ncsh_is_delimiter(char ch)
     }
 }
 
-char *ops_2char_str[] = {
-    STDOUT_REDIRECTION_APPEND,
-    STDERR_REDIRECTION,
-    STDOUT_AND_STDERR_REDIRECTION,
-    AND,
-    OR,
-    EXPONENTIATION
-};
+char* ops_2char_str[] = {
+    STDOUT_REDIRECTION_APPEND, STDERR_REDIRECTION, STDOUT_AND_STDERR_REDIRECTION, AND, OR, EXPONENTIATION};
 
-enum ncsh_Ops ops_2char[] = {
-    OP_STDOUT_REDIRECTION_APPEND,
-    OP_STDERR_REDIRECTION,
-    OP_STDOUT_AND_STDERR_REDIRECTION,
-    OP_AND,
-    OP_OR,
-    OP_EXPONENTIATION
-};
+enum ncsh_Ops ops_2char[] = {OP_STDOUT_REDIRECTION_APPEND,
+                             OP_STDERR_REDIRECTION,
+                             OP_STDOUT_AND_STDERR_REDIRECTION,
+                             OP_AND,
+                             OP_OR,
+                             OP_EXPONENTIATION};
 
-char *ops_3char_str[] = {
-    STDERR_REDIRECTION_APPEND,
-    STDOUT_AND_STDERR_REDIRECTION_APPEND
-};
+char* ops_3char_str[] = {STDERR_REDIRECTION_APPEND, STDOUT_AND_STDERR_REDIRECTION_APPEND};
 
-enum ncsh_Ops ops_3char[] = {
-    OP_STDERR_REDIRECTION_APPEND,
-    OP_STDOUT_AND_STDERR_REDIRECTION_APPEND
-};
+enum ncsh_Ops ops_3char[] = {OP_STDERR_REDIRECTION_APPEND, OP_STDOUT_AND_STDERR_REDIRECTION_APPEND};
 
-eskilib_nodiscard enum ncsh_Ops ncsh_op_get(const char *line, size_t length)
+eskilib_nodiscard enum ncsh_Ops ncsh_op_get(const char* line, size_t length)
 {
-    switch (length)
-    {
+    switch (length) {
     case 0: {
         return OP_NONE;
     }
     case 1: {
-        switch (line[0])
-        {
-        case PIPE: { return OP_PIPE; }
-        case STDOUT_REDIRECTION: { return OP_STDOUT_REDIRECTION; }
-        case STDIN_REDIRECTION: { return OP_STDIN_REDIRECTION; }
-        case BACKGROUND_JOB: { return OP_BACKGROUND_JOB; }
-        case ADD: { return OP_ADD; }
-        case SUBTRACT: { return OP_SUBTRACT; }
-        case MULTIPLY: { return OP_MULTIPLY; }
-        case DIVIDE: { return OP_DIVIDE; }
-        case MODULO: { return OP_MODULO; }
-        case OPENING_PARAN: { return OP_MATH_EXPRESSION_START; }
-        case CLOSING_PARAN: { return OP_MATH_EXPRESSION_END; }
-        default: { return OP_CONSTANT; }
+        switch (line[0]) {
+        case PIPE: {
+            return OP_PIPE;
+        }
+        case STDOUT_REDIRECTION: {
+            return OP_STDOUT_REDIRECTION;
+        }
+        case STDIN_REDIRECTION: {
+            return OP_STDIN_REDIRECTION;
+        }
+        case BACKGROUND_JOB: {
+            return OP_BACKGROUND_JOB;
+        }
+        case ADD: {
+            return OP_ADD;
+        }
+        case SUBTRACT: {
+            return OP_SUBTRACT;
+        }
+        case MULTIPLY: {
+            return OP_MULTIPLY;
+        }
+        case DIVIDE: {
+            return OP_DIVIDE;
+        }
+        case MODULO: {
+            return OP_MODULO;
+        }
+        case OPENING_PARAN: {
+            return OP_MATH_EXPRESSION_START;
+        }
+        case CLOSING_PARAN: {
+            return OP_MATH_EXPRESSION_END;
+        }
+        default: {
+            return OP_CONSTANT;
+        }
         }
     }
     case 2: {
-        for (uint_fast32_t i = 0; i < sizeof(ops_2char_str) / sizeof(char *); ++i)
-        {
+        for (uint_fast32_t i = 0; i < sizeof(ops_2char_str) / sizeof(char*); ++i) {
             if (STRCMP_2CHAR(line, ops_2char_str[i]))
                 return ops_2char[i];
         }
@@ -212,8 +211,7 @@ eskilib_nodiscard enum ncsh_Ops ncsh_op_get(const char *line, size_t length)
         return OP_CONSTANT;
     }
     case 3: {
-        for (uint_fast32_t i = 0; i < sizeof(ops_3char_str) / sizeof(char *); ++i)
-        {
+        for (uint_fast32_t i = 0; i < sizeof(ops_3char_str) / sizeof(char*); ++i) {
             if (STRCMP_3CHAR(line, ops_3char_str[i]))
                 return ops_3char[i];
         }
@@ -226,21 +224,19 @@ eskilib_nodiscard enum ncsh_Ops ncsh_op_get(const char *line, size_t length)
     }
 }
 
-enum ncsh_Parser_State
-{
+enum ncsh_Parser_State {
     IN_SINGLE_QUOTES = 0x01,
     IN_DOUBLE_QUOTES = 0x02,
     IN_BACKTICK_QUOTES = 0x04,
     IN_MATHEMATICAL_EXPRESSION = 0x08
 };
 
-void ncsh_parser_parse(const char *line, size_t length, struct ncsh_Args *args)
+void ncsh_parser_parse(const char* line, size_t length, struct ncsh_Args* args)
 {
     assert(args);
     assert(line);
 
-    if (!line || length < 2 || length > NCSH_MAX_INPUT)
-    {
+    if (!line || length < 2 || length > NCSH_MAX_INPUT) {
         args->count = 0;
         return;
     }
@@ -255,37 +251,31 @@ void ncsh_parser_parse(const char *line, size_t length, struct ncsh_Args *args)
     size_t buf_pos = 0;
     int state = 0;
 
-    for (uint_fast32_t line_position = 0; line_position < length + 1; ++line_position)
-    {
-        if (args->count == NCSH_PARSER_TOKENS - 1 && line_position < length)
-        { // can't parse all of the args
+    for (uint_fast32_t line_position = 0; line_position < length + 1; ++line_position) {
+        if (args->count == NCSH_PARSER_TOKENS - 1 && line_position < length) { // can't parse all of the args
             ncsh_parser_args_free_values(args);
             args->count = 0;
             break;
         }
         else if (line_position == length || line_position >= NCSH_MAX_INPUT - 1 || buf_pos >= NCSH_MAX_INPUT - 1 ||
-                 args->count == NCSH_PARSER_TOKENS - 1)
-        {
+                 args->count == NCSH_PARSER_TOKENS - 1) {
             args->values[args->count] = NULL;
             break;
         }
-        else if (ncsh_is_delimiter(line[line_position]) && (state == 0 || (state & IN_MATHEMATICAL_EXPRESSION)))
-        {
+        else if (ncsh_is_delimiter(line[line_position]) && (state == 0 || (state & IN_MATHEMATICAL_EXPRESSION))) {
             buffer[buf_pos] = '\0';
 
-                args->values[args->count] = malloc(buf_pos + 1);
-                memcpy(args->values[args->count], buffer, buf_pos + 1);
-                args->ops[args->count] = ncsh_op_get(buffer, buf_pos);
-                args->lengths[args->count] = buf_pos + 1; // + 1 for null terminator
-                ++args->count;
+            args->values[args->count] = malloc(buf_pos + 1);
+            memcpy(args->values[args->count], buffer, buf_pos + 1);
+            args->ops[args->count] = ncsh_op_get(buffer, buf_pos);
+            args->lengths[args->count] = buf_pos + 1; // + 1 for null terminator
+            ++args->count;
 
             buffer[0] = '\0';
             buf_pos = 0;
         }
-        else
-        {
-            switch (line[line_position])
-            {
+        else {
+            switch (line[line_position]) {
             case DOUBLE_QUOTE_KEY: {
                 if (!(state & IN_DOUBLE_QUOTES))
                     state |= IN_DOUBLE_QUOTES;
@@ -307,9 +297,9 @@ void ncsh_parser_parse(const char *line, size_t length, struct ncsh_Args *args)
                     state &= ~IN_BACKTICK_QUOTES;
                 break;
             }
-	    case OPENING_PARAN: {
-		if (!(state & IN_MATHEMATICAL_EXPRESSION))
-		    state |= IN_MATHEMATICAL_EXPRESSION;
+            case OPENING_PARAN: {
+                if (!(state & IN_MATHEMATICAL_EXPRESSION))
+                    state |= IN_MATHEMATICAL_EXPRESSION;
 
                 buffer[buf_pos++] = line[line_position];
                 args->values[args->count] = malloc(buf_pos + 1);
@@ -320,11 +310,11 @@ void ncsh_parser_parse(const char *line, size_t length, struct ncsh_Args *args)
 
                 buffer[0] = '\0';
                 buf_pos = 0;
-	        break;
-	    }
-	    case CLOSING_PARAN: {
-		if (state & IN_MATHEMATICAL_EXPRESSION)
-		    state &= ~IN_MATHEMATICAL_EXPRESSION;
+                break;
+            }
+            case CLOSING_PARAN: {
+                if (state & IN_MATHEMATICAL_EXPRESSION)
+                    state &= ~IN_MATHEMATICAL_EXPRESSION;
 
                 args->values[args->count] = malloc(buf_pos + 1);
                 memcpy(args->values[args->count], buffer, buf_pos + 1);
@@ -336,13 +326,12 @@ void ncsh_parser_parse(const char *line, size_t length, struct ncsh_Args *args)
                 buf_pos = 0;
 
                 buffer[buf_pos++] = line[line_position];
-		break;
-	    }
+                break;
+            }
             case TILDE: {
-                char *home = getenv("HOME");
+                char* home = getenv("HOME");
                 size_t home_length = strlen(home);
-                if (buf_pos + home_length > NCSH_MAX_INPUT)
-                {
+                if (buf_pos + home_length > NCSH_MAX_INPUT) {
                     // protect from overflow
                     ncsh_parser_args_free_values(args);
                     args->count = 0;
@@ -365,18 +354,18 @@ void ncsh_parser_parse(const char *line, size_t length, struct ncsh_Args *args)
 #endif /* ifdef NCSH_DEBUG */
 }
 
-            /*if (!state)
-            {
-                if (line_position == length)
-                { // missing closing quote or end of mathematical expression
+/*if (!state)
+{
+    if (line_position == length)
+    { // missing closing quote or end of mathematical expression
 
-                    ncsh_parser_args_free_values(args);
-                    args->count = 0;
-                    break;
-                }
-                // check if quotes not closed, overlap, etc.
-                // if (state & IN_DOUBLE_QUOTES)
-                // if (state & IN_SINGLE_QUOTES)
-                // if (state & IN_BACKTICK_QUOTES)
-                // if (state & IN_MATHEMATICAL_EXPRESSION)
-            }*/
+        ncsh_parser_args_free_values(args);
+        args->count = 0;
+        break;
+    }
+    // check if quotes not closed, overlap, etc.
+    // if (state & IN_DOUBLE_QUOTES)
+    // if (state & IN_SINGLE_QUOTES)
+    // if (state & IN_BACKTICK_QUOTES)
+    // if (state & IN_MATHEMATICAL_EXPRESSION)
+}*/
