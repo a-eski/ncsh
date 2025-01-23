@@ -52,5 +52,3 @@ eskilib_nodiscard enum eskilib_Result ncsh_history_save_v2(struct ncsh_History* 
     fclose(file);
     return E_SUCCESS;
 }*/
-
-

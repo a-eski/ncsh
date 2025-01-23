@@ -10,8 +10,7 @@
 #include "z/z.h"
 #include <stdint.h>
 
-struct ncsh_Shell
-{
+struct ncsh_Shell {
     struct ncsh_Directory prompt_info;
     struct ncsh_Config config;
 
@@ -20,8 +19,8 @@ struct ncsh_Shell
     int history_position;
     struct eskilib_String history_entry;
     struct ncsh_History history;
-    char *current_autocompletion;
-    struct ncsh_Autocompletion_Node *autocompletions_tree;
+    char* current_autocompletion;
+    struct ncsh_Autocompletion_Node* autocompletions_tree;
 
     struct z_Database z_db;
 

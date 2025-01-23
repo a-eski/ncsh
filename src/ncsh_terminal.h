@@ -45,15 +45,13 @@
 #define RESTORE_CURSOR_POSITION "\033[u"
 #define MOVE_CURSOR_HOME "\033[H"
 
-struct ncsh_Directory
-{
+struct ncsh_Directory {
     bool reprint_prompt;
-    char *user;
+    char* user;
     char cwd[PATH_MAX];
 };
 
-struct ncsh_Coordinates
-{
+struct ncsh_Coordinates {
     int x;
     int y;
 };

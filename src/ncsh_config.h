@@ -10,17 +10,16 @@
 #define DOT_CONFIG ".config"
 #define NCSH_RC ".ncshrc"
 
-struct ncsh_Config
-{
+struct ncsh_Config {
     struct eskilib_String home_location;
     struct eskilib_String config_location;
     struct eskilib_String config_file;
 };
 
-enum eskilib_Result ncsh_config_init(struct ncsh_Config *config);
+enum eskilib_Result ncsh_config_init(struct ncsh_Config* config);
 
-void ncsh_config_free(struct ncsh_Config *config);
+void ncsh_config_free(struct ncsh_Config* config);
 
-struct eskilib_String ncsh_config_alias_check(char *buffer, size_t buf_len);
+struct eskilib_String ncsh_config_alias_check(char* buffer, size_t buf_len);
 
 #endif // !ncsh_config_h

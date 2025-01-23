@@ -10,8 +10,8 @@
 #include "eskilib/eskilib_colors.h"
 #include "eskilib/eskilib_result.h"
 #include "ncsh_defines.h" // used when NCSH_DEBUG defined
-#include "ncsh_noninteractive.h"
 #include "ncsh_interpreter.h"
+#include "ncsh_noninteractive.h"
 #include "ncsh_parser.h"
 
 /*enum ncsh_Flags
@@ -71,20 +71,18 @@ int_fast32_t ncsh_flag_error(const char *message, size_t message_length)
     return EXIT_SUCCESS
 }*/
 
-int_fast32_t ncsh_noninteractive(int argc, char **argv)
+int_fast32_t ncsh_noninteractive(int argc, char** argv)
 {
 #ifdef NCSH_DEBUG
     printf("ncsh running in noninteractive mode.\n");
 #endif /* ifdef NCSH_DEBUG */
-    if (argc > 2)
-    {
+    if (argc > 2) {
         printf("ncsh currently only supports passing in one command at a time in interactive mode!\n");
     }
 
     struct ncsh_Args args = {0};
     enum eskilib_Result result;
-    if ((result = ncsh_parser_args_malloc(&args)) != E_SUCCESS)
-    {
+    if ((result = ncsh_parser_args_malloc(&args)) != E_SUCCESS) {
         perror(RED "ncsh: Error when allocating memory for parser" RESET);
         fflush(stderr);
         if (result != E_FAILURE_MALLOC)
@@ -103,8 +101,7 @@ int_fast32_t ncsh_noninteractive(int argc, char **argv)
     int_fast32_t command_result = ncsh_interpreter_execute_noninteractive(&args);
 
     int_fast32_t exit_code = EXIT_SUCCESS;
-    switch (command_result)
-    {
+    switch (command_result) {
     case NCSH_COMMAND_EXIT_FAILURE: {
         exit_code = EXIT_FAILURE;
         // goto exit;

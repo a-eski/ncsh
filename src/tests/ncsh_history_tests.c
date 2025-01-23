@@ -18,7 +18,7 @@ void ncsh_history_load_file_not_exists_test(void)
     result = ncsh_history_init(eskilib_String_Empty, &history);
     eskilib_assert(result == E_SUCCESS);
 
-    FILE *file = fopen(NCSH_HISTORY_FILE, "r");
+    FILE* file = fopen(NCSH_HISTORY_FILE, "r");
     eskilib_assert(file != NULL);
     fclose(file);
 
@@ -32,7 +32,7 @@ void ncsh_history_load_file_exists_test(void)
     result = ncsh_history_init(eskilib_String_Empty, &history);
     eskilib_assert(result == E_SUCCESS);
 
-    FILE *file = fopen(NCSH_HISTORY_FILE, "r");
+    FILE* file = fopen(NCSH_HISTORY_FILE, "r");
     eskilib_assert(file != NULL);
     fclose(file);
 
@@ -148,11 +148,10 @@ void ncsh_history_save_adds_to_file(void)
 
     ncsh_history_exit(&history);
 
-    FILE *file = fopen(NCSH_HISTORY_FILE, "r");
+    FILE* file = fopen(NCSH_HISTORY_FILE, "r");
     eskilib_assert(file != NULL);
     char buffer[MAX_INPUT];
-    if (!fgets(buffer, sizeof(buffer), file))
-    {
+    if (!fgets(buffer, sizeof(buffer), file)) {
         eskilib_assert(false);
         fclose(file);
     }
@@ -168,7 +167,7 @@ void ncsh_history_save_adds_multiple_to_file(void)
     eskilib_assert(result == E_SUCCESS);
 
     size_t existing_command_len = 3;
-    char *existing_command = "ls\n";
+    char* existing_command = "ls\n";
     size_t ls_sort_len = 10;
     result = ncsh_history_add("ls | sort\0", ls_sort_len, &history);
     eskilib_assert(result == E_SUCCESS);
@@ -178,25 +177,20 @@ void ncsh_history_save_adds_multiple_to_file(void)
 
     ncsh_history_exit(&history);
 
-    FILE *file = fopen(NCSH_HISTORY_FILE, "r");
+    FILE* file = fopen(NCSH_HISTORY_FILE, "r");
     eskilib_assert(file != NULL);
     char buffer[MAX_INPUT];
-    for (uint_fast8_t i = 0; fgets(buffer, sizeof(buffer), file) != NULL; i++)
-    {
-        if (i == 0)
-        {
+    for (uint_fast8_t i = 0; fgets(buffer, sizeof(buffer), file) != NULL; i++) {
+        if (i == 0) {
             eskilib_assert(memcmp(buffer, existing_command, existing_command_len) == 0);
         }
-        else if (i == 1)
-        {
+        else if (i == 1) {
             eskilib_assert(memcmp(buffer, "ls | sort\n", ls_sort_len) == 0);
         }
-        if (i == 2)
-        {
+        if (i == 2) {
             eskilib_assert(memcmp(buffer, "echo hello\n", echo_hello_len) == 0);
         }
-        else
-        {
+        else {
             break;
         }
     }
@@ -285,8 +279,10 @@ void ncsh_history_tests(void)
     eskilib_test_run("ncsh_history_get_empty_file_test", ncsh_history_get_empty_file_test);
     eskilib_test_run("ncsh_history_get_negative_input_test", ncsh_history_get_negative_input_test);
     eskilib_test_run("ncsh_history_get_null_entries_test", ncsh_history_get_null_entries_test);
-    eskilib_test_run("ncsh_history_get_position_gt_history_count_test", ncsh_history_get_position_gt_history_count_test);
-    eskilib_test_run("ncsh_history_get_position_equals_history_count_test", ncsh_history_get_position_equals_history_count_test);
+    eskilib_test_run("ncsh_history_get_position_gt_history_count_test",
+                     ncsh_history_get_position_gt_history_count_test);
+    eskilib_test_run("ncsh_history_get_position_equals_history_count_test",
+                     ncsh_history_get_position_equals_history_count_test);
     eskilib_test_run("ncsh_history_get_position_gt_max_test", ncsh_history_get_position_gt_max_test);
     eskilib_test_run("ncsh_history_save_adds_to_file", ncsh_history_save_adds_to_file);
     eskilib_test_run("ncsh_history_save_adds_multiple_to_file", ncsh_history_save_adds_multiple_to_file);

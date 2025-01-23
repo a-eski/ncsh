@@ -18,24 +18,21 @@
 #define Z_WEEK 7 * Z_DAY
 #define Z_MONTH 30 * Z_DAY
 
-struct z_Directory
-{
+struct z_Directory {
     double rank;
     time_t last_accessed;
-    char *path;
+    char* path;
     size_t path_length;
 };
 
-struct z_Database
-{
+struct z_Database {
     // bool dirty;
     size_t count;
-    char *database_file;
+    char* database_file;
     struct z_Directory dirs[Z_DATABASE_IN_MEMORY_LIMIT];
 };
 
-enum z_Result
-{
+enum z_Result {
     Z_BAD_STRING = -8,
     Z_FILE_LENGTH_TOO_LARGE = -7,
     Z_MATCH_NOT_FOUND = -6,
@@ -48,14 +45,14 @@ enum z_Result
     Z_SUCCESS = 1
 };
 
-enum z_Result z_init(struct eskilib_String config_location, struct z_Database *database);
+enum z_Result z_init(struct eskilib_String config_location, struct z_Database* database);
 
-void z(char *target, size_t target_length, const char *cwd, struct z_Database *db);
+void z(char* target, size_t target_length, const char* cwd, struct z_Database* db);
 
-enum z_Result z_add(char *path, size_t path_length, struct z_Database *db);
+enum z_Result z_add(char* path, size_t path_length, struct z_Database* db);
 
-enum z_Result z_exit(struct z_Database *db);
+enum z_Result z_exit(struct z_Database* db);
 
-void z_print(struct z_Database *db);
+void z_print(struct z_Database* db);
 
 #endif // !z_h

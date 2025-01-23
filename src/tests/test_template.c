@@ -4,7 +4,6 @@
 
 void ncsh_template_example_test(void)
 {
-
 }
 
 void ncsh_template_tests(void)
