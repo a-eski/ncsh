@@ -32,6 +32,8 @@ enum eskilib_Result ncsh_history_add(char* line, size_t length, struct ncsh_Hist
 
 struct eskilib_String ncsh_history_get(int position, struct ncsh_History* history);
 
-int_fast32_t ncsh_history_command(struct ncsh_Args* args, struct ncsh_History* history);
+int_fast32_t ncsh_history_command_display(struct ncsh_History* history);
+int_fast32_t ncsh_history_command_count(struct ncsh_History* history);
+int_fast32_t ncsh_history_command_clean(struct ncsh_History* history);
 
 #endif // !ncsh_history_h

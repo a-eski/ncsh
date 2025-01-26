@@ -12,56 +12,46 @@
 
 #include "../eskilib/eskilib_colors.h"
 #include "../ncsh_defines.h"
+#include "fzf.h"
 #include "z.h"
 
-double z_score(struct z_Directory* directory, time_t now)
+double z_score(struct z_Directory* directory, int fzf_score, time_t now)
 {
     assert(directory);
+    assert(fzf_score > 0);
 
     time_t duration = now - directory->last_accessed;
 
     if (duration < Z_HOUR) {
-        return directory->rank * 4.0;
+        return (directory->rank + fzf_score) * 4.0;
     }
     else if (duration < Z_DAY) {
-        return directory->rank * 2.0;
+        return (directory->rank + fzf_score) * 2.0;
     }
     else if (duration < Z_WEEK) {
-        return directory->rank * 0.5;
+        return (directory->rank + fzf_score) * 0.5;
     }
     else {
-        return directory->rank * 0.25;
+        return (directory->rank + fzf_score) * 0.25;
     }
 }
 
-struct z_Directory* z_find_match_add(char* target, size_t target_length, struct z_Database* db)
+bool z_match_exists(char* target, size_t target_length, struct z_Database* db)
 {
     assert(db && target && target_length > 0);
 
-    struct z_Directory* current_match = NULL;
-    time_t now = time(NULL);
-
     for (uint_fast32_t i = 0; i < db->count; ++i) {
         if (eskilib_string_compare((db->dirs + i)->path, (db->dirs + i)->path_length, target, target_length)) {
-            if (!current_match || z_score(current_match, now) < z_score((db->dirs + i), now)) {
-                current_match = (db->dirs + i);
-            }
+            ++(db->dirs + i)->rank;
+            (db->dirs + i)->last_accessed = time(NULL);
+            return true;
         }
     }
 
-    if (current_match) {
-        ++current_match->rank;
-        current_match->last_accessed = time(NULL);
-#ifdef Z_DEBUG
-        printf("Best match: %s\n", current_match->path);
-        printf("Best match score: %f\n", current_match->rank);
-#endif /* ifdef Z_DEBUG */
-    }
-
-    return current_match;
+    return false;
 }
 
-struct z_Directory* z_find_match(char* target, size_t target_length, const char* cwd, size_t cwd_length,
+struct z_Directory* z_match_find(char* target, size_t target_length, const char* cwd, size_t cwd_length,
                                  struct z_Database* db)
 {
     assert(db);
@@ -69,31 +59,47 @@ struct z_Directory* z_find_match(char* target, size_t target_length, const char*
         return NULL;
     }
 
-    struct z_Directory* current_match = NULL;
+    fzf_slab_t *slab = fzf_make_default_slab();
+    fzf_pattern_t *pattern = fzf_parse_pattern(CaseSmart, target, target_length - 1);
+    struct z_Match current_match = {0};
     time_t now = time(NULL);
 
     for (uint_fast32_t i = 0; i < db->count; ++i) {
-        if (eskilib_string_contains((db->dirs + i)->path, (db->dirs + i)->path_length, target, target_length) &&
-            !eskilib_string_compare((db->dirs + i)->path, (db->dirs + i)->path_length, (char*)cwd, cwd_length)) {
-            if (!current_match || z_score(current_match, now) < z_score((db->dirs + i), now)) {
-                current_match = (db->dirs + i);
+        if (!eskilib_string_compare((db->dirs + i)->path, (db->dirs + i)->path_length, (char*)cwd, cwd_length)) {
+            int fzf_score = fzf_get_score((db->dirs + i)->path, (db->dirs + i)->path_length - 1, pattern, slab);
+            if (fzf_score == 0)
+                continue;
+
+            double potential_match_z_score = z_score((db->dirs + i), fzf_score, now);
+#ifdef Z_DEBUG
+            printf("%s fzf_score %d\n", (db->dirs + i)->path, fzf_score);
+            printf("%s z_score %f\n", (db->dirs + i)->path, potential_match_z_score);
+#endif /* ifdef Z_DEBUG */
+
+            if (!current_match.dir || current_match.z_score < potential_match_z_score) {
+                current_match.z_score = potential_match_z_score;
+                current_match.dir = (db->dirs + i);
             }
         }
     }
 
-    if (current_match) {
-        ++current_match->rank;
-        current_match->last_accessed = time(NULL);
+    if (current_match.dir) {
+        ++current_match.dir->rank;
+        current_match.dir->last_accessed = time(NULL);
 #ifdef Z_DEBUG
-        printf("Best match: %s\n", current_match->path);
-        printf("Best match score: %f\n", current_match->rank);
+        printf("Best match: %s\n", current_match.dir->path);
+        printf("Best match score: %f\n", current_match.dir->rank);
+        printf("Best match fzf_score %d\n", current_match.fzf_score);
 #endif /* ifdef Z_DEBUG */
     }
 
-    return current_match;
+    fzf_free_pattern(pattern);
+    fzf_free_slab(slab);
+
+    return current_match.dir;
 }
 
-enum z_Result z_write_entry_to_file(struct z_Directory* dir, FILE* file)
+enum z_Result z_write_entry(struct z_Directory* dir, FILE* file)
 {
     assert(dir && file);
 
@@ -134,7 +140,7 @@ enum z_Result z_write_entry_to_file(struct z_Directory* dir, FILE* file)
     return Z_SUCCESS;
 }
 
-enum z_Result z_write_to_database_file(struct z_Database* db)
+enum z_Result z_write(struct z_Database* db)
 {
     assert(db);
     if (!db) {
@@ -161,7 +167,7 @@ enum z_Result z_write_to_database_file(struct z_Database* db)
 
     enum z_Result result;
     for (uint_fast32_t i = 0; i < db->count; ++i) {
-        if ((result = z_write_entry_to_file((db->dirs + i), file)) != Z_SUCCESS) {
+        if ((result = z_write_entry((db->dirs + i), file)) != Z_SUCCESS) {
             fclose(file);
             return result;
         }
@@ -171,7 +177,7 @@ enum z_Result z_write_to_database_file(struct z_Database* db)
     return Z_SUCCESS;
 }
 
-enum z_Result z_read_entry_from_file(struct z_Directory* dir, FILE* file)
+enum z_Result z_read_entry(struct z_Directory* dir, FILE* file)
 {
     assert(dir && file);
 
@@ -218,7 +224,7 @@ enum z_Result z_read_entry_from_file(struct z_Directory* dir, FILE* file)
     return Z_SUCCESS;
 }
 
-enum z_Result z_read_from_database_file(struct z_Database* db)
+enum z_Result z_read(struct z_Database* db)
 {
     FILE* file = fopen(db->database_file, "rb");
     if (!file || feof(file) || ferror(file)) {
@@ -283,7 +289,7 @@ enum z_Result z_read_from_database_file(struct z_Database* db)
     enum z_Result result;
     for (uint_fast32_t i = 0; i < number_of_entries && number_of_entries < Z_DATABASE_IN_MEMORY_LIMIT && !feof(file);
          ++i) {
-        if ((result = z_read_entry_from_file((db->dirs + i), file)) != Z_SUCCESS) {
+        if ((result = z_read_entry((db->dirs + i), file)) != Z_SUCCESS) {
             fclose(file);
             return result;
         }
@@ -300,7 +306,7 @@ enum z_Result z_read_from_database_file(struct z_Database* db)
     return Z_SUCCESS;
 }
 
-enum z_Result z_add_new_path_to_database(char* path, size_t path_length, struct z_Database* db)
+enum z_Result z_write_entry_new(char* path, size_t path_length, struct z_Database* db)
 {
     assert(path && db && path_length > 1);
     assert(path[path_length - 1] == '\0');
@@ -324,7 +330,7 @@ enum z_Result z_add_new_path_to_database(char* path, size_t path_length, struct 
     return Z_SUCCESS;
 }
 
-enum z_Result z_add_new_to_database(char* path, size_t path_length, const char* cwd, size_t cwd_length,
+enum z_Result z_database_add(char* path, size_t path_length, const char* cwd, size_t cwd_length,
                                     struct z_Database* db)
 {
     if (path_length == 0) {
@@ -407,10 +413,10 @@ enum z_Result z_init(struct eskilib_String config_file, struct z_Database* db)
         return result;
     }
 
-    return z_read_from_database_file(db);
+    return z_read(db);
 }
 
-enum z_Result z_directory_matches(char* target, size_t target_length, const char* cwd, struct eskilib_String* output)
+enum z_Result z_directory_match_exists(char* target, size_t target_length, const char* cwd, struct eskilib_String* output)
 {
     assert(target && cwd && target_length > 0);
 
@@ -493,14 +499,14 @@ void z(char* target, size_t target_length, const char* cwd, struct z_Database* d
 
     size_t cwd_length = strlen(cwd) + 1;
     struct eskilib_String output = {0};
-    struct z_Directory* match = z_find_match(target, target_length, cwd, cwd_length, db);
+    struct z_Directory* match = z_match_find(target, target_length, cwd, cwd_length, db);
 
-    if (z_directory_matches(target, target_length, cwd, &output) == Z_SUCCESS) {
+    if (z_directory_match_exists(target, target_length, cwd, &output) == Z_SUCCESS) {
 #ifdef Z_DEBUG
         printf("dir matches %s\n", output.value);
 #endif /* ifdef Z_DEBUG */
 
-        if (!match && z_add_new_to_database(output.value, output.length, cwd, cwd_length, db) != Z_SUCCESS) {
+        if (!match && z_database_add(output.value, output.length, cwd, cwd_length, db) != Z_SUCCESS) {
             if (output.value) {
                 free(output.value);
             }
@@ -546,14 +552,14 @@ enum z_Result z_add(char* path, size_t path_length, struct z_Database* db)
         return Z_BAD_STRING;
     }
 
-    if (z_find_match_add(path, path_length, db)) {
+    if (z_match_exists(path, path_length, db)) {
         if (write(STDERR_FILENO, "Entry already exists in z database.\n", 36) == -1) {
             return Z_FAILURE;
         }
         return Z_SUCCESS;
     }
 
-    if (z_add_new_path_to_database(path, path_length, db) == Z_SUCCESS) {
+    if (z_write_entry_new(path, path_length, db) == Z_SUCCESS) {
         if (write(STDERR_FILENO, "Added new entry to z database.\n", 31) == -1) {
             return Z_FAILURE;
         }
@@ -564,6 +570,18 @@ enum z_Result z_add(char* path, size_t path_length, struct z_Database* db)
         return Z_FAILURE;
     }
     return Z_MALLOC_ERROR;
+}
+
+enum z_Result z_remove(char* path, size_t path_length, struct z_Database* db)
+{
+    if (!path || !db) {
+        return Z_NULL_REFERENCE;
+    }
+    if (path_length < 2 || path[path_length - 1] != '\0') {
+        return Z_BAD_STRING;
+    }
+
+    return Z_SUCCESS;
 }
 
 void z_free(struct z_Database* db)
@@ -590,7 +608,7 @@ enum z_Result z_exit(struct z_Database* db)
     }
 
     enum z_Result result;
-    if ((result = z_write_to_database_file(db)) != Z_SUCCESS) {
+    if ((result = z_write(db)) != Z_SUCCESS) {
         if (write(STDERR_FILENO, "Error writing to z database file.\n", 34) == -1) {
             return result;
         }
@@ -611,10 +629,12 @@ void z_print(struct z_Database* db)
         return;
     }
 
+    // time_t now = time(NULL);
     for (size_t i = 0; i < db->count; ++i) {
         printf("z_db.entries[%zu].path: %s\n", i, db->dirs[i].path);
         printf("z_db.entries[%zu].path_length: %zu\n", i, db->dirs[i].path_length);
         printf("z_db.entries[%zu].last_accessed: %zu\n", i, db->dirs[i].last_accessed);
         printf("z_db.entries[%zu].rank: %f\n", i, db->dirs[i].rank);
+        // printf("z_db.entries[%zu].score %f\n", i, z_score((db->dirs + i), now));
     }
 }

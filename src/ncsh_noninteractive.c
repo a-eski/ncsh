@@ -10,9 +10,9 @@
 #include "eskilib/eskilib_colors.h"
 #include "eskilib/eskilib_result.h"
 #include "ncsh_defines.h" // used when NCSH_DEBUG defined
-#include "ncsh_interpreter.h"
 #include "ncsh_noninteractive.h"
 #include "ncsh_parser.h"
+#include "ncsh_interpreter.h"
 
 /*enum ncsh_Flags
 {

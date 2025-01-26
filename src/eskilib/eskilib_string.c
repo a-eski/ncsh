@@ -9,10 +9,10 @@
 #include "eskilib_defines.h"
 #include "eskilib_string.h"
 
-eskilib_nodiscard bool eskilib_string_compare(char* str, size_t str_len, char* str_two, size_t str_two_len)
-{
+eskilib_nodiscard bool eskilib_string_compare(char* str, size_t str_len, char* str_two, size_t str_two_len);
+/*{
     return str_len == str_two_len && memcmp(str, str_two, str_len) == 0;
-}
+}*/
 
 eskilib_nodiscard bool eskilib_string_contains(const char* string, size_t string_length, const char* string_two,
                                                size_t string_two_length)

@@ -25,6 +25,11 @@ struct z_Directory {
     size_t path_length;
 };
 
+struct z_Match {
+    double z_score;
+    struct z_Directory* dir;
+};
+
 struct z_Database {
     // bool dirty;
     size_t count;
@@ -50,6 +55,8 @@ enum z_Result z_init(struct eskilib_String config_location, struct z_Database* d
 void z(char* target, size_t target_length, const char* cwd, struct z_Database* db);
 
 enum z_Result z_add(char* path, size_t path_length, struct z_Database* db);
+
+enum z_Result z_remove(char* path, size_t path_length, struct z_Database* db);
 
 enum z_Result z_exit(struct z_Database* db);
 

@@ -1,6 +1,6 @@
 # ncsh
 
-An interactive unix shell focused on speed and building everything from the ground up.
+An interactive unix shell focused on speed and building everything up.
 
 ## features
 
