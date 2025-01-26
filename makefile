@@ -52,7 +52,6 @@ install : $(target)
 .PHONY: check
 check :
 	set -e
-	make test_fzf
 	make test_autocompletions
 	make test_history
 	make test_parser
@@ -66,6 +65,7 @@ integration_tests :
 .PHONY: l
 l :
 	set -e
+	make test_fzf
 	make check
 	make integration_tests
 
