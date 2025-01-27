@@ -803,7 +803,6 @@ int_fast32_t ncsh(void)
 
     struct ncsh_Shell shell = {0};
     if (ncsh_init(&shell) == EXIT_FAILURE) {
-        free(shell.input.buffer);
         return EXIT_FAILURE;
     }
 
