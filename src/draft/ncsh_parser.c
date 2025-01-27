@@ -10,7 +10,6 @@
 
 #include "../eskilib/eskilib_defines.h"
 #include "../eskilib/eskilib_result.h"
-#include "../eskilib/eskilib_string.h"
 #include "../ncsh_defines.h"
 #include "../ncsh_parser.h"
 

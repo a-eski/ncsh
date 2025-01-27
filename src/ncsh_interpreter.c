@@ -14,11 +14,9 @@
 #include "ncsh_builtins.h"
 #include "ncsh_config.h"
 #include "ncsh_defines.h"
-#include "ncsh_history.h"
 #include "ncsh_parser.h"
 #include "ncsh_types.h"
 #include "ncsh_vm.h"
-#include "z/z.h"
 
 #define NCSH_Z "z"
 #define NCSH_Z_ADD "add"
@@ -107,11 +105,11 @@ eskilib_nodiscard int_fast32_t ncsh_interpreter_execute(struct ncsh_Shell* shell
     }
 
     if (eskilib_string_compare(shell->args.values[0], shell->args.lengths[0], NCSH_Z, sizeof(NCSH_Z))) {
-        return ncsh_interpreter_z(&shell->args, &shell->z_db);
+        return ncsh_builtins_z(&shell->z_db, &shell->args);
     }
 
     if (eskilib_string_compare(shell->args.values[0], shell->args.lengths[0], NCSH_HISTORY, sizeof(NCSH_HISTORY))) {
-        return ncsh_history_command(&shell->args, &shell->history);
+        return ncsh_builtins_history(&shell->history, &shell->args);
     }
 
     ncsh_interpreter_alias(&shell->args);

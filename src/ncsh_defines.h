@@ -14,6 +14,8 @@
 #define NCSH_ERROR_STDIN "ncsh: Error writing to stdin"
 
 // values returned from executing commands
+#define NCSH_COMMAND_NONE -5 // command not run yet
+#define NCSH_COMMAND_EXECVP_FAILED -3
 #define NCSH_COMMAND_SYNTAX_ERROR -2
 #define NCSH_COMMAND_EXIT_FAILURE -1
 #define NCSH_COMMAND_EXIT 0

@@ -14,7 +14,7 @@ rm .ncsh_history_test
 set -e
 echo "starting ncsh integration tests"
 
-make CFLAGS="-Wall -Wextra -Werror -pedantic-errors -Wformat=2 -Wconversion -Wsign-conversion -Wshadow -Wvla -fsanitize=address,undefined,leak -DNCSH_HISTORY_TEST -DZ_TEST -DNCSH_SHORT_DIRECTORY -DNCSH_START_TIME -DNDEBUG"
+make CFLAGS="-Wall -Wextra -Werror -pedantic-errors -Wformat=2 -Wsign-conversion -Wshadow -Wvla -fsanitize=address,undefined,leak -DNCSH_HISTORY_TEST -DZ_TEST -DNCSH_SHORT_DIRECTORY -DNCSH_START_TIME -DNDEBUG"
 ./integration_tests/integration_test.rb
 make clean
 

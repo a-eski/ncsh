@@ -10,6 +10,8 @@
 #include "z/z.h"
 #include <stdint.h>
 
+// ncsh_Shell: store information relevant to the shell.
+// Lives for the shell's lifetime: not freed until exit.
 struct ncsh_Shell {
     struct ncsh_Directory prompt_info;
     struct ncsh_Config config;

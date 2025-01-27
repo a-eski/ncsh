@@ -1,6 +1,7 @@
 // Copyright (c) ncsh by Alex Eski 2024
 
 #define _POSIX_C_SOURCE 200809L
+#include <assert.h>
 #include <fcntl.h>
 #include <linux/limits.h>
 #include <stdbool.h>
@@ -10,13 +11,75 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "eskilib/eskilib_colors.h"
 #include "eskilib/eskilib_defines.h"
-#include "ncsh_builtins.h"
 #include "ncsh_defines.h"
+#include "ncsh_history.h"
+#include "ncsh_builtins.h"
 #include "ncsh_parser.h"
+#include "z/z.h"
+
+eskilib_nodiscard int_fast32_t ncsh_builtins_z(struct z_Database* z_db, struct ncsh_Args* args)
+{
+    assert(z_db);
+    assert(args->count > 0);
+
+    if (args->values[1] &&
+        eskilib_string_compare(args->values[1], args->lengths[1], NCSH_Z_PRINT, sizeof(NCSH_Z_PRINT))) {
+        z_print(z_db);
+        return NCSH_COMMAND_SUCCESS_CONTINUE;
+    }
+
+    if (args->count > 2) {
+        if (!args->values[1] || !args->values[2]) {
+            return NCSH_COMMAND_FAILED_CONTINUE;
+        }
+
+        if (eskilib_string_compare(args->values[1], args->lengths[1], NCSH_Z_ADD, sizeof(NCSH_Z_ADD))) {
+            size_t length = strlen(args->values[2]) + 1;
+            if (z_add(args->values[2], length, z_db) == Z_SUCCESS) {
+                return NCSH_COMMAND_SUCCESS_CONTINUE;
+            }
+            else {
+                return NCSH_COMMAND_EXIT_FAILURE;
+            }
+        }
+        else {
+            return NCSH_COMMAND_SUCCESS_CONTINUE;
+        }
+    }
+
+    size_t length = !args->values[1] ? 0 : strlen(args->values[1]) + 1;
+    char cwd[PATH_MAX] = {0};
+    char* cwd_result = getcwd(cwd, PATH_MAX);
+    if (!cwd_result) {
+        perror(RED "ncsh z: Could not load cwd information" RESET);
+        return NCSH_COMMAND_EXIT_FAILURE;
+    }
+
+    z(args->values[1], length, cwd, z_db);
+    return NCSH_COMMAND_SUCCESS_CONTINUE;
+}
+
+eskilib_nodiscard int_fast32_t ncsh_builtins_history(struct ncsh_History* history, struct ncsh_Args* args)
+{
+    if (args->values[1]) {
+        if (eskilib_string_compare(args->values[1], args->lengths[1], NCSH_HISTORY_COUNT,
+                                   sizeof(NCSH_HISTORY_COUNT))) {
+            return ncsh_history_command_count(history);
+        }
+        else if (eskilib_string_compare(args->values[1], args->lengths[1], NCSH_HISTORY_CLEAN,
+                                        sizeof(NCSH_HISTORY_CLEAN))) {
+            return ncsh_history_command_clean(history);
+        }
+        // else { Invalid options }
+    }
+
+    return ncsh_history_command_display(history);
+}
 
 eskilib_nodiscard int_fast32_t ncsh_builtins_exit(struct ncsh_Args* args)
 {
@@ -68,6 +131,9 @@ eskilib_nodiscard int_fast32_t ncsh_builtins_help(struct ncsh_Args* args)
     NCSH_HELP_WRITE(NCSH_HELP_FORMAT);
     NCSH_HELP_WRITE(NCSH_HELP_QUIT);
     NCSH_HELP_WRITE(NCSH_HELP_CHANGEDIR);
+    // z
+    // z add
+    // z print
     NCSH_HELP_WRITE(NCSH_HELP_ECHO);
     NCSH_HELP_WRITE(NCSH_HELP_HISTORY);
     NCSH_HELP_WRITE(NCSH_HELP_HISTORY_COUNT);
@@ -140,6 +206,7 @@ eskilib_nodiscard int_fast32_t ncsh_builtins_kill(struct ncsh_Args* args)
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
+// NOTE: set is not fully implemented.
 eskilib_nodiscard int_fast32_t ncsh_builtins_set_e()
 {
     puts("sets e detected");
@@ -177,3 +244,5 @@ eskilib_nodiscard int_fast32_t ncsh_builtins_set(struct ncsh_Args* args)
 
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
+
+

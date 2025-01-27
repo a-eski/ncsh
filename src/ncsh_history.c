@@ -372,21 +372,3 @@ eskilib_nodiscard int_fast32_t ncsh_history_command_clean(struct ncsh_History* h
 
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
-
-#define HISTORY_COUNT_COMMAND "count"
-#define HISTORY_CLEAN_COMMAND "clean"
-eskilib_nodiscard int_fast32_t ncsh_history_command(struct ncsh_Args* args, struct ncsh_History* history)
-{
-    if (args->values[1]) {
-        if (eskilib_string_compare(args->values[1], args->lengths[1], HISTORY_COUNT_COMMAND,
-                                   sizeof(HISTORY_COUNT_COMMAND))) {
-            return ncsh_history_command_count(history);
-        }
-        else if (eskilib_string_compare(args->values[1], args->lengths[1], HISTORY_CLEAN_COMMAND,
-                                        sizeof(HISTORY_CLEAN_COMMAND))) {
-            return ncsh_history_command_clean(history);
-        }
-    }
-
-    return ncsh_history_command_display(history);
-}
