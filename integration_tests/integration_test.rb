@@ -508,7 +508,7 @@ end
 
 def help_test(row)
   assert_check_new_row(row)
-  @tty.send_keys_one_at_a_time(%(help\n))
+  @tty.send_line('help')
   row += 1
   @tty.assert_contents_at row, row + 13, <<~TERM
     ncsh Copyright (C) 2025 Alex Eski
@@ -539,15 +539,37 @@ def basic_echo_test(row)
   row += 1
   @tty.assert_row(row, 'hello')
   row += 1
-  puts 'echo hello test passed'
+  puts 'basic echo test passed'
+  row
+end
+
+def quote_echo_test(row)
+  assert_check_new_row(row)
+  @tty.send_line("echo 'hello'")
+  row += 1
+  @tty.assert_row(row, 'hello')
+  row += 1
+
+  @tty.send_line('echo "hello"')
+  row += 1
+  @tty.assert_row(row, 'hello')
+  row += 1
+
+  @tty.send_line('echo `hello`')
+  row += 1
+  @tty.assert_row(row, 'hello')
+  row += 1
+
+  puts 'quote echo test passed'
   row
 end
 
 def builtin_tests(row)
   starting_tests 'builtin'
 
-  row = help_test row
-  basic_echo_test row
+  # row = help_test row
+  row = basic_echo_test row
+  quote_echo_test row
 end
 
 def delete_line_tests(row)

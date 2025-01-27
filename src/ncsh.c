@@ -22,10 +22,10 @@
 #include "ncsh_config.h"
 #include "ncsh_defines.h"
 #include "ncsh_history.h"
-#include "ncsh_interpreter.h"
 #include "ncsh_parser.h"
 #include "ncsh_terminal.h"
 #include "ncsh_types.h"
+#include "ncsh_vm.h"
 
 /* Macros */
 #define EXIT_IO_FAILURE -1
@@ -48,17 +48,9 @@
         return EXIT_FAILURE;                                                                                           \
     }
 
-/* Types */
-struct ncsh_Input {
-    size_t start_pos;
-    size_t pos;
-    size_t max_pos;
-    char* buffer;
-};
-
 /* Prompt */
 #ifdef NCSH_SHORT_DIRECTORY
-void ncsh_prompt_directory(char* cwd, char* output)
+size_t ncsh_prompt_directory(char* cwd, char* output)
 {
     uint_fast32_t i = 1;
     uint_fast32_t last_slash_pos = 0;
@@ -72,7 +64,13 @@ void ncsh_prompt_directory(char* cwd, char* output)
         ++i;
     }
 
-    memcpy(output, &cwd[second_to_last_slash] - 1, i - second_to_last_slash + 1);
+    memcpy(output, cwd + second_to_last_slash - 1, i - second_to_last_slash + 1);
+    output[i - second_to_last_slash + 1] = '\0';
+
+    size_t result_len = i - second_to_last_slash + 2; // null termination included in len
+    assert(result_len == strlen(cwd + second_to_last_slash - 1) + 1);
+
+    return result_len;
 }
 #endif /* ifdef NCSH_SHORT_DIRECTORY */
 
@@ -85,11 +83,12 @@ eskilib_nodiscard int_fast32_t ncsh_prompt(struct ncsh_Directory prompt_info)
     }
 
 #ifdef NCSH_SHORT_DIRECTORY
-    char prompt_directory[PATH_MAX] = {0};
-    ncsh_prompt_directory(prompt_info.cwd, prompt_directory);
-    printf(ncsh_GREEN "%s" WHITE " " ncsh_CYAN "%s" WHITE_BRIGHT " \u2771 ", prompt_info.user, prompt_directory);
+    prompt_info.prompt_directory.length = ncsh_prompt_directory(prompt_info.cwd, prompt_info.prompt_directory.value);
+    printf(ncsh_GREEN "%s" WHITE " " ncsh_CYAN "%s" WHITE_BRIGHT " \u2771 ", prompt_info.user.value, prompt_info.prompt_directory.value);
 #else
-    printf(ncsh_GREEN "%s" WHITE " " ncsh_CYAN "%s" WHITE_BRIGHT " \u2771 ", prompt_info.user, prompt_info.path);
+    strcpy(prompt_info.prompt_directory.value, prompt_info.cwd);
+    prompt_info.prompt_directory.length = strlen(prompt_info.prompt_directory.value) + 1;
+    printf(ncsh_GREEN "%s" WHITE " " ncsh_CYAN "%s" WHITE_BRIGHT " \u2771 ", prompt_info.user.value, prompt_info.prompt_directory.value);
 #endif /* ifdef NCSH_SHORT_DIRECTORY */
 
     fflush(stdout);
@@ -322,6 +321,9 @@ eskilib_nodiscard int_fast32_t ncsh_tab_autocomplete(struct ncsh_Input* input,
 
 void ncsh_exit(struct ncsh_Shell* shell)
 {
+    free(shell->prompt_info.prompt_directory.value);
+    free(shell->input.buffer);
+
     ncsh_config_free(&shell->config);
 
     ncsh_parser_args_free(&shell->args);
@@ -338,10 +340,21 @@ void ncsh_exit(struct ncsh_Shell* shell)
 
 eskilib_nodiscard int_fast32_t ncsh_init(struct ncsh_Shell* shell)
 {
-    shell->prompt_info.user = getenv("USER");
+    shell->prompt_info.user.value = getenv("USER");
+    shell->prompt_info.user.length = strlen(shell->prompt_info.user.value) + 1;
+    shell->prompt_info.prompt_directory.length = 0;
+    shell->prompt_info.prompt_directory.value = malloc(PATH_MAX);
+
+    shell->input.buffer = calloc(NCSH_MAX_INPUT, sizeof(char));
+    if (!shell->input.buffer) {
+        free(shell->prompt_info.prompt_directory.value);
+        return EXIT_FAILURE;
+    }
 
     enum eskilib_Result result;
     if ((result = ncsh_config_init(&shell->config)) != E_SUCCESS) {
+        free(shell->prompt_info.prompt_directory.value);
+        free(shell->input.buffer);
         if (result != E_FAILURE_MALLOC) {
             ncsh_config_free(&shell->config);
         }
@@ -351,6 +364,8 @@ eskilib_nodiscard int_fast32_t ncsh_init(struct ncsh_Shell* shell)
     if ((result = ncsh_parser_args_malloc(&shell->args)) != E_SUCCESS) {
         perror(RED "ncsh: Error when allocating memory for parser" RESET);
         fflush(stderr);
+        free(shell->prompt_info.prompt_directory.value);
+        free(shell->input.buffer);
         ncsh_config_free(&shell->config);
         if (result != E_FAILURE_MALLOC) {
             ncsh_parser_args_free(&shell->args);
@@ -359,6 +374,8 @@ eskilib_nodiscard int_fast32_t ncsh_init(struct ncsh_Shell* shell)
     }
 
     if ((result = ncsh_history_init(shell->config.config_location, &shell->history)) != E_SUCCESS) {
+        free(shell->prompt_info.prompt_directory.value);
+        free(shell->input.buffer);
         ncsh_config_free(&shell->config);
         ncsh_parser_args_free(&shell->args);
         if (result != E_FAILURE_MALLOC) {
@@ -371,6 +388,8 @@ eskilib_nodiscard int_fast32_t ncsh_init(struct ncsh_Shell* shell)
     if (!shell->current_autocompletion) {
         perror(RED "ncsh: Error when allocating data for autocompletion results" RESET);
         fflush(stderr);
+        free(shell->prompt_info.prompt_directory.value);
+        free(shell->input.buffer);
         ncsh_config_free(&shell->config);
         ncsh_parser_args_free(&shell->args);
         ncsh_history_exit(&shell->history);
@@ -380,6 +399,8 @@ eskilib_nodiscard int_fast32_t ncsh_init(struct ncsh_Shell* shell)
     if (!shell->autocompletions_tree) {
         perror(RED "ncsh: Error when loading data from history as autocompletions" RESET);
         fflush(stderr);
+        free(shell->prompt_info.prompt_directory.value);
+        free(shell->input.buffer);
         ncsh_config_free(&shell->config);
         ncsh_parser_args_free(&shell->args);
         ncsh_history_exit(&shell->history);
@@ -390,6 +411,8 @@ eskilib_nodiscard int_fast32_t ncsh_init(struct ncsh_Shell* shell)
 
     enum z_Result z_result = z_init(shell->config.config_location, &shell->z_db);
     if (z_result != Z_SUCCESS) {
+        free(shell->prompt_info.prompt_directory.value);
+        free(shell->input.buffer);
         ncsh_config_free(&shell->config);
         ncsh_parser_args_free(&shell->args);
         ncsh_history_exit(&shell->history);
@@ -777,15 +800,9 @@ int_fast32_t ncsh(void)
     int_fast32_t exit_code = EXIT_SUCCESS;
     int_fast32_t input_result = 0;
     int_fast32_t command_result = 0;
-    struct ncsh_Input input = {0};
-    input.buffer = calloc(NCSH_MAX_INPUT, sizeof(char));
-    if (!input.buffer) {
-        return EXIT_FAILURE;
-    }
 
     struct ncsh_Shell shell = {0};
     if (ncsh_init(&shell) == EXIT_FAILURE) {
-        free(input.buffer);
         return EXIT_FAILURE;
     }
 
@@ -797,12 +814,11 @@ int_fast32_t ncsh(void)
 
     if (ncsh_prompt(shell.prompt_info) == EXIT_FAILURE) {
         ncsh_exit(&shell);
-        free(input.buffer);
         return EXIT_FAILURE;
     }
 
     while (1) {
-        input_result = ncsh_readline(&input, &shell);
+        input_result = ncsh_readline(&shell.input, &shell);
         switch (input_result) {
         case EXIT_FAILURE: {
             exit_code = EXIT_FAILURE;
@@ -816,9 +832,9 @@ int_fast32_t ncsh(void)
         }
         }
 
-        ncsh_parser_parse(input.buffer, input.pos, &shell.args);
+        ncsh_parser_parse(shell.input.buffer, shell.input.pos, &shell.args);
 
-        command_result = ncsh_interpreter_execute(&shell);
+        command_result = ncsh_vm_execute(&shell);
         switch (command_result) {
         case NCSH_COMMAND_EXIT_FAILURE: {
             exit_code = EXIT_FAILURE;
@@ -833,20 +849,19 @@ int_fast32_t ncsh(void)
         }
         }
 
-        ncsh_history_add(input.buffer, input.pos, &shell.history);
-        ncsh_autocompletions_add(input.buffer, input.pos, shell.autocompletions_tree);
+        ncsh_history_add(shell.input.buffer, shell.input.pos, &shell.history);
+        ncsh_autocompletions_add(shell.input.buffer, shell.input.pos, shell.autocompletions_tree);
 
     reset:
         ncsh_parser_args_free_values(&shell.args);
-        memset(input.buffer, '\0', input.max_pos);
-        input.pos = 0;
-        input.max_pos = 0;
+        memset(shell.input.buffer, '\0', shell.input.max_pos);
+        shell.input.pos = 0;
+        shell.input.max_pos = 0;
         shell.args.count = 0;
         shell.args.values[0] = NULL;
     }
 
 exit:
-    free(input.buffer);
     ncsh_exit(&shell);
 
     return exit_code;

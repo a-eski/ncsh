@@ -11,6 +11,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <time.h>
@@ -18,12 +19,19 @@
 
 #include "eskilib/eskilib_colors.h"
 #include "eskilib/eskilib_defines.h"
+#include "ncsh_builtins.h"
 #include "ncsh_defines.h"
 #include "ncsh_parser.h"
 #include "ncsh_terminal.h"
 #include "ncsh_vm.h"
 
 /* Types */
+enum ncsh_Command_Type {
+    CT_NONE = 0,
+    CT_BUILTIN = 1,
+    CT_EXTERNAL = 2
+};
+
 struct ncsh_Output_Redirect_IO {
     int fd_stdout;
     int fd_stderr;
@@ -62,6 +70,17 @@ struct ncsh_Tokens {
 
     bool output_append;
 };
+
+/* Builtins */
+char* builtins[] = {NCSH_EXIT, NCSH_QUIT, NCSH_Q, NCSH_ECHO, NCSH_HELP, NCSH_CD, NCSH_PWD, NCSH_KILL, NCSH_SET};
+size_t builtins_len[] = {sizeof(NCSH_EXIT), sizeof(NCSH_QUIT), sizeof(NCSH_Q),    sizeof(NCSH_ECHO), sizeof(NCSH_HELP),
+                         sizeof(NCSH_CD),   sizeof(NCSH_PWD),  sizeof(NCSH_KILL), sizeof(NCSH_SET)};
+
+int_fast32_t (*builtin_func[])(struct ncsh_Args*) = {&ncsh_builtins_exit, &ncsh_builtins_exit, &ncsh_builtins_exit,
+                                                     &ncsh_builtins_echo, &ncsh_builtins_help, &ncsh_builtins_cd,
+                                                     &ncsh_builtins_pwd,  &ncsh_builtins_kill, &ncsh_builtins_set};
+
+
 
 /* Signal Handling */
 static _Atomic pid_t ncsh_atomic_internal_child_pid = 0;
@@ -605,10 +624,13 @@ eskilib_nodiscard int_fast32_t ncsh_vm(struct ncsh_Args* args)
     pid_t pid = 0;
     int status;
     int execvp_result = 0;
+    int command_result = NCSH_COMMAND_NONE;
     struct ncsh_Vm vm = {0};
     char* buffer[MAX_INPUT] = {0};
+    size_t buffer_len[MAX_INPUT] = {0};
     bool end = false;
     enum ncsh_Ops op_current = OP_NONE;
+    enum ncsh_Command_Type command_type = CT_NONE;
 
     uint_fast32_t command_position = 0;
     uint_fast32_t args_position = 0;
@@ -623,6 +645,7 @@ eskilib_nodiscard int_fast32_t ncsh_vm(struct ncsh_Args* args)
 
         while (args->ops[args_position] == OP_CONSTANT) {
             buffer[buffer_position] = args->values[args_position];
+	    buffer_len[buffer_position] = args->lengths[args_position];
             ++args_position;
 
             if (args->values[args_position] == NULL) {
@@ -637,13 +660,12 @@ eskilib_nodiscard int_fast32_t ncsh_vm(struct ncsh_Args* args)
         if (!end) {
             op_current = args->ops[args_position];
         }
+        ++args_position;
 
         buffer[buffer_position] = NULL;
         if (buffer[0] == NULL) {
             return NCSH_COMMAND_FAILED_CONTINUE;
         }
-
-        ++args_position;
 
         if (op_current == OP_PIPE && !end) {
             if (!ncsh_pipe_start(command_position, &vm.pipes_io)) {
@@ -651,92 +673,106 @@ eskilib_nodiscard int_fast32_t ncsh_vm(struct ncsh_Args* args)
             }
         }
 
-        /*if (ncsh_vm_signal_forward(SIGINT) ||
-            ncsh_vm_signal_forward(SIGHUP) ||
-            ncsh_vm_signal_forward(SIGTERM) ||
-            ncsh_vm_signal_forward(SIGQUIT) ||
-            ncsh_vm_signal_forward(SIGUSR1) ||
-            ncsh_vm_signal_forward(SIGUSR2)) {
-            perror("ncsh: Error setting up signal handlers");
-            return NCSH_COMMAND_EXIT_FAILURE;
-        }*/
-        if (ncsh_vm_signal_forward(SIGINT)) {
-            perror("ncsh: Error setting up signal handlers");
-            return NCSH_COMMAND_EXIT_FAILURE;
-        }
+        for (uint_fast32_t i = 0; i < sizeof(builtins) / sizeof(char*); ++i) {
+            if (eskilib_string_compare(buffer[0], buffer_len[0], builtins[i], builtins_len[i])) {
+                command_type = CT_BUILTIN;
+                command_result = (*builtin_func[i])(args);
 
-        pid = fork();
-
-        if (pid == -1) {
-            return ncsh_fork_failure(command_position, tokens.number_of_pipe_commands, &vm.pipes_io);
-        }
-
-        if (pid == 0) {
-            if (op_current == OP_PIPE) {
-                ncsh_pipe_connect(command_position, tokens.number_of_pipe_commands, &vm.pipes_io);
+                if (op_current == OP_PIPE) {
+                    ncsh_pipe_stop(command_position, tokens.number_of_pipe_commands, &vm.pipes_io);
+                }
+                break;
             }
+        }
 
-            /*if (setpgid(pid, pid) == 0) {
-                perror(RED "ncsh: Error setting up process group ID for child process" RESET);
+        if (command_type != CT_BUILTIN) {
+            /*if (ncsh_vm_signal_forward(SIGINT) ||
+                ncsh_vm_signal_forward(SIGHUP) ||
+                ncsh_vm_signal_forward(SIGTERM) ||
+                ncsh_vm_signal_forward(SIGQUIT) ||
+                ncsh_vm_signal_forward(SIGUSR1) ||
+                ncsh_vm_signal_forward(SIGUSR2)) {
+                perror("ncsh: Error setting up signal handlers");
+                return NCSH_COMMAND_EXIT_FAILURE;
             }*/
-
-            if ((execvp_result = execvp(buffer[0], buffer)) == EXECVP_FAILED) {
-                end = true;
-                perror(RED "ncsh: Could not find command or directory" RESET);
-                fflush(stdout);
-                kill(getpid(), SIGTERM);
+            if (ncsh_vm_signal_forward(SIGINT)) {
+                perror("ncsh: Error setting up signal handlers");
+                return NCSH_COMMAND_EXIT_FAILURE;
             }
-        }
 
-        if (op_current == OP_PIPE) {
-            ncsh_pipe_stop(command_position, tokens.number_of_pipe_commands, &vm.pipes_io);
-        }
+            pid = fork();
 
-        if (execvp_result == EXECVP_FAILED) {
-            break;
-        }
+            if (pid == -1) {
+                return ncsh_fork_failure(command_position, tokens.number_of_pipe_commands, &vm.pipes_io);
+            }
 
-        ncsh_vm_atomic_child_pid_set(pid);
-
-        __pid_t waitpid_result;
-        while (1) {
-            status = 0;
-            waitpid_result = waitpid(pid, &status, WUNTRACED);
-
-            // check for errors
-            if (waitpid_result == -1) {
-                /* ignore EINTR, occurs when SA_RESTART is not specified in sigaction flags */
-                if (errno == EINTR) {
-                    continue;
+            if (pid == 0) {
+                if (op_current == OP_PIPE) {
+                    ncsh_pipe_connect(command_position, tokens.number_of_pipe_commands, &vm.pipes_io);
                 }
 
-                perror(RED "ncsh: Error waiting for child process to exit" RESET);
-                status = EXIT_FAILURE;
+                /*if (setpgid(pid, pid) == 0) {
+                    perror(RED "ncsh: Error setting up process group ID for child process" RESET);
+                }*/
+
+                if ((execvp_result = execvp(buffer[0], buffer)) == EXECVP_FAILED) {
+                    end = true;
+                    perror(RED "ncsh: Could not find command or directory" RESET);
+                    fflush(stdout);
+                    kill(getpid(), SIGTERM);
+                }
+            }
+
+            if (op_current == OP_PIPE) {
+                ncsh_pipe_stop(command_position, tokens.number_of_pipe_commands, &vm.pipes_io);
+            }
+
+            if (execvp_result == EXECVP_FAILED) {
                 break;
             }
 
-            // check if child process has exited
-            if (waitpid_result == pid) {
+            ncsh_vm_atomic_child_pid_set(pid);
+
+            __pid_t waitpid_result;
+            while (1) {
+                status = 0;
+                waitpid_result = waitpid(pid, &status, WUNTRACED);
+
+                // check for errors
+                if (waitpid_result == -1) {
+                    /* ignore EINTR, occurs when SA_RESTART is not specified in sigaction flags */
+                    if (errno == EINTR) {
+                        continue;
+                    }
+
+                    perror(RED "ncsh: Error waiting for child process to exit" RESET);
+                    status = EXIT_FAILURE;
+                    break;
+                }
+
+                // check if child process has exited
+                if (waitpid_result == pid) {
 #ifdef NCSH_DEBUG
-                if (WIFEXITED(status)) {
-                    if (WEXITSTATUS(status)) {
-                        fprintf(stderr, "ncsh: Command child process failed with status %d\n", WEXITSTATUS(status));
+                    if (WIFEXITED(status)) {
+                        if (WEXITSTATUS(status)) {
+                            fprintf(stderr, "ncsh: Command child process failed with status %d\n", WEXITSTATUS(status));
+                        }
+                        else {
+                            fprintf(stderr, "ncsh: Command child process exited successfully.\n");
+                        }
+                    }
+                    else if (WIFSIGNALED(status)) {
+                        fprintf(stderr, "ncsh: Command child process died from signal #%d\n", WTERMSIG(status));
                     }
                     else {
-                        fprintf(stderr, "ncsh: Command child process exited successfully.\n");
+                        if (write(STDERR_FILENO, "ncsh: Command child process died, cause unknown.\n", 49) == -1) {
+                            perror("ncsh: Error writing to stderr");
+                        }
                     }
-                }
-                else if (WIFSIGNALED(status)) {
-                    fprintf(stderr, "ncsh: Command child process died from signal #%d\n", WTERMSIG(status));
-                }
-                else {
-                    if (write(STDERR_FILENO, "ncsh: Command child process died, cause unknown.\n", 49) == -1) {
-                        perror("ncsh: Error writing to stderr");
-                    }
-                }
 #endif /* ifdef NCSH_DEBUG */
 
-                break;
+                    break;
+                }
             }
         }
 
@@ -751,18 +787,44 @@ eskilib_nodiscard int_fast32_t ncsh_vm(struct ncsh_Args* args)
     if (status == EXIT_FAILURE) {
         return NCSH_COMMAND_EXIT_FAILURE;
     }
+    if (command_result != NCSH_COMMAND_NONE)
+        return command_result;
 
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
-eskilib_nodiscard int_fast32_t ncsh_vm_execute(struct ncsh_Args* args)
+void ncsh_vm_alias(struct ncsh_Args* args)
 {
-    assert(args);
+    struct eskilib_String alias = ncsh_config_alias_check(args->values[0], args->lengths[0]);
+    if (alias.length) {
+        args->values[0] = realloc(args->values[0], alias.length);
+        memcpy(args->values[0], alias.value, alias.length - 1);
+        args->values[0][alias.length - 1] = '\0';
+        args->lengths[0] = alias.length;
+    }
+}
+
+eskilib_nodiscard int_fast32_t ncsh_vm_execute(struct ncsh_Shell* shell)
+{
+    assert(shell);
+    assert(&shell->args);
+
+    if (shell->args.count == 0) {
+        return NCSH_COMMAND_SUCCESS_CONTINUE;
+    }
+
+    if (eskilib_string_compare(shell->args.values[0], shell->args.lengths[0], NCSH_Z, sizeof(NCSH_Z))) {
+        return ncsh_builtins_z(&shell->z_db, &shell->args);
+    }
+
+    if (eskilib_string_compare(shell->args.values[0], shell->args.lengths[0], NCSH_HISTORY, sizeof(NCSH_HISTORY))) {
+        return ncsh_builtins_history(&shell->history, &shell->args);
+    }
+
+    ncsh_vm_alias(&shell->args);
 
     ncsh_terminal_reset(); // reset terminal settings since a lot of terminal programs use canonical mode
-
-    int_fast32_t result = ncsh_vm(args);
-
+    int_fast32_t result = ncsh_vm(&shell->args);
     ncsh_terminal_init(); // back to noncanonical mode
 
     return result;
@@ -773,6 +835,14 @@ eskilib_nodiscard int_fast32_t ncsh_vm_execute_noninteractive(struct ncsh_Args* 
     assert(args);
     if (!args->count) {
         return NCSH_COMMAND_SUCCESS_CONTINUE;
+    }
+
+    ncsh_vm_alias(args);
+
+    for (uint_fast32_t i = 0; i < sizeof(builtins) / sizeof(char*); ++i) {
+        if (eskilib_string_compare(args->values[0], args->lengths[0], builtins[i], builtins_len[i])) {
+            return (*builtin_func[i])(args);
+        }
     }
 
     return ncsh_vm(args);
