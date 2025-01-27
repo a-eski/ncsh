@@ -141,6 +141,11 @@ eskilib_nodiscard int_fast32_t ncsh_builtins_help(struct ncsh_Args* args)
     NCSH_HELP_WRITE(NCSH_HELP_PWD);
     // kill
 
+    // controls
+    // autocomplete
+    // tab autocomplete
+    // CTRL + W, CTRL + U
+
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 

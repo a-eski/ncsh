@@ -7,6 +7,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "eskilib/eskilib_string.h"
+
 // input definitions
 #define ESCAPE_CHARACTER 27 // "\033" or "^["
 #define DOUBLE_QUOTE_KEY '\"'
@@ -47,7 +49,8 @@
 
 struct ncsh_Directory {
     bool reprint_prompt;
-    char* user;
+    struct eskilib_String user;
+    struct eskilib_String prompt_directory;
     char cwd[PATH_MAX];
 };
 

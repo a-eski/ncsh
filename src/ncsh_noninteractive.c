@@ -12,7 +12,7 @@
 #include "ncsh_defines.h" // used when NCSH_DEBUG defined
 #include "ncsh_noninteractive.h"
 #include "ncsh_parser.h"
-#include "ncsh_interpreter.h"
+#include "ncsh_vm.h"
 
 /*enum ncsh_Flags
 {
@@ -98,7 +98,7 @@ int_fast32_t ncsh_noninteractive(int argc, char** argv)
 #endif /* ifdef NCSH_DEBUG */
 
     ncsh_parser_parse(argv[1], length, &args);
-    int_fast32_t command_result = ncsh_interpreter_execute_noninteractive(&args);
+    int_fast32_t command_result = ncsh_vm_execute_noninteractive(&args);
 
     int_fast32_t exit_code = EXIT_SUCCESS;
     switch (command_result) {

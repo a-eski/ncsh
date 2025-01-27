@@ -21,5 +21,4 @@
 #include "ncsh_noninteractive.c"
 #include "ncsh_parser.c"
 #include "ncsh_terminal.c"
-#include "ncsh_interpreter.c"
 #include "ncsh_vm.c"

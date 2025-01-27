@@ -54,7 +54,7 @@
 #define TILDE '~'
 
 // currently unsupported
-#define BANG '!'
+// #define BANG '!'
 
 eskilib_nodiscard enum eskilib_Result ncsh_parser_args_malloc(struct ncsh_Args* args)
 {

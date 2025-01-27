@@ -23,16 +23,20 @@ double z_score(struct z_Directory* directory, int fzf_score, time_t now)
     time_t duration = now - directory->last_accessed;
 
     if (duration < Z_HOUR) {
-        return (directory->rank + fzf_score) * 4.0;
+        // return (directory->rank + fzf_score) * 4.0;
+        return (directory->rank * 4.0) + fzf_score;
     }
     else if (duration < Z_DAY) {
-        return (directory->rank + fzf_score) * 2.0;
+        // return (directory->rank + fzf_score) * 2.0;
+        return (directory->rank * 2.0) + fzf_score;
     }
     else if (duration < Z_WEEK) {
-        return (directory->rank + fzf_score) * 0.5;
+        // return (directory->rank + fzf_score) * 0.5;
+        return (directory->rank * 0.5) + fzf_score;
     }
     else {
-        return (directory->rank + fzf_score) * 0.25;
+        // return (directory->rank + fzf_score) * 0.25;
+        return (directory->rank * 0.25) + fzf_score;
     }
 }
 
@@ -580,6 +584,8 @@ enum z_Result z_remove(char* path, size_t path_length, struct z_Database* db)
     if (path_length < 2 || path[path_length - 1] != '\0') {
         return Z_BAD_STRING;
     }
+
+    // NOTE: not implemented
 
     return Z_SUCCESS;
 }
