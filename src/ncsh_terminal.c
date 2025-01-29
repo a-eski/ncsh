@@ -1,5 +1,8 @@
 // Copyright (c) ncsh by Alex Eski 2024
 
+#include <assert.h>
+#include <limits.h>
+#include <linux/limits.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,13 +12,14 @@
 #include <unistd.h>
 
 #include "eskilib/eskilib_colors.h"
+#include "eskilib/eskilib_result.h"
 #include "ncsh_terminal.h"
 #define TERMINAL_RETURN 'R'
 #define T_BUFFER_LENGTH 30
 
 /* Static Variables */
-static struct termios terminal;
-static struct termios original_terminal;
+static struct termios terminal_os;
+static struct termios original_terminal_os;
 static struct winsize window;
 
 /* Signal Handling */
@@ -29,35 +33,35 @@ static struct winsize window;
         perror("sighandler error");
 }*/
 
-void ncsh_terminal_reset(void)
+void ncsh_terminal_os_reset(void)
 {
     fflush(stdout);
-    if (tcsetattr(STDIN_FILENO, TCSANOW, &original_terminal) != 0) {
+    if (tcsetattr(STDIN_FILENO, TCSANOW, &original_terminal_os) != 0) {
         perror(RED "ncsh: Could not restore terminal settings" RESET);
     }
 }
 
-void ncsh_terminal_init(void)
+void ncsh_terminal_os_init(void)
 {
     if (!isatty(STDIN_FILENO)) {
         fprintf(stderr, "Not running in a terminal.\n");
         exit(EXIT_FAILURE);
     }
 
-    if (tcgetattr(STDIN_FILENO, &original_terminal) != 0) {
+    if (tcgetattr(STDIN_FILENO, &original_terminal_os) != 0) {
         perror(RED "ncsh: Could not get terminal settings" RESET);
         exit(EXIT_FAILURE);
     }
 
-    terminal = original_terminal;
-    terminal.c_lflag &= (tcflag_t) ~(ICANON | ECHO);
-    terminal.c_cc[VMIN] = 1;
-    terminal.c_cc[VTIME] = 0;
+    terminal_os = original_terminal_os;
+    terminal_os.c_lflag &= (tcflag_t) ~(ICANON | ECHO);
+    terminal_os.c_cc[VMIN] = 1;
+    terminal_os.c_cc[VTIME] = 0;
     // terminal.c_cc[VEOF] = CTRL_D;
     // terminal.c_cc[VINTR] = CTRL_C;
     // terminal.c_cc[VKILL] = CTRL_U;
 
-    if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &terminal) != 0) {
+    if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &terminal_os) != 0) {
         perror(RED "ncsh: Could not set terminal settings" RESET);
     }
 
@@ -99,6 +103,73 @@ void ncsh_terminal_move_up(int i)
 void ncsh_terminal_move_down(int i)
 {
     printf("\033[%dB", i);
+}
+
+enum eskilib_Result ncsh_terminal_malloc(struct ncsh_Terminal* terminal)
+{
+    assert(terminal);
+
+    terminal->prompt.user.value = getenv("USER");
+    terminal->prompt.user.length = strlen(terminal->prompt.user.value) + 1;
+    terminal->prompt.directory.length = 0;
+    terminal->prompt.directory.value = malloc(PATH_MAX);
+    if (!terminal->prompt.directory.value) {
+	return E_FAILURE_MALLOC;
+    }
+    /*terminal->prompt.cwd = malloc(PATH_MAX);
+    if (!terminal->prompt.cwd) {
+	return E_FAILURE_MALLOC;
+    }*/
+
+    ncsh_terminal_size_set();
+    terminal->size = ncsh_terminal_size_get();
+
+    return E_SUCCESS;
+}
+
+void ncsh_terminal_init(struct ncsh_Terminal* terminal)
+{
+    ncsh_terminal_size_set();
+    terminal->size = ncsh_terminal_size_get();
+}
+
+void ncsh_terminal_free(struct ncsh_Terminal *terminal)
+{
+    free(terminal->prompt.directory.value);
+}
+
+int ncsh_terminal_prompt_size(struct ncsh_Prompt* prompt)
+{
+    // shell prompt format:
+    // {user} {directory} {symbol} {buffer}
+    // user, directory include null termination, use as space for len
+    //     {user}{space (\0)}    {directory}{space (\0)}    {>} {space}     {buffer}
+    return prompt->user.length + prompt->directory.length + 1 + 1;
+}
+
+void ncsh_terminal_line_size(size_t buf_pos, struct ncsh_Terminal* terminal)
+{
+    assert(buf_pos <= INT_MAX);
+    assert(terminal);
+    assert(terminal->size.x);
+
+    int new_size = terminal->lines.y == 1
+        ? ncsh_terminal_prompt_size(&terminal->prompt) + (int)buf_pos
+        : (int)buf_pos;
+    if (new_size > terminal->size.x)
+    {
+        ++terminal->lines.y;
+    }
+
+    terminal->lines.x = new_size;
+}
+
+void ncsh_terminal_line_new(struct ncsh_Terminal* terminal)
+{
+    assert(terminal);
+
+    terminal->lines.y = 1;
+    terminal->lines.x = ncsh_terminal_prompt_size(&terminal->prompt);
 }
 
 struct ncsh_Coordinates ncsh_terminal_position(void)
