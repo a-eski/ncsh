@@ -74,22 +74,24 @@ size_t ncsh_prompt_directory(char* cwd, char* output)
 }
 #endif /* ifdef NCSH_SHORT_DIRECTORY */
 
-eskilib_nodiscard int_fast32_t ncsh_prompt(struct ncsh_Directory prompt_info)
+eskilib_nodiscard int_fast32_t ncsh_prompt(struct ncsh_Terminal* terminal)
 {
-    if (!getcwd(prompt_info.cwd, sizeof(prompt_info.cwd))) {
+    if (!getcwd(terminal->prompt.cwd, sizeof(terminal->prompt.cwd))) {
         perror(RED "ncsh: Error when getting current directory" RESET);
         fflush(stderr);
         return EXIT_FAILURE;
     }
 
 #ifdef NCSH_SHORT_DIRECTORY
-    prompt_info.prompt_directory.length = ncsh_prompt_directory(prompt_info.cwd, prompt_info.prompt_directory.value);
-    printf(ncsh_GREEN "%s" WHITE " " ncsh_CYAN "%s" WHITE_BRIGHT " \u2771 ", prompt_info.user.value, prompt_info.prompt_directory.value);
+    terminal->prompt.directory.length = ncsh_prompt_directory(terminal->prompt.cwd, terminal->prompt.directory.value);
+    printf(ncsh_GREEN "%s" WHITE " " ncsh_CYAN "%s" WHITE_BRIGHT " \u2771 ", terminal->prompt.user.value, terminal->prompt.directory.value);
 #else
-    strcpy(prompt_info.prompt_directory.value, prompt_info.cwd);
-    prompt_info.prompt_directory.length = strlen(prompt_info.prompt_directory.value) + 1;
-    printf(ncsh_GREEN "%s" WHITE " " ncsh_CYAN "%s" WHITE_BRIGHT " \u2771 ", prompt_info.user.value, prompt_info.prompt_directory.value);
+    strcpy(terminal->prompt.directory.value, terminal->prompt.cwd);
+    terminal->prompt.directory.length = strlen(terminal->prompt.directory.value) + 1;
+    printf(ncsh_GREEN "%s" WHITE " " ncsh_CYAN "%s" WHITE_BRIGHT " \u2771 ", terminal->prompt.user.value, terminal->prompt.directory.value);
 #endif /* ifdef NCSH_SHORT_DIRECTORY */
+
+    ncsh_terminal_line_new(terminal);
 
     fflush(stdout);
     // save cursor position so we can reset cursor when loading history entries
@@ -177,18 +179,19 @@ void ncsh_autocomplete(struct ncsh_Input* input, struct ncsh_Shell* shell)
         return;
     }
 
-    shell->terminal_position = ncsh_terminal_position();
+    shell->terminal.position = ncsh_terminal_position();
+    int lines_before = shell->terminal.lines.y;
+    ncsh_terminal_line_size(input->pos, &shell->terminal);
 
-    int length = (int)strlen(shell->current_autocompletion) + 1;
-    if (shell->terminal_position.x + length >= shell->terminal_size.x) {
+    if (lines_before < shell->terminal.lines.y) {
         /*if (write(STDOUT_FILENO, WHITE_DIM, sizeof(WHITE_DIM) - 1) == -1)
             return;
 
-        for (int_fast32_t i = 0; i < shell->terminal_size.x - shell->terminal_position.x; ++i) {
+        for (int_fast32_t i = 0; i < shell->terminal.size.x - shell->terminal.position.x; ++i) {
             putchar(shell->current_autocompletion[i]);
         }
         putchar('\n');
-        for (int_fast32_t i = shell->terminal_size.x - shell->terminal_position.x; i < length; ++i) {
+        for (int_fast32_t i = shell->terminal.size.x - shell->terminal.position.x; i < length; ++i) {
             putchar(shell->current_autocompletion[i]);
         }
 
@@ -198,7 +201,7 @@ void ncsh_autocomplete(struct ncsh_Input* input, struct ncsh_Shell* shell)
         return;
     }
     printf(WHITE_DIM "%s" RESET, shell->current_autocompletion);
-    ncsh_terminal_move(shell->terminal_position.x, shell->terminal_position.y);
+    ncsh_terminal_move(shell->terminal.position.x, shell->terminal.position.y);
     fflush(stdout);
 }
 
@@ -321,7 +324,7 @@ eskilib_nodiscard int_fast32_t ncsh_tab_autocomplete(struct ncsh_Input* input,
 
 void ncsh_exit(struct ncsh_Shell* shell)
 {
-    free(shell->prompt_info.prompt_directory.value);
+    ncsh_terminal_free(&shell->terminal);
     free(shell->input.buffer);
 
     ncsh_config_free(&shell->config);
@@ -335,25 +338,24 @@ void ncsh_exit(struct ncsh_Shell* shell)
 
     z_exit(&shell->z_db);
 
-    ncsh_terminal_reset();
+    ncsh_terminal_os_reset();
 }
 
 eskilib_nodiscard int_fast32_t ncsh_init(struct ncsh_Shell* shell)
 {
-    shell->prompt_info.user.value = getenv("USER");
-    shell->prompt_info.user.length = strlen(shell->prompt_info.user.value) + 1;
-    shell->prompt_info.prompt_directory.length = 0;
-    shell->prompt_info.prompt_directory.value = malloc(PATH_MAX);
+    if (ncsh_terminal_malloc(&shell->terminal) != E_SUCCESS) {
+        return EXIT_FAILURE;
+    }
 
     shell->input.buffer = calloc(NCSH_MAX_INPUT, sizeof(char));
     if (!shell->input.buffer) {
-        free(shell->prompt_info.prompt_directory.value);
+        free(shell->terminal.prompt.directory.value);
         return EXIT_FAILURE;
     }
 
     enum eskilib_Result result;
     if ((result = ncsh_config_init(&shell->config)) != E_SUCCESS) {
-        free(shell->prompt_info.prompt_directory.value);
+        ncsh_terminal_free(&shell->terminal);
         free(shell->input.buffer);
         if (result != E_FAILURE_MALLOC) {
             ncsh_config_free(&shell->config);
@@ -364,7 +366,7 @@ eskilib_nodiscard int_fast32_t ncsh_init(struct ncsh_Shell* shell)
     if ((result = ncsh_parser_args_malloc(&shell->args)) != E_SUCCESS) {
         perror(RED "ncsh: Error when allocating memory for parser" RESET);
         fflush(stderr);
-        free(shell->prompt_info.prompt_directory.value);
+        ncsh_terminal_free(&shell->terminal);
         free(shell->input.buffer);
         ncsh_config_free(&shell->config);
         if (result != E_FAILURE_MALLOC) {
@@ -374,7 +376,7 @@ eskilib_nodiscard int_fast32_t ncsh_init(struct ncsh_Shell* shell)
     }
 
     if ((result = ncsh_history_init(shell->config.config_location, &shell->history)) != E_SUCCESS) {
-        free(shell->prompt_info.prompt_directory.value);
+        ncsh_terminal_free(&shell->terminal);
         free(shell->input.buffer);
         ncsh_config_free(&shell->config);
         ncsh_parser_args_free(&shell->args);
@@ -388,7 +390,7 @@ eskilib_nodiscard int_fast32_t ncsh_init(struct ncsh_Shell* shell)
     if (!shell->current_autocompletion) {
         perror(RED "ncsh: Error when allocating data for autocompletion results" RESET);
         fflush(stderr);
-        free(shell->prompt_info.prompt_directory.value);
+        ncsh_terminal_free(&shell->terminal);
         free(shell->input.buffer);
         ncsh_config_free(&shell->config);
         ncsh_parser_args_free(&shell->args);
@@ -399,7 +401,7 @@ eskilib_nodiscard int_fast32_t ncsh_init(struct ncsh_Shell* shell)
     if (!shell->autocompletions_tree) {
         perror(RED "ncsh: Error when loading data from history as autocompletions" RESET);
         fflush(stderr);
-        free(shell->prompt_info.prompt_directory.value);
+        ncsh_terminal_free(&shell->terminal);
         free(shell->input.buffer);
         ncsh_config_free(&shell->config);
         ncsh_parser_args_free(&shell->args);
@@ -411,7 +413,7 @@ eskilib_nodiscard int_fast32_t ncsh_init(struct ncsh_Shell* shell)
 
     enum z_Result z_result = z_init(shell->config.config_location, &shell->z_db);
     if (z_result != Z_SUCCESS) {
-        free(shell->prompt_info.prompt_directory.value);
+        ncsh_terminal_free(&shell->terminal);
         free(shell->input.buffer);
         ncsh_config_free(&shell->config);
         ncsh_parser_args_free(&shell->args);
@@ -424,9 +426,7 @@ eskilib_nodiscard int_fast32_t ncsh_init(struct ncsh_Shell* shell)
         return EXIT_FAILURE;
     }
 
-    ncsh_terminal_init();
-    ncsh_terminal_size_set();
-    shell->terminal_size = ncsh_terminal_size_get();
+    ncsh_terminal_os_init();
 
     return EXIT_SUCCESS;
 }
@@ -437,14 +437,14 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input* input, struct nc
     char temp_character;
 
     while (1) {
-        if (input->pos == 0 && shell->prompt_info.reprint_prompt == true) {
-            if (ncsh_prompt(shell->prompt_info) == EXIT_FAILURE) {
+        if (input->pos == 0 && shell->terminal.prompt.reprint == true) {
+            if (ncsh_prompt(&shell->terminal) == EXIT_FAILURE) {
                 return EXIT_FAILURE;
             }
             shell->history_position = 0;
         }
         else {
-            shell->prompt_info.reprint_prompt = true;
+            shell->terminal.prompt.reprint = true;
         }
 
         if (read(STDIN_FILENO, &character, 1) == -1) {
@@ -460,7 +460,7 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input* input, struct nc
             return EXIT_SUCCESS_END;
         }
         else if (character == CTRL_W) { // delete last word
-            shell->prompt_info.reprint_prompt = false;
+            shell->terminal.prompt.reprint = false;
             if (input->pos == 0 && input->max_pos == 0) {
                 continue;
             }
@@ -481,7 +481,7 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input* input, struct nc
             shell->args.values[0] = NULL;
         }
         else if (character == CTRL_U) { // delete entire line
-            shell->prompt_info.reprint_prompt = false;
+            shell->terminal.prompt.reprint = false;
             if (input->pos == 0 && input->max_pos == 0) {
                 continue;
             }
@@ -511,7 +511,7 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input* input, struct nc
                 return EXIT_SUCCESS_EXECUTE;
             }
             case EXIT_SUCCESS: {
-                shell->prompt_info.reprint_prompt = true;
+                shell->terminal.prompt.reprint = true;
                 input->buffer[0] = '\0';
                 input->pos = 0;
                 input->max_pos = 0;
@@ -524,7 +524,7 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input* input, struct nc
             continue;
         }
         else if (character == BACKSPACE_KEY) {
-            shell->prompt_info.reprint_prompt = false;
+            shell->terminal.prompt.reprint = false;
             if (input->pos == 0) {
                 continue;
             }
@@ -549,7 +549,7 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input* input, struct nc
 
                 switch (character) {
                 case RIGHT_ARROW: {
-                    shell->prompt_info.reprint_prompt = false;
+                    shell->terminal.prompt.reprint = false;
                     if (input->pos == 0 && input->max_pos == 0) {
                         continue;
                     }
@@ -586,7 +586,7 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input* input, struct nc
                     break;
                 }
                 case LEFT_ARROW: {
-                    shell->prompt_info.reprint_prompt = false;
+                    shell->terminal.prompt.reprint = false;
 
                     if (input->pos == 0 || (!input->buffer[input->pos] && !input->buffer[input->pos - 1])) {
                         continue;
@@ -599,7 +599,7 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input* input, struct nc
                     break;
                 }
                 case UP_ARROW: {
-                    shell->prompt_info.reprint_prompt = false;
+                    shell->terminal.prompt.reprint = false;
 
                     shell->history_entry = ncsh_history_get(shell->history_position, &shell->history);
                     if (shell->history_entry.length > 0) {
@@ -616,7 +616,7 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input* input, struct nc
                     continue;
                 }
                 case DOWN_ARROW: {
-                    shell->prompt_info.reprint_prompt = false;
+                    shell->terminal.prompt.reprint = false;
 
                     if (shell->history_position == 0) {
                         continue;
@@ -653,7 +653,7 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input* input, struct nc
                         continue;
                     }
 
-                    shell->prompt_info.reprint_prompt = false;
+                    shell->terminal.prompt.reprint = false;
 
                     if (ncsh_delete(input) == EXIT_FAILURE) {
                         return EXIT_FAILURE;
@@ -662,7 +662,7 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input* input, struct nc
                     break;
                 }
                 case HOME_KEY: {
-                    shell->prompt_info.reprint_prompt = false;
+                    shell->terminal.prompt.reprint = false;
                     if (input->pos == 0) {
                         continue;
                     }
@@ -673,7 +673,7 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input* input, struct nc
                     break;
                 }
                 case END_KEY: {
-                    shell->prompt_info.reprint_prompt = false;
+                    shell->terminal.prompt.reprint = false;
                     if (input->pos == input->max_pos) {
                         continue;
                     }
@@ -812,7 +812,7 @@ int_fast32_t ncsh(void)
     printf("ncsh: startup time: %.2f milliseconds\n", elapsed_ms);
 #endif
 
-    if (ncsh_prompt(shell.prompt_info) == EXIT_FAILURE) {
+    if (ncsh_prompt(&shell.terminal) == EXIT_FAILURE) {
         ncsh_exit(&shell);
         return EXIT_FAILURE;
     }

@@ -823,9 +823,9 @@ eskilib_nodiscard int_fast32_t ncsh_vm_execute(struct ncsh_Shell* shell)
 
     ncsh_vm_alias(&shell->args);
 
-    ncsh_terminal_reset(); // reset terminal settings since a lot of terminal programs use canonical mode
+    ncsh_terminal_os_reset(); // reset terminal settings since a lot of terminal programs use canonical mode
     int_fast32_t result = ncsh_vm(&shell->args);
-    ncsh_terminal_init(); // back to noncanonical mode
+    ncsh_terminal_os_init(); // back to noncanonical mode
 
     return result;
 }
@@ -838,12 +838,6 @@ eskilib_nodiscard int_fast32_t ncsh_vm_execute_noninteractive(struct ncsh_Args* 
     }
 
     ncsh_vm_alias(args);
-
-    for (uint_fast32_t i = 0; i < sizeof(builtins) / sizeof(char*); ++i) {
-        if (eskilib_string_compare(args->values[0], args->lengths[0], builtins[i], builtins_len[i])) {
-            return (*builtin_func[i])(args);
-        }
-    }
 
     return ncsh_vm(args);
 }

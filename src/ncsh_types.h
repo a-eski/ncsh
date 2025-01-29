@@ -21,7 +21,7 @@ struct ncsh_Input {
 // ncsh_Shell: store information relevant to the shell.
 // Lives for the shell's lifetime: not freed until exit.
 struct ncsh_Shell {
-    struct ncsh_Directory prompt_info;
+    struct ncsh_Terminal terminal;
     struct ncsh_Config config;
 
     struct ncsh_Input input;
@@ -34,9 +34,6 @@ struct ncsh_Shell {
     struct ncsh_Autocompletion_Node* autocompletions_tree;
 
     struct z_Database z_db;
-
-    struct ncsh_Coordinates terminal_size;
-    struct ncsh_Coordinates terminal_position;
 };
 
 #endif // !ncsh_types_h
