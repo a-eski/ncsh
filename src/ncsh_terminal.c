@@ -171,11 +171,6 @@ void ncsh_terminal_line_new(struct ncsh_Terminal* terminal)
 
     terminal->lines.y = 1;
     terminal->lines.x = ncsh_terminal_prompt_size(&terminal->prompt);
-
-#ifdef NCSH_DEBUG
-    printf("terminal.size x,y %d,%d\n", terminal->size.x, terminal->size.y);
-    printf("terminal.lines x,y %d,%d\n", terminal->lines.x, terminal->lines.y);
-#endif /* ifdef NCSH_DEBUG */
 }
 
 struct ncsh_Coordinates ncsh_terminal_position(void)
