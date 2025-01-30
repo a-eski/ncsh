@@ -1,14 +1,6 @@
 // Copyright (c) ncsh by Alex Eski 2024
 
 #ifdef NCSH_DEBUG
-#define NCSH_LOG(str) ncsh_debug_log(__FILE__, __LINE__, str)
-// #define NCSH_LOGF(fmt_str) ncsh_debug_log(__FILE__, __LINE__, fmt_str)
-#else
-#define NCSH_LOG(str)
-// #define NCSH_LOGF(str)
-#endif // NCSH_DEBUG
-
-#ifdef NCSH_DEBUG
 
 #ifndef NCSH_DEBUG_H_
 #define NCSH_DEBUG_H_
@@ -48,16 +40,6 @@ static inline void ncsh_debug_string(struct eskilib_String string, const char* n
 {
     printf("%s value: %s\n", name, string.value);
     printf("%s length: %zu\n", name, string.length);
-}
-
-static inline void ncsh_debug_log(char* file, char* line, char* buffer)
-{
-    printf("%s %s %s\n", file, line, buffer);
-}
-
-static inline void ncsh_debug_log(char* file, char* line, char* buffer)
-{
-    printf("%s %s %s\n", file, line, buffer);
 }
 
 #endif // !NCSH_DEBUG_H_
