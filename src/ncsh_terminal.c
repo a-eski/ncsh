@@ -117,10 +117,6 @@ enum eskilib_Result ncsh_terminal_malloc(struct ncsh_Terminal* terminal)
     if (!terminal->prompt.directory.value) {
 	return E_FAILURE_MALLOC;
     }
-    /*terminal->prompt.cwd = malloc(PATH_MAX);
-    if (!terminal->prompt.cwd) {
-	return E_FAILURE_MALLOC;
-    }*/
 
     ncsh_terminal_size_set();
     terminal->size = ncsh_terminal_size_get();

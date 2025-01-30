@@ -60,11 +60,6 @@ struct ncsh_Coordinates {
     int y;
 };
 
-struct ncsh_Lines {
-    int y;
-    int* x;
-};
-
 // Keep track of information about the terminal such as size, prompt, and number of lines.
 struct ncsh_Terminal {
     struct ncsh_Prompt prompt;
