@@ -2,8 +2,8 @@
 
 #ifdef NCSH_DEBUG
 
-#ifndef ncsh_debug_h
-#define ncsh_debug_h
+#ifndef NCSH_DEBUG_H_
+#define NCSH_DEBUG_H_
 
 #include <stdio.h>
 
@@ -42,6 +42,6 @@ static inline void ncsh_debug_string(struct eskilib_String string, const char* n
     printf("%s length: %zu\n", name, string.length);
 }
 
-#endif // !ncsh_debug_h
+#endif // !NCSH_DEBUG_H_
 
 #endif // NCSH_DEBUG

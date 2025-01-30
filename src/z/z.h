@@ -1,7 +1,7 @@
 // Copyright (c) z by Alex Eski 2024
 
-#ifndef z_h
-#define z_h
+#ifndef Z_H_
+#define Z_H_
 
 #include <stdint.h>
 #include <time.h>
@@ -62,4 +62,4 @@ enum z_Result z_exit(struct z_Database* db);
 
 void z_print(struct z_Database* db);
 
-#endif // !z_h
+#endif // !Z_H_

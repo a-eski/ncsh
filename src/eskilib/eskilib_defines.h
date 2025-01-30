@@ -1,7 +1,7 @@
 /* Copyright eskilib by Alex Eski 2025 */
 
-#ifndef eskilib_defines_h
-#define eskilib_defines_h
+#ifndef ESKILIB_DEFINES_H_
+#define ESKILIB_DEFINES_H_
 
 // INFO: eskilib_nodiscard: an attribute qualifier wrapper for [[nodiscard]].
 // If not using c2x/c23, does nothing, otherwise use [[nodiscard]] attribute.
@@ -21,4 +21,4 @@
 #define eskilib_nodiscard
 #endif
 
-#endif // !eskilib_defines_h
+#endif // !ESKILIB_DEFINES_H_

@@ -1,7 +1,7 @@
 // Copyright (c) eskilib by Alex Eski 2024
 
-#ifndef eskilib_hashtable_h
-#define eskilib_hashtable_h
+#ifndef ESKILIB_HASHTABLE_H_
+#define ESKILIB_HASHTABLE_H_
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -31,4 +31,4 @@ bool eskilib_hashtable_exists(const char* key, struct eskilib_HashTable* table);
 
 const char* eskilib_hashtable_set(const char* key, struct eskilib_String value, struct eskilib_HashTable* table);
 
-#endif // eskilib_hashtable_h
+#endif // ESKILIB_HASHTABLE_H_

@@ -1,7 +1,7 @@
 // Copyright (c) ncsh by Alex Eski 2024
 
-#ifndef ncsh_terminal_h
-#define ncsh_terminal_h
+#ifndef NCSH_TERMINAL_H_
+#define NCSH_TERMINAL_H_
 
 #include <linux/limits.h>
 #include <stdbool.h>
@@ -106,4 +106,6 @@ void ncsh_terminal_line_new(struct ncsh_Terminal* terminal);
 // need to figure out an alternative.
 struct ncsh_Coordinates ncsh_terminal_position(void);
 
-#endif // !ncsh_terminal_h
+int_fast32_t ncsh_terminal_prompt(struct ncsh_Terminal* terminal);
+
+#endif // !NCSH_TERMINAL_H_

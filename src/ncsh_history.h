@@ -1,7 +1,7 @@
 // Copyright (c) ncsh by Alex Eski 2024
 
-#ifndef ncsh_history_h
-#define ncsh_history_h
+#ifndef NCSH_HISTORY_H_
+#define NCSH_HISTORY_H_
 
 #include <stdint.h>
 
@@ -36,4 +36,4 @@ int_fast32_t ncsh_history_command_display(struct ncsh_History* history);
 int_fast32_t ncsh_history_command_count(struct ncsh_History* history);
 int_fast32_t ncsh_history_command_clean(struct ncsh_History* history);
 
-#endif // !ncsh_history_h
+#endif // !NCSH_HISTORY_H_

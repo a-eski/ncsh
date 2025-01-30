@@ -1,8 +1,8 @@
-#ifndef ncsh_h
-#define ncsh_h
+#ifndef NCSH_H_
+#define NCSH_H_
 
 #include <stdint.h>
 
 int_fast32_t ncsh(void);
 
-#endif // !ncsh_noninteractive_h
+#endif // !NCSH_H_

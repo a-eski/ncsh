@@ -1,7 +1,7 @@
 // Copyright (c) ncsh by Alex Eski 2024
 
-#ifndef ncsh_config_h
-#define ncsh_config_h
+#ifndef NCSH_CONFIG_H_
+#define NCSH_CONFIG_H_
 
 #include "eskilib/eskilib_result.h"
 #include "eskilib/eskilib_string.h"
@@ -22,4 +22,4 @@ void ncsh_config_free(struct ncsh_Config* config);
 
 struct eskilib_String ncsh_config_alias_check(char* buffer, size_t buf_len);
 
-#endif // !ncsh_config_h
+#endif // !NCSH_CONFIG_H_

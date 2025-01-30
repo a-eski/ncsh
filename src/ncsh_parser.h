@@ -1,7 +1,7 @@
 // Copyright (c) ncsh by Alex Eski 2024
 
-#ifndef ncsh_parser_h
-#define ncsh_parser_h
+#ifndef NCSH_PARSER_H_
+#define NCSH_PARSER_H_
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -75,4 +75,4 @@ void ncsh_parser_args_free_values(struct ncsh_Args* args);
 
 void ncsh_parser_parse(const char* line, size_t length, struct ncsh_Args* args);
 
-#endif // !ncsh_parser_h
+#endif // !NCSH_PARSER_H_

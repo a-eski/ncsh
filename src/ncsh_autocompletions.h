@@ -1,8 +1,8 @@
 // Copyright (c) ncsh by Alex Eski 2024
 // Based on eskilib_trie prefix tree implementation.
 
-#ifndef ncsh_autocompletions_h
-#define ncsh_autocompletions_h
+#ifndef NCSH_AUTOCOMPLETIONS_H_
+#define NCSH_AUTOCOMPLETIONS_H_
 
 #include "eskilib/eskilib_string.h"
 
@@ -55,4 +55,4 @@ uint_fast8_t ncsh_autocompletions_get(char* search, size_t search_length, struct
 uint_fast8_t ncsh_autocompletions_first(char* search, size_t search_length, char* match,
                                         struct ncsh_Autocompletion_Node* tree);
 
-#endif // !ncsh_autocompletions_h
+#endif // !NCSH_AUTOCOMPLETIONS_H_
