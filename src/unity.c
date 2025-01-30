@@ -14,6 +14,7 @@
 
 #include "main.c"
 #include "ncsh.c"
+#include "ncsh_readline.c"
 #include "ncsh_autocompletions.c"
 #include "ncsh_builtins.c"
 #include "ncsh_config.c"

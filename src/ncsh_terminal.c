@@ -13,6 +13,7 @@
 
 #include "eskilib/eskilib_colors.h"
 #include "eskilib/eskilib_result.h"
+#include "ncsh_defines.h"
 #include "ncsh_terminal.h"
 #define TERMINAL_RETURN 'R'
 #define T_BUFFER_LENGTH 30
@@ -170,6 +171,11 @@ void ncsh_terminal_line_new(struct ncsh_Terminal* terminal)
 
     terminal->lines.y = 1;
     terminal->lines.x = ncsh_terminal_prompt_size(&terminal->prompt);
+
+#ifdef NCSH_DEBUG
+    printf("terminal.size x,y %d,%d\n", terminal->size.x, terminal->size.y);
+    printf("terminal.lines x,y %d,%d\n", terminal->lines.x, terminal->lines.y);
+#endif /* ifdef NCSH_DEBUG */
 }
 
 struct ncsh_Coordinates ncsh_terminal_position(void)
@@ -207,4 +213,56 @@ struct ncsh_Coordinates ncsh_terminal_position(void)
     }
 
     return cursor_position;
+}
+
+/* Prompt */
+#ifdef NCSH_SHORT_DIRECTORY
+size_t ncsh_terminal_prompt_short_directory(char* cwd, char* output)
+{
+    uint_fast32_t i = 1;
+    uint_fast32_t last_slash_pos = 0;
+    uint_fast32_t second_to_last_slash = 0;
+
+    while (cwd[i] != '\n' && cwd[i] != '\0') {
+        if (cwd[i] == '/') {
+            second_to_last_slash = last_slash_pos;
+            last_slash_pos = i + 1;
+        }
+        ++i;
+    }
+
+    memcpy(output, cwd + second_to_last_slash - 1, i - second_to_last_slash + 1);
+    output[i - second_to_last_slash + 1] = '\0';
+
+    size_t result_len = i - second_to_last_slash + 2; // null termination included in len
+    assert(result_len == strlen(cwd + second_to_last_slash - 1) + 1);
+
+    return result_len;
+}
+#endif /* ifdef NCSH_SHORT_DIRECTORY */
+
+eskilib_nodiscard int_fast32_t ncsh_terminal_prompt(struct ncsh_Terminal* terminal)
+{
+    if (!getcwd(terminal->prompt.cwd, sizeof(terminal->prompt.cwd))) {
+        perror(RED "ncsh: Error when getting current directory" RESET);
+        fflush(stderr);
+        return EXIT_FAILURE;
+    }
+
+#ifdef NCSH_SHORT_DIRECTORY
+    terminal->prompt.directory.length = ncsh_terminal_prompt_short_directory(terminal->prompt.cwd, terminal->prompt.directory.value);
+    printf(ncsh_GREEN "%s" WHITE " " ncsh_CYAN "%s" WHITE_BRIGHT " \u2771 ", terminal->prompt.user.value, terminal->prompt.directory.value);
+#else
+    strcpy(terminal->prompt.directory.value, terminal->prompt.cwd);
+    terminal->prompt.directory.length = strlen(terminal->prompt.directory.value) + 1;
+    printf(ncsh_GREEN "%s" WHITE " " ncsh_CYAN "%s" WHITE_BRIGHT " \u2771 ", terminal->prompt.user.value, terminal->prompt.directory.value);
+#endif /* ifdef NCSH_SHORT_DIRECTORY */
+
+    ncsh_terminal_line_new(terminal);
+
+    fflush(stdout);
+    // save cursor position so we can reset cursor when loading history entries
+    ncsh_write_literal(SAVE_CURSOR_POSITION);
+
+    return EXIT_SUCCESS;
 }

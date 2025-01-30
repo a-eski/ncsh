@@ -1,7 +1,7 @@
 // Copyright (c) ncsh by Alex Eski 2024
 
-#ifndef ncsh_builtins_h
-#define ncsh_builtins_h
+#ifndef NCSH_BUILTINS_H_
+#define NCSH_BUILTINS_H_
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -46,4 +46,4 @@ int_fast32_t ncsh_builtins_kill(struct ncsh_Args* args);
 #define NCSH_SET "set" // not fully implemented
 int_fast32_t ncsh_builtins_set(struct ncsh_Args* args);
 
-#endif // !ncsh_builtins_h
+#endif // !NCSH_BUILTINS_H_
