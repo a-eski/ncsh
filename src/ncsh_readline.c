@@ -11,6 +11,58 @@
 #include "ncsh_types.h"
 #include "ncsh_readline.h"
 
+/* Prompt */
+#ifdef NCSH_SHORT_DIRECTORY
+size_t ncsh_readline_prompt_short_directory(char* cwd, char* output)
+{
+    uint_fast32_t i = 1;
+    uint_fast32_t last_slash_pos = 0;
+    uint_fast32_t second_to_last_slash = 0;
+
+    while (cwd[i] != '\n' && cwd[i] != '\0') {
+        if (cwd[i] == '/') {
+            second_to_last_slash = last_slash_pos;
+            last_slash_pos = i + 1;
+        }
+        ++i;
+    }
+
+    memcpy(output, cwd + second_to_last_slash - 1, i - second_to_last_slash + 1);
+    output[i - second_to_last_slash + 1] = '\0';
+
+    size_t result_len = i - second_to_last_slash + 2; // null termination included in len
+    assert(result_len == strlen(cwd + second_to_last_slash - 1) + 1);
+
+    return result_len;
+}
+#endif /* ifdef NCSH_SHORT_DIRECTORY */
+
+eskilib_nodiscard int_fast32_t ncsh_readline_prompt(struct ncsh_Terminal* terminal)
+{
+    if (!getcwd(terminal->cwd, sizeof(terminal->cwd))) {
+        perror(RED "ncsh: Error when getting current directory" RESET);
+        fflush(stderr);
+        return EXIT_FAILURE;
+    }
+
+#ifdef NCSH_SHORT_DIRECTORY
+    terminal->directory.length = ncsh_readline_prompt_short_directory(terminal->cwd, terminal->directory.value);
+    printf(ncsh_GREEN "%s" WHITE " " ncsh_CYAN "%s" WHITE_BRIGHT " \u2771 ", terminal->user.value, terminal->directory.value);
+#else
+    strcpy(terminal->directory.value, terminal->cwd);
+    terminal->directory.length = strlen(terminal->directory.value) + 1;
+    printf(ncsh_GREEN "%s" WHITE " " ncsh_CYAN "%s" WHITE_BRIGHT " \u2771 ", terminal->user.value, terminal->directory.value);
+#endif /* ifdef NCSH_SHORT_DIRECTORY */
+
+    ncsh_terminal_line_new(terminal);
+
+    fflush(stdout);
+    // save cursor position so we can reset cursor when loading history entries
+    ncsh_write_literal(SAVE_CURSOR_POSITION);
+
+    return EXIT_SUCCESS;
+}
+
 eskilib_nodiscard int_fast32_t ncsh_backspace(struct ncsh_Input* input)
 {
     if (input->pos == 0) {
@@ -90,17 +142,18 @@ void ncsh_autocomplete(struct ncsh_Input* input, struct ncsh_Shell* shell)
         return;
     }
 
-    int len = strlen(shell->current_autocompletion);
+    shell->terminal.position = ncsh_terminal_position();
+    /*int len = strlen(shell->current_autocompletion);
     shell->terminal.position = ncsh_terminal_position();
     int lines_before = shell->terminal.lines.y;
     int lines_after = lines_before;
     // printf("x: %d\n", shell->terminal.lines.x + (int)input->pos + len - 1);
     if (shell->terminal.lines.x + (int)input->pos + len - 1 > shell->terminal.size.x) {
 	++lines_after;
-    }
+    }*/
     // ncsh_terminal_line_size(input->pos, &shell->terminal);
 
-    if (lines_before != lines_after) {
+    // if (lines_before != lines_after) {
         /*if (write(STDOUT_FILENO, WHITE_DIM, sizeof(WHITE_DIM) - 1) == -1)
             return;
 
@@ -115,8 +168,8 @@ void ncsh_autocomplete(struct ncsh_Input* input, struct ncsh_Shell* shell)
         if (write(STDOUT_FILENO, RESET, sizeof(RESET) - 1) == -1)
             return;
         fflush(stdout);*/
-        return;
-    }
+        // return;
+    // }
 
     printf(WHITE_DIM "%s" RESET, shell->current_autocompletion);
     ncsh_terminal_move(shell->terminal.position.x, shell->terminal.position.y);
@@ -244,32 +297,38 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input* input, struct nc
 {
     char character;
     char temp_character;
+    int exit = EXIT_SUCCESS;
+
+    ncsh_terminal_os_init();
 
     while (1) {
-        if (input->pos == 0 && shell->terminal.prompt.reprint == true) {
-            if (ncsh_terminal_prompt(&shell->terminal) == EXIT_FAILURE) {
-                return EXIT_FAILURE;
+        if (input->pos == 0 && shell->terminal.reprint_prompt == true) {
+            if (ncsh_readline_prompt(&shell->terminal) == EXIT_FAILURE) {
+                exit = EXIT_FAILURE;
+		break;
             }
             shell->history_position = 0;
         }
         else {
-            shell->terminal.prompt.reprint = true;
+            shell->terminal.reprint_prompt = true;
         }
 
         if (read(STDIN_FILENO, &character, 1) == -1) {
             perror(RED NCSH_ERROR_STDIN RESET);
             fflush(stderr);
-            return EXIT_FAILURE;
+            exit = EXIT_FAILURE;
+	    break;
         }
 
         if (character == CTRL_D) {
             ncsh_write_literal(ERASE_CURRENT_LINE);
             putchar('\n');
             fflush(stdout);
-            return EXIT_SUCCESS_END;
+            exit = EXIT_SUCCESS_END;
+	    break;
         }
         else if (character == CTRL_W) { // delete last word
-            shell->terminal.prompt.reprint = false;
+            shell->terminal.reprint_prompt = false;
             if (input->pos == 0 && input->max_pos == 0) {
                 continue;
             }
@@ -290,7 +349,7 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input* input, struct nc
             shell->args.values[0] = NULL;
         }
         else if (character == CTRL_U) { // delete entire line
-            shell->terminal.prompt.reprint = false;
+            shell->terminal.reprint_prompt = false;
             if (input->pos == 0 && input->max_pos == 0) {
                 continue;
             }
@@ -312,53 +371,51 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input* input, struct nc
         }
         else if (character == TAB_KEY) {
             int_fast32_t tab_autocomplete_result = ncsh_tab_autocomplete(input, shell->autocompletions_tree);
-            switch (tab_autocomplete_result) {
-            case EXIT_FAILURE: {
-                return EXIT_FAILURE;
-            }
-            case EXIT_SUCCESS_EXECUTE: {
-                return EXIT_SUCCESS_EXECUTE;
-            }
-            case EXIT_SUCCESS: {
-                shell->terminal.prompt.reprint = true;
-                input->buffer[0] = '\0';
-                input->pos = 0;
-                input->max_pos = 0;
-                shell->args.count = 0;
-                shell->args.values[0] = NULL;
-                break;
-            }
-            }
+	    if (tab_autocomplete_result != EXIT_SUCCESS) {
+		exit = tab_autocomplete_result;
+		break;
+	    }
+
+	    shell->terminal.reprint_prompt = true;
+            input->buffer[0] = '\0';
+            input->pos = 0;
+            input->max_pos = 0;
+            shell->args.count = 0;
+            shell->args.values[0] = NULL;
 
             continue;
         }
         else if (character == BACKSPACE_KEY) {
-            shell->terminal.prompt.reprint = false;
+            shell->terminal.reprint_prompt = false;
             if (input->pos == 0) {
                 continue;
             }
             shell->current_autocompletion[0] = '\0';
             if (ncsh_backspace(input) == EXIT_FAILURE) {
-                return EXIT_FAILURE;
+                exit = EXIT_FAILURE;
+		break;
             }
         }
         else if (character == ESCAPE_CHARACTER) {
             if (read(STDIN_FILENO, &character, 1) == -1) {
                 perror(RED NCSH_ERROR_STDIN RESET);
                 fflush(stderr);
-                return EXIT_FAILURE;
+                exit = EXIT_FAILURE;
+		break;
             }
 
             if (character == '[') {
                 if (read(STDIN_FILENO, &character, 1) == -1) {
                     perror(RED NCSH_ERROR_STDIN RESET);
                     fflush(stderr);
-                    return EXIT_FAILURE;
+                    exit = EXIT_FAILURE;
+		    break;
                 }
 
+		int key_result = EXIT_SUCCESS;
                 switch (character) {
                 case RIGHT_ARROW: {
-                    shell->terminal.prompt.reprint = false;
+                    shell->terminal.reprint_prompt = false;
                     if (input->pos == 0 && input->max_pos == 0) {
                         continue;
                     }
@@ -395,7 +452,7 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input* input, struct nc
                     break;
                 }
                 case LEFT_ARROW: {
-                    shell->terminal.prompt.reprint = false;
+                    shell->terminal.reprint_prompt = false;
 
                     if (input->pos == 0 || (!input->buffer[input->pos] && !input->buffer[input->pos - 1])) {
                         continue;
@@ -408,7 +465,7 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input* input, struct nc
                     break;
                 }
                 case UP_ARROW: {
-                    shell->terminal.prompt.reprint = false;
+                    shell->terminal.reprint_prompt = false;
 
                     shell->history_entry = ncsh_history_get(shell->history_position, &shell->history);
                     if (shell->history_entry.length > 0) {
@@ -425,7 +482,7 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input* input, struct nc
                     continue;
                 }
                 case DOWN_ARROW: {
-                    shell->terminal.prompt.reprint = false;
+                    shell->terminal.reprint_prompt = false;
 
                     if (shell->history_position == 0) {
                         continue;
@@ -455,23 +512,25 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input* input, struct nc
                     if (read(STDIN_FILENO, &character, 1) == -1) {
                         perror(RED NCSH_ERROR_STDIN RESET);
                         fflush(stderr);
-                        return EXIT_FAILURE;
+                        key_result = EXIT_FAILURE;
+			break;
                     }
 
                     if (character != DELETE_KEY) {
                         continue;
                     }
 
-                    shell->terminal.prompt.reprint = false;
+                    shell->terminal.reprint_prompt = false;
 
                     if (ncsh_delete(input) == EXIT_FAILURE) {
-                        return EXIT_FAILURE;
+                        key_result = EXIT_FAILURE;
+			break;
                     }
 
                     break;
                 }
                 case HOME_KEY: {
-                    shell->terminal.prompt.reprint = false;
+                    shell->terminal.reprint_prompt = false;
                     if (input->pos == 0) {
                         continue;
                     }
@@ -482,7 +541,7 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input* input, struct nc
                     break;
                 }
                 case END_KEY: {
-                    shell->terminal.prompt.reprint = false;
+                    shell->terminal.reprint_prompt = false;
                     if (input->pos == input->max_pos) {
                         continue;
                     }
@@ -495,6 +554,14 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input* input, struct nc
                     break;
                 }
                 }
+
+		if (key_result != EXIT_SUCCESS) {
+		    exit = key_result;
+		    break;
+		}
+            }
+            else {
+                shell->terminal.reprint_prompt = false;
             }
         }
         else if (character == '\n' || character == '\r') {
@@ -517,8 +584,9 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input* input, struct nc
 
             ncsh_write_literal(ERASE_CURRENT_LINE "\n");
             fflush(stdout);
-
-            return EXIT_SUCCESS_EXECUTE;
+	    ncsh_terminal_os_reset();
+            exit = EXIT_SUCCESS_EXECUTE;
+	    break;
         }
         else {
             if (input->pos == NCSH_MAX_INPUT - 1) {
@@ -569,12 +637,12 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input* input, struct nc
                 }
             }
             else { // end of line insertions
-	        assert(input->pos <= INT_MAX);
+	        /*assert(input->pos <= INT_MAX);
 		if ((shell->terminal.lines.x + (int)input->pos / shell->terminal.lines.y) > shell->terminal.size.x) {
 		    ++shell->terminal.lines.y;
 		    // shell->terminal.lines.x = shell->terminal.lines.x + (int)input->pos - shell->terminal.size.x;
 		    putchar('\n');
-		}
+		}*/
                 putchar(character);
                 fflush(stdout);
                 input->buffer[input->pos++] = character;
@@ -598,4 +666,8 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input* input, struct nc
 
         ncsh_autocomplete(input, shell);
     }
+
+
+    ncsh_terminal_os_reset();
+    return exit;
 }
