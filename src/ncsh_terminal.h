@@ -48,13 +48,6 @@
 #define RESTORE_CURSOR_POSITION "\033[u"
 #define MOVE_CURSOR_HOME "\033[H"
 
-struct ncsh_Prompt {
-    bool reprint;
-    struct eskilib_String user;
-    struct eskilib_String directory;
-    char cwd[PATH_MAX];
-};
-
 struct ncsh_Coordinates {
     int x;
     int y;
@@ -62,13 +55,16 @@ struct ncsh_Coordinates {
 
 // Keep track of information about the terminal such as size, prompt, and number of lines.
 struct ncsh_Terminal {
-    struct ncsh_Prompt prompt;
     struct ncsh_Coordinates size;
     struct ncsh_Coordinates position;
     struct ncsh_Coordinates lines;
-};
 
-bool ncsh_terminal_is_interactive(void);
+    bool reprint_prompt;
+    struct eskilib_String user;         // current user
+    struct eskilib_String directory;    // full or short directory as part of prompt
+    // struct eskilib_String prompt;       // full prompt
+    char cwd[PATH_MAX];                 // temp buffer to store cwd
+};
 
 // Put the terminal in the previous state of the terminal that is stored in memory.
 void ncsh_terminal_os_reset(void);
@@ -77,13 +73,9 @@ void ncsh_terminal_os_reset(void);
 void ncsh_terminal_os_init(void);
 
 void ncsh_terminal_move(int x, int y);
-
 void ncsh_terminal_move_up(int i);
-
 void ncsh_terminal_move_down(int i);
-
 void ncsh_terminal_move_right(int i);
-
 void ncsh_terminal_move_left(int i);
 
 // allocate memory for struct ncsh_Terminal at beginning of shell's lifetime.
@@ -96,7 +88,7 @@ void ncsh_terminal_size_set(void);
 struct ncsh_Coordinates ncsh_terminal_size_get(void);
 
 // Get the length of the current prompt.
-int ncsh_terminal_prompt_size(struct ncsh_Prompt* prompt);
+int ncsh_terminal_prompt_size(struct ncsh_Terminal* terminal);
 // Get the length of the current line including the prompt.
 void ncsh_terminal_line_size(size_t buf_pos, struct ncsh_Terminal* terminal);
 // Set lengths for a new line.
@@ -105,7 +97,5 @@ void ncsh_terminal_line_new(struct ncsh_Terminal* terminal);
 // can cause crashes when you paste in entries and it tries to get cursor position.
 // need to figure out an alternative.
 struct ncsh_Coordinates ncsh_terminal_position(void);
-
-int_fast32_t ncsh_terminal_prompt(struct ncsh_Terminal* terminal);
 
 #endif // !NCSH_TERMINAL_H_

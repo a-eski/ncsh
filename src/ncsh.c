@@ -55,7 +55,7 @@ eskilib_nodiscard int_fast32_t ncsh_init(struct ncsh_Shell* shell)
 
     shell->input.buffer = calloc(NCSH_MAX_INPUT, sizeof(char));
     if (!shell->input.buffer) {
-        free(shell->terminal.prompt.directory.value);
+        free(shell->terminal.directory.value);
         return EXIT_FAILURE;
     }
 
@@ -132,8 +132,6 @@ eskilib_nodiscard int_fast32_t ncsh_init(struct ncsh_Shell* shell)
         return EXIT_FAILURE;
     }
 
-    ncsh_terminal_os_init();
-
     return EXIT_SUCCESS;
 }
 
@@ -163,11 +161,6 @@ int_fast32_t ncsh(void)
     double elapsed_ms = ((double)(end - start)) / CLOCKS_PER_SEC * 1000;
     printf("ncsh: startup time: %.2f milliseconds\n", elapsed_ms);
 #endif
-
-    if (ncsh_terminal_prompt(&shell.terminal) == EXIT_FAILURE) {
-        ncsh_exit(&shell);
-        return EXIT_FAILURE;
-    }
 
     while (1) {
         input_result = ncsh_readline(&shell.input, &shell);

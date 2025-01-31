@@ -13,13 +13,11 @@
 
 #include "eskilib/eskilib_colors.h"
 #include "eskilib/eskilib_result.h"
-#include "ncsh_defines.h"
 #include "ncsh_terminal.h"
 #define TERMINAL_RETURN 'R'
 #define T_BUFFER_LENGTH 30
 
 /* Static Variables */
-static struct termios terminal_os;
 static struct termios original_terminal_os;
 static struct winsize window;
 
@@ -29,7 +27,8 @@ static struct winsize window;
     if (signum != SIGWINCH)
         return;
 
-    ncsh_terminal_size_set();
+    ioctl(STDOUT_FILENO, TIOCGWINSZ, &window);
+
     if (write(STDOUT_FILENO, "ncsh window change handled\n", sizeof("ncsh window change handled\n")) == -1)
         perror("sighandler error");
 }*/
@@ -49,18 +48,20 @@ void ncsh_terminal_os_init(void)
         exit(EXIT_FAILURE);
     }
 
+    ioctl(STDOUT_FILENO, TIOCGWINSZ, &window);
+
     if (tcgetattr(STDIN_FILENO, &original_terminal_os) != 0) {
         perror(RED "ncsh: Could not get terminal settings" RESET);
         exit(EXIT_FAILURE);
     }
 
-    terminal_os = original_terminal_os;
+    // mouse support? investigate
+    // printf("\x1b[?1049h\x1b[0m\x1b[2J\x1b[?1003h\x1b[?1015h\x1b[?1006h\x1b[?25l");
+
+    struct termios terminal_os = original_terminal_os;
     terminal_os.c_lflag &= (tcflag_t) ~(ICANON | ECHO);
     terminal_os.c_cc[VMIN] = 1;
     terminal_os.c_cc[VTIME] = 0;
-    // terminal.c_cc[VEOF] = CTRL_D;
-    // terminal.c_cc[VINTR] = CTRL_C;
-    // terminal.c_cc[VKILL] = CTRL_U;
 
     if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &terminal_os) != 0) {
         perror(RED "ncsh: Could not set terminal settings" RESET);
@@ -68,12 +69,6 @@ void ncsh_terminal_os_init(void)
 
     signal(SIGHUP, SIG_DFL); // Stops the process if the terminal is closed
     // signal(SIGWINCH, ncsh_terminal_signal_handler); // Sets window size when window size changed
-}
-
-void ncsh_terminal_size_set(void)
-{
-    // todo: look at getenv("LINES"), getenv("COLUMNS") since ioctl is not portable
-    ioctl(STDOUT_FILENO, TIOCGWINSZ, &window);
 }
 
 struct ncsh_Coordinates ncsh_terminal_size_get(void)
@@ -110,38 +105,38 @@ enum eskilib_Result ncsh_terminal_malloc(struct ncsh_Terminal* terminal)
 {
     assert(terminal);
 
-    terminal->prompt.user.value = getenv("USER");
-    terminal->prompt.user.length = strlen(terminal->prompt.user.value) + 1;
-    terminal->prompt.directory.length = 0;
-    terminal->prompt.directory.value = malloc(PATH_MAX);
-    if (!terminal->prompt.directory.value) {
+    terminal->reprint_prompt = true; // print for first entry into readline.
+    terminal->user.value = getenv("USER");
+    terminal->user.length = strlen(terminal->user.value) + 1;
+    terminal->directory.length = 0;
+    terminal->directory.value = malloc(PATH_MAX);
+    if (!terminal->directory.value) {
 	return E_FAILURE_MALLOC;
     }
 
-    ncsh_terminal_size_set();
+    /*terminal->prompt.length = 0;
+    terminal->prompt.value = malloc(PATH_MAX);
+    if (!terminal->prompt.value) {
+	return E_FAILURE_MALLOC;
+    }*/
+
     terminal->size = ncsh_terminal_size_get();
 
     return E_SUCCESS;
 }
 
-void ncsh_terminal_init(struct ncsh_Terminal* terminal)
-{
-    ncsh_terminal_size_set();
-    terminal->size = ncsh_terminal_size_get();
-}
-
 void ncsh_terminal_free(struct ncsh_Terminal *terminal)
 {
-    free(terminal->prompt.directory.value);
+    free(terminal->directory.value);
 }
 
-int ncsh_terminal_prompt_size(struct ncsh_Prompt* prompt)
+int ncsh_terminal_prompt_size(struct ncsh_Terminal* terminal)
 {
     // shell prompt format:
     // {user} {directory} {symbol} {buffer}
     // user, directory include null termination, use as space for len
-    //     {user}{space (\0)}    {directory}{space (\0)}    {>} {space}     {buffer}
-    return prompt->user.length + prompt->directory.length + 1 + 1;
+    //     {user}{space (\0)}      {directory}{space (\0)}     {>}  {space}     {buffer}
+    return terminal->user.length + terminal->directory.length + 1 + 1;
 }
 
 void ncsh_terminal_line_size(size_t buf_pos, struct ncsh_Terminal* terminal)
@@ -151,7 +146,7 @@ void ncsh_terminal_line_size(size_t buf_pos, struct ncsh_Terminal* terminal)
     assert(terminal->size.x);
 
     int new_size = terminal->lines.y == 1
-        ? ncsh_terminal_prompt_size(&terminal->prompt) + (int)buf_pos
+        ? ncsh_terminal_prompt_size(terminal) + (int)buf_pos
         : (int)buf_pos;
     if (new_size > terminal->size.x)
     {
@@ -166,7 +161,7 @@ void ncsh_terminal_line_new(struct ncsh_Terminal* terminal)
     assert(terminal);
 
     terminal->lines.y = 1;
-    terminal->lines.x = ncsh_terminal_prompt_size(&terminal->prompt);
+    terminal->lines.x = ncsh_terminal_prompt_size(terminal);
 }
 
 struct ncsh_Coordinates ncsh_terminal_position(void)
@@ -204,56 +199,4 @@ struct ncsh_Coordinates ncsh_terminal_position(void)
     }
 
     return cursor_position;
-}
-
-/* Prompt */
-#ifdef NCSH_SHORT_DIRECTORY
-size_t ncsh_terminal_prompt_short_directory(char* cwd, char* output)
-{
-    uint_fast32_t i = 1;
-    uint_fast32_t last_slash_pos = 0;
-    uint_fast32_t second_to_last_slash = 0;
-
-    while (cwd[i] != '\n' && cwd[i] != '\0') {
-        if (cwd[i] == '/') {
-            second_to_last_slash = last_slash_pos;
-            last_slash_pos = i + 1;
-        }
-        ++i;
-    }
-
-    memcpy(output, cwd + second_to_last_slash - 1, i - second_to_last_slash + 1);
-    output[i - second_to_last_slash + 1] = '\0';
-
-    size_t result_len = i - second_to_last_slash + 2; // null termination included in len
-    assert(result_len == strlen(cwd + second_to_last_slash - 1) + 1);
-
-    return result_len;
-}
-#endif /* ifdef NCSH_SHORT_DIRECTORY */
-
-eskilib_nodiscard int_fast32_t ncsh_terminal_prompt(struct ncsh_Terminal* terminal)
-{
-    if (!getcwd(terminal->prompt.cwd, sizeof(terminal->prompt.cwd))) {
-        perror(RED "ncsh: Error when getting current directory" RESET);
-        fflush(stderr);
-        return EXIT_FAILURE;
-    }
-
-#ifdef NCSH_SHORT_DIRECTORY
-    terminal->prompt.directory.length = ncsh_terminal_prompt_short_directory(terminal->prompt.cwd, terminal->prompt.directory.value);
-    printf(ncsh_GREEN "%s" WHITE " " ncsh_CYAN "%s" WHITE_BRIGHT " \u2771 ", terminal->prompt.user.value, terminal->prompt.directory.value);
-#else
-    strcpy(terminal->prompt.directory.value, terminal->prompt.cwd);
-    terminal->prompt.directory.length = strlen(terminal->prompt.directory.value) + 1;
-    printf(ncsh_GREEN "%s" WHITE " " ncsh_CYAN "%s" WHITE_BRIGHT " \u2771 ", terminal->prompt.user.value, terminal->prompt.directory.value);
-#endif /* ifdef NCSH_SHORT_DIRECTORY */
-
-    ncsh_terminal_line_new(terminal);
-
-    fflush(stdout);
-    // save cursor position so we can reset cursor when loading history entries
-    ncsh_write_literal(SAVE_CURSOR_POSITION);
-
-    return EXIT_SUCCESS;
 }
