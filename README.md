@@ -15,6 +15,8 @@ none, asides from the C standard library and POSIX extensions.
 
 ## to build from source
 
+For more details on compilation, see COMPILE.md
+
 ``` sh
 make
 
@@ -24,7 +26,7 @@ cd bin
 make
 ```
 
-## to install
+## installing
 
 ``` sh
 sudo make install
@@ -46,7 +48,7 @@ sudo make install
 * rc file and more configurations
 * more compile-time configurations
 * aliasing
-* frecency-based autocomplete (currently is a simple weight of how many times it has been used).
+* frecency-based autocomplete
 * support removing entries from history and autocompletions (use sqlite??)
 * move built-in commands like export, kill, setting environment variables, etc.
 * aliasing for user-defined commands, user configuration
