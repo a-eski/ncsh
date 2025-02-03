@@ -44,7 +44,7 @@ bool z_match_exists(char* target, size_t target_length, struct z_Database* db)
 {
     assert(db && target && target_length > 0);
 
-    for (uint_fast32_t i = 0; i < db->count; ++i) {
+    for (size_t i = 0; i < db->count; ++i) {
         if (eskilib_string_compare((db->dirs + i)->path, (db->dirs + i)->path_length, target, target_length)) {
             ++(db->dirs + i)->rank;
             (db->dirs + i)->last_accessed = time(NULL);
@@ -68,7 +68,7 @@ struct z_Directory* z_match_find(char* target, size_t target_length, const char*
     struct z_Match current_match = {0};
     time_t now = time(NULL);
 
-    for (uint_fast32_t i = 0; i < db->count; ++i) {
+    for (size_t i = 0; i < db->count; ++i) {
         if (!eskilib_string_compare((db->dirs + i)->path, (db->dirs + i)->path_length, (char*)cwd, cwd_length)) {
             int fzf_score = fzf_get_score((db->dirs + i)->path, (db->dirs + i)->path_length - 1, pattern, slab);
             if (fzf_score == 0)
@@ -170,7 +170,7 @@ enum z_Result z_write(struct z_Database* db)
     }
 
     enum z_Result result;
-    for (uint_fast32_t i = 0; i < db->count; ++i) {
+    for (size_t i = 0; i < db->count; ++i) {
         if ((result = z_write_entry((db->dirs + i), file)) != Z_SUCCESS) {
             fclose(file);
             return result;
@@ -291,7 +291,7 @@ enum z_Result z_read(struct z_Database* db)
     }
 
     enum z_Result result;
-    for (uint_fast32_t i = 0; i < number_of_entries && number_of_entries < Z_DATABASE_IN_MEMORY_LIMIT && !feof(file);
+    for (uint32_t i = 0; i < number_of_entries && number_of_entries < Z_DATABASE_IN_MEMORY_LIMIT && !feof(file);
          ++i) {
         if ((result = z_read_entry((db->dirs + i), file)) != Z_SUCCESS) {
             fclose(file);
@@ -598,7 +598,7 @@ void z_free(struct z_Database* db)
         free(db->database_file);
     }
 
-    for (uint_fast32_t i = 0; i < db->count; ++i) {
+    for (size_t i = 0; i < db->count; ++i) {
         if (db->dirs[i].path) {
             free(db->dirs[i].path);
         }

@@ -22,7 +22,6 @@
 #include "ncsh_builtins.h"
 #include "ncsh_defines.h"
 #include "ncsh_parser.h"
-#include "ncsh_terminal.h"
 #include "ncsh_vm.h"
 
 /* Types */

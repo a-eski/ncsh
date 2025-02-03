@@ -54,14 +54,16 @@ valgrind --leak-check=yes --track-fds=yes ./bin/ncsh
 
 ## Testing
 
+There are shorthands for all of the commands in the makefile.
+
 ### Testing Local
 
 ``` sh
-# run CI tests
+# run CI tests (not all tests)
 make check
 
-# run all tests locally
-make l
+# run all tests
+make check_local
 
 # run tests individually
 make test_autocompletions
@@ -78,4 +80,6 @@ make integration_tests
 make fuzz_autocompletions
 make fuzz_history
 make fuzz_parser
+./src/z/z_fuzz.sh
+./src/z/z_add_fuzz.sh
 ```
