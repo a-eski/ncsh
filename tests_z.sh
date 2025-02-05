@@ -9,5 +9,4 @@ chmod +x ./z.sh
 ./z.sh
 ./ztests
 
-rm ztests
-rm _z_database.bin
+rm ztests _z_database.bin

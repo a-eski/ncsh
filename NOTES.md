@@ -7,10 +7,17 @@
 * [bash](https://aosabook.org/en/v1/bash.html)
 * [ascii codes](https://theasciicode.com.ar/)
 * [gcc options](https://gcc.gnu.org/onlinedocs/gcc-10.4.0/gcc/Instrumentation-Options.html)
+* [XTerm control sequences](http://invisible-island.net/xterm/ctlseqs/ctlseqs.html)
+* [VT220 Emulation](http://www.3waylabs.com/nw/WWW/products/wizcon/vt220.html)
 
-### Other Shells
+### Other Shells in C
 
+* [PShell](https://github.com/PhilippRados/PShell/tree/master)
 * [psh](https://github.com/proh14/psh)
+* [esh](https://github.com/aperezdc/esh)
+* [zsh](https://github.com/zsh-users/zsh)
+* [bash](https://github.com/bminor/bash)
+* [esh google](https://github.com/google/esh)
 
 ### Libraries Considered
 

@@ -26,7 +26,7 @@ void ncsh_history_file_set(struct eskilib_String config_file, struct ncsh_Histor
     return;
 #endif /* ifdef NCSH_HISTORY_TEST */
 
-    if (config_file.value == NULL || config_file.length == 0) {
+    if (!config_file.value || !config_file.length) {
         history->file = NCSH_HISTORY_FILE;
         return;
     }
@@ -172,7 +172,7 @@ eskilib_nodiscard enum eskilib_Result ncsh_history_init(struct eskilib_String co
 eskilib_nodiscard enum eskilib_Result ncsh_history_clean(struct ncsh_History* history)
 {
     assert(history);
-    if (history->count == 0 || !history->entries[0].value) {
+    if (!history->count || !history->entries[0].value) {
         return E_FAILURE_NULL_REFERENCE;
     }
 
@@ -193,7 +193,7 @@ eskilib_nodiscard enum eskilib_Result ncsh_history_clean(struct ncsh_History* hi
     }
 
     for (int i = 0; i < history->count; ++i) {
-        if (history->entries[i].length == 0 || history->entries[i].value == NULL) {
+        if (!history->entries[i].length || history->entries[i].value == NULL) {
             continue;
         }
 
@@ -233,7 +233,7 @@ eskilib_nodiscard enum eskilib_Result ncsh_history_clean(struct ncsh_History* hi
 enum eskilib_Result ncsh_history_save(struct ncsh_History* history)
 {
     assert(history->count > 0);
-    if (history->count == 0 || !history->entries[0].value) {
+    if (!history->count || !history->entries[0].value) {
         return E_FAILURE_NULL_REFERENCE;
     }
 
@@ -255,7 +255,7 @@ enum eskilib_Result ncsh_history_save(struct ncsh_History* history)
     }
 
     for (int i = pos; i < history->count; ++i) {
-        if (history->entries[i].length == 0 || history->entries[i].value == NULL) {
+        if (!history->entries[i].length || history->entries[i].value == NULL) {
             continue;
         }
 
@@ -307,7 +307,7 @@ eskilib_nodiscard enum eskilib_Result ncsh_history_add(char* line, size_t length
     if (history == NULL || line == NULL) {
         return E_FAILURE_NULL_REFERENCE;
     }
-    else if (length == 0) {
+    else if (!length) {
         return E_FAILURE_ZERO_LENGTH;
     }
     else if (history->count + 1 < history->count) {
@@ -328,7 +328,7 @@ struct eskilib_String ncsh_history_get(int position, struct ncsh_History* histor
 {
     assert(history != NULL);
 
-    if (history == NULL || history->count == 0 || history->entries == NULL) {
+    if (history == NULL || !history->count || history->entries == NULL) {
         return eskilib_String_Empty;
     }
     else if (position < 0) {
@@ -348,7 +348,7 @@ struct eskilib_String ncsh_history_get(int position, struct ncsh_History* histor
 eskilib_nodiscard int_fast32_t ncsh_history_command_display(struct ncsh_History* history)
 {
     assert(history);
-    if (!history || history->count == 0) {
+    if (!history || !history->count) {
         return NCSH_COMMAND_SUCCESS_CONTINUE;
     }
 

@@ -1163,7 +1163,7 @@ int32_t fzf_get_score(const char *text, size_t text_len, fzf_pattern_t *pattern,
                       fzf_slab_t *slab) {
   // If the pattern is an empty string then pattern->ptr will be NULL and we
   // basically don't want to filter. Return 1 for telescope
-  if (pattern->ptr == NULL) {
+  if (!pattern->ptr) {
     return 1;
   }
 
@@ -1216,7 +1216,7 @@ fzf_position_t *fzf_get_positions(const char *text, fzf_pattern_t *pattern,
                                   fzf_slab_t *slab) {
   // If the pattern is an empty string then pattern->ptr will be NULL and we
   // basically don't want to filter. Return 1 for telescope
-  if (pattern->ptr == NULL) {
+  if (!pattern->ptr) {
     return NULL;
   }
 

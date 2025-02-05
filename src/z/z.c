@@ -59,7 +59,7 @@ struct z_Directory* z_match_find(char* target, size_t target_length, const char*
                                  struct z_Database* db)
 {
     assert(db);
-    if (db->count == 0 || cwd_length < 2) {
+    if (!db->count || cwd_length < 2) {
         return NULL;
     }
 
@@ -71,7 +71,7 @@ struct z_Directory* z_match_find(char* target, size_t target_length, const char*
     for (size_t i = 0; i < db->count; ++i) {
         if (!eskilib_string_compare((db->dirs + i)->path, (db->dirs + i)->path_length, (char*)cwd, cwd_length)) {
             int fzf_score = fzf_get_score((db->dirs + i)->path, (db->dirs + i)->path_length - 1, pattern, slab);
-            if (fzf_score == 0)
+            if (!fzf_score)
                 continue;
 
             double potential_match_z_score = z_score((db->dirs + i), fzf_score, now);
@@ -110,7 +110,7 @@ enum z_Result z_write_entry(struct z_Directory* dir, FILE* file)
     size_t bytes_written;
 
     bytes_written = fwrite(&dir->rank, sizeof(double), 1, file);
-    if (bytes_written == 0 || feof(file)) {
+    if (!bytes_written || feof(file)) {
         return Z_ZERO_BYTES_READ;
     }
     else if (ferror(file)) {
@@ -118,7 +118,7 @@ enum z_Result z_write_entry(struct z_Directory* dir, FILE* file)
     }
 
     bytes_written = fwrite(&dir->last_accessed, sizeof(time_t), 1, file);
-    if (bytes_written == 0 || feof(file)) {
+    if (!bytes_written || feof(file)) {
         return Z_ZERO_BYTES_READ;
     }
     else if (ferror(file)) {
@@ -126,7 +126,7 @@ enum z_Result z_write_entry(struct z_Directory* dir, FILE* file)
     }
 
     bytes_written = fwrite(&dir->path_length, sizeof(uint32_t), 1, file);
-    if (bytes_written == 0 || feof(file)) {
+    if (!bytes_written || feof(file)) {
         return Z_ZERO_BYTES_READ;
     }
     else if (ferror(file)) {
@@ -134,7 +134,7 @@ enum z_Result z_write_entry(struct z_Directory* dir, FILE* file)
     }
 
     bytes_written = fwrite(dir->path, sizeof(char), dir->path_length, file);
-    if (bytes_written == 0) {
+    if (!bytes_written) {
         return Z_ZERO_BYTES_READ;
     }
     else if (ferror(file)) {
@@ -150,7 +150,7 @@ enum z_Result z_write(struct z_Database* db)
     if (!db) {
         return Z_NULL_REFERENCE;
     }
-    if (db->count == 0) {
+    if (!db->count) {
         return Z_SUCCESS;
     }
 
@@ -163,7 +163,7 @@ enum z_Result z_write(struct z_Database* db)
         return Z_FILE_ERROR;
     }
 
-    if (fwrite(&db->count, sizeof(uint32_t), 1, file) == 0 || feof(file) || ferror(file)) {
+    if (!fwrite(&db->count, sizeof(uint32_t), 1, file) || feof(file) || ferror(file)) {
         perror("Error writing number of entries to z database file, could not write to database file");
         fclose(file);
         return Z_FILE_ERROR;
@@ -187,7 +187,7 @@ enum z_Result z_read_entry(struct z_Directory* dir, FILE* file)
 
     size_t bytes_read;
     bytes_read = fread(&dir->rank, sizeof(double), 1, file);
-    if (bytes_read == 0 || feof(file)) {
+    if (!bytes_read || feof(file)) {
         return Z_ZERO_BYTES_READ;
     }
     else if (ferror(file)) {
@@ -195,14 +195,14 @@ enum z_Result z_read_entry(struct z_Directory* dir, FILE* file)
     }
 
     bytes_read = fread(&dir->last_accessed, sizeof(time_t), 1, file);
-    if (bytes_read == 0 || feof(file)) {
+    if (!bytes_read || feof(file)) {
         return Z_ZERO_BYTES_READ;
     }
     else if (ferror(file)) {
         return Z_FILE_ERROR;
     }
     bytes_read = fread(&dir->path_length, sizeof(uint32_t), 1, file);
-    if (bytes_read == 0 || feof(file)) {
+    if (!bytes_read || feof(file)) {
         return Z_ZERO_BYTES_READ;
     }
     else if (ferror(file)) {
@@ -217,7 +217,7 @@ enum z_Result z_read_entry(struct z_Directory* dir, FILE* file)
     }
 
     bytes_read = fread(dir->path, sizeof(char), dir->path_length, file);
-    if (bytes_read == 0) {
+    if (!bytes_read) {
         return Z_ZERO_BYTES_READ;
     }
     else if (ferror(file)) {
@@ -269,7 +269,7 @@ enum z_Result z_read(struct z_Database* db)
 
     uint32_t number_of_entries = 0;
     size_t bytes_read = fread(&number_of_entries, sizeof(uint32_t), 1, file);
-    if (number_of_entries == 0) {
+    if (!number_of_entries) {
         if (write(STDERR_FILENO, "Couldn't find number of entries header while trying to read z database file.\n",
                   77) == -1) {
             perror(RED NCSH_ERROR_STDOUT RESET);
@@ -279,7 +279,7 @@ enum z_Result z_read(struct z_Database* db)
         fclose(file);
         return Z_ZERO_BYTES_READ;
     }
-    else if (bytes_read == 0 || ferror(file) || feof(file)) {
+    else if (!bytes_read || ferror(file) || feof(file)) {
         if (write(STDERR_FILENO, "Couldn't read number of entries from header while trying to read z database file.\n",
                   82) == -1) {
             perror(RED NCSH_ERROR_STDOUT RESET);
@@ -337,7 +337,7 @@ enum z_Result z_write_entry_new(char* path, size_t path_length, struct z_Databas
 enum z_Result z_database_add(char* path, size_t path_length, const char* cwd, size_t cwd_length,
                                     struct z_Database* db)
 {
-    if (path_length == 0) {
+    if (!path_length) {
         return Z_NULL_REFERENCE;
     }
 
@@ -383,7 +383,7 @@ enum z_Result z_database_file_set(struct eskilib_String config_file, struct z_Da
     return Z_SUCCESS;
 #endif /* ifdef Z_TEST */
 
-    if (!config_file.value || config_file.length == 0) {
+    if (!config_file.value || !config_file.length) {
         return Z_NULL_REFERENCE;
     }
 
@@ -630,7 +630,7 @@ void z_print(struct z_Database* db)
     puts(RED_BRIGHT "z: autojump/z implementation in C for ncsh." RESET);
     puts("z database (db) details:");
     printf("z db count: %zu\n", db->count);
-    if (db->count == 0) {
+    if (!db->count) {
         puts("no other z db details to print because db count is 0.");
         return;
     }

@@ -46,7 +46,7 @@ eskilib_nodiscard enum eskilib_Result ncsh_config_home(struct ncsh_Config* confi
 
 eskilib_nodiscard enum eskilib_Result ncsh_config(struct ncsh_Config* config)
 {
-    if (config == NULL) {
+    if (!config) {
         return E_FAILURE_NULL_REFERENCE;
     }
 
@@ -90,7 +90,7 @@ eskilib_nodiscard enum eskilib_Result ncsh_config(struct ncsh_Config* config)
 
 eskilib_nodiscard enum eskilib_Result ncsh_config_file_set(struct ncsh_Config* config)
 {
-    if (!config->config_location.value || config->config_location.length == 0) {
+    if (!config->config_location.value || !config->config_location.length) {
         config->config_file.value = malloc(sizeof(NCSH_RC));
         memcpy(config->config_file.value, NCSH_RC, sizeof(NCSH_RC) - 1);
         config->config_file.value[sizeof(NCSH_RC) - 1] = '\0';
@@ -126,9 +126,9 @@ eskilib_nodiscard enum eskilib_Result ncsh_config_load(struct ncsh_Config* confi
     // ask user if they would like to create a config file
 
     FILE* file = fopen(config->config_file.value, "r");
-    if (file == NULL) {
+    if (!file) {
         file = fopen(config->config_file.value, "w");
-        if (file == NULL) {
+        if (!file) {
             perror(RED "ncsh: Could not load or create config file" RESET);
             return E_FAILURE_FILE_OP;
         }

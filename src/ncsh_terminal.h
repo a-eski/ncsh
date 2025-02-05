@@ -61,9 +61,7 @@ struct ncsh_Terminal {
 
     bool reprint_prompt;
     struct eskilib_String user;         // current user
-    struct eskilib_String directory;    // full or short directory as part of prompt
-    // struct eskilib_String prompt;       // full prompt
-    char cwd[PATH_MAX];                 // temp buffer to store cwd
+    size_t prompt_len;
 };
 
 // Put the terminal in the previous state of the terminal that is stored in memory.
@@ -78,21 +76,14 @@ void ncsh_terminal_move_down(int i);
 void ncsh_terminal_move_right(int i);
 void ncsh_terminal_move_left(int i);
 
-// allocate memory for struct ncsh_Terminal at beginning of shell's lifetime.
-enum eskilib_Result ncsh_terminal_malloc(struct ncsh_Terminal* terminal);
-
-// free memory for struct ncsh_Terminal at end of shell's lifetime.
-void ncsh_terminal_free(struct ncsh_Terminal* terminal);
+enum eskilib_Result ncsh_terminal_init(struct ncsh_Terminal* terminal);
+void ncsh_terminal_exit(struct ncsh_Terminal* terminal);
 
 void ncsh_terminal_size_set(void);
 struct ncsh_Coordinates ncsh_terminal_size_get(void);
 
 // Get the length of the current prompt.
-int ncsh_terminal_prompt_size(struct ncsh_Terminal* terminal);
-// Get the length of the current line including the prompt.
-void ncsh_terminal_line_size(size_t buf_pos, struct ncsh_Terminal* terminal);
-// Set lengths for a new line.
-void ncsh_terminal_line_new(struct ncsh_Terminal* terminal);
+size_t ncsh_terminal_prompt_size(size_t user_len, size_t dir_len);
 
 // can cause crashes when you paste in entries and it tries to get cursor position.
 // need to figure out an alternative.

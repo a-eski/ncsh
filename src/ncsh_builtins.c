@@ -249,5 +249,3 @@ eskilib_nodiscard int_fast32_t ncsh_builtins_set(struct ncsh_Args* args)
 
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
-
-

@@ -100,7 +100,7 @@ static void ncsh_vm_signal_handler(int signum, siginfo_t* info, void* context)
     const pid_t target = ncsh_vm_atomic_child_pid_get();
 
     if (target != 0 && info->si_pid != target) {
-        if (kill(target, signum) == 0) {
+        if (!kill(target, signum)) {
             if (write(STDOUT_FILENO, "\n", 1) == -1) { // write is async safe, do not use fflush, putchar, prinft
                 perror(RED "ncsh: Error writing to standard output while processing a signal" RESET);
             }
@@ -325,7 +325,7 @@ void ncsh_vm_pipe_connect(uint_fast32_t command_position, uint_fast32_t number_o
 {
     assert(pipes);
 
-    if (command_position == 0) { // first command
+    if (!command_position) { // first command
         dup2(pipes->fd_two[1], STDOUT_FILENO);
     }
     else if (command_position == number_of_commands - 1) { // last command
@@ -352,7 +352,7 @@ void ncsh_vm_pipe_stop(uint_fast32_t command_position, uint_fast32_t number_of_c
 {
     assert(pipes);
 
-    if (command_position == 0) {
+    if (!command_position) {
         close(pipes->fd_two[1]);
     }
     else if (command_position == number_of_commands - 1) {
@@ -647,7 +647,7 @@ eskilib_nodiscard int_fast32_t ncsh_vm(struct ncsh_Args* args)
 	    buffer_len[buffer_position] = args->lengths[args_position];
             ++args_position;
 
-            if (args->values[args_position] == NULL) {
+            if (!args->values[args_position]) {
                 end = true;
                 ++buffer_position;
                 break;
@@ -662,7 +662,7 @@ eskilib_nodiscard int_fast32_t ncsh_vm(struct ncsh_Args* args)
         ++args_position;
 
         buffer[buffer_position] = NULL;
-        if (buffer[0] == NULL) {
+        if (!buffer[0]) {
             return NCSH_COMMAND_FAILED_CONTINUE;
         }
 
@@ -808,7 +808,7 @@ eskilib_nodiscard int_fast32_t ncsh_vm_execute(struct ncsh_Shell* shell)
     assert(shell);
     assert(&shell->args);
 
-    if (shell->args.count == 0) {
+    if (!shell->args.count) {
         return NCSH_COMMAND_SUCCESS_CONTINUE;
     }
 
@@ -817,7 +817,7 @@ eskilib_nodiscard int_fast32_t ncsh_vm_execute(struct ncsh_Shell* shell)
     }
 
     if (eskilib_string_compare(shell->args.values[0], shell->args.lengths[0], NCSH_HISTORY, sizeof(NCSH_HISTORY))) {
-        return ncsh_builtins_history(&shell->history, &shell->args);
+        return ncsh_builtins_history(&shell->input.history, &shell->args);
     }
 
     ncsh_vm_alias(&shell->args);

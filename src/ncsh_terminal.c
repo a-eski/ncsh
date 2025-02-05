@@ -101,67 +101,30 @@ void ncsh_terminal_move_down(int i)
     printf("\033[%dB", i);
 }
 
-enum eskilib_Result ncsh_terminal_malloc(struct ncsh_Terminal* terminal)
+enum eskilib_Result ncsh_terminal_init(struct ncsh_Terminal* terminal)
 {
     assert(terminal);
 
     terminal->reprint_prompt = true; // print for first entry into readline.
     terminal->user.value = getenv("USER");
     terminal->user.length = strlen(terminal->user.value) + 1;
-    terminal->directory.length = 0;
-    terminal->directory.value = malloc(PATH_MAX);
-    if (!terminal->directory.value) {
-	return E_FAILURE_MALLOC;
-    }
-
-    /*terminal->prompt.length = 0;
-    terminal->prompt.value = malloc(PATH_MAX);
-    if (!terminal->prompt.value) {
-	return E_FAILURE_MALLOC;
-    }*/
-
     terminal->size = ncsh_terminal_size_get();
 
     return E_SUCCESS;
 }
 
-void ncsh_terminal_free(struct ncsh_Terminal *terminal)
+void ncsh_terminal_exit(struct ncsh_Terminal *terminal)
 {
-    free(terminal->directory.value);
+    (void)terminal;
 }
 
-int ncsh_terminal_prompt_size(struct ncsh_Terminal* terminal)
+size_t ncsh_terminal_prompt_size(size_t user_len, size_t dir_len)
 {
     // shell prompt format:
     // {user} {directory} {symbol} {buffer}
     // user, directory include null termination, use as space for len
     //     {user}{space (\0)}      {directory}{space (\0)}     {>}  {space}     {buffer}
-    return terminal->user.length + terminal->directory.length + 1 + 1;
-}
-
-void ncsh_terminal_line_size(size_t buf_pos, struct ncsh_Terminal* terminal)
-{
-    assert(buf_pos <= INT_MAX);
-    assert(terminal);
-    assert(terminal->size.x);
-
-    int new_size = terminal->lines.y == 1
-        ? ncsh_terminal_prompt_size(terminal) + (int)buf_pos
-        : (int)buf_pos;
-    if (new_size > terminal->size.x)
-    {
-        ++terminal->lines.y;
-    }
-
-    terminal->lines.x = new_size;
-}
-
-void ncsh_terminal_line_new(struct ncsh_Terminal* terminal)
-{
-    assert(terminal);
-
-    terminal->lines.y = 1;
-    terminal->lines.x = ncsh_terminal_prompt_size(terminal);
+    return user_len + dir_len + 1 + 1;
 }
 
 struct ncsh_Coordinates ncsh_terminal_position(void)

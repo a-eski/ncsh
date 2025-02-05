@@ -16,7 +16,6 @@
 #include "eskilib/eskilib_colors.h"
 #include "eskilib/eskilib_defines.h"
 #include "eskilib/eskilib_result.h"
-#include "eskilib/eskilib_string.h"
 #include "ncsh.h"
 #include "ncsh_autocompletions.h"
 #include "ncsh_config.h"
@@ -30,17 +29,11 @@
 
 void ncsh_exit(struct ncsh_Shell* shell)
 {
-    ncsh_terminal_free(&shell->terminal);
-    free(shell->input.buffer);
-
     ncsh_config_free(&shell->config);
 
+    ncsh_readline_exit(&shell->input);
+
     ncsh_parser_args_free(&shell->args);
-
-    ncsh_history_exit(&shell->history);
-
-    free(shell->current_autocompletion);
-    ncsh_autocompletions_free(shell->autocompletions_tree);
 
     z_exit(&shell->z_db);
 
@@ -49,83 +42,35 @@ void ncsh_exit(struct ncsh_Shell* shell)
 
 eskilib_nodiscard int_fast32_t ncsh_init(struct ncsh_Shell* shell)
 {
-    if (ncsh_terminal_malloc(&shell->terminal) != E_SUCCESS) {
-        return EXIT_FAILURE;
-    }
-
-    shell->input.buffer = calloc(NCSH_MAX_INPUT, sizeof(char));
-    if (!shell->input.buffer) {
-        free(shell->terminal.directory.value);
-        return EXIT_FAILURE;
-    }
-
     enum eskilib_Result result;
     if ((result = ncsh_config_init(&shell->config)) != E_SUCCESS) {
-        ncsh_terminal_free(&shell->terminal);
-        free(shell->input.buffer);
         if (result != E_FAILURE_MALLOC) {
             ncsh_config_free(&shell->config);
         }
         return EXIT_FAILURE;
     }
 
+    if (ncsh_readline_init(&shell->config, &shell->input) != EXIT_SUCCESS) {
+        ncsh_config_free(&shell->config);
+        ncsh_readline_exit(&shell->input);
+    }
+
     if ((result = ncsh_parser_args_malloc(&shell->args)) != E_SUCCESS) {
         perror(RED "ncsh: Error when allocating memory for parser" RESET);
         fflush(stderr);
-        ncsh_terminal_free(&shell->terminal);
-        free(shell->input.buffer);
         ncsh_config_free(&shell->config);
+        ncsh_readline_exit(&shell->input);
         if (result != E_FAILURE_MALLOC) {
             ncsh_parser_args_free(&shell->args);
         }
         return EXIT_FAILURE;
     }
 
-    if ((result = ncsh_history_init(shell->config.config_location, &shell->history)) != E_SUCCESS) {
-        ncsh_terminal_free(&shell->terminal);
-        free(shell->input.buffer);
-        ncsh_config_free(&shell->config);
-        ncsh_parser_args_free(&shell->args);
-        if (result != E_FAILURE_MALLOC) {
-            ncsh_history_exit(&shell->history);
-        }
-        return EXIT_FAILURE;
-    }
-
-    shell->current_autocompletion = calloc(NCSH_MAX_INPUT, sizeof(char));
-    if (!shell->current_autocompletion) {
-        perror(RED "ncsh: Error when allocating data for autocompletion results" RESET);
-        fflush(stderr);
-        ncsh_terminal_free(&shell->terminal);
-        free(shell->input.buffer);
-        ncsh_config_free(&shell->config);
-        ncsh_parser_args_free(&shell->args);
-        ncsh_history_exit(&shell->history);
-    }
-
-    shell->autocompletions_tree = ncsh_autocompletions_malloc();
-    if (!shell->autocompletions_tree) {
-        perror(RED "ncsh: Error when loading data from history as autocompletions" RESET);
-        fflush(stderr);
-        ncsh_terminal_free(&shell->terminal);
-        free(shell->input.buffer);
-        ncsh_config_free(&shell->config);
-        ncsh_parser_args_free(&shell->args);
-        ncsh_history_exit(&shell->history);
-        ncsh_autocompletions_free(shell->autocompletions_tree);
-        return EXIT_FAILURE;
-    }
-    ncsh_autocompletions_add_multiple(shell->history.entries, shell->history.count, shell->autocompletions_tree);
-
     enum z_Result z_result = z_init(shell->config.config_location, &shell->z_db);
     if (z_result != Z_SUCCESS) {
-        ncsh_terminal_free(&shell->terminal);
-        free(shell->input.buffer);
         ncsh_config_free(&shell->config);
+        ncsh_readline_exit(&shell->input);
         ncsh_parser_args_free(&shell->args);
-        ncsh_history_exit(&shell->history);
-        free(shell->current_autocompletion);
-        ncsh_autocompletions_free(shell->autocompletions_tree);
         if (z_result != Z_MALLOC_ERROR) {
             z_exit(&shell->z_db);
         }
@@ -163,7 +108,7 @@ int_fast32_t ncsh(void)
 #endif
 
     while (1) {
-        input_result = ncsh_readline(&shell.input, &shell);
+        input_result = ncsh_readline(&shell.input);
         switch (input_result) {
         case EXIT_FAILURE: {
             exit_code = EXIT_FAILURE;
@@ -194,8 +139,8 @@ int_fast32_t ncsh(void)
         }
         }
 
-        ncsh_history_add(shell.input.buffer, shell.input.pos, &shell.history);
-        ncsh_autocompletions_add(shell.input.buffer, shell.input.pos, shell.autocompletions_tree);
+        ncsh_history_add(shell.input.buffer, shell.input.pos, &shell.input.history);
+        ncsh_autocompletions_add(shell.input.buffer, shell.input.pos, shell.input.autocompletions_tree);
 
     reset:
         ncsh_parser_args_free_values(&shell.args);

@@ -2,14 +2,9 @@
 
 echo 'setting up for ncsh integration tests'
 
-rm t.txt
-rm t2.txt
-rm t3.txt
-rm t4.txt
+rm t.txt t2.txt t3.txt t4.txt
 make clean
-rm _z_database.bin
-rm .ncsh_history
-rm .ncsh_history_test
+rm _z_database.bin .ncsh_history .ncsh_history_test
 
 set -e
 echo "starting ncsh integration tests"
@@ -20,7 +15,4 @@ make clean
 
 set +e
 
-rm _z_database.bin
-rm .ncsh_history
-rm .ncsh_history_test
-rm t4.txt
+rm _z_database.bin .ncsh_history .ncsh_history_test t4.txt

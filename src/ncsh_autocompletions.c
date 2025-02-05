@@ -56,7 +56,7 @@ void ncsh_autocompletions_add(char* string, size_t length, struct ncsh_Autocompl
     assert(string);
     assert(length > 0);
     assert(tree);
-    if (!string || length == 0 || !tree || length > NCSH_MAX_INPUT) {
+    if (!string || !length || !tree || length > NCSH_MAX_INPUT) {
         return;
     }
 
@@ -100,7 +100,7 @@ struct ncsh_Autocompletion_Node* ncsh_autocompletions_search(char* string, size_
     assert(string);
     assert(length > 0);
     assert(tree);
-    if (!string || length == 0 || !tree) {
+    if (!string || !length || !tree) {
         return NULL;
     }
 
@@ -125,7 +125,7 @@ struct ncsh_Autocompletion_Node* ncsh_autocompletions_search_string(struct eskil
     assert(string.value);
     assert(string.length > 0);
     assert(tree);
-    if (!string.value || string.length == 0 || !tree) {
+    if (!string.value || !string.length || !tree) {
         return NULL;
     }
 
@@ -208,7 +208,7 @@ uint_fast8_t ncsh_autocompletions_get(char* search, size_t search_length, struct
     }
 
     uint_fast8_t match_count = ncsh_autocompletions_matches(matches, search_result);
-    if (match_count == 0) {
+    if (!match_count) {
         return 0;
     }
 
@@ -225,7 +225,7 @@ uint_fast8_t ncsh_autocompletions_first(char* search, size_t search_length, char
 
     struct ncsh_Autocompletion matches[NCSH_MAX_AUTOCOMPLETION_MATCHES] = {0};
     uint_fast8_t matches_count = ncsh_autocompletions_matches(matches, search_result);
-    if (matches_count == 0) {
+    if (!matches_count) {
         return 0;
     }
 

@@ -58,7 +58,7 @@
 
 eskilib_nodiscard enum eskilib_Result ncsh_parser_args_malloc(struct ncsh_Args* args)
 {
-    if (args == NULL) {
+    if (!args) {
         return E_FAILURE_NULL_REFERENCE;
     }
 
@@ -109,7 +109,7 @@ void ncsh_parser_args_free(struct ncsh_Args* args)
 
 void ncsh_parser_args_free_values(struct ncsh_Args* args)
 {
-    if (args->count == 0) {
+    if (!args->count) {
         return;
     }
 
@@ -269,7 +269,7 @@ void ncsh_parser_parse(const char* line, size_t length, struct ncsh_Args* args)
             args->values[args->count] = NULL;
             break;
         }
-        else if (ncsh_is_delimiter(line[line_position]) && (state == 0 || (state & IN_MATHEMATICAL_EXPRESSION))) {
+        else if (ncsh_is_delimiter(line[line_position]) && (!state || (state & IN_MATHEMATICAL_EXPRESSION))) {
             buffer[buf_pos] = '\0';
 
             if (glob_found) {
@@ -279,7 +279,7 @@ void ncsh_parser_parse(const char* line, size_t length, struct ncsh_Args* args)
 
                 for (size_t i = 0; i < glob_buf.gl_pathc; ++i) {
                     glob_len = strlen(glob_buf.gl_pathv[i]) + 1;
-                    if (glob_len == 0 || glob_len >= NCSH_MAX_INPUT) {
+                    if (!glob_len || glob_len >= NCSH_MAX_INPUT) {
                         break;
                     }
                     buf_pos = glob_len;
