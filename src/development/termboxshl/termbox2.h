@@ -732,6 +732,7 @@ const char *tb_version(void);
 
 #endif // TERMBOX_H_INCL
 
+#define TB_IMPL
 #ifdef TB_IMPL
 
 #define if_err_return(rv, expr)                                                \
