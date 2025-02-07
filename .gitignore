@@ -18,3 +18,5 @@ t.txt
 database.z
 ztests
 _z_database.bin
+src/development/cash/cash
+src/development/termboxshl/tb2sh
