@@ -1,3 +1,5 @@
+// ncurses experiment
+
 #define _POSIX_C_SOURCE 200809L
 
 #include <errno.h>
@@ -289,15 +291,18 @@ void handle_input(char *buffer, struct ncsh_Directory *prompt_info)
         {
             break;
         }
-        else
-        {
+
+        if (buffer && !buffer[0]) {
+            system(buffer);
+            // move(getcury(stdscr) + 1, getcurx(stdscr) - 1000);
+            refresh();
             addch('\n');
             refresh();
-            if (buffer) {
-                system(buffer);
-                addch('\n');
-                refresh();
-            }
+        }
+        else {
+            // move(getcury(stdscr) + 1, getcurx((stdscr)));
+            addch('\n');
+            refresh();
         }
 
         cash_clear_perror();
