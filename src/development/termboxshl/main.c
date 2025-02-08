@@ -1,3 +1,5 @@
+// termbox2 experiment
+
 #define TB_IMPL
 #include "termbox2.h"
 /* always define termbox2 first */
@@ -7,12 +9,9 @@
 #include <stdbool.h>
 #include <string.h>
 
-#define LINE_LIMIT 10
-
-struct line {
-	bool has_prompt;
-	int len;
-	char* buffer;
+struct screen_Line {
+    bool has_prompt;
+    char* buffer;
 };
 
 struct screen {
@@ -22,16 +21,75 @@ struct screen {
     int max_y;
     int line_start_y;
     int line_total_x; // buffer_len
-    int lines_x[LINE_LIMIT];
+    int* lines_x;
     int lines_y;
     struct tb_event ev;
     bool reprint_prompt;
     char* prompt;
     int prompt_len;
     char* buffer;
-    char** lines_buffer;
-    // struct line* lines;
+    struct screen_Line* lines;
 };
+
+// public API's
+int screen_init(struct screen* screen);
+void screen_prompt(struct screen* screen);
+void screen_update(struct screen* screen);
+void screen_exit(struct screen* screen);
+
+// private API's
+void screen_debug_buffer(struct screen* screen);
+void screen_debug_lines_horizontal(struct screen* screen);
+void screen_debug_lines_vertical(struct screen* screen);
+void screen_render(struct screen* screen);
+
+[[nodiscard]]
+int screen_init(struct screen* screen)
+{
+    tb_init();
+
+    screen->max_x = tb_width();
+    screen->max_y = tb_height();
+    screen->reprint_prompt = false;
+    screen->prompt = "> ";
+    screen->prompt_len = sizeof("> ") - 1;
+
+    screen->lines_x = calloc(screen->max_x, sizeof(int));
+
+    screen->buffer = calloc(PATH_MAX, sizeof(char));
+    if (!screen->buffer)
+	return EXIT_FAILURE;
+
+    screen->lines = calloc(screen->max_y, sizeof(struct screen_Line));
+    if (!screen->lines)
+	return EXIT_FAILURE;
+    for (int i = 0; i < screen->max_y; ++i) {
+        screen->lines[i].buffer = calloc(PATH_MAX, sizeof(char));
+	if (!screen->lines[i].buffer)
+	    return EXIT_FAILURE;
+    }
+
+    tb_print(screen->x, screen->y, TB_GREEN, 0, "> ");
+    screen->x = screen->prompt_len;
+    tb_present();
+
+    return EXIT_SUCCESS;
+}
+
+void screen_exit(struct screen* screen)
+{
+    free(screen->lines_x);
+    free(screen->buffer);
+
+    for (int i = 0; i < screen->max_y; ++i) {
+        if (screen->lines[i].buffer) {
+            free(screen->lines[i].buffer);
+        }
+    }
+    free(screen->lines);
+
+    tb_shutdown();
+}
 
 void screen_debug_buffer(struct screen* screen)
 {
@@ -55,87 +113,51 @@ void screen_debug_buffer(struct screen* screen)
     }
 }
 
-void screen_debug_lines_buffer(struct screen* screen)
+void screen_debug_lines_horizontal(struct screen* screen)
 {
     for (int i = 0; i < screen->max_y; ++i) {
-
-        tb_print(0, i + 10, TB_GREEN, 0, "> ");
-        if (screen->lines_buffer[i][0] == '\0')
+        if (screen->lines[i].buffer[0] == '\0') {
+            tb_print(screen->max_x / 2, i, TB_GREEN, 0, "> ");
             break;
-        tb_print(3, i + 10, 0, 0, screen->lines_buffer[i]);
-    }
-
-    /*for (int i = 0; i < screen->max_y; ++i) {
-	if (screen->lines[i].has_prompt) {
-            tb_print(0, i + 10, TB_GREEN, 0, "> ");
-	    if (screen->lines[i].buffer[0] == '\0')
-                break;
-  	    tb_print(3, i + 10, 0, 0, screen->lines[i].buffer);
 	}
-	else {
+        if (screen->lines[i].has_prompt) {
+            tb_print(screen->max_x / 2, i, TB_GREEN, 0, "> ");
+            tb_print(screen->max_x / 2 + screen->prompt_len, i, 0, 0, screen->lines[i].buffer);
+    	}
+        else {
+	    tb_print(screen->max_x / 2, i, 0, 0, screen->lines[i].buffer);
+	}
+    }
+}
+
+void screen_debug_lines_vertical(struct screen* screen)
+{
+    for (int i = 0; i < screen->max_y; ++i) {
+        if (screen->lines[i].buffer[0] == '\0') {
+            tb_print(0, i + 10, TB_GREEN, 0, "> ");
+            break;
+	}
+        if (screen->lines[i].has_prompt) {
+            tb_print(0, i + 10, TB_GREEN, 0, "> ");
+            tb_print(screen->prompt_len, i + 10, 0, 0, screen->lines[i].buffer);
+    	}
+        else {
 	    tb_print(0, i + 10, 0, 0, screen->lines[i].buffer);
 	}
-    }*/
+    }
 }
 
-[[nodiscard]]
-int screen_init(struct screen* screen)
+void screen_render(struct screen* screen)
 {
-    tb_init();
-
-    screen->max_x = tb_width();
-    screen->max_y = tb_height();
-    screen->reprint_prompt = false;
-    screen->prompt = "> ";
-    screen->prompt_len = sizeof("> ") - 1;
-
-    screen->buffer = calloc(PATH_MAX, sizeof(char));
-    if (!screen->buffer)
-	return EXIT_FAILURE;
-
-    screen->lines_buffer = calloc(screen->max_y, sizeof(char*));
-    if (!screen->lines_buffer)
-	return EXIT_FAILURE;
     for (int i = 0; i < screen->max_y; ++i) {
-        screen->lines_buffer[i] = calloc(PATH_MAX, sizeof(char));
-	if (!screen->lines_buffer[i])
-	    return EXIT_FAILURE;
+        if (screen->lines[i].buffer[0] == '\0') {
+            break;
+	}
+	if (screen->lines[i].has_prompt) {
+            tb_print(0, i, TB_GREEN, 0, "> ");
+	}
+        tb_print(3, i, 0, 0, screen->lines[i].buffer);
     }
-
-    /*screen->lines = malloc(sizeof(struct line));
-    for (int i = 0; i < screen->max_y; ++i) {
-        screen->lines[i].buffer = calloc(PATH_MAX, sizeof(char));
-	if (!screen->lines[i].buffer)
-	    return EXIT_FAILURE;
-    }*/
-
-    tb_print(screen->x, screen->y, TB_GREEN, 0, "> ");
-    // screen->lines[0].has_prompt = true;
-    screen->x = screen->prompt_len;
-    tb_present();
-
-    return EXIT_SUCCESS;
-}
-
-void screen_exit(struct screen* screen)
-{
-    free(screen->buffer);
-
-    for (int i = 0; i < screen->max_y; ++i) {
-        if (screen->lines_buffer[i]) {
-            free(screen->lines_buffer[i]);
-        }
-    }
-    free(screen->lines_buffer);
-
-    /*for (int i = 0; i < screen->max_y; ++i) {
-        if (screen->lines[i].buffer) {
-            free(screen->lines[i].buffer);
-        }
-    }
-    free(screen->lines);*/
-
-    tb_shutdown();
 }
 
 void screen_prompt(struct screen* screen)
@@ -143,35 +165,41 @@ void screen_prompt(struct screen* screen)
     screen->x = 0;
     tb_print(screen->x, ++screen->y, TB_GREEN, 0, "> ");
     screen->x = screen->prompt_len;
-    // screen->lines[screen->y].has_prompt = true;
-    // screen_debug_print(screen->buffer, screen);
+    // screen_debug_buffer(screen);
     screen->line_start_y = screen->y;
     screen->line_total_x = 0;
+    memset(screen->lines_x, 0, sizeof(int) * screen->lines_y);
     screen->lines_y = 0;
-    memset(screen->lines_x, 0, sizeof(int) * LINE_LIMIT);
     memset(screen->buffer, 0, sizeof(char) * PATH_MAX);
     screen->reprint_prompt = false;
 }
 
 void screen_update(struct screen* screen)
 {
+    if (screen->y == screen->max_y ||
+        (screen->y > screen->max_y && screen->y % screen->max_y >= screen->max_y)) {
+        memmove(screen->lines, screen->lines + 1, screen->max_y - 1);
+    }
+
     int y = screen->y >= screen->max_y ? screen->max_y - screen->y : screen->y;
-    strcpy(screen->lines_buffer[y], screen->buffer);
+    if (screen->lines_y == 0) {
+	screen->lines[y].has_prompt = true;
+        // memcpy(screen->lines[y].buffer, screen->prompt, screen->prompt_len);
+        // memcpy(screen->lines[y].buffer + screen->prompt_len, screen->buffer, screen->lines_x[y]);
+	strcpy(screen->lines[y].buffer + screen->prompt_len, screen->buffer);
+    }
+    else {
+	int x = screen->max_x * screen->lines_y - screen->prompt_len;
+        // memcpy(screen->lines[y].buffer, screen->buffer + x, screen->lines_x[y]);
+	strcpy(screen->lines[y].buffer, screen->buffer + x);
+    }
 
     if (screen->x >= screen->max_x) {
 	screen->lines_x[screen->lines_y] = screen->x;
-        ++screen->y; // handle multiline being at end of screen
+        ++screen->y; // need to handle multiline being at end of screen
         ++screen->lines_y;
 	screen->x = 0;
     }
-
-    /*if (screen->y >= screen->max_y) {
-        memmove(screen->lines_buffer, screen->lines_buffer + 1, screen->max_y);
-        for (int i = 0; i < screen->max_y; ++i) {
-            tb_print(0, i, TB_GREEN, 0, "> ");
-            tb_print(screen->prompt_len, i, 0, 0, screen->lines_buffer[i]);
-        }
-    }*/
 }
 
 int main()
@@ -193,7 +221,7 @@ int main()
 
         switch (screen.ev.key) {
             case 4: {
-                screen_debug_lines_buffer(&screen);
+                screen_debug_lines_horizontal(&screen);
                 goto exit;
             }
             case 13: {
