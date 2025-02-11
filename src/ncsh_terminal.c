@@ -12,7 +12,6 @@
 #include <unistd.h>
 
 #include "eskilib/eskilib_colors.h"
-#include "eskilib/eskilib_result.h"
 #include "ncsh_terminal.h"
 #define TERMINAL_RETURN 'R'
 #define T_BUFFER_LENGTH 30
@@ -33,7 +32,7 @@ static struct winsize window;
         perror("sighandler error");
 }*/
 
-void ncsh_terminal_os_reset(void)
+void ncsh_terminal_reset(void)
 {
     fflush(stdout);
     if (tcsetattr(STDIN_FILENO, TCSANOW, &original_terminal_os) != 0) {
@@ -41,7 +40,7 @@ void ncsh_terminal_os_reset(void)
     }
 }
 
-void ncsh_terminal_os_init(void)
+void ncsh_terminal_init(void)
 {
     if (!isatty(STDIN_FILENO)) {
         fprintf(stderr, "Not running in a terminal.\n");
@@ -76,6 +75,14 @@ struct ncsh_Coordinates ncsh_terminal_size_get(void)
     return (struct ncsh_Coordinates){.x = window.ws_col, .y = window.ws_row};
 }
 
+int ncsh_terminal_size_x(void) {
+    return window.ws_col;
+}
+
+int ncsh_terminal_size_y(void) {
+    return window.ws_row;
+}
+
 void ncsh_terminal_move(int x, int y)
 {
     printf("\033[%d;%dH", y, x);
@@ -99,23 +106,6 @@ void ncsh_terminal_move_up(int i)
 void ncsh_terminal_move_down(int i)
 {
     printf("\033[%dB", i);
-}
-
-enum eskilib_Result ncsh_terminal_init(struct ncsh_Terminal* terminal)
-{
-    assert(terminal);
-
-    terminal->reprint_prompt = true; // print for first entry into readline.
-    terminal->user.value = getenv("USER");
-    terminal->user.length = strlen(terminal->user.value) + 1;
-    terminal->size = ncsh_terminal_size_get();
-
-    return E_SUCCESS;
-}
-
-void ncsh_terminal_exit(struct ncsh_Terminal *terminal)
-{
-    (void)terminal;
 }
 
 size_t ncsh_terminal_prompt_size(size_t user_len, size_t dir_len)

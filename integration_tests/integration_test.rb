@@ -81,7 +81,7 @@ end
 
 def basic_ls_test(row)
   assert_check_new_row(row)
-  @tty.send_keys_one_at_a_time(%(ls))
+  @tty.send_keys_one_at_a_time('ls')
   @tty.assert_cursor_position(START_COL + 2, row)
   @tty.assert_row_ends_with(row, 'ls')
   @tty.send_newline

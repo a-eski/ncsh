@@ -23,7 +23,6 @@
 #include "ncsh_history.h"
 #include "ncsh_parser.h"
 #include "ncsh_readline.h"
-#include "ncsh_terminal.h"
 #include "ncsh_types.h"
 #include "ncsh_vm.h"
 
@@ -36,8 +35,6 @@ void ncsh_exit(struct ncsh_Shell* shell)
     ncsh_parser_args_free(&shell->args);
 
     z_exit(&shell->z_db);
-
-    ncsh_terminal_os_reset();
 }
 
 eskilib_nodiscard int_fast32_t ncsh_init(struct ncsh_Shell* shell)

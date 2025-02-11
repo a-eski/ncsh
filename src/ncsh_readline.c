@@ -36,7 +36,7 @@ size_t ncsh_readline_prompt_short_directory(char* cwd, char* output)
 }
 #endif /* ifdef NCSH_SHORT_DIRECTORY */
 
-eskilib_nodiscard int_fast32_t ncsh_readline_prompt(struct ncsh_Terminal* terminal)
+eskilib_nodiscard int_fast32_t ncsh_readline_prompt(struct ncsh_Input* input)
 {
     char cwd[PATH_MAX] = {0};
     char directory[PATH_MAX] = {0};
@@ -48,15 +48,14 @@ eskilib_nodiscard int_fast32_t ncsh_readline_prompt(struct ncsh_Terminal* termin
 
 #ifdef NCSH_SHORT_DIRECTORY
     size_t dir_len = ncsh_readline_prompt_short_directory(cwd, directory);
-    printf(ncsh_GREEN "%s" WHITE " " ncsh_CYAN "%s" WHITE_BRIGHT " \u2771 ", terminal->user.value, directory);
+    printf(ncsh_GREEN "%s" WHITE " " ncsh_CYAN "%s" WHITE_BRIGHT " \u2771 ", input->user.value, directory);
 #else
     strcpy(directory, cwd);
     size_t dir_len = strlen(directory) + 1;
-    printf(ncsh_GREEN "%s" WHITE " " ncsh_CYAN "%s" WHITE_BRIGHT " \u2771 ", terminal->user.value, directory);
+    printf(ncsh_GREEN "%s" WHITE " " ncsh_CYAN "%s" WHITE_BRIGHT " \u2771 ", input->user.value, directory);
 #endif /* ifdef NCSH_SHORT_DIRECTORY */
 
-    terminal->prompt_len = ncsh_terminal_prompt_size(terminal->user.length, dir_len);
-
+    input->prompt_len = ncsh_terminal_prompt_size(input->user.length, dir_len);
     fflush(stdout);
     // save cursor position so we can reset cursor when loading history entries
     ncsh_write_literal(SAVE_CURSOR_POSITION);
@@ -69,6 +68,8 @@ eskilib_nodiscard int_fast32_t ncsh_backspace(struct ncsh_Input* input)
     if (!input->pos) {
         return EXIT_SUCCESS;
     }
+
+    input->current_autocompletion[0] = '\0';
 
     --input->pos;
     if (input->max_pos > 0) {
@@ -135,6 +136,19 @@ eskilib_nodiscard int_fast32_t ncsh_delete(struct ncsh_Input* input)
 
 void ncsh_autocomplete(struct ncsh_Input* input)
 {
+    if (input->buffer[0] == '\0' || input->buffer[input->pos] != '\0') {
+        return;
+    }
+    else if (input->buffer[0] < 32) { // exclude control characters from autocomplete
+        memset(input->buffer, '\0', input->max_pos);
+        input->pos = 0;
+        input->max_pos = 0;
+        return;
+    }
+    /*else if (input->prompt_len + input->pos > (size_t)input->max_x) {
+        return;
+    }*/
+
     uint_fast8_t autocompletions_matches_count = ncsh_autocompletions_first(
         input->buffer, input->pos + 1, input->current_autocompletion, input->autocompletions_tree);
 
@@ -143,37 +157,13 @@ void ncsh_autocomplete(struct ncsh_Input* input)
         return;
     }
 
-    input->terminal.position = ncsh_terminal_position();
-    /*int len = strlen(input->current_autocompletion);
-    input->terminal.position = ncsh_terminal_position();
-    int lines_before = input->terminal.lines.y;
-    int lines_after = lines_before;
-    // printf("x: %d\n", input->terminal.lines.x + (int)input->pos + len - 1);
-    if (input->terminal.lines.x + (int)input->pos + len - 1 > input->terminal.size.x) {
-	++lines_after;
+    /*if ((int)strlen(input->current_autocompletion) > input->max_x) {
+        return;
     }*/
-    // ncsh_terminal_line_size(input->pos, &input->terminal);
 
-    // if (lines_before != lines_after) {
-        /*if (write(STDOUT_FILENO, WHITE_DIM, sizeof(WHITE_DIM) - 1) == -1)
-            return;
-
-        for (int_fast32_t i = 0; i < input->terminal.size.x - input->terminal.position.x; ++i) {
-            putchar(input->current_autocompletion[i]);
-        }
-        putchar('\n');
-        for (int_fast32_t i = input->terminal.size.x - input->terminal.position.x; i < length; ++i) {
-            putchar(input->current_autocompletion[i]);
-        }
-
-        if (write(STDOUT_FILENO, RESET, sizeof(RESET) - 1) == -1)
-            return;
-        fflush(stdout);*/
-        // return;
-    // }
-
-    printf(WHITE_DIM "%s" RESET, input->current_autocompletion);
-    ncsh_terminal_move(input->terminal.position.x, input->terminal.position.y);
+    struct ncsh_Coordinates previous_pos = ncsh_terminal_position();
+    printf(ERASE_CURRENT_LINE WHITE_DIM "%s" RESET, input->current_autocompletion);
+    ncsh_terminal_move(previous_pos.x, previous_pos.y);
     fflush(stdout);
 }
 
@@ -296,12 +286,12 @@ eskilib_nodiscard int_fast32_t ncsh_tab_autocomplete(struct ncsh_Input* input,
 
 int_fast32_t ncsh_readline_init(struct ncsh_Config* config, struct ncsh_Input *input)
 {
+    input->max_x = ncsh_terminal_size_x();
+    input->max_y = ncsh_terminal_size_x();
+    input->user.value = getenv("USER");
+    input->user.length = strlen(input->user.value) + 1;
     input->buffer = calloc(NCSH_MAX_INPUT, sizeof(char));
     if (!input->buffer) {
-        return EXIT_FAILURE;
-    }
-
-    if (ncsh_terminal_init(&input->terminal) != E_SUCCESS) {
         return EXIT_FAILURE;
     }
 
@@ -336,24 +326,80 @@ int_fast32_t ncsh_readline_init(struct ncsh_Config* config, struct ncsh_Input *i
     return EXIT_SUCCESS;
 }
 
+int_fast32_t ncsh_readline_putchar(char character, struct ncsh_Input* input)
+{
+    char temp_character;
+
+    // midline insertions
+    if (input->pos < input->max_pos && input->buffer[input->pos]) {
+        input->start_pos = input->pos;
+
+        if (!input->pos) {
+            temp_character = input->buffer[0];
+            input->buffer[0] = character;
+            putchar(character);
+            character = temp_character;
+            ++input->pos;
+        }
+
+        for (uint_fast32_t i = input->pos - 1; i < input->max_pos && i < NCSH_MAX_INPUT; ++i) {
+            temp_character = character;
+            character = input->buffer[i + 1];
+            input->buffer[i + 1] = temp_character;
+            putchar(temp_character);
+            ++input->pos;
+        }
+
+        if (input->pos > input->max_pos) {
+            input->max_pos = input->pos;
+        }
+
+        if (input->pos == input->max_pos) {
+            input->buffer[input->pos] = '\0';
+        }
+
+        fflush(stdout);
+
+        if (!input->pos || input->buffer[1] == '\0') {
+            return EXIT_CONTINUE;
+        }
+
+        while (input->pos > input->start_pos + 1) {
+            ncsh_write_literal(MOVE_CURSOR_LEFT);
+            --input->pos;
+        }
+    }
+    else { // end of line insertions
+        putchar(character);
+        fflush(stdout);
+        input->buffer[input->pos++] = character;
+
+        if (input->pos >= input->max_pos) {
+            input->max_pos = input->pos;
+            input->buffer[input->pos] = '\0';
+        }
+    }
+
+    return EXIT_SUCCESS;
+}
+
 eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input* input)
 {
     char character;
-    char temp_character;
     int exit = EXIT_SUCCESS;
+    int result = EXIT_SUCCESS;
 
-    ncsh_terminal_os_init();
+    input->reprint_prompt = true;
+    ncsh_terminal_init();
 
     while (1) {
-        if (!input->pos && input->terminal.reprint_prompt == true) {
-            if (ncsh_readline_prompt(&input->terminal) == EXIT_FAILURE) {
+        if (input->reprint_prompt == true) {
+	    if (ncsh_readline_prompt(input) == EXIT_FAILURE) {
                 exit = EXIT_FAILURE;
 		break;
             }
             input->history_position = 0;
-        }
-        else {
-            input->terminal.reprint_prompt = true;
+            input->reprint_prompt = false;
         }
 
         if (read(STDIN_FILENO, &character, 1) == -1) {
@@ -371,7 +417,6 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input* input)
 	    break;
         }
         else if (character == CTRL_W) { // delete last word
-            input->terminal.reprint_prompt = false;
             if (!input->pos && !input->max_pos) {
                 continue;
             }
@@ -390,7 +435,6 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input* input)
             input->pos = input->max_pos;
         }
         else if (character == CTRL_U) { // delete entire line
-            input->terminal.reprint_prompt = false;
             if (!input->pos && !input->max_pos) {
                 continue;
             }
@@ -415,7 +459,7 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input* input)
 		break;
 	    }
 
-	    input->terminal.reprint_prompt = true;
+	    input->reprint_prompt = true;
             input->buffer[0] = '\0';
             input->pos = 0;
             input->max_pos = 0;
@@ -423,11 +467,6 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input* input)
             continue;
         }
         else if (character == BACKSPACE_KEY) {
-            input->terminal.reprint_prompt = false;
-            if (!input->pos) {
-                continue;
-            }
-            input->current_autocompletion[0] = '\0';
             if (ncsh_backspace(input) == EXIT_FAILURE) {
                 exit = EXIT_FAILURE;
 		break;
@@ -452,10 +491,12 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input* input)
 		int key_result = EXIT_SUCCESS;
                 switch (character) {
                 case RIGHT_ARROW: {
-                    input->terminal.reprint_prompt = false;
                     if (!input->pos && !input->max_pos) {
                         continue;
                     }
+                    /*if (!input->current_autocompletion[0]) {
+                        continue;
+                    }*/
 
                     if (input->pos == input->max_pos && input->buffer[0]) {
                         printf("%s", input->current_autocompletion);
@@ -489,8 +530,6 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input* input)
                     break;
                 }
                 case LEFT_ARROW: {
-                    input->terminal.reprint_prompt = false;
-
                     if (!input->pos || (!input->buffer[input->pos] && !input->buffer[input->pos - 1])) {
                         continue;
                     }
@@ -502,8 +541,6 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input* input)
                     break;
                 }
                 case UP_ARROW: {
-                    input->terminal.reprint_prompt = false;
-
                     input->history_entry = ncsh_history_get(input->history_position, &input->history);
                     if (input->history_entry.length > 0) {
                         ++input->history_position;
@@ -519,8 +556,6 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input* input)
                     continue;
                 }
                 case DOWN_ARROW: {
-                    input->terminal.reprint_prompt = false;
-
                     if (!input->history_position) {
                         continue;
                     }
@@ -550,24 +585,21 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input* input)
                         perror(RED NCSH_ERROR_STDIN RESET);
                         fflush(stderr);
                         key_result = EXIT_FAILURE;
-			break;
+			goto exit;
                     }
 
                     if (character != DELETE_KEY) {
                         continue;
                     }
 
-                    input->terminal.reprint_prompt = false;
-
                     if (ncsh_delete(input) == EXIT_FAILURE) {
                         key_result = EXIT_FAILURE;
-			break;
+			goto exit;
                     }
 
                     break;
                 }
                 case HOME_KEY: {
-                    input->terminal.reprint_prompt = false;
                     if (!input->pos) {
                         continue;
                     }
@@ -578,7 +610,6 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input* input)
                     break;
                 }
                 case END_KEY: {
-                    input->terminal.reprint_prompt = false;
                     if (input->pos == input->max_pos) {
                         continue;
                     }
@@ -597,12 +628,10 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input* input)
 		    break;
 		}
             }
-            else {
-                input->terminal.reprint_prompt = false;
-            }
         }
         else if (character == '\n' || character == '\r') {
             if (!input->pos && !input->buffer[input->pos]) {
+                input->reprint_prompt = true;
                 putchar('\n');
                 fflush(stdout);
                 continue;
@@ -621,7 +650,6 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input* input)
 
             ncsh_write_literal(ERASE_CURRENT_LINE "\n");
             fflush(stdout);
-	    ncsh_terminal_os_reset();
             exit = EXIT_SUCCESS_EXECUTE;
 	    break;
         }
@@ -634,85 +662,23 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input* input)
                 continue;
             }
 
-            // midline insertions
-            if (input->pos < input->max_pos && input->buffer[input->pos]) {
-                input->start_pos = input->pos;
-
-                if (!input->pos) {
-                    temp_character = input->buffer[0];
-                    input->buffer[0] = character;
-                    putchar(character);
-                    character = temp_character;
-                    ++input->pos;
-                }
-
-                for (uint_fast32_t i = input->pos - 1; i < input->max_pos && i < NCSH_MAX_INPUT; ++i) {
-                    temp_character = character;
-                    character = input->buffer[i + 1];
-                    input->buffer[i + 1] = temp_character;
-                    putchar(temp_character);
-                    ++input->pos;
-                }
-
-                if (input->pos > input->max_pos) {
-                    input->max_pos = input->pos;
-                }
-
-                if (input->pos == input->max_pos) {
-                    input->buffer[input->pos] = '\0';
-                }
-
-                fflush(stdout);
-
-                if (!input->pos || input->buffer[1] == '\0') {
-                    continue;
-                }
-
-                while (input->pos > input->start_pos + 1) {
-                    ncsh_write_literal(MOVE_CURSOR_LEFT);
-                    --input->pos;
-                }
+            result = ncsh_readline_putchar(character, input);
+            switch (result) {
+            case EXIT_CONTINUE: {
+                continue;
             }
-            else { // end of line insertions
-	        /*assert(input->pos <= INT_MAX);
-		if ((input->terminal.lines.x + (int)input->pos / input->terminal.lines.y) > input->terminal.size.x) {
-		    ++input->terminal.lines.y;
-		    // input->terminal.lines.x = input->terminal.lines.x + (int)input->pos - input->terminal.size.x;
-		    putchar('\n');
-		}*/
-                putchar(character);
-                fflush(stdout);
-                input->buffer[input->pos++] = character;
-
-                if (input->pos > input->max_pos) {
-                    input->max_pos = input->pos;
-                }
-
-                if (input->pos == input->max_pos) {
-                    input->buffer[input->pos] = '\0';
-                }
-
-                ncsh_write_literal(ERASE_CURRENT_LINE);
+            case EXIT_FAILURE: {
+                exit = EXIT_FAILURE;
+                goto exit;
+            }
             }
         }
-
-        // autocompletion logic
-        if (input->buffer[0] == '\0' || input->buffer[input->pos] != '\0') {
-            continue;
-        }
-        else if (input->buffer[0] < 32) { // exclude control characters from autocomplete
-            memset(input->buffer, '\0', input->max_pos);
-            input->pos = 0;
-            input->max_pos = 0;
-	    input->terminal.reprint_prompt = false;
-            continue;
-	}
 
         ncsh_autocomplete(input);
     }
 
-
-    ncsh_terminal_os_reset();
+exit:
+    ncsh_terminal_reset();
     return exit;
 }
 
@@ -722,4 +688,5 @@ void ncsh_readline_exit(struct ncsh_Input* input)
     ncsh_history_exit(&input->history);
     free(input->current_autocompletion);
     ncsh_autocompletions_free(input->autocompletions_tree);
+    ncsh_terminal_reset();
 }
