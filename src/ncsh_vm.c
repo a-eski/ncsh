@@ -80,48 +80,6 @@ int_fast32_t (*builtin_func[])(struct ncsh_Args*) = {&ncsh_builtins_exit, &ncsh_
                                                      &ncsh_builtins_pwd,  &ncsh_builtins_kill, &ncsh_builtins_set};
 
 
-
-/* Signal Handling */
-static _Atomic pid_t ncsh_vm_atomic_internal_child_pid = 0;
-
-static inline void ncsh_vm_atomic_child_pid_set(pid_t pid)
-{
-    ncsh_vm_atomic_internal_child_pid = pid;
-}
-
-static inline pid_t ncsh_vm_atomic_child_pid_get(void)
-{
-    return ncsh_vm_atomic_internal_child_pid;
-}
-
-static void ncsh_vm_signal_handler(int signum, siginfo_t* info, void* context)
-{
-    (void)context;
-    const pid_t target = ncsh_vm_atomic_child_pid_get();
-
-    if (target != 0 && info->si_pid != target) {
-        if (!kill(target, signum)) {
-            if (write(STDOUT_FILENO, "\n", 1) == -1) { // write is async safe, do not use fflush, putchar, prinft
-                perror(RED "ncsh: Error writing to standard output while processing a signal" RESET);
-            }
-        }
-    }
-}
-
-static int ncsh_vm_signal_forward(const int signum)
-{
-    struct sigaction act = {0};
-    sigemptyset(&act.sa_mask);
-    act.sa_sigaction = ncsh_vm_signal_handler;
-    act.sa_flags = SA_SIGINFO | SA_RESTART;
-
-    if (sigaction(signum, &act, NULL)) {
-        return errno;
-    }
-
-    return 0;
-}
-
 /* IO Redirection */
 int ncsh_vm_output_redirection_oflags_get(bool append)
 {

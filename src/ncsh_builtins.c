@@ -3,14 +3,13 @@
 #define _POSIX_C_SOURCE 200809L
 #include <assert.h>
 #include <fcntl.h>
-#include <linux/limits.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
-#include <sys/wait.h>
+// #include <sys/wait.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -20,6 +19,7 @@
 #include "ncsh_history.h"
 #include "ncsh_builtins.h"
 #include "ncsh_parser.h"
+#include "ncsh_platform.h"
 #include "z/z.h"
 
 eskilib_nodiscard int_fast32_t ncsh_builtins_z(struct z_Database* z_db, struct ncsh_Args* args)
@@ -203,8 +203,8 @@ eskilib_nodiscard int_fast32_t ncsh_builtins_kill(struct ncsh_Args* args)
         }
         return NCSH_COMMAND_FAILED_CONTINUE;
     }
-    if (kill(pid, SIGTERM) != 0) {
-        printf("ncsh kill: could not kill process with process ID (PID): %d\n", pid);
+    if (ncsh_platform_kill(pid) != 0) {
+        printf("ncsh kill: could not kill process with process ID (PID): %d\n", (int)pid);
         return NCSH_COMMAND_FAILED_CONTINUE;
     }
 

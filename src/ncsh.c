@@ -2,14 +2,13 @@
 
 #include <assert.h>
 #include <limits.h>
-#include <linux/limits.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
-#include <sys/wait.h>
+// #include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -22,6 +21,7 @@
 #include "ncsh_defines.h"
 #include "ncsh_history.h"
 #include "ncsh_parser.h"
+#include "ncsh_platform.h"
 #include "ncsh_readline.h"
 #include "ncsh_terminal.h"
 #include "ncsh_types.h"

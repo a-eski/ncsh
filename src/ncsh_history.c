@@ -1,7 +1,6 @@
 // Copyright (c) ncsh by Alex Eski 2024
 
 #include <assert.h>
-#include <linux/limits.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -17,6 +16,7 @@
 #include "eskilib/eskilib_string.h"
 #include "ncsh_defines.h"
 #include "ncsh_history.h"
+#include "ncsh_platform.h"
 
 void ncsh_history_file_set(struct eskilib_String config_file, struct ncsh_History* history)
 {

@@ -12,6 +12,7 @@
 #include "z/fzf.c"
 #include "z/z.c"
 
+#include "ncsh_platform.c"
 #include "main.c"
 #include "ncsh.c"
 #include "ncsh_readline.c"

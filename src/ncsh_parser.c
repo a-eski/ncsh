@@ -1,7 +1,6 @@
 // Copyright (c) ncsh by Alex Eski 2024
 
 #include <assert.h>
-#include <glob.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -13,6 +12,7 @@
 #include "eskilib/eskilib_result.h"
 #include "ncsh_defines.h"
 #include "ncsh_parser.h"
+#include "ncsh_platform.h"
 
 // #define STRCMP_1CHAR(val1, val2) (val1[0] == val2[0])
 #define STRCMP_2CHAR(val1, val2) (val1[0] == val2[0] && val1[1] == val2[1])
@@ -273,27 +273,7 @@ void ncsh_parser_parse(const char* line, size_t length, struct ncsh_Args* args)
             buffer[buf_pos] = '\0';
 
             if (glob_found) {
-                glob_t glob_buf = {0};
-                size_t glob_len;
-                glob(buffer, GLOB_DOOFFS, NULL, &glob_buf);
-
-                for (size_t i = 0; i < glob_buf.gl_pathc; ++i) {
-                    glob_len = strlen(glob_buf.gl_pathv[i]) + 1;
-                    if (!glob_len || glob_len >= NCSH_MAX_INPUT) {
-                        break;
-                    }
-                    buf_pos = glob_len;
-                    args->values[args->count] = malloc(buf_pos);
-                    memcpy(args->values[args->count], glob_buf.gl_pathv[i], glob_len);
-                    args->ops[args->count] = OP_CONSTANT;
-                    args->lengths[args->count] = buf_pos;
-                    ++args->count;
-                    if (args->count >= NCSH_PARSER_TOKENS - 1) {
-                        break;
-                    }
-                }
-
-                globfree(&glob_buf);
+                ncsh_platform_glob(buffer, args);
                 glob_found = false;
             }
             else {

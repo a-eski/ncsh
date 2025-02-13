@@ -3,12 +3,12 @@
 #ifndef NCSH_TERMINAL_H_
 #define NCSH_TERMINAL_H_
 
-#include <linux/limits.h>
 #include <stdbool.h>
 #include <stdint.h>
 
 #include "eskilib/eskilib_result.h"
 #include "eskilib/eskilib_string.h"
+#include "ncsh_platform.h"
 
 // input definitions
 #define ESCAPE_CHARACTER 27 // "\033" or "^["
@@ -79,7 +79,6 @@ void ncsh_terminal_move_left(int i);
 enum eskilib_Result ncsh_terminal_init(struct ncsh_Terminal* terminal);
 void ncsh_terminal_exit(struct ncsh_Terminal* terminal);
 
-void ncsh_terminal_size_set(void);
 struct ncsh_Coordinates ncsh_terminal_size_get(void);
 
 // Get the length of the current prompt.

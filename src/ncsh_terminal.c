@@ -2,78 +2,31 @@
 
 #include <assert.h>
 #include <limits.h>
-#include <linux/limits.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/ioctl.h>
-// #if defined(HAVE_TERMIOS_H)
-#include <termios.h>
 #include <unistd.h>
 
 #include "eskilib/eskilib_colors.h"
 #include "eskilib/eskilib_result.h"
+#include "ncsh_platform.h"
 #include "ncsh_terminal.h"
 #define TERMINAL_RETURN 'R'
 #define T_BUFFER_LENGTH 30
 
-/* Static Variables */
-static struct termios original_terminal_os;
-static struct winsize window;
-
-/* Signal Handling */
-/*static void ncsh_terminal_signal_handler(int signum)
-{
-    if (signum != SIGWINCH)
-        return;
-
-    ioctl(STDOUT_FILENO, TIOCGWINSZ, &window);
-
-    if (write(STDOUT_FILENO, "ncsh window change handled\n", sizeof("ncsh window change handled\n")) == -1)
-        perror("sighandler error");
-}*/
-
 void ncsh_terminal_os_reset(void)
 {
-    fflush(stdout);
-    if (tcsetattr(STDIN_FILENO, TCSANOW, &original_terminal_os) != 0) {
-        perror(RED "ncsh: Could not restore terminal settings" RESET);
-    }
+   ncsh_platform_terminal_reset();
 }
 
 void ncsh_terminal_os_init(void)
 {
-    if (!isatty(STDIN_FILENO)) {
-        fprintf(stderr, "Not running in a terminal.\n");
-        exit(EXIT_FAILURE);
-    }
-
-    ioctl(STDOUT_FILENO, TIOCGWINSZ, &window);
-
-    if (tcgetattr(STDIN_FILENO, &original_terminal_os) != 0) {
-        perror(RED "ncsh: Could not get terminal settings" RESET);
-        exit(EXIT_FAILURE);
-    }
-
-    // mouse support? investigate
-    // printf("\x1b[?1049h\x1b[0m\x1b[2J\x1b[?1003h\x1b[?1015h\x1b[?1006h\x1b[?25l");
-
-    struct termios terminal_os = original_terminal_os;
-    terminal_os.c_lflag &= (tcflag_t) ~(ICANON | ECHO);
-    terminal_os.c_cc[VMIN] = 1;
-    terminal_os.c_cc[VTIME] = 0;
-
-    if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &terminal_os) != 0) {
-        perror(RED "ncsh: Could not set terminal settings" RESET);
-    }
-
-    signal(SIGHUP, SIG_DFL); // Stops the process if the terminal is closed
-    // signal(SIGWINCH, ncsh_terminal_signal_handler); // Sets window size when window size changed
+    ncsh_platform_terminal_init();
 }
 
 struct ncsh_Coordinates ncsh_terminal_size_get(void)
 {
-    return (struct ncsh_Coordinates){.x = window.ws_col, .y = window.ws_row};
+    return ncsh_platform_terminal_size_get();
 }
 
 void ncsh_terminal_move(int x, int y)

@@ -14,6 +14,7 @@
 #include "eskilib/eskilib_string.h"
 #include "ncsh_config.h"
 #include "ncsh_defines.h"
+#include "ncsh_platform.h"
 
 eskilib_nodiscard enum eskilib_Result ncsh_config_home(struct ncsh_Config* config)
 {
@@ -83,7 +84,8 @@ eskilib_nodiscard enum eskilib_Result ncsh_config(struct ncsh_Config* config)
 #endif /* ifdef NCSH_DEBUG */
 
     assert(strlen(config->config_location.value) + 1 == config->config_location.length);
-    mkdir(config->config_location.value, 0755);
+    // mkdir(config->config_location.value, 0755);
+    ncsh_platform_mkdir(config->config_location.value);
 
     return E_SUCCESS;
 }
