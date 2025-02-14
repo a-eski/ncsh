@@ -79,8 +79,6 @@ int_fast32_t (*builtin_func[])(struct ncsh_Args*) = {&ncsh_builtins_exit, &ncsh_
                                                      &ncsh_builtins_echo, &ncsh_builtins_help, &ncsh_builtins_cd,
                                                      &ncsh_builtins_pwd,  &ncsh_builtins_kill, &ncsh_builtins_set};
 
-
-
 /* Signal Handling */
 static _Atomic pid_t ncsh_vm_atomic_internal_child_pid = 0;
 

@@ -8,13 +8,25 @@
 #include "ncsh_history.h"
 #include "ncsh_terminal.h"
 
+#define LINE_LIMIT 100
+
 struct ncsh_Input {
+    int y;
+    int x;
+    int max_x;
+    int max_y;
+    int line_start_y;
+    int line_total_x; // buffer_len aka pos
+    int lines_x[LINE_LIMIT];
+    int lines_y;
+    bool reprint_prompt;
+    size_t prompt_len;
+    struct eskilib_String user;
+
     size_t start_pos;
     size_t pos;
     size_t max_pos;
     char* buffer;
-
-    struct ncsh_Terminal terminal;
 
     int history_position;
     struct eskilib_String history_entry;

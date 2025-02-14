@@ -18,6 +18,7 @@
 // #define EXIT_FAILURE 1 // From stdlib.h
 #define EXIT_SUCCESS_END 2
 #define EXIT_SUCCESS_EXECUTE 3
+#define EXIT_CONTINUE 4
 
 #define ncsh_write(str, len)                                                                                           \
     if (write(STDOUT_FILENO, str, len) == -1) {                                                                        \

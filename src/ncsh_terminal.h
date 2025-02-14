@@ -13,8 +13,8 @@
 // input definitions
 #define ESCAPE_CHARACTER 27 // "\033" or "^["
 #define DOUBLE_QUOTE_KEY '\"'
-#define CTRL_C '\003'
-#define CTRL_D '\004'
+#define CTRL_C 3 // '\003'
+#define CTRL_D 4 // '\004'
 #define CTRL_U 21
 #define CTRL_W 23
 #define BACKSPACE_KEY 127
@@ -53,22 +53,11 @@ struct ncsh_Coordinates {
     int y;
 };
 
-// Keep track of information about the terminal such as size, prompt, and number of lines.
-struct ncsh_Terminal {
-    struct ncsh_Coordinates size;
-    struct ncsh_Coordinates position;
-    struct ncsh_Coordinates lines;
-
-    bool reprint_prompt;
-    struct eskilib_String user;         // current user
-    size_t prompt_len;
-};
-
 // Put the terminal in the previous state of the terminal that is stored in memory.
-void ncsh_terminal_os_reset(void);
+void ncsh_terminal_reset(void);
 
 // Put the terminal in the proper modes for ncsh and save the previous state of the terminal in memory.
-void ncsh_terminal_os_init(void);
+void ncsh_terminal_init(void);
 
 void ncsh_terminal_move(int x, int y);
 void ncsh_terminal_move_up(int i);
@@ -76,11 +65,10 @@ void ncsh_terminal_move_down(int i);
 void ncsh_terminal_move_right(int i);
 void ncsh_terminal_move_left(int i);
 
-enum eskilib_Result ncsh_terminal_init(struct ncsh_Terminal* terminal);
-void ncsh_terminal_exit(struct ncsh_Terminal* terminal);
-
 void ncsh_terminal_size_set(void);
 struct ncsh_Coordinates ncsh_terminal_size_get(void);
+int ncsh_terminal_size_x(void);
+int ncsh_terminal_size_y(void);
 
 // Get the length of the current prompt.
 size_t ncsh_terminal_prompt_size(size_t user_len, size_t dir_len);

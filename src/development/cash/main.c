@@ -38,6 +38,43 @@ struct ncsh_Directory
     char path[PATH_MAX];
 };
 
+uint_fast32_t shl_launch_process(char* buffer)
+{
+	#if shl_DEBUG
+		shl_debug_launch_process(args);
+	#endif /* ifdef shl_DEBUG */
+
+	pid_t pid;
+	int status;
+
+	pid = fork();
+	if (pid == 0)
+	{
+		int exec_result = execvp(buffer, &buffer);
+		if (exec_result == -1)
+		{
+			perror("Could not find command");
+			fflush(stdout);
+			return 0;
+		}
+		return 1;
+	}
+	else if (pid < 0)
+	{
+		perror("Error when forking process");
+		fflush(stdout);
+		return 0;
+	}
+	else
+	{
+		do {
+			waitpid(pid, &status, WUNTRACED);
+		}while (!WIFEXITED(status) && !WIFSIGNALED(status));
+	}
+
+	return 1;
+}
+
 void cash_perror(const char *msg)
 {
     char err_msg[256];
@@ -292,16 +329,18 @@ void handle_input(char *buffer, struct ncsh_Directory *prompt_info)
             break;
         }
 
-        if (buffer && !buffer[0]) {
-            system(buffer);
-            // move(getcury(stdscr) + 1, getcurx(stdscr) - 1000);
+        if (buffer[0]) {
+            // addch('\n');
+            move(getcury(stdscr) + 1, 0);
             refresh();
-            addch('\n');
+	    shl_launch_process(buffer);
+            refresh();
+            move(getcury(stdscr) + 1, 0);
             refresh();
         }
         else {
-            // move(getcury(stdscr) + 1, getcurx((stdscr)));
-            addch('\n');
+            // addch('\n');
+            move(getcury(stdscr) + 1, 0);
             refresh();
         }
 
