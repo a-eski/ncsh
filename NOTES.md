@@ -75,9 +75,9 @@
 ``` sh
 sudo docker build . --tag ncsh-docked --file ./dockerfile
 sudo docker run -d ncsh-docked
-docker run -ti --rm -v $(shell pwd):/docker ncsh-docked "make && ruby ./src/integration_tests/tests.rb"
+docker run -ti --rm -v $(shell pwd):/docker ncsh-docked "make && ruby ./src/acceptance_tests/acceptance_tests.rb"
 
-sudo docker run -ti --rm -v $(shell pwd):/ncsh ncsh-docked "make && ruby ./integration_tests/integration_test.rb"
+sudo docker run -ti --rm -v $(shell pwd):/ncsh ncsh-docked "make && ruby ./acceptance_tests/acceptance_tests.rb"
 
 sudo docker run -ti --rm -v $(shell pwd):/ncsh ncsh-docked "./tests_it.sh"
 

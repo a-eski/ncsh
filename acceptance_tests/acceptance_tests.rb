@@ -3,19 +3,23 @@
 
 require 'ttytest'
 
-START_COL = 20
-WC_C_LENGTH = '209'
+WC_C_LENGTH = '141'
 SLEEP_TIME = 0.2
-LS_LINES = 3
-LS_ITEMS = 18
+LS_LINES = 2
+LS_ITEMS = 15
 LS_FIRST_ITEM = 'CMakeLists.txt'
 TAB_AUTOCOMPLETE_ROWS = 11
 
+def setup_tests
+  @user = ENV['USER']
+  @start_column = 16 + @user.length
+end
+
 def assert_check_new_row(row)
-  @tty.assert_row_starts_with(row, "#{ENV['USER']} ")
+  @tty.assert_row_starts_with(row, "#{@user} ")
   @tty.assert_row_like(row, 'ncsh')
   @tty.assert_row_ends_with(row, ' ❱ ')
-  @tty.assert_cursor_position(START_COL, row)
+  @tty.assert_cursor_position(@start_column, row)
 end
 
 def starting_tests(test)
@@ -82,7 +86,7 @@ end
 def basic_ls_test(row)
   assert_check_new_row(row)
   @tty.send_keys_one_at_a_time('ls')
-  @tty.assert_cursor_position(START_COL + 2, row)
+  @tty.assert_cursor_position(@start_column + 2, row)
   @tty.assert_row_ends_with(row, 'ls')
   @tty.send_newline
   row += 1
@@ -95,7 +99,7 @@ end
 def basic_bad_command_test(row)
   assert_check_new_row(row)
   @tty.send_keys_one_at_a_time(%(lss)) # send a bad command
-  @tty.assert_cursor_position(START_COL + 3, row)
+  @tty.assert_cursor_position(@start_column + 3, row)
   @tty.send_newline
   @tty.assert_row_ends_with(row, 'lss')
   row += 1
@@ -118,9 +122,9 @@ def home_and_end_tests(row)
   assert_check_new_row(row)
   @tty.send_keys_one_at_a_time(%(ss))
   @tty.send_home
-  @tty.assert_cursor_position(START_COL, row)
+  @tty.assert_cursor_position(@start_column, row)
   @tty.send_end
-  @tty.assert_cursor_position(START_COL + 2, row)
+  @tty.assert_cursor_position(@start_column + 2, row)
   @tty.send_backspaces(2)
 
   puts 'Home and End tests passed'
@@ -157,16 +161,16 @@ end
 def midline_backspace_test(row)
   assert_check_new_row(row)
   @tty.send_keys_one_at_a_time(%(lsssss))
-  @tty.assert_cursor_position(START_COL + 6, row)
+  @tty.assert_cursor_position(@start_column + 6, row)
   @tty.send_left_arrows(2)
-  @tty.assert_cursor_position(START_COL + 4, row)
+  @tty.assert_cursor_position(@start_column + 4, row)
   @tty.send_backspaces(4)
-  @tty.assert_cursor_position(START_COL, row)
+  @tty.assert_cursor_position(@start_column, row)
   @tty.assert_row_ends_with(row, 'ss')
   @tty.send_right_arrows(2)
-  @tty.assert_cursor_position(START_COL + 2, row)
+  @tty.assert_cursor_position(@start_column + 2, row)
   @tty.send_backspaces(2)
-  @tty.assert_cursor_position(START_COL, row)
+  @tty.assert_cursor_position(@start_column, row)
   @tty.send_line('echo hello') # make sure buffer is properly formed after backspaces
   row += 1
   @tty.assert_row(row, 'hello')
@@ -187,9 +191,9 @@ end
 def end_of_line_delete_test(row)
   assert_check_new_row(row)
   @tty.send_keys_one_at_a_time('s')
-  @tty.assert_cursor_position(START_COL + 1, row)
+  @tty.assert_cursor_position(@start_column + 1, row)
   @tty.send_left_arrow
-  @tty.assert_cursor_position(START_COL, row)
+  @tty.assert_cursor_position(@start_column, row)
   @tty.send_delete
   assert_check_new_row(row)
   puts 'End of line delete test passed'
@@ -199,11 +203,11 @@ end
 def midline_delete_test(row)
   assert_check_new_row(row)
   @tty.send_keys_one_at_a_time(%(lssss))
-  @tty.assert_cursor_position(START_COL + 5, row)
+  @tty.assert_cursor_position(@start_column + 5, row)
   @tty.send_left_arrows(4)
-  @tty.assert_cursor_position(START_COL + 1, row)
+  @tty.assert_cursor_position(@start_column + 1, row)
   @tty.send_delete
-  @tty.assert_cursor_position(START_COL + 1, row)
+  @tty.assert_cursor_position(@start_column + 1, row)
   @tty.send_deletes(3)
   @tty.send_left_arrow
   @tty.send_delete
@@ -533,7 +537,7 @@ end
 def basic_echo_test(row)
   assert_check_new_row(row)
   @tty.send_keys_one_at_a_time(%(echo hello))
-  @tty.assert_cursor_position(START_COL + 10, row)
+  @tty.assert_cursor_position(@start_column + 10, row)
   @tty.send_newline
   @tty.assert_row_ends_with(row, 'echo hello')
   row += 1
@@ -768,6 +772,7 @@ end
 
 row = 0
 @tty = TTYtest.new_terminal(%(PS1='$ ' ./bin/ncsh), width: 120, height: 140)
+setup_tests()
 
 row = startup_tests(row, true)
 row = basic_tests row

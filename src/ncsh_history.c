@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "eskilib/eskilib_colors.h"
 #include "eskilib/eskilib_defines.h"
@@ -68,6 +69,18 @@ eskilib_nodiscard enum eskilib_Result ncsh_history_load(struct ncsh_History* his
 
     FILE* file = fopen(history->file, "r");
     if (file == NULL) {
+	/*printf("ncsh: would you like to create a history file %s? [Y/n]: ", history->file);
+        fflush(stdout);
+
+	char character;
+	if (!read(STDIN_FILENO, &character, 1)) {
+            perror(RED NCSH_ERROR_STDIN RESET);
+            return E_FAILURE;
+    	}
+
+	if (character != 'y' || character != 'Y')
+	    return E_SUCCESS;*/
+
         file = fopen(history->file, "w");
         if (file == NULL) {
             perror(RED "ncsh: Could not load or create history file" RESET);

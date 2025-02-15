@@ -7,6 +7,7 @@
 
 #include "eskilib/eskilib_result.h"
 #include "eskilib/eskilib_string.h"
+#include "ncsh_configurables.h"
 #include "ncsh_parser.h"
 
 #ifdef NCSH_HISTORY_TEST
