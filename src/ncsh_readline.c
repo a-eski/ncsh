@@ -161,34 +161,24 @@ int ncsh_readline_line_reset(struct ncsh_Input* input)
 void ncsh_readline_autocomplete(struct ncsh_Input* input)
 {
     if (input->buffer[0] == '\0' || input->buffer[input->pos] != '\0') {
-        // ncsh_readline_line_reset(input);
         return;
     }
     else if (input->buffer[0] < 32) { // exclude control characters from autocomplete
-        // ncsh_readline_line_reset(input);
+        ncsh_readline_line_reset(input);
         memset(input->buffer, '\0', input->max_pos);
         input->pos = 0;
         input->max_pos = 0;
         return;
     }
-    /*else if (input->prompt_len + input->pos > (size_t)input->max_x) {
-        ncsh_readline_line_reset(input);
-        return;
-    }*/
 
     uint_fast8_t autocompletions_matches_count = ncsh_autocompletions_first(
         input->buffer, input->pos + 1, input->current_autocompletion, input->autocompletions_tree);
 
     if (!autocompletions_matches_count) {
         input->current_autocompletion[0] = '\0';
-        // ncsh_readline_line_reset(input);
-        return;
-    }
-
-    /*if ((int)strlen(input->current_autocompletion) > input->max_x) {
         ncsh_readline_line_reset(input);
         return;
-    }*/
+    }
 
     struct ncsh_Coordinates previous_pos = ncsh_terminal_position();
     printf(ERASE_CURRENT_LINE WHITE_DIM "%s" RESET, input->current_autocompletion);
