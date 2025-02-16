@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "eskilib/eskilib_colors.h"
@@ -19,25 +20,29 @@ size_t ncsh_readline_prompt_short_directory(char* cwd, char* output)
 {
     uint_fast32_t i = 1;
     uint_fast32_t last_slash_pos = 0;
-    uint_fast32_t second_to_last_slash = 0;
+    uint_fast32_t second_to_last_slash_pos = 0;
 
     while (cwd[i] != '\n' && cwd[i] != '\0') {
         if (cwd[i] == '/') {
-            second_to_last_slash = last_slash_pos;
+            second_to_last_slash_pos = last_slash_pos;
             last_slash_pos = i + 1;
         }
         ++i;
     }
 
-    if (last_slash_pos + 1 != second_to_last_slash) {
-    	memcpy(output, cwd + second_to_last_slash - 1, i - second_to_last_slash + 1);
+    if (second_to_last_slash_pos != 0) { // has at least 3 slashes
+    	memcpy(output, cwd + second_to_last_slash_pos - 1, i - second_to_last_slash_pos + 1);
+	output[i - second_to_last_slash_pos + 1] = '\0';
+    	return i - second_to_last_slash_pos + 2; // null termination included in len
     }
-    else {
-	memcpy(output, cwd, i);
-    }
-    output[i - second_to_last_slash + 1] = '\0';
 
-    return i - second_to_last_slash + 2; // null termination included in len
+    if (last_slash_pos == 0) { // 1 slash at beginning of cwd
+	memcpy(output, cwd, i);
+	return i;
+    }
+
+    memcpy(output, cwd + last_slash_pos - 1, i - last_slash_pos + 1); // has 2 slashes
+     return i - last_slash_pos + 2; // null termination included in len
 }
 #endif /* ifdef NCSH_SHORT_DIRECTORY */
 
@@ -143,22 +148,24 @@ int ncsh_readline_line_reset(struct ncsh_Input* input)
 {
     int pos = input->max_pos - input->pos;
     if (pos > 0) {
-        ncsh_terminal_move_right(input->max_pos - input->pos);
+        ncsh_terminal_move_right(pos);
+	ncsh_write_literal(ERASE_CURRENT_LINE);
+	ncsh_terminal_move_left(pos);
+	return EXIT_SUCCESS;
     }
 
     ncsh_write_literal(ERASE_CURRENT_LINE);
-
     return EXIT_SUCCESS;
 }
 
 void ncsh_readline_autocomplete(struct ncsh_Input* input)
 {
     if (input->buffer[0] == '\0' || input->buffer[input->pos] != '\0') {
-        ncsh_readline_line_reset(input);
+        // ncsh_readline_line_reset(input);
         return;
     }
     else if (input->buffer[0] < 32) { // exclude control characters from autocomplete
-        ncsh_readline_line_reset(input);
+        // ncsh_readline_line_reset(input);
         memset(input->buffer, '\0', input->max_pos);
         input->pos = 0;
         input->max_pos = 0;
@@ -174,7 +181,7 @@ void ncsh_readline_autocomplete(struct ncsh_Input* input)
 
     if (!autocompletions_matches_count) {
         input->current_autocompletion[0] = '\0';
-        ncsh_readline_line_reset(input);
+        // ncsh_readline_line_reset(input);
         return;
     }
 
