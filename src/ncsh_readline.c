@@ -29,7 +29,12 @@ size_t ncsh_readline_prompt_short_directory(char* cwd, char* output)
         ++i;
     }
 
-    memcpy(output, cwd + second_to_last_slash - 1, i - second_to_last_slash + 1);
+    if (last_slash_pos + 1 != second_to_last_slash) {
+    	memcpy(output, cwd + second_to_last_slash - 1, i - second_to_last_slash + 1);
+    }
+    else {
+	memcpy(output, cwd, i);
+    }
     output[i - second_to_last_slash + 1] = '\0';
 
     return i - second_to_last_slash + 2; // null termination included in len
@@ -63,7 +68,7 @@ eskilib_nodiscard int_fast32_t ncsh_readline_prompt(struct ncsh_Input* input)
     return EXIT_SUCCESS;
 }
 
-eskilib_nodiscard int_fast32_t ncsh_backspace(struct ncsh_Input* input)
+eskilib_nodiscard int_fast32_t ncsh_readline_backspace(struct ncsh_Input* input)
 {
     if (!input->pos) {
         return EXIT_SUCCESS;
@@ -101,7 +106,7 @@ eskilib_nodiscard int_fast32_t ncsh_backspace(struct ncsh_Input* input)
     return EXIT_SUCCESS;
 }
 
-eskilib_nodiscard int_fast32_t ncsh_delete(struct ncsh_Input* input)
+eskilib_nodiscard int_fast32_t ncsh_readline_delete(struct ncsh_Input* input)
 {
     ncsh_write_literal(DELETE_STRING ERASE_CURRENT_LINE);
 
@@ -134,18 +139,33 @@ eskilib_nodiscard int_fast32_t ncsh_delete(struct ncsh_Input* input)
     return EXIT_SUCCESS;
 }
 
-void ncsh_autocomplete(struct ncsh_Input* input)
+int ncsh_readline_line_reset(struct ncsh_Input* input)
+{
+    int pos = input->max_pos - input->pos;
+    if (pos > 0) {
+        ncsh_terminal_move_right(input->max_pos - input->pos);
+    }
+
+    ncsh_write_literal(ERASE_CURRENT_LINE);
+
+    return EXIT_SUCCESS;
+}
+
+void ncsh_readline_autocomplete(struct ncsh_Input* input)
 {
     if (input->buffer[0] == '\0' || input->buffer[input->pos] != '\0') {
+        ncsh_readline_line_reset(input);
         return;
     }
     else if (input->buffer[0] < 32) { // exclude control characters from autocomplete
+        ncsh_readline_line_reset(input);
         memset(input->buffer, '\0', input->max_pos);
         input->pos = 0;
         input->max_pos = 0;
         return;
     }
     /*else if (input->prompt_len + input->pos > (size_t)input->max_x) {
+        ncsh_readline_line_reset(input);
         return;
     }*/
 
@@ -154,10 +174,12 @@ void ncsh_autocomplete(struct ncsh_Input* input)
 
     if (!autocompletions_matches_count) {
         input->current_autocompletion[0] = '\0';
+        ncsh_readline_line_reset(input);
         return;
     }
 
     /*if ((int)strlen(input->current_autocompletion) > input->max_x) {
+        ncsh_readline_line_reset(input);
         return;
     }*/
 
@@ -167,7 +189,7 @@ void ncsh_autocomplete(struct ncsh_Input* input)
     fflush(stdout);
 }
 
-char ncsh_read(void)
+char ncsh_readline_read(void)
 {
     char character = 0;
     if (!read(STDIN_FILENO, &character, 1)) {
@@ -202,7 +224,7 @@ char ncsh_read(void)
     return '\0';
 }
 
-eskilib_nodiscard int_fast32_t ncsh_tab_autocomplete(struct ncsh_Input* input,
+eskilib_nodiscard int_fast32_t ncsh_readline_tab_autocomplete(struct ncsh_Input* input,
                                                      struct ncsh_Autocompletion_Node* autocompletions_tree)
 {
     ncsh_write_literal(ERASE_CURRENT_LINE "\n");
@@ -235,7 +257,7 @@ eskilib_nodiscard int_fast32_t ncsh_tab_autocomplete(struct ncsh_Input* input,
     int_fast32_t exit = EXIT_SUCCESS;
     bool continue_input = true;
     while (continue_input) {
-        if ((character = ncsh_read()) == EXIT_IO_FAILURE) {
+        if ((character = ncsh_readline_read()) == EXIT_IO_FAILURE) {
             return EXIT_FAILURE;
         }
         switch (character) {
@@ -453,7 +475,7 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input* input)
             input->pos = 0;
         }
         else if (character == TAB_KEY) {
-            int_fast32_t tab_autocomplete_result = ncsh_tab_autocomplete(input, input->autocompletions_tree);
+            int_fast32_t tab_autocomplete_result = ncsh_readline_tab_autocomplete(input, input->autocompletions_tree);
 	    if (tab_autocomplete_result != EXIT_SUCCESS) {
 		exit = tab_autocomplete_result;
 		break;
@@ -467,7 +489,7 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input* input)
             continue;
         }
         else if (character == BACKSPACE_KEY) {
-            if (ncsh_backspace(input) == EXIT_FAILURE) {
+            if (ncsh_readline_backspace(input) == EXIT_FAILURE) {
                 exit = EXIT_FAILURE;
 		break;
             }
@@ -592,7 +614,7 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input* input)
                         continue;
                     }
 
-                    if (ncsh_delete(input) == EXIT_FAILURE) {
+                    if (ncsh_readline_delete(input) == EXIT_FAILURE) {
                         key_result = EXIT_FAILURE;
 			goto exit;
                     }
@@ -674,7 +696,7 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input* input)
             }
         }
 
-        ncsh_autocomplete(input);
+        ncsh_readline_autocomplete(input);
     }
 
 exit:
