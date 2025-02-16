@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 #include "eskilib/eskilib_colors.h"
 #include "eskilib/eskilib_defines.h"
@@ -123,10 +124,21 @@ eskilib_nodiscard enum eskilib_Result ncsh_config_file_set(struct ncsh_Config* c
 
 eskilib_nodiscard enum eskilib_Result ncsh_config_load(struct ncsh_Config* config)
 {
-    // ask user if they would like to create a config file
 
     FILE* file = fopen(config->config_file.value, "r");
-    if (!file) {
+    if (!file || ferror(file)) {
+	printf("ncsh: would you like to create a config file %s? [Y/n]: ", config->config_file.value);
+        fflush(stdout);
+
+	char character;
+	if (!read(STDIN_FILENO, &character, 1)) {
+            perror(RED NCSH_ERROR_STDIN RESET);
+            return E_FAILURE;
+    	}
+
+	if (character != 'y' || character != 'Y')
+	    return E_SUCCESS;
+
         file = fopen(config->config_file.value, "w");
         if (!file) {
             perror(RED "ncsh: Could not load or create config file" RESET);
@@ -150,13 +162,13 @@ eskilib_nodiscard enum eskilib_Result ncsh_config_init(struct ncsh_Config* confi
         return result;
     }
 
-    if ((result = ncsh_config_file_set(config)) != E_SUCCESS) {
+    /*if ((result = ncsh_config_file_set(config)) != E_SUCCESS) {
         return result;
     }
 
     if ((result = ncsh_config_load(config)) != E_SUCCESS) {
         return result;
-    }
+    }*/
 
     return E_SUCCESS;
 }

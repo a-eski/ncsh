@@ -5,9 +5,9 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wsign-conversion"
 
+#include "lib/examiner.h"
 #include "../fzf.h"
 
-#include <examiner.h>
 #include <stdlib.h>
 #include <string.h>
 

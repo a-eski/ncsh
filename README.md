@@ -11,7 +11,7 @@ An interactive unix shell focused on speed and building everything from scratch.
 
 ## dependencies
 
-none, asides from the C standard library and POSIX extensions.
+None, asides from the C standard library and POSIX extensions.
 
 ## to build from source
 
@@ -42,6 +42,10 @@ sudo make install
 * Install directory is by default /usr/local.
 * Pass in DESTDIR if you want to install it somewhere else.
 * History file .ncsh_history tries to use XDG_CONFIG_HOME if available, or else HOME.
+
+## running tests
+
+Please see COMPILE.md.
 
 ## goals
 

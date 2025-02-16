@@ -68,13 +68,13 @@ check :
 c :
 	make check
 
-.PHONY: integration_tests
-integration_tests :
-	chmod +x ./tests_it.sh
-	./tests_it.sh
-.PHONY: it
-it :
-	make integration_tests
+.PHONY: acceptance_tests
+acceptance_tests :
+	chmod +x ./tests_at.sh
+	./tests_at.sh
+.PHONY: at
+at :
+	make acceptance_tests
 
 # make check_local aka make l
 
@@ -84,7 +84,7 @@ check_local :
 	make test_fzf
 	make check
 	make test_z
-	make integration_tests
+	make acceptance_tests
 .PHONY: l
 l :
 	make check_local
@@ -138,7 +138,7 @@ tz :
 
 .PHONY: test_fzf
 test_fzf :
-	$(CC) $(STD) -fsanitize=address,undefined,leak -g ./src/z/fzf.c ./src/z/tests/fzf_tests.c -lexaminer -o ./$(BUILDDIR)/fzf_tests
+	$(CC) $(STD) -fsanitize=address,undefined,leak -g ./src/z/fzf.c ./src/z/tests/lib/examiner.c ./src/z/tests/fzf_tests.c -o ./$(BUILDDIR)/fzf_tests
 	@LD_LIBRARY_PATH=/usr/local/lib:./bin:${LD_LIBRARY_PATH} ./$(BUILDDIR)/fzf_tests
 .PHONY: tf
 tf :

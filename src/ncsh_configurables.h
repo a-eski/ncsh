@@ -20,3 +20,10 @@
 #ifndef NCSH_START_TIME
 #define NCSH_START_TIME
 #endif // !NCSH_START_TIME
+
+/* History Settings */
+/* NCSH_MAX_HISTORY_FILE: the maximum number of history entries to save to the history file */
+#define NCSH_MAX_HISTORY_FILE 2000
+/* NCSH_MAX_HISTORY_FILE: the maximum number of history entries to be able to hold in memory while the program is running. */
+#define NCSH_MAX_HISTORY_IN_MEMORY 2400
+

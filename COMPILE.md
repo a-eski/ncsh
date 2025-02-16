@@ -56,6 +56,17 @@ valgrind --leak-check=yes --track-fds=yes ./bin/ncsh
 
 There are shorthands for all of the commands in the makefile.
 
+### Dependencies
+
+There are unit tests and acceptance tests. You can run a subset of unit tests with `make check`. You can run all tests with `make check_local` aka `make l`, which include the acceptance tests. However, to run acceptance tests you need to install ruby and [ttytest2](https://github.com/a-eski/ttytest2).
+
+Example for Ubuntu/Debian:
+
+``` sh
+sudo apt-get install ruby-full
+sudo gem install ttytest2
+```
+
 ### Testing Local
 
 ``` sh
@@ -71,7 +82,7 @@ make test_history
 make test_parser
 make test_fzf
 make test_z
-make integration_tests
+make acceptance_tests
 ```
 
 ### Fuzz Testing

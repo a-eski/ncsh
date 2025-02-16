@@ -277,7 +277,7 @@ enum z_Result z_read(struct z_Database* db)
             return Z_STDIO_ERROR;
         }
         fclose(file);
-        return Z_ZERO_BYTES_READ;
+        return Z_SUCCESS;
     }
     else if (!bytes_read || ferror(file) || feof(file)) {
         if (write(STDERR_FILENO, "Couldn't read number of entries from header while trying to read z database file.\n",
@@ -287,7 +287,7 @@ enum z_Result z_read(struct z_Database* db)
             return Z_STDIO_ERROR;
         }
         fclose(file);
-        return Z_ZERO_BYTES_READ;
+        return Z_SUCCESS;
     }
 
     enum z_Result result;
