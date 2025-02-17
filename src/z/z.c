@@ -647,19 +647,16 @@ enum z_Result z_exit(struct z_Database* db)
 
 void z_print(struct z_Database* db)
 {
-    puts(RED_BRIGHT "z: autojump/z implementation in C for ncsh." RESET);
-    puts("z database (db) details:");
-    printf("z db count: %zu\n", db->count);
+    puts(RED_BRIGHT "z: autojump/z implementation in C for ncsh.\n" RESET);
+    printf("Number of entries in the database is currently: %zu\n\n", db->count);
     if (!db->count) {
-        puts("no other z db details to print because db count is 0.");
         return;
     }
 
-    // time_t now = time(NULL);
     for (size_t i = 0; i < db->count; ++i) {
         printf("z_db.entries[%zu].path: %s\n", i, db->dirs[i].path);
         printf("z_db.entries[%zu].path_length: %zu\n", i, db->dirs[i].path_length);
         printf("z_db.entries[%zu].last_accessed: %zu\n", i, db->dirs[i].last_accessed);
-        printf("z_db.entries[%zu].rank: %f\n", i, db->dirs[i].rank);
+        printf("z_db.entries[%zu].rank: %f\n\n", i, db->dirs[i].rank);
     }
 }
