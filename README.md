@@ -53,11 +53,10 @@ Please see COMPILE.md.
 * more compile-time configurations
 * aliasing
 * frecency-based autocomplete
-* support removing entries from history and autocompletions (use sqlite??)
-* move built-in commands like export, kill, setting environment variables, etc.
+* move built-in commands like export, setting environment variables, etc.
 * aliasing for user-defined commands, user configuration
 * better prompt line and configurable prompt line
 * support scripts through a non-iteractive mode
-* build for and test on mac (I don't have one)
-* build for and test on windows with msys2
+* build for and test on mac (I don't have one)?
+* build for and test on windows with msys2?
 * math

@@ -11,23 +11,24 @@
 #include "ncsh_parser.h"
 #include "z/z.h"
 
-#define NCSH_Z "z"
+#define NCSH_Z "z" // the base command, changes directory
 #define NCSH_Z_ADD "add"
 #define NCSH_Z_RM "rm"
 #define NCSH_Z_REMOVE "remove" // alias for rm
 #define NCSH_Z_PRINT "print"
-// Handles z, z {directory}, z add {directory}, z print
 int_fast32_t ncsh_builtins_z(struct z_Database* z_db, struct ncsh_Args* args);
 
-#define NCSH_HISTORY "history"
+#define NCSH_HISTORY "history" // the base command, displays history
 #define NCSH_HISTORY_COUNT "count"
 #define NCSH_HISTORY_CLEAN "clean"
-// Handles history, history count, history clean
+#define NCSH_HISTORY_ADD "add"
+#define NCSH_HISTORY_RM "rm" // alias for rm
+#define NCSH_HISTORY_REMOVE "remove"
 int_fast32_t ncsh_builtins_history(struct ncsh_History* history, struct ncsh_Args* args);
 
-#define NCSH_EXIT "exit" // ncsh_builtins_exit
-#define NCSH_QUIT "quit" // alias for exit, ncsh_builtins_exit
-#define NCSH_Q "q"       // alias for exit, ncsh_builtins_exit
+#define NCSH_EXIT "exit" // the base command
+#define NCSH_QUIT "quit" // alias for exit
+#define NCSH_Q "q"       // alias for exit
 int_fast32_t ncsh_builtins_exit(struct ncsh_Args* args);
 
 #define NCSH_ECHO "echo"

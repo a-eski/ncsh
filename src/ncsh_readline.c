@@ -58,11 +58,11 @@ eskilib_nodiscard int_fast32_t ncsh_readline_prompt(struct ncsh_Input* input)
 
 #ifdef NCSH_SHORT_DIRECTORY
     size_t dir_len = ncsh_readline_prompt_short_directory(cwd, directory);
-    printf(ncsh_GREEN "%s" WHITE " " ncsh_CYAN "%s" WHITE_BRIGHT " \u2771 ", input->user.value, directory);
+    printf(ncsh_GREEN "%s" WHITE " " ncsh_CYAN "%s" WHITE_BRIGHT NCSH_PROMPT_ENDING_STRING, input->user.value, directory);
 #else
     strcpy(directory, cwd);
     size_t dir_len = strlen(directory) + 1;
-    printf(ncsh_GREEN "%s" WHITE " " ncsh_CYAN "%s" WHITE_BRIGHT " \u2771 ", input->user.value, directory);
+    printf(ncsh_GREEN "%s" WHITE " " ncsh_CYAN "%s" WHITE_BRIGHT " " NCSH_PROMPT_ENDING_STRING " ", input->user.value, directory);
 #endif /* ifdef NCSH_SHORT_DIRECTORY */
 
     input->prompt_len = ncsh_terminal_prompt_size(input->user.length, dir_len);
