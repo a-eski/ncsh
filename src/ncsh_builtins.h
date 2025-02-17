@@ -13,6 +13,8 @@
 
 #define NCSH_Z "z"
 #define NCSH_Z_ADD "add"
+#define NCSH_Z_RM "rm"
+#define NCSH_Z_REMOVE "remove" // alias for rm
 #define NCSH_Z_PRINT "print"
 // Handles z, z {directory}, z add {directory}, z print
 int_fast32_t ncsh_builtins_z(struct z_Database* z_db, struct ncsh_Args* args);
@@ -24,8 +26,8 @@ int_fast32_t ncsh_builtins_z(struct z_Database* z_db, struct ncsh_Args* args);
 int_fast32_t ncsh_builtins_history(struct ncsh_History* history, struct ncsh_Args* args);
 
 #define NCSH_EXIT "exit" // ncsh_builtins_exit
-#define NCSH_QUIT "quit" // ncsh_builtins_exit
-#define NCSH_Q "q"       // ncsh_builtins_exit
+#define NCSH_QUIT "quit" // alias for exit, ncsh_builtins_exit
+#define NCSH_Q "q"       // alias for exit, ncsh_builtins_exit
 int_fast32_t ncsh_builtins_exit(struct ncsh_Args* args);
 
 #define NCSH_ECHO "echo"

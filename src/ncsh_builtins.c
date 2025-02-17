@@ -11,9 +11,9 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <string.h>
 #include <unistd.h>
 
+#include "eskilib/eskilib_string.h"
 #include "eskilib/eskilib_colors.h"
 #include "eskilib/eskilib_defines.h"
 #include "ncsh_defines.h"
@@ -27,40 +27,49 @@ eskilib_nodiscard int_fast32_t ncsh_builtins_z(struct z_Database* z_db, struct n
     assert(z_db);
     assert(args->count > 0);
 
-    if (args->values[1] &&
-        eskilib_string_compare(args->values[1], args->lengths[1], NCSH_Z_PRINT, sizeof(NCSH_Z_PRINT))) {
-        z_print(z_db);
+    if (args->count == 2) {
+        assert(args->values[1]);
+
+        // z print
+        if (eskilib_string_compare(args->values[1], args->lengths[1], NCSH_Z_PRINT, sizeof(NCSH_Z_PRINT))) {
+            z_print(z_db);
+            return NCSH_COMMAND_SUCCESS_CONTINUE;
+        }
+
+	// z
+        char cwd[PATH_MAX] = {0};
+        if (!getcwd(cwd, PATH_MAX)) {
+            perror(RED "ncsh z: Could not load cwd information" RESET);
+            return NCSH_COMMAND_EXIT_FAILURE;
+        }
+
+        z(args->values[1], args->lengths[1], cwd, z_db);
         return NCSH_COMMAND_SUCCESS_CONTINUE;
     }
 
     if (args->count > 2) {
-        if (!args->values[1] || !args->values[2]) {
-            return NCSH_COMMAND_FAILED_CONTINUE;
-        }
+        assert(args->values[1] && args->values[2]);
 
+	// z add
         if (eskilib_string_compare(args->values[1], args->lengths[1], NCSH_Z_ADD, sizeof(NCSH_Z_ADD))) {
-            size_t length = strlen(args->values[2]) + 1;
-            if (z_add(args->values[2], length, z_db) == Z_SUCCESS) {
-                return NCSH_COMMAND_SUCCESS_CONTINUE;
-            }
-            else {
+            if (z_add(args->values[2], args->lengths[2], z_db) != Z_SUCCESS) {
                 return NCSH_COMMAND_EXIT_FAILURE;
             }
+
+            return NCSH_COMMAND_SUCCESS_CONTINUE;
         }
-        else {
+	// z rm/remove
+        else if (eskilib_string_compare(args->values[1], args->lengths[1], NCSH_Z_RM, sizeof(NCSH_Z_RM)) ||
+                eskilib_string_compare(args->values[1], args->lengths[1], NCSH_Z_REMOVE, sizeof(NCSH_Z_REMOVE))) {
+            if (z_remove(args->values[2], args->lengths[2], z_db) != Z_SUCCESS) {
+                return NCSH_COMMAND_EXIT_FAILURE;
+            }
+
             return NCSH_COMMAND_SUCCESS_CONTINUE;
         }
     }
 
-    size_t length = !args->values[1] ? 0 : strlen(args->values[1]) + 1;
-    char cwd[PATH_MAX] = {0};
-    char* cwd_result = getcwd(cwd, PATH_MAX);
-    if (!cwd_result) {
-        perror(RED "ncsh z: Could not load cwd information" RESET);
-        return NCSH_COMMAND_EXIT_FAILURE;
-    }
-
-    z(args->values[1], length, cwd, z_db);
+    ncsh_write_literal("ncsh z: command not found.");
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
@@ -75,7 +84,9 @@ eskilib_nodiscard int_fast32_t ncsh_builtins_history(struct ncsh_History* histor
                                         sizeof(NCSH_HISTORY_CLEAN))) {
             return ncsh_history_command_clean(history);
         }
-        // else { Invalid options }
+
+        ncsh_write_literal("ncsh history: command not found.");
+        return NCSH_COMMAND_FAILED_CONTINUE;
     }
 
     return ncsh_history_command_display(history);
@@ -101,22 +112,28 @@ eskilib_nodiscard int_fast32_t ncsh_builtins_echo(struct ncsh_Args* args)
 }
 
 #define NCSH_COPYRIGHT                                                                                                 \
-    "ncsh Copyright (C) 2025 Alex Eski\n"                                                                              \
+    "ncsh: Copyright (C) 2025 Alex Eski\n"                                                                              \
     "This program comes with ABSOLUTELY NO WARRANTY.\n"                                                                \
     "This is free software, and you are welcome to redistribute it "                                                   \
     "under certain conditions.\n\n"
 
-#define NCSH_HELP_MESSAGE "ncsh help:\n"
-#define NCSH_HELP_FORMAT "Builtin Commands: {command} {args}\n"
-#define NCSH_HELP_QUIT "q:		      To exit, type q, exit, or quit and press enter. You can also use Ctrl+D to exit.\n"
-#define NCSH_HELP_CHANGEDIR "cd/z:		      You can change directory with cd or z.\n"
-#define NCSH_HELP_ECHO "echo:		      You can write things to the screen using echo.\n"
-#define NCSH_HELP_HISTORY "history:	      You can see your command history using the history command.\n"
-#define NCSH_HELP_HISTORY_COUNT                                                                                        \
-    "history count:        You can see the number of entries in your history with history count command.\n"
-#define NCSH_HELP_PWD "pwd:         	      Prints the current working directory.\n"
+#define HELP_MESSAGE "ncsh help\n\n"
+#define HELP_FORMAT "Builtin Commands: {command} {args}\n\n"
+#define HELP_QUIT "q:		      To exit, type q, exit, or quit and press enter. You can also use Ctrl+D to exit.\n\n"
+#define HELP_CHANGEDIR "cd/z:		      You can change directory with cd or z.\n\n"
+#define HELP_Z "z {directory}:        A builtin autojump/z command. An enhanced cd command that keeps track of history and fuzzy matches against previously visited directories.\n\n"
+#define HELP_Z_ADD "z add {directory}:    Manually add a directory to your z database.\n\n"
+#define HELP_Z_RM "z rm {directory}:     Manually remove a directory from your z database.\n\n"
+#define HELP_Z_PRINT "z print:              Print out information about the entries in your z database.\n\n"
+#define HELP_ECHO "echo:		      You can write things to the screen using echo.\n\n"
+#define HELP_HISTORY "history:	      You can see your command history using the history command.\n\n"
+#define HELP_HISTORY_COUNT                                                                                        \
+    "history count:        You can see the number of entries in your history with history count command.\n\n"
+#define HELP_HISTORY_CLEAN "history clean:        Removes all duplicates from the history file and reloads deduplicated history into memory.\n\n"
+#define HELP_PWD "pwd:         	      Prints the current working directory.\n\n"
+#define HELP_KILL "kill {processId}:     Terminates the process with associated processId.\n"
 
-#define NCSH_HELP_WRITE(str)                                                                                           \
+#define HELP_WRITE(str)                                                                                           \
     if (write(STDOUT_FILENO, str, sizeof(str) - 1) == -1) {                                                            \
         perror(RED NCSH_ERROR_STDOUT RESET);                                                                           \
         return NCSH_COMMAND_EXIT_FAILURE;                                                                              \
@@ -126,20 +143,21 @@ eskilib_nodiscard int_fast32_t ncsh_builtins_help(struct ncsh_Args* args)
 {
     (void)args; // to not get compiler warnings
 
-    NCSH_HELP_WRITE(NCSH_COPYRIGHT);
-    NCSH_HELP_WRITE(NCSH_HELP_MESSAGE);
-    NCSH_HELP_WRITE(NCSH_HELP_FORMAT);
-    NCSH_HELP_WRITE(NCSH_HELP_QUIT);
-    NCSH_HELP_WRITE(NCSH_HELP_CHANGEDIR);
-    // z
-    // z add
-    // z print
-    NCSH_HELP_WRITE(NCSH_HELP_ECHO);
-    NCSH_HELP_WRITE(NCSH_HELP_HISTORY);
-    NCSH_HELP_WRITE(NCSH_HELP_HISTORY_COUNT);
-    // history clean
-    NCSH_HELP_WRITE(NCSH_HELP_PWD);
-    // kill
+    HELP_WRITE(NCSH_COPYRIGHT);
+    HELP_WRITE(HELP_MESSAGE);
+    HELP_WRITE(HELP_FORMAT);
+    HELP_WRITE(HELP_QUIT);
+    HELP_WRITE(HELP_CHANGEDIR);
+    HELP_WRITE(HELP_Z);
+    HELP_WRITE(HELP_Z_ADD);
+    HELP_WRITE(HELP_Z_RM);
+    HELP_WRITE(HELP_Z_PRINT);
+    HELP_WRITE(HELP_ECHO);
+    HELP_WRITE(HELP_HISTORY);
+    HELP_WRITE(HELP_HISTORY_COUNT);
+    HELP_WRITE(HELP_HISTORY_CLEAN);
+    HELP_WRITE(HELP_PWD);
+    HELP_WRITE(HELP_KILL);
 
     // controls
     // autocomplete

@@ -23,19 +23,15 @@ double z_score(struct z_Directory* directory, int fzf_score, time_t now)
     time_t duration = now - directory->last_accessed;
 
     if (duration < Z_HOUR) {
-        // return (directory->rank + fzf_score) * 4.0;
         return (directory->rank * 4.0) + fzf_score;
     }
     else if (duration < Z_DAY) {
-        // return (directory->rank + fzf_score) * 2.0;
         return (directory->rank * 2.0) + fzf_score;
     }
     else if (duration < Z_WEEK) {
-        // return (directory->rank + fzf_score) * 0.5;
         return (directory->rank * 0.5) + fzf_score;
     }
     else {
-        // return (directory->rank + fzf_score) * 0.25;
         return (directory->rank * 0.25) + fzf_score;
     }
 }
@@ -208,6 +204,9 @@ enum z_Result z_read_entry(struct z_Directory* dir, FILE* file)
     else if (ferror(file)) {
         return Z_FILE_ERROR;
     }
+    else if (dir->path_length == 0) {
+	return Z_FILE_ERROR;
+    }
 
     dir->path = malloc(dir->path_length + 1);
     if (!dir->path) {
@@ -228,12 +227,16 @@ enum z_Result z_read_entry(struct z_Directory* dir, FILE* file)
     return Z_SUCCESS;
 }
 
+#define Z_CREATING_DB_FILE "ncsh z: trying to create z database file.\n"
+#define Z_CREATED_DB_FILE "ncsh z: created z database file.\n"
+#define Z_NO_COUNT_HEADER "ncsh z: couldn't find number of entries header while trying to read z database file. File is empty or corrupted.\n"
 enum z_Result z_read(struct z_Database* db)
 {
     FILE* file = fopen(db->database_file, "rb");
+
     if (!file || feof(file) || ferror(file)) {
-        perror("Error opening z database file");
-        if (write(STDOUT_FILENO, "Trying to create z database file.\n", 34) == -1) {
+        perror("ncsh z: z database file could not be found or opened");
+        if (write(STDOUT_FILENO, Z_CREATING_DB_FILE, sizeof(Z_CREATING_DB_FILE) - 1) == -1) {
             perror(RED NCSH_ERROR_STDOUT RESET);
             fflush(stderr);
             if (file) {
@@ -245,13 +248,13 @@ enum z_Result z_read(struct z_Database* db)
         file = fopen(db->database_file, "wb");
 
         if (!file || ferror(file)) {
-            perror("Error creating z database file");
+            perror("ncsh z: error creating z database file");
             if (file) {
                 fclose(file);
             }
         }
         else {
-            if (write(STDOUT_FILENO, "Created z database file.\n", 25) == -1) {
+            if (write(STDOUT_FILENO, Z_CREATED_DB_FILE, sizeof(Z_CREATED_DB_FILE) - 1) == -1) {
                 perror(RED NCSH_ERROR_STDOUT RESET);
                 fflush(stderr);
                 if (file) {
@@ -270,8 +273,7 @@ enum z_Result z_read(struct z_Database* db)
     uint32_t number_of_entries = 0;
     size_t bytes_read = fread(&number_of_entries, sizeof(uint32_t), 1, file);
     if (!number_of_entries) {
-        if (write(STDERR_FILENO, "Couldn't find number of entries header while trying to read z database file.\n",
-                  77) == -1) {
+        if (write(STDERR_FILENO, Z_NO_COUNT_HEADER, sizeof(Z_NO_COUNT_HEADER) - 1) == -1) {
             perror(RED NCSH_ERROR_STDOUT RESET);
             fflush(stderr);
             return Z_STDIO_ERROR;
@@ -576,18 +578,41 @@ enum z_Result z_add(char* path, size_t path_length, struct z_Database* db)
     return Z_MALLOC_ERROR;
 }
 
+void z_remove_dirs_shift(size_t offset, struct z_Database* db)
+{
+    if (offset + 1 == db->count) {
+        return;
+    }
+
+    for (size_t i = offset; i < db->count - 1; ++i) {
+	db->dirs[i] = db->dirs[i + 1];
+    }
+}
+
 enum z_Result z_remove(char* path, size_t path_length, struct z_Database* db)
 {
-    if (!path || !db) {
+    assert(db);
+    if (!path) {
         return Z_NULL_REFERENCE;
     }
     if (path_length < 2 || path[path_length - 1] != '\0') {
         return Z_BAD_STRING;
     }
 
-    // NOTE: not implemented
+    for (size_t i = 0; i < db->count; ++i) {
+        if (eskilib_string_compare((db->dirs + i)->path, (db->dirs + i)->path_length, (char*)path, path_length)) {
+            free((db->dirs + i)->path);
+            (db->dirs + i)->path = NULL;
+            (db->dirs + i)->path_length = 0;
+            (db->dirs + i)->last_accessed = 0;
+            (db->dirs + i)->rank = 0;
+	    z_remove_dirs_shift(i, db);
+	    --db->count;
+    	    return Z_SUCCESS;
+        }
+    }
 
-    return Z_SUCCESS;
+    return Z_MATCH_NOT_FOUND;
 }
 
 void z_free(struct z_Database* db)
@@ -627,20 +652,16 @@ enum z_Result z_exit(struct z_Database* db)
 
 void z_print(struct z_Database* db)
 {
-    puts(RED_BRIGHT "z: autojump/z implementation in C for ncsh." RESET);
-    puts("z database (db) details:");
-    printf("z db count: %zu\n", db->count);
+    puts(RED_BRIGHT "z: autojump/z implementation in C for ncsh.\n" RESET);
+    printf("Number of entries in the database is currently: %zu\n\n", db->count);
     if (!db->count) {
-        puts("no other z db details to print because db count is 0.");
         return;
     }
 
-    // time_t now = time(NULL);
     for (size_t i = 0; i < db->count; ++i) {
         printf("z_db.entries[%zu].path: %s\n", i, db->dirs[i].path);
         printf("z_db.entries[%zu].path_length: %zu\n", i, db->dirs[i].path_length);
         printf("z_db.entries[%zu].last_accessed: %zu\n", i, db->dirs[i].last_accessed);
-        printf("z_db.entries[%zu].rank: %f\n", i, db->dirs[i].rank);
-        // printf("z_db.entries[%zu].score %f\n", i, z_score((db->dirs + i), now));
+        printf("z_db.entries[%zu].rank: %f\n\n", i, db->dirs[i].rank);
     }
 }

@@ -27,11 +27,11 @@ def starting_tests(test)
 end
 
 def z_database_new_test(row)
-  @tty.assert_row(row, 'Error opening z database file: No such file or directory')
+  @tty.assert_row(row, 'ncsh z: z database file could not be found or opened: No such file or directory')
   row += 1
-  @tty.assert_row(row, 'Trying to create z database file.')
+  @tty.assert_row(row, 'ncsh z: trying to create z database file.')
   row += 1
-  @tty.assert_row(row, 'Created z database file.')
+  @tty.assert_row(row, 'ncsh z: created z database file.')
   row += 1
   puts 'New z database test passed'
   row
