@@ -15,7 +15,7 @@
 #include "ncsh_readline.h"
 
 /* Prompt */
-#ifdef NCSH_SHORT_DIRECTORY
+#if NCSH_PROMPT_DIRECTORY == NCSH_DIRECTORY_SHORT
 size_t ncsh_readline_prompt_short_directory(char* cwd, char* output)
 {
     uint_fast32_t i = 1;
@@ -44,9 +44,8 @@ size_t ncsh_readline_prompt_short_directory(char* cwd, char* output)
     memcpy(output, cwd + last_slash_pos - 1, i - last_slash_pos + 1); // has 2 slashes
      return i - last_slash_pos + 2; // null termination included in len
 }
-#endif /* ifdef NCSH_SHORT_DIRECTORY */
 
-eskilib_nodiscard int_fast32_t ncsh_readline_prompt(struct ncsh_Input* input)
+int_fast32_t ncsh_readline_prompt_short_directory_print(struct ncsh_Input* input)
 {
     char cwd[PATH_MAX] = {0};
     char directory[PATH_MAX] = {0};
@@ -55,24 +54,77 @@ eskilib_nodiscard int_fast32_t ncsh_readline_prompt(struct ncsh_Input* input)
         fflush(stderr);
         return EXIT_FAILURE;
     }
-
-#ifdef NCSH_SHORT_DIRECTORY
     size_t dir_len = ncsh_readline_prompt_short_directory(cwd, directory);
-    printf(ncsh_GREEN "%s" WHITE " " ncsh_CYAN "%s" WHITE_BRIGHT NCSH_PROMPT_ENDING_STRING, input->user.value, directory);
-#else
-    strcpy(directory, cwd);
-    size_t dir_len = strlen(directory) + 1;
-    printf(ncsh_GREEN "%s" WHITE " " ncsh_CYAN "%s" WHITE_BRIGHT " " NCSH_PROMPT_ENDING_STRING " ", input->user.value, directory);
-#endif /* ifdef NCSH_SHORT_DIRECTORY */
-
+#ifdef NCSH_PROMPT_SHOW_USER
+    printf(ncsh_GREEN "%s" " " ncsh_CYAN "%s" WHITE_BRIGHT NCSH_PROMPT_ENDING_STRING, input->user.value, directory);
     input->prompt_len = ncsh_terminal_prompt_size(input->user.length, dir_len);
+#else
+    printf(ncsh_CYAN "%s" WHITE_BRIGHT NCSH_PROMPT_ENDING_STRING, directory);
+    input->prompt_len = ncsh_terminal_prompt_size(0, dir_len);
+#endif /* ifdef NCSH_PROMPT_SHOW_USER */
+    fflush(stdout);
+    // save cursor position so we can reset cursor when loading history entries
+    ncsh_write_literal(SAVE_CURSOR_POSITION);
+    return EXIT_SUCCESS;
+}
+#endif /* if NCSH_PROMPT_DIRECTORY == NCSH_DIRECTORY_SHORT */
+
+#if NCSH_PROMPT_DIRECTORY == NCSH_DIRECTORY_NORMAL
+int_fast32_t ncsh_readline_prompt_directory_print(struct ncsh_Input* input)
+{
+    char cwd[PATH_MAX] = {0};
+    if (!getcwd(cwd, sizeof(cwd))) {
+        perror(RED "ncsh: Error when getting current directory" RESET);
+        fflush(stderr);
+        return EXIT_FAILURE;
+    }
+    size_t dir_len = strlen(cwd) + 1;
+
+#ifdef NCSH_PROMPT_SHOW_USER
+    printf(ncsh_GREEN "%s" WHITE_BRIGHT " " ncsh_CYAN "%s" WHITE_BRIGHT NCSH_PROMPT_ENDING_STRING, input->user.value, cwd);
+    input->prompt_len = ncsh_terminal_prompt_size(input->user.length, dir_len);
+#else
+    printf(ncsh_CYAN "%s" WHITE_BRIGHT NCSH_PROMPT_ENDING_STRING, cwd);
+    input->prompt_len = ncsh_terminal_prompt_size(0, dir_len);
+#endif /* ifdef NCSH_PROMPT_SHOW_USER */
+
     fflush(stdout);
     // save cursor position so we can reset cursor when loading history entries
     ncsh_write_literal(SAVE_CURSOR_POSITION);
 
     return EXIT_SUCCESS;
 }
+#endif /* if NCSH_PROMPT_DIRECTORY == NCSH_DIRECTORY_NORMAL */
 
+#if NCSH_PROMPT_DIRECTORY == NCSH_DIRECTORY_NONE
+int_fast32_t ncsh_readline_prompt_no_directory_print(struct ncsh_Input* input) {
+#ifdef NCSH_PROMPT_SHOW_USER
+    printf(ncsh_GREEN "%s" WHITE_BRIGHT NCSH_PROMPT_ENDING_STRING, input->user.value);
+    input->prompt_len = ncsh_terminal_prompt_size(input->user.length, 0);
+#else
+    printf(WHITE_BRIGHT NCSH_PROMPT_ENDING_STRING);
+    input->prompt_len = ncsh_terminal_prompt_size(0, 0);
+#endif /* ifdef NCSH_PROMPT_SHOW_USER */
+
+    fflush(stdout);
+    // save cursor position so we can reset cursor when loading history entries
+    ncsh_write_literal(SAVE_CURSOR_POSITION);
+    return EXIT_SUCCESS;
+}
+#endif
+
+eskilib_nodiscard int_fast32_t ncsh_readline_prompt(struct ncsh_Input* input)
+{
+#if NCSH_PROMPT_DIRECTORY == NCSH_DIRECTORY_SHORT
+    return ncsh_readline_prompt_short_directory_print(input);
+#elif NCSH_PROMPT_DIRECTORY == NCSH_DIRECTORY_NORMAL
+    return ncsh_readline_prompt_directory_print(input);
+#elif NCSH_PROMPT_DIRECTORY == NCSH_DIRECTORY_NONE
+    return ncsh_readline_prompt_no_directory_print(input);
+#endif /* if NCSH_PROMPT_DIRECTORY == NCSH_DIRECTORY_SHORT */
+}
+
+// IO
 eskilib_nodiscard int_fast32_t ncsh_readline_backspace(struct ncsh_Input* input)
 {
     if (!input->pos) {

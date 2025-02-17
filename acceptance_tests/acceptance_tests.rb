@@ -315,6 +315,8 @@ def history_tests(row)
   row = history_delete_test row
   row = history_backspace_test row
   history_clear_test row
+  # row = history_add_test row
+  # row = history_remove_test row
 end
 
 def basic_stdout_redirection_test(row)

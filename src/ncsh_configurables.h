@@ -9,17 +9,26 @@
 
 
 /* Prompt Settings */
-/* NCSH_SHORT_DIRECTORY: only show up to 2 directories in prompt line (defined) or show current path entirely (not
- * defined) */
-#ifndef NCSH_SHORT_DIRECTORY
-#define NCSH_SHORT_DIRECTORY
-#endif // !NCSH_SHORT_DIRECTORY
+// NCSH_DIRECTORY_{OPTION}: options for NCSH_PROMPT_DIRECTORY
+#define NCSH_DIRECTORY_NORMAL 0  // show the current working directory in the prompt line
+#define NCSH_DIRECTORY_SHORT  1  // show up to 2 of the parent directories in the prompt line
+#define NCSH_DIRECTORY_NONE   2  // do not show the current working directory in the prompt line
+
+#ifndef NCSH_PROMPT_DIRECTORY
+// put the option from above that you want after NCSH_PROMPT_DIRECTORY
+#define NCSH_PROMPT_DIRECTORY NCSH_DIRECTORY_SHORT
+#endif // !NCSH_PROMPT_DIRECTORY
 
 /* NCSH_PROMPT_ENDING_STRING: the string at the end of the prompt line, traditionally "> " or "$ ".
  * Allows you to control spacing as well, if you want "{user} {directory}> ", you would put "> ".*/
 #ifndef NCSH_PROMPT_ENDING_STRING
 #define NCSH_PROMPT_ENDING_STRING " \u2771 "
 #endif // !NCSH_PROMPT_ENDING_STRING
+
+/* NCSH_PROMPT_SHOW_USER: show the current user at the start of the prompt. */
+#ifndef NCSH_PROMPT_SHOW_USER
+#define NCSH_PROMPT_SHOW_USER
+#endif // !NCSH_PROMPT_SHOW_USER
 
 
 
