@@ -53,7 +53,7 @@ eskilib_nodiscard int_fast32_t ncsh_builtins_z(struct z_Database* z_db, struct n
 	// z add
         if (eskilib_string_compare(args->values[1], args->lengths[1], NCSH_Z_ADD, sizeof(NCSH_Z_ADD))) {
             if (z_add(args->values[2], args->lengths[2], z_db) != Z_SUCCESS) {
-                return NCSH_COMMAND_EXIT_FAILURE;
+                return NCSH_COMMAND_FAILED_CONTINUE;
             }
 
             return NCSH_COMMAND_SUCCESS_CONTINUE;
@@ -62,20 +62,26 @@ eskilib_nodiscard int_fast32_t ncsh_builtins_z(struct z_Database* z_db, struct n
         else if (eskilib_string_compare(args->values[1], args->lengths[1], NCSH_Z_RM, sizeof(NCSH_Z_RM)) ||
                 eskilib_string_compare(args->values[1], args->lengths[1], NCSH_Z_REMOVE, sizeof(NCSH_Z_REMOVE))) {
             if (z_remove(args->values[2], args->lengths[2], z_db) != Z_SUCCESS) {
-                return NCSH_COMMAND_EXIT_FAILURE;
+                return NCSH_COMMAND_FAILED_CONTINUE;
             }
 
             return NCSH_COMMAND_SUCCESS_CONTINUE;
         }
     }
 
-    ncsh_write_literal("ncsh z: command not found.");
+    ncsh_write_literal("ncsh z: command not found.\n");
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
 eskilib_nodiscard int_fast32_t ncsh_builtins_history(struct ncsh_History* history, struct ncsh_Args* args)
 {
-    if (args->values[1]) {
+    if (args->count == 1) {
+        return ncsh_history_command_display(history);
+    }
+
+    if (args->count == 2) {
+        assert(args->values[1]);
+
         if (eskilib_string_compare(args->values[1], args->lengths[1], NCSH_HISTORY_COUNT,
                                    sizeof(NCSH_HISTORY_COUNT))) {
             return ncsh_history_command_count(history);
@@ -84,12 +90,32 @@ eskilib_nodiscard int_fast32_t ncsh_builtins_history(struct ncsh_History* histor
                                         sizeof(NCSH_HISTORY_CLEAN))) {
             return ncsh_history_command_clean(history);
         }
-
-        ncsh_write_literal("ncsh history: command not found.");
-        return NCSH_COMMAND_FAILED_CONTINUE;
     }
 
-    return ncsh_history_command_display(history);
+    if (args->count == 3) {
+        assert(args->values[1] && args->values[2]);
+
+        // z add
+        if (eskilib_string_compare(args->values[1], args->lengths[1], NCSH_HISTORY_ADD, sizeof(NCSH_HISTORY_ADD))) {
+            if (ncsh_history_command_add(args->values[2], args->lengths[2], history) != Z_SUCCESS) {
+                return NCSH_COMMAND_FAILED_CONTINUE;
+            }
+
+            return NCSH_COMMAND_SUCCESS_CONTINUE;
+        }
+	// z rm/remove
+        else if (eskilib_string_compare(args->values[1], args->lengths[1], NCSH_HISTORY_RM, sizeof(NCSH_HISTORY_RM)) ||
+                eskilib_string_compare(args->values[1], args->lengths[1], NCSH_HISTORY_REMOVE, sizeof(NCSH_HISTORY_REMOVE))) {
+            if (ncsh_history_command_remove(args->values[2], args->lengths[2], history) != Z_SUCCESS) {
+                return NCSH_COMMAND_FAILED_CONTINUE;
+            }
+
+            return NCSH_COMMAND_SUCCESS_CONTINUE;
+        }
+    }
+
+    ncsh_write_literal("ncsh history: command not found.\n");
+    return NCSH_COMMAND_FAILED_CONTINUE;
 }
 
 eskilib_nodiscard int_fast32_t ncsh_builtins_exit(struct ncsh_Args* args)
@@ -119,19 +145,21 @@ eskilib_nodiscard int_fast32_t ncsh_builtins_echo(struct ncsh_Args* args)
 
 #define HELP_MESSAGE "ncsh help\n\n"
 #define HELP_FORMAT "Builtin Commands: {command} {args}\n\n"
-#define HELP_QUIT "q:		      To exit, type q, exit, or quit and press enter. You can also use Ctrl+D to exit.\n\n"
-#define HELP_CHANGEDIR "cd/z:		      You can change directory with cd or z.\n\n"
-#define HELP_Z "z {directory}:        A builtin autojump/z command. An enhanced cd command that keeps track of history and fuzzy matches against previously visited directories.\n\n"
-#define HELP_Z_ADD "z add {directory}:    Manually add a directory to your z database.\n\n"
-#define HELP_Z_RM "z rm {directory}:     Manually remove a directory from your z database.\n\n"
-#define HELP_Z_PRINT "z print:              Print out information about the entries in your z database.\n\n"
-#define HELP_ECHO "echo:		      You can write things to the screen using echo.\n\n"
-#define HELP_HISTORY "history:	      You can see your command history using the history command.\n\n"
+#define HELP_QUIT "q:		          To exit, type q, exit, or quit and press enter. You can also use Ctrl+D to exit.\n\n"
+#define HELP_CHANGEDIR "cd/z:		          You can change directory with cd or z.\n\n"
+#define HELP_Z "z {directory}:            A builtin autojump/z command. An enhanced cd command that keeps track of history and fuzzy matches against previously visited directories.\n\n"
+#define HELP_Z_ADD "z add {directory}:        Manually add a directory to your z database.\n\n"
+#define HELP_Z_RM "z rm {directory}:         Manually remove a directory from your z database. Can also call using 'z remove {directory}'.\n\n"
+#define HELP_Z_PRINT "z print:                  Print out information about the entries in your z database.\n\n"
+#define HELP_ECHO "echo:		          You can write things to the screen using echo.\n\n"
+#define HELP_HISTORY "history:	          You can see your command history using the history command.\n\n"
 #define HELP_HISTORY_COUNT                                                                                        \
-    "history count:        You can see the number of entries in your history with history count command.\n\n"
-#define HELP_HISTORY_CLEAN "history clean:        Removes all duplicates from the history file and reloads deduplicated history into memory.\n\n"
-#define HELP_PWD "pwd:         	      Prints the current working directory.\n\n"
-#define HELP_KILL "kill {processId}:     Terminates the process with associated processId.\n"
+    "history count:            You can see the number of entries in your history with history count command.\n\n"
+#define HELP_HISTORY_CLEAN "history clean:            Removes all duplicates from the history file and reloads deduplicated history into memory.\n\n"
+#define HELP_HISTORY_ADD "history add {command}:    Add a command to your history without executing the command.\n\n"
+#define HELP_HISTORY_RM "history rm {command}:     Remove a command from your history. Please note, the history is cleaned first to dededuplicate. Can also call using 'history remove {command}.\n\n"
+#define HELP_PWD "pwd:         	          Prints the current working directory.\n\n"
+#define HELP_KILL "kill {processId}:         Terminates the process with associated processId.\n"
 
 #define HELP_WRITE(str)                                                                                           \
     if (write(STDOUT_FILENO, str, sizeof(str) - 1) == -1) {                                                            \
@@ -156,6 +184,8 @@ eskilib_nodiscard int_fast32_t ncsh_builtins_help(struct ncsh_Args* args)
     HELP_WRITE(HELP_HISTORY);
     HELP_WRITE(HELP_HISTORY_COUNT);
     HELP_WRITE(HELP_HISTORY_CLEAN);
+    HELP_WRITE(HELP_HISTORY_ADD);
+    HELP_WRITE(HELP_HISTORY_RM);
     HELP_WRITE(HELP_PWD);
     HELP_WRITE(HELP_KILL);
 

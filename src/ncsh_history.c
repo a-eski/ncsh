@@ -385,3 +385,44 @@ eskilib_nodiscard int_fast32_t ncsh_history_command_clean(struct ncsh_History* h
 
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
+
+eskilib_nodiscard int_fast32_t ncsh_history_command_add(char* value, size_t value_len, struct ncsh_History* history)
+{
+    return ncsh_history_add(value, value_len, history);
+}
+
+void ncsh_history_remove_entries_shift(int offset, struct ncsh_History* history)
+{
+    if (offset + 1 == history->count) {
+        return;
+    }
+
+    for (int i = offset; i < history->count - 1; ++i) {
+	history->entries[i] = history->entries[i + 1];
+    }
+}
+
+eskilib_nodiscard int_fast32_t ncsh_history_command_remove(char* value, size_t value_len, struct ncsh_History* history)
+{
+    assert(value);
+    assert(value_len > 0);
+    assert(history);
+
+    if (ncsh_history_clean(history) != E_SUCCESS) {
+        return NCSH_COMMAND_FAILED_CONTINUE;
+    }
+
+    for (int i = 0; i < history->count; ++i) {
+	if (eskilib_string_compare(value, value_len, history->entries[i].value, history->entries[i].length)) {
+	    free(history->entries[i].value);
+	    history->entries[i].value = NULL;
+	    history->entries[i].length = 0;
+	    ncsh_history_remove_entries_shift(i, history);
+	    --history->count;
+            printf("ncsh history: removed entry: %s\n", value);
+	    return NCSH_COMMAND_SUCCESS_CONTINUE;
+	}
+    }
+
+    return NCSH_COMMAND_FAILED_CONTINUE;
+}

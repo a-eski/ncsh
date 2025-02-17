@@ -25,16 +25,18 @@ struct ncsh_History {
     struct eskilib_String* entries;
 };
 
+/* History Setup and Manipulation */
 enum eskilib_Result ncsh_history_init(struct eskilib_String config_location, struct ncsh_History* history);
-
 void ncsh_history_exit(struct ncsh_History* history);
-
 enum eskilib_Result ncsh_history_add(char* line, size_t length, struct ncsh_History* history);
-
 struct eskilib_String ncsh_history_get(int position, struct ncsh_History* history);
 
+/* History Commands called from ncsh_builtins when user enters commands like 'history',
+ * 'history count', 'history clean', 'history add {directory}', 'history remove {directory}'. */
 int_fast32_t ncsh_history_command_display(struct ncsh_History* history);
 int_fast32_t ncsh_history_command_count(struct ncsh_History* history);
 int_fast32_t ncsh_history_command_clean(struct ncsh_History* history);
+int_fast32_t ncsh_history_command_add(char* value, size_t value_len, struct ncsh_History* history);
+int_fast32_t ncsh_history_command_remove(char* value, size_t value_len, struct ncsh_History* history);
 
 #endif // !NCSH_HISTORY_H_
