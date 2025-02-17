@@ -587,9 +587,6 @@ void z_remove_dirs_shift(size_t offset, struct z_Database* db)
     for (size_t i = offset; i < db->count - 1; ++i) {
 	db->dirs[i] = db->dirs[i + 1];
     }
-
-    // isn't working as expected
-    // memmove(db->dirs + offset, db->dirs + offset + 1, db->count - offset);
 }
 
 enum z_Result z_remove(char* path, size_t path_length, struct z_Database* db)
