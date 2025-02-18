@@ -49,14 +49,14 @@ Please see COMPILE.md.
 
 ## goals
 
-* rc file and more configurations
+* rc file configurations
 * more compile-time configurations
-* aliasing
 * frecency-based autocomplete
 * move built-in commands like export, setting environment variables, etc.
-* aliasing for user-defined commands, user configuration
-* better prompt line and configurable prompt line
+* aliasing for user-defined commands
+* custom prompt line layout, colors, backgrounds
 * support scripts through a non-iteractive mode
 * build for and test on mac (I don't have one)?
 * build for and test on windows with msys2?
 * math
+* better posix support

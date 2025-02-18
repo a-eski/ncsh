@@ -1,7 +1,11 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+# acceptance_tests.rb: the main acceptance tests for ncsh.
+# Uses prompt options PROMPT_DIRECTORY_SHORT and PROMPT_SHOW_USER_NORMAL
+
 require 'ttytest'
+require './acceptance_tests/startup.rb'
 
 WC_C_LENGTH = '141'
 SLEEP_TIME = 0.2
@@ -9,79 +13,6 @@ LS_LINES = 2
 LS_ITEMS = 15
 LS_FIRST_ITEM = 'CMakeLists.txt'
 TAB_AUTOCOMPLETE_ROWS = 11
-
-def setup_tests
-  @user = ENV['USER']
-  @start_column = 16 + @user.length
-end
-
-def assert_check_new_row(row)
-  @tty.assert_row_starts_with(row, "#{@user} ")
-  @tty.assert_row_like(row, 'ncsh')
-  @tty.assert_row_ends_with(row, ' ❱ ')
-  @tty.assert_cursor_position(@start_column, row)
-end
-
-def starting_tests(test)
-  puts "===== Starting #{test} tests ====="
-end
-
-def z_database_new_test(row)
-  @tty.assert_row(row, 'ncsh z: z database file could not be found or opened: No such file or directory')
-  row += 1
-  @tty.assert_row(row, 'ncsh z: trying to create z database file.')
-  row += 1
-  @tty.assert_row(row, 'ncsh z: created z database file.')
-  row += 1
-  puts 'New z database test passed'
-  row
-end
-
-def startup_test(row)
-  @tty.assert_row_starts_with(row, 'ncsh: startup time: ')
-  row += 1
-  puts 'Startup time test passed'
-  row
-end
-
-def newline_sanity_test(row)
-  assert_check_new_row(row)
-  @tty.send_newline
-  row += 1
-  assert_check_new_row(row)
-  @tty.send_newline
-  row += 1
-  puts 'Newline sanity test passed'
-  row
-end
-
-def empty_line_arrow_check(row)
-  @tty.send_left_arrow
-  assert_check_new_row(row)
-  @tty.send_right_arrow
-  assert_check_new_row(row)
-end
-
-def empty_line_sanity_test(row)
-  assert_check_new_row(row)
-  empty_line_arrow_check(row)
-  @tty.send_backspace
-  assert_check_new_row(row)
-  @tty.send_delete
-  assert_check_new_row(row)
-  puts 'Empty line sanity test passed'
-  row
-end
-
-def startup_tests(row, run_z_database_new_tests)
-  starting_tests 'startup tests'
-
-  row = z_database_new_test row if run_z_database_new_tests
-  row = startup_test row
-  row = newline_sanity_test row
-
-  empty_line_sanity_test row
-end
 
 def basic_ls_test(row)
   assert_check_new_row(row)
@@ -315,6 +246,8 @@ def history_tests(row)
   row = history_delete_test row
   row = history_backspace_test row
   history_clear_test row
+  # row = history_add_test row
+  # row = history_remove_test row
 end
 
 def basic_stdout_redirection_test(row)
@@ -770,9 +703,9 @@ def stdout_and_stderr_redirection_tests(row)
   basic_stdout_and_stderr_redirection_stdout_test row
 end
 
+setup_tests(PROMPT_DIRECTORY_SHORT, PROMPT_SHOW_USER_NORMAL)
 row = 0
 @tty = TTYtest.new_terminal(%(PS1='$ ' ./bin/ncsh), width: 120, height: 140)
-setup_tests()
 
 row = startup_tests(row, true)
 row = basic_tests row
