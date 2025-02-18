@@ -55,13 +55,13 @@ int_fast32_t ncsh_readline_prompt_short_directory_print(struct ncsh_Input* input
         return EXIT_FAILURE;
     }
     size_t dir_len = ncsh_readline_prompt_short_directory(cwd, directory);
-#ifdef NCSH_PROMPT_SHOW_USER
+#if NCSH_PROMPT_SHOW_USER == NCSH_SHOW_USER_NORMAL
     printf(ncsh_GREEN "%s" " " ncsh_CYAN "%s" WHITE_BRIGHT NCSH_PROMPT_ENDING_STRING, input->user.value, directory);
     input->prompt_len = ncsh_terminal_prompt_size(input->user.length, dir_len);
 #else
     printf(ncsh_CYAN "%s" WHITE_BRIGHT NCSH_PROMPT_ENDING_STRING, directory);
     input->prompt_len = ncsh_terminal_prompt_size(0, dir_len);
-#endif /* ifdef NCSH_PROMPT_SHOW_USER */
+#endif /* if NCSH_PROMPT_SHOW_USER == NCSH_SHOW_USER_NORMAL */
     fflush(stdout);
     // save cursor position so we can reset cursor when loading history entries
     ncsh_write_literal(SAVE_CURSOR_POSITION);
@@ -80,13 +80,13 @@ int_fast32_t ncsh_readline_prompt_directory_print(struct ncsh_Input* input)
     }
     size_t dir_len = strlen(cwd) + 1;
 
-#ifdef NCSH_PROMPT_SHOW_USER
+#if NCSH_PROMPT_SHOW_USER == NCSH_SHOW_USER_NORMAL
     printf(ncsh_GREEN "%s" WHITE_BRIGHT " " ncsh_CYAN "%s" WHITE_BRIGHT NCSH_PROMPT_ENDING_STRING, input->user.value, cwd);
     input->prompt_len = ncsh_terminal_prompt_size(input->user.length, dir_len);
 #else
     printf(ncsh_CYAN "%s" WHITE_BRIGHT NCSH_PROMPT_ENDING_STRING, cwd);
     input->prompt_len = ncsh_terminal_prompt_size(0, dir_len);
-#endif /* ifdef NCSH_PROMPT_SHOW_USER */
+#endif /* if NCSH_PROMPT_SHOW_USER == NCSH_SHOW_USER_NORMAL */
 
     fflush(stdout);
     // save cursor position so we can reset cursor when loading history entries
@@ -98,13 +98,13 @@ int_fast32_t ncsh_readline_prompt_directory_print(struct ncsh_Input* input)
 
 #if NCSH_PROMPT_DIRECTORY == NCSH_DIRECTORY_NONE
 int_fast32_t ncsh_readline_prompt_no_directory_print(struct ncsh_Input* input) {
-#ifdef NCSH_PROMPT_SHOW_USER
+#if NCSH_PROMPT_SHOW_USER == NCSH_SHOW_USER_NORMAL
     printf(ncsh_GREEN "%s" WHITE_BRIGHT NCSH_PROMPT_ENDING_STRING, input->user.value);
     input->prompt_len = ncsh_terminal_prompt_size(input->user.length, 0);
 #else
     printf(WHITE_BRIGHT NCSH_PROMPT_ENDING_STRING);
     input->prompt_len = ncsh_terminal_prompt_size(0, 0);
-#endif /* ifdef NCSH_PROMPT_SHOW_USER */
+#endif /* if NCSH_PROMPT_SHOW_USER == NCSH_SHOW_USER_NORMAL */
 
     fflush(stdout);
     // save cursor position so we can reset cursor when loading history entries

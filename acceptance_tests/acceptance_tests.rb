@@ -1,6 +1,9 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+# acceptance_tests.rb: the main acceptance tests for ncsh.
+# Uses prompt options PROMPT_DIRECTORY_SHORT and PROMPT_SHOW_USER_NORMAL
+
 require 'ttytest'
 require './acceptance_tests/startup.rb'
 
@@ -700,7 +703,7 @@ def stdout_and_stderr_redirection_tests(row)
   basic_stdout_and_stderr_redirection_stdout_test row
 end
 
-setup_tests(PROMPT_DIRECTORY_SHORT)
+setup_tests(PROMPT_DIRECTORY_SHORT, PROMPT_SHOW_USER_NORMAL)
 row = 0
 @tty = TTYtest.new_terminal(%(PS1='$ ' ./bin/ncsh), width: 120, height: 140)
 

@@ -9,13 +9,15 @@
 
 
 /* Prompt Settings */
-// NCSH_DIRECTORY_{OPTION}: options for NCSH_PROMPT_DIRECTORY
+/* NCSH_PROMPT_DIRECTORY section: do you want to show the entire cwd in the prompt line? no directory?
+ * a shortened version? use this configurable. */
+/* NCSH_DIRECTORY_{OPTION}: options for NCSH_PROMPT_DIRECTORY */
 #define NCSH_DIRECTORY_NORMAL 0  // show the current working directory in the prompt line
 #define NCSH_DIRECTORY_SHORT  1  // show up to 2 of the parent directories in the prompt line
 #define NCSH_DIRECTORY_NONE   2  // do not show the current working directory in the prompt line
 
 #ifndef NCSH_PROMPT_DIRECTORY
-// put the option from above that you want after NCSH_PROMPT_DIRECTORY
+/* put the option from above that you want after NCSH_PROMPT_DIRECTORY */
 #define NCSH_PROMPT_DIRECTORY NCSH_DIRECTORY_SHORT
 #endif // !NCSH_PROMPT_DIRECTORY
 
@@ -25,9 +27,14 @@
 #define NCSH_PROMPT_ENDING_STRING " \u2771 "
 #endif // !NCSH_PROMPT_ENDING_STRING
 
-/* NCSH_PROMPT_SHOW_USER: show the current user at the start of the prompt. */
+
+/* NCSH_PROMPT_SHOW_USER: whether or not to show the current user at the start of the prompt. */
+/* NCSH_USER_{OPTION}: options for NCSH_PROMPT_SHOW_USER */
+#define NCSH_SHOW_USER_NORMAL 0
+#define NCSH_SHOW_USER_NONE 1
+
 #ifndef NCSH_PROMPT_SHOW_USER
-#define NCSH_PROMPT_SHOW_USER
+#define NCSH_PROMPT_SHOW_USER NCSH_SHOW_USER_NORMAL
 #endif // !NCSH_PROMPT_SHOW_USER
 
 
@@ -38,7 +45,7 @@
 #define NCSH_CLEAR_SCREEN_ON_STARTUP
 #endif // !NCSH_CLEAR_SCREEN_ON_STARTUP
 
-/* NCSH_START_TIME: display the amount of milliseconds it took to startup ncsh */
+/* NCSH_START_TIME: display the amount of milliseconds it took to startup ncsh when defined. */
 #ifndef NCSH_START_TIME
 #define NCSH_START_TIME
 #endif // !NCSH_START_TIME

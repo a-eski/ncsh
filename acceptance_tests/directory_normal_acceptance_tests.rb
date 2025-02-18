@@ -4,7 +4,7 @@
 require 'ttytest'
 require './acceptance_tests/startup.rb'
 
-setup_tests(PROMPT_DIRECTORY_NORMAL)
+setup_tests(PROMPT_DIRECTORY_NORMAL, PROMPT_SHOW_USER_NORMAL)
 row = 0
 @tty = TTYtest.new_terminal(%(PS1='$ ' ./bin/ncsh), width: 120, height: 20)
 
