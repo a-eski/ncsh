@@ -29,6 +29,8 @@ HOME_LENGTH = 5
 def setup_tests(prompt_directory_option, prompt_user_option)
   directory = Dir.pwd
   @user = ENV['USER']
+  @show_directory = prompt_directory_option == PROMPT_DIRECTORY_NONE
+  @show_user = prompt_user_option == PROMPT_SHOW_USER_NORMAL
   @start_column = PROMPT_LENGTH
 
   case prompt_directory_option
@@ -37,18 +39,13 @@ def setup_tests(prompt_directory_option, prompt_user_option)
   when PROMPT_DIRECTORY_SHORT
     @start_column += directory.length - HOME_LENGTH
   when PROMPT_DIRECTORY_NONE
-    if prompt_user_option != PROMPT_SHOW_USER_NONE
-      @start_column -= 1
-    end
+    @start_column -= 1 if prompt_user_option != PROMPT_SHOW_USER_NONE
   end
 
   case prompt_user_option
   when PROMPT_SHOW_USER_NORMAL
     @start_column += @user.length + 1
   end
-
-  @show_directory = prompt_directory_option == PROMPT_DIRECTORY_NONE ? true : false
-  @show_user = prompt_user_option == PROMPT_SHOW_USER_NORMAL ? true : false
 end
 
 def starting_tests(test)

@@ -11,7 +11,9 @@ An interactive unix shell focused on speed and building everything from scratch.
 
 ## dependencies
 
-None, asides from the C standard library and POSIX extensions.
+Your terminal emulator must support at least 16 colors for autocomplete to work as expected (autocompletion suggestions are 'dimmed').
+
+You don't need to install anything, ncsh only uses the C standard library and POSIX extensions.
 
 ## to build from source
 
@@ -19,6 +21,9 @@ For more details on compilation, see COMPILE.md
 
 ``` sh
 make
+
+# you can also build with clang
+make CC=clang
 
 # or can use cmake
 cmake build -S ./ -B ./bin
@@ -34,6 +39,9 @@ sudo make install
 # or can use cmake
 cd bin
 sudo make install
+
+# set as your shell
+usermod -s /bin/ncsh <username>
 ```
 
 ## installation notes
@@ -58,5 +66,7 @@ Please see COMPILE.md.
 * support scripts through a non-iteractive mode
 * build for and test on mac (I don't have one)?
 * build for and test on windows with msys2?
+* background jobs support
 * math
 * better posix support
+* add to path

@@ -10,6 +10,13 @@
 #include "ncsh_readline.h"
 #include "z/z.h"
 
+#define NCSH_MAX_PROCESSES 100
+
+struct ncsh_Processes {
+    uint32_t job_number;
+    uint32_t process_ids[NCSH_MAX_PROCESSES];
+};
+
 // ncsh_Shell: store information relevant to the shell.
 // Lives for the shell's lifetime: not freed until exit.
 struct ncsh_Shell {
@@ -17,6 +24,7 @@ struct ncsh_Shell {
 
     struct ncsh_Input input;
     struct ncsh_Args args;
+    struct ncsh_Processes processes;
 
     struct z_Database z_db;
 };

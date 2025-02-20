@@ -24,7 +24,12 @@
 /* NCSH_PROMPT_ENDING_STRING: the string at the end of the prompt line, traditionally "> " or "$ ".
  * Allows you to control spacing as well, if you want "{user} {directory}> ", you would put "> ".*/
 #ifndef NCSH_PROMPT_ENDING_STRING
+/* NCSH_PROMPT_ENDING_DEBUG: useful for defining when ncsh is your shell but you want to run a debug build and tell the difference. */
+#ifdef NCSH_PROMPT_ENDING_DEBUG
+#define NCSH_PROMPT_ENDING_STRING " (d) \u2771 "
+#else
 #define NCSH_PROMPT_ENDING_STRING " \u2771 "
+#endif /* NCSH_PROMPT_ENDING_DEBUG  */
 #endif // !NCSH_PROMPT_ENDING_STRING
 
 
@@ -40,9 +45,10 @@
 
 
 /* Startup Settings */
-/* NCSH_CLEAR_SCREEN_ON_STARTUP: clear screen on startup (defined) or don't clear screen on startup (not defined) */
+/* NCSH_CLEAR_SCREEN_ON_STARTUP: clear screen on startup (defined) or don't clear screen on startup (not defined).
+ * Useful for when you are doing debugging/dev and don't want to clear the screen on startup. */
 #ifndef NCSH_CLEAR_SCREEN_ON_STARTUP
-#define NCSH_CLEAR_SCREEN_ON_STARTUP
+// #define NCSH_CLEAR_SCREEN_ON_STARTUP
 #endif // !NCSH_CLEAR_SCREEN_ON_STARTUP
 
 /* NCSH_START_TIME: display the amount of milliseconds it took to startup ncsh when defined. */

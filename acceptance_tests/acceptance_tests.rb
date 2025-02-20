@@ -5,7 +5,7 @@
 # Uses prompt options PROMPT_DIRECTORY_SHORT and PROMPT_SHOW_USER_NORMAL
 
 require 'ttytest'
-require './acceptance_tests/startup.rb'
+require './acceptance_tests/startup'
 
 WC_C_LENGTH = '141'
 SLEEP_TIME = 0.2
@@ -34,7 +34,7 @@ def basic_bad_command_test(row)
   @tty.send_newline
   @tty.assert_row_ends_with(row, 'lss')
   row += 1
-  @tty.assert_row(row, 'ncsh: Could not find command or directory: No such file or directory')
+  @tty.assert_row(row, 'ncsh: Could not run command: No such file or directory')
   row += 1
   puts 'Bad command test passed'
   row
@@ -589,7 +589,7 @@ def tab_autocompletion_tests(row)
 
   row = tab_out_autocompletion_test row
   row = arrows_move_tab_autocompletion_test row
-  # select_tab_autocompletion_test row
+  select_tab_autocompletion_test row
 end
 
 def assert_check_syntax_error(row, input)
@@ -629,12 +629,19 @@ def operators_invalid_syntax_last_position_test(row)
   row
 end
 
+def operators_invalid_syntax_not_last_position_test(row)
+  row = assert_check_syntax_error(row, 'ls & ss') # background job not in last position
+  puts 'Invalid syntax not in last position test passed'
+  row
+end
+
 # invalid operator usage to ensure invalid syntax is shown to user
 def syntax_error_tests(row)
   starting_tests 'syntax errors'
 
   row = operators_invalid_syntax_first_position_test row
-  operators_invalid_syntax_last_position_test row
+  row = operators_invalid_syntax_last_position_test row
+  operators_invalid_syntax_not_last_position_test row
 end
 
 def basic_stderr_redirection_test(row)
@@ -719,7 +726,7 @@ row = z_add_tests row
 row = stdin_redirection_tests row
 row = builtin_tests row
 row = delete_line_tests row
-row = delete_word_tests row
+delete_word_tests row
 @tty.send_keys_exact(%(quit))
 @tty.send_newline
 
@@ -730,13 +737,11 @@ row = autocompletion_tests row
 row = tab_autocompletion_tests row
 row = syntax_error_tests row
 row = stderr_redirection_tests row
-row = stdout_and_stderr_redirection_tests row
+stdout_and_stderr_redirection_tests row
 
 # row = 0
 # @tty = TTYtest.new_terminal(%(PS1='$ ' ./bin/ncsh), width: 20, height: 5)
-# row =
-# multiline_tests row
-
+# row = multiline_tests row
 # row = home_expansion_tests row
 # row = star_expansion_tests row
 # row = question_expansion_tests row
