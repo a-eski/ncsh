@@ -480,7 +480,7 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input* input)
 	    break;
         }
 
-        if (character == CTRL_D || character == CTRL_C) {
+        if (character == CTRL_D) {
             ncsh_write_literal(ERASE_CURRENT_LINE);
             putchar('\n');
             fflush(stdout);
