@@ -24,6 +24,9 @@
 #include "ncsh_parser.h"
 #include "ncsh_vm.h"
 
+/* Macros (Constants) */
+#define EXECVP_FAILED -1
+
 /* Types */
 enum ncsh_Command_Type {
     CT_NONE = 0,
@@ -68,6 +71,7 @@ struct ncsh_Tokens {
     char* stdout_and_stderr_file;
 
     bool output_append;
+    bool is_background_job;
 };
 
 /* Builtins */
@@ -103,6 +107,10 @@ static void ncsh_vm_signal_handler(int signum, siginfo_t* info, void* context)
                 perror(RED "ncsh: Error writing to standard output while processing a signal" RESET);
             }
         }
+        ncsh_vm_atomic_child_pid_set(0);
+    }
+    else {
+        exit(EXIT_SUCCESS);
     }
 }
 
@@ -442,10 +450,13 @@ eskilib_nodiscard int_fast32_t ncsh_vm_syntax_error(const char* message, size_t 
 #define INVALID_SYNTAX_BACKGROUND_JOB_FIRST_ARG                                                                        \
     "ncsh: Invalid syntax: found background job operator ('&') as first argument. Correct usage of background job "    \
     "operator is 'program &'.\n"
+#define INVALID_SYNTAX_BACKGROUND_JOB_NOT_LAST_ARG                                                                     \
+    "ncsh: Invalid syntax: found background job operator ('&') in position other than last argument. Correct usage "   \
+    "of background job operator is 'program &'.\n"
 
 #define INVALID_SYNTAX(message) ncsh_vm_syntax_error(message, sizeof(message) - 1)
 
-eskilib_nodiscard int_fast32_t ncsh_vm_args_check(struct ncsh_Args* args)
+eskilib_nodiscard int_fast32_t ncsh_vm_args_syntax_check(struct ncsh_Args* args)
 {
     assert(args);
 
@@ -509,27 +520,17 @@ eskilib_nodiscard int_fast32_t ncsh_vm_args_check(struct ncsh_Args* args)
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
-/*eskilib_nodiscard int_fast32_t ncsh_vm_tokens_check(struct ncsh_Tokens* tokens) {
-    assert(tokens);
-
-    if (tokens->stdout_redirect_index && tokens->stdin_redirect_index) {
-        return ncsh_vm_syntax_error("ncsh: Invalid syntax: found both input and output redirects operators ('<' and '>',
-respectively).\n", 97);
-    }
-
-    return NCSH_COMMAND_SUCCESS_CONTINUE;
-}*/
-
 eskilib_nodiscard int_fast32_t ncsh_vm_tokenize(struct ncsh_Args* args, struct ncsh_Tokens* tokens)
 {
     assert(args);
     assert(tokens);
 
     int_fast32_t syntax_check;
-    if ((syntax_check = ncsh_vm_args_check(args)) != NCSH_COMMAND_SUCCESS_CONTINUE) {
+    if ((syntax_check = ncsh_vm_args_syntax_check(args)) != NCSH_COMMAND_SUCCESS_CONTINUE) {
         return syntax_check;
     }
 
+    tokens->is_background_job = false;
     for (uint_fast32_t i = 0; i < args->count; ++i) {
         switch (args->ops[i]) {
         case OP_STDOUT_REDIRECTION: {
@@ -574,18 +575,26 @@ eskilib_nodiscard int_fast32_t ncsh_vm_tokenize(struct ncsh_Args* args, struct n
             ++tokens->number_of_pipe_commands;
             break;
         }
+        case OP_BACKGROUND_JOB: {
+            if (i != args->count - 1) {
+                return INVALID_SYNTAX(INVALID_SYNTAX_BACKGROUND_JOB_NOT_LAST_ARG);
+            }
+            tokens->is_background_job = true;
+        }
         }
     }
     ++tokens->number_of_pipe_commands;
-
-    /*if ((syntax_check = ncsh_vm_tokens_check(tokens)) != NCSH_COMMAND_SUCCESS_CONTINUE) {
-        return syntax_check;
-    }*/
 
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
 /* Failure Handling */
+eskilib_nodiscard int_fast32_t ncsh_vm_fork_failure_perror() {
+    perror(RED "ncsh: Error when forking process" RESET);
+    fflush(stdout);
+    return NCSH_COMMAND_EXIT_FAILURE;
+}
+
 eskilib_nodiscard int_fast32_t ncsh_vm_fork_failure(uint_fast32_t command_position, uint_fast32_t number_of_commands,
                                                  struct ncsh_Pipe_IO* pipes)
 {
@@ -605,10 +614,47 @@ eskilib_nodiscard int_fast32_t ncsh_vm_fork_failure(uint_fast32_t command_positi
     return NCSH_COMMAND_EXIT_FAILURE;
 }
 
-/* VM */
-#define EXECVP_FAILED -1
+/* Background Jobs */
+eskilib_nodiscard int_fast32_t ncsh_vm_background_job_run(struct ncsh_Args* args, struct ncsh_Processes* processes,
+                                                    struct ncsh_Tokens* tokens)
+{
+    (void)tokens;
 
-eskilib_nodiscard int_fast32_t ncsh_vm(struct ncsh_Args* args)
+    int execvp_result = NCSH_COMMAND_NONE;
+    pid_t pid = fork();
+
+    if (pid < 0) {
+       perror(RED "ncsh: Error when forking process" RESET);
+       fflush(stdout);
+       return NCSH_COMMAND_EXIT_FAILURE;
+    } else if (pid == 0) {
+        setsid();
+        signal(SIGCHLD, SIG_DFL); // Restore default handler in child
+
+        // Redirect standard input, output, and error
+        int fd = open("/dev/null", O_RDWR);
+        dup2(fd, STDIN_FILENO);
+        dup2(fd, STDOUT_FILENO);
+        dup2(fd, STDERR_FILENO);
+        close(fd);
+
+        if ((execvp_result = execvp(args->values[0], args->values)) == EXECVP_FAILED) {
+            perror(RED "ncsh: Could not run command" RESET);
+            fflush(stdout);
+            kill(getpid(), SIGTERM);
+            return NCSH_COMMAND_EXIT_FAILURE;
+        }
+    } else {
+        signal(SIGCHLD, SIG_IGN); // Prevent zombie processes
+        uint32_t job_number = !processes ? 0 : ++processes->job_number;
+        printf("job [%u] pid [%d]\n", job_number, pid); // Job number and PID
+    }
+
+    return NCSH_COMMAND_SUCCESS_CONTINUE;
+}
+
+/* VM */
+eskilib_nodiscard int_fast32_t ncsh_vm(struct ncsh_Args* args, struct ncsh_Processes* processes)
 {
     assert(args);
 
@@ -618,6 +664,11 @@ eskilib_nodiscard int_fast32_t ncsh_vm(struct ncsh_Args* args)
         return result;
     }
 
+    (void)processes;
+    /*if (tokens.is_background_job == true) {
+	return ncsh_vm_background_job_run(args, processes, &tokens);
+    }*/
+
     pid_t pid = 0;
     int status;
     int execvp_result = 0;
@@ -625,7 +676,7 @@ eskilib_nodiscard int_fast32_t ncsh_vm(struct ncsh_Args* args)
     struct ncsh_Vm vm = {0};
     char* buffer[MAX_INPUT] = {0};
     size_t buffer_len[MAX_INPUT] = {0};
-    bool end = false;
+    bool args_end = false;
     enum ncsh_Ops op_current = OP_NONE;
     enum ncsh_Command_Type command_type = CT_NONE;
 
@@ -637,7 +688,7 @@ eskilib_nodiscard int_fast32_t ncsh_vm(struct ncsh_Args* args)
         return result;
     }
 
-    while (args->values[args_position] != NULL && end != true) {
+    while (args->values[args_position] != NULL && args_end != true) {
         buffer_position = 0;
 
         while (args->ops[args_position] == OP_CONSTANT) {
@@ -646,7 +697,7 @@ eskilib_nodiscard int_fast32_t ncsh_vm(struct ncsh_Args* args)
             ++args_position;
 
             if (!args->values[args_position]) {
-                end = true;
+                args_end = true;
                 ++buffer_position;
                 break;
             }
@@ -654,7 +705,7 @@ eskilib_nodiscard int_fast32_t ncsh_vm(struct ncsh_Args* args)
             ++buffer_position;
         }
 
-        if (!end) {
+        if (!args_end) {
             op_current = args->ops[args_position];
         }
         ++args_position;
@@ -664,7 +715,7 @@ eskilib_nodiscard int_fast32_t ncsh_vm(struct ncsh_Args* args)
             return NCSH_COMMAND_FAILED_CONTINUE;
         }
 
-        if (op_current == OP_PIPE && !end) {
+        if (op_current == OP_PIPE && !args_end) {
             if (!ncsh_vm_pipe_start(command_position, &vm.pipes_io)) {
                 return NCSH_COMMAND_EXIT_FAILURE;
             }
@@ -683,15 +734,6 @@ eskilib_nodiscard int_fast32_t ncsh_vm(struct ncsh_Args* args)
         }
 
         if (command_type != CT_BUILTIN) {
-            /*if (ncsh_vm_signal_forward(SIGINT) ||
-                ncsh_vm_signal_forward(SIGHUP) ||
-                ncsh_vm_signal_forward(SIGTERM) ||
-                ncsh_vm_signal_forward(SIGQUIT) ||
-                ncsh_vm_signal_forward(SIGUSR1) ||
-                ncsh_vm_signal_forward(SIGUSR2)) {
-                perror("ncsh: Error setting up signal handlers");
-                return NCSH_COMMAND_EXIT_FAILURE;
-            }*/
             if (ncsh_vm_signal_forward(SIGINT)) {
                 perror("ncsh: Error setting up signal handlers");
                 return NCSH_COMMAND_EXIT_FAILURE;
@@ -699,25 +741,24 @@ eskilib_nodiscard int_fast32_t ncsh_vm(struct ncsh_Args* args)
 
             pid = fork();
 
-            if (pid == -1) {
+            if (pid < 0) {
                 return ncsh_vm_fork_failure(command_position, tokens.number_of_pipe_commands, &vm.pipes_io);
             }
 
-            if (pid == 0) {
+            if (pid == 0) { // runs in the child process
                 if (op_current == OP_PIPE) {
                     ncsh_vm_pipe_connect(command_position, tokens.number_of_pipe_commands, &vm.pipes_io);
                 }
 
-                /*if (setpgid(pid, pid) == 0) {
-                    perror(RED "ncsh: Error setting up process group ID for child process" RESET);
-                }*/
-
                 if ((execvp_result = execvp(buffer[0], buffer)) == EXECVP_FAILED) {
-                    end = true;
-                    perror(RED "ncsh: Could not find command or directory" RESET);
+                    args_end = true;
+                    perror(RED "ncsh: Could not run command" RESET);
                     fflush(stdout);
                     kill(getpid(), SIGTERM);
                 }
+
+                // Exit from the child process.
+                // return NCSH_COMMAND_EXIT;
             }
 
             if (op_current == OP_PIPE) {
@@ -820,7 +861,7 @@ eskilib_nodiscard int_fast32_t ncsh_vm_execute(struct ncsh_Shell* shell)
 
     ncsh_vm_alias(&shell->args);
 
-    return ncsh_vm(&shell->args);
+    return ncsh_vm(&shell->args, &shell->processes);
 }
 
 eskilib_nodiscard int_fast32_t ncsh_vm_execute_noninteractive(struct ncsh_Args* args)
@@ -832,5 +873,5 @@ eskilib_nodiscard int_fast32_t ncsh_vm_execute_noninteractive(struct ncsh_Args* 
 
     ncsh_vm_alias(args);
 
-    return ncsh_vm(args);
+    return ncsh_vm(args, NULL);
 }

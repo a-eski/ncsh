@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 require 'ttytest'
-require './acceptance_tests/startup.rb'
+require './acceptance_tests/startup'
 
 setup_tests(PROMPT_DIRECTORY_NORMAL, PROMPT_SHOW_USER_NORMAL)
 row = 0

@@ -1,5 +1,22 @@
 // Copyright (c) ncsh by Alex Eski 2024
 
+/* from VM */
+/*if (setpgid(pid, pid) == 0) {
+                    perror(RED "ncsh: Error setting up process group ID for child process" RESET);
+                }*/
+
+
+/*if (ncsh_vm_signal_forward(SIGINT) ||
+                ncsh_vm_signal_forward(SIGHUP) ||
+                ncsh_vm_signal_forward(SIGTERM) ||
+                ncsh_vm_signal_forward(SIGQUIT) ||
+                ncsh_vm_signal_forward(SIGUSR1) ||
+                ncsh_vm_signal_forward(SIGUSR2)) {
+                perror("ncsh: Error setting up signal handlers");
+                return NCSH_COMMAND_EXIT_FAILURE;
+            }*/
+
+/* from readline */
 /* Need to figure out how to handle SIGWINCH signal */
 
 #define _POSIX_C_SOURCE 200809L
