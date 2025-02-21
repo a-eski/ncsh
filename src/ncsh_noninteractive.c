@@ -76,9 +76,7 @@ int_fast32_t ncsh_noninteractive(int argc, char** argv)
 #ifdef NCSH_DEBUG
     printf("ncsh running in noninteractive mode.\n");
 #endif /* ifdef NCSH_DEBUG */
-    if (argc > 2) {
-        printf("ncsh currently only supports passing in one command at a time in interactive mode!\n");
-    }
+    (void)argc;
 
     struct ncsh_Args args = {0};
     enum eskilib_Result result;

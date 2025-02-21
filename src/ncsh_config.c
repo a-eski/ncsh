@@ -1,6 +1,8 @@
 // Copyright (c) ncsh by Alex Eski 2025
 
+#define _POSIX_C_SOURCE 200809L
 #include <assert.h>
+#include <linux/limits.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -13,6 +15,7 @@
 #include "eskilib/eskilib_defines.h"
 #include "eskilib/eskilib_result.h"
 #include "eskilib/eskilib_string.h"
+#include "eskilib/eskilib_file.h"
 #include "ncsh_config.h"
 #include "ncsh_defines.h"
 
@@ -122,12 +125,47 @@ eskilib_nodiscard enum eskilib_Result ncsh_config_file_set(struct ncsh_Config* c
     return E_SUCCESS;
 }
 
+#define PATH "PATH"
+#define PATH_ADD "PATH+="
+void ncsh_config_path_add(char* value, int len)
+{
+    assert(len > 0);
+    if (len < 0) {
+        return;
+    }
+
+    char* path = getenv("PATH");
+    size_t path_len = strlen(path) + 1; // null terminator here becomes : in length calc below
+    char* new_path = malloc(path_len + (size_t)len);
+    memcpy(new_path, path, path_len - 1);
+    new_path[path_len - 2] = ':';
+    memcpy(new_path + path_len - 1, value, (size_t)len);
+#ifdef NCSH_DEBUG
+    printf("Got new path to set %s\n", new_path);
+#endif /* ifdef NCSH_DEBUG */
+    setenv(PATH, new_path, true);
+    free(new_path);
+}
+
+void ncsh_config_execute(FILE* file)
+{
+    int buffer_length;
+    char buffer[MAX_INPUT] = {0};
+    while ((buffer_length = eskilib_fgets(buffer, sizeof(buffer), file)) != EOF) {
+        if (buffer_length > 6 && !strncmp(buffer, PATH_ADD, sizeof(PATH_ADD) - 1)) {
+            ncsh_config_path_add(buffer + 6, buffer_length - 6);
+        }
+
+        memset(buffer, '\0', (size_t)buffer_length);
+    }
+}
+
 eskilib_nodiscard enum eskilib_Result ncsh_config_load(struct ncsh_Config* config)
 {
 
     FILE* file = fopen(config->config_file.value, "r");
     if (!file || ferror(file)) {
-	printf("ncsh: would you like to create a config file %s? [Y/n]: ", config->config_file.value);
+	printf("ncsh: would you like to create a config file '%s'? [Y/n]: ", config->config_file.value);
         fflush(stdout);
 
 	char character;
@@ -136,18 +174,22 @@ eskilib_nodiscard enum eskilib_Result ncsh_config_load(struct ncsh_Config* confi
             return E_FAILURE;
     	}
 
-	if (character != 'y' || character != 'Y')
+	if (character != 'y' && character != 'Y') {
 	    return E_SUCCESS;
+	}
 
         file = fopen(config->config_file.value, "w");
         if (!file) {
             perror(RED "ncsh: Could not load or create config file" RESET);
             return E_FAILURE_FILE_OP;
         }
-        puts("Created " NCSH_RC " config file.");
+        puts("\nCreated " NCSH_RC " config file.");
         return E_SUCCESS;
     }
 
+    ncsh_config_execute(file);
+
+    fclose(file);
     return E_SUCCESS;
 }
 
@@ -162,13 +204,13 @@ eskilib_nodiscard enum eskilib_Result ncsh_config_init(struct ncsh_Config* confi
         return result;
     }
 
-    /*if ((result = ncsh_config_file_set(config)) != E_SUCCESS) {
+    if ((result = ncsh_config_file_set(config)) != E_SUCCESS) {
         return result;
     }
 
     if ((result = ncsh_config_load(config)) != E_SUCCESS) {
         return result;
-    }*/
+    }
 
     return E_SUCCESS;
 }
