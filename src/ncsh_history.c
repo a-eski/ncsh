@@ -93,8 +93,8 @@ eskilib_nodiscard enum eskilib_Result ncsh_history_load(struct ncsh_History* his
     int buffer_length = 0;
 
     for (size_t i = 0;
-         (buffer_length = eskilib_fgets(buffer, sizeof(buffer), file)) != EOF && i < NCSH_MAX_HISTORY_FILE; ++i) {
-        if (buffer_length > 0) {
+         (buffer_length = eskilib_fgets(buffer, sizeof(buffer), file)) != EOF && i < NCSH_MAX_HISTORY_FILE;
+         ++i) {
             ++history->count;
             history->entries[i].length = (size_t)buffer_length;
             history->entries[i].value = malloc((size_t)buffer_length);
@@ -103,7 +103,6 @@ eskilib_nodiscard enum eskilib_Result ncsh_history_load(struct ncsh_History* his
             }
 
             memcpy(history->entries[i].value, buffer, (size_t)buffer_length);
-        }
     }
 
     fclose(file);

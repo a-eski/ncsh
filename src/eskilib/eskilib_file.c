@@ -20,7 +20,7 @@ eskilib_nodiscard int eskilib_fgets(char* input_buffer, size_t size_of_input_buf
     }
 
     *buffer = '\0';
-    return characters_read;
+    return characters_read > 0 ? characters_read : EOF;
 }
 
 eskilib_nodiscard int eskilib_fgets_delimited(char* input_buffer, size_t size_of_input_buffer, FILE* file_pointer,
@@ -40,5 +40,5 @@ eskilib_nodiscard int eskilib_fgets_delimited(char* input_buffer, size_t size_of
     }
 
     *buffer = '\0';
-    return characters_read;
+    return characters_read > 0 ? characters_read : EOF;
 }
