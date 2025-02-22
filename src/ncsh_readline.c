@@ -121,7 +121,8 @@ int_fast32_t ncsh_readline_prompt_no_directory_print(struct ncsh_Input* input) {
 }
 #endif
 
-eskilib_nodiscard int_fast32_t ncsh_readline_prompt(struct ncsh_Input* input)
+[[nodiscard]]
+int_fast32_t ncsh_readline_prompt(struct ncsh_Input* input)
 {
 #if NCSH_PROMPT_DIRECTORY == NCSH_DIRECTORY_SHORT
     return ncsh_readline_prompt_short_directory_print(input);
@@ -133,7 +134,8 @@ eskilib_nodiscard int_fast32_t ncsh_readline_prompt(struct ncsh_Input* input)
 }
 
 // IO
-eskilib_nodiscard int_fast32_t ncsh_readline_backspace(struct ncsh_Input* input)
+[[nodiscard]]
+int_fast32_t ncsh_readline_backspace(struct ncsh_Input* input)
 {
     if (!input->pos) {
         return EXIT_SUCCESS;
@@ -171,7 +173,8 @@ eskilib_nodiscard int_fast32_t ncsh_readline_backspace(struct ncsh_Input* input)
     return EXIT_SUCCESS;
 }
 
-eskilib_nodiscard int_fast32_t ncsh_readline_delete(struct ncsh_Input* input)
+[[nodiscard]]
+int_fast32_t ncsh_readline_delete(struct ncsh_Input* input)
 {
     ncsh_write_literal(DELETE_STRING ERASE_CURRENT_LINE);
 
@@ -204,7 +207,8 @@ eskilib_nodiscard int_fast32_t ncsh_readline_delete(struct ncsh_Input* input)
     return EXIT_SUCCESS;
 }
 
-eskilib_nodiscard int_fast32_t ncsh_readline_line_delete(struct ncsh_Input* input)
+[[nodiscard]]
+int_fast32_t ncsh_readline_line_delete(struct ncsh_Input* input)
 {
     if (!input->pos && !input->max_pos) {
         return EXIT_SUCCESS;
@@ -295,7 +299,8 @@ char ncsh_readline_read(void)
     return '\0';
 }
 
-eskilib_nodiscard int_fast32_t ncsh_readline_tab_autocomplete(struct ncsh_Input* input,
+[[nodiscard]]
+int_fast32_t ncsh_readline_tab_autocomplete(struct ncsh_Input* input,
                                                      struct ncsh_Autocompletion_Node* autocompletions_tree)
 {
     ncsh_write_literal(ERASE_CURRENT_LINE "\n");
@@ -514,7 +519,8 @@ void ncsh_readline_adjust_line_if_needed(struct ncsh_Input* input)
     }
 }
 
-eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input* input)
+[[nodiscard]]
+int_fast32_t ncsh_readline(struct ncsh_Input* input)
 {
     char character;
     int exit = EXIT_SUCCESS;
