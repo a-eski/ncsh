@@ -12,14 +12,14 @@
 #include <unistd.h>
 
 #include "eskilib/eskilib_colors.h"
-#include "eskilib/eskilib_defines.h"
 #include "eskilib/eskilib_result.h"
 #include "eskilib/eskilib_string.h"
 #include "eskilib/eskilib_file.h"
 #include "ncsh_config.h"
 #include "ncsh_defines.h"
 
-eskilib_nodiscard enum eskilib_Result ncsh_config_home(struct ncsh_Config* config)
+[[nodiscard]]
+enum eskilib_Result ncsh_config_home(struct ncsh_Config* config)
 {
     if (!config) {
         return E_FAILURE_NULL_REFERENCE;
@@ -48,7 +48,8 @@ eskilib_nodiscard enum eskilib_Result ncsh_config_home(struct ncsh_Config* confi
     return E_SUCCESS;
 }
 
-eskilib_nodiscard enum eskilib_Result ncsh_config(struct ncsh_Config* config)
+[[nodiscard]]
+enum eskilib_Result ncsh_config(struct ncsh_Config* config)
 {
     if (!config) {
         return E_FAILURE_NULL_REFERENCE;
@@ -92,7 +93,8 @@ eskilib_nodiscard enum eskilib_Result ncsh_config(struct ncsh_Config* config)
     return E_SUCCESS;
 }
 
-eskilib_nodiscard enum eskilib_Result ncsh_config_file_set(struct ncsh_Config* config)
+[[nodiscard]]
+enum eskilib_Result ncsh_config_file_set(struct ncsh_Config* config)
 {
     if (!config->config_location.value || !config->config_location.length) {
         config->config_file.value = malloc(sizeof(NCSH_RC));
@@ -160,7 +162,8 @@ void ncsh_config_execute(FILE* file)
     }
 }
 
-eskilib_nodiscard enum eskilib_Result ncsh_config_load(struct ncsh_Config* config)
+[[nodiscard]]
+enum eskilib_Result ncsh_config_load(struct ncsh_Config* config)
 {
 
     FILE* file = fopen(config->config_file.value, "r");
@@ -193,7 +196,8 @@ eskilib_nodiscard enum eskilib_Result ncsh_config_load(struct ncsh_Config* confi
     return E_SUCCESS;
 }
 
-eskilib_nodiscard enum eskilib_Result ncsh_config_init(struct ncsh_Config* config)
+[[nodiscard]]
+enum eskilib_Result ncsh_config_init(struct ncsh_Config* config)
 {
     enum eskilib_Result result;
     if ((result = ncsh_config_home(config)) != E_SUCCESS) {

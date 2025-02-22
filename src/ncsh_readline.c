@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <limits.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,8 +17,11 @@
 
 /* Prompt */
 #if NCSH_PROMPT_DIRECTORY == NCSH_DIRECTORY_SHORT
-size_t ncsh_readline_prompt_short_directory(char* cwd, char* output)
+[[nodiscard]]
+size_t ncsh_readline_prompt_short_directory_get(char* cwd, char* output)
 {
+    assert(cwd);
+
     uint_fast32_t i = 1;
     uint_fast32_t last_slash_pos = 0;
     uint_fast32_t second_to_last_slash_pos = 0;
@@ -42,9 +46,10 @@ size_t ncsh_readline_prompt_short_directory(char* cwd, char* output)
     }
 
     memcpy(output, cwd + last_slash_pos - 1, i - last_slash_pos + 1); // has 2 slashes
-     return i - last_slash_pos + 2; // null termination included in len
+    return i - last_slash_pos + 2; // null termination included in len
 }
 
+[[nodiscard]]
 int_fast32_t ncsh_readline_prompt_short_directory_print(struct ncsh_Input* input)
 {
     char cwd[PATH_MAX] = {0};
@@ -54,7 +59,7 @@ int_fast32_t ncsh_readline_prompt_short_directory_print(struct ncsh_Input* input
         fflush(stderr);
         return EXIT_FAILURE;
     }
-    size_t dir_len = ncsh_readline_prompt_short_directory(cwd, directory);
+    size_t dir_len = ncsh_readline_prompt_short_directory_get(cwd, directory);
 #if NCSH_PROMPT_SHOW_USER == NCSH_SHOW_USER_NORMAL
     printf(ncsh_GREEN "%s" " " ncsh_CYAN "%s" WHITE_BRIGHT NCSH_PROMPT_ENDING_STRING, input->user.value, directory);
     input->prompt_len = ncsh_terminal_prompt_size(input->user.length, dir_len);
@@ -70,6 +75,7 @@ int_fast32_t ncsh_readline_prompt_short_directory_print(struct ncsh_Input* input
 #endif /* if NCSH_PROMPT_DIRECTORY == NCSH_DIRECTORY_SHORT */
 
 #if NCSH_PROMPT_DIRECTORY == NCSH_DIRECTORY_NORMAL
+[[nodiscard]]
 int_fast32_t ncsh_readline_prompt_directory_print(struct ncsh_Input* input)
 {
     char cwd[PATH_MAX] = {0};
@@ -97,6 +103,7 @@ int_fast32_t ncsh_readline_prompt_directory_print(struct ncsh_Input* input)
 #endif /* if NCSH_PROMPT_DIRECTORY == NCSH_DIRECTORY_NORMAL */
 
 #if NCSH_PROMPT_DIRECTORY == NCSH_DIRECTORY_NONE
+[[nodiscard]]
 int_fast32_t ncsh_readline_prompt_no_directory_print(struct ncsh_Input* input) {
 #if NCSH_PROMPT_SHOW_USER == NCSH_SHOW_USER_NORMAL
     printf(ncsh_GREEN "%s" WHITE_BRIGHT NCSH_PROMPT_ENDING_STRING, input->user.value);
@@ -196,16 +203,8 @@ eskilib_nodiscard int_fast32_t ncsh_readline_delete(struct ncsh_Input* input)
     return EXIT_SUCCESS;
 }
 
-int ncsh_readline_line_reset(struct ncsh_Input* input)
+int ncsh_readline_line_reset()
 {
-    int pos = input->max_pos - input->pos;
-    if (pos > 0) {
-        ncsh_terminal_move_right(pos);
-	ncsh_write_literal(ERASE_CURRENT_LINE);
-	ncsh_terminal_move_left(pos);
-	return EXIT_SUCCESS;
-    }
-
     ncsh_write_literal(ERASE_CURRENT_LINE);
     return EXIT_SUCCESS;
 }
@@ -216,7 +215,7 @@ void ncsh_readline_autocomplete(struct ncsh_Input* input)
         return;
     }
     else if (input->buffer[0] < 32) { // exclude control characters from autocomplete
-        ncsh_readline_line_reset(input);
+        ncsh_readline_line_reset();
         memset(input->buffer, '\0', input->max_pos);
         input->pos = 0;
         input->max_pos = 0;
@@ -228,13 +227,12 @@ void ncsh_readline_autocomplete(struct ncsh_Input* input)
 
     if (!autocompletions_matches_count) {
         input->current_autocompletion[0] = '\0';
-        ncsh_readline_line_reset(input);
+        ncsh_readline_line_reset();
         return;
     }
 
-    struct ncsh_Coordinates previous_pos = ncsh_terminal_position();
     printf(ERASE_CURRENT_LINE WHITE_DIM "%s" RESET, input->current_autocompletion);
-    ncsh_terminal_move(previous_pos.x, previous_pos.y);
+    ncsh_terminal_move_left(strlen(input->current_autocompletion));
     fflush(stdout);
 }
 
@@ -357,8 +355,6 @@ eskilib_nodiscard int_fast32_t ncsh_readline_tab_autocomplete(struct ncsh_Input*
 
 int_fast32_t ncsh_readline_init(struct ncsh_Config* config, struct ncsh_Input *input)
 {
-    input->max_x = ncsh_terminal_size_x();
-    input->max_y = ncsh_terminal_size_x();
     input->user.value = getenv("USER");
     input->user.length = strlen(input->user.value) + 1;
     input->buffer = calloc(NCSH_MAX_INPUT, sizeof(char));
@@ -454,6 +450,34 @@ int_fast32_t ncsh_readline_putchar(char character, struct ncsh_Input* input)
     return EXIT_SUCCESS;
 }
 
+bool is_end_of_line(struct ncsh_Input* input)
+{
+    if (input->lines_y == 0) {
+        input->lines_x[0] = input->pos;
+        return input->pos + input->prompt_len >= (size_t)input->terminal_size.x;
+    }
+
+    int current_line_pos = input->pos;
+    for (int i = 0; i < input->lines_y; ++i) {
+        current_line_pos -= input->lines_x[i];
+    }
+
+    if (current_line_pos <= 0) {
+        return false;
+    }
+
+    input->lines_x[input->lines_y] = current_line_pos;
+    return current_line_pos >= input->terminal_size.x;
+}
+
+void ncsh_readline_add_newline_if_needed(struct ncsh_Input* input)
+{
+    if (is_end_of_line(input)) {
+        ++input->lines_y;
+        putchar('\n');
+    }
+}
+
 eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input* input)
 {
     char character;
@@ -461,7 +485,7 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input* input)
     int result = EXIT_SUCCESS;
 
     input->reprint_prompt = true;
-    ncsh_terminal_init();
+    input->terminal_size = ncsh_terminal_init();
 
     while (1) {
         if (input->reprint_prompt == true) {
@@ -469,6 +493,7 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input* input)
                 exit = EXIT_FAILURE;
 		break;
             }
+	    input->lines_y = 0;
             input->history_position = 0;
             input->reprint_prompt = false;
         }
@@ -732,6 +757,8 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input* input)
                 input->max_pos = 0;
                 continue;
             }
+
+	    ncsh_readline_add_newline_if_needed(input);
 
             result = ncsh_readline_putchar(character, input);
             switch (result) {

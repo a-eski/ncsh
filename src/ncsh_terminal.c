@@ -18,7 +18,6 @@
 
 /* Static Variables */
 static struct termios original_terminal_os;
-static struct winsize window;
 
 /* Signal Handling */
 /*static void ncsh_terminal_signal_handler(int signum)
@@ -40,13 +39,14 @@ void ncsh_terminal_reset(void)
     }
 }
 
-void ncsh_terminal_init(void)
+struct ncsh_Coordinates ncsh_terminal_init(void)
 {
     if (!isatty(STDIN_FILENO)) {
         fprintf(stderr, "Not running in a terminal.\n");
         exit(EXIT_FAILURE);
     }
 
+    struct winsize window;
     ioctl(STDOUT_FILENO, TIOCGWINSZ, &window);
 
     if (tcgetattr(STDIN_FILENO, &original_terminal_os) != 0) {
@@ -68,19 +68,8 @@ void ncsh_terminal_init(void)
 
     signal(SIGHUP, SIG_DFL); // Stops the process if the terminal is closed
     // signal(SIGWINCH, ncsh_terminal_signal_handler); // Sets window size when window size changed
-}
 
-struct ncsh_Coordinates ncsh_terminal_size_get(void)
-{
     return (struct ncsh_Coordinates){.x = window.ws_col, .y = window.ws_row};
-}
-
-int ncsh_terminal_size_x(void) {
-    return window.ws_col;
-}
-
-int ncsh_terminal_size_y(void) {
-    return window.ws_row;
 }
 
 void ncsh_terminal_move(int x, int y)
@@ -114,10 +103,14 @@ size_t ncsh_terminal_prompt_size(size_t user_len, size_t dir_len)
     // {user} {directory} {symbol} {buffer}
     // user, directory include null termination, use as space for len
     //     {user}{space (\0)}      {directory}{space (\0)}     {>}  {space}     {buffer}
+#ifdef NCSH_PROMPT_ENDING_DEBUG
+    return user_len + dir_len + 1 + 1 + 4;
+#endif /* ifdef NCSH_PROMPT_ENDING_DEBUG */
+
     return user_len + dir_len + 1 + 1;
 }
 
-struct ncsh_Coordinates ncsh_terminal_position(void)
+/*struct ncsh_Coordinates ncsh_terminal_position(void)
 {
     char buffer[T_BUFFER_LENGTH] = {0};
     int i = 0;
@@ -152,4 +145,4 @@ struct ncsh_Coordinates ncsh_terminal_position(void)
     }
 
     return cursor_position;
-}
+}*/

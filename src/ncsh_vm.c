@@ -18,7 +18,6 @@
 #include <unistd.h>
 
 #include "eskilib/eskilib_colors.h"
-#include "eskilib/eskilib_defines.h"
 #include "ncsh_builtins.h"
 #include "ncsh_defines.h"
 #include "ncsh_parser.h"
@@ -224,7 +223,8 @@ void ncsh_vm_stdout_and_stderr_redirection_stop(struct ncsh_Output_Redirect_IO* 
     dup2(io->original_stderr, STDERR_FILENO);
 }
 
-eskilib_nodiscard int_fast32_t ncsh_vm_redirection_start_if_needed(struct ncsh_Args* args, struct ncsh_Tokens* tokens,
+[[nodiscard]]
+int_fast32_t ncsh_vm_redirection_start_if_needed(struct ncsh_Args* args, struct ncsh_Tokens* tokens,
                                                                    struct ncsh_Vm* vm)
 {
     assert(args);
@@ -305,7 +305,8 @@ void ncsh_vm_redirection_stop_if_needed(struct ncsh_Tokens* tokens, struct ncsh_
 }
 
 /* Pipes */
-eskilib_nodiscard int_fast32_t ncsh_vm_pipe_start(uint_fast32_t command_position, struct ncsh_Pipe_IO* pipes)
+[[nodiscard]]
+int_fast32_t ncsh_vm_pipe_start(uint_fast32_t command_position, struct ncsh_Pipe_IO* pipes)
 {
     assert(pipes);
 
@@ -382,7 +383,8 @@ void ncsh_vm_pipe_stop(uint_fast32_t command_position, uint_fast32_t number_of_c
 }
 
 /* Tokenizing and Syntax Validation */
-eskilib_nodiscard int_fast32_t ncsh_vm_syntax_error(const char* message, size_t message_length)
+[[nodiscard]]
+int_fast32_t ncsh_vm_syntax_error(const char* message, size_t message_length)
 {
     if (write(STDIN_FILENO, message, message_length) == -1) {
         return NCSH_COMMAND_EXIT_FAILURE;
@@ -456,7 +458,8 @@ eskilib_nodiscard int_fast32_t ncsh_vm_syntax_error(const char* message, size_t 
 
 #define INVALID_SYNTAX(message) ncsh_vm_syntax_error(message, sizeof(message) - 1)
 
-eskilib_nodiscard int_fast32_t ncsh_vm_args_syntax_check(struct ncsh_Args* args)
+[[nodiscard]]
+int_fast32_t ncsh_vm_args_syntax_check(struct ncsh_Args* args)
 {
     assert(args);
 
@@ -520,7 +523,8 @@ eskilib_nodiscard int_fast32_t ncsh_vm_args_syntax_check(struct ncsh_Args* args)
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
-eskilib_nodiscard int_fast32_t ncsh_vm_tokenize(struct ncsh_Args* args, struct ncsh_Tokens* tokens)
+[[nodiscard]]
+int_fast32_t ncsh_vm_tokenize(struct ncsh_Args* args, struct ncsh_Tokens* tokens)
 {
     assert(args);
     assert(tokens);
@@ -589,13 +593,15 @@ eskilib_nodiscard int_fast32_t ncsh_vm_tokenize(struct ncsh_Args* args, struct n
 }
 
 /* Failure Handling */
-eskilib_nodiscard int_fast32_t ncsh_vm_fork_failure_perror() {
+[[nodiscard]]
+int_fast32_t ncsh_vm_fork_failure_perror() {
     perror(RED "ncsh: Error when forking process" RESET);
     fflush(stdout);
     return NCSH_COMMAND_EXIT_FAILURE;
 }
 
-eskilib_nodiscard int_fast32_t ncsh_vm_fork_failure(uint_fast32_t command_position, uint_fast32_t number_of_commands,
+[[nodiscard]]
+int_fast32_t ncsh_vm_fork_failure(uint_fast32_t command_position, uint_fast32_t number_of_commands,
                                                  struct ncsh_Pipe_IO* pipes)
 {
     assert(pipes);
@@ -615,7 +621,8 @@ eskilib_nodiscard int_fast32_t ncsh_vm_fork_failure(uint_fast32_t command_positi
 }
 
 /* Background Jobs */
-eskilib_nodiscard int_fast32_t ncsh_vm_background_job_run(struct ncsh_Args* args, struct ncsh_Processes* processes,
+[[nodiscard]]
+int_fast32_t ncsh_vm_background_job_run(struct ncsh_Args* args, struct ncsh_Processes* processes,
                                                     struct ncsh_Tokens* tokens)
 {
     (void)tokens;
@@ -654,7 +661,8 @@ eskilib_nodiscard int_fast32_t ncsh_vm_background_job_run(struct ncsh_Args* args
 }
 
 /* VM */
-eskilib_nodiscard int_fast32_t ncsh_vm(struct ncsh_Args* args, struct ncsh_Processes* processes)
+[[nodiscard]]
+int_fast32_t ncsh_vm(struct ncsh_Args* args, struct ncsh_Processes* processes)
 {
     assert(args);
 
@@ -842,7 +850,8 @@ void ncsh_vm_alias(struct ncsh_Args* args)
     }
 }
 
-eskilib_nodiscard int_fast32_t ncsh_vm_execute(struct ncsh_Shell* shell)
+[[nodiscard]]
+int_fast32_t ncsh_vm_execute(struct ncsh_Shell* shell)
 {
     assert(shell);
     assert(&shell->args);
@@ -864,7 +873,8 @@ eskilib_nodiscard int_fast32_t ncsh_vm_execute(struct ncsh_Shell* shell)
     return ncsh_vm(&shell->args, &shell->processes);
 }
 
-eskilib_nodiscard int_fast32_t ncsh_vm_execute_noninteractive(struct ncsh_Args* args)
+[[nodiscard]]
+int_fast32_t ncsh_vm_execute_noninteractive(struct ncsh_Args* args)
 {
     assert(args);
     if (!args->count) {

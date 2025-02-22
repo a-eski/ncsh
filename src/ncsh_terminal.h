@@ -57,7 +57,7 @@ struct ncsh_Coordinates {
 void ncsh_terminal_reset(void);
 
 // Put the terminal in the proper modes for ncsh and save the previous state of the terminal in memory.
-void ncsh_terminal_init(void);
+struct ncsh_Coordinates ncsh_terminal_init(void);
 
 void ncsh_terminal_move(int x, int y);
 void ncsh_terminal_move_up(int i);
@@ -65,16 +65,11 @@ void ncsh_terminal_move_down(int i);
 void ncsh_terminal_move_right(int i);
 void ncsh_terminal_move_left(int i);
 
-void ncsh_terminal_size_set(void);
-struct ncsh_Coordinates ncsh_terminal_size_get(void);
-int ncsh_terminal_size_x(void);
-int ncsh_terminal_size_y(void);
-
 // Get the length of the current prompt.
 size_t ncsh_terminal_prompt_size(size_t user_len, size_t dir_len);
 
 // can cause crashes when you paste in entries and it tries to get cursor position.
 // need to figure out an alternative.
-struct ncsh_Coordinates ncsh_terminal_position(void);
+// struct ncsh_Coordinates ncsh_terminal_position(void);
 
 #endif // !NCSH_TERMINAL_H_
