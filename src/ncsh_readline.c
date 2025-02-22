@@ -8,6 +8,7 @@
 #include <unistd.h>
 
 #include "eskilib/eskilib_colors.h"
+#include "eskilib/eskilib_defines.h"
 #include "eskilib/eskilib_result.h"
 #include "ncsh_autocompletions.h"
 #include "ncsh_config.h"
@@ -200,6 +201,27 @@ eskilib_nodiscard int_fast32_t ncsh_readline_delete(struct ncsh_Input* input)
         input->max_pos = input->pos;
     }
 
+    return EXIT_SUCCESS;
+}
+
+eskilib_nodiscard int_fast32_t ncsh_readline_line_delete(struct ncsh_Input* input)
+{
+    if (!input->pos && !input->max_pos) {
+        return EXIT_SUCCESS;
+    }
+
+    ncsh_write_literal(BACKSPACE_STRING ERASE_CURRENT_LINE);
+    input->buffer[input->max_pos] = '\0';
+    --input->max_pos;
+
+    while (input->max_pos > 0) {
+        ncsh_write_literal(BACKSPACE_STRING);
+        input->buffer[input->max_pos] = '\0';
+        --input->max_pos;
+    }
+    fflush(stdout);
+
+    input->pos = 0;
     return EXIT_SUCCESS;
 }
 
@@ -450,7 +472,7 @@ int_fast32_t ncsh_readline_putchar(char character, struct ncsh_Input* input)
     return EXIT_SUCCESS;
 }
 
-bool is_end_of_line(struct ncsh_Input* input)
+bool ncsh_readline_is_end_of_line(struct ncsh_Input* input)
 {
     if (input->lines_y == 0) {
         input->lines_x[0] = input->pos;
@@ -462,19 +484,40 @@ bool is_end_of_line(struct ncsh_Input* input)
         current_line_pos -= input->lines_x[i];
     }
 
-    if (current_line_pos <= 0) {
+    if (current_line_pos < 0) {
         return false;
     }
-
     input->lines_x[input->lines_y] = current_line_pos;
     return current_line_pos >= input->terminal_size.x;
 }
 
-void ncsh_readline_add_newline_if_needed(struct ncsh_Input* input)
+bool ncsh_readline_is_start_of_line(struct ncsh_Input* input)
 {
-    if (is_end_of_line(input)) {
+    if (input->lines_y == 0) {
+        return false;
+    }
+
+    int current_line_pos = input->pos;
+    for (int i = 0; i < input->lines_y; ++i) {
+        current_line_pos -= input->lines_x[i];
+    }
+
+    return current_line_pos == 0;
+}
+
+void ncsh_readline_adjust_line_if_needed(struct ncsh_Input* input)
+{
+    if (ncsh_readline_is_end_of_line(input)) {
         ++input->lines_y;
         putchar('\n');
+    }
+    // else if (is_start_of_line(input)) {
+    else if (input->lines_y > 0 && input->lines_x[input->lines_y] == 0) {
+        // input->lines_x[input->lines_y] = 0;
+        --input->lines_y;
+        ncsh_terminal_move_up(1);
+        ncsh_terminal_move_right(9999);
+        fflush(stdout);
     }
 }
 
@@ -531,22 +574,10 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input* input)
             input->pos = input->max_pos;
         }
         else if (character == CTRL_U) { // delete entire line
-            if (!input->pos && !input->max_pos) {
-                continue;
+            if (ncsh_readline_line_delete(input) != EXIT_SUCCESS) {
+                exit = EXIT_FAILURE;
+                break;
             }
-
-            ncsh_write_literal(BACKSPACE_STRING ERASE_CURRENT_LINE);
-            input->buffer[input->max_pos] = '\0';
-            --input->max_pos;
-
-            while (input->max_pos > 0) {
-                ncsh_write_literal(BACKSPACE_STRING);
-                input->buffer[input->max_pos] = '\0';
-                --input->max_pos;
-            }
-            fflush(stdout);
-
-            input->pos = 0;
         }
         else if (character == TAB_KEY) {
             int_fast32_t tab_autocomplete_result = ncsh_readline_tab_autocomplete(input, input->autocompletions_tree);
@@ -758,8 +789,6 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input* input)
                 continue;
             }
 
-	    ncsh_readline_add_newline_if_needed(input);
-
             result = ncsh_readline_putchar(character, input);
             switch (result) {
             case EXIT_CONTINUE: {
@@ -772,6 +801,7 @@ eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input* input)
             }
         }
 
+        ncsh_readline_adjust_line_if_needed(input);
         ncsh_readline_autocomplete(input);
     }
 

@@ -103,10 +103,6 @@ size_t ncsh_terminal_prompt_size(size_t user_len, size_t dir_len)
     // {user} {directory} {symbol} {buffer}
     // user, directory include null termination, use as space for len
     //     {user}{space (\0)}      {directory}{space (\0)}     {>}  {space}     {buffer}
-#ifdef NCSH_PROMPT_ENDING_DEBUG
-    return user_len + dir_len + 1 + 1 + 4;
-#endif /* ifdef NCSH_PROMPT_ENDING_DEBUG */
-
     return user_len + dir_len + 1 + 1;
 }
 
