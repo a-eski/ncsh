@@ -210,18 +210,20 @@ eskilib_nodiscard int_fast32_t ncsh_readline_line_delete(struct ncsh_Input* inpu
         return EXIT_SUCCESS;
     }
 
-    ncsh_write_literal(BACKSPACE_STRING ERASE_CURRENT_LINE);
-    input->buffer[input->max_pos] = '\0';
-    --input->max_pos;
-
-    while (input->max_pos > 0) {
-        ncsh_write_literal(BACKSPACE_STRING);
-        input->buffer[input->max_pos] = '\0';
-        --input->max_pos;
+    for (int i = input->lines_y; i >= 0; --i) {
+        ncsh_terminal_move_left(input->lines_x[i]);
+	fflush(stdout);
+	ncsh_write_literal(ERASE_CURRENT_LINE);
+	fflush(stdout);
+	if (i > 0) {
+	    ncsh_terminal_move_to_end_of_previous_line();
+	}
     }
-    fflush(stdout);
-
+    memset(input->buffer, '\0', input->max_pos + 1);
+    input->max_pos = 0;
     input->pos = 0;
+    memset(input->lines_x, 0, (size_t)input->lines_y + 1);
+    input->lines_y = 0;
     return EXIT_SUCCESS;
 }
 
@@ -475,7 +477,7 @@ int_fast32_t ncsh_readline_putchar(char character, struct ncsh_Input* input)
 bool ncsh_readline_is_end_of_line(struct ncsh_Input* input)
 {
     if (input->lines_y == 0) {
-        input->lines_x[0] = input->pos;
+	input->lines_x[0] = input->pos;
         return input->pos + input->prompt_len >= (size_t)input->terminal_size.x;
     }
 
@@ -493,30 +495,21 @@ bool ncsh_readline_is_end_of_line(struct ncsh_Input* input)
 
 bool ncsh_readline_is_start_of_line(struct ncsh_Input* input)
 {
-    if (input->lines_y == 0) {
-        return false;
-    }
-
-    int current_line_pos = input->pos;
-    for (int i = 0; i < input->lines_y; ++i) {
-        current_line_pos -= input->lines_x[i];
-    }
-
-    return current_line_pos == 0;
+    return input->lines_y > 0 && input->lines_x[input->lines_y] == 0;
 }
 
 void ncsh_readline_adjust_line_if_needed(struct ncsh_Input* input)
 {
     if (ncsh_readline_is_end_of_line(input)) {
+	if (input->lines_y == 0) {
+	    input->lines_x[0] -= 1;
+	}
         ++input->lines_y;
         putchar('\n');
     }
-    // else if (is_start_of_line(input)) {
-    else if (input->lines_y > 0 && input->lines_x[input->lines_y] == 0) {
-        // input->lines_x[input->lines_y] = 0;
+    else if (ncsh_readline_is_start_of_line(input)) {
         --input->lines_y;
-        ncsh_terminal_move_up(1);
-        ncsh_terminal_move_right(9999);
+        ncsh_terminal_move_to_end_of_previous_line();
         fflush(stdout);
     }
 }

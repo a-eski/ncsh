@@ -97,6 +97,12 @@ void ncsh_terminal_move_down(int i)
     printf("\033[%dB", i);
 }
 
+void ncsh_terminal_move_to_end_of_previous_line()
+{
+    ncsh_terminal_move_up(1);
+    ncsh_terminal_move_right(9999);
+}
+
 size_t ncsh_terminal_prompt_size(size_t user_len, size_t dir_len)
 {
     // shell prompt format:

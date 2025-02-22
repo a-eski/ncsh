@@ -64,6 +64,7 @@ void ncsh_terminal_move_up(int i);
 void ncsh_terminal_move_down(int i);
 void ncsh_terminal_move_right(int i);
 void ncsh_terminal_move_left(int i);
+void ncsh_terminal_move_to_end_of_previous_line();
 
 // Get the length of the current prompt.
 size_t ncsh_terminal_prompt_size(size_t user_len, size_t dir_len);
