@@ -17,7 +17,7 @@
 #define T_BUFFER_LENGTH 30
 
 /* Static Variables */
-static struct termios original_terminal_os;
+static struct termios original_terminal_settings;
 
 /* Signal Handling */
 /*static void ncsh_terminal_signal_handler(int signum)
@@ -34,7 +34,7 @@ static struct termios original_terminal_os;
 void ncsh_terminal_reset(void)
 {
     fflush(stdout);
-    if (tcsetattr(STDIN_FILENO, TCSANOW, &original_terminal_os) != 0) {
+    if (tcsetattr(STDIN_FILENO, TCSANOW, &original_terminal_settings) != 0) {
         perror(RED "ncsh: Could not restore terminal settings" RESET);
     }
 }
@@ -49,7 +49,7 @@ struct ncsh_Coordinates ncsh_terminal_init(void)
     struct winsize window;
     ioctl(STDOUT_FILENO, TIOCGWINSZ, &window);
 
-    if (tcgetattr(STDIN_FILENO, &original_terminal_os) != 0) {
+    if (tcgetattr(STDIN_FILENO, &original_terminal_settings) != 0) {
         perror(RED "ncsh: Could not get terminal settings" RESET);
         exit(EXIT_FAILURE);
     }
@@ -57,12 +57,12 @@ struct ncsh_Coordinates ncsh_terminal_init(void)
     // mouse support? investigate
     // printf("\x1b[?1049h\x1b[0m\x1b[2J\x1b[?1003h\x1b[?1015h\x1b[?1006h\x1b[?25l");
 
-    struct termios terminal_os = original_terminal_os;
-    terminal_os.c_lflag &= (tcflag_t) ~(ICANON | ECHO);
-    terminal_os.c_cc[VMIN] = 1;
-    terminal_os.c_cc[VTIME] = 0;
+    struct termios terminal_settings = original_terminal_settings;
+    terminal_settings.c_lflag &= (tcflag_t) ~(ICANON | ECHO);
+    terminal_settings.c_cc[VMIN] = 1;
+    terminal_settings.c_cc[VTIME] = 0;
 
-    if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &terminal_os) != 0) {
+    if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &terminal_settings) != 0) {
         perror(RED "ncsh: Could not set terminal settings" RESET);
     }
 
@@ -72,10 +72,15 @@ struct ncsh_Coordinates ncsh_terminal_init(void)
     return (struct ncsh_Coordinates){.x = window.ws_col, .y = window.ws_row};
 }
 
-void ncsh_terminal_move(int x, int y)
+/*void ncsh_terminal_move(int x, int y)
 {
     printf("\033[%d;%dH", y, x);
 }
+
+void ncsh_terminal_move_absolute(int x)
+{
+    printf("\033[%dG", x);
+}*/
 
 void ncsh_terminal_move_right(int i)
 {
@@ -103,48 +108,13 @@ void ncsh_terminal_move_to_end_of_previous_line()
     ncsh_terminal_move_right(9999);
 }
 
-size_t ncsh_terminal_prompt_size(size_t user_len, size_t dir_len)
-{
-    // shell prompt format:
-    // {user} {directory} {symbol} {buffer}
-    // user, directory include null termination, use as space for len
-    //     {user}{space (\0)}      {directory}{space (\0)}     {>}  {space}     {buffer}
-    return user_len + dir_len + 1 + 1;
+/*void ncsh_terminal_line_insert(int i) {
+    printf("\033[%dL", i);
 }
-
-/*struct ncsh_Coordinates ncsh_terminal_position(void)
-{
-    char buffer[T_BUFFER_LENGTH] = {0};
-    int i = 0;
-    int power = 0;
-    char character = 0;
-    struct ncsh_Coordinates cursor_position = {0};
-
-    if (write(STDOUT_FILENO, GET_CURSOR_POSITION, sizeof(GET_CURSOR_POSITION) - 1) == -1) {
-        perror(RED "ncsh: Error writing to stdout" RESET);
-        fflush(stdout);
-        return cursor_position;
-    }
-
-    for (i = 0; i < T_BUFFER_LENGTH && character != TERMINAL_RETURN; ++i) {
-        if (read(STDIN_FILENO, &character, 1) == -1) {
-            perror(RED "ncsh: Could not get cursor position" RESET);
-            return cursor_position;
-        }
-        buffer[i] = character;
-    }
-
-    if (i < 2 || i == T_BUFFER_LENGTH - 1) {
-        return cursor_position;
-    }
-
-    for (i -= 2, power = 1; buffer[i] != ';'; i--, power *= 10) {
-        cursor_position.x += (buffer[i] - '0') * power;
-    }
-
-    for (i--, power = 1; buffer[i] != '['; i--, power *= 10) {
-        cursor_position.y += (buffer[i] - '0') * power;
-    }
-
-    return cursor_position;
+void ncsh_terminal_line_delete(int i) {
+    printf("\033[%dM", i);
+}
+void ncsh_terminal_characters_delete(int i) {
+    printf("\033[%dP", i);
+    // printf("\033[%dX", i);
 }*/

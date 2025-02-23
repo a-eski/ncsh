@@ -16,6 +16,15 @@
 #include "ncsh_readline.h"
 
 /* Prompt */
+size_t ncsh_readline_prompt_size(size_t user_len, size_t dir_len)
+{
+    // shell prompt format:
+    // {user} {directory} {symbol} {buffer}
+    // user, directory include null termination, use as space for len
+    //     {user}{space (\0)}      {directory}{space (\0)}     {>}  {space}     {buffer}
+    return user_len + dir_len + 1 + 1;
+}
+
 #if NCSH_PROMPT_DIRECTORY == NCSH_DIRECTORY_SHORT
 [[nodiscard]]
 size_t ncsh_readline_prompt_short_directory_get(char* cwd, char* output)
@@ -62,10 +71,10 @@ int_fast32_t ncsh_readline_prompt_short_directory_print(struct ncsh_Input* input
     size_t dir_len = ncsh_readline_prompt_short_directory_get(cwd, directory);
 #if NCSH_PROMPT_SHOW_USER == NCSH_SHOW_USER_NORMAL
     printf(ncsh_GREEN "%s" " " ncsh_CYAN "%s" WHITE_BRIGHT NCSH_PROMPT_ENDING_STRING, input->user.value, directory);
-    input->prompt_len = ncsh_terminal_prompt_size(input->user.length, dir_len);
+    input->prompt_len = ncsh_readline_prompt_size(input->user.length, dir_len);
 #else
     printf(ncsh_CYAN "%s" WHITE_BRIGHT NCSH_PROMPT_ENDING_STRING, directory);
-    input->prompt_len = ncsh_terminal_prompt_size(0, dir_len);
+    input->prompt_len = ncsh_readline_prompt_size(0, dir_len);
 #endif /* if NCSH_PROMPT_SHOW_USER == NCSH_SHOW_USER_NORMAL */
     fflush(stdout);
     // save cursor position so we can reset cursor when loading history entries
@@ -88,10 +97,10 @@ int_fast32_t ncsh_readline_prompt_directory_print(struct ncsh_Input* input)
 
 #if NCSH_PROMPT_SHOW_USER == NCSH_SHOW_USER_NORMAL
     printf(ncsh_GREEN "%s" WHITE_BRIGHT " " ncsh_CYAN "%s" WHITE_BRIGHT NCSH_PROMPT_ENDING_STRING, input->user.value, cwd);
-    input->prompt_len = ncsh_terminal_prompt_size(input->user.length, dir_len);
+    input->prompt_len = ncsh_readline_prompt_size(input->user.length, dir_len);
 #else
     printf(ncsh_CYAN "%s" WHITE_BRIGHT NCSH_PROMPT_ENDING_STRING, cwd);
-    input->prompt_len = ncsh_terminal_prompt_size(0, dir_len);
+    input->prompt_len = ncsh_readline_prompt_size(0, dir_len);
 #endif /* if NCSH_PROMPT_SHOW_USER == NCSH_SHOW_USER_NORMAL */
 
     fflush(stdout);
@@ -107,10 +116,10 @@ int_fast32_t ncsh_readline_prompt_directory_print(struct ncsh_Input* input)
 int_fast32_t ncsh_readline_prompt_no_directory_print(struct ncsh_Input* input) {
 #if NCSH_PROMPT_SHOW_USER == NCSH_SHOW_USER_NORMAL
     printf(ncsh_GREEN "%s" WHITE_BRIGHT NCSH_PROMPT_ENDING_STRING, input->user.value);
-    input->prompt_len = ncsh_terminal_prompt_size(input->user.length, 0);
+    input->prompt_len = ncsh_readline_prompt_size(input->user.length, 0);
 #else
     printf(WHITE_BRIGHT NCSH_PROMPT_ENDING_STRING);
-    input->prompt_len = ncsh_terminal_prompt_size(0, 0);
+    input->prompt_len = ncsh_readline_prompt_size(0, 0);
 #endif /* if NCSH_PROMPT_SHOW_USER == NCSH_SHOW_USER_NORMAL */
 
     fflush(stdout);
