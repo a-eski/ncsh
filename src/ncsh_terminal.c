@@ -12,6 +12,7 @@
 #include <unistd.h>
 
 #include "eskilib/eskilib_colors.h"
+#include "ncsh_defines.h"
 #include "ncsh_terminal.h"
 #define TERMINAL_RETURN 'R'
 #define T_BUFFER_LENGTH 30
@@ -106,6 +107,14 @@ void ncsh_terminal_move_to_end_of_previous_line()
 {
     ncsh_terminal_move_up(1);
     ncsh_terminal_move_right(9999);
+}
+
+void ncsh_terminal_move_to_start_of_next_line()
+{
+    if (write(STDOUT_FILENO, MOVE_CURSOR_NEXT_LINE, sizeof(MOVE_CURSOR_NEXT_LINE) - 1) == -1) {
+        perror(RED NCSH_ERROR_STDOUT RESET);
+    }
+    fflush(stdout);
 }
 
 /*void ncsh_terminal_line_insert(int i) {

@@ -179,7 +179,6 @@ enum ncsh_Line_Adjustment ncsh_readline_adjust_line_if_needed(struct ncsh_Input*
 	    input->lines_x[0] -= 1;
 	}
         ++input->lines_y;
-        putchar('\n');
 	return L_NEXT;
     }
     else if (ncsh_readline_is_start_of_line(input)) {
@@ -329,7 +328,7 @@ void ncsh_readline_autocomplete(struct ncsh_Input* input)
         return;
     }
     else if (input->buffer[0] < 32) { // exclude control characters from autocomplete
-        ncsh_readline_line_reset();
+        // ncsh_readline_line_reset();
         memset(input->buffer, '\0', input->max_pos);
         input->pos = 0;
         input->max_pos = 0;
@@ -341,7 +340,7 @@ void ncsh_readline_autocomplete(struct ncsh_Input* input)
 
     if (!autocompletions_matches_count) {
         input->current_autocompletion[0] = '\0';
-        ncsh_readline_line_reset();
+        // ncsh_readline_line_reset();
         return;
     }
 

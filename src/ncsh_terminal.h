@@ -90,6 +90,7 @@ void ncsh_terminal_move_down(int i);
 void ncsh_terminal_move_right(int i);
 void ncsh_terminal_move_left(int i);
 void ncsh_terminal_move_to_end_of_previous_line();
+void ncsh_terminal_move_to_start_of_next_line();
 
 // void ncsh_terminal_line_insert(char* line);
 // void ncsh_terminal_line_delete(int line);
