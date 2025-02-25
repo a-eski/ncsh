@@ -417,13 +417,13 @@ int_fast32_t ncsh_readline_move_cursor_end(struct ncsh_Input* input)
 {
     if (input->lines_y > input->current_y) {
 	ncsh_write_literal(HIDE_CURSOR);
-        ncsh_terminal_move_to_start_of_next_line();
-	fflush(stdout);
 	input->current_y = input->lines_y - input->current_y;
-	input->pos = input->max_pos;
+	ncsh_terminal_move_down(input->current_y);
+	putchar(MOVE_CURSOR_START_OF_LINE_CHAR);
 	ncsh_terminal_move_right(input->lines_x[input->current_y] - 1);
 	ncsh_write_literal(SHOW_CURSOR);
 	fflush(stdout);
+	input->pos = input->max_pos;
 	return EXIT_SUCCESS;
     }
 
