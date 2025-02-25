@@ -22,6 +22,7 @@ struct ncsh_Input {
     char* buffer;
 
     int lines_x[LINE_LIMIT]; //terminal pos
+    int current_y;
     int lines_y;
     struct ncsh_Coordinates terminal_size;
 

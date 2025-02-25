@@ -35,7 +35,6 @@
 #define BACKSPACE_STRING "\b \b"
 #define DELETE_STRING " \b"
 
-
 #define ERASE_CURRENT_LINE "\033[K"
 #define ERASE_CURRENT_LINE_TO_LEFT "\033[1K"
 #define ERASE_CURRENT_LINE_ALL "\033[2K"
@@ -52,7 +51,7 @@
 #define MOVE_CURSOR_UP "\033[1A"
 #define MOVE_CURSOR_DOWN "\033[1B"
 
-#define MOVE_CURSOR_START_OF_LINE '\r'
+#define MOVE_CURSOR_START_OF_LINE "\r"
 #define MOVE_CURSOR_NEXT_LINE "\033[1E"
 #define MOVE_CURSOR_PREVIOUS_LINE "\033[1F"
 
@@ -94,6 +93,6 @@ void ncsh_terminal_move_to_start_of_next_line();
 
 // void ncsh_terminal_line_insert(char* line);
 // void ncsh_terminal_line_delete(int line);
-// void ncsh_terminal_characters_delete(int num);
+void ncsh_terminal_characters_delete(int i);
 
 #endif // !NCSH_TERMINAL_H_

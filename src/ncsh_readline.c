@@ -179,10 +179,12 @@ enum ncsh_Line_Adjustment ncsh_readline_adjust_line_if_needed(struct ncsh_Input*
 	    input->lines_x[0] -= 1;
 	}
         ++input->lines_y;
+	input->current_y = input->lines_y;
 	return L_NEXT;
     }
     else if (ncsh_readline_is_start_of_line(input)) {
         --input->lines_y;
+	input->current_y = input->lines_y;
         ncsh_terminal_move_to_end_of_previous_line();
         fflush(stdout);
 	return L_PREVIOUS;
@@ -316,8 +318,13 @@ int_fast32_t ncsh_readline_word_delete(struct ncsh_Input* input)
     return EXIT_SUCCESS;
 }
 
-int ncsh_readline_line_reset()
+int_fast32_t ncsh_readline_line_reset(/*char* current_autocompletion*/)
 {
+    // deletes chars, but doesn't work, prevents line wrap
+    // size_t len = strlen(current_autocompletion);
+    // ncsh_terminal_characters_delete(len);
+    // fflush(stdout);
+    // deletes chars, but doesn't work, prevents line wrap
     ncsh_write_literal(ERASE_CURRENT_LINE);
     return EXIT_SUCCESS;
 }
@@ -328,7 +335,7 @@ void ncsh_readline_autocomplete(struct ncsh_Input* input)
         return;
     }
     else if (input->buffer[0] < 32) { // exclude control characters from autocomplete
-        // ncsh_readline_line_reset();
+	// ncsh_readline_line_reset(input->current_autocompletion);
         memset(input->buffer, '\0', input->max_pos);
         input->pos = 0;
         input->max_pos = 0;
@@ -340,7 +347,7 @@ void ncsh_readline_autocomplete(struct ncsh_Input* input)
 
     if (!autocompletions_matches_count) {
         input->current_autocompletion[0] = '\0';
-        // ncsh_readline_line_reset();
+	// ncsh_readline_line_reset(input->current_autocompletion);
         return;
     }
 
@@ -396,6 +403,39 @@ int_fast32_t ncsh_readline_move_cursor_left(struct ncsh_Input* input)
     return EXIT_SUCCESS;
 }
 
+[[nodiscard]]
+int_fast32_t ncsh_readline_move_cursor_home(struct ncsh_Input* input)
+{
+    ncsh_write_literal(RESTORE_CURSOR_POSITION);
+    input->pos = 0;
+    input->current_y = 0;
+    return EXIT_SUCCESS;
+}
+
+[[nodiscard]]
+int_fast32_t ncsh_readline_move_cursor_end(struct ncsh_Input* input)
+{
+    if (input->lines_y > input->current_y) {
+	ncsh_write_literal(HIDE_CURSOR);
+        ncsh_terminal_move_to_start_of_next_line();
+	fflush(stdout);
+	input->current_y = input->lines_y - input->current_y;
+	input->pos = input->max_pos;
+	ncsh_terminal_move_right(input->lines_x[input->current_y] - 1);
+	ncsh_write_literal(SHOW_CURSOR);
+	fflush(stdout);
+	return EXIT_SUCCESS;
+    }
+
+    while (input->buffer[input->pos]) {
+        ncsh_write_literal(MOVE_CURSOR_RIGHT);
+        ++input->pos;
+    }
+
+    return EXIT_SUCCESS;
+}
+
+[[nodiscard]]
 char ncsh_readline_read(void)
 {
     char character = 0;
@@ -554,6 +594,7 @@ int_fast32_t ncsh_readline_init(struct ncsh_Config* config, struct ncsh_Input *i
     return EXIT_SUCCESS;
 }
 
+[[nodiscard]]
 int_fast32_t ncsh_readline_putchar(char character, struct ncsh_Input* input)
 {
     char temp_character;
@@ -795,8 +836,10 @@ int_fast32_t ncsh_readline(struct ncsh_Input* input)
                         continue;
                     }
 
-                    ncsh_write_literal(RESTORE_CURSOR_POSITION);
-                    input->pos = 0;
+		    if (ncsh_readline_move_cursor_home(input) != EXIT_SUCCESS) {
+			exit = EXIT_FAILURE;
+			goto exit;
+		    }
 
                     break;
                 }
@@ -805,10 +848,10 @@ int_fast32_t ncsh_readline(struct ncsh_Input* input)
                         continue;
                     }
 
-                    while (input->buffer[input->pos]) {
-                        ncsh_write_literal(MOVE_CURSOR_RIGHT);
-                        ++input->pos;
-                    }
+		    if (ncsh_readline_move_cursor_end(input) != EXIT_SUCCESS) {
+			exit = EXIT_FAILURE;
+			goto exit;
+		    }
 
                     break;
                 }

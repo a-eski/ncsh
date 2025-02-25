@@ -122,8 +122,8 @@ void ncsh_terminal_move_to_start_of_next_line()
 }
 void ncsh_terminal_line_delete(int i) {
     printf("\033[%dM", i);
-}
+}*/
+
 void ncsh_terminal_characters_delete(int i) {
     printf("\033[%dP", i);
-    // printf("\033[%dX", i);
-}*/
+}
