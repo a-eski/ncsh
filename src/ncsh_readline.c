@@ -273,15 +273,9 @@ int_fast32_t ncsh_readline_line_delete(struct ncsh_Input* input)
         return EXIT_SUCCESS;
     }
 
-    for (int i = input->lines_y; i >= 0; --i) {
-        ncsh_terminal_move_left(input->lines_x[i]);
-	fflush(stdout);
-	ncsh_write_literal(ERASE_CURRENT_LINE);
-	fflush(stdout);
-	if (i > 0) {
-	    ncsh_terminal_move_to_end_of_previous_line();
-	}
-    }
+    ncsh_write_literal(RESTORE_CURSOR_POSITION);
+    ncsh_write_literal(ERASE_BELOW);
+    fflush(stdout);
 
     memset(input->buffer, '\0', input->max_pos + 1);
     input->max_pos = 0;
