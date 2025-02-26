@@ -4,4 +4,4 @@
 require './acceptance_tests/startup'
 require './acceptance_tests/acceptance_tests'
 
-run_acceptance_tests(PROMPT_DIRECTORY_SHORT, PROMPT_SHOW_USER_NONE)
+run_acceptance_tests(PROMPT_DIRECTORY_SHORT, PROMPT_SHOW_USER_NONE, false)

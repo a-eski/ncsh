@@ -593,8 +593,8 @@ def tab_autocompletion_tests(row)
   select_tab_autocompletion_test(row)
 end
 
-def run_acceptance_tests(prompt_directory_option, prompt_user_option)
-  setup_tests(prompt_directory_option, prompt_user_option)
+def run_acceptance_tests(prompt_directory_option, prompt_user_option, is_custom_prompt)
+  setup_tests(prompt_directory_option, prompt_user_option, is_custom_prompt)
   row = 0
   @tty = TTYtest.new_terminal(%(PS1='$ ' ./bin/ncsh), width: 120, height: 140)
 

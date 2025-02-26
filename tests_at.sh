@@ -57,7 +57,7 @@ set +e
 rm _z_database.bin .ncsh_history_test
 set -e
 
-echo "staring no directory acceptance tests"
+echo "starting no directory acceptance tests"
 make CFLAGS="-Wall -Wextra -Werror -pedantic-errors -Wformat=2 -Wsign-conversion -Wshadow -Wvla -fsanitize=address,undefined,leak -DNCSH_HISTORY_TEST -DZ_TEST -DNCSH_PROMPT_DIRECTORY=2 -DNCSH_PROMPT_SHOW_USER=0 -DNCSH_START_TIME -DNDEBUG"
 chmod +x ./acceptance_tests/directory_none_acceptance_test_runner.rb
 ./acceptance_tests/directory_none_acceptance_test_runner.rb
@@ -66,7 +66,7 @@ make clean
 set +e
 rm _z_database.bin .ncsh_history_test
 
-echo "staring no directory no user acceptance tests"
+echo "starting no directory no user acceptance tests"
 make CFLAGS="-Wall -Wextra -Werror -pedantic-errors -Wformat=2 -Wsign-conversion -Wshadow -Wvla -fsanitize=address,undefined,leak -DNCSH_HISTORY_TEST -DZ_TEST -DNCSH_PROMPT_DIRECTORY=2 -DNCSH_PROMPT_SHOW_USER=1 -DNCSH_START_TIME -DNDEBUG"
 chmod +x ./acceptance_tests/directory_none_no_user_acceptance_test_runner.rb
 ./acceptance_tests/directory_none_no_user_acceptance_test_runner.rb
@@ -74,7 +74,15 @@ make clean
 
 set +e
 rm _z_database.bin .ncsh_history_test
+set -e
 
-GREEN='\033[0;32m'
-echo "${GREEN}All acceptance tests passed!"
-echo "all acceptance tests passed"
+echo "starting custom prompt acceptance tests"
+make CFLAGS="-Wall -Wextra -Werror -pedantic-errors -Wformat=2 -Wsign-conversion -Wshadow -Wvla -fsanitize=address,undefined,leak -DNCSH_HISTORY_TEST -DZ_TEST -DNCSH_PROMPT_DIRECTORY=2 -DNCSH_PROMPT_SHOW_USER=1 -DNCSH_START_TIME -DNDEBUG -DNCSH_PROMPT_ENDING_STRING_TEST"
+chmod +x ./acceptance_tests/custom_prompt_test_runner.rb
+./acceptance_tests/custom_prompt_test_runner.rb
+make clean
+
+set +e
+rm _z_database.bin .ncsh_history_test
+
+echo "ALL ACCEPTANC TESTS PASSED"
