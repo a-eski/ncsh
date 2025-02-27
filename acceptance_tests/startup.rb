@@ -57,6 +57,10 @@ def starting_tests(test)
   puts "===== Starting #{test} tests ====="
 end
 
+def test_passed(test)
+  puts "#{test} passed"
+end
+
 # Assertion
 def assert_check_new_row(row)
   @tty.assert_row_starts_with(row, "#{@user} ") if @show_user
@@ -77,14 +81,14 @@ def z_database_new_test(row)
   row += 1
   @tty.assert_row(row, 'ncsh z: created z database file.')
   row += 1
-  puts 'New z database test passed'
+  test_passed('New z database test')
   row
 end
 
 def startup_test(row)
   @tty.assert_row_starts_with(row, 'ncsh: startup time: ')
   row += 1
-  puts 'Startup time test passed'
+  test_passed('Startup time test')
   row
 end
 
@@ -95,7 +99,7 @@ def newline_sanity_test(row)
   assert_check_new_row(row)
   @tty.send_newline
   row += 1
-  puts 'Newline sanity test passed'
+  test_passed('Newline sanity test')
   row
 end
 
@@ -113,7 +117,7 @@ def empty_line_sanity_test(row)
   assert_check_new_row(row)
   @tty.send_delete
   assert_check_new_row(row)
-  puts 'Empty line sanity test passed'
+  test_passed('Empty line sanity test')
   row
 end
 

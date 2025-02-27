@@ -7,6 +7,7 @@
 require 'ttytest'
 require './acceptance_tests/startup'
 require './acceptance_tests/syntax'
+require './acceptance_tests/expansion'
 
 WC_C_LENGTH = '141'
 SLEEP_TIME = 0.2
@@ -24,7 +25,7 @@ def basic_ls_test(row)
   row += 1
   @tty.assert_row_starts_with(row, LS_FIRST_ITEM)
   row += LS_LINES
-  puts 'Basic input (ls) test passed'
+  test_passed('Basic input (ls) test')
   row
 end
 
@@ -37,7 +38,7 @@ def basic_bad_command_test(row)
   row += 1
   @tty.assert_row(row, 'ncsh: Could not run command: No such file or directory')
   row += 1
-  puts 'Bad command test passed'
+  test_passed('Bad command test')
   row
 end
 
@@ -59,7 +60,7 @@ def home_and_end_tests(row)
   @tty.assert_cursor_position(@start_column + 2, row)
   @tty.send_backspaces(2)
 
-  puts 'Home and End tests passed'
+  test_passed('Home and End tests')
   row
 end
 
@@ -68,7 +69,7 @@ def end_of_line_backspace_test(row)
   @tty.send_keys_one_at_a_time(%(l))
   @tty.send_backspace
   assert_check_new_row(row)
-  puts 'End of line backspace test passed'
+  test_passed('End of line backspace test')
   row
 end
 
@@ -86,7 +87,7 @@ def multiple_end_of_line_backspace_test(row)
   row += 1
   @tty.assert_row(row, 'hello')
   row += 1
-  puts 'Multiple end of line backspace test passed'
+  test_passed('Multiple end of line backspace test')
   row
 end
 
@@ -107,7 +108,7 @@ def midline_backspace_test(row)
   row += 1
   @tty.assert_row(row, 'hello')
   row += 1
-  puts 'Midline backspace test passed'
+  test_passed('Midline backspace test')
   row
 end
 
@@ -128,7 +129,7 @@ def end_of_line_delete_test(row)
   @tty.assert_cursor_position(@start_column, row)
   @tty.send_delete
   assert_check_new_row(row)
-  puts 'End of line delete test passed'
+  test_passed('End of line delete test')
   row
 end
 
@@ -148,7 +149,7 @@ def midline_delete_test(row)
   row += 1
   @tty.assert_row(row, 'hello')
   row += 1
-  puts 'Midline delete test passed'
+  test_passed('Midline delete test')
   row
 end
 
@@ -165,7 +166,7 @@ def pipe_test(row)
   row += 1
   @tty.assert_row_ends_with(row, WC_C_LENGTH)
   row += 1
-  puts 'Simple pipe test passed'
+  test_passed('Simple pipe test')
   row
 end
 
@@ -175,7 +176,7 @@ def multiple_pipes_test(row)
   row += 1
   @tty.assert_row_ends_with(row, WC_C_LENGTH)
   row += 1
-  puts 'Multiple pipes test passed'
+  test_passed('Multiple pipes test')
   row
 end
 
@@ -198,7 +199,7 @@ def basic_history_test(row)
   row += 1
   @tty.assert_row_ends_with(row, WC_C_LENGTH)
   row += 1
-  puts 'Basic history test passed'
+  test_passed('Basic history test')
   row
 end
 
@@ -212,7 +213,7 @@ def history_delete_test(row)
   row += 1
   @tty.assert_row_ends_with(row, WC_C_LENGTH)
   row += 1
-  puts 'History delete test passed'
+  test_passed('History delete test')
   row
 end
 
@@ -226,7 +227,7 @@ def history_backspace_test(row)
   row += 1
   @tty.assert_row_ends_with(row, LS_FIRST_ITEM)
   row += 1
-  puts 'History backspace test passed'
+  test_passed('History backspace test')
   row
 end
 
@@ -236,7 +237,7 @@ def history_clear_test(row)
   @tty.assert_row_ends_with(row, 'ls | head -1')
   @tty.send_down_arrow
   assert_check_new_row(row)
-  puts 'History clear test passed'
+  test_passed('History clear test')
   row
 end
 
@@ -263,7 +264,7 @@ def basic_stdout_redirection_test(row)
   assert_check_new_row(row)
   @tty.send_line('rm t.txt')
   row += 1
-  puts 'Basic output redirection test passed'
+  test_passed('Basic output redirection test')
   row
 end
 
@@ -281,7 +282,7 @@ def piped_stdout_redirection_test(row)
   assert_check_new_row(row)
   @tty.send_line('rm t2.txt')
   row += 1
-  puts 'Piped output redirection test passed'
+  test_passed('Piped output redirection test')
   row
 end
 
@@ -299,7 +300,7 @@ def multiple_piped_stdout_redirection_test(row)
   assert_check_new_row(row)
   @tty.send_line('rm t3.txt')
   row += 1
-  puts 'Multiple piped output redirection test passed'
+  test_passed('Multiple piped output redirection test')
   row
 end
 
@@ -318,7 +319,7 @@ def stdout_redirection_append_test(row)
   @tty.send_line('rm t3.txt')
   row += 1
 
-  puts 'Stdout redirection append test passed'
+  test_passed('Stdout redirection append test')
   row
 end
 
@@ -342,7 +343,7 @@ def z_add_tests(row)
   row += 1
   @tty.assert_row_ends_with(row, 'Entry already exists in z database.')
   row += 1
-  puts 'z add tests passed'
+  test_passed('z add tests')
   row
 end
 
@@ -358,7 +359,7 @@ def basic_stdin_redirection_test(row)
   assert_check_new_row(row)
   @tty.send_line('rm t.txt')
   row += 1
-  puts 'Basic input redirection test passed'
+  test_passed('Basic input redirection test')
   row
 end
 
@@ -376,7 +377,7 @@ def piped_stdin_redirection_test(row)
   assert_check_new_row(row)
   @tty.send_line('rm t2.txt')
   row += 1
-  puts 'Piped input redirection test passed'
+  test_passed('Piped input redirection test')
   row
 end
 
@@ -393,7 +394,7 @@ def multiple_piped_stdin_redirection_test(row)
   assert_check_new_row(row)
   @tty.send_line('rm t3.txt')
   row += 1
-  puts 'Multiple piped input redirection test passed'
+  test_passed('Multiple piped input redirection test')
   row
 end
 
@@ -412,7 +413,7 @@ def basic_autocompletion_test(row)
   @tty.assert_row_ends_with(row, %(ls | sort | wc -c))
   @tty.send_keys_exact(TTYtest::CTRLU)
 
-  puts 'Basic autocompletion test passed'
+  test_passed('Basic autocompletion test')
   row
 end
 
@@ -433,7 +434,7 @@ def backspace_and_delete_autocompletion_test(row)
   @tty.assert_row(row, WC_C_LENGTH)
   row += 1
 
-  puts 'Backspace and delete autocompletion test passed'
+  test_passed('Backspace and delete autocompletion test')
   row
 end
 
@@ -464,7 +465,7 @@ def help_test(row)
     alex /shells/ncsh ❱
   TERM
   row += 12
-  puts 'Help test passed'
+  test_passed('Help test')
   row
 end
 
@@ -477,7 +478,7 @@ def basic_echo_test(row)
   row += 1
   @tty.assert_row(row, 'hello')
   row += 1
-  puts 'basic echo test passed'
+  test_passed('basic echo test')
   row
 end
 
@@ -498,7 +499,7 @@ def quote_echo_test(row)
   @tty.assert_row(row, 'hello')
   row += 1
 
-  puts 'quote echo test passed'
+  test_passed('quote echo test')
   row
 end
 
@@ -517,7 +518,7 @@ def delete_line_tests(row)
   @tty.send_keys_exact(TTYtest::CTRLU)
   assert_check_new_row(row)
   @tty.send_keys_exact(TTYtest::CTRLU)
-  puts 'Delete line test passed'
+  test_passed('Delete line test')
   row
 end
 
@@ -532,7 +533,7 @@ def delete_word_tests(row)
   @tty.send_keys(TTYtest::CTRLW)
   @tty.assert_row_ends_with(row, %(ls))
   @tty.send_keys(TTYtest::CTRLW)
-  puts 'Delete word test passed'
+  test_passed('Delete word test')
   row
 end
 
@@ -546,7 +547,7 @@ def tab_out_autocompletion_test(row)
   row += TAB_AUTOCOMPLETE_ROWS
   assert_check_new_row(row)
 
-  puts 'Tab out of autocompletion test passed'
+  test_passed('Tab out of autocompletion test')
   row
 end
 
@@ -566,7 +567,7 @@ def arrows_move_tab_autocompletion_test(row)
   @tty.send_keys(TTYtest::TAB)
   row += TAB_AUTOCOMPLETE_ROWS
 
-  puts 'Arrows autocompletion test passed'
+  test_passed('Arrows autocompletion test')
   row
 end
 
@@ -581,7 +582,7 @@ def select_tab_autocompletion_test(row)
   @tty.assert_row_ends_with(row, WC_C_LENGTH)
   row += 1
 
-  puts 'Select tab autocompletion test passed'
+  test_passed('Select tab autocompletion test')
   row
 end
 
@@ -619,20 +620,17 @@ def run_acceptance_tests(prompt_directory_option, prompt_user_option, is_custom_
   row = startup_tests(row, false)
   row = autocompletion_tests(row)
   row = tab_autocompletion_tests(row)
-  syntax_tests(row)
+  row = syntax_tests(row)
+  expansion_tests(row)
 end
 
 # row = 0
 # @tty = TTYtest.new_terminal(%(PS1='$ ' ./bin/ncsh), width: 20, height: 5)
 # row = multiline_tests(row)
-# row = home_expansion_tests(row)
-# row = star_expansion_tests(row)
-# row = question_expansion_tests(row)
 # row = copy_paste_tests(row)
+# z remove tests, z print tests
 
 # troubleshooting
 # @tty.print
 # @tty.print_rows
 # p @tty.to_s
-
-puts 'All tests passed!'

@@ -85,4 +85,4 @@ make clean
 set +e
 rm _z_database.bin .ncsh_history_test
 
-echo "ALL ACCEPTANC TESTS PASSED"
+echo "ALL ACCEPTANCE TESTS PASSED"

@@ -20,7 +20,7 @@ def operators_invalid_syntax_first_position_test(row)
   row = assert_check_syntax_error(row, '&>') # output and error redirection
   row = assert_check_syntax_error(row, '&>>') # output and error redirection append
   row = assert_check_syntax_error(row, '&') # background job
-  puts 'Invalid syntax in first position test passed'
+  test_passed('Invalid syntax in first position test')
   row
 end
 
@@ -33,13 +33,13 @@ def operators_invalid_syntax_last_position_test(row)
   row = assert_check_syntax_error(row, 'ls 2>>') # error redirection append
   row = assert_check_syntax_error(row, 'ls &>') # output and error redirection
   row = assert_check_syntax_error(row, 'ls &>>') # output and error redirection append
-  puts 'Invalid syntax in last position test passed'
+  test_passed('Invalid syntax in last position test')
   row
 end
 
 def operators_invalid_syntax_not_last_position_test(row)
   row = assert_check_syntax_error(row, 'ls & ss') # background job not in last position
-  puts 'Invalid syntax not in last position test passed'
+  test_passed('Invalid syntax not in last position test')
   row
 end
 
@@ -63,14 +63,14 @@ def basic_stderr_redirection_test(row)
   @tty.send_line('rm t4.txt')
   row += 1
 
-  puts 'Basic stderr redirection test passed'
+  test_passed('Basic stderr redirection test')
   row
 end
 
 def stderr_redirection_append_test(row)
   assert_check_new_row(row)
 
-  puts 'Stderr redirection append test passed'
+  test_passed('Stderr redirection append test')
   row
 end
 
@@ -92,7 +92,7 @@ def basic_stdout_and_stderr_redirection_stderr_test(row)
   @tty.send_line('rm t4.txt')
   row += 1
 
-  puts 'Basic stdout and stderr redirection stderr test passed'
+  test_passed('Basic stdout and stderr redirection stderr test')
   row
 end
 
@@ -107,7 +107,7 @@ def basic_stdout_and_stderr_redirection_stdout_test(row)
   @tty.send_line('rm t4.txt')
   row += 1
 
-  puts 'Basic stdout and stderr redirection stdout test passed'
+  test_passed('Basic stdout and stderr redirection stdout test')
   row
 end
 
