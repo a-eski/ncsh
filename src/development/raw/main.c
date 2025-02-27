@@ -9,6 +9,7 @@
 #include <unistd.h>
 
 #include "../../ncsh_terminal.h"
+#include "../../ncsh_defines.h"
 
 #define LINE_LIMIT 10
 
@@ -76,6 +77,8 @@ void screen_update(struct screen* screen)
         ++screen->y;
         ++screen->lines_y;
 	screen->x = 0;
+        putchar('\n');
+        fflush(stdout);
     }
 }
 
@@ -104,6 +107,7 @@ int main()
         }
         screen.buffer[screen.line_total_x++] = new_char;
 	putchar(new_char);
+        ncsh_write_literal(ERASE_CURRENT_LINE)
         fflush(stdout);
 	++screen.x;
 
@@ -113,8 +117,19 @@ int main()
             }
             case BACKSPACE_KEY: {
                 if (!screen.line_total_x) {
-                    continue;
+                    break;
                 }
+
+                if (screen.lines_y > 0 && screen.x - 1 == 0) {
+                    putchar('B');
+                    fflush(stdout);
+                    break;
+                }
+
+                screen.buffer[screen.line_total_x--] = '\0';
+                --screen.x;
+                ncsh_write_literal(BACKSPACE_STRING ERASE_CURRENT_LINE);
+
 		break;
             }
             case ESCAPE_CHARACTER: {

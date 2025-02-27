@@ -15,14 +15,14 @@
 
 #include "eskilib/eskilib_string.h"
 #include "eskilib/eskilib_colors.h"
-#include "eskilib/eskilib_defines.h"
 #include "ncsh_defines.h"
 #include "ncsh_history.h"
 #include "ncsh_builtins.h"
 #include "ncsh_parser.h"
 #include "z/z.h"
 
-eskilib_nodiscard int_fast32_t ncsh_builtins_z(struct z_Database* z_db, struct ncsh_Args* args)
+[[nodiscard]]
+int_fast32_t ncsh_builtins_z(struct z_Database* z_db, struct ncsh_Args* args)
 {
     assert(z_db);
     assert(args->count > 0);
@@ -73,7 +73,8 @@ eskilib_nodiscard int_fast32_t ncsh_builtins_z(struct z_Database* z_db, struct n
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
-eskilib_nodiscard int_fast32_t ncsh_builtins_history(struct ncsh_History* history, struct ncsh_Args* args)
+[[nodiscard]]
+int_fast32_t ncsh_builtins_history(struct ncsh_History* history, struct ncsh_Args* args)
 {
     if (args->count == 1) {
         return ncsh_history_command_display(history);
@@ -118,13 +119,15 @@ eskilib_nodiscard int_fast32_t ncsh_builtins_history(struct ncsh_History* histor
     return NCSH_COMMAND_FAILED_CONTINUE;
 }
 
-eskilib_nodiscard int_fast32_t ncsh_builtins_exit(struct ncsh_Args* args)
+[[nodiscard]]
+int_fast32_t ncsh_builtins_exit(struct ncsh_Args* args)
 {
     (void)args; // to not get compiler warnings
     return NCSH_COMMAND_EXIT;
 }
 
-eskilib_nodiscard int_fast32_t ncsh_builtins_echo(struct ncsh_Args* args)
+[[nodiscard]]
+int_fast32_t ncsh_builtins_echo(struct ncsh_Args* args)
 {
     for (uint_fast32_t i = 1; i < args->count; ++i) {
         printf("%s ", args->values[i]);
@@ -167,7 +170,8 @@ eskilib_nodiscard int_fast32_t ncsh_builtins_echo(struct ncsh_Args* args)
         return NCSH_COMMAND_EXIT_FAILURE;                                                                              \
     }
 
-eskilib_nodiscard int_fast32_t ncsh_builtins_help(struct ncsh_Args* args)
+[[nodiscard]]
+int_fast32_t ncsh_builtins_help(struct ncsh_Args* args)
 {
     (void)args; // to not get compiler warnings
 
@@ -197,7 +201,8 @@ eskilib_nodiscard int_fast32_t ncsh_builtins_help(struct ncsh_Args* args)
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
-eskilib_nodiscard int_fast32_t ncsh_builtins_cd(struct ncsh_Args* args)
+[[nodiscard]]
+int_fast32_t ncsh_builtins_cd(struct ncsh_Args* args)
 {
     if (!args->values[1]) {
         char* home = getenv("HOME");
@@ -218,7 +223,8 @@ eskilib_nodiscard int_fast32_t ncsh_builtins_cd(struct ncsh_Args* args)
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
-eskilib_nodiscard int_fast32_t ncsh_builtins_pwd(struct ncsh_Args* args)
+[[nodiscard]]
+int_fast32_t ncsh_builtins_pwd(struct ncsh_Args* args)
 {
     (void)args;
     char path[PATH_MAX];
@@ -234,7 +240,8 @@ eskilib_nodiscard int_fast32_t ncsh_builtins_pwd(struct ncsh_Args* args)
 
 #define KILL_NOTHING_TO_KILL_MESSAGE "ncsh kill: nothing to kill, please pass in a process ID (PID).\n"
 #define KILL_COULDNT_PARSE_PID_MESSAGE "ncsh kill: could not parse process ID (PID) from arguments.\n"
-eskilib_nodiscard int_fast32_t ncsh_builtins_kill(struct ncsh_Args* args)
+[[nodiscard]]
+int_fast32_t ncsh_builtins_kill(struct ncsh_Args* args)
 {
     if (!args->values[1]) {
         if (write(STDOUT_FILENO, KILL_NOTHING_TO_KILL_MESSAGE, sizeof(KILL_NOTHING_TO_KILL_MESSAGE) - 1) == -1) {
@@ -260,7 +267,8 @@ eskilib_nodiscard int_fast32_t ncsh_builtins_kill(struct ncsh_Args* args)
 }
 
 // NOTE: set is not fully implemented.
-eskilib_nodiscard int_fast32_t ncsh_builtins_set_e()
+[[nodiscard]]
+int_fast32_t ncsh_builtins_set_e()
 {
     puts("sets e detected");
     return NCSH_COMMAND_SUCCESS_CONTINUE;
@@ -268,7 +276,8 @@ eskilib_nodiscard int_fast32_t ncsh_builtins_set_e()
 
 #define SET_NOTHING_TO_SET_MESSAGE "ncsh set: nothing to set, please pass in a value to set (i.e. '-e', '-c')"
 #define SET_VALID_OPERATIONS_MESSAGE "ncsh set: valid set operations are in the form '-e', '-c', etc."
-eskilib_nodiscard int_fast32_t ncsh_builtins_set(struct ncsh_Args* args)
+[[nodiscard]]
+int_fast32_t ncsh_builtins_set(struct ncsh_Args* args)
 {
     if (!args->values[1]) {
         if (write(STDOUT_FILENO, SET_NOTHING_TO_SET_MESSAGE, sizeof(SET_NOTHING_TO_SET_MESSAGE) - 1) == -1) {

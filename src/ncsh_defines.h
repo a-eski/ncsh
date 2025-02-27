@@ -4,6 +4,7 @@
 #ifndef NCSH_DEFINES_H_
 #define NCSH_DEFINES_H_
 
+#include "eskilib/eskilib_colors.h"
 #include "ncsh_configurables.h"
 
 #ifdef NCSH_DEBUG

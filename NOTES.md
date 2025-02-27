@@ -41,9 +41,7 @@
 
 ## Bugs
 
-* handle deleting when input is over multiple lines
-* handle copying/pasting when input is multiple lines
-* handle copying/pasting when input has spaces
+* handle pasting when input matches to autocomplete (autocomplete can interfere with pasting)
 
 ## Windows Notes
 

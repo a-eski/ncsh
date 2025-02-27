@@ -14,7 +14,6 @@
 #include <unistd.h>
 
 #include "eskilib/eskilib_colors.h"
-#include "eskilib/eskilib_defines.h"
 #include "eskilib/eskilib_result.h"
 #include "ncsh.h"
 #include "ncsh_autocompletions.h"
@@ -37,7 +36,8 @@ void ncsh_exit(struct ncsh_Shell* shell)
     z_exit(&shell->z_db);
 }
 
-eskilib_nodiscard int_fast32_t ncsh_init(struct ncsh_Shell* shell)
+[[nodiscard]]
+int_fast32_t ncsh_init(struct ncsh_Shell* shell)
 {
     enum eskilib_Result result;
     if ((result = ncsh_config_init(&shell->config)) != E_SUCCESS) {

@@ -3,6 +3,15 @@
 #ifndef ESKILIB_COLORS_H_
 #define ESKILIB_COLORS_H_
 
+/*
+Escape Key
+    Ctrl-Key: ^[
+    Octal: \033
+    Unicode: \u001b
+    Hexadecimal: \x1B
+    Decimal: 27
+*/
+
 #define RESET "\x1B[0m"
 
 #define BLACK "\x1B[30m"

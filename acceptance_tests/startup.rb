@@ -26,12 +26,13 @@ HOME_LENGTH = 5
 #
 #   {prompt}
 #
-def setup_tests(prompt_directory_option, prompt_user_option)
+def setup_tests(prompt_directory_option, prompt_user_option, is_custom_prompt)
   directory = Dir.pwd
   @user = ENV['USER']
   @show_directory = prompt_directory_option == PROMPT_DIRECTORY_NONE
   @show_user = prompt_user_option == PROMPT_SHOW_USER_NORMAL
   @start_column = PROMPT_LENGTH
+  @is_custom_prompt = is_custom_prompt
 
   case prompt_directory_option
   when PROMPT_DIRECTORY_NORMAL
@@ -46,17 +47,29 @@ def setup_tests(prompt_directory_option, prompt_user_option)
   when PROMPT_SHOW_USER_NORMAL
     @start_column += @user.length + 1
   end
+
+  return unless @is_custom_prompt
+
+  @start_column -= 2
 end
 
 def starting_tests(test)
   puts "===== Starting #{test} tests ====="
 end
 
+def test_passed(test)
+  puts "#{test} passed"
+end
+
 # Assertion
 def assert_check_new_row(row)
   @tty.assert_row_starts_with(row, "#{@user} ") if @show_user
   @tty.assert_row_like(row, 'ncsh') unless @show_directory
-  @tty.assert_row_ends_with(row, ' ❱ ')
+  if @is_custom_prompt
+    @tty.assert_row_ends_with(row, '$')
+  else
+    @tty.assert_row_ends_with(row, ' ❱ ')
+  end
   @tty.assert_cursor_position(@start_column, row)
 end
 
@@ -68,14 +81,14 @@ def z_database_new_test(row)
   row += 1
   @tty.assert_row(row, 'ncsh z: created z database file.')
   row += 1
-  puts 'New z database test passed'
+  test_passed('New z database test')
   row
 end
 
 def startup_test(row)
   @tty.assert_row_starts_with(row, 'ncsh: startup time: ')
   row += 1
-  puts 'Startup time test passed'
+  test_passed('Startup time test')
   row
 end
 
@@ -86,7 +99,7 @@ def newline_sanity_test(row)
   assert_check_new_row(row)
   @tty.send_newline
   row += 1
-  puts 'Newline sanity test passed'
+  test_passed('Newline sanity test')
   row
 end
 
@@ -104,7 +117,7 @@ def empty_line_sanity_test(row)
   assert_check_new_row(row)
   @tty.send_delete
   assert_check_new_row(row)
-  puts 'Empty line sanity test passed'
+  test_passed('Empty line sanity test')
   row
 end
 

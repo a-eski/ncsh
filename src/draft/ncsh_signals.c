@@ -55,7 +55,8 @@ static int ncsh_screen_size_change_handler()
     return EXIT_SUCCESS;
 }*/
 
-eskilib_nodiscard int_fast32_t ncsh_init(struct ncsh* shell)
+[[nodiscard]]
+int_fast32_t ncsh_init(struct ncsh* shell)
 {
     shell->prompt_info.user = getenv("USER");
 
@@ -129,7 +130,8 @@ eskilib_nodiscard int_fast32_t ncsh_init(struct ncsh* shell)
     return EXIT_SUCCESS;
 }
 
-eskilib_nodiscard int_fast32_t ncsh_readline(struct ncsh_Input* input, struct ncsh* shell)
+[[nodiscard]]
+int_fast32_t ncsh_readline(struct ncsh_Input* input, struct ncsh* shell)
 {
     char character;
     char temp_character;

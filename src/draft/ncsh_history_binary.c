@@ -1,4 +1,6 @@
-/*eskilib_nodiscard enum eskilib_Result history_write_entry_to_file(struct eskilib_String* entry, FILE* file)
+/*
+[[nodiscard]]
+enum eskilib_Result history_write_entry_to_file(struct eskilib_String* entry, FILE* file)
 {
     assert(file);
 
@@ -19,7 +21,8 @@
     return E_SUCCESS;
 }
 
-eskilib_nodiscard enum eskilib_Result ncsh_history_save_v2(struct ncsh_History* history)
+[[nodiscard]]
+enum eskilib_Result ncsh_history_save_v2(struct ncsh_History* history)
 {
     assert(history);
     if (!history)

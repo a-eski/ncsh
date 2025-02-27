@@ -8,7 +8,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../eskilib/eskilib_defines.h"
 #include "../eskilib/eskilib_result.h"
 #include "../ncsh_defines.h"
 #include "../ncsh_parser.h"
@@ -55,7 +54,8 @@
 // currently unsupported
 #define BANG '!'
 
-eskilib_nodiscard enum eskilib_Result ncsh_parser_args_malloc(struct ncsh_Args* args)
+[[nodiscard]]
+enum eskilib_Result ncsh_parser_args_malloc(struct ncsh_Args* args)
 {
     if (args == NULL)
         return E_FAILURE_NULL_REFERENCE;
@@ -117,7 +117,8 @@ void ncsh_parser_args_free_values(struct ncsh_Args* args)
     args->count = 0;
 }
 
-eskilib_nodiscard bool ncsh_is_delimiter(char ch)
+[[nodiscard]]
+bool ncsh_is_delimiter(char ch)
 {
     switch (ch) {
     case ' ': {
@@ -155,7 +156,8 @@ char* ops_3char_str[] = {STDERR_REDIRECTION_APPEND, STDOUT_AND_STDERR_REDIRECTIO
 
 enum ncsh_Ops ops_3char[] = {OP_STDERR_REDIRECTION_APPEND, OP_STDOUT_AND_STDERR_REDIRECTION_APPEND};
 
-eskilib_nodiscard enum ncsh_Ops ncsh_op_get(const char* line, size_t length)
+[[nodiscard]]
+enum ncsh_Ops ncsh_op_get(const char* line, size_t length)
 {
     switch (length) {
     case 0: {

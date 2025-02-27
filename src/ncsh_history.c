@@ -11,7 +11,6 @@
 #include <unistd.h>
 
 #include "eskilib/eskilib_colors.h"
-#include "eskilib/eskilib_defines.h"
 #include "eskilib/eskilib_file.h"
 #include "eskilib/eskilib_hashtable.h"
 #include "eskilib/eskilib_result.h"
@@ -46,7 +45,8 @@ void ncsh_history_file_set(struct eskilib_String config_file, struct ncsh_Histor
 #endif /* ifdef NCSH_DEBUG */
 }
 
-eskilib_nodiscard enum eskilib_Result ncsh_history_malloc(struct ncsh_History* history)
+[[nodiscard]]
+enum eskilib_Result ncsh_history_malloc(struct ncsh_History* history)
 {
     assert(history);
     if (!history) {
@@ -62,7 +62,8 @@ eskilib_nodiscard enum eskilib_Result ncsh_history_malloc(struct ncsh_History* h
     return E_SUCCESS;
 }
 
-eskilib_nodiscard enum eskilib_Result ncsh_history_load(struct ncsh_History* history)
+[[nodiscard]]
+enum eskilib_Result ncsh_history_load(struct ncsh_History* history)
 {
     assert(history);
     assert(history->file);
@@ -93,8 +94,8 @@ eskilib_nodiscard enum eskilib_Result ncsh_history_load(struct ncsh_History* his
     int buffer_length = 0;
 
     for (size_t i = 0;
-         (buffer_length = eskilib_fgets(buffer, sizeof(buffer), file)) != EOF && i < NCSH_MAX_HISTORY_FILE; ++i) {
-        if (buffer_length > 0) {
+         (buffer_length = eskilib_fgets(buffer, sizeof(buffer), file)) != EOF && i < NCSH_MAX_HISTORY_FILE;
+         ++i) {
             ++history->count;
             history->entries[i].length = (size_t)buffer_length;
             history->entries[i].value = malloc((size_t)buffer_length);
@@ -103,7 +104,6 @@ eskilib_nodiscard enum eskilib_Result ncsh_history_load(struct ncsh_History* his
             }
 
             memcpy(history->entries[i].value, buffer, (size_t)buffer_length);
-        }
     }
 
     fclose(file);
@@ -111,7 +111,8 @@ eskilib_nodiscard enum eskilib_Result ncsh_history_load(struct ncsh_History* his
     return E_SUCCESS;
 }
 
-eskilib_nodiscard enum eskilib_Result ncsh_history_reload(struct ncsh_History* history)
+[[nodiscard]]
+enum eskilib_Result ncsh_history_reload(struct ncsh_History* history)
 {
     assert(history);
     assert(history->file);
@@ -158,7 +159,8 @@ eskilib_nodiscard enum eskilib_Result ncsh_history_reload(struct ncsh_History* h
     return E_SUCCESS;
 }
 
-eskilib_nodiscard enum eskilib_Result ncsh_history_init(struct eskilib_String config_location,
+[[nodiscard]]
+enum eskilib_Result ncsh_history_init(struct eskilib_String config_location,
                                                         struct ncsh_History* history)
 {
     enum eskilib_Result result;
@@ -182,7 +184,8 @@ eskilib_nodiscard enum eskilib_Result ncsh_history_init(struct eskilib_String co
     return E_SUCCESS;
 }
 
-eskilib_nodiscard enum eskilib_Result ncsh_history_clean(struct ncsh_History* history)
+[[nodiscard]]
+enum eskilib_Result ncsh_history_clean(struct ncsh_History* history)
 {
     assert(history);
     if (!history->count || !history->entries[0].value) {
@@ -310,7 +313,8 @@ void ncsh_history_exit(struct ncsh_History* history)
     }
 }
 
-eskilib_nodiscard enum eskilib_Result ncsh_history_add(char* line, size_t length, struct ncsh_History* history)
+[[nodiscard]]
+enum eskilib_Result ncsh_history_add(char* line, size_t length, struct ncsh_History* history)
 {
     assert(history);
     assert(line);
@@ -358,7 +362,8 @@ struct eskilib_String ncsh_history_get(int position, struct ncsh_History* histor
     }
 }
 
-eskilib_nodiscard int_fast32_t ncsh_history_command_display(struct ncsh_History* history)
+[[nodiscard]]
+int_fast32_t ncsh_history_command_display(struct ncsh_History* history)
 {
     assert(history);
     if (!history || !history->count) {
@@ -371,13 +376,15 @@ eskilib_nodiscard int_fast32_t ncsh_history_command_display(struct ncsh_History*
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
-eskilib_nodiscard int_fast32_t ncsh_history_command_count(struct ncsh_History* history)
+[[nodiscard]]
+int_fast32_t ncsh_history_command_count(struct ncsh_History* history)
 {
     printf("history count: %d\n", history->count);
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
-eskilib_nodiscard int_fast32_t ncsh_history_command_clean(struct ncsh_History* history)
+[[nodiscard]]
+int_fast32_t ncsh_history_command_clean(struct ncsh_History* history)
 {
     if (ncsh_history_clean(history) != E_SUCCESS) {
         return NCSH_COMMAND_FAILED_CONTINUE;
@@ -386,7 +393,8 @@ eskilib_nodiscard int_fast32_t ncsh_history_command_clean(struct ncsh_History* h
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
-eskilib_nodiscard int_fast32_t ncsh_history_command_add(char* value, size_t value_len, struct ncsh_History* history)
+[[nodiscard]]
+int_fast32_t ncsh_history_command_add(char* value, size_t value_len, struct ncsh_History* history)
 {
     return ncsh_history_add(value, value_len, history);
 }
@@ -402,7 +410,8 @@ void ncsh_history_remove_entries_shift(int offset, struct ncsh_History* history)
     }
 }
 
-eskilib_nodiscard int_fast32_t ncsh_history_command_remove(char* value, size_t value_len, struct ncsh_History* history)
+[[nodiscard]]
+int_fast32_t ncsh_history_command_remove(char* value, size_t value_len, struct ncsh_History* history)
 {
     assert(value);
     assert(value_len > 0);
