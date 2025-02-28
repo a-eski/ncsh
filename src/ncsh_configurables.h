@@ -22,14 +22,17 @@
 #endif // !NCSH_PROMPT_DIRECTORY
 
 /* NCSH_PROMPT_ENDING_STRING: the string at the end of the prompt line, traditionally "> " or "$ ".
- * Allows you to control spacing as well, if you want "{user} {directory}> ", you would put "> ".*/
+ * Allows you to control spacing as well, if you want "{user} {directory}> ", you would put "> ".
+ * Length is defined so you can use multibyte characters without the shell having to process that data. */
 #ifndef NCSH_PROMPT_ENDING_STRING
 #define     NCSH_PROMPT_ENDING_STRING " \u2771 "
+#define     NCSH_PROMPT_ENDING_STRING_LENGTH 3
 #endif // !NCSH_PROMPT_ENDING_STRING
 
 #ifdef NCSH_PROMPT_ENDING_STRING_TEST
 #undef      NCSH_PROMPT_ENDING_STRING
 #define     NCSH_PROMPT_ENDING_STRING "$"
+#define     NCSH_PROMPT_ENDING_STRING_LENGTH 1
 #endif // NCSH_PROMPT_ENDING_STRING_TEST
 
 /* NCSH_PROMPT_SHOW_USER: whether or not to show the current user at the start of the prompt. */

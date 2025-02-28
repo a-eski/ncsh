@@ -65,8 +65,10 @@ enum eskilib_Result ncsh_config(struct ncsh_Config* config)
     const char* const config_original_ptr = config->config_location.value;
     config->config_location.length = config->home_location.length;
 
+    constexpr size_t config_location_len = sizeof(DOT_CONFIG) + sizeof(NCSH);
     /* first +1 is "/", second is terminating null */
-    if (config->home_location.length + 1 + sizeof(DOT_CONFIG) + sizeof(NCSH) + 1 > NCSH_MAX_INPUT) {
+    constexpr size_t config_location_folder_len = 1 + config_location_len + 1;
+    if (config->home_location.length + config_location_folder_len > NCSH_MAX_INPUT) {
         config->config_location.value[0] = '\0';
         return E_FAILURE_OVERFLOW_PROTECTION;
     }
@@ -76,10 +78,10 @@ enum eskilib_Result ncsh_config(struct ncsh_Config* config)
     *config->config_location.value = '/';
     ++config->config_location.length;
     ++config->config_location.value;
-    memcpy(config->config_location.value, DOT_CONFIG "/" NCSH, sizeof(DOT_CONFIG) + sizeof(NCSH));
-    config->config_location.value += sizeof(DOT_CONFIG) + sizeof(NCSH);
+    memcpy(config->config_location.value, DOT_CONFIG "/" NCSH, config_location_len);
+    config->config_location.value += config_location_len;
     *config->config_location.value = '\0';
-    config->config_location.length += sizeof(DOT_CONFIG) + sizeof(NCSH);
+    config->config_location.length += config_location_len;
 
     config->config_location.value = (char*)config_original_ptr;
 

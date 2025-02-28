@@ -12,23 +12,30 @@
 #define LINE_LIMIT 100
 
 struct ncsh_Input {
-    bool reprint_prompt; // prompt
+    // values related to prompt
+    bool reprint_prompt;
     size_t prompt_len;
     struct eskilib_String user;
 
-    size_t start_pos; // buffer
-    size_t pos; // same as max_x, or all of lines_x
+    // values related to the line buffer
+    size_t start_pos;
+    size_t pos; // same as max_x, or all of lines_x added together
     size_t max_pos;
     char* buffer;
 
-    int lines_x[LINE_LIMIT]; //terminal pos
+    // position relative to start line of prompt
+    int lines_x[LINE_LIMIT];
     int current_y;
     int lines_y;
     struct ncsh_Coordinates terminal_size;
 
-    int history_position; // history & autocomplete
+    // history
+    int history_position;
     struct eskilib_String history_entry;
     struct ncsh_History history;
+
+    // autocompletions
+    size_t current_autocompletion_len;
     char* current_autocompletion;
     struct ncsh_Autocompletion_Node* autocompletions_tree;
 };

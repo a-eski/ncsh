@@ -164,8 +164,9 @@ int_fast32_t ncsh_builtins_echo(struct ncsh_Args* args)
 #define HELP_PWD "pwd:         	          Prints the current working directory.\n\n"
 #define HELP_KILL "kill {processId}:         Terminates the process with associated processId.\n"
 
-#define HELP_WRITE(str)                                                                                           \
-    if (write(STDOUT_FILENO, str, sizeof(str) - 1) == -1) {                                                            \
+#define HELP_WRITE(str)                                                                                                \
+    constexpr size_t str##_len = sizeof(str) - 1;                                                                      \
+    if (write(STDOUT_FILENO, str, str##_len) == -1) {                                                                  \
         perror(RED NCSH_ERROR_STDOUT RESET);                                                                           \
         return NCSH_COMMAND_EXIT_FAILURE;                                                                              \
     }

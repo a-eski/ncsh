@@ -109,6 +109,9 @@ static void ncsh_vm_signal_handler(int signum, siginfo_t* info, void* context)
         ncsh_vm_atomic_child_pid_set(0);
     }
     else {
+        /*if (write(STDOUT_FILENO, "exit\n", 5) == -1) {
+            perror(RED "ncsh: Error writing to standard output while processing a signal" RESET);
+        }*/
         exit(EXIT_SUCCESS);
     }
 }
