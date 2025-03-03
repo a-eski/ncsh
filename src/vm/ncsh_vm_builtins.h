@@ -49,4 +49,24 @@ int_fast32_t ncsh_builtins_kill(struct ncsh_Args* args);
 #define NCSH_SET "set" // not fully implemented
 int_fast32_t ncsh_builtins_set(struct ncsh_Args* args);
 
+struct ncsh_Builtin {
+    size_t length;
+    char* value;
+    int_fast32_t (*func)(struct ncsh_Args*);
+};
+
+static struct ncsh_Builtin builtins[] = {
+    { .length = sizeof(NCSH_EXIT), .value = NCSH_EXIT, .func = &ncsh_builtins_exit },
+    { .length = sizeof(NCSH_QUIT), .value = NCSH_QUIT, .func = &ncsh_builtins_exit },
+    { .length = sizeof(NCSH_Q), .value = NCSH_Q, .func = &ncsh_builtins_exit },
+    { .length = sizeof(NCSH_ECHO), .value = NCSH_ECHO, .func = &ncsh_builtins_echo },
+    { .length = sizeof(NCSH_HELP), .value = NCSH_HELP, .func = &ncsh_builtins_help },
+    { .length = sizeof(NCSH_CD), .value = NCSH_CD, .func = &ncsh_builtins_cd },
+    { .length = sizeof(NCSH_PWD), .value = NCSH_PWD, .func = &ncsh_builtins_pwd },
+    { .length = sizeof(NCSH_KILL), .value = NCSH_KILL, .func = &ncsh_builtins_kill },
+    { .length = sizeof(NCSH_SET), .value = NCSH_SET, .func = &ncsh_builtins_set },
+};
+
+static constexpr size_t builtins_count = sizeof(builtins) / sizeof(struct ncsh_Builtin);
+
 #endif // !NCSH_BUILTINS_H_
