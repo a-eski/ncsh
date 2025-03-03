@@ -64,6 +64,8 @@ check :
 	make test_autocompletions
 	make test_history
 	make test_parser
+	make test_config
+	make test_readline
 .PHONY: c
 c :
 	make check
@@ -143,6 +145,22 @@ test_fzf :
 .PHONY: tf
 tf :
 	make test_fzf
+
+.PHONY: test_config
+test_config :
+	$(CC) $(STD) $(debug_flags) -DNCSH_HISTORY_TEST ./src/eskilib/eskilib_string.c ./src/eskilib/eskilib_test.c ./src/eskilib/eskilib_file.c ./src/ncsh_config.c ./src/tests/ncsh_config_tests.c -o ./$(BUILDDIR)/ncsh_config_tests
+	./$(BUILDDIR)/ncsh_config_tests
+.PHONY: tc
+tc :
+	make test_config
+
+.PHONY: test_readline
+test_readline :
+	$(CC) $(STD) $(debug_flags) -DNCSH_HISTORY_TEST ./src/eskilib/eskilib_string.c ./src/eskilib/eskilib_test.c ./src/eskilib/eskilib_file.c ./src/eskilib/eskilib_hashtable.c ./src/ncsh_terminal.c ./src/ncsh_autocompletions.c ./src/ncsh_history.c ./src/ncsh_readline.c ./src/tests/ncsh_readline_tests.c -o ./$(BUILDDIR)/ncsh_readline_tests
+	./$(BUILDDIR)/ncsh_readline_tests
+.PHONY: tr
+tr :
+	make test_readline
 
 .PHONY: clang_format
 clang_format :

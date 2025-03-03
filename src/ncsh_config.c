@@ -243,11 +243,27 @@ void ncsh_config_free(struct ncsh_Config* config)
 #define MAKE "make"
 #define MAKE_ALIAS "m"
 
-char* aliases[] = {GIT, NEOVIM, MAKE};
-size_t aliases_len[] = {sizeof(GIT), sizeof(NEOVIM), sizeof(MAKE)};
+#define FD "fdfind"
+#define FD_ALIAS "fd"
 
-char* aliased[] = {GIT_ALIAS, NEOVIM_ALIAS, MAKE_ALIAS};
-size_t aliased_len[] = {sizeof(GIT_ALIAS), sizeof(NEOVIM_ALIAS), sizeof(MAKE_ALIAS)};
+#define CARGO "cargo"
+#define CARGO_ALIAS "c"
+
+struct eskilib_String aliases[] = {
+    { .length = sizeof(GIT), .value = GIT },
+    { .length = sizeof(NEOVIM), .value = NEOVIM },
+    { .length = sizeof(MAKE), .value = MAKE },
+    { .length = sizeof(FD), .value = FD },
+    { .length = sizeof(CARGO), .value = CARGO },
+};
+
+struct eskilib_String aliased[] = {
+    { .length = sizeof(GIT_ALIAS), .value = GIT_ALIAS },
+    { .length = sizeof(NEOVIM_ALIAS), .value = NEOVIM_ALIAS },
+    { .length = sizeof(MAKE_ALIAS), .value = MAKE_ALIAS },
+    { .length = sizeof(FD_ALIAS), .value = FD_ALIAS },
+    { .length = sizeof(CARGO_ALIAS), .value = CARGO_ALIAS },
+};
 
 struct eskilib_String ncsh_config_alias_check(char* buffer, size_t buf_len)
 {
@@ -255,9 +271,9 @@ struct eskilib_String ncsh_config_alias_check(char* buffer, size_t buf_len)
         return eskilib_String_Empty;
     }
 
-    for (uint_fast32_t i = 0; i < sizeof(aliased) / sizeof(char*); ++i) {
-        if (eskilib_string_compare(buffer, buf_len, aliased[i], aliased_len[i])) {
-            return (struct eskilib_String){.value = aliases[i], .length = aliases_len[i]};
+    for (uint_fast32_t i = 0; i < sizeof(aliased) / sizeof(struct eskilib_String); ++i) {
+        if (eskilib_string_compare(buffer, buf_len, aliased[i].value, aliased[i].length)) {
+            return aliases[i];
         }
     }
 

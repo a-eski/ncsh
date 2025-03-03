@@ -24,9 +24,11 @@ size_t ncsh_readline_prompt_size(size_t user_len, size_t dir_len)
     // {user} {directory} {symbol} {buffer}
     // user, directory include null termination, use as space for len
     //     {user}{space (\0)}      {directory}{space (\0) excluded by -1}     {>}  {space}     {buffer}
-    static_assert(NCSH_PROMPT_ENDING_STRING_LENGTH > 0);
-    constexpr size_t prompt_len = -1 + NCSH_PROMPT_ENDING_STRING_LENGTH;
-    return user_len + dir_len + prompt_len;
+    if (user_len == 0 && dir_len == 0) {
+        return NCSH_PROMPT_ENDING_STRING_LENGTH;
+    }
+
+    return user_len + dir_len - 1 + NCSH_PROMPT_ENDING_STRING_LENGTH;
 }
 
 #if NCSH_PROMPT_DIRECTORY == NCSH_DIRECTORY_SHORT

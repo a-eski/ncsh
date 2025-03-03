@@ -40,6 +40,8 @@ struct ncsh_Input {
     struct ncsh_Autocompletion_Node* autocompletions_tree;
 };
 
+size_t ncsh_readline_prompt_size(size_t user_len, size_t dir_len);
+
 int_fast32_t ncsh_readline_init(struct ncsh_Config* config, struct ncsh_Input *input);
 
 int_fast32_t ncsh_readline(struct ncsh_Input* input);
