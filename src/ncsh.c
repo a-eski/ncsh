@@ -23,7 +23,7 @@
 #include "ncsh_parser.h"
 #include "ncsh_readline.h"
 #include "ncsh_types.h"
-#include "ncsh_vm.h"
+#include "vm/ncsh_vm.h"
 
 void ncsh_exit(struct ncsh_Shell* shell)
 {

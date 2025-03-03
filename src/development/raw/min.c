@@ -24,9 +24,8 @@ struct screen {
 [[nodiscard]]
 int screen_init(struct screen* screen)
 {
-    ncsh_terminal_init();
+    struct ncsh_Coordinates terminal_size = ncsh_terminal_init();
 
-    struct ncsh_Coordinates terminal_size = ncsh_terminal_size_get();
     screen->max_x = terminal_size.x;
     screen->max_y = terminal_size.y;
     screen->reprint_prompt = true;
