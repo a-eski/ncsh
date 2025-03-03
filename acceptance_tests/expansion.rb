@@ -14,8 +14,13 @@ def home_expansion_echo_test(row)
 end
 
 def home_expansion_tests(row)
-  starting_tests 'home expansion'
+  starting_tests('home expansion')
   home_expansion_echo_test(row)
+end
+
+def star_expansion_tests(row)
+  starting_tests('star expansion')
+  row
 end
 
 def expansion_tests(row)

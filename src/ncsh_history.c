@@ -54,7 +54,8 @@ enum eskilib_Result ncsh_history_malloc(struct ncsh_History* history)
     }
 
     history->count = 0;
-    history->entries = malloc(sizeof(struct eskilib_String) * NCSH_MAX_HISTORY_IN_MEMORY);
+    constexpr size_t entries_size = sizeof(struct eskilib_String) * NCSH_MAX_HISTORY_IN_MEMORY;
+    history->entries = malloc(entries_size);
     if (history->entries == NULL) {
         return E_FAILURE_MALLOC;
     }

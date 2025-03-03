@@ -5,9 +5,10 @@
 # Uses prompt options PROMPT_DIRECTORY_SHORT and PROMPT_SHOW_USER_NORMAL
 
 require 'ttytest'
+require './acceptance_tests/expansion'
+require './acceptance_tests/autocompletion'
 require './acceptance_tests/startup'
 require './acceptance_tests/syntax'
-require './acceptance_tests/expansion'
 
 WC_C_LENGTH = '141'
 SLEEP_TIME = 0.2
@@ -43,14 +44,14 @@ def basic_bad_command_test(row)
 end
 
 def basic_tests(row)
-  starting_tests 'basic'
+  starting_tests('basic')
 
   row = basic_ls_test(row)
   basic_bad_command_test(row)
 end
 
 def home_and_end_tests(row)
-  starting_tests 'home and end'
+  starting_tests('home and end')
 
   assert_check_new_row(row)
   @tty.send_keys_one_at_a_time(%(ss))
@@ -113,7 +114,7 @@ def midline_backspace_test(row)
 end
 
 def backspace_tests(row)
-  starting_tests 'backspace'
+  starting_tests('backspace')
 
   row = end_of_line_backspace_test(row)
   row = multiple_end_of_line_backspace_test(row)
@@ -154,7 +155,7 @@ def midline_delete_test(row)
 end
 
 def delete_tests(row)
-  starting_tests 'delete'
+  starting_tests('delete')
 
   row = end_of_line_delete_test(row)
   midline_delete_test(row)
@@ -181,7 +182,7 @@ def multiple_pipes_test(row)
 end
 
 def pipe_tests(row)
-  starting_tests 'pipe'
+  starting_tests('pipe')
 
   row = pipe_test(row)
   multiple_pipes_test(row)
@@ -242,7 +243,7 @@ def history_clear_test(row)
 end
 
 def history_tests(row)
-  starting_tests 'history'
+  starting_tests('history')
 
   row = basic_history_test(row)
   row = history_delete_test(row)
@@ -324,7 +325,7 @@ def stdout_redirection_append_test(row)
 end
 
 def stdout_redirection_tests(row)
-  starting_tests 'stdout redirection'
+  starting_tests('stdout redirection')
 
   row = basic_stdout_redirection_test(row)
   row = piped_stdout_redirection_test(row)
@@ -333,7 +334,7 @@ def stdout_redirection_tests(row)
 end
 
 def z_add_tests(row)
-  starting_tests 'z_add'
+  starting_tests('z_add')
   assert_check_new_row(row)
   @tty.send_line('z add ~/.config')
   row += 1
@@ -399,50 +400,11 @@ def multiple_piped_stdin_redirection_test(row)
 end
 
 def stdin_redirection_tests(row)
-  starting_tests 'stdin redirection'
+  starting_tests('stdin redirection')
 
   row = basic_stdin_redirection_test(row)
   row = piped_stdin_redirection_test(row)
   multiple_piped_stdin_redirection_test(row)
-end
-
-def basic_autocompletion_test(row)
-  assert_check_new_row(row)
-  @tty.send_keys_one_at_a_time(%(l))
-  @tty.send_right_arrow
-  @tty.assert_row_ends_with(row, %(ls | sort | wc -c))
-  @tty.send_keys_exact(TTYtest::CTRLU)
-
-  test_passed('Basic autocompletion test')
-  row
-end
-
-def backspace_and_delete_autocompletion_test(row)
-  assert_check_new_row(row)
-  @tty.send_keys_one_at_a_time(%(ls > ))
-  @tty.send_backspaces(1)
-  @tty.send_right_arrow
-  @tty.assert_row_ends_with(row, %(ls > t.txt))
-
-  @tty.send_left_arrows(8)
-  @tty.send_deletes(8)
-  @tty.send_keys_one_at_a_time(%( |))
-  @tty.send_right_arrow
-  @tty.assert_row_ends_with(row, %(ls | sort | wc -c > t3.txt))
-  @tty.send_newline
-  row += 1
-  @tty.assert_row(row, WC_C_LENGTH)
-  row += 1
-
-  test_passed('Backspace and delete autocompletion test')
-  row
-end
-
-def autocompletion_tests(row)
-  starting_tests 'autocompletion'
-
-  row = basic_autocompletion_test(row)
-  backspace_and_delete_autocompletion_test(row)
 end
 
 def help_test(row)
@@ -504,7 +466,7 @@ def quote_echo_test(row)
 end
 
 def builtin_tests(row)
-  starting_tests 'builtin'
+  starting_tests('builtin')
 
   # row = help_test(row)
   row = basic_echo_test(row)
@@ -512,7 +474,7 @@ def builtin_tests(row)
 end
 
 def delete_line_tests(row)
-  starting_tests 'delete line'
+  starting_tests('delete line')
   assert_check_new_row(row)
   @tty.send_keys_one_at_a_time(%(ls | sort ))
   @tty.send_keys_exact(TTYtest::CTRLU)
@@ -523,7 +485,7 @@ def delete_line_tests(row)
 end
 
 def delete_word_tests(row)
-  starting_tests 'delete word'
+  starting_tests('delete word')
   assert_check_new_row(row)
   @tty.send_keys_one_at_a_time(%(ls | sort ))
   @tty.send_keys(TTYtest::CTRLW)
@@ -535,63 +497,6 @@ def delete_word_tests(row)
   @tty.send_keys(TTYtest::CTRLW)
   test_passed('Delete word test')
   row
-end
-
-def tab_out_autocompletion_test(row)
-  assert_check_new_row(row)
-  @tty.send_keys_one_at_a_time(%(ls))
-  @tty.send_keys(TTYtest::TAB)
-  row += 1
-  @tty.assert_row_ends_with(row, %(ls > t.txt))
-  @tty.send_keys(TTYtest::TAB)
-  row += TAB_AUTOCOMPLETE_ROWS
-  assert_check_new_row(row)
-
-  test_passed('Tab out of autocompletion test')
-  row
-end
-
-def arrows_move_tab_autocompletion_test(row)
-  assert_check_new_row(row)
-  @tty.send_keys_one_at_a_time(%(ls))
-  @tty.send_keys(TTYtest::TAB)
-  row += 1
-  cursor_x_before = @tty.cursor_x
-  cursor_y_before = @tty.cursor_y
-  @tty.send_up_arrow
-  @tty.assert_cursor_position(cursor_x_before, cursor_y_before)
-  @tty.send_down_arrow
-  @tty.assert_cursor_position(cursor_x_before, cursor_y_before + 1)
-  @tty.send_down_arrows(TAB_AUTOCOMPLETE_ROWS)
-  @tty.assert_cursor_position(cursor_x_before, cursor_y_before + TAB_AUTOCOMPLETE_ROWS - 2)
-  @tty.send_keys(TTYtest::TAB)
-  row += TAB_AUTOCOMPLETE_ROWS
-
-  test_passed('Arrows autocompletion test')
-  row
-end
-
-def select_tab_autocompletion_test(row)
-  assert_check_new_row(row)
-  @tty.send_keys_one_at_a_time(%(ls))
-  @tty.send_keys(TTYtest::TAB)
-  row += 1
-  @tty.send_down_arrows(5)
-  @tty.send_newline
-  row += TAB_AUTOCOMPLETE_ROWS + 1
-  @tty.assert_row_ends_with(row, WC_C_LENGTH)
-  row += 1
-
-  test_passed('Select tab autocompletion test')
-  row
-end
-
-def tab_autocompletion_tests(row)
-  starting_tests 'tab autocompletion'
-
-  row = tab_out_autocompletion_test(row)
-  row = arrows_move_tab_autocompletion_test(row)
-  select_tab_autocompletion_test(row)
 end
 
 def run_acceptance_tests(prompt_directory_option, prompt_user_option, is_custom_prompt)
@@ -608,6 +513,8 @@ def run_acceptance_tests(prompt_directory_option, prompt_user_option, is_custom_
   row = history_tests(row)
   row = stdout_redirection_tests(row)
   row = z_add_tests(row)
+  # row = z_remove_tests(row)
+  # row = z_print_tests(row)
   row = stdin_redirection_tests(row)
   row = builtin_tests(row)
   row = delete_line_tests(row)
@@ -619,18 +526,8 @@ def run_acceptance_tests(prompt_directory_option, prompt_user_option, is_custom_
   @tty = TTYtest.new_terminal(%(PS1='$ ' ./bin/ncsh), width: 180, height: 150)
   row = startup_tests(row, false)
   row = autocompletion_tests(row)
-  row = tab_autocompletion_tests(row)
   row = syntax_tests(row)
+  # row = paste_tests(row)
+  # row = multiline_tests(row)
   expansion_tests(row)
 end
-
-# row = 0
-# @tty = TTYtest.new_terminal(%(PS1='$ ' ./bin/ncsh), width: 20, height: 5)
-# row = multiline_tests(row)
-# row = copy_paste_tests(row)
-# z remove tests, z print tests
-
-# troubleshooting
-# @tty.print
-# @tty.print_rows
-# p @tty.to_s

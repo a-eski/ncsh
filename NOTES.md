@@ -42,6 +42,7 @@
 ## Bugs
 
 * handle pasting when input matches to autocomplete (autocomplete can interfere with pasting)
+* handle multiline when current line is at the bottom of the screen and scrolling has occurred
 
 ## Windows Notes
 

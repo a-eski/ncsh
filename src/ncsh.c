@@ -84,7 +84,8 @@ int_fast32_t ncsh(void)
 #endif
 
 #ifdef NCSH_CLEAR_SCREEN_ON_STARTUP
-    if (write(STDOUT_FILENO, CLEAR_SCREEN MOVE_CURSOR_HOME, sizeof(CLEAR_SCREEN MOVE_CURSOR_HOME) - 1) == -1) {
+    constexpr size_t clear_screen_len = sizeof(CLEAR_SCREEN MOVE_CURSOR_HOME) - 1;
+    if (write(STDOUT_FILENO, CLEAR_SCREEN MOVE_CURSOR_HOME, clear_screen_len) == -1) {
         return EXIT_FAILURE;
     }
 #endif
@@ -128,6 +129,7 @@ int_fast32_t ncsh(void)
             goto exit;
         }
         case NCSH_COMMAND_EXIT: {
+            puts("exit");
             goto exit;
         }
         case NCSH_COMMAND_SYNTAX_ERROR:

@@ -13,10 +13,6 @@
 #include "ncsh_defines.h"
 #include "ncsh_parser.h"
 
-// #define STRCMP_1CHAR(val1, val2) (val1[0] == val2[0])
-#define STRCMP_2CHAR(val1, val2) (val1[0] == val2[0] && val1[1] == val2[1])
-#define STRCMP_3CHAR(val1, val2) (val1[0] == val2[0] && val1[1] == val2[1] && val1[2] == val2[2])
-
 // supported quotes
 #define SINGLE_QUOTE_KEY '\''
 #define DOUBLE_QUOTE_KEY '\"'
@@ -210,7 +206,7 @@ enum ncsh_Ops ncsh_op_get(const char* line, size_t length)
     }
     case 2: {
         for (uint_fast32_t i = 0; i < sizeof(ops_2char_str) / sizeof(char*); ++i) {
-            if (STRCMP_2CHAR(line, ops_2char_str[i])) {
+            if (!memcmp(line, ops_2char_str[i], 2)) {
                 return ops_2char[i];
             }
         }
@@ -219,7 +215,7 @@ enum ncsh_Ops ncsh_op_get(const char* line, size_t length)
     }
     case 3: {
         for (uint_fast32_t i = 0; i < sizeof(ops_3char_str) / sizeof(char*); ++i) {
-            if (STRCMP_3CHAR(line, ops_3char_str[i])) {
+            if (!memcmp(line, ops_3char_str[i], 3)) {
                 return ops_3char[i];
             }
         }

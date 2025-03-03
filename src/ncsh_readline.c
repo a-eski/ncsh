@@ -9,8 +9,10 @@
 
 #include "eskilib/eskilib_colors.h"
 #include "eskilib/eskilib_result.h"
+#include "eskilib/eskilib_string.h"
 #include "ncsh_autocompletions.h"
 #include "ncsh_config.h"
+#include "ncsh_configurables.h"
 #include "ncsh_defines.h"
 #include "ncsh_terminal.h"
 #include "ncsh_readline.h"
@@ -21,8 +23,12 @@ size_t ncsh_readline_prompt_size(size_t user_len, size_t dir_len)
     // shell prompt format:
     // {user} {directory} {symbol} {buffer}
     // user, directory include null termination, use as space for len
-    //     {user}{space (\0)}      {directory}{space (\0)}     {>}  {space}     {buffer}
-    return user_len + dir_len + sizeof(NCSH_PROMPT_ENDING_STRING) - 1;
+    //     {user}{space (\0)}      {directory}{space (\0) excluded by -1}     {>}  {space}     {buffer}
+    if (user_len == 0 && dir_len == 0) {
+        return NCSH_PROMPT_ENDING_STRING_LENGTH;
+    }
+
+    return user_len + dir_len - 1 + NCSH_PROMPT_ENDING_STRING_LENGTH;
 }
 
 #if NCSH_PROMPT_DIRECTORY == NCSH_DIRECTORY_SHORT
@@ -312,14 +318,35 @@ int_fast32_t ncsh_readline_word_delete(struct ncsh_Input* input)
     return EXIT_SUCCESS;
 }
 
-int_fast32_t ncsh_readline_line_reset(/*char* current_autocompletion*/)
+[[nodiscard]]
+int_fast32_t ncsh_readline_line_reset(struct ncsh_Input* input)
 {
+    if (input->current_autocompletion[0] == '\0') {
+	return EXIT_SUCCESS;
+    }
     // deletes chars, but doesn't work, prevents line wrap
     // size_t len = strlen(current_autocompletion);
     // ncsh_terminal_characters_delete(len);
     // fflush(stdout);
+
     // deletes chars, but doesn't work, prevents line wrap
+    // ncsh_write_literal(ERASE_CURRENT_LINE);
+
+    fflush(stdout);
     ncsh_write_literal(ERASE_CURRENT_LINE);
+
+    /*ncsh_write_literal(HIDE_CURSOR);
+    ncsh_terminal_move_right(input->current_autocompletion_len);
+    fflush(stdout);
+    for (size_t i = input->current_autocompletion_len; i > input->pos; --i) {
+        ncsh_write_literal(BACKSPACE_STRING);
+	fflush(stdout);
+    }
+
+    ncsh_terminal_move_left(input->current_autocompletion_len);
+    ncsh_write_literal(SHOW_CURSOR);
+    fflush(stdout);*/
+
     return EXIT_SUCCESS;
 }
 
@@ -327,6 +354,17 @@ int_fast32_t ncsh_readline_line_reset(/*char* current_autocompletion*/)
 int_fast32_t ncsh_readline_autocomplete_print(struct ncsh_Input* input)
 {
     printf(ERASE_CURRENT_LINE WHITE_DIM "%s" RESET, input->current_autocompletion);
+    input->current_autocompletion_len = strlen(input->current_autocompletion);
+    /*int start_y = input->lines_y;
+    if (start_y == 0) {
+        int new_len = input->prompt_len + input->pos + current_autocompletion_len;
+        for (int i = 0; new_len > input->terminal_size.x; ++i) {
+            input->lines_x[i] = input->terminal_size.x - input->prompt_len;
+            ++input->lines_y;
+            new_len -= input->terminal_size.x;
+        }
+    }*/
+    // if (current_autocompletion_len)
     // ncsh_write_literal(ERASE_CURRENT_LINE WHITE_DIM);
     /*char* current_autocompletion = input->current_autocompletion;
     while (!*current_autocompletion) {
@@ -335,7 +373,7 @@ int_fast32_t ncsh_readline_autocomplete_print(struct ncsh_Input* input)
     fflush(stdout);*/
     // ncsh_write(input->current_autocompletion, strlen(input->current_autocompletion));
     // ncsh_write_literal(RESET);
-    ncsh_terminal_move_left(strlen(input->current_autocompletion));
+    ncsh_terminal_move_left(input->current_autocompletion_len);
     fflush(stdout);
     return EXIT_SUCCESS;
 }
@@ -347,7 +385,9 @@ int_fast32_t ncsh_readline_autocomplete(struct ncsh_Input* input)
         return EXIT_SUCCESS;
     }
     else if (input->buffer[0] < 32) { // exclude control characters from autocomplete
-	// ncsh_readline_line_reset(input->current_autocompletion);
+	if (ncsh_readline_line_reset(input) != EXIT_SUCCESS) {
+            return EXIT_FAILURE;
+        }
         memset(input->buffer, '\0', input->max_pos);
         input->pos = 0;
         input->max_pos = 0;
@@ -358,8 +398,10 @@ int_fast32_t ncsh_readline_autocomplete(struct ncsh_Input* input)
         input->buffer, input->pos + 1, input->current_autocompletion, input->autocompletions_tree);
 
     if (!autocompletions_matches_count) {
+        if (ncsh_readline_line_reset(input) != EXIT_SUCCESS) {
+            return EXIT_FAILURE;
+        }
         input->current_autocompletion[0] = '\0';
-	// ncsh_readline_line_reset(input->current_autocompletion);
         return EXIT_SUCCESS;
     }
 
@@ -430,6 +472,7 @@ int_fast32_t ncsh_readline_move_cursor_end(struct ncsh_Input* input)
 	input->current_y = input->lines_y - input->current_y;
 	ncsh_terminal_move_down(input->current_y);
 	putchar(MOVE_CURSOR_START_OF_LINE_CHAR);
+	fflush(stdout);
 	ncsh_terminal_move_right(input->lines_x[input->current_y] - 1);
 	ncsh_write_literal(SHOW_CURSOR);
 	fflush(stdout);
@@ -694,6 +737,7 @@ int_fast32_t ncsh_readline(struct ncsh_Input* input)
             ncsh_write_literal(ERASE_CURRENT_LINE);
             putchar('\n');
             fflush(stdout);
+	    puts("exit");
             exit = EXIT_SUCCESS_END;
 	    break;
         }

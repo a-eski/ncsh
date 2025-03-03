@@ -122,11 +122,11 @@ def empty_line_sanity_test(row)
 end
 
 def startup_tests(row, run_z_database_new_tests)
-  starting_tests 'startup tests'
+  starting_tests('startup tests')
 
-  row = z_database_new_test row if run_z_database_new_tests
-  row = startup_test row
-  row = newline_sanity_test row
+  row = z_database_new_test(row) if run_z_database_new_tests
+  row = startup_test(row)
+  row = newline_sanity_test(row)
 
-  empty_line_sanity_test row
+  empty_line_sanity_test(row)
 end
