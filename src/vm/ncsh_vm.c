@@ -22,26 +22,6 @@
 #include "ncsh_vm_tokenizer.h"
 #include "ncsh_vm.h"
 
-/* Builtins */
-struct ncsh_Builtin {
-    size_t length;
-    char* value;
-    int_fast32_t (*func)(struct ncsh_Args*);
-};
-
-struct ncsh_Builtin builtins[] = {
-    { .length = sizeof(NCSH_EXIT), .value = NCSH_EXIT, .func = &ncsh_builtins_exit },
-    { .length = sizeof(NCSH_QUIT), .value = NCSH_QUIT, .func = &ncsh_builtins_exit },
-    { .length = sizeof(NCSH_Q), .value = NCSH_Q, .func = &ncsh_builtins_exit },
-    { .length = sizeof(NCSH_ECHO), .value = NCSH_ECHO, .func = &ncsh_builtins_echo },
-    { .length = sizeof(NCSH_HELP), .value = NCSH_HELP, .func = &ncsh_builtins_help },
-    { .length = sizeof(NCSH_CD), .value = NCSH_CD, .func = &ncsh_builtins_cd },
-    { .length = sizeof(NCSH_PWD), .value = NCSH_PWD, .func = &ncsh_builtins_pwd },
-    { .length = sizeof(NCSH_KILL), .value = NCSH_KILL, .func = &ncsh_builtins_kill },
-    { .length = sizeof(NCSH_SET), .value = NCSH_SET, .func = &ncsh_builtins_set },
-};
-size_t builtins_count = sizeof(builtins) / sizeof(struct ncsh_Builtin);
-
 /* Signal Handling */
 static _Atomic pid_t ncsh_vm_atomic_internal_child_pid = 0;
 
