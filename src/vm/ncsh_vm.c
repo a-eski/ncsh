@@ -4,8 +4,6 @@
 #include <assert.h>
 #include <bits/types/siginfo_t.h>
 #include <errno.h>
-#include <fcntl.h>
-#include <linux/limits.h>
 #include <signal.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -14,25 +12,35 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <time.h>
 #include <unistd.h>
 
 #include "../eskilib/eskilib_colors.h"
-#include "../ncsh_builtins.h"
 #include "../ncsh_defines.h"
 #include "../ncsh_parser.h"
+#include "ncsh_vm_builtins.h"
 #include "ncsh_vm_data.h"
 #include "ncsh_vm_tokenizer.h"
 #include "ncsh_vm.h"
 
 /* Builtins */
-char* builtins[] = {NCSH_EXIT, NCSH_QUIT, NCSH_Q, NCSH_ECHO, NCSH_HELP, NCSH_CD, NCSH_PWD, NCSH_KILL, NCSH_SET};
-size_t builtins_len[] = {sizeof(NCSH_EXIT), sizeof(NCSH_QUIT), sizeof(NCSH_Q),    sizeof(NCSH_ECHO), sizeof(NCSH_HELP),
-                         sizeof(NCSH_CD),   sizeof(NCSH_PWD),  sizeof(NCSH_KILL), sizeof(NCSH_SET)};
+struct ncsh_Builtin {
+    size_t length;
+    char* value;
+    int_fast32_t (*func)(struct ncsh_Args*);
+};
 
-int_fast32_t (*builtin_func[])(struct ncsh_Args*) = {&ncsh_builtins_exit, &ncsh_builtins_exit, &ncsh_builtins_exit,
-                                                     &ncsh_builtins_echo, &ncsh_builtins_help, &ncsh_builtins_cd,
-                                                     &ncsh_builtins_pwd,  &ncsh_builtins_kill, &ncsh_builtins_set};
+struct ncsh_Builtin builtins[] = {
+    { .length = sizeof(NCSH_EXIT), .value = NCSH_EXIT, .func = &ncsh_builtins_exit },
+    { .length = sizeof(NCSH_QUIT), .value = NCSH_QUIT, .func = &ncsh_builtins_exit },
+    { .length = sizeof(NCSH_Q), .value = NCSH_Q, .func = &ncsh_builtins_exit },
+    { .length = sizeof(NCSH_ECHO), .value = NCSH_ECHO, .func = &ncsh_builtins_echo },
+    { .length = sizeof(NCSH_HELP), .value = NCSH_HELP, .func = &ncsh_builtins_help },
+    { .length = sizeof(NCSH_CD), .value = NCSH_CD, .func = &ncsh_builtins_cd },
+    { .length = sizeof(NCSH_PWD), .value = NCSH_PWD, .func = &ncsh_builtins_pwd },
+    { .length = sizeof(NCSH_KILL), .value = NCSH_KILL, .func = &ncsh_builtins_kill },
+    { .length = sizeof(NCSH_SET), .value = NCSH_SET, .func = &ncsh_builtins_set },
+};
+size_t builtins_count = sizeof(builtins) / sizeof(struct ncsh_Builtin);
 
 /* Signal Handling */
 static _Atomic pid_t ncsh_vm_atomic_internal_child_pid = 0;
@@ -406,6 +414,30 @@ int_fast32_t ncsh_vm_background_job_run(struct ncsh_Args* args, struct ncsh_Proc
 }
 
 /* VM */
+void ncsh_vm_buffer_set_command_next(struct ncsh_Args* args, struct ncsh_Vm_Data* vm)
+{
+    vm->buffer_position = 0;
+
+    while (args->ops[vm->args_position] == OP_CONSTANT) {
+        vm->buffer[vm->buffer_position] = args->values[vm->args_position];
+        vm->buffer_len[vm->buffer_position] = args->lengths[vm->args_position];
+        ++vm->args_position;
+
+        if (!args->values[vm->args_position]) {
+            vm->args_end = true;
+            ++vm->buffer_position;
+            break;
+        }
+
+        ++vm->buffer_position;
+    }
+
+    if (!vm->args_end) {
+        vm->op_current = args->ops[vm->args_position];
+    }
+    ++vm->args_position;
+}
+
 [[nodiscard]]
 int_fast32_t ncsh_vm(struct ncsh_Args* args, struct ncsh_Processes* processes)
 {
@@ -430,26 +462,7 @@ int_fast32_t ncsh_vm(struct ncsh_Args* args, struct ncsh_Processes* processes)
     }
 
     while (args->values[vm.args_position] && vm.args_end != true) {
-        vm.buffer_position = 0;
-
-        while (args->ops[vm.args_position] == OP_CONSTANT) {
-            vm.buffer[vm.buffer_position] = args->values[vm.args_position];
-	    vm.buffer_len[vm.buffer_position] = args->lengths[vm.args_position];
-            ++vm.args_position;
-
-            if (!args->values[vm.args_position]) {
-                vm.args_end = true;
-                ++vm.buffer_position;
-                break;
-            }
-
-            ++vm.buffer_position;
-        }
-
-        if (!vm.args_end) {
-            vm.op_current = args->ops[vm.args_position];
-        }
-        ++vm.args_position;
+        ncsh_vm_buffer_set_command_next(args, &vm);
 
         vm.buffer[vm.buffer_position] = NULL;
         if (!vm.buffer[0]) {
@@ -462,10 +475,10 @@ int_fast32_t ncsh_vm(struct ncsh_Args* args, struct ncsh_Processes* processes)
             }
         }
 
-        for (uint_fast32_t i = 0; i < sizeof(builtins) / sizeof(char*); ++i) {
-            if (eskilib_string_compare(vm.buffer[0], vm.buffer_len[0], builtins[i], builtins_len[i])) {
+        for (uint_fast32_t i = 0; i < builtins_count; ++i) {
+            if (eskilib_string_compare(vm.buffer[0], vm.buffer_len[0], builtins[i].value, builtins[i].length)) {
                 vm.command_type = CT_BUILTIN;
-                vm.command_result = (*builtin_func[i])(args);
+                vm.command_result = (*builtins[i].func)(args);
 
                 if (vm.op_current == OP_PIPE) {
                     ncsh_vm_pipe_stop(vm.command_position, tokens.number_of_pipe_commands, &vm.pipes_io);

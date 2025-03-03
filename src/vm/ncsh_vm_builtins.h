@@ -6,10 +6,10 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "eskilib/eskilib_string.h"
-#include "ncsh_history.h"
-#include "ncsh_parser.h"
-#include "z/z.h"
+#include "../eskilib/eskilib_string.h"
+#include "../ncsh_history.h"
+#include "../ncsh_parser.h"
+#include "../z/z.h"
 
 #define NCSH_Z "z" // the base command, changes directory
 #define NCSH_Z_ADD "add"
