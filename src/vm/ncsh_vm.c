@@ -17,61 +17,13 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "eskilib/eskilib_colors.h"
-#include "ncsh_builtins.h"
-#include "ncsh_defines.h"
-#include "ncsh_parser.h"
+#include "../eskilib/eskilib_colors.h"
+#include "../ncsh_builtins.h"
+#include "../ncsh_defines.h"
+#include "../ncsh_parser.h"
+#include "ncsh_vm_data.h"
+#include "ncsh_vm_tokenizer.h"
 #include "ncsh_vm.h"
-
-/* Macros (Constants) */
-#define EXECVP_FAILED -1
-
-/* Types */
-enum ncsh_Command_Type {
-    CT_NONE = 0,
-    CT_BUILTIN = 1,
-    CT_EXTERNAL = 2
-};
-
-struct ncsh_Output_Redirect_IO {
-    int fd_stdout;
-    int fd_stderr;
-    int original_stdout;
-    int original_stderr;
-};
-
-struct ncsh_Input_Redirect_IO {
-    int fd;
-    int original_stdin;
-};
-
-struct ncsh_Pipe_IO {
-    int fd_one[2];
-    int fd_two[2];
-};
-
-struct ncsh_Vm {
-    struct ncsh_Output_Redirect_IO output_redirect_io;
-    struct ncsh_Input_Redirect_IO input_redirect_io;
-    struct ncsh_Pipe_IO pipes_io;
-};
-
-struct ncsh_Tokens {
-    uint_fast32_t stdout_redirect_index;
-    uint_fast32_t stdin_redirect_index;
-    uint_fast32_t stderr_redirect_index;
-    uint_fast32_t stdout_and_stderr_redirect_index;
-
-    uint_fast32_t number_of_pipe_commands;
-
-    char* stdout_file;
-    char* stdin_file;
-    char* stderr_file;
-    char* stdout_and_stderr_file;
-
-    bool output_append;
-    bool is_background_job;
-};
 
 /* Builtins */
 char* builtins[] = {NCSH_EXIT, NCSH_QUIT, NCSH_Q, NCSH_ECHO, NCSH_HELP, NCSH_CD, NCSH_PWD, NCSH_KILL, NCSH_SET};
@@ -228,7 +180,7 @@ void ncsh_vm_stdout_and_stderr_redirection_stop(struct ncsh_Output_Redirect_IO* 
 
 [[nodiscard]]
 int_fast32_t ncsh_vm_redirection_start_if_needed(struct ncsh_Args* args, struct ncsh_Tokens* tokens,
-                                                                   struct ncsh_Vm* vm)
+                                                                   struct ncsh_Vm_Data* vm)
 {
     assert(args);
     assert(tokens);
@@ -285,7 +237,7 @@ int_fast32_t ncsh_vm_redirection_start_if_needed(struct ncsh_Args* args, struct 
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
-void ncsh_vm_redirection_stop_if_needed(struct ncsh_Tokens* tokens, struct ncsh_Vm* vm)
+void ncsh_vm_redirection_stop_if_needed(struct ncsh_Tokens* tokens, struct ncsh_Vm_Data* vm)
 {
     assert(tokens);
     assert(vm);
@@ -385,216 +337,6 @@ void ncsh_vm_pipe_stop(uint_fast32_t command_position, uint_fast32_t number_of_c
     }
 }
 
-/* Tokenizing and Syntax Validation */
-[[nodiscard]]
-int_fast32_t ncsh_vm_syntax_error(const char* message, size_t message_length)
-{
-    if (write(STDIN_FILENO, message, message_length) == -1) {
-        return NCSH_COMMAND_EXIT_FAILURE;
-    }
-
-    return NCSH_COMMAND_SYNTAX_ERROR;
-}
-
-#define INVALID_SYNTAX_PIPE_FIRST_ARG                                                                                  \
-    "ncsh: Invalid syntax: found pipe operator ('|') as first argument. Correct usage of pipe operator is 'program1 "  \
-    "| program2'.\n"
-#define INVALID_SYNTAX_PIPE_LAST_ARG                                                                                   \
-    "ncsh: Invalid syntax: found pipe operator ('|') as last argument. Correct usage of pipe operator is 'program1 | " \
-    "program2'.\n"
-
-#define INVALID_SYNTAX_STDOUT_REDIR_FIRST_ARG                                                                          \
-    "ncsh: Invalid syntax: found output redirection operator ('>') as first argument. Correct usage of output "        \
-    "redirection operator is 'program > file'.\n"
-#define INVALID_SYNTAX_STDOUT_REDIR_LAST_ARG                                                                           \
-    "ncsh: Invalid syntax: found no filename after output redirect operator ('>'). Correct usage of output "           \
-    "redirection operator is 'program > file'.\n"
-
-#define INVALID_SYNTAX_STDOUT_REDIR_APPEND_FIRST_ARG                                                                   \
-    "ncsh: Invalid syntax: found output redirection append operator ('>>') as first argument. Correct usage of "       \
-    "output redirection append operator is 'program >> file'.\n"
-#define INVALID_SYNTAX_STDOUT_REDIR_APPEND_LAST_ARG                                                                    \
-    "ncsh: Invalid syntax: found no filename after output redirect append operator ('>>'). Correct usage of output "   \
-    "redirection operator is 'program >> file'.\n"
-
-#define INVALID_SYNTAX_STDIN_REDIR_FIRST_ARG                                                                           \
-    "ncsh: Invalid syntax: found input redirection operator ('<') as first argument. Correct usage of input "          \
-    "redirection operator is 'program < file'.\n"
-#define INVALID_SYNTAX_STDIN_REDIR_LAST_ARG                                                                            \
-    "ncsh: Invalid syntax: found input redirection operator ('<') as last argument. Correct usage of input "           \
-    "redirection operator is 'program < file'.\n"
-
-#define INVALID_SYNTAX_STDERR_REDIR_FIRST_ARG                                                                          \
-    "ncsh: Invalid syntax: found error redirection operator ('2>') as first argument. Correct usage of error "         \
-    "redirection is 'program 2> file'.\n"
-#define INVALID_SYNTAX_STDERR_REDIR_LAST_ARG                                                                           \
-    "ncsh: Invalid syntax: found error redirection operator ('2>') as last argument. Correct usage of error "          \
-    "redirection is 'program 2> file'.\n"
-
-#define INVALID_SYNTAX_STDERR_REDIR_APPEND_FIRST_ARG                                                                   \
-    "ncsh: Invalid syntax: found error redirection append operator ('2>>') as first argument. Correct usage of error " \
-    "redirection is 'program 2>> file'.\n"
-#define INVALID_SYNTAX_STDERR_REDIR_APPEND_LAST_ARG                                                                    \
-    "ncsh: Invalid syntax: found error redirection operator ('2>>') as last argument. Correct usage of error "         \
-    "redirection is 'program 2>> file'.\n"
-
-#define INVALID_SYNTAX_STDOUT_AND_STDERR_REDIR_FIRST_ARG                                                               \
-    "ncsh: Invalid syntax: found output & error redirection operator ('&>') as first argument. Correct usage of "      \
-    "output & error redirection is 'program &> file'.\n"
-#define INVALID_SYNTAX_STDOUT_AND_STDERR_REDIR_LAST_ARG                                                                \
-    "ncsh: Invalid syntax: found output & error redirection operator ('&>') as last argument. Correct usage of "       \
-    "output & error redirection is 'program &> file'.\n"
-
-#define INVALID_SYNTAX_STDOUT_AND_STDERR_REDIR_APPEND_FIRST_ARG                                                        \
-    "ncsh: Invalid syntax: found output & error redirection operator ('&>>') as first argument. Correct usage of "     \
-    "output & error redirection is 'program &>> file'.\n"
-#define INVALID_SYNTAX_STDOUT_AND_STDERR_REDIR_APPEND_LAST_ARG                                                         \
-    "ncsh: Invalid syntax: found output & error redirection operator ('&>>') as last argument. Correct usage of "      \
-    "output & error redirection is 'program &>> file'.\n"
-
-#define INVALID_SYNTAX_BACKGROUND_JOB_FIRST_ARG                                                                        \
-    "ncsh: Invalid syntax: found background job operator ('&') as first argument. Correct usage of background job "    \
-    "operator is 'program &'.\n"
-#define INVALID_SYNTAX_BACKGROUND_JOB_NOT_LAST_ARG                                                                     \
-    "ncsh: Invalid syntax: found background job operator ('&') in position other than last argument. Correct usage "   \
-    "of background job operator is 'program &'.\n"
-
-#define INVALID_SYNTAX(message) ncsh_vm_syntax_error(message, sizeof(message) - 1)
-
-[[nodiscard]]
-int_fast32_t ncsh_vm_args_syntax_check(struct ncsh_Args* args)
-{
-    assert(args);
-
-    switch (args->ops[0]) {
-    case OP_PIPE: {
-        return INVALID_SYNTAX(INVALID_SYNTAX_PIPE_FIRST_ARG);
-    }
-    case OP_STDOUT_REDIRECTION: {
-        return INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_REDIR_FIRST_ARG);
-    }
-    case OP_STDOUT_REDIRECTION_APPEND: {
-        return INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_REDIR_APPEND_FIRST_ARG);
-    }
-    case OP_STDIN_REDIRECTION: {
-        return INVALID_SYNTAX(INVALID_SYNTAX_STDIN_REDIR_FIRST_ARG);
-    }
-    case OP_STDERR_REDIRECTION: {
-        return INVALID_SYNTAX(INVALID_SYNTAX_STDERR_REDIR_FIRST_ARG);
-    }
-    case OP_STDERR_REDIRECTION_APPEND: {
-        return INVALID_SYNTAX(INVALID_SYNTAX_STDERR_REDIR_APPEND_FIRST_ARG);
-    }
-    case OP_STDOUT_AND_STDERR_REDIRECTION: {
-        return INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_AND_STDERR_REDIR_FIRST_ARG);
-    }
-    case OP_STDOUT_AND_STDERR_REDIRECTION_APPEND: {
-        return INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_AND_STDERR_REDIR_APPEND_FIRST_ARG);
-    }
-    case OP_BACKGROUND_JOB: {
-        return INVALID_SYNTAX(INVALID_SYNTAX_BACKGROUND_JOB_FIRST_ARG);
-    }
-    }
-
-    switch (args->ops[args->count - 1]) {
-    case OP_PIPE: {
-        return INVALID_SYNTAX(INVALID_SYNTAX_PIPE_LAST_ARG);
-    }
-    case OP_STDOUT_REDIRECTION: {
-        return INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_REDIR_LAST_ARG);
-    }
-    case OP_STDOUT_REDIRECTION_APPEND: {
-        return INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_REDIR_APPEND_LAST_ARG);
-    }
-    case OP_STDIN_REDIRECTION: {
-        return INVALID_SYNTAX(INVALID_SYNTAX_STDIN_REDIR_LAST_ARG);
-    }
-    case OP_STDERR_REDIRECTION: {
-        return INVALID_SYNTAX(INVALID_SYNTAX_STDERR_REDIR_LAST_ARG);
-    }
-    case OP_STDERR_REDIRECTION_APPEND: {
-        return INVALID_SYNTAX(INVALID_SYNTAX_STDERR_REDIR_APPEND_LAST_ARG);
-    }
-    case OP_STDOUT_AND_STDERR_REDIRECTION: {
-        return INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_AND_STDERR_REDIR_LAST_ARG);
-    }
-    case OP_STDOUT_AND_STDERR_REDIRECTION_APPEND: {
-        return INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_AND_STDERR_REDIR_APPEND_LAST_ARG);
-    }
-    }
-
-    return NCSH_COMMAND_SUCCESS_CONTINUE;
-}
-
-[[nodiscard]]
-int_fast32_t ncsh_vm_tokenize(struct ncsh_Args* args, struct ncsh_Tokens* tokens)
-{
-    assert(args);
-    assert(tokens);
-
-    int_fast32_t syntax_check;
-    if ((syntax_check = ncsh_vm_args_syntax_check(args)) != NCSH_COMMAND_SUCCESS_CONTINUE) {
-        return syntax_check;
-    }
-
-    tokens->is_background_job = false;
-    for (uint_fast32_t i = 0; i < args->count; ++i) {
-        switch (args->ops[i]) {
-        case OP_STDOUT_REDIRECTION: {
-            tokens->stdout_file = args->values[i + 1];
-            tokens->stdout_redirect_index = i;
-            break;
-        }
-        case OP_STDOUT_REDIRECTION_APPEND: {
-            tokens->stdout_file = args->values[i + 1];
-            tokens->stdout_redirect_index = i;
-            tokens->output_append = true;
-            break;
-        }
-        case OP_STDIN_REDIRECTION: {
-            tokens->stdin_file = args->values[i + 1];
-            tokens->stdin_redirect_index = i;
-            break;
-        }
-        case OP_STDERR_REDIRECTION: {
-            tokens->stderr_file = args->values[i + 1];
-            tokens->stderr_redirect_index = i;
-            break;
-        }
-        case OP_STDERR_REDIRECTION_APPEND: {
-            tokens->stderr_file = args->values[i + 1];
-            tokens->stderr_redirect_index = i;
-            tokens->output_append = true;
-            break;
-        }
-        case OP_STDOUT_AND_STDERR_REDIRECTION: {
-            tokens->stdout_and_stderr_file = args->values[i + 1];
-            tokens->stdout_and_stderr_redirect_index = i;
-            break;
-        }
-        case OP_STDOUT_AND_STDERR_REDIRECTION_APPEND: {
-            tokens->stdout_and_stderr_file = args->values[i + 1];
-            tokens->stdout_and_stderr_redirect_index = i;
-            tokens->output_append = true;
-            break;
-        }
-        case OP_PIPE: {
-            ++tokens->number_of_pipe_commands;
-            break;
-        }
-        case OP_BACKGROUND_JOB: {
-            if (i != args->count - 1) {
-                return INVALID_SYNTAX(INVALID_SYNTAX_BACKGROUND_JOB_NOT_LAST_ARG);
-            }
-            tokens->is_background_job = true;
-        }
-        }
-    }
-    ++tokens->number_of_pipe_commands;
-
-    return NCSH_COMMAND_SUCCESS_CONTINUE;
-}
-
 /* Failure Handling */
 [[nodiscard]]
 int_fast32_t ncsh_vm_fork_failure_perror() {
@@ -670,7 +412,7 @@ int_fast32_t ncsh_vm(struct ncsh_Args* args, struct ncsh_Processes* processes)
     assert(args);
 
     struct ncsh_Tokens tokens = {0};
-    int_fast32_t result = ncsh_vm_tokenize(args, &tokens);
+    int_fast32_t result = ncsh_vm_tokenizer_tokenize(args, &tokens);
     if (result != NCSH_COMMAND_SUCCESS_CONTINUE) {
         return result;
     }
@@ -680,89 +422,77 @@ int_fast32_t ncsh_vm(struct ncsh_Args* args, struct ncsh_Processes* processes)
 	return ncsh_vm_background_job_run(args, processes, &tokens);
     }*/
 
-    pid_t pid = 0;
-    int status;
-    int execvp_result = 0;
-    int command_result = NCSH_COMMAND_NONE;
-    struct ncsh_Vm vm = {0};
-    char* buffer[MAX_INPUT] = {0};
-    size_t buffer_len[MAX_INPUT] = {0};
-    bool args_end = false;
-    enum ncsh_Ops op_current = OP_NONE;
-    enum ncsh_Command_Type command_type = CT_NONE;
-
-    uint_fast32_t command_position = 0;
-    uint_fast32_t args_position = 0;
-    uint_fast32_t buffer_position = 0;
+    struct ncsh_Vm_Data vm = {0};
+    vm.command_result = NCSH_COMMAND_NONE;
 
     if ((result = ncsh_vm_redirection_start_if_needed(args, &tokens, &vm)) != NCSH_COMMAND_SUCCESS_CONTINUE) {
         return result;
     }
 
-    while (args->values[args_position] != NULL && args_end != true) {
-        buffer_position = 0;
+    while (args->values[vm.args_position] && vm.args_end != true) {
+        vm.buffer_position = 0;
 
-        while (args->ops[args_position] == OP_CONSTANT) {
-            buffer[buffer_position] = args->values[args_position];
-	    buffer_len[buffer_position] = args->lengths[args_position];
-            ++args_position;
+        while (args->ops[vm.args_position] == OP_CONSTANT) {
+            vm.buffer[vm.buffer_position] = args->values[vm.args_position];
+	    vm.buffer_len[vm.buffer_position] = args->lengths[vm.args_position];
+            ++vm.args_position;
 
-            if (!args->values[args_position]) {
-                args_end = true;
-                ++buffer_position;
+            if (!args->values[vm.args_position]) {
+                vm.args_end = true;
+                ++vm.buffer_position;
                 break;
             }
 
-            ++buffer_position;
+            ++vm.buffer_position;
         }
 
-        if (!args_end) {
-            op_current = args->ops[args_position];
+        if (!vm.args_end) {
+            vm.op_current = args->ops[vm.args_position];
         }
-        ++args_position;
+        ++vm.args_position;
 
-        buffer[buffer_position] = NULL;
-        if (!buffer[0]) {
+        vm.buffer[vm.buffer_position] = NULL;
+        if (!vm.buffer[0]) {
             return NCSH_COMMAND_FAILED_CONTINUE;
         }
 
-        if (op_current == OP_PIPE && !args_end) {
-            if (!ncsh_vm_pipe_start(command_position, &vm.pipes_io)) {
+        if (vm.op_current == OP_PIPE && !vm.args_end) {
+            if (!ncsh_vm_pipe_start(vm.command_position, &vm.pipes_io)) {
                 return NCSH_COMMAND_EXIT_FAILURE;
             }
         }
 
         for (uint_fast32_t i = 0; i < sizeof(builtins) / sizeof(char*); ++i) {
-            if (eskilib_string_compare(buffer[0], buffer_len[0], builtins[i], builtins_len[i])) {
-                command_type = CT_BUILTIN;
-                command_result = (*builtin_func[i])(args);
+            if (eskilib_string_compare(vm.buffer[0], vm.buffer_len[0], builtins[i], builtins_len[i])) {
+                vm.command_type = CT_BUILTIN;
+                vm.command_result = (*builtin_func[i])(args);
 
-                if (op_current == OP_PIPE) {
-                    ncsh_vm_pipe_stop(command_position, tokens.number_of_pipe_commands, &vm.pipes_io);
+                if (vm.op_current == OP_PIPE) {
+                    ncsh_vm_pipe_stop(vm.command_position, tokens.number_of_pipe_commands, &vm.pipes_io);
                 }
                 break;
             }
         }
 
-        if (command_type != CT_BUILTIN) {
+        if (vm.command_type != CT_BUILTIN) {
             if (ncsh_vm_signal_forward(SIGINT)) {
                 perror("ncsh: Error setting up signal handlers");
                 return NCSH_COMMAND_EXIT_FAILURE;
             }
 
-            pid = fork();
+            vm.pid = fork();
 
-            if (pid < 0) {
-                return ncsh_vm_fork_failure(command_position, tokens.number_of_pipe_commands, &vm.pipes_io);
+            if (vm.pid < 0) {
+                return ncsh_vm_fork_failure(vm.command_position, tokens.number_of_pipe_commands, &vm.pipes_io);
             }
 
-            if (pid == 0) { // runs in the child process
-                if (op_current == OP_PIPE) {
-                    ncsh_vm_pipe_connect(command_position, tokens.number_of_pipe_commands, &vm.pipes_io);
+            if (vm.pid == 0) { // runs in the child process
+                if (vm.op_current == OP_PIPE) {
+                    ncsh_vm_pipe_connect(vm.command_position, tokens.number_of_pipe_commands, &vm.pipes_io);
                 }
 
-                if ((execvp_result = execvp(buffer[0], buffer)) == EXECVP_FAILED) {
-                    args_end = true;
+                if ((vm.execvp_result = execvp(vm.buffer[0], vm.buffer)) == EXECVP_FAILED) {
+                    vm.args_end = true;
                     perror(RED "ncsh: Could not run command" RESET);
                     fflush(stdout);
                     kill(getpid(), SIGTERM);
@@ -772,20 +502,20 @@ int_fast32_t ncsh_vm(struct ncsh_Args* args, struct ncsh_Processes* processes)
                 // return NCSH_COMMAND_EXIT;
             }
 
-            if (op_current == OP_PIPE) {
-                ncsh_vm_pipe_stop(command_position, tokens.number_of_pipe_commands, &vm.pipes_io);
+            if (vm.op_current == OP_PIPE) {
+                ncsh_vm_pipe_stop(vm.command_position, tokens.number_of_pipe_commands, &vm.pipes_io);
             }
 
-            if (execvp_result == EXECVP_FAILED) {
+            if (vm.execvp_result == EXECVP_FAILED) {
                 break;
             }
 
-            ncsh_vm_atomic_child_pid_set(pid);
+            ncsh_vm_atomic_child_pid_set(vm.pid);
 
             __pid_t waitpid_result;
             while (1) {
-                status = 0;
-                waitpid_result = waitpid(pid, &status, WUNTRACED);
+                vm.status = 0;
+                waitpid_result = waitpid(vm.pid, &vm.status, WUNTRACED);
 
                 // check for errors
                 if (waitpid_result == -1) {
@@ -795,23 +525,23 @@ int_fast32_t ncsh_vm(struct ncsh_Args* args, struct ncsh_Processes* processes)
                     }
 
                     perror(RED "ncsh: Error waiting for child process to exit" RESET);
-                    status = EXIT_FAILURE;
+                    vm.status = EXIT_FAILURE;
                     break;
                 }
 
                 // check if child process has exited
-                if (waitpid_result == pid) {
+                if (waitpid_result == vm.pid) {
 #ifdef NCSH_DEBUG
-                    if (WIFEXITED(status)) {
-                        if (WEXITSTATUS(status)) {
-                            fprintf(stderr, "ncsh: Command child process failed with status %d\n", WEXITSTATUS(status));
+                    if (WIFEXITED(vm.status)) {
+                        if (WEXITSTATUS(vm.status)) {
+                            fprintf(stderr, "ncsh: Command child process failed with status %d\n", WEXITSTATUS(vm.status));
                         }
                         else {
                             fprintf(stderr, "ncsh: Command child process exited successfully.\n");
                         }
                     }
-                    else if (WIFSIGNALED(status)) {
-                        fprintf(stderr, "ncsh: Command child process died from signal #%d\n", WTERMSIG(status));
+                    else if (WIFSIGNALED(vm.status)) {
+                        fprintf(stderr, "ncsh: Command child process died from signal #%d\n", WTERMSIG(vm.status));
                     }
                     else {
                         if (write(STDERR_FILENO, "ncsh: Command child process died, cause unknown.\n", 49) == -1) {
@@ -825,19 +555,19 @@ int_fast32_t ncsh_vm(struct ncsh_Args* args, struct ncsh_Processes* processes)
             }
         }
 
-        ++command_position;
+        ++vm.command_position;
     }
 
     ncsh_vm_redirection_stop_if_needed(&tokens, &vm);
 
-    if (execvp_result == EXECVP_FAILED) {
+    if (vm.execvp_result == EXECVP_FAILED) {
         return NCSH_COMMAND_EXIT_FAILURE;
     }
-    if (status == EXIT_FAILURE) {
+    if (vm.status == EXIT_FAILURE) {
         return NCSH_COMMAND_EXIT_FAILURE;
     }
-    if (command_result != NCSH_COMMAND_NONE)
-        return command_result;
+    if (vm.command_result != NCSH_COMMAND_NONE)
+        return vm.command_result;
 
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }

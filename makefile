@@ -6,7 +6,7 @@ RELEASE ?= 1
 debug_flags = -Wall -Wextra -Werror -Wpedantic -pedantic-errors -Wsign-conversion -Wformat=2 -Wshadow -Wvla -fstack-protector-all -fsanitize=address,undefined,leak -g
 release_flags = -Wall -Wextra -Werror -pedantic-errors -Wsign-conversion -Wformat=2 -Wshadow -Wvla -O3 -DNDEBUG
 fuzz_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,leak,fuzzer -DNDEBUG -g
-objects = obj/main.o obj/ncsh.o obj/ncsh_noninteractive.o obj/ncsh_readline.o obj/ncsh_vm.o obj/ncsh_terminal.o obj/eskilib_string.o obj/eskilib_file.o obj/eskilib_hashtable.o obj/ncsh_parser.o obj/ncsh_builtins.o obj/ncsh_history.o obj/ncsh_autocompletions.o obj/ncsh_config.o obj/fzf.o obj/z.o
+objects = obj/main.o obj/ncsh.o obj/ncsh_noninteractive.o obj/ncsh_readline.o obj/ncsh_vm.o obj/ncsh_vm_tokenizer.o obj/ncsh_terminal.o obj/eskilib_string.o obj/eskilib_file.o obj/eskilib_hashtable.o obj/ncsh_parser.o obj/ncsh_builtins.o obj/ncsh_history.o obj/ncsh_autocompletions.o obj/ncsh_config.o obj/fzf.o obj/z.o
 target = $(BUILDDIR)/ncsh
 
 ifeq ($(CC), gcc)
@@ -23,6 +23,9 @@ endif
 
 $(target) : $(objects)
 	$(cc_with_flags) -o $(target) $(objects)
+
+obj/%.o: src/vm/%.c
+	$(cc_with_flags) -c $< -o $@
 
 obj/%.o: src/eskilib/%.c
 	$(cc_with_flags) -c $< -o $@

@@ -1,1 +1,0 @@
-gcc -std=c23 -Wall -Wextra -Werror -Wpedantic -pedantic-errors -Wconversion -Wsign-conversion -Wformat=2 -Wshadow -Wvla -fstack-protector-all -DNCSH_DEBUG ../eskilib/eskilib_test.c ../eskilib/eskilib_string.c ncsh_parser.c ncsh_math.c -o math

@@ -22,4 +22,5 @@
 #include "ncsh_noninteractive.c"
 #include "ncsh_parser.c"
 #include "ncsh_terminal.c"
-#include "ncsh_vm.c"
+#include "vm/ncsh_vm_tokenizer.c"
+#include "vm/ncsh_vm.c"

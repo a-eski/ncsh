@@ -12,7 +12,7 @@
 #include "ncsh_defines.h" // used when NCSH_DEBUG defined
 #include "ncsh_noninteractive.h"
 #include "ncsh_parser.h"
-#include "ncsh_vm.h"
+#include "vm/ncsh_vm.h"
 
 /*enum ncsh_Flags
 {
