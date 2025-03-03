@@ -13,13 +13,13 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#include "eskilib/eskilib_string.h"
-#include "eskilib/eskilib_colors.h"
-#include "ncsh_defines.h"
-#include "ncsh_history.h"
-#include "ncsh_builtins.h"
-#include "ncsh_parser.h"
-#include "z/z.h"
+#include "../eskilib/eskilib_string.h"
+#include "../eskilib/eskilib_colors.h"
+#include "../ncsh_defines.h"
+#include "../ncsh_history.h"
+#include "../ncsh_parser.h"
+#include "ncsh_vm_builtins.h"
+#include "../z/z.h"
 
 [[nodiscard]]
 int_fast32_t ncsh_builtins_z(struct z_Database* z_db, struct ncsh_Args* args)
