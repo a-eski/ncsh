@@ -77,6 +77,16 @@ int_fast32_t ncsh_init(struct ncsh_Shell* shell)
     return EXIT_SUCCESS;
 }
 
+void ncsh_reset(struct ncsh_Shell* shell)
+{
+    ncsh_parser_args_free_values(&shell->args);
+    memset(shell->input.buffer, '\0', shell->input.max_pos);
+    shell->input.pos = 0;
+    shell->input.max_pos = 0;
+    shell->args.count = 0;
+    shell->args.values[0] = NULL;
+}
+
 int_fast32_t ncsh(void)
 {
 #ifdef NCSH_START_TIME
@@ -142,12 +152,7 @@ int_fast32_t ncsh(void)
         ncsh_autocompletions_add(shell.input.buffer, shell.input.pos, shell.input.autocompletions_tree);
 
     reset:
-        ncsh_parser_args_free_values(&shell.args);
-        memset(shell.input.buffer, '\0', shell.input.max_pos);
-        shell.input.pos = 0;
-        shell.input.max_pos = 0;
-        shell.args.count = 0;
-        shell.args.values[0] = NULL;
+        ncsh_reset(&shell);
     }
 
 exit:
