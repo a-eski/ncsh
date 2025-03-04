@@ -6,9 +6,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "eskilib/eskilib_string.h"
+#include "../eskilib/eskilib_string.h"
+#include "../ncsh_defines.h"
 #include "ncsh_autocompletions.h"
-#include "ncsh_defines.h"
 
 int ncsh_char_to_index(char character);
 char ncsh_index_to_char(int index);

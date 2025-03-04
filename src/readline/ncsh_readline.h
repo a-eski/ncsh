@@ -4,8 +4,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "eskilib/eskilib_result.h"
-#include "ncsh_config.h"
+#include "../eskilib/eskilib_result.h"
+#include "../ncsh_config.h"
 #include "ncsh_history.h"
 #include "ncsh_terminal.h"
 
@@ -45,6 +45,8 @@ size_t ncsh_readline_prompt_size(size_t user_len, size_t dir_len);
 int_fast32_t ncsh_readline_init(struct ncsh_Config* config, struct ncsh_Input *input);
 
 int_fast32_t ncsh_readline(struct ncsh_Input* input);
+
+void ncsh_readline_history_and_autocompletion_add(struct ncsh_Input* input);
 
 void ncsh_readline_exit(struct ncsh_Input* input);
 

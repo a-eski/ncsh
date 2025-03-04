@@ -1,7 +1,7 @@
 #include <stdlib.h>
 
 #include "../eskilib/eskilib_test.h"
-#include "../ncsh_readline.h"
+#include "../readline/ncsh_readline.h"
 
 static const char user[] = "alex";
 static const char dir[] = "/home/alex";

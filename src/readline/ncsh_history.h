@@ -5,10 +5,10 @@
 
 #include <stdint.h>
 
-#include "eskilib/eskilib_result.h"
-#include "eskilib/eskilib_string.h"
-#include "ncsh_configurables.h"
-#include "ncsh_parser.h"
+#include "../eskilib/eskilib_result.h"
+#include "../eskilib/eskilib_string.h"
+#include "../ncsh_configurables.h"
+#include "../ncsh_parser.h"
 
 #ifdef NCSH_HISTORY_TEST
 #define NCSH_HISTORY_FILE ".ncsh_history_test"

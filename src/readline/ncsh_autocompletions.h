@@ -4,7 +4,7 @@
 #ifndef NCSH_AUTOCOMPLETIONS_H_
 #define NCSH_AUTOCOMPLETIONS_H_
 
-#include "eskilib/eskilib_string.h"
+#include "../eskilib/eskilib_string.h"
 
 #define NCSH_LETTERS 96 // ascii printable characters 32-127
 

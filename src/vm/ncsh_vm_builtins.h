@@ -7,7 +7,7 @@
 #include <stdint.h>
 
 #include "../eskilib/eskilib_string.h"
-#include "../ncsh_history.h"
+#include "../readline/ncsh_history.h"
 #include "../ncsh_parser.h"
 #include "../z/z.h"
 

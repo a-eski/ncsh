@@ -7,7 +7,7 @@
 
 #include "ncsh_config.h"
 #include "ncsh_parser.h"
-#include "ncsh_readline.h"
+#include "readline/ncsh_readline.h"
 #include "z/z.h"
 
 #define NCSH_MAX_PROCESSES 100
