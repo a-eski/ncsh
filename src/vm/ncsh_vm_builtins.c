@@ -259,6 +259,7 @@ int_fast32_t ncsh_builtins_kill(struct ncsh_Args* args)
         }
         return NCSH_COMMAND_FAILED_CONTINUE;
     }
+
     if (kill(pid, SIGTERM) != 0) {
         printf("ncsh kill: could not kill process with process ID (PID): %d\n", pid);
         return NCSH_COMMAND_FAILED_CONTINUE;
