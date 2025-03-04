@@ -387,19 +387,3 @@ void ncsh_parser_parse(const char* line, size_t length, struct ncsh_Args* args)
     ncsh_debug_args(args);
 #endif /* ifdef NCSH_DEBUG */
 }
-
-/*if (!state)
-{
-    if (line_position == length)
-    { // missing closing quote or end of mathematical expression
-
-        ncsh_parser_args_free_values(args);
-        args->count = 0;
-        break;
-    }
-    // check if quotes not closed, overlap, etc.
-    // if (state & IN_DOUBLE_QUOTES)
-    // if (state & IN_SINGLE_QUOTES)
-    // if (state & IN_BACKTICK_QUOTES)
-    // if (state & IN_MATHEMATICAL_EXPRESSION)
-}*/

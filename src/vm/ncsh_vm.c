@@ -18,7 +18,7 @@
 #include "../ncsh_defines.h"
 #include "../ncsh_parser.h"
 #include "ncsh_vm_builtins.h"
-#include "ncsh_vm_data.h"
+#include "ncsh_vm_types.h"
 #include "ncsh_vm_tokenizer.h"
 #include "ncsh_vm.h"
 
@@ -416,6 +416,14 @@ void ncsh_vm_buffer_set_command_next(struct ncsh_Args* args, struct ncsh_Vm_Data
         vm->op_current = args->ops[vm->args_position];
     }
     ++vm->args_position;
+}
+
+[[nodiscard]]
+int_fast32_t ncsh_vm_run(struct ncsh_Args* args, struct ncsh_Processes* processes)
+{
+    (void)args;
+    (void)processes;
+    return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
 [[nodiscard]]

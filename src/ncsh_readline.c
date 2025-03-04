@@ -147,6 +147,20 @@ int_fast32_t ncsh_readline_prompt(struct ncsh_Input* input)
 #endif /* if NCSH_PROMPT_DIRECTORY == NCSH_DIRECTORY_SHORT */
 }
 
+[[nodiscard]]
+int_fast32_t ncsh_readline_prompt_if_needed(struct ncsh_Input* input)
+{
+    if (input->reprint_prompt == true) {
+        if (ncsh_readline_prompt(input) == EXIT_FAILURE) {
+            return EXIT_FAILURE;
+        }
+        input->lines_y = 0;
+        input->history_position = 0;
+        input->reprint_prompt = false;
+    }
+    return EXIT_SUCCESS;
+}
+
 // IO
 enum ncsh_Line_Adjustment : uint_fast8_t {
     L_NONE = 0,
@@ -448,6 +462,67 @@ int_fast32_t ncsh_readline_move_cursor_right(struct ncsh_Input* input)
 }
 
 [[nodiscard]]
+int_fast32_t ncsh_readline_right_arrow_process(struct ncsh_Input* input)
+{
+    if (input->pos == input->max_pos && input->buffer[0]) {
+        if (ncsh_readline_autocomplete_select(input) != EXIT_SUCCESS) {
+            return EXIT_FAILURE;
+        }
+    }
+
+    if (ncsh_readline_move_cursor_right(input) != EXIT_SUCCESS) {
+        return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
+}
+
+[[nodiscard]]
+int_fast32_t ncsh_readline_history_up(struct ncsh_Input* input)
+{
+    input->history_entry = ncsh_history_get(input->history_position, &input->history);
+    if (input->history_entry.length > 0) {
+        ++input->history_position;
+        ncsh_write_literal(RESTORE_CURSOR_POSITION ERASE_CURRENT_LINE);
+
+        input->pos = input->history_entry.length - 1;
+        input->max_pos = input->history_entry.length - 1;
+        memcpy(input->buffer, input->history_entry.value, input->pos);
+
+        ncsh_write(input->buffer, input->pos);
+        ncsh_readline_adjust_line_if_needed(input);
+    }
+
+    return EXIT_SUCCESS;
+}
+
+[[nodiscard]]
+int_fast32_t ncsh_readline_history_down(struct ncsh_Input* input)
+{
+    input->history_entry = ncsh_history_get(input->history_position - 2, &input->history);
+
+    ncsh_write_literal(RESTORE_CURSOR_POSITION ERASE_CURRENT_LINE);
+
+    if (input->history_entry.length > 0) {
+        --input->history_position;
+        input->pos = input->history_entry.length - 1;
+        input->max_pos = input->history_entry.length - 1;
+        memcpy(input->buffer, input->history_entry.value, input->pos);
+
+        ncsh_write(input->buffer, input->pos);
+    }
+    else {
+        input->buffer[0] = '\0';
+        input->pos = 0;
+        input->max_pos = 0;
+    }
+
+    ncsh_readline_adjust_line_if_needed(input);
+
+    return EXIT_SUCCESS;
+}
+
+[[nodiscard]]
 int_fast32_t ncsh_readline_move_cursor_left(struct ncsh_Input* input)
 {
     ncsh_write_literal(MOVE_CURSOR_LEFT);
@@ -716,14 +791,9 @@ int_fast32_t ncsh_readline(struct ncsh_Input* input)
     input->terminal_size = ncsh_terminal_init();
 
     while (1) {
-        if (input->reprint_prompt == true) {
-	    if (ncsh_readline_prompt(input) == EXIT_FAILURE) {
-                exit = EXIT_FAILURE;
-		break;
-            }
-	    input->lines_y = 0;
-            input->history_position = 0;
-            input->reprint_prompt = false;
+        if (ncsh_readline_prompt_if_needed(input) != EXIT_SUCCESS) {
+            exit = EXIT_FAILURE;
+            break;
         }
 
         if (read(STDIN_FILENO, &character, 1) == -1) {
@@ -754,9 +824,8 @@ int_fast32_t ncsh_readline(struct ncsh_Input* input)
             }
         }
         else if (character == TAB_KEY) {
-            int_fast32_t tab_autocomplete_result = ncsh_readline_tab_autocomplete(input, input->autocompletions_tree);
-	    if (tab_autocomplete_result != EXIT_SUCCESS) {
-		exit = tab_autocomplete_result;
+	    if ((result = ncsh_readline_tab_autocomplete(input, input->autocompletions_tree)) != EXIT_SUCCESS) {
+		exit = result;
 		break;
 	    }
 
@@ -789,26 +858,18 @@ int_fast32_t ncsh_readline(struct ncsh_Input* input)
 		    break;
                 }
 
-		int key_result = EXIT_SUCCESS;
                 switch (character) {
                 case RIGHT_ARROW: {
 		    if (!input->pos && !input->max_pos) {
         		continue;
     		    }
 
-    		    if (input->pos == input->max_pos && input->buffer[0]) {
-		        if (ncsh_readline_autocomplete_select(input) != EXIT_SUCCESS) {
-			    exit = EXIT_FAILURE;
-			    break;
-			}
-		    }
+                    if (ncsh_readline_right_arrow_process(input) != EXIT_SUCCESS) {
+                        exit = EXIT_FAILURE;
+                        goto exit;
+                    }
 
-    		    if (ncsh_readline_move_cursor_right(input) != EXIT_SUCCESS) {
-			exit = EXIT_FAILURE;
-			break;
-		    }
-
-		    break;
+                    break;
                 }
                 case LEFT_ARROW: {
                     if (!input->pos || (!input->buffer[input->pos] && !input->buffer[input->pos - 1])) {
@@ -817,23 +878,15 @@ int_fast32_t ncsh_readline(struct ncsh_Input* input)
 
                     if (ncsh_readline_move_cursor_left(input) != EXIT_SUCCESS) {
 			exit = EXIT_FAILURE;
-			break;
+			goto exit;
 		    }
 
                     break;
                 }
                 case UP_ARROW: {
-                    input->history_entry = ncsh_history_get(input->history_position, &input->history);
-                    if (input->history_entry.length > 0) {
-                        ++input->history_position;
-                        ncsh_write_literal(RESTORE_CURSOR_POSITION ERASE_CURRENT_LINE);
-
-                        input->pos = input->history_entry.length - 1;
-                        input->max_pos = input->history_entry.length - 1;
-                        memcpy(input->buffer, input->history_entry.value, input->pos);
-
-                        ncsh_write(input->buffer, input->pos);
-			ncsh_readline_adjust_line_if_needed(input);
+                    if (ncsh_readline_history_up(input) != EXIT_SUCCESS) {
+                        exit = EXIT_FAILURE;
+                        goto exit;
                     }
 
                     continue;
@@ -843,26 +896,10 @@ int_fast32_t ncsh_readline(struct ncsh_Input* input)
                         continue;
                     }
 
-                    input->history_entry = ncsh_history_get(input->history_position - 2, &input->history);
-
-                    ncsh_write_literal(RESTORE_CURSOR_POSITION ERASE_CURRENT_LINE);
-
-                    if (input->history_entry.length > 0) {
-                        --input->history_position;
-                        input->pos = input->history_entry.length - 1;
-                        input->max_pos = input->history_entry.length - 1;
-                        memcpy(input->buffer, input->history_entry.value, input->pos);
-
-                        ncsh_write(input->buffer, input->pos);
-
+                    if (ncsh_readline_history_down(input) != EXIT_SUCCESS) {
+                        exit = EXIT_FAILURE;
+                        goto exit;
                     }
-                    else {
-                        input->buffer[0] = '\0';
-                        input->pos = 0;
-                        input->max_pos = 0;
-                    }
-
-		    ncsh_readline_adjust_line_if_needed(input);
 
                     continue;
                 }
@@ -870,7 +907,7 @@ int_fast32_t ncsh_readline(struct ncsh_Input* input)
                     if (read(STDIN_FILENO, &character, 1) == -1) {
                         perror(RED NCSH_ERROR_STDIN RESET);
                         fflush(stderr);
-                        key_result = EXIT_FAILURE;
+                        exit = EXIT_FAILURE;
 			goto exit;
                     }
 
@@ -879,7 +916,7 @@ int_fast32_t ncsh_readline(struct ncsh_Input* input)
                     }
 
                     if (ncsh_readline_delete(input) == EXIT_FAILURE) {
-                        key_result = EXIT_FAILURE;
+                        exit = EXIT_FAILURE;
 			goto exit;
                     }
 
@@ -910,11 +947,6 @@ int_fast32_t ncsh_readline(struct ncsh_Input* input)
                     break;
                 }
                 }
-
-		if (key_result != EXIT_SUCCESS) {
-		    exit = key_result;
-		    break;
-		}
             }
         }
         else if (character == '\n' || character == '\r') {

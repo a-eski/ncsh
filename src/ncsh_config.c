@@ -151,7 +151,7 @@ void ncsh_config_path_add(char* value, int len)
     free(new_path);
 }
 
-void ncsh_config_execute(FILE* file)
+void ncsh_config_process(FILE* file)
 {
     int buffer_length;
     char buffer[MAX_INPUT] = {0};
@@ -192,7 +192,7 @@ enum eskilib_Result ncsh_config_load(struct ncsh_Config* config)
         return E_SUCCESS;
     }
 
-    ncsh_config_execute(file);
+    ncsh_config_process(file);
 
     fclose(file);
     return E_SUCCESS;
@@ -249,21 +249,20 @@ void ncsh_config_free(struct ncsh_Config* config)
 #define CARGO "cargo"
 #define CARGO_ALIAS "c"
 
-struct eskilib_String aliases[] = {
-    { .length = sizeof(GIT), .value = GIT },
-    { .length = sizeof(NEOVIM), .value = NEOVIM },
-    { .length = sizeof(MAKE), .value = MAKE },
-    { .length = sizeof(FD), .value = FD },
-    { .length = sizeof(CARGO), .value = CARGO },
+struct ncsh_Alias {
+    struct eskilib_String alias;
+    struct eskilib_String actual_command;
 };
 
-struct eskilib_String aliased[] = {
-    { .length = sizeof(GIT_ALIAS), .value = GIT_ALIAS },
-    { .length = sizeof(NEOVIM_ALIAS), .value = NEOVIM_ALIAS },
-    { .length = sizeof(MAKE_ALIAS), .value = MAKE_ALIAS },
-    { .length = sizeof(FD_ALIAS), .value = FD_ALIAS },
-    { .length = sizeof(CARGO_ALIAS), .value = CARGO_ALIAS },
+struct ncsh_Alias aliases[] = {
+    { .alias = { .length = sizeof(GIT_ALIAS), .value = GIT_ALIAS }, .actual_command = { .length = sizeof(GIT), .value = GIT }},
+    { .alias = { .length = sizeof(NEOVIM_ALIAS), .value = NEOVIM_ALIAS }, .actual_command = { .length = sizeof(NEOVIM), .value = NEOVIM }},
+    { .alias = { .length = sizeof(MAKE_ALIAS), .value = MAKE_ALIAS }, .actual_command = { .length = sizeof(MAKE), .value = MAKE }},
+    { .alias = { .length = sizeof(FD_ALIAS), .value = FD_ALIAS }, .actual_command = {. length = sizeof(FD), .value = FD }},
+    { .alias = { .length = sizeof(CARGO_ALIAS ), .value = CARGO_ALIAS }, .actual_command = { .length = sizeof(CARGO), .value = CARGO }},
 };
+
+static constexpr size_t aliases_count = sizeof(aliases) / sizeof(struct ncsh_Alias);
 
 struct eskilib_String ncsh_config_alias_check(char* buffer, size_t buf_len)
 {
@@ -271,9 +270,9 @@ struct eskilib_String ncsh_config_alias_check(char* buffer, size_t buf_len)
         return eskilib_String_Empty;
     }
 
-    for (uint_fast32_t i = 0; i < sizeof(aliased) / sizeof(struct eskilib_String); ++i) {
-        if (eskilib_string_compare(buffer, buf_len, aliased[i].value, aliased[i].length)) {
-            return aliases[i];
+    for (uint_fast32_t i = 0; i < aliases_count; ++i) {
+        if (eskilib_string_compare(buffer, buf_len, aliases[i].alias.value, aliases[i].alias.length)) {
+            return aliases[i].actual_command;
         }
     }
 
