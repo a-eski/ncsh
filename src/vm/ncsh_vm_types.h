@@ -13,9 +13,8 @@
 
 /* Types */
 enum ncsh_Command_Type {
-    CT_NONE = 0,
-    CT_BUILTIN = 1,
-    CT_EXTERNAL = 2
+    CT_EXTERNAL = 0,
+    CT_BUILTIN = 1
 };
 
 struct ncsh_Output_Redirect_IO {
