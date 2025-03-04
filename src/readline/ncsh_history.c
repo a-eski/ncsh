@@ -10,12 +10,12 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "eskilib/eskilib_colors.h"
-#include "eskilib/eskilib_file.h"
-#include "eskilib/eskilib_hashtable.h"
-#include "eskilib/eskilib_result.h"
-#include "eskilib/eskilib_string.h"
-#include "ncsh_defines.h"
+#include "../eskilib/eskilib_colors.h"
+#include "../eskilib/eskilib_file.h"
+#include "../eskilib/eskilib_hashtable.h"
+#include "../eskilib/eskilib_result.h"
+#include "../eskilib/eskilib_string.h"
+#include "../ncsh_defines.h"
 #include "ncsh_history.h"
 
 void ncsh_history_file_set(struct eskilib_String config_file, struct ncsh_History* history)

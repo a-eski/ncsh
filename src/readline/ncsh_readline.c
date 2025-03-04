@@ -7,13 +7,13 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "eskilib/eskilib_colors.h"
-#include "eskilib/eskilib_result.h"
-#include "eskilib/eskilib_string.h"
+#include "../eskilib/eskilib_colors.h"
+#include "../eskilib/eskilib_result.h"
+#include "../eskilib/eskilib_string.h"
+#include "../ncsh_config.h"
+#include "../ncsh_configurables.h"
+#include "../ncsh_defines.h"
 #include "ncsh_autocompletions.h"
-#include "ncsh_config.h"
-#include "ncsh_configurables.h"
-#include "ncsh_defines.h"
 #include "ncsh_terminal.h"
 #include "ncsh_readline.h"
 
@@ -1004,6 +1004,12 @@ int_fast32_t ncsh_readline(struct ncsh_Input* input)
 exit:
     ncsh_terminal_reset();
     return exit;
+}
+
+void ncsh_readline_history_and_autocompletion_add(struct ncsh_Input *input)
+{
+    ncsh_history_add(input->buffer, input->pos, &input->history);
+    ncsh_autocompletions_add(input->buffer, input->pos, input->autocompletions_tree);
 }
 
 void ncsh_readline_exit(struct ncsh_Input* input)

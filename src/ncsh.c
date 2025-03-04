@@ -16,12 +16,10 @@
 #include "eskilib/eskilib_colors.h"
 #include "eskilib/eskilib_result.h"
 #include "ncsh.h"
-#include "ncsh_autocompletions.h"
 #include "ncsh_config.h"
 #include "ncsh_defines.h"
-#include "ncsh_history.h"
 #include "ncsh_parser.h"
-#include "ncsh_readline.h"
+#include "readline/ncsh_readline.h"
 #include "ncsh_types.h"
 #include "vm/ncsh_vm.h"
 
@@ -148,8 +146,7 @@ int_fast32_t ncsh(void)
         }
         }
 
-        ncsh_history_add(shell.input.buffer, shell.input.pos, &shell.input.history);
-        ncsh_autocompletions_add(shell.input.buffer, shell.input.pos, shell.input.autocompletions_tree);
+        ncsh_readline_history_and_autocompletion_add(&shell.input);
 
     reset:
         ncsh_reset(&shell);

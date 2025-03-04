@@ -16,7 +16,7 @@
 #include "../eskilib/eskilib_string.h"
 #include "../eskilib/eskilib_colors.h"
 #include "../ncsh_defines.h"
-#include "../ncsh_history.h"
+#include "../readline/ncsh_history.h"
 #include "../ncsh_parser.h"
 #include "ncsh_vm_builtins.h"
 #include "../z/z.h"

@@ -24,6 +24,9 @@ endif
 $(target) : $(objects)
 	$(cc_with_flags) -o $(target) $(objects)
 
+obj/%.o: src/readline/%.c
+	$(cc_with_flags) -c $< -o $@
+
 obj/%.o: src/vm/%.c
 	$(cc_with_flags) -c $< -o $@
 
@@ -96,7 +99,7 @@ l :
 
 .PHONY: test_history
 test_history :
-	$(CC) $(STD) $(debug_flags) -DNCSH_HISTORY_TEST ./src/eskilib/eskilib_string.c ./src/eskilib/eskilib_test.c ./src/eskilib/eskilib_file.c ./src/eskilib/eskilib_hashtable.c ./src/ncsh_history.c ./src/tests/ncsh_history_tests.c -o ./$(BUILDDIR)/ncsh_history_tests
+	$(CC) $(STD) $(debug_flags) -DNCSH_HISTORY_TEST ./src/eskilib/eskilib_string.c ./src/eskilib/eskilib_test.c ./src/eskilib/eskilib_file.c ./src/eskilib/eskilib_hashtable.c ./src/readline/ncsh_history.c ./src/tests/ncsh_history_tests.c -o ./$(BUILDDIR)/ncsh_history_tests
 	./$(BUILDDIR)/ncsh_history_tests
 .PHONY: th
 th :
@@ -104,12 +107,12 @@ th :
 
 .PHONY: fuzz_history
 fuzz_history :
-	clang $(STD) $(fuzz_flags) -DNCSH_HISTORY_TEST ./src/tests/ncsh_history_fuzzing.c ./src/ncsh_history.c ./src/eskilib/eskilib_string.c ./src/eskilib/eskilib_file.c
+	clang $(STD) $(fuzz_flags) -DNCSH_HISTORY_TEST ./src/tests/ncsh_history_fuzzing.c ./src/readline/ncsh_history.c ./src/eskilib/eskilib_string.c ./src/eskilib/eskilib_file.c
 	./a.out NCSH_HISTORY_CORPUS/ -detect_leaks=0 -rss_limit_mb=4096
 
 .PHONY: test_autocompletions
 test_autocompletions :
-	 $(CC) $(STD) $(debug_flags) ./src/eskilib/eskilib_string.c ./src/eskilib/eskilib_test.c ./src/ncsh_autocompletions.c ./src/tests/ncsh_autocompletions_tests.c -o ./$(BUILDDIR)/ncsh_autocompletions_tests
+	 $(CC) $(STD) $(debug_flags) ./src/eskilib/eskilib_string.c ./src/eskilib/eskilib_test.c ./src/readline/ncsh_autocompletions.c ./src/tests/ncsh_autocompletions_tests.c -o ./$(BUILDDIR)/ncsh_autocompletions_tests
 	 ./$(BUILDDIR)/ncsh_autocompletions_tests
 .PHONY: ta
 ta :
@@ -117,7 +120,7 @@ ta :
 
 .PHONY: fuzz_autocompletions
 fuzz_autocompletions :
-	clang $(STD) $(fuzz_flags) ./src/tests/ncsh_autocompletions_fuzzing.c ./src/ncsh_autocompletions.c ./src/eskilib/eskilib_string.c
+	clang $(STD) $(fuzz_flags) ./src/tests/ncsh_autocompletions_fuzzing.c ./src/readline/ncsh_autocompletions.c ./src/eskilib/eskilib_string.c
 	./a.out NCSH_AUTOCOMPLETIONS_CORPUS/ -detect_leaks=0 -rss_limit_mb=8192
 
 .PHONY: test_parser
@@ -159,7 +162,7 @@ tc :
 
 .PHONY: test_readline
 test_readline :
-	$(CC) $(STD) $(debug_flags) -DNCSH_HISTORY_TEST ./src/eskilib/eskilib_string.c ./src/eskilib/eskilib_test.c ./src/eskilib/eskilib_file.c ./src/eskilib/eskilib_hashtable.c ./src/ncsh_terminal.c ./src/ncsh_autocompletions.c ./src/ncsh_history.c ./src/ncsh_readline.c ./src/tests/ncsh_readline_tests.c -o ./$(BUILDDIR)/ncsh_readline_tests
+	$(CC) $(STD) $(debug_flags) -DNCSH_HISTORY_TEST ./src/eskilib/eskilib_string.c ./src/eskilib/eskilib_test.c ./src/eskilib/eskilib_file.c ./src/eskilib/eskilib_hashtable.c ./src/readline/ncsh_terminal.c ./src/readline/ncsh_autocompletions.c ./src/readline/ncsh_history.c ./src/readline/ncsh_readline.c ./src/tests/ncsh_readline_tests.c -o ./$(BUILDDIR)/ncsh_readline_tests
 	./$(BUILDDIR)/ncsh_readline_tests
 .PHONY: tr
 tr :

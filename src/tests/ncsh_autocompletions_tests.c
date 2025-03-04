@@ -5,7 +5,7 @@
 
 #include "../eskilib/eskilib_string.h"
 #include "../eskilib/eskilib_test.h"
-#include "../ncsh_autocompletions.h"
+#include "../readline/ncsh_autocompletions.h"
 #include "../ncsh_defines.h"
 
 void ncsh_autocompletions_add_length_mismatch_test(void)

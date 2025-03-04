@@ -7,7 +7,7 @@
 #include "../eskilib/eskilib_string.h"
 #include "../eskilib/eskilib_test.h"
 
-#include "../ncsh_history.h"
+#include "../readline/ncsh_history.h"
 
 void ncsh_history_load_file_not_exists_test(void)
 {

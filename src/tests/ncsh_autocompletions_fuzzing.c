@@ -2,7 +2,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "../ncsh_autocompletions.h"
+#include "../readline/ncsh_autocompletions.h"
 
 int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size)
 {
