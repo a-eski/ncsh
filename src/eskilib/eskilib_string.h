@@ -25,6 +25,14 @@ bool eskilib_string_compare(char* str, size_t str_len, char* str_two, size_t str
     return str_len == str_two_len && memcmp(str, str_two, str_len) == 0;
 }
 
+eskilib_nodiscard
+static inline
+bool eskilib_string_compare_const(const char* const str, const size_t str_len,
+                                  const char* const str_two, const size_t str_two_len)
+{
+    return str_len == str_two_len && memcmp(str, str_two, str_len) == 0;
+}
+
 bool eskilib_string_contains(const char* string, size_t string_length, const char* string_two,
                              size_t string_two_length);
 

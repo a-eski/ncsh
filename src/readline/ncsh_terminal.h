@@ -85,10 +85,10 @@ void ncsh_terminal_reset(void);
 
 // void ncsh_terminal_move(int x, int y);
 // void ncsh_terminal_move_absolute(int x);
-void ncsh_terminal_move_up(int i);
-void ncsh_terminal_move_down(int i);
-void ncsh_terminal_move_right(int i);
-void ncsh_terminal_move_left(int i);
+void ncsh_terminal_move_up(const int i);
+void ncsh_terminal_move_down(const int i);
+void ncsh_terminal_move_right(const int i);
+void ncsh_terminal_move_left(const int i);
 void ncsh_terminal_move_to_end_of_previous_line();
 void ncsh_terminal_move_to_start_of_next_line();
 

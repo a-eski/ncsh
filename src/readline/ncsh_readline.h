@@ -49,18 +49,18 @@ struct ncsh_Input {
  * get the prompt size accounting for prompt length, user length, and cwd lenght
  * Returns: length of the prompt
  */
-size_t ncsh_readline_prompt_size(size_t user_len, size_t dir_len);
+size_t ncsh_readline_prompt_size(const size_t user_len, const size_t dir_len);
 
-int_fast32_t ncsh_readline_init(struct ncsh_Config* config, struct ncsh_Input *input);
+int_fast32_t ncsh_readline_init(struct ncsh_Config* const config, struct ncsh_Input* const restrict input);
 
 /* ncsh_readline
  * Read user input while supporting different operations like backspace or delete.
  * Returns: exit status, EXIT_SUCCESS, EXIT_FAILURE, or value in ncsh_defines.h (EXIT_...)
  */
-int_fast32_t ncsh_readline(struct ncsh_Input* input);
+int_fast32_t ncsh_readline(struct ncsh_Input* const restrict input);
 
-void ncsh_readline_history_and_autocompletion_add(struct ncsh_Input* input);
+void ncsh_readline_history_and_autocompletion_add(struct ncsh_Input* const restrict input);
 
-void ncsh_readline_exit(struct ncsh_Input* input);
+void ncsh_readline_exit(struct ncsh_Input* const restrict input);
 
 #endif // !NCSH_READLINE_H_

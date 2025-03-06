@@ -87,6 +87,7 @@ enum eskilib_Result ncsh_parser_args_malloc(struct ncsh_Args* args)
 
     return E_SUCCESS;
 }
+
 /* ncsh_parser_args_free
  * Free memory used by the parser at the end of shell's lifetime.
  * Safe to call multiple times, as it performs null checks before freeing memory,
@@ -173,7 +174,7 @@ bool ncsh_parser_is_delimiter(char ch)
  * Size of the array is stored as constant expression in ops_2char_len
  * Bytecodes (opcodes) equivalents are stored in the array of enum ncsh_Ops, ops_2char
  */
-const char* const ops_2char_str[] = {
+const char* const restrict ops_2char_str[] = {
     STDOUT_REDIRECTION_APPEND, STDERR_REDIRECTION, STDOUT_AND_STDERR_REDIRECTION, AND, OR, EXPONENTIATION};
 
 constexpr size_t ops_2char_len = sizeof(ops_2char_str) / sizeof(char*);
@@ -190,7 +191,7 @@ const enum ncsh_Ops ops_2char[] = {OP_STDOUT_REDIRECTION_APPEND,
  * Size of the array is stored as constant expression in ops_3char_len
  * Bytecodes (opcodes) equivalents are stored in the array of enum ncsh_Ops, ops_3char
  */
-const char* const ops_3char_str[] = {STDERR_REDIRECTION_APPEND, STDOUT_AND_STDERR_REDIRECTION_APPEND};
+const char* const restrict ops_3char_str[] = {STDERR_REDIRECTION_APPEND, STDOUT_AND_STDERR_REDIRECTION_APPEND};
 
 constexpr size_t ops_3char_len = sizeof(ops_3char_str) / sizeof(char*);
 
@@ -201,7 +202,7 @@ const enum ncsh_Ops ops_3char[] = {OP_STDERR_REDIRECTION_APPEND, OP_STDOUT_AND_S
  * Returns: a value from enum ncsh_Ops, the bytecode relevant to the input
  */
 [[nodiscard]]
-enum ncsh_Ops ncsh_parser_op_get(const char* line, size_t length)
+enum ncsh_Ops ncsh_parser_op_get(const char* const restrict line, size_t length)
 {
     switch (length) {
     case 0: {
@@ -287,7 +288,7 @@ enum ncsh_Parser_State {
  * Handles expansions like *, ?, and ~
  * Results are stored in struct ncsh_Args
  */
-void ncsh_parser_parse(const char* line, size_t length, struct ncsh_Args* args)
+void ncsh_parser_parse(const char* const restrict line, size_t length, struct ncsh_Args* args)
 {
     assert(args);
     assert(line);

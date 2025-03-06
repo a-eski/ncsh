@@ -41,7 +41,7 @@ void ncsh_autocompletions_free(struct ncsh_Autocompletion_Node* tree)
     free(tree);
 }
 
-void ncsh_autocompletions_free_matches(struct ncsh_Autocompletion* matches, uint_fast8_t matches_count)
+void ncsh_autocompletions_free_matches(struct ncsh_Autocompletion* const matches, const uint_fast8_t matches_count)
 {
     assert(matches);
     if (!matches) {
@@ -53,7 +53,7 @@ void ncsh_autocompletions_free_matches(struct ncsh_Autocompletion* matches, uint
     }
 }
 
-void ncsh_autocompletions_add(char* string, size_t length, struct ncsh_Autocompletion_Node* tree)
+void ncsh_autocompletions_add(const char* const string, const size_t length, struct ncsh_Autocompletion_Node* restrict tree)
 {
     assert(string);
     assert(length > 0);
@@ -85,7 +85,8 @@ void ncsh_autocompletions_add(char* string, size_t length, struct ncsh_Autocompl
     tree->is_end_of_a_word = true;
 }
 
-void ncsh_autocompletions_add_multiple(struct eskilib_String* strings, int count, struct ncsh_Autocompletion_Node* tree)
+void ncsh_autocompletions_add_multiple(const struct eskilib_String* const strings, const int count,
+                                       struct ncsh_Autocompletion_Node* restrict tree)
 {
     if (!strings || count <= 0 || !tree) {
         return;
@@ -96,8 +97,8 @@ void ncsh_autocompletions_add_multiple(struct eskilib_String* strings, int count
     }
 }
 
-struct ncsh_Autocompletion_Node* ncsh_autocompletions_search(char* string, size_t length,
-                                                             struct ncsh_Autocompletion_Node* tree)
+struct ncsh_Autocompletion_Node* ncsh_autocompletions_search(const char* const string, const size_t length,
+                                                             struct ncsh_Autocompletion_Node* restrict tree)
 {
     assert(string);
     assert(length > 0);
@@ -121,8 +122,8 @@ struct ncsh_Autocompletion_Node* ncsh_autocompletions_search(char* string, size_
     return tree;
 }
 
-struct ncsh_Autocompletion_Node* ncsh_autocompletions_search_string(struct eskilib_String string,
-                                                                    struct ncsh_Autocompletion_Node* tree)
+struct ncsh_Autocompletion_Node* ncsh_autocompletions_search_string(const struct eskilib_String string,
+                                                                    struct ncsh_Autocompletion_Node* restrict tree)
 {
     assert(string.value);
     assert(string.length > 0);
@@ -146,8 +147,8 @@ struct ncsh_Autocompletion_Node* ncsh_autocompletions_search_string(struct eskil
     return tree;
 }
 
-void ncsh_autocompletions_match(struct ncsh_Autocompletion* matches, uint_fast32_t* string_position,
-                                uint_fast8_t* matches_position, struct ncsh_Autocompletion_Node* tree)
+void ncsh_autocompletions_match(struct ncsh_Autocompletion* const matches, uint_fast32_t* const string_position,
+                                uint_fast8_t* const matches_position, struct ncsh_Autocompletion_Node* restrict tree)
 {
     for (int i = 0; i < NCSH_LETTERS; ++i) {
         if (tree->nodes[i]) {
@@ -191,7 +192,7 @@ void ncsh_autocompletions_match(struct ncsh_Autocompletion* matches, uint_fast32
     }
 }
 
-uint_fast8_t ncsh_autocompletions_matches(struct ncsh_Autocompletion* matches, struct ncsh_Autocompletion_Node* tree)
+uint_fast8_t ncsh_autocompletions_matches(struct ncsh_Autocompletion* const matches, struct ncsh_Autocompletion_Node* restrict tree)
 {
     uint_fast32_t string_position = 0;
     uint_fast8_t matches_position = 0;
@@ -201,10 +202,10 @@ uint_fast8_t ncsh_autocompletions_matches(struct ncsh_Autocompletion* matches, s
     return matches_position;
 }
 
-uint_fast8_t ncsh_autocompletions_get(char* search, size_t search_length, struct ncsh_Autocompletion* matches,
-                                      struct ncsh_Autocompletion_Node* tree)
+uint_fast8_t ncsh_autocompletions_get(const char* const search, const size_t search_length, struct ncsh_Autocompletion* matches,
+                                      struct ncsh_Autocompletion_Node* restrict tree)
 {
-    struct ncsh_Autocompletion_Node* search_result = ncsh_autocompletions_search(search, search_length, tree);
+    struct ncsh_Autocompletion_Node* const search_result = ncsh_autocompletions_search(search, search_length, tree);
     if (!search_result) {
         return 0;
     }
@@ -217,8 +218,8 @@ uint_fast8_t ncsh_autocompletions_get(char* search, size_t search_length, struct
     return match_count;
 }
 
-uint_fast8_t ncsh_autocompletions_first(char* search, size_t search_length, char* match,
-                                        struct ncsh_Autocompletion_Node* tree)
+uint_fast8_t ncsh_autocompletions_first(const char* const search, const size_t search_length, char* match,
+                                        struct ncsh_Autocompletion_Node* restrict tree)
 {
     struct ncsh_Autocompletion_Node* search_result = ncsh_autocompletions_search(search, search_length, tree);
     if (!search_result) {

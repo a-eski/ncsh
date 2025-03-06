@@ -24,7 +24,7 @@
  * get the prompt size accounting for prompt length, user length, and cwd lenght
  * Returns: length of the prompt
  */
-size_t ncsh_readline_prompt_size(size_t user_len, size_t dir_len)
+size_t ncsh_readline_prompt_size(const size_t user_len, const size_t dir_len)
 {
     // shell prompt format:
     // {user} {directory} {symbol} {buffer}
@@ -44,7 +44,7 @@ size_t ncsh_readline_prompt_size(size_t user_len, size_t dir_len)
  */
 #if NCSH_PROMPT_DIRECTORY == NCSH_DIRECTORY_SHORT
 [[nodiscard]]
-size_t ncsh_readline_prompt_short_directory_get(char* cwd, char* output)
+size_t ncsh_readline_prompt_short_directory_get(const char* const cwd, char* output)
 {
     assert(cwd);
 
@@ -76,7 +76,7 @@ size_t ncsh_readline_prompt_short_directory_get(char* cwd, char* output)
 }
 
 [[nodiscard]]
-int_fast32_t ncsh_readline_prompt_short_directory_print(struct ncsh_Input* input)
+int_fast32_t ncsh_readline_prompt_short_directory_print(struct ncsh_Input* const restrict input)
 {
     char cwd[PATH_MAX] = {0};
     char directory[PATH_MAX] = {0};
@@ -102,7 +102,7 @@ int_fast32_t ncsh_readline_prompt_short_directory_print(struct ncsh_Input* input
 
 #if NCSH_PROMPT_DIRECTORY == NCSH_DIRECTORY_NORMAL
 [[nodiscard]]
-int_fast32_t ncsh_readline_prompt_directory_print(struct ncsh_Input* input)
+int_fast32_t ncsh_readline_prompt_directory_print(struct ncsh_Input* const restrict input)
 {
     char cwd[PATH_MAX] = {0};
     if (!getcwd(cwd, sizeof(cwd))) {
@@ -130,7 +130,8 @@ int_fast32_t ncsh_readline_prompt_directory_print(struct ncsh_Input* input)
 
 #if NCSH_PROMPT_DIRECTORY == NCSH_DIRECTORY_NONE
 [[nodiscard]]
-int_fast32_t ncsh_readline_prompt_no_directory_print(struct ncsh_Input* input) {
+int_fast32_t ncsh_readline_prompt_no_directory_print(struct ncsh_Input* const restrict input)
+{
 #if NCSH_PROMPT_SHOW_USER == NCSH_SHOW_USER_NORMAL
     printf(ncsh_GREEN "%s" WHITE_BRIGHT NCSH_PROMPT_ENDING_STRING, input->user.value);
     input->prompt_len = ncsh_readline_prompt_size(input->user.length, 0);
@@ -151,7 +152,7 @@ int_fast32_t ncsh_readline_prompt_no_directory_print(struct ncsh_Input* input) {
  * Returns: the length of the prompt.
  */
 [[nodiscard]]
-int_fast32_t ncsh_readline_prompt(struct ncsh_Input* input)
+int_fast32_t ncsh_readline_prompt(struct ncsh_Input* const restrict input)
 {
 #if NCSH_PROMPT_DIRECTORY == NCSH_DIRECTORY_SHORT
     return ncsh_readline_prompt_short_directory_print(input);
@@ -168,7 +169,7 @@ int_fast32_t ncsh_readline_prompt(struct ncsh_Input* input)
  * Returns: the length of the prompt.
  */
 [[nodiscard]]
-int_fast32_t ncsh_readline_prompt_if_needed(struct ncsh_Input* input)
+int_fast32_t ncsh_readline_prompt_if_needed(struct ncsh_Input* const restrict input)
 {
     if (input->reprint_prompt == true) {
         if (ncsh_readline_prompt(input) == EXIT_FAILURE) {
@@ -195,7 +196,7 @@ enum ncsh_Line_Adjustment : uint_fast8_t {
  * Determines if the cursor is currently at the end of the current line.
  * Returns: true if at end of current line.
  */
-bool ncsh_readline_is_end_of_line(struct ncsh_Input* input)
+bool ncsh_readline_is_end_of_line(struct ncsh_Input* const restrict input)
 {
     if (input->lines_y == 0) {
 	input->lines_x[0] = input->pos;
@@ -218,12 +219,12 @@ bool ncsh_readline_is_end_of_line(struct ncsh_Input* input)
  * Determines if the cursor is at the start of the current line.
  * Returns: true if at the start of the current line.
  */
-bool ncsh_readline_is_start_of_line(struct ncsh_Input* input)
+bool ncsh_readline_is_start_of_line(const struct ncsh_Input* const restrict input)
 {
     return input->lines_y > 0 && input->lines_x[input->lines_y] == 0;
 }
 
-enum ncsh_Line_Adjustment ncsh_readline_adjust_line_if_needed(struct ncsh_Input* input)
+enum ncsh_Line_Adjustment ncsh_readline_adjust_line_if_needed(struct ncsh_Input* const restrict input)
 {
     if (ncsh_readline_is_end_of_line(input)) {
 	if (input->lines_y == 0) {
@@ -245,7 +246,7 @@ enum ncsh_Line_Adjustment ncsh_readline_adjust_line_if_needed(struct ncsh_Input*
 }
 
 [[nodiscard]]
-int_fast32_t ncsh_readline_backspace(struct ncsh_Input* input)
+int_fast32_t ncsh_readline_backspace(struct ncsh_Input* const restrict input)
 {
     if (!input->pos) {
         return EXIT_SUCCESS;
@@ -284,7 +285,7 @@ int_fast32_t ncsh_readline_backspace(struct ncsh_Input* input)
 }
 
 [[nodiscard]]
-int_fast32_t ncsh_readline_delete(struct ncsh_Input* input)
+int_fast32_t ncsh_readline_delete(struct ncsh_Input* const restrict input)
 {
     ncsh_write_literal(DELETE_STRING ERASE_CURRENT_LINE);
 
@@ -318,7 +319,7 @@ int_fast32_t ncsh_readline_delete(struct ncsh_Input* input)
 }
 
 [[nodiscard]]
-int_fast32_t ncsh_readline_line_delete(struct ncsh_Input* input)
+int_fast32_t ncsh_readline_line_delete(struct ncsh_Input* const restrict input)
 {
     if (!input->pos && !input->max_pos) {
         return EXIT_SUCCESS;
@@ -337,7 +338,7 @@ int_fast32_t ncsh_readline_line_delete(struct ncsh_Input* input)
 }
 
 [[nodiscard]]
-int_fast32_t ncsh_readline_word_delete(struct ncsh_Input* input)
+int_fast32_t ncsh_readline_word_delete(struct ncsh_Input* const restrict input)
 {
     if (!input->pos && !input->max_pos) {
         return EXIT_SUCCESS;
@@ -364,7 +365,7 @@ int_fast32_t ncsh_readline_word_delete(struct ncsh_Input* input)
 }
 
 [[nodiscard]]
-int_fast32_t ncsh_readline_line_reset(struct ncsh_Input* input)
+int_fast32_t ncsh_readline_line_reset(struct ncsh_Input* const restrict input)
 {
     if (input->current_autocompletion[0] == '\0') {
 	return EXIT_SUCCESS;
@@ -396,7 +397,7 @@ int_fast32_t ncsh_readline_line_reset(struct ncsh_Input* input)
 }
 
 [[nodiscard]]
-int_fast32_t ncsh_readline_autocomplete_print(struct ncsh_Input* input)
+int_fast32_t ncsh_readline_autocomplete_print(struct ncsh_Input* const restrict input)
 {
     printf(ERASE_CURRENT_LINE WHITE_DIM "%s" RESET, input->current_autocompletion);
     input->current_autocompletion_len = strlen(input->current_autocompletion);
@@ -424,7 +425,7 @@ int_fast32_t ncsh_readline_autocomplete_print(struct ncsh_Input* input)
 }
 
 [[nodiscard]]
-int_fast32_t ncsh_readline_autocomplete(struct ncsh_Input* input)
+int_fast32_t ncsh_readline_autocomplete(struct ncsh_Input* const restrict input)
 {
     if (input->buffer[0] == '\0' || input->buffer[input->pos] != '\0') {
         return EXIT_SUCCESS;
@@ -457,7 +458,7 @@ int_fast32_t ncsh_readline_autocomplete(struct ncsh_Input* input)
  * render the current autocompletion.
  */
 [[nodiscard]]
-int_fast32_t ncsh_readline_autocomplete_select(struct ncsh_Input* input)
+int_fast32_t ncsh_readline_autocomplete_select(struct ncsh_Input* const restrict input)
 {
     printf("%s", input->current_autocompletion);
     for (uint_fast32_t i = 0; input->current_autocompletion[i] != '\0'; i++) {
@@ -476,7 +477,7 @@ int_fast32_t ncsh_readline_autocomplete_select(struct ncsh_Input* input)
 }
 
 [[nodiscard]]
-int_fast32_t ncsh_readline_move_cursor_right(struct ncsh_Input* input)
+int_fast32_t ncsh_readline_move_cursor_right(struct ncsh_Input* const restrict input)
 {
     if (input->pos == NCSH_MAX_INPUT - 1 || (!input->buffer[input->pos] && !input->buffer[input->pos + 1])) {
         return EXIT_SUCCESS;
@@ -493,7 +494,7 @@ int_fast32_t ncsh_readline_move_cursor_right(struct ncsh_Input* input)
 }
 
 [[nodiscard]]
-int_fast32_t ncsh_readline_right_arrow_process(struct ncsh_Input* input)
+int_fast32_t ncsh_readline_right_arrow_process(struct ncsh_Input* const restrict input)
 {
     if (input->pos == input->max_pos && input->buffer[0]) {
         if (ncsh_readline_autocomplete_select(input) != EXIT_SUCCESS) {
@@ -509,7 +510,7 @@ int_fast32_t ncsh_readline_right_arrow_process(struct ncsh_Input* input)
 }
 
 [[nodiscard]]
-int_fast32_t ncsh_readline_history_up(struct ncsh_Input* input)
+int_fast32_t ncsh_readline_history_up(struct ncsh_Input* const restrict input)
 {
     input->history_entry = ncsh_history_get(input->history_position, &input->history);
     if (input->history_entry.length > 0) {
@@ -528,7 +529,7 @@ int_fast32_t ncsh_readline_history_up(struct ncsh_Input* input)
 }
 
 [[nodiscard]]
-int_fast32_t ncsh_readline_history_down(struct ncsh_Input* input)
+int_fast32_t ncsh_readline_history_down(struct ncsh_Input* const restrict input)
 {
     input->history_entry = ncsh_history_get(input->history_position - 2, &input->history);
 
@@ -554,7 +555,7 @@ int_fast32_t ncsh_readline_history_down(struct ncsh_Input* input)
 }
 
 [[nodiscard]]
-int_fast32_t ncsh_readline_move_cursor_left(struct ncsh_Input* input)
+int_fast32_t ncsh_readline_move_cursor_left(struct ncsh_Input* const restrict input)
 {
     ncsh_write_literal(MOVE_CURSOR_LEFT);
     --input->pos;
@@ -562,7 +563,7 @@ int_fast32_t ncsh_readline_move_cursor_left(struct ncsh_Input* input)
 }
 
 [[nodiscard]]
-int_fast32_t ncsh_readline_move_cursor_home(struct ncsh_Input* input)
+int_fast32_t ncsh_readline_move_cursor_home(struct ncsh_Input* const restrict input)
 {
     ncsh_write_literal(RESTORE_CURSOR_POSITION);
     input->pos = 0;
@@ -571,7 +572,7 @@ int_fast32_t ncsh_readline_move_cursor_home(struct ncsh_Input* input)
 }
 
 [[nodiscard]]
-int_fast32_t ncsh_readline_move_cursor_end(struct ncsh_Input* input)
+int_fast32_t ncsh_readline_move_cursor_end(struct ncsh_Input* const restrict input)
 {
     if (input->lines_y > input->current_y) {
 	ncsh_write_literal(HIDE_CURSOR);
@@ -631,14 +632,13 @@ char ncsh_readline_read(void)
 }
 
 [[nodiscard]]
-int_fast32_t ncsh_readline_tab_autocomplete(struct ncsh_Input* input,
-                                                     struct ncsh_Autocompletion_Node* autocompletions_tree)
+int_fast32_t ncsh_readline_tab_autocomplete(struct ncsh_Input* const restrict input)
 {
     ncsh_write_literal(ERASE_CURRENT_LINE "\n");
 
     struct ncsh_Autocompletion autocompletion_matches[NCSH_MAX_AUTOCOMPLETION_MATCHES] = {0};
     int autocompletions_matches_count =
-        ncsh_autocompletions_get(input->buffer, input->pos + 1, autocompletion_matches, autocompletions_tree);
+        ncsh_autocompletions_get(input->buffer, input->pos + 1, autocompletion_matches, input->autocompletions_tree);
 
     if (!autocompletions_matches_count) {
         return EXIT_SUCCESS;
@@ -713,7 +713,7 @@ int_fast32_t ncsh_readline_tab_autocomplete(struct ncsh_Input* input,
     return exit;
 }
 
-int_fast32_t ncsh_readline_init(struct ncsh_Config* config, struct ncsh_Input *input)
+int_fast32_t ncsh_readline_init(struct ncsh_Config* const config, struct ncsh_Input* const restrict input)
 {
     input->user.value = getenv("USER");
     input->user.length = strlen(input->user.value) + 1;
@@ -754,7 +754,7 @@ int_fast32_t ncsh_readline_init(struct ncsh_Config* config, struct ncsh_Input *i
 }
 
 [[nodiscard]]
-int_fast32_t ncsh_readline_putchar(char character, struct ncsh_Input* input)
+int_fast32_t ncsh_readline_putchar(char character, struct ncsh_Input* const restrict input)
 {
     char temp_character;
 
@@ -812,7 +812,7 @@ int_fast32_t ncsh_readline_putchar(char character, struct ncsh_Input* input)
 }
 
 [[nodiscard]]
-int_fast32_t ncsh_readline(struct ncsh_Input* input)
+int_fast32_t ncsh_readline(struct ncsh_Input* const restrict input)
 {
     char character;
     int exit = EXIT_SUCCESS;
@@ -855,7 +855,7 @@ int_fast32_t ncsh_readline(struct ncsh_Input* input)
             }
         }
         else if (character == TAB_KEY) {
-	    if ((result = ncsh_readline_tab_autocomplete(input, input->autocompletions_tree)) != EXIT_SUCCESS) {
+	    if ((result = ncsh_readline_tab_autocomplete(input)) != EXIT_SUCCESS) {
 		exit = result;
 		break;
 	    }
@@ -1037,13 +1037,13 @@ exit:
     return exit;
 }
 
-void ncsh_readline_history_and_autocompletion_add(struct ncsh_Input *input)
+void ncsh_readline_history_and_autocompletion_add(struct ncsh_Input* const restrict input)
 {
     ncsh_history_add(input->buffer, input->pos, &input->history);
     ncsh_autocompletions_add(input->buffer, input->pos, input->autocompletions_tree);
 }
 
-void ncsh_readline_exit(struct ncsh_Input* input)
+void ncsh_readline_exit(struct ncsh_Input* const restrict input)
 {
     free(input->buffer);
     ncsh_history_exit(&input->history);
