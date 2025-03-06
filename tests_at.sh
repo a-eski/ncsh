@@ -1,5 +1,7 @@
 #!/bin/env bash
 
+# run ncsh acceptance tests.
+
 echo 'starting ncsh acceptance tests'
 
 rm t.txt t2.txt t3.txt t4.txt

@@ -11,7 +11,9 @@
 
 #define NCSH_PARSER_TOKENS 128
 
-/* ncsh_Ops: bytecodes which get sent to the VM */
+/* enum ncsh_Ops
+ * Represents the bytecodes which get sent to the VM.
+ */
 enum ncsh_Ops : uint_fast8_t {
     // Default value, indicative of an issue parsing when found during execution
     OP_NONE = 0,
@@ -30,7 +32,7 @@ enum ncsh_Ops : uint_fast8_t {
     OP_BACKGROUND_JOB = 11,                       // &
     OP_AND = 12,                                  // &&
     OP_OR = 13,                                   // ||
-    // Math
+    // Math (only implemented in parser)
     OP_ADD = 14,                   // +
     OP_SUBTRACT = 15,              // -
     OP_MULTIPLY = 16,              // *
@@ -41,9 +43,9 @@ enum ncsh_Ops : uint_fast8_t {
     OP_MATH_EXPRESSION_END = 21,   // )
 };
 
-// Investigate if having struct ncsh_Object would be better, where length, op code, value, and any state in one struct.
+// TODO: Investigate if having struct ncsh_Command would be better, where length, op code, value, and any state in one struct to improve cache locality.
 /*
-struct ncsh_Object
+struct ncsh_Command
 {
     size_t length;
     uint_fast8_t op;
@@ -53,11 +55,14 @@ struct ncsh_Object
 struct ncsh_Args
 {
     uint_fast32_t count;
-    struct ncsh_Object *objects;
+    struct ncsh_Command* commands;
 }
 */
 
-/* ncsh_Args: Output of the parser, contains bytecode input which gets sent to the VM */
+/* struct ncsh_Args
+ * The output of the parser.
+ * Contains bytecodes, strings, and the string's lengths as well as a count
+ * Gets sent to the VM as input to the VM. */
 struct ncsh_Args {
     uint_fast32_t count; // Number of lengths/values/ops
     size_t* lengths;     // Length of the constants stored in values
@@ -65,14 +70,27 @@ struct ncsh_Args {
     char** values;       // Constant values needed to be referenced by the VM
 };
 
-bool ncsh_parser_args_is_valid(const struct ncsh_Args* args);
-
+/* ncsh_parser_args_malloc
+ * Allocate memory for the parser that lives for the lifetime of the shell.
+ * Returns: enum eskilib_Result, E_SUCCESS is successful.
+ */
 enum eskilib_Result ncsh_parser_args_malloc(struct ncsh_Args* args);
 
+/* ncsh_parser_args_free
+ * Free memory used by the parser at the end of shell's lifetime.
+ */
 void ncsh_parser_args_free(struct ncsh_Args* args);
 
-void ncsh_parser_args_free_values(struct ncsh_Args* args);
-
+/* ncsh_parser_parse
+ * Parse the line into commands, command lengths, and op codes stored in struct ncsh_Args.
+ * Allocates memory that is freed by ncsh_parser_free_values at the end of each main loop of the shell.
+ */
 void ncsh_parser_parse(const char* line, size_t length, struct ncsh_Args* args);
+
+/* ncsh_parser_args_free_values
+ * Free memory used by the parser that is used during each main loop of the shell.
+ * This means each main loop of the shell has values freed by this function.
+ */
+void ncsh_parser_args_free_values(struct ncsh_Args* args);
 
 #endif // !NCSH_PARSER_H_

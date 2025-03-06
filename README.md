@@ -22,13 +22,8 @@ For more details on compilation, see COMPILE.md
 ``` sh
 make
 
-# you can also build with clang
+# you can also build with clang.
 make CC=clang
-
-# or can use cmake
-cmake build -S ./ -B ./bin
-cd bin
-make
 ```
 
 ## installing
@@ -55,6 +50,10 @@ usermod -s /bin/ncsh <username>
 
 Please see COMPILE.md.
 
+## reading code
+
+There are some high-level comments in the header files, with more detailed cod documentation in the source files.
+
 ## goals
 
 * rc file configurations
@@ -70,3 +69,4 @@ Please see COMPILE.md.
 * math
 * better posix support
 * add to path
+* variables

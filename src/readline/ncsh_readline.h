@@ -1,3 +1,5 @@
+// Copyright (c) ncsh by Alex Eski 2025
+
 #ifndef NCSH_READLINE_H_
 #define NCSH_READLINE_H_
 
@@ -11,6 +13,9 @@
 
 #define LINE_LIMIT 100
 
+/* struct ncsh_Input
+ * Store information related to reading and processing user input.
+ */
 struct ncsh_Input {
     // values related to prompt
     bool reprint_prompt;
@@ -40,10 +45,18 @@ struct ncsh_Input {
     struct ncsh_Autocompletion_Node* autocompletions_tree;
 };
 
+/* ncsh_readline_prompt_size
+ * get the prompt size accounting for prompt length, user length, and cwd lenght
+ * Returns: length of the prompt
+ */
 size_t ncsh_readline_prompt_size(size_t user_len, size_t dir_len);
 
 int_fast32_t ncsh_readline_init(struct ncsh_Config* config, struct ncsh_Input *input);
 
+/* ncsh_readline
+ * Read user input while supporting different operations like backspace or delete.
+ * Returns: exit status, EXIT_SUCCESS, EXIT_FAILURE, or value in ncsh_defines.h (EXIT_...)
+ */
 int_fast32_t ncsh_readline(struct ncsh_Input* input);
 
 void ncsh_readline_history_and_autocompletion_add(struct ncsh_Input* input);

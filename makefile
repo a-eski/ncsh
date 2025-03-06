@@ -109,6 +109,9 @@ th :
 fuzz_history :
 	clang $(STD) $(fuzz_flags) -DNCSH_HISTORY_TEST ./src/tests/ncsh_history_fuzzing.c ./src/readline/ncsh_history.c ./src/eskilib/eskilib_string.c ./src/eskilib/eskilib_file.c
 	./a.out NCSH_HISTORY_CORPUS/ -detect_leaks=0 -rss_limit_mb=4096
+.PHONY: fh
+fh :
+	make fuzz_history
 
 .PHONY: test_autocompletions
 test_autocompletions :
@@ -122,6 +125,9 @@ ta :
 fuzz_autocompletions :
 	clang $(STD) $(fuzz_flags) ./src/tests/ncsh_autocompletions_fuzzing.c ./src/readline/ncsh_autocompletions.c ./src/eskilib/eskilib_string.c
 	./a.out NCSH_AUTOCOMPLETIONS_CORPUS/ -detect_leaks=0 -rss_limit_mb=8192
+.PHONY: fa
+fa :
+	make fuzz_autocompletions
 
 .PHONY: test_parser
 test_parser :
@@ -135,6 +141,9 @@ tp :
 fuzz_parser :
 	clang $(STD) $(fuzz_flags) ./src/tests/ncsh_parser_fuzzing.c ./src/ncsh_parser.c ./src/eskilib/eskilib_string.c
 	./a.out NCSH_PARSER_CORPUS/ -detect_leaks=0 -rss_limit_mb=4096
+.PHONY: fp
+fp :
+	make fuzz_parser
 
 .PHONY: test_z
 test_z :

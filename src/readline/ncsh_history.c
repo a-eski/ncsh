@@ -20,9 +20,11 @@
 
 void ncsh_history_file_set(struct eskilib_String config_file, struct ncsh_History* history)
 {
+
+    constexpr size_t history_file_len = sizeof(NCSH_HISTORY_FILE);
 #ifdef NCSH_HISTORY_TEST
-    history->file = malloc(sizeof(NCSH_HISTORY_FILE));
-    memcpy(history->file, NCSH_HISTORY_FILE, sizeof(NCSH_HISTORY_FILE));
+    history->file = malloc(history_file_len);
+    memcpy(history->file, NCSH_HISTORY_FILE, history_file_len);
     return;
 #endif /* ifdef NCSH_HISTORY_TEST */
 
@@ -31,14 +33,14 @@ void ncsh_history_file_set(struct eskilib_String config_file, struct ncsh_Histor
         return;
     }
 
-    if (config_file.length + sizeof(NCSH_HISTORY_FILE) > NCSH_MAX_INPUT) {
+    if (config_file.length + history_file_len > NCSH_MAX_INPUT) {
         history->file = NULL;
         return;
     }
 
-    history->file = malloc(config_file.length + sizeof(NCSH_HISTORY_FILE));
+    history->file = malloc(config_file.length + history_file_len);
     memcpy(history->file, config_file.value, config_file.length);
-    memcpy(history->file + config_file.length - 1, NCSH_HISTORY_FILE, sizeof(NCSH_HISTORY_FILE));
+    memcpy(history->file + config_file.length - 1, NCSH_HISTORY_FILE, history_file_len);
 
 #ifdef NCSH_DEBUG
     printf("history->file: %s\n", history->file);

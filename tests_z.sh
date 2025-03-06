@@ -1,5 +1,7 @@
 #!/bin/env bash
 
+# run z unit tests.
+
 set -e
 
 cd src

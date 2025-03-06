@@ -1,3 +1,5 @@
+// Copyright (c) ncsh by Alex Eski 2025
+
 #include "ncsh_vm_tokenizer.h"
 
 #include <assert.h>
