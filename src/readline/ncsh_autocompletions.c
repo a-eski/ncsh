@@ -1,3 +1,5 @@
+// Copyright (c) ncsh by Alex Eski 2025
+
 #include <assert.h>
 #include <stdbool.h>
 #include <stddef.h>

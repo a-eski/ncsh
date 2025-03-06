@@ -1,3 +1,5 @@
+// Copyright (c) ncsh by Alex Eski 2025
+
 #include <assert.h>
 #include <limits.h>
 #include <stddef.h>
@@ -18,6 +20,10 @@
 #include "ncsh_readline.h"
 
 /* Prompt */
+/* ncsh_readline_prompt_size
+ * get the prompt size accounting for prompt length, user length, and cwd lenght
+ * Returns: length of the prompt
+ */
 size_t ncsh_readline_prompt_size(size_t user_len, size_t dir_len)
 {
     // shell prompt format:
@@ -31,6 +37,11 @@ size_t ncsh_readline_prompt_size(size_t user_len, size_t dir_len)
     return user_len + dir_len - 1 + NCSH_PROMPT_ENDING_STRING_LENGTH;
 }
 
+/* ncsh_readline_prompt_short_directory_get
+ * gets a shortened version of the cwd, the last 2 directories in the cwd.
+ * i.e. /home/alex/dir becomes /alex/dir
+ * Returns: length of the shortened cwd
+ */
 #if NCSH_PROMPT_DIRECTORY == NCSH_DIRECTORY_SHORT
 [[nodiscard]]
 size_t ncsh_readline_prompt_short_directory_get(char* cwd, char* output)
@@ -135,6 +146,10 @@ int_fast32_t ncsh_readline_prompt_no_directory_print(struct ncsh_Input* input) {
 }
 #endif
 
+/* ncsh_readline_prompt
+ * Prints the prompt based on the current prompt compile-time settings.
+ * Returns: the length of the prompt.
+ */
 [[nodiscard]]
 int_fast32_t ncsh_readline_prompt(struct ncsh_Input* input)
 {
@@ -147,6 +162,11 @@ int_fast32_t ncsh_readline_prompt(struct ncsh_Input* input)
 #endif /* if NCSH_PROMPT_DIRECTORY == NCSH_DIRECTORY_SHORT */
 }
 
+/* ncsh_readline_prompt_if_needed
+ * Prints the prompt if input.reprint_prompt is true.
+ * Calls ncsh_readline_prompt.
+ * Returns: the length of the prompt.
+ */
 [[nodiscard]]
 int_fast32_t ncsh_readline_prompt_if_needed(struct ncsh_Input* input)
 {
@@ -162,12 +182,19 @@ int_fast32_t ncsh_readline_prompt_if_needed(struct ncsh_Input* input)
 }
 
 // IO
+/* enum ncsh_Line_Adjustment
+ * Represents if the cursor was moved to previous line, next line, or not at all.
+ */
 enum ncsh_Line_Adjustment : uint_fast8_t {
     L_NONE = 0,
     L_NEXT,
     L_PREVIOUS
 };
 
+/* ncsh_readline_is_end_of_line
+ * Determines if the cursor is currently at the end of the current line.
+ * Returns: true if at end of current line.
+ */
 bool ncsh_readline_is_end_of_line(struct ncsh_Input* input)
 {
     if (input->lines_y == 0) {
@@ -187,6 +214,10 @@ bool ncsh_readline_is_end_of_line(struct ncsh_Input* input)
     return current_line_pos >= input->terminal_size.x;
 }
 
+/* ncsh_readline_is_start_of_line
+ * Determines if the cursor is at the start of the current line.
+ * Returns: true if at the start of the current line.
+ */
 bool ncsh_readline_is_start_of_line(struct ncsh_Input* input)
 {
     return input->lines_y > 0 && input->lines_x[input->lines_y] == 0;

@@ -23,6 +23,9 @@
 #include "ncsh_types.h"
 #include "vm/ncsh_vm.h"
 
+/* ncsh_exit
+ * Called on exit to free memory related to the shells lifetime & the shells main loops lifetime.
+ */
 void ncsh_exit(struct ncsh_Shell* shell)
 {
     ncsh_config_free(&shell->config);
@@ -34,6 +37,10 @@ void ncsh_exit(struct ncsh_Shell* shell)
     z_exit(&shell->z_db);
 }
 
+/* ncsh_init
+ * Called on startup to allocate memory related to the shells lifetime.
+ * Returns: exit result, EXIT_SUCCESS or EXIT_FAILURE
+ */
 [[nodiscard]]
 int_fast32_t ncsh_init(struct ncsh_Shell* shell)
 {
@@ -75,6 +82,10 @@ int_fast32_t ncsh_init(struct ncsh_Shell* shell)
     return EXIT_SUCCESS;
 }
 
+/* ncsh_reset
+ * Manages freeing the lifetime of the main shell loop.
+ * Frees memory used by the parser to populate ncsh_Args.
+ */
 void ncsh_reset(struct ncsh_Shell* shell)
 {
     ncsh_parser_args_free_values(&shell->args);
@@ -85,6 +96,16 @@ void ncsh_reset(struct ncsh_Shell* shell)
     shell->args.values[0] = NULL;
 }
 
+/* ncsh
+ * Handles initialization, exit, and the main loop of the shell.
+ *
+ * This function represents interactive mode, for noninteractive see ncsh_noninteractive.
+ *
+ * Has several lifetimes.
+ * 1. The lifetime of the shell, managed through ncsh_init and ncsh_exit.
+ * 2. The lifetime of the main loop of the shell, managed through ncsh_reset.
+ * 3. ncsh_readline and ncsh_vm have their own inner lifetimes.
+ */
 int_fast32_t ncsh(void)
 {
 #ifdef NCSH_START_TIME

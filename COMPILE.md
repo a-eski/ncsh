@@ -2,25 +2,39 @@
 
 ## Compile
 
+### Notes
+
+I tried to have the makefile follow conventions as closely as possible. CC, CFLAGS, STD, DESTDIR, BUILDDIR, RELEASE can all be passed in from command line with make.
+
+You can build any of the builds listed below with clang if you have a version of clang installed which supports C23 and constexpr. Simply add `CC=clang` to the end of any of the build commands.
+
+There are also shorthand versions of the commands to make it easier to iterate. For example, you can run `make test_readline` with `make tr`. If you are running ncsh as your shell, it has a builtin alias for `make`, `m`. So you can run `m tr` instead of `make test_readline`. This comes in handy when running tests over and over and making lots of changes.
+
 ### Compile Debug Builds
 
 ``` sh
+# debug build
 make debug
 make d # equivalent to make debug
-make debug CC=clang
-make d CC=clang # equivalent to make debug CC=clang
+
+# debug unity build
+make unity_debug
+make ud # equivalent to make unity_debug
+
+# if running ncsh as your shell, you can use:
+m d # equivalent to make debug
+m ud #equivalent to make unity_debug
 ```
 
 ### Compile Release Builds
 
 ``` sh
+# standard build
 make
-make CC=clang
 
-# cmake
-cmake build -S ./ -B bin/
-cd bin
-make
+# unity build
+make unity
+make u # equivalent to make unity
 ```
 
 ## Debug
@@ -71,26 +85,26 @@ sudo gem install ttytest2
 
 ``` sh
 # run CI tests (not all tests)
-make check
+make check # or make c
 
 # run all tests
-make check_local
+make check_local # or make l
 
 # run tests individually
-make test_autocompletions
-make test_history
-make test_parser
-make test_fzf
-make test_z
-make acceptance_tests
+make test_autocompletions # or make ta
+make test_history # or make th
+make test_parser # or make tp
+make test_fzf # or make tf
+make test_z # or make tz
+make acceptance_tests # or make at
 ```
 
 ### Fuzz Testing
 
 ``` sh
-make fuzz_autocompletions
-make fuzz_history
-make fuzz_parser
+make fuzz_autocompletions # of make fa
+make fuzz_history # or make fh
+make fuzz_parser # or make fp
 ./src/z/z_fuzz.sh
 ./src/z/z_add_fuzz.sh
 ```

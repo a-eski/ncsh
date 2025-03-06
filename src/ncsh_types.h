@@ -10,6 +10,10 @@
 #include "readline/ncsh_readline.h"
 #include "z/z.h"
 
+
+/* struct ncsh_Processes
+ * Maintains details about background jobs that have been started by the user.
+ */
 #define NCSH_MAX_PROCESSES 100
 
 struct ncsh_Processes {
@@ -17,8 +21,12 @@ struct ncsh_Processes {
     uint32_t process_ids[NCSH_MAX_PROCESSES];
 };
 
-// ncsh_Shell: store information relevant to the shell.
-// Lives for the shell's lifetime: not freed until exit.
+/* struct ncsh_Shell
+ * Store information relevant to the shell.
+ * Lives for the shell's lifetime: not freed until exit.
+ * Certain parts of ncsh_Args are freed in the main shell loop,
+ * they live for the lifetime of the main shell loop.
+ */
 struct ncsh_Shell {
     struct ncsh_Config config;
 

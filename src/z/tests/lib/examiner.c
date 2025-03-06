@@ -1,3 +1,5 @@
+// for license see examiner_LICENSE
+
 #include "examiner.h"
 
 #include <math.h>

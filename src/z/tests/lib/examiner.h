@@ -1,3 +1,5 @@
+// for license see examiner_LICENSE
+
 #ifndef EXAMINER_H
 #define EXAMINER_H
 

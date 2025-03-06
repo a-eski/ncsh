@@ -1,3 +1,5 @@
+// Copyright (c) ncsh by Alex Eski 2025
+
 #ifndef NCSH_VM_DATA_
 #define NCSH_VM_DATA_
 
@@ -8,7 +10,7 @@
 
 #include "../ncsh_parser.h"
 
-/* Macros (Constants) */
+/* Macros */
 #define EXECVP_FAILED -1
 
 /* Types */

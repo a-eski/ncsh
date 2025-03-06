@@ -1,3 +1,6 @@
+// Copyright (c) z by Alex Eski 2024
+// Used by unit tests for z
+
 #include <stdint.h>
 #include <time.h>
 

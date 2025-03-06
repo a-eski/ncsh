@@ -94,6 +94,6 @@ void ncsh_terminal_move_to_start_of_next_line();
 
 // void ncsh_terminal_line_insert(char* line);
 // void ncsh_terminal_line_delete(int line);
-void ncsh_terminal_characters_delete(int i);
+// void ncsh_terminal_characters_delete(int i);
 
 #endif // !NCSH_TERMINAL_H_

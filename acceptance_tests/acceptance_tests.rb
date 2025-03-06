@@ -10,11 +10,11 @@ require './acceptance_tests/autocompletion'
 require './acceptance_tests/startup'
 require './acceptance_tests/syntax'
 
-WC_C_LENGTH = '141'
+WC_C_LENGTH = '126'
 SLEEP_TIME = 0.2
 LS_LINES = 2
-LS_ITEMS = 15
-LS_FIRST_ITEM = 'CMakeLists.txt'
+LS_ITEMS = 14
+LS_FIRST_ITEM = 'COMPILE.md'
 TAB_AUTOCOMPLETE_ROWS = 11
 
 def basic_ls_test(row)
