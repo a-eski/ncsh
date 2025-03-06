@@ -83,22 +83,22 @@ void ncsh_terminal_move_absolute(int x)
     printf("\033[%dG", x);
 }*/
 
-void ncsh_terminal_move_right(int i)
+void ncsh_terminal_move_right(const int i)
 {
     printf("\033[%dC", i);
 }
 
-void ncsh_terminal_move_left(int i)
+void ncsh_terminal_move_left(const int i)
 {
     printf("\033[%dD", i);
 }
 
-void ncsh_terminal_move_up(int i)
+void ncsh_terminal_move_up(const int i)
 {
     printf("\033[%dA", i);
 }
 
-void ncsh_terminal_move_down(int i)
+void ncsh_terminal_move_down(const int i)
 {
     printf("\033[%dB", i);
 }

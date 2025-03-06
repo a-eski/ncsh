@@ -590,6 +590,8 @@ int_fast32_t ncsh_vm_execute(struct ncsh_Shell* shell)
         return NCSH_COMMAND_SUCCESS_CONTINUE;
     }
 
+    // check if any jobs finished running
+
     if (eskilib_string_compare(shell->args.values[0], shell->args.lengths[0], NCSH_Z, sizeof(NCSH_Z))) {
         return ncsh_builtins_z(&shell->z_db, &shell->args);
     }

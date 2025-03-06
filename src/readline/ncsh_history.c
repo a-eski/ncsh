@@ -18,7 +18,7 @@
 #include "../ncsh_defines.h"
 #include "ncsh_history.h"
 
-void ncsh_history_file_set(struct eskilib_String config_file, struct ncsh_History* history)
+void ncsh_history_file_set(const struct eskilib_String config_file, struct ncsh_History* const restrict history)
 {
 
     constexpr size_t history_file_len = sizeof(NCSH_HISTORY_FILE);
@@ -48,7 +48,7 @@ void ncsh_history_file_set(struct eskilib_String config_file, struct ncsh_Histor
 }
 
 [[nodiscard]]
-enum eskilib_Result ncsh_history_malloc(struct ncsh_History* history)
+enum eskilib_Result ncsh_history_malloc(struct ncsh_History* const restrict history)
 {
     assert(history);
     if (!history) {
@@ -66,7 +66,7 @@ enum eskilib_Result ncsh_history_malloc(struct ncsh_History* history)
 }
 
 [[nodiscard]]
-enum eskilib_Result ncsh_history_load(struct ncsh_History* history)
+enum eskilib_Result ncsh_history_load(struct ncsh_History* const restrict history)
 {
     assert(history);
     assert(history->file);
@@ -115,7 +115,7 @@ enum eskilib_Result ncsh_history_load(struct ncsh_History* history)
 }
 
 [[nodiscard]]
-enum eskilib_Result ncsh_history_reload(struct ncsh_History* history)
+enum eskilib_Result ncsh_history_reload(struct ncsh_History* const restrict history)
 {
     assert(history);
     assert(history->file);
@@ -163,8 +163,8 @@ enum eskilib_Result ncsh_history_reload(struct ncsh_History* history)
 }
 
 [[nodiscard]]
-enum eskilib_Result ncsh_history_init(struct eskilib_String config_location,
-                                                        struct ncsh_History* history)
+enum eskilib_Result ncsh_history_init(const struct eskilib_String config_location,
+                                                        struct ncsh_History* const restrict history)
 {
     enum eskilib_Result result;
     if ((result = ncsh_history_malloc(history)) != E_SUCCESS) {
@@ -188,7 +188,7 @@ enum eskilib_Result ncsh_history_init(struct eskilib_String config_location,
 }
 
 [[nodiscard]]
-enum eskilib_Result ncsh_history_clean(struct ncsh_History* history)
+enum eskilib_Result ncsh_history_clean(struct ncsh_History* const restrict history)
 {
     assert(history);
     if (!history->count || !history->entries[0].value) {
@@ -249,7 +249,7 @@ enum eskilib_Result ncsh_history_clean(struct ncsh_History* history)
     return E_SUCCESS;
 }
 
-enum eskilib_Result ncsh_history_save(struct ncsh_History* history)
+enum eskilib_Result ncsh_history_save(struct ncsh_History* const restrict history)
 {
     assert(history->count > 0);
     if (!history->count || !history->entries[0].value) {
@@ -294,7 +294,7 @@ enum eskilib_Result ncsh_history_save(struct ncsh_History* history)
     return E_SUCCESS;
 }
 
-void ncsh_history_free(struct ncsh_History* history)
+void ncsh_history_free(struct ncsh_History* const restrict history)
 {
     assert(history);
 
@@ -306,7 +306,7 @@ void ncsh_history_free(struct ncsh_History* history)
     free(history->entries);
 }
 
-void ncsh_history_exit(struct ncsh_History* history)
+void ncsh_history_exit(struct ncsh_History* const restrict history)
 {
     if (history) {
         if (history->count > 0) {
@@ -317,7 +317,8 @@ void ncsh_history_exit(struct ncsh_History* history)
 }
 
 [[nodiscard]]
-enum eskilib_Result ncsh_history_add(char* line, size_t length, struct ncsh_History* history)
+enum eskilib_Result ncsh_history_add(const char* const line, const size_t length,
+                                     struct ncsh_History* const restrict history)
 {
     assert(history);
     assert(line);
@@ -344,7 +345,7 @@ enum eskilib_Result ncsh_history_add(char* line, size_t length, struct ncsh_Hist
     return E_SUCCESS;
 }
 
-struct eskilib_String ncsh_history_get(int position, struct ncsh_History* history)
+struct eskilib_String ncsh_history_get(const int position, struct ncsh_History* const restrict history)
 {
     assert(history != NULL);
 
@@ -366,7 +367,7 @@ struct eskilib_String ncsh_history_get(int position, struct ncsh_History* histor
 }
 
 [[nodiscard]]
-int_fast32_t ncsh_history_command_display(struct ncsh_History* history)
+int_fast32_t ncsh_history_command_display(const struct ncsh_History* const restrict history)
 {
     assert(history);
     if (!history || !history->count) {
@@ -380,14 +381,14 @@ int_fast32_t ncsh_history_command_display(struct ncsh_History* history)
 }
 
 [[nodiscard]]
-int_fast32_t ncsh_history_command_count(struct ncsh_History* history)
+int_fast32_t ncsh_history_command_count(const struct ncsh_History* history)
 {
     printf("history count: %d\n", history->count);
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
 [[nodiscard]]
-int_fast32_t ncsh_history_command_clean(struct ncsh_History* history)
+int_fast32_t ncsh_history_command_clean(struct ncsh_History* const restrict history)
 {
     if (ncsh_history_clean(history) != E_SUCCESS) {
         return NCSH_COMMAND_FAILED_CONTINUE;
@@ -397,12 +398,12 @@ int_fast32_t ncsh_history_command_clean(struct ncsh_History* history)
 }
 
 [[nodiscard]]
-int_fast32_t ncsh_history_command_add(char* value, size_t value_len, struct ncsh_History* history)
+int_fast32_t ncsh_history_command_add(const char* const value, const size_t value_len, struct ncsh_History* const restrict history)
 {
     return ncsh_history_add(value, value_len, history);
 }
 
-void ncsh_history_remove_entries_shift(int offset, struct ncsh_History* history)
+void ncsh_history_remove_entries_shift(const int offset, struct ncsh_History* const restrict history)
 {
     if (offset + 1 == history->count) {
         return;
@@ -414,7 +415,8 @@ void ncsh_history_remove_entries_shift(int offset, struct ncsh_History* history)
 }
 
 [[nodiscard]]
-int_fast32_t ncsh_history_command_remove(char* value, size_t value_len, struct ncsh_History* history)
+int_fast32_t ncsh_history_command_remove(const char* const value, const size_t value_len,
+                                         struct ncsh_History* const restrict history)
 {
     assert(value);
     assert(value_len > 0);
@@ -425,7 +427,7 @@ int_fast32_t ncsh_history_command_remove(char* value, size_t value_len, struct n
     }
 
     for (int i = 0; i < history->count; ++i) {
-	if (eskilib_string_compare(value, value_len, history->entries[i].value, history->entries[i].length)) {
+	if (eskilib_string_compare_const(value, value_len, history->entries[i].value, history->entries[i].length)) {
 	    free(history->entries[i].value);
 	    history->entries[i].value = NULL;
 	    history->entries[i].length = 0;

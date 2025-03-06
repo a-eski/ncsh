@@ -10,6 +10,10 @@
 #define DOT_CONFIG ".config"
 #define NCSH_RC ".ncshrc"
 
+/*
+ * struct ncsh_Config
+ * Stores home location, config location, and full path to the config file.
+ */
 struct ncsh_Config {
     struct eskilib_String home_location;
     struct eskilib_String config_location;
