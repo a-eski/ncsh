@@ -254,6 +254,9 @@ struct ncsh_Alias {
     struct eskilib_String actual_command;
 };
 
+/* aliases
+ * A constant array of compile time aliases
+ */
 const struct ncsh_Alias aliases[] = {
     { .alias = { .length = sizeof(GIT_ALIAS), .value = GIT_ALIAS }, .actual_command = { .length = sizeof(GIT), .value = GIT }},
     { .alias = { .length = sizeof(NEOVIM_ALIAS), .value = NEOVIM_ALIAS }, .actual_command = { .length = sizeof(NEOVIM), .value = NEOVIM }},
@@ -262,14 +265,13 @@ const struct ncsh_Alias aliases[] = {
     { .alias = { .length = sizeof(CARGO_ALIAS ), .value = CARGO_ALIAS }, .actual_command = { .length = sizeof(CARGO), .value = CARGO }},
 };
 
-constexpr size_t aliases_count = sizeof(aliases) / sizeof(struct ncsh_Alias);
-
 struct eskilib_String ncsh_config_alias_check(char* buffer, size_t buf_len)
 {
     if (!buffer || buf_len < 2) {
         return eskilib_String_Empty;
     }
 
+    constexpr size_t aliases_count = sizeof(aliases) / sizeof(struct ncsh_Alias);
     for (uint_fast32_t i = 0; i < aliases_count; ++i) {
         if (eskilib_string_compare(buffer, buf_len, aliases[i].alias.value, aliases[i].alias.length)) {
             return aliases[i].actual_command;
