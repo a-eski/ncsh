@@ -11,14 +11,23 @@
 #include "../ncsh_parser.h"
 
 /* Macros */
+/* Result of system call execvp when it failes */
 #define EXECVP_FAILED -1
 
 /* Types */
+/* enum ncsh_Command_Type
+ * Represents the command type, a shell builtin or external command that
+ * needs to be called using fork/execvp
+ */
 enum ncsh_Command_Type {
     CT_EXTERNAL = 0,
     CT_BUILTIN = 1
 };
 
+/* struct ncsh_Output_Redirect_IO
+ * Stores file descriptors (fds) for redirected output and original fds
+ * for stdout and/or stderr
+ */
 struct ncsh_Output_Redirect_IO {
     int fd_stdout;
     int fd_stderr;
@@ -26,16 +35,27 @@ struct ncsh_Output_Redirect_IO {
     int original_stderr;
 };
 
+/* struct ncsh_Output_Redirect_IO
+ * Stores file descriptors (fds) for redirected input and original fd
+ * for stdin
+ */
 struct ncsh_Input_Redirect_IO {
     int fd;
     int original_stdin;
 };
 
+/* struct ncsh_Pipe_IO
+ * Stores file descriptors (fds) for piping io between processes
+ */
 struct ncsh_Pipe_IO {
     int fd_one[2];
     int fd_two[2];
 };
 
+/* struct ncsh_Vm_Data
+ * Stores information related to state in the VM.
+ * Used in conjunction with struct ncsh_Args and then struct ncsh_Tokens.
+ */
 struct ncsh_Vm_Data {
     pid_t pid;
     int status;

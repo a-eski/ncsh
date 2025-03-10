@@ -74,23 +74,29 @@ struct ncsh_Args {
  * Allocate memory for the parser that lives for the lifetime of the shell.
  * Returns: enum eskilib_Result, E_SUCCESS is successful.
  */
-enum eskilib_Result ncsh_parser_args_malloc(struct ncsh_Args* args);
+enum eskilib_Result ncsh_parser_args_malloc(struct ncsh_Args* restrict args);
 
 /* ncsh_parser_args_free
  * Free memory used by the parser at the end of shell's lifetime.
  */
-void ncsh_parser_args_free(struct ncsh_Args* args);
+void ncsh_parser_args_free(struct ncsh_Args* restrict args);
 
 /* ncsh_parser_parse
  * Parse the line into commands, command lengths, and op codes stored in struct ncsh_Args.
  * Allocates memory that is freed by ncsh_parser_free_values at the end of each main loop of the shell.
  */
-void ncsh_parser_parse(const char* line, size_t length, struct ncsh_Args* args);
+void ncsh_parser_parse(const char* const restrict line, const size_t length, struct ncsh_Args* restrict args);
+
+/* ncsh_parser_parse_noninteractive
+ * Parse the command line input into commands, command lengths, and op codes stored in struct ncsh_Args.
+ * Allocates memory that is freed by ncsh_parser_free_values at the end of each main loop of the shell.
+ */
+void ncsh_parser_parse_noninteractive(char** const restrict inputs, const size_t inputs_count, struct ncsh_Args* restrict args);
 
 /* ncsh_parser_args_free_values
  * Free memory used by the parser that is used during each main loop of the shell.
  * This means each main loop of the shell has values freed by this function.
  */
-void ncsh_parser_args_free_values(struct ncsh_Args* args);
+void ncsh_parser_args_free_values(struct ncsh_Args* restrict args);
 
 #endif // !NCSH_PARSER_H_

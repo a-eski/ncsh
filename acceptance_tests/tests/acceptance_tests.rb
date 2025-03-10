@@ -4,18 +4,12 @@
 # acceptance_tests.rb: the main acceptance tests for ncsh.
 # Uses prompt options PROMPT_DIRECTORY_SHORT and PROMPT_SHOW_USER_NORMAL
 
-require 'ttytest'
-require './acceptance_tests/expansion'
-require './acceptance_tests/autocompletion'
-require './acceptance_tests/startup'
-require './acceptance_tests/syntax'
-
-WC_C_LENGTH = '126'
-SLEEP_TIME = 0.2
-LS_LINES = 2
-LS_ITEMS = 14
-LS_FIRST_ITEM = 'COMPILE.md'
-TAB_AUTOCOMPLETE_ROWS = 11
+require './acceptance_tests/tests/common'
+require './acceptance_tests/tests/expansion'
+require './acceptance_tests/tests/autocompletion'
+require './acceptance_tests/tests/startup'
+require './acceptance_tests/tests/syntax'
+require './acceptance_tests/tests/z'
 
 def basic_ls_test(row)
   assert_check_new_row(row)
@@ -333,21 +327,6 @@ def stdout_redirection_tests(row)
   stdout_redirection_append_test(row)
 end
 
-def z_add_tests(row)
-  starting_tests('z_add')
-  assert_check_new_row(row)
-  @tty.send_line('z add ~/.config')
-  row += 1
-  @tty.assert_row_ends_with(row, %(Added new entry to z database.))
-  row += 1
-  @tty.send_line('z add ~/.config')
-  row += 1
-  @tty.assert_row_ends_with(row, 'Entry already exists in z database.')
-  row += 1
-  test_passed('z add tests')
-  row
-end
-
 def basic_stdin_redirection_test(row)
   assert_check_new_row(row)
   @tty.send_line_then_sleep('ls > t.txt', SLEEP_TIME)
@@ -501,9 +480,9 @@ end
 
 def run_acceptance_tests(prompt_directory_option, prompt_user_option, is_custom_prompt)
   setup_tests(prompt_directory_option, prompt_user_option, is_custom_prompt)
+
   row = 0
   @tty = TTYtest.new_terminal(%(PS1='$ ' ./bin/ncsh), width: 120, height: 140)
-
   row = startup_tests(row, true)
   row = basic_tests(row)
   row = home_and_end_tests(row)
@@ -512,9 +491,7 @@ def run_acceptance_tests(prompt_directory_option, prompt_user_option, is_custom_
   row = pipe_tests(row)
   row = history_tests(row)
   row = stdout_redirection_tests(row)
-  row = z_add_tests(row)
-  # row = z_remove_tests(row)
-  # row = z_print_tests(row)
+  row = z_tests(row)
   row = stdin_redirection_tests(row)
   row = builtin_tests(row)
   row = delete_line_tests(row)

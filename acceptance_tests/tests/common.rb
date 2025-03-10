@@ -1,5 +1,17 @@
 # frozen_string_literal: true
 
+require 'ttytest'
+
+# Test related constants
+WC_C_LENGTH_NO_Z_DATABASE = '111'
+WC_C_LENGTH = '126'
+SLEEP_TIME = 0.2
+LS_LINES = 2
+LS_ITEMS = 14
+LS_FIRST_ITEM = 'COMPILE.md'
+TAB_AUTOCOMPLETE_ROWS = 11
+
+# Shell compiler option related constants
 PROMPT_DIRECTORY_NORMAL = 0
 PROMPT_DIRECTORY_SHORT = 1
 PROMPT_DIRECTORY_NONE = 2
@@ -71,62 +83,4 @@ def assert_check_new_row(row)
     @tty.assert_row_ends_with(row, ' ❱ ')
   end
   @tty.assert_cursor_position(@start_column, row)
-end
-
-# Tests
-def z_database_new_test(row)
-  @tty.assert_row(row, 'ncsh z: z database file could not be found or opened: No such file or directory')
-  row += 1
-  @tty.assert_row(row, 'ncsh z: trying to create z database file.')
-  row += 1
-  @tty.assert_row(row, 'ncsh z: created z database file.')
-  row += 1
-  test_passed('New z database test')
-  row
-end
-
-def startup_test(row)
-  @tty.assert_row_starts_with(row, 'ncsh: startup time: ')
-  row += 1
-  test_passed('Startup time test')
-  row
-end
-
-def newline_sanity_test(row)
-  assert_check_new_row(row)
-  @tty.send_newline
-  row += 1
-  assert_check_new_row(row)
-  @tty.send_newline
-  row += 1
-  test_passed('Newline sanity test')
-  row
-end
-
-def empty_line_arrow_check(row)
-  @tty.send_left_arrow
-  assert_check_new_row(row)
-  @tty.send_right_arrow
-  assert_check_new_row(row)
-end
-
-def empty_line_sanity_test(row)
-  assert_check_new_row(row)
-  empty_line_arrow_check(row)
-  @tty.send_backspace
-  assert_check_new_row(row)
-  @tty.send_delete
-  assert_check_new_row(row)
-  test_passed('Empty line sanity test')
-  row
-end
-
-def startup_tests(row, run_z_database_new_tests)
-  starting_tests('startup tests')
-
-  row = z_database_new_test(row) if run_z_database_new_tests
-  row = startup_test(row)
-  row = newline_sanity_test(row)
-
-  empty_line_sanity_test(row)
 end
