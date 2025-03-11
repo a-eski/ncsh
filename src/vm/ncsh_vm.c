@@ -35,7 +35,7 @@ static inline pid_t ncsh_vm_atomic_child_pid_get(void)
     return ncsh_vm_atomic_internal_child_pid;
 }
 
-static void ncsh_vm_signal_handler(int signum, siginfo_t* info, void* context)
+static void ncsh_vm_signal_handler(int signum, siginfo_t* const info, void* const context)
 {
     (void)context;
     const pid_t target = ncsh_vm_atomic_child_pid_get();
@@ -71,12 +71,14 @@ static int ncsh_vm_signal_forward(const int signum)
 }
 
 /* IO Redirection */
-int ncsh_vm_output_redirection_oflags_get(bool append)
+int ncsh_vm_output_redirection_oflags_get(const bool append)
 {
     return append ? O_WRONLY | O_CREAT | O_APPEND : O_WRONLY | O_CREAT | O_TRUNC;
 }
 
-void ncsh_vm_stdout_redirection_start(char* file, bool append, struct ncsh_Output_Redirect_IO* io)
+void ncsh_vm_stdout_redirection_start(const char* const restrict file,
+                                      const bool append,
+                                      struct ncsh_Output_Redirect_IO* const restrict io)
 {
     assert(file);
     assert(io);
@@ -92,12 +94,13 @@ void ncsh_vm_stdout_redirection_start(char* file, bool append, struct ncsh_Outpu
     close(file_descriptor);
 }
 
-void ncsh_vm_stdout_redirection_stop(int original_stdout)
+void ncsh_vm_stdout_redirection_stop(const int original_stdout)
 {
     dup2(original_stdout, STDOUT_FILENO);
 }
 
-void ncsh_vm_stdin_redirection_start(char* file, struct ncsh_Input_Redirect_IO* io)
+void ncsh_vm_stdin_redirection_start(const char* const restrict file,
+                                     struct ncsh_Input_Redirect_IO* const restrict io)
 {
     assert(file);
     assert(io);
@@ -113,12 +116,14 @@ void ncsh_vm_stdin_redirection_start(char* file, struct ncsh_Input_Redirect_IO* 
     close(file_descriptor);
 }
 
-void ncsh_vm_stdin_redirection_stop(int original_stdin)
+void ncsh_vm_stdin_redirection_stop(const int original_stdin)
 {
     dup2(original_stdin, STDIN_FILENO);
 }
 
-void ncsh_vm_stderr_redirection_start(char* file, bool append, struct ncsh_Output_Redirect_IO* io)
+void ncsh_vm_stderr_redirection_start(const char* const restrict file,
+                                      const bool append,
+                                      struct ncsh_Output_Redirect_IO* const restrict io)
 {
     assert(file);
     assert(io);
@@ -134,12 +139,14 @@ void ncsh_vm_stderr_redirection_start(char* file, bool append, struct ncsh_Outpu
     close(file_descriptor);
 }
 
-void ncsh_vm_stderr_redirection_stop(int original_stderr)
+void ncsh_vm_stderr_redirection_stop(const int original_stderr)
 {
     dup2(original_stderr, STDERR_FILENO);
 }
 
-void ncsh_vm_stdout_and_stderr_redirection_start(char* file, bool append, struct ncsh_Output_Redirect_IO* io)
+void ncsh_vm_stdout_and_stderr_redirection_start(const char* const restrict file,
+                                                 const bool append,
+                                                 struct ncsh_Output_Redirect_IO* const restrict io)
 {
     assert(file);
     assert(io);
@@ -158,7 +165,7 @@ void ncsh_vm_stdout_and_stderr_redirection_start(char* file, bool append, struct
     close(file_descriptor);
 }
 
-void ncsh_vm_stdout_and_stderr_redirection_stop(struct ncsh_Output_Redirect_IO* io)
+void ncsh_vm_stdout_and_stderr_redirection_stop(struct ncsh_Output_Redirect_IO* const restrict io)
 {
     assert(io);
 
@@ -167,8 +174,9 @@ void ncsh_vm_stdout_and_stderr_redirection_stop(struct ncsh_Output_Redirect_IO* 
 }
 
 [[nodiscard]]
-int_fast32_t ncsh_vm_redirection_start_if_needed(struct ncsh_Args* args, struct ncsh_Tokens* tokens,
-                                                                   struct ncsh_Vm_Data* vm)
+int_fast32_t ncsh_vm_redirection_start_if_needed(struct ncsh_Args* const restrict args,
+                                                 const struct ncsh_Tokens* const restrict tokens,
+                                                 struct ncsh_Vm_Data* const restrict vm)
 {
     assert(args);
     assert(tokens);
@@ -225,7 +233,8 @@ int_fast32_t ncsh_vm_redirection_start_if_needed(struct ncsh_Args* args, struct 
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
-void ncsh_vm_redirection_stop_if_needed(struct ncsh_Tokens* tokens, struct ncsh_Vm_Data* vm)
+void ncsh_vm_redirection_stop_if_needed(const struct ncsh_Tokens* const restrict tokens,
+                                        struct ncsh_Vm_Data* const restrict vm)
 {
     assert(tokens);
     assert(vm);
@@ -249,7 +258,8 @@ void ncsh_vm_redirection_stop_if_needed(struct ncsh_Tokens* tokens, struct ncsh_
 
 /* Pipes */
 [[nodiscard]]
-int_fast32_t ncsh_vm_pipe_start(uint_fast32_t command_position, struct ncsh_Pipe_IO* pipes)
+int_fast32_t ncsh_vm_pipe_start(const uint_fast32_t command_position,
+                                struct ncsh_Pipe_IO* const restrict pipes)
 {
     assert(pipes);
 
@@ -271,7 +281,9 @@ int_fast32_t ncsh_vm_pipe_start(uint_fast32_t command_position, struct ncsh_Pipe
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
-void ncsh_vm_pipe_connect(uint_fast32_t command_position, uint_fast32_t number_of_commands, struct ncsh_Pipe_IO* pipes)
+void ncsh_vm_pipe_connect(const uint_fast32_t command_position,
+                          const uint_fast32_t number_of_commands,
+                          const struct ncsh_Pipe_IO* const restrict pipes)
 {
     assert(pipes);
 
@@ -298,7 +310,9 @@ void ncsh_vm_pipe_connect(uint_fast32_t command_position, uint_fast32_t number_o
     }
 }
 
-void ncsh_vm_pipe_stop(uint_fast32_t command_position, uint_fast32_t number_of_commands, struct ncsh_Pipe_IO* pipes)
+void ncsh_vm_pipe_stop(const uint_fast32_t command_position,
+                       const uint_fast32_t number_of_commands,
+                       const struct ncsh_Pipe_IO* const restrict pipes)
 {
     assert(pipes);
 
@@ -327,8 +341,9 @@ void ncsh_vm_pipe_stop(uint_fast32_t command_position, uint_fast32_t number_of_c
 
 /* Failure Handling */
 [[nodiscard]]
-int_fast32_t ncsh_vm_fork_failure(uint_fast32_t command_position, uint_fast32_t number_of_commands,
-                                                 struct ncsh_Pipe_IO* pipes)
+int_fast32_t ncsh_vm_fork_failure(const uint_fast32_t command_position,
+                                  const uint_fast32_t number_of_commands,
+                                  const struct ncsh_Pipe_IO* const restrict pipes)
 {
     assert(pipes);
 
@@ -348,8 +363,9 @@ int_fast32_t ncsh_vm_fork_failure(uint_fast32_t command_position, uint_fast32_t 
 
 /* Background Jobs */
 [[nodiscard]]
-int_fast32_t ncsh_vm_run_background_job(struct ncsh_Args* args, struct ncsh_Processes* processes,
-                                                    struct ncsh_Tokens* tokens)
+int_fast32_t ncsh_vm_run_background_job(struct ncsh_Args* const restrict args,
+                                        struct ncsh_Processes* const restrict processes,
+                                        struct ncsh_Tokens* const restrict tokens)
 {
     (void)tokens;
 
@@ -389,7 +405,7 @@ int_fast32_t ncsh_vm_run_background_job(struct ncsh_Args* args, struct ncsh_Proc
 /* VM */
 #ifdef NCSH_DEBUG
 #define NCSH_VM_COMMAND_DIED_MESSAGE "ncsh: Command child process died, cause unknown.\n"
-void ncsh_vm_debug_status(struct ncsh_Vm_Data* vm)
+void ncsh_vm_debug_status(struct ncsh_Vm_Data* const restrict vm)
 {
     if (WIFEXITED(vm->status)) {
         if (WEXITSTATUS(vm->status)) {
@@ -410,7 +426,8 @@ void ncsh_vm_debug_status(struct ncsh_Vm_Data* vm)
 }
 #endif /* ifdef NCSH_DEBUG */
 
-void ncsh_vm_buffer_set_command_next(struct ncsh_Args* args, struct ncsh_Vm_Data* vm)
+void ncsh_vm_buffer_set_command_next(struct ncsh_Args* const restrict args,
+                                     struct ncsh_Vm_Data* const restrict vm)
 {
     vm->buffer_position = 0;
 
@@ -435,7 +452,8 @@ void ncsh_vm_buffer_set_command_next(struct ncsh_Args* args, struct ncsh_Vm_Data
 }
 
 [[nodiscard]]
-int_fast32_t ncsh_vm_run(struct ncsh_Args* args, struct ncsh_Tokens* tokens)
+int_fast32_t ncsh_vm_run(struct ncsh_Args* const restrict args,
+                         struct ncsh_Tokens* tokens)
 {
     int_fast32_t result;
     struct ncsh_Vm_Data vm = {0};
@@ -552,7 +570,7 @@ int_fast32_t ncsh_vm_run(struct ncsh_Args* args, struct ncsh_Tokens* tokens)
 }
 
 [[nodiscard]]
-int_fast32_t ncsh_vm(struct ncsh_Args* args, struct ncsh_Processes* processes)
+int_fast32_t ncsh_vm(struct ncsh_Args* const restrict args, struct ncsh_Processes* const restrict processes)
 {
     assert(args);
 
@@ -569,7 +587,7 @@ int_fast32_t ncsh_vm(struct ncsh_Args* args, struct ncsh_Processes* processes)
     return ncsh_vm_run(args, &tokens);
 }
 
-void ncsh_vm_alias(struct ncsh_Args* args)
+void ncsh_vm_alias(struct ncsh_Args* const restrict args)
 {
     struct eskilib_String alias = ncsh_config_alias_check(args->values[0], args->lengths[0]);
     if (alias.length) {
@@ -581,7 +599,7 @@ void ncsh_vm_alias(struct ncsh_Args* args)
 }
 
 [[nodiscard]]
-int_fast32_t ncsh_vm_execute(struct ncsh_Shell* shell)
+int_fast32_t ncsh_vm_execute(struct ncsh_Shell* const restrict shell)
 {
     assert(shell);
     assert(&shell->args);
@@ -606,7 +624,7 @@ int_fast32_t ncsh_vm_execute(struct ncsh_Shell* shell)
 }
 
 [[nodiscard]]
-int_fast32_t ncsh_vm_execute_noninteractive(struct ncsh_Args* args)
+int_fast32_t ncsh_vm_execute_noninteractive(struct ncsh_Args* const restrict args)
 {
     assert(args);
     if (!args->count) {

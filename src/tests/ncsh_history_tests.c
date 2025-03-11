@@ -274,22 +274,19 @@ void ncsh_history_tests(void)
 {
     eskilib_test_start();
 
-    eskilib_test_run("ncsh_history_load_file_not_exists_test", ncsh_history_load_file_not_exists_test);
-    eskilib_test_run("ncsh_history_load_file_exists_test", ncsh_history_load_file_exists_test);
-    eskilib_test_run("ncsh_history_get_empty_file_test", ncsh_history_get_empty_file_test);
-    eskilib_test_run("ncsh_history_get_negative_input_test", ncsh_history_get_negative_input_test);
-    eskilib_test_run("ncsh_history_get_null_entries_test", ncsh_history_get_null_entries_test);
-    eskilib_test_run("ncsh_history_get_position_gt_history_count_test",
-                     ncsh_history_get_position_gt_history_count_test);
-    eskilib_test_run("ncsh_history_get_position_equals_history_count_test",
-                     ncsh_history_get_position_equals_history_count_test);
-    eskilib_test_run("ncsh_history_get_position_gt_max_test", ncsh_history_get_position_gt_max_test);
-    eskilib_test_run("ncsh_history_save_adds_to_file", ncsh_history_save_adds_to_file);
-    eskilib_test_run("ncsh_history_save_adds_multiple_to_file", ncsh_history_save_adds_multiple_to_file);
-    eskilib_test_run("ncsh_history_get_position_last_entry_test", ncsh_history_get_position_last_entry_test);
-    eskilib_test_run("ncsh_history_load_and_get_entries_test", ncsh_history_load_and_get_entries_test);
-    eskilib_test_run("ncsh_history_load_and_get_entries_then_add_entries_test",
-                     ncsh_history_load_and_get_entries_then_add_entries_test);
+    eskilib_test_run(ncsh_history_load_file_not_exists_test);
+    eskilib_test_run(ncsh_history_load_file_exists_test);
+    eskilib_test_run(ncsh_history_get_empty_file_test);
+    eskilib_test_run(ncsh_history_get_negative_input_test);
+    eskilib_test_run(ncsh_history_get_null_entries_test);
+    eskilib_test_run(ncsh_history_get_position_gt_history_count_test);
+    eskilib_test_run(ncsh_history_get_position_equals_history_count_test);
+    eskilib_test_run(ncsh_history_get_position_gt_max_test);
+    eskilib_test_run(ncsh_history_save_adds_to_file);
+    eskilib_test_run(ncsh_history_save_adds_multiple_to_file);
+    eskilib_test_run(ncsh_history_get_position_last_entry_test);
+    eskilib_test_run(ncsh_history_load_and_get_entries_test);
+    eskilib_test_run(ncsh_history_load_and_get_entries_then_add_entries_test);
 
     eskilib_test_finish();
 }

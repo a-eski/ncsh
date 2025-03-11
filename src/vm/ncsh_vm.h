@@ -8,8 +8,8 @@
 #include "../ncsh_parser.h"
 #include "../ncsh_types.h"
 
-int_fast32_t ncsh_vm_execute(struct ncsh_Shell* shell);
+int_fast32_t ncsh_vm_execute(struct ncsh_Shell* const restrict shell);
 
-int_fast32_t ncsh_vm_execute_noninteractive(struct ncsh_Args* args);
+int_fast32_t ncsh_vm_execute_noninteractive(struct ncsh_Args* const restrict args);
 
 #endif // !NCSH_VM_H_

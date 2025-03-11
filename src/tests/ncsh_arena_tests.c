@@ -38,10 +38,10 @@ void ncsh_arena_tests(void)
 {
     eskilib_test_start();
 
-    eskilib_test_run("ncsh_arena_init_zero_test", ncsh_arena_init_zero_test);
-    eskilib_test_run("ncsh_arena_init_nonzero_test", ncsh_arena_init_nonzero_test);
-    eskilib_test_run("ncsh_arena_malloc_bad_input_test", ncsh_arena_malloc_bad_input_test);
-    eskilib_test_run("ncsh_arena_malloc_test", ncsh_arena_malloc_test);
+    eskilib_test_run(ncsh_arena_init_zero_test);
+    eskilib_test_run(ncsh_arena_init_nonzero_test);
+    eskilib_test_run(ncsh_arena_malloc_bad_input_test);
+    eskilib_test_run(ncsh_arena_malloc_test);
 
     eskilib_test_finish();
 }

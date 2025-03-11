@@ -1,4 +1,4 @@
-// Copyright (c) ncsh by Alex Eski 2024
+/* Copyright (c) ncsh by Alex Eski 2024 */
 
 #include <assert.h>
 #include <limits.h>
@@ -26,7 +26,7 @@
 /* ncsh_exit
  * Called on exit to free memory related to the shells lifetime & the shells main loops lifetime.
  */
-void ncsh_exit(struct ncsh_Shell* shell)
+void ncsh_exit(struct ncsh_Shell* const restrict shell)
 {
     ncsh_config_free(&shell->config);
 
@@ -42,7 +42,7 @@ void ncsh_exit(struct ncsh_Shell* shell)
  * Returns: exit result, EXIT_SUCCESS or EXIT_FAILURE
  */
 [[nodiscard]]
-int_fast32_t ncsh_init(struct ncsh_Shell* shell)
+int_fast32_t ncsh_init(struct ncsh_Shell* const restrict shell)
 {
     enum eskilib_Result result;
     if ((result = ncsh_config_init(&shell->config)) != E_SUCCESS) {
@@ -86,7 +86,7 @@ int_fast32_t ncsh_init(struct ncsh_Shell* shell)
  * Manages freeing the lifetime of the main shell loop.
  * Frees memory used by the parser to populate ncsh_Args.
  */
-void ncsh_reset(struct ncsh_Shell* shell)
+void ncsh_reset(struct ncsh_Shell* const restrict shell)
 {
     ncsh_parser_args_free_values(&shell->args);
     memset(shell->input.buffer, '\0', shell->input.max_pos);
@@ -106,6 +106,7 @@ void ncsh_reset(struct ncsh_Shell* shell)
  * 2. The lifetime of the main loop of the shell, managed through ncsh_reset.
  * 3. ncsh_readline and ncsh_vm have their own inner lifetimes.
  */
+[[nodiscard]]
 int_fast32_t ncsh(void)
 {
 #ifdef NCSH_START_TIME

@@ -36,12 +36,9 @@ void ncsh_config_tests(void)
 {
     eskilib_test_start();
 
-    eskilib_test_run("ncsh_config_alias_check_no_alias_test",
-                     ncsh_config_alias_check_no_alias_test);
-    eskilib_test_run("ncsh_config_alias_check_alias_found_test",
-                     ncsh_config_alias_check_alias_found_test);
-    eskilib_test_run("ncsh_config_alias_check_alias_found_multiple_chars_test",
-                     ncsh_config_alias_check_alias_found_multiple_chars_test);
+    eskilib_test_run(ncsh_config_alias_check_no_alias_test);
+    eskilib_test_run(ncsh_config_alias_check_alias_found_test);
+    eskilib_test_run(ncsh_config_alias_check_alias_found_multiple_chars_test);
 
     eskilib_test_finish();
 }

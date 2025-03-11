@@ -45,22 +45,26 @@ struct ncsh_Input {
     struct ncsh_Autocompletion_Node* autocompletions_tree;
 };
 
-/* ncsh_readline_prompt_size
- * get the prompt size accounting for prompt length, user length, and cwd lenght
- * Returns: length of the prompt
+/* ncsh_readline_init
+ * Allocates memory that lives for the lifetime of the shell and is used by readline to process user input.
+ * Returns: exit status, EXIT_SUCCESS, EXIT_FAILURE, or value in ncsh_defines.h (EXIT_...)
  */
-size_t ncsh_readline_prompt_size(const size_t user_len, const size_t dir_len);
-
-int_fast32_t ncsh_readline_init(struct ncsh_Config* const config, struct ncsh_Input* const restrict input);
+int_fast32_t ncsh_readline_init(struct ncsh_Config* const restrict config, struct ncsh_Input* const restrict input);
 
 /* ncsh_readline
- * Read user input while supporting different operations like backspace or delete.
+ * Read user input while supporting different operations like backspace, delete, history, autocompletions, home/end, and other inputs.
  * Returns: exit status, EXIT_SUCCESS, EXIT_FAILURE, or value in ncsh_defines.h (EXIT_...)
  */
 int_fast32_t ncsh_readline(struct ncsh_Input* const restrict input);
 
+/* ncsh_readline_history_and_autocompletion_add
+ * Add user input that was able to be processed and executed by the VM to readline's history and autocompletion data stores.
+ */
 void ncsh_readline_history_and_autocompletion_add(struct ncsh_Input* const restrict input);
 
+/* ncsh_readline_exit
+ * Releases memory at the end of the shell's lifetime related to readline functionility around processing and manipulating user input.
+ */
 void ncsh_readline_exit(struct ncsh_Input* const restrict input);
 
 #endif // !NCSH_READLINE_H_

@@ -602,40 +602,35 @@ int main(void)
 {
     eskilib_test_start();
 
-    eskilib_test_run("z_read_empty_database_file_test",
-                     z_read_empty_database_file_test);
-    eskilib_test_run("z_add_to_database_empty_database_test", z_add_to_database_empty_database_test);
-    eskilib_test_run("z_match_find_empty_database_test", z_match_find_empty_database_test);
-    eskilib_test_run("z_write_empty_database_test", z_write_empty_database_test);
-    eskilib_test_run("z_read_non_empty_database_test",
-                     z_read_non_empty_database_test);
-    eskilib_test_run("z_add_to_database_empty_value_test", z_add_to_database_empty_value_test);
-    eskilib_test_run("z_write_nonempty_database_test",
-                     z_write_nonempty_database_test);
-    eskilib_test_run("z_match_find_finds_exact_match_test", z_match_find_finds_exact_match_test);
-    eskilib_test_run("z_match_find_finds_match_test", z_match_find_finds_match_test);
-    // eskilib_test_run("z_match_find_no_match_test", z_match_find_no_match_test);
-    eskilib_test_run("z_match_find_multiple_matches_test", z_match_find_multiple_matches_test);
+    eskilib_test_run(z_read_empty_database_file_test);
+    eskilib_test_run(z_add_to_database_empty_database_test);
+    eskilib_test_run(z_match_find_empty_database_test);
+    eskilib_test_run(z_write_empty_database_test);
+    eskilib_test_run(z_read_non_empty_database_test);
+    eskilib_test_run(z_add_to_database_empty_value_test);
+    eskilib_test_run(z_write_nonempty_database_test);
+    eskilib_test_run(z_match_find_finds_exact_match_test);
+    eskilib_test_run(z_match_find_finds_match_test);
+    // eskilib_test_run(z_match_find_no_match_test);
+    eskilib_test_run(z_match_find_multiple_matches_test);
 
 #ifdef NDEBUG
-    eskilib_test_run("z_change_directory_test", z_change_directory_test);
+    eskilib_test_run(z_change_directory_test);
 #endif /* ifdef NDEBUG */
-    eskilib_test_run("z_home_empty_target_change_directory_test", z_home_empty_target_change_directory_test);
-    eskilib_test_run("z_no_match_change_directory_test", z_no_match_change_directory_test);
-    eskilib_test_run("z_valid_subdirectory_change_directory_test", z_valid_subdirectory_change_directory_test);
+    eskilib_test_run(z_home_empty_target_change_directory_test);
+    eskilib_test_run(z_no_match_change_directory_test);
+    eskilib_test_run(z_valid_subdirectory_change_directory_test);
 #ifdef NDEBUG
-    eskilib_test_run("z_dir_slash_dir_change_directory_test", z_dir_slash_dir_change_directory_test);
+    eskilib_test_run(z_dir_slash_dir_change_directory_test);
 #endif /* ifdef NDEBUG */
-    eskilib_test_run("z_empty_database_valid_subdirectory_change_directory_test",
-                     z_empty_database_valid_subdirectory_change_directory_test);
+    eskilib_test_run(z_empty_database_valid_subdirectory_change_directory_test);
 
-    eskilib_test_run("z_add_new_entry_test", z_add_new_entry_test);
-    eskilib_test_run("z_add_existing_in_database_new_entry", z_add_existing_in_database_new_entry);
-    eskilib_test_run("z_add_null_parameters", z_add_null_parameters);
-    eskilib_test_run("z_add_bad_parameters", z_add_bad_parameters);
-    eskilib_test_run("z_add_new_entry_contained_in_another_entry_but_different_test",
-                     z_add_new_entry_contained_in_another_entry_but_different_test);
-    // eskilib_test_run("z_contains_correct_match_test", z_contains_correct_match_test);
+    eskilib_test_run(z_add_new_entry_test);
+    eskilib_test_run(z_add_existing_in_database_new_entry);
+    eskilib_test_run(z_add_null_parameters);
+    eskilib_test_run(z_add_bad_parameters);
+    eskilib_test_run(z_add_new_entry_contained_in_another_entry_but_different_test);
+    // eskilib_test_run(z_contains_correct_match_test);
 
     eskilib_test_finish();
 

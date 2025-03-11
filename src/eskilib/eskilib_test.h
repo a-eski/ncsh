@@ -13,7 +13,9 @@
         return;                                                                                                        \
     }
 
-extern void eskilib_test_run(const char* function_name, void (*function)(void));
+#define eskilib_test_run(function) eskilib_test_run_internal(#function, function);
+
+extern void eskilib_test_run_internal(const char* function_name, void (*function)(void));
 
 // private API: do not need to use this manually, used with eskilib_assert to mark test failed when assertion does not
 // pass.

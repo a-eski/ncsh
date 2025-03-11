@@ -21,7 +21,7 @@
 
 /* Prompt */
 /* ncsh_readline_prompt_size
- * get the prompt size accounting for prompt length, user length, and cwd lenght
+ * get the prompt size accounting for prompt length, user length, and cwd length
  * Returns: length of the prompt
  */
 size_t ncsh_readline_prompt_size(const size_t user_len, const size_t dir_len)
@@ -37,12 +37,15 @@ size_t ncsh_readline_prompt_size(const size_t user_len, const size_t dir_len)
     return user_len + dir_len - 1 + NCSH_PROMPT_ENDING_STRING_LENGTH;
 }
 
+
+/* This section is included at compile time if the prompt directory setting is set to use shortened directory. */
+#if NCSH_PROMPT_DIRECTORY == NCSH_DIRECTORY_SHORT
+
 /* ncsh_readline_prompt_short_directory_get
  * gets a shortened version of the cwd, the last 2 directories in the cwd.
  * i.e. /home/alex/dir becomes /alex/dir
  * Returns: length of the shortened cwd
  */
-#if NCSH_PROMPT_DIRECTORY == NCSH_DIRECTORY_SHORT
 [[nodiscard]]
 size_t ncsh_readline_prompt_short_directory_get(const char* const cwd, char* output)
 {
@@ -75,6 +78,11 @@ size_t ncsh_readline_prompt_short_directory_get(const char* const cwd, char* out
     return i - last_slash_pos + 2; // null termination included in len
 }
 
+/* ncsh_readline_prompt_short_directory_print
+ * Gets and prints the shortened directory prompt when it is enabled at compile time via ncsh_configurables.h option.
+ * Handles whether User is included in prompt or not, based on
+ * Returns: EXIT_FAILURE or EXIT_SUCCESS
+ */
 [[nodiscard]]
 int_fast32_t ncsh_readline_prompt_short_directory_print(struct ncsh_Input* const restrict input)
 {
@@ -100,7 +108,9 @@ int_fast32_t ncsh_readline_prompt_short_directory_print(struct ncsh_Input* const
 }
 #endif /* if NCSH_PROMPT_DIRECTORY == NCSH_DIRECTORY_SHORT */
 
+/* This section is included at compile time if the prompt directory setting is set to use the full directory. */
 #if NCSH_PROMPT_DIRECTORY == NCSH_DIRECTORY_NORMAL
+
 [[nodiscard]]
 int_fast32_t ncsh_readline_prompt_directory_print(struct ncsh_Input* const restrict input)
 {
@@ -128,7 +138,9 @@ int_fast32_t ncsh_readline_prompt_directory_print(struct ncsh_Input* const restr
 }
 #endif /* if NCSH_PROMPT_DIRECTORY == NCSH_DIRECTORY_NORMAL */
 
+/* This section is included at compile time if the prompt directory setting is set to use the full directory. */
 #if NCSH_PROMPT_DIRECTORY == NCSH_DIRECTORY_NONE
+
 [[nodiscard]]
 int_fast32_t ncsh_readline_prompt_no_directory_print(struct ncsh_Input* const restrict input)
 {
@@ -224,6 +236,12 @@ bool ncsh_readline_is_start_of_line(const struct ncsh_Input* const restrict inpu
     return input->lines_y > 0 && input->lines_x[input->lines_y] == 0;
 }
 
+/* ncsh_readline_adjust_line_if_needed
+ * Checks if a newline needs to be inserted.
+ * For moving to the next line, nothing happens except increasing lines_y and current_y, which track y position relative to the line the prompt started on.
+ * For moving to the previous line, we manually move the cursor to the end of the previous line, decrease lines_y and current_y.
+ * Returns: enum ncsh_Line_Adjustment, a value that indicates whether any line change has happened or not
+ */
 enum ncsh_Line_Adjustment ncsh_readline_adjust_line_if_needed(struct ncsh_Input* const restrict input)
 {
     if (ncsh_readline_is_end_of_line(input)) {
@@ -245,6 +263,11 @@ enum ncsh_Line_Adjustment ncsh_readline_adjust_line_if_needed(struct ncsh_Input*
     return L_NONE;
 }
 
+/* ncsh_readline_backspace
+ * Handles backspace key input in any position, end of line, midline, start of line.
+ * Adjusts buffer and buffer position which holds user input.
+ * Returns: EXIT_SUCCESS OR EXIT_FAILURE
+ */
 [[nodiscard]]
 int_fast32_t ncsh_readline_backspace(struct ncsh_Input* const restrict input)
 {
@@ -284,6 +307,11 @@ int_fast32_t ncsh_readline_backspace(struct ncsh_Input* const restrict input)
     return EXIT_SUCCESS;
 }
 
+/* ncsh_readline_delete
+ * Handles delete key input in any position, end of line, midline, start of line.
+ * Adjusts buffer and buffer position which holds user input.
+ * Returns: EXIT_SUCCESS OR EXIT_FAILURE
+ */
 [[nodiscard]]
 int_fast32_t ncsh_readline_delete(struct ncsh_Input* const restrict input)
 {
@@ -713,7 +741,11 @@ int_fast32_t ncsh_readline_tab_autocomplete(struct ncsh_Input* const restrict in
     return exit;
 }
 
-int_fast32_t ncsh_readline_init(struct ncsh_Config* const config, struct ncsh_Input* const restrict input)
+/* ncsh_readline_init
+ * Allocates memory that lives for the lifetime of the shell and is used by readline to process user input.
+ * Returns: exit status, EXIT_SUCCESS, EXIT_FAILURE, or value in ncsh_defines.h (EXIT_...)
+ */
+int_fast32_t ncsh_readline_init(struct ncsh_Config* const restrict config, struct ncsh_Input* const restrict input)
 {
     input->user.value = getenv("USER");
     input->user.length = strlen(input->user.value) + 1;
@@ -811,6 +843,10 @@ int_fast32_t ncsh_readline_putchar(char character, struct ncsh_Input* const rest
     return EXIT_SUCCESS;
 }
 
+/* ncsh_readline
+ * Read user input while supporting different operations like backspace, delete, history, autocompletions, home/end, and other inputs.
+ * Returns: exit status, EXIT_SUCCESS, EXIT_FAILURE, or value in ncsh_defines.h (EXIT_...)
+ */
 [[nodiscard]]
 int_fast32_t ncsh_readline(struct ncsh_Input* const restrict input)
 {
@@ -1037,12 +1073,18 @@ exit:
     return exit;
 }
 
+/* ncsh_readline_history_and_autocompletion_add
+ * Add user input that was able to be processed and executed by the VM to readline's history and autocompletion data stores.
+ */
 void ncsh_readline_history_and_autocompletion_add(struct ncsh_Input* const restrict input)
 {
     ncsh_history_add(input->buffer, input->pos, &input->history);
     ncsh_autocompletions_add(input->buffer, input->pos, input->autocompletions_tree);
 }
 
+/* ncsh_readline_exit
+ * Releases memory at the end of the shell's lifetime related to readline functionility around processing and manipulating user input.
+ */
 void ncsh_readline_exit(struct ncsh_Input* const restrict input)
 {
     free(input->buffer);
