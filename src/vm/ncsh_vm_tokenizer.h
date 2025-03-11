@@ -7,6 +7,11 @@
 
 #include "../ncsh_parser.h"
 
+/* struct ncsh_Tokens
+ * Stores information related to tokens from struct ncsh_Args,
+ * like position of redirect operations, counts of pipe commands, and file names to use to create file descriptors.
+ * Output append directs output redirections to append to the file instead of writing over it.
+ */
 struct ncsh_Tokens {
     uint_fast32_t stdout_redirect_index;
     uint_fast32_t stdin_redirect_index;

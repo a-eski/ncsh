@@ -36,6 +36,13 @@ static inline void ncsh_debug_args(struct ncsh_Args* args)
     }
 }
 
+static inline void ncsh_debug_argsv(int argc, char** argv)
+{
+    for (int i = 0; i < argc; ++i) {
+        printf("argv[%d]: %s", i, argv[i]);
+    }
+}
+
 static inline void ncsh_debug_string(struct eskilib_String string, const char* name)
 {
     printf("%s value: %s\n", name, string.value);

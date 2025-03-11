@@ -61,12 +61,12 @@ There are some high-level comments in the header files, with more detailed cod d
 * frecency-based autocomplete
 * move built-in commands like export, setting environment variables, etc.
 * aliasing for user-defined commands
-* custom prompt line layout, colors, backgrounds
+* custom prompt colors, backgrounds
 * support scripts through a non-iteractive mode
 * build for and test on mac (I don't have one)?
 * build for and test on windows with msys2?
 * background jobs support
 * math
 * better posix support
-* add to path
+* add to path (works but has some issues when running ncsh as main shell)
 * variables

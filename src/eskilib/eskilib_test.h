@@ -8,7 +8,7 @@
 
 #define eskilib_assert(condition)                                                                                      \
     if (!(condition)) {                                                                                                \
-        printf("%s condition failed on line %d\n", __func__, __LINE__);                                                \
+        printf("%s condition (%s) failed on line %d\n", __func__, #condition, __LINE__);                               \
         eskilib_test_failed_internal();                                                                                \
         return;                                                                                                        \
     }
