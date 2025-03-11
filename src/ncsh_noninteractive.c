@@ -18,13 +18,6 @@
 #include "ncsh_parser.h"
 #include "vm/ncsh_vm.h"
 
-void ncsh_debug_argsv(int argc, char** argv)
-{
-    for (int i = 0; i < argc; ++i) {
-        printf("argv[%d]: %s\n", i, argv[i]);
-    }
-}
-
 /* ncsh_noninteractive
  * Main noninteractive loop of the shell.
  * Runs when calling shell via command-line like /bin/ncsh ls or via scripts.
