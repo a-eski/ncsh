@@ -1,4 +1,4 @@
-// Copyright (c) ncsh by Alex Eski 2024
+/* Copyright (c) ncsh by Alex Eski 2024 */
 
 #include <assert.h>
 #include <limits.h>
@@ -106,6 +106,7 @@ void ncsh_reset(struct ncsh_Shell* const restrict shell)
  * 2. The lifetime of the main loop of the shell, managed through ncsh_reset.
  * 3. ncsh_readline and ncsh_vm have their own inner lifetimes.
  */
+[[nodiscard]]
 int_fast32_t ncsh(void)
 {
 #ifdef NCSH_START_TIME

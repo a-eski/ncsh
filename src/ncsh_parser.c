@@ -1,4 +1,4 @@
-// Copyright (c) ncsh by Alex Eski 2024
+/* Copyright (c) ncsh by Alex Eski 2024 */
 
 #include <assert.h>
 #include <glob.h>
@@ -59,7 +59,7 @@
  *      or E_FAILURE_MALLOC if malloc returns null.
  */
 [[nodiscard]]
-enum eskilib_Result ncsh_parser_args_malloc(struct ncsh_Args* restrict args)
+enum eskilib_Result ncsh_parser_args_malloc(struct ncsh_Args* const restrict args)
 {
     if (!args) {
         return E_FAILURE_NULL_REFERENCE;
@@ -93,7 +93,7 @@ enum eskilib_Result ncsh_parser_args_malloc(struct ncsh_Args* restrict args)
  * Safe to call multiple times, as it performs null checks before freeing memory,
  * and sets the pointer explicitly to null after freeing.
  */
-void ncsh_parser_args_free(struct ncsh_Args* restrict args)
+void ncsh_parser_args_free(struct ncsh_Args* const restrict args)
 {
     if (!args) {
         return;
@@ -124,7 +124,7 @@ void ncsh_parser_args_free(struct ncsh_Args* restrict args)
  * Sets args->count to 0, args itself lives for the main lifetime of the shell, only the values get
  * freed at the end of each shell loop.
  */
-void ncsh_parser_args_free_values(struct ncsh_Args* restrict args)
+void ncsh_parser_args_free_values(struct ncsh_Args* const restrict args)
 {
     if (!args->count) {
         return;
@@ -202,7 +202,8 @@ const enum ncsh_Ops ops_3char[] = {OP_STDERR_REDIRECTION_APPEND, OP_STDOUT_AND_S
  * Returns: a value from enum ncsh_Ops, the bytecode relevant to the input
  */
 [[nodiscard]]
-enum ncsh_Ops ncsh_parser_op_get(const char* const restrict line, size_t length)
+enum ncsh_Ops ncsh_parser_op_get(const char* const restrict line,
+                                 const size_t length)
 {
     switch (length) {
     case 0: {
@@ -288,7 +289,9 @@ enum ncsh_Parser_State {
  * Handles expansions like *, ?, and ~
  * Results are stored in struct ncsh_Args
  */
-void ncsh_parser_parse(const char* const restrict line, size_t length, struct ncsh_Args* restrict args)
+void ncsh_parser_parse(const char* const restrict line,
+                       const size_t length,
+                       struct ncsh_Args* const restrict args)
 {
     assert(args);
     assert(line);
@@ -445,7 +448,9 @@ void ncsh_parser_parse(const char* const restrict line, size_t length, struct nc
  * Parse the command line input into commands, command lengths, and op codes stored in struct ncsh_Args.
  * Allocates memory that is freed by ncsh_parser_free_values at the end of each main loop of the shell.
  */
-void ncsh_parser_parse_noninteractive(const char** const restrict inputs, const size_t inputs_count, struct ncsh_Args* restrict args)
+void ncsh_parser_parse_noninteractive(const char** const restrict inputs,
+                                      const size_t inputs_count,
+                                      struct ncsh_Args* const restrict args)
 {
     assert(args);
     assert(inputs);

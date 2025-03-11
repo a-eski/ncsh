@@ -40,10 +40,10 @@ void ncsh_readline_tests(void)
 {
     eskilib_test_start();
 
-    eskilib_test_run("ncsh_readline_prompt_size_only_prompt_test", ncsh_readline_prompt_size_only_prompt_test);
-    eskilib_test_run("ncsh_readline_prompt_size_only_prompt_and_user_test", ncsh_readline_prompt_size_only_prompt_and_user_test);
-    eskilib_test_run("ncsh_readline_prompt_size_only_prompt_and_dir_test", ncsh_readline_prompt_size_only_prompt_and_dir_test);
-    eskilib_test_run("ncsh_readline_prompt_size_all_test", ncsh_readline_prompt_size_all_test);
+    eskilib_test_run(ncsh_readline_prompt_size_only_prompt_test);
+    eskilib_test_run(ncsh_readline_prompt_size_only_prompt_and_user_test);
+    eskilib_test_run(ncsh_readline_prompt_size_only_prompt_and_dir_test);
+    eskilib_test_run(ncsh_readline_prompt_size_all_test);
 
     eskilib_test_finish();
 }

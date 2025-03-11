@@ -39,6 +39,13 @@ obj/%.o: src/z/%.c
 obj/%.o: src/%.c
 	$(cc_with_flags) -c $< -o $@
 
+.PHONY: release
+release :
+	make RELEASE=1
+.PHONY: r
+r :
+	make release
+
 .PHONY: debug
 debug :
 	make -B RELEASE=0

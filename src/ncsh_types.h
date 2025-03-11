@@ -1,4 +1,4 @@
-// Copyright (c) ncsh by Alex Eski 2025
+/* Copyright (c) ncsh by Alex Eski 2025 */
 
 #ifndef NCSH_TYPES_H_
 #define NCSH_TYPES_H_
@@ -10,12 +10,11 @@
 #include "readline/ncsh_readline.h"
 #include "z/z.h"
 
+#define NCSH_MAX_PROCESSES 100
 
 /* struct ncsh_Processes
  * Maintains details about background jobs that have been started by the user.
  */
-#define NCSH_MAX_PROCESSES 100
-
 struct ncsh_Processes {
     uint32_t job_number;
     uint32_t process_ids[NCSH_MAX_PROCESSES];

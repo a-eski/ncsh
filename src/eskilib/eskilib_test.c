@@ -10,7 +10,7 @@ static bool test_failed;
 static int tests_failed;
 static int tests_passed;
 
-void eskilib_test_run(const char* function_name, void (*function)(void))
+void eskilib_test_run_internal(const char* function_name, void (*function)(void))
 {
     test_failed = false;
     printf("%s started.\n", function_name);

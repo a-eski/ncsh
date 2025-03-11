@@ -8,7 +8,7 @@
 /* main
  * Entry point.
  * Controls whether the shell runs in interactive or noninteractive mode.
- * Returns: exit result, see values in ncsh_defines.h (EXIT_...)
+ * Returns: exit result, see values in ncsh_defines.h (EXIT_*)
  */
 int main(int argc, char** argv)
 {

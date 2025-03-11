@@ -1,4 +1,4 @@
-// Copyright (c) ncsh by Alex Eski 2025
+/* Copyright (c) ncsh by Alex Eski 2025 */
 
 #define _POSIX_C_SOURCE 200809L
 #include <assert.h>

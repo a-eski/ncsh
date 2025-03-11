@@ -22,7 +22,8 @@
 #include "../z/z.h"
 
 [[nodiscard]]
-int_fast32_t ncsh_builtins_z(struct z_Database* z_db, struct ncsh_Args* args)
+int_fast32_t ncsh_builtins_z(struct z_Database* const restrict z_db,
+                             const struct ncsh_Args* const restrict args)
 {
     assert(z_db);
     assert(args->count > 0);
@@ -74,7 +75,8 @@ int_fast32_t ncsh_builtins_z(struct z_Database* z_db, struct ncsh_Args* args)
 }
 
 [[nodiscard]]
-int_fast32_t ncsh_builtins_history(struct ncsh_History* history, struct ncsh_Args* args)
+int_fast32_t ncsh_builtins_history(struct ncsh_History* const restrict history,
+                                   const struct ncsh_Args* const restrict args)
 {
     if (args->count == 1) {
         return ncsh_history_command_display(history);
@@ -120,14 +122,14 @@ int_fast32_t ncsh_builtins_history(struct ncsh_History* history, struct ncsh_Arg
 }
 
 [[nodiscard]]
-int_fast32_t ncsh_builtins_exit(struct ncsh_Args* args)
+int_fast32_t ncsh_builtins_exit(const struct ncsh_Args* const restrict args)
 {
     (void)args; // to not get compiler warnings
     return NCSH_COMMAND_EXIT;
 }
 
 [[nodiscard]]
-int_fast32_t ncsh_builtins_echo(struct ncsh_Args* args)
+int_fast32_t ncsh_builtins_echo(const struct ncsh_Args* const restrict args)
 {
     for (uint_fast32_t i = 1; i < args->count; ++i) {
         printf("%s ", args->values[i]);
@@ -172,7 +174,7 @@ int_fast32_t ncsh_builtins_echo(struct ncsh_Args* args)
     }
 
 [[nodiscard]]
-int_fast32_t ncsh_builtins_help(struct ncsh_Args* args)
+int_fast32_t ncsh_builtins_help(const struct ncsh_Args* const restrict args)
 {
     (void)args; // to not get compiler warnings
 
@@ -203,7 +205,7 @@ int_fast32_t ncsh_builtins_help(struct ncsh_Args* args)
 }
 
 [[nodiscard]]
-int_fast32_t ncsh_builtins_cd(struct ncsh_Args* args)
+int_fast32_t ncsh_builtins_cd(const struct ncsh_Args* const restrict args)
 {
     if (!args->values[1]) {
         char* home = getenv("HOME");
@@ -225,7 +227,7 @@ int_fast32_t ncsh_builtins_cd(struct ncsh_Args* args)
 }
 
 [[nodiscard]]
-int_fast32_t ncsh_builtins_pwd(struct ncsh_Args* args)
+int_fast32_t ncsh_builtins_pwd(const struct ncsh_Args* const restrict args)
 {
     (void)args;
     char path[PATH_MAX];
@@ -242,7 +244,7 @@ int_fast32_t ncsh_builtins_pwd(struct ncsh_Args* args)
 #define KILL_NOTHING_TO_KILL_MESSAGE "ncsh kill: nothing to kill, please pass in a process ID (PID).\n"
 #define KILL_COULDNT_PARSE_PID_MESSAGE "ncsh kill: could not parse process ID (PID) from arguments.\n"
 [[nodiscard]]
-int_fast32_t ncsh_builtins_kill(struct ncsh_Args* args)
+int_fast32_t ncsh_builtins_kill(const struct ncsh_Args* const restrict args)
 {
     if (!args->values[1]) {
         if (write(STDOUT_FILENO, KILL_NOTHING_TO_KILL_MESSAGE, sizeof(KILL_NOTHING_TO_KILL_MESSAGE) - 1) == -1) {
@@ -279,7 +281,7 @@ int_fast32_t ncsh_builtins_set_e()
 #define SET_NOTHING_TO_SET_MESSAGE "ncsh set: nothing to set, please pass in a value to set (i.e. '-e', '-c')"
 #define SET_VALID_OPERATIONS_MESSAGE "ncsh set: valid set operations are in the form '-e', '-c', etc."
 [[nodiscard]]
-int_fast32_t ncsh_builtins_set(struct ncsh_Args* args)
+int_fast32_t ncsh_builtins_set(const struct ncsh_Args* const restrict args)
 {
     if (!args->values[1]) {
         if (write(STDOUT_FILENO, SET_NOTHING_TO_SET_MESSAGE, sizeof(SET_NOTHING_TO_SET_MESSAGE) - 1) == -1) {

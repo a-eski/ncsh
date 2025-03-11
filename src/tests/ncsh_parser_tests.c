@@ -450,31 +450,29 @@ void ncsh_parser_parse_tests(void)
 {
     eskilib_test_start();
 
-    eskilib_test_run("ncsh_parser_parse_ls_test", ncsh_parser_parse_ls_test);
-    eskilib_test_run("ncsh_parser_parse_ls_dash_l_test", ncsh_parser_parse_ls_dash_l_test);
-    eskilib_test_run("ncsh_parser_parse_pipe_test", ncsh_parser_parse_pipe_test);
-    eskilib_test_run("ncsh_parser_parse_multiple_pipe_test", ncsh_parser_parse_multiple_pipe_test);
-    eskilib_test_run("ncsh_parser_parse_background_job_test", ncsh_parser_parse_background_job_test);
-    eskilib_test_run("ncsh_parser_parse_output_redirection_test", ncsh_parser_parse_output_redirection_test);
-    eskilib_test_run("ncsh_parser_parse_double_quotes_test", ncsh_parser_parse_double_quotes_test);
-    eskilib_test_run("ncsh_parser_parse_single_quotes_test", ncsh_parser_parse_single_quotes_test);
-    eskilib_test_run("ncsh_parser_parse_backtick_quotes_test", ncsh_parser_parse_backtick_quotes_test);
-    eskilib_test_run("ncsh_parser_parse_output_redirection_append_test",
-                     ncsh_parser_parse_output_redirection_append_test);
-    eskilib_test_run("ncsh_parser_parse_git_commit_test", ncsh_parser_parse_git_commit_test);
+    eskilib_test_run(ncsh_parser_parse_ls_test);
+    eskilib_test_run(ncsh_parser_parse_ls_dash_l_test);
+    eskilib_test_run(ncsh_parser_parse_pipe_test);
+    eskilib_test_run(ncsh_parser_parse_multiple_pipe_test);
+    eskilib_test_run(ncsh_parser_parse_background_job_test);
+    eskilib_test_run(ncsh_parser_parse_output_redirection_test);
+    eskilib_test_run(ncsh_parser_parse_double_quotes_test);
+    eskilib_test_run(ncsh_parser_parse_single_quotes_test);
+    eskilib_test_run(ncsh_parser_parse_backtick_quotes_test);
+    eskilib_test_run(ncsh_parser_parse_output_redirection_append_test);
+    eskilib_test_run(ncsh_parser_parse_git_commit_test);
 
 #ifdef NDEBUG
     eskilib_test_run("ncsh_parser_parse_home_test", ncsh_parser_parse_home_test);
     eskilib_test_run("ncsh_parser_parse_home_at_start_test", ncsh_parser_parse_home_at_start_test);
 #endif /* ifdef NDEBUG */
 
-    eskilib_test_run("ncsh_parser_parse_math_operators", ncsh_parser_parse_math_operators);
+    eskilib_test_run(ncsh_parser_parse_math_operators);
 
-    eskilib_test_run("ncsh_parser_parse_glob_star_shouldnt_crash", ncsh_parser_parse_glob_star_shouldnt_crash);
-    eskilib_test_run("ncsh_parser_parse_tilde_home_shouldnt_crash", ncsh_parser_parse_tilde_home_shouldnt_crash);
-    eskilib_test_run("ncsh_parser_parse_glob_question_and_tilde_home_shouldnt_crash",
-                     ncsh_parser_parse_glob_question_and_tilde_home_shouldnt_crash);
-    eskilib_test_run("ncsh_parser_parse_bad_input_shouldnt_crash", ncsh_parser_parse_bad_input_shouldnt_crash);
+    eskilib_test_run(ncsh_parser_parse_glob_star_shouldnt_crash);
+    eskilib_test_run(ncsh_parser_parse_tilde_home_shouldnt_crash);
+    eskilib_test_run(ncsh_parser_parse_glob_question_and_tilde_home_shouldnt_crash);
+    eskilib_test_run(ncsh_parser_parse_bad_input_shouldnt_crash);
 
     eskilib_test_finish();
 }

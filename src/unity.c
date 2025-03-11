@@ -1,7 +1,8 @@
-// Copyright (c) ncsh by Alex Eski 2024
+/* Copyright (c) ncsh by Alex Eski 2024 */
 
-// Used to build ncsh with a single translation unit, aka a unity build.
-// Try it out with 'make unity_debug' or 'make unity'.
+/* Used to build ncsh with a single translation unit, aka a unity build.
+ * Try it out with 'make unity_debug' or 'make unity'.
+ */
 
 #define _POSIX_C_SOURCE 200809L
 

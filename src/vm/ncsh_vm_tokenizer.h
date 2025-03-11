@@ -29,6 +29,7 @@ struct ncsh_Tokens {
     bool is_background_job;
 };
 
-int_fast32_t ncsh_vm_tokenizer_tokenize(struct ncsh_Args* args, struct ncsh_Tokens* tokens);
+int_fast32_t ncsh_vm_tokenizer_tokenize(const struct ncsh_Args* const restrict args,
+                                        struct ncsh_Tokens* const restrict tokens);
 
 #endif // !NCSH_VM_TOKENIZER_H_

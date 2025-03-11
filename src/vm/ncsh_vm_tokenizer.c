@@ -9,7 +9,7 @@
 #include "../ncsh_parser.h"
 
 [[nodiscard]]
-int_fast32_t ncsh_vm_tokenizer_syntax_error(const char* message, size_t message_length)
+int_fast32_t ncsh_vm_tokenizer_syntax_error(const char* const message, const size_t message_length)
 {
     if (write(STDIN_FILENO, message, message_length) == -1) {
         return NCSH_COMMAND_EXIT_FAILURE;
@@ -84,7 +84,7 @@ int_fast32_t ncsh_vm_tokenizer_syntax_error(const char* message, size_t message_
 #define INVALID_SYNTAX(message) ncsh_vm_tokenizer_syntax_error(message, sizeof(message) - 1)
 
 [[nodiscard]]
-int_fast32_t ncsh_vm_args_syntax_check(struct ncsh_Args* args)
+int_fast32_t ncsh_vm_args_syntax_check(const struct ncsh_Args* const restrict args)
 {
     assert(args);
 
@@ -149,7 +149,8 @@ int_fast32_t ncsh_vm_args_syntax_check(struct ncsh_Args* args)
 }
 
 [[nodiscard]]
-int_fast32_t ncsh_vm_tokenizer_tokenize(struct ncsh_Args* args, struct ncsh_Tokens* tokens)
+int_fast32_t ncsh_vm_tokenizer_tokenize(const struct ncsh_Args* const restrict args,
+                                        struct ncsh_Tokens* const restrict tokens)
 {
     assert(args);
     assert(tokens);

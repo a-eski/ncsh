@@ -1,4 +1,4 @@
-// Copyright (c) ncsh by Alex Eski 2024
+/* Copyright (c) ncsh by Alex Eski 2024 */
 
 #ifndef NCSH_CONFIG_H_
 #define NCSH_CONFIG_H_
@@ -10,8 +10,7 @@
 #define DOT_CONFIG ".config"
 #define NCSH_RC ".ncshrc"
 
-/*
- * struct ncsh_Config
+/* struct ncsh_Config
  * Stores home location, config location, and full path to the config file.
  */
 struct ncsh_Config {

@@ -1,4 +1,4 @@
-// Copyright (c) ncsh by Alex Eski 2024
+/* Copyright (c) ncsh by Alex Eski 2024 */
 
 #include <assert.h>
 #include <limits.h>
@@ -24,7 +24,9 @@
  * Much simpler than interactive loop, parses input from command-line and sends it to the VM.
  * Returns: exit status, see ncsh_defines.h (EXIT_...)
  */
-int_fast32_t ncsh_noninteractive(const int argc, const char** const restrict argv)
+[[nodiscard]]
+int_fast32_t ncsh_noninteractive(const int argc,
+                                 const char** const restrict argv)
 {
     assert(argc > 1); // 1 because first arg is ncsh
     assert(argv);

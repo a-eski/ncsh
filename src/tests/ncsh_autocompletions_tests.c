@@ -429,20 +429,18 @@ void ncsh_autocompletions_tests(void)
 {
     eskilib_test_start();
 
-    eskilib_test_run("ncsh_autocompletions_add_length_mismatch_test", ncsh_autocompletions_add_length_mismatch_test);
-    eskilib_test_run("ncsh_autocompletions_add_test", ncsh_autocompletions_add_test);
-    eskilib_test_run("ncsh_autocompletions_add_duplicate_test", ncsh_autocompletions_add_duplicate_test);
-    eskilib_test_run("ncsh_autocompletions_add_multiple_unrelated_test",
-                     ncsh_autocompletions_add_multiple_unrelated_test);
-    eskilib_test_run("ncsh_autocompletions_add_multiple_related_test", ncsh_autocompletions_add_multiple_related_test);
-    eskilib_test_run("ncsh_autocompletions_search_test", ncsh_autocompletions_search_test);
-    eskilib_test_run("ncsh_autocompletions_search_no_results_test", ncsh_autocompletions_search_no_results_test);
-    eskilib_test_run("ncsh_autocompletions_search_commands_test", ncsh_autocompletions_search_commands_test);
-    eskilib_test_run("ncsh_autocompletions_matches_test", ncsh_autocompletions_matches_test);
-    eskilib_test_run("ncsh_autocompletions_matches_no_results_test", ncsh_autocompletions_matches_no_results_test);
-    eskilib_test_run("ncsh_autocompletions_matches_multiple_test", ncsh_autocompletions_matches_multiple_test);
-    eskilib_test_run("ncsh_autocompletions_matches_multiple_simulation_test",
-                     ncsh_autocompletions_matches_multiple_simulation_test);
+    eskilib_test_run(ncsh_autocompletions_add_length_mismatch_test);
+    eskilib_test_run(ncsh_autocompletions_add_test);
+    eskilib_test_run(ncsh_autocompletions_add_duplicate_test);
+    eskilib_test_run(ncsh_autocompletions_add_multiple_unrelated_test);
+    eskilib_test_run(ncsh_autocompletions_add_multiple_related_test);
+    eskilib_test_run(ncsh_autocompletions_search_test);
+    eskilib_test_run(ncsh_autocompletions_search_no_results_test);
+    eskilib_test_run(ncsh_autocompletions_search_commands_test);
+    eskilib_test_run(ncsh_autocompletions_matches_test);
+    eskilib_test_run(ncsh_autocompletions_matches_no_results_test);
+    eskilib_test_run(ncsh_autocompletions_matches_multiple_test);
+    eskilib_test_run(ncsh_autocompletions_matches_multiple_simulation_test);
 
     eskilib_test_finish();
 }
