@@ -19,7 +19,7 @@
 #include "ncsh_defines.h"
 
 [[nodiscard]]
-enum eskilib_Result ncsh_config_home(struct ncsh_Config* config)
+enum eskilib_Result ncsh_config_home(struct ncsh_Config* const restrict config)
 {
     if (!config) {
         return E_FAILURE_NULL_REFERENCE;
@@ -49,7 +49,7 @@ enum eskilib_Result ncsh_config_home(struct ncsh_Config* config)
 }
 
 [[nodiscard]]
-enum eskilib_Result ncsh_config(struct ncsh_Config* config)
+enum eskilib_Result ncsh_config(struct ncsh_Config* const restrict config)
 {
     if (!config) {
         return E_FAILURE_NULL_REFERENCE;
@@ -96,7 +96,7 @@ enum eskilib_Result ncsh_config(struct ncsh_Config* config)
 }
 
 [[nodiscard]]
-enum eskilib_Result ncsh_config_file_set(struct ncsh_Config* config)
+enum eskilib_Result ncsh_config_file_set(struct ncsh_Config* const restrict config)
 {
     if (!config->config_location.value || !config->config_location.length) {
         config->config_file.value = malloc(sizeof(NCSH_RC));
@@ -151,7 +151,7 @@ void ncsh_config_path_add(char* value, int len)
     free(new_path);
 }
 
-void ncsh_config_process(FILE* file)
+void ncsh_config_process(FILE* const restrict file)
 {
     int buffer_length;
     char buffer[MAX_INPUT] = {0};
@@ -165,7 +165,7 @@ void ncsh_config_process(FILE* file)
 }
 
 [[nodiscard]]
-enum eskilib_Result ncsh_config_load(struct ncsh_Config* config)
+enum eskilib_Result ncsh_config_load(const struct ncsh_Config* const restrict config)
 {
 
     FILE* file = fopen(config->config_file.value, "r");
@@ -199,7 +199,7 @@ enum eskilib_Result ncsh_config_load(struct ncsh_Config* config)
 }
 
 [[nodiscard]]
-enum eskilib_Result ncsh_config_init(struct ncsh_Config* config)
+enum eskilib_Result ncsh_config_init(struct ncsh_Config* const restrict config)
 {
     enum eskilib_Result result;
     if ((result = ncsh_config_home(config)) != E_SUCCESS) {
@@ -221,7 +221,7 @@ enum eskilib_Result ncsh_config_init(struct ncsh_Config* config)
     return E_SUCCESS;
 }
 
-void ncsh_config_free(struct ncsh_Config* config)
+void ncsh_config_free(struct ncsh_Config* const restrict config)
 {
     if (config->home_location.value) {
         free(config->home_location.value);
@@ -265,7 +265,7 @@ const struct ncsh_Alias aliases[] = {
     { .alias = { .length = sizeof(CARGO_ALIAS ), .value = CARGO_ALIAS }, .actual_command = { .length = sizeof(CARGO), .value = CARGO }},
 };
 
-struct eskilib_String ncsh_config_alias_check(char* buffer, size_t buf_len)
+struct eskilib_String ncsh_config_alias_check(const char* const restrict buffer, const size_t buf_len)
 {
     if (!buffer || buf_len < 2) {
         return eskilib_String_Empty;
@@ -273,7 +273,7 @@ struct eskilib_String ncsh_config_alias_check(char* buffer, size_t buf_len)
 
     constexpr size_t aliases_count = sizeof(aliases) / sizeof(struct ncsh_Alias);
     for (uint_fast32_t i = 0; i < aliases_count; ++i) {
-        if (eskilib_string_compare(buffer, buf_len, aliases[i].alias.value, aliases[i].alias.length)) {
+        if (eskilib_string_compare_const(buffer, buf_len, aliases[i].alias.value, aliases[i].alias.length)) {
             return aliases[i].actual_command;
         }
     }

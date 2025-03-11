@@ -91,7 +91,7 @@ void ncsh_parser_parse(const char* const restrict line, const size_t length, str
  * Parse the command line input into commands, command lengths, and op codes stored in struct ncsh_Args.
  * Allocates memory that is freed by ncsh_parser_free_values at the end of each main loop of the shell.
  */
-void ncsh_parser_parse_noninteractive(char** const restrict inputs, const size_t inputs_count, struct ncsh_Args* restrict args);
+void ncsh_parser_parse_noninteractive(const char** const restrict inputs, const size_t inputs_count, struct ncsh_Args* restrict args);
 
 /* ncsh_parser_args_free_values
  * Free memory used by the parser that is used during each main loop of the shell.

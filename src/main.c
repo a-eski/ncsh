@@ -13,7 +13,7 @@
 int main(int argc, char** argv)
 {
     if (argc > 1 || !isatty(STDIN_FILENO)) {
-        return (int)ncsh_noninteractive(argc, argv);
+        return (int)ncsh_noninteractive(argc, (const char** const)argv);
     }
     else {
         return (int)ncsh();

@@ -6,8 +6,8 @@
 #include <stdint.h>
 #include <stdio.h>
 
-int eskilib_fgets(char* input_buffer, size_t size_of_input_buffer, FILE* file_pointer);
+int eskilib_fgets(char* const input_buffer, const size_t size_of_input_buffer, FILE* const restrict file_pointer);
 
-int eskilib_fgets_delimited(char* input_buffer, size_t size_of_input_buffer, FILE* file_pointer, char delimiter);
+int eskilib_fgets_delimited(char* const input_buffer, const size_t size_of_input_buffer, FILE* const restrict file_pointer, char delimiter);
 
 #endif // ESKILIB_FILE_H_
