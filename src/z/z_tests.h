@@ -1,5 +1,5 @@
-// Copyright (c) z by Alex Eski 2024
-// Used by unit tests for z
+/* Copyright (c) z by Alex Eski 2024 */
+/* Used by unit tests for z */
 
 #include <stdint.h>
 #include <time.h>
@@ -7,12 +7,22 @@
 #include "../eskilib/eskilib_string.h"
 #include "z.h"
 
-double z_score(struct z_Directory* directory, time_t now);
+static const struct eskilib_String config_location = { .length = 0, .value = NULL };
 
-struct z_Directory* z_match_find(char* target, size_t target_length, const char* cwd, size_t cwd_length,
-                                 struct z_Database* db);
+double z_score(struct z_Directory* const restrict directory,
+               const int fzf_score,
+               const time_t now);
 
-enum z_Result z_database_add(char* path, size_t path_length, const char* cwd, size_t cwd_length,
-                                    struct z_Database* db);
+struct z_Directory* z_match_find(char* const target,
+                                 const size_t target_length,
+                                 const char* const cwd,
+                                 const size_t cwd_length,
+                                 struct z_Database* const restrict db);
 
-void z_free(struct z_Database* db);
+enum z_Result z_database_add(const char* const path,
+                             const size_t path_length,
+                             const char* const cwd,
+                             const size_t cwd_length,
+                             struct z_Database* const restrict db);
+
+void z_free(struct z_Database* const restrict db);

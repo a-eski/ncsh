@@ -18,7 +18,7 @@ void z_read_empty_database_file_test(void)
     remove(Z_DATABASE_FILE);
 
     struct z_Database db = {0};
-    eskilib_assert(z_init(eskilib_String_Empty, &db) == Z_SUCCESS);
+    eskilib_assert(z_init(&config_location, &db) == Z_SUCCESS);
     eskilib_assert(db.count == 0);
 
     z_free(&db);
@@ -28,7 +28,7 @@ void z_read_empty_database_file_test(void)
 void z_read_non_empty_database_test(void)
 {
     struct z_Database db = {0};
-    eskilib_assert(z_init(eskilib_String_Empty, &db) == Z_SUCCESS);
+    eskilib_assert(z_init(&config_location, &db) == Z_SUCCESS);
     eskilib_assert(db.count == 1);
 
     struct eskilib_String new_value = {.length = 5};
@@ -60,7 +60,7 @@ void z_add_to_database_empty_database_test(void)
     remove(Z_DATABASE_FILE);
 
     struct z_Database db = {0};
-    eskilib_assert(z_init(eskilib_String_Empty, &db) == Z_SUCCESS);
+    eskilib_assert(z_init(&config_location, &db) == Z_SUCCESS);
     eskilib_assert(db.count == 0);
 
     struct eskilib_String new_value = {.length = 5};
@@ -84,7 +84,7 @@ void z_add_new_entry_test(void)
     remove(Z_DATABASE_FILE);
 
     struct z_Database db = {0};
-    eskilib_assert(z_init(eskilib_String_Empty, &db) == Z_SUCCESS);
+    eskilib_assert(z_init(&config_location, &db) == Z_SUCCESS);
     eskilib_assert(db.count == 0);
 
     eskilib_assert(z_add("/mnt/c/Users/Alex/source/repos/PersonalRepos/shells", 52, &db) == Z_SUCCESS);
@@ -99,7 +99,7 @@ void z_add_new_entry_test(void)
 void z_add_existing_in_database_new_entry(void)
 {
     struct z_Database db = {0};
-    eskilib_assert(z_init(eskilib_String_Empty, &db) == Z_SUCCESS);
+    eskilib_assert(z_init(&config_location, &db) == Z_SUCCESS);
     eskilib_assert(db.count == 1);
 
     double initial_rank = db.dirs[0].rank;
@@ -116,7 +116,7 @@ void z_add_existing_in_database_new_entry(void)
 void z_add_null_parameters(void)
 {
     struct z_Database db = {0};
-    eskilib_assert(z_init(eskilib_String_Empty, &db) == Z_SUCCESS);
+    eskilib_assert(z_init(&config_location, &db) == Z_SUCCESS);
     eskilib_assert(db.count == 1);
 
     eskilib_assert(z_add(NULL, 0, &db) == Z_NULL_REFERENCE);
@@ -130,7 +130,7 @@ void z_add_null_parameters(void)
 void z_add_bad_parameters(void)
 {
     struct z_Database db = {0};
-    eskilib_assert(z_init(eskilib_String_Empty, &db) == Z_SUCCESS);
+    eskilib_assert(z_init(&config_location, &db) == Z_SUCCESS);
     eskilib_assert(db.count == 1);
 
     eskilib_assert(z_add(".", 0, &db) == Z_BAD_STRING);
@@ -144,7 +144,7 @@ void z_add_bad_parameters(void)
 void z_add_new_entry_contained_in_another_entry_but_different_test(void)
 {
     struct z_Database db = {0};
-    eskilib_assert(z_init(eskilib_String_Empty, &db) == Z_SUCCESS);
+    eskilib_assert(z_init(&config_location, &db) == Z_SUCCESS);
     eskilib_assert(db.count == 1);
 
     eskilib_assert(z_add("/mnt/c/Users/Alex/source/repos/PersonalRepos", 45, &db) == Z_SUCCESS);
@@ -163,7 +163,7 @@ void z_match_find_empty_database_test(void)
     remove(Z_DATABASE_FILE);
 
     struct z_Database db = {0};
-    eskilib_assert(z_init(eskilib_String_Empty, &db) == Z_SUCCESS);
+    eskilib_assert(z_init(&config_location, &db) == Z_SUCCESS);
     eskilib_assert(db.count == 0);
 
     struct eskilib_String target = {.value = "path", .length = 5};
@@ -185,7 +185,7 @@ void z_write_empty_database_test(void)
     remove(Z_DATABASE_FILE);
 
     struct z_Database db = {0};
-    eskilib_assert(z_init(eskilib_String_Empty, &db) == Z_SUCCESS);
+    eskilib_assert(z_init(&config_location, &db) == Z_SUCCESS);
     eskilib_assert(db.count == 0);
 
     struct eskilib_String new_value = {.length = 5};
@@ -207,7 +207,7 @@ void z_write_empty_database_test(void)
 void z_add_to_database_empty_value_test(void)
 {
     struct z_Database db = {0};
-    eskilib_assert(z_init(eskilib_String_Empty, &db) == Z_SUCCESS);
+    eskilib_assert(z_init(&config_location, &db) == Z_SUCCESS);
     eskilib_assert(db.count == 1);
     struct eskilib_String cwd = {.value = "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells", .length = 52};
 
@@ -222,7 +222,7 @@ void z_add_to_database_empty_value_test(void)
 void z_write_nonempty_database_test(void)
 {
     struct z_Database db = {0};
-    eskilib_assert(z_init(eskilib_String_Empty, &db) == Z_SUCCESS);
+    eskilib_assert(z_init(&config_location, &db) == Z_SUCCESS);
     eskilib_assert(db.count == 1);
 
     double start_rank = db.dirs[0].rank;
@@ -245,7 +245,7 @@ void z_write_nonempty_database_test(void)
 void z_match_find_finds_exact_match_test(void)
 {
     struct z_Database db = {0};
-    eskilib_assert(z_init(eskilib_String_Empty, &db) == Z_SUCCESS);
+    eskilib_assert(z_init(&config_location, &db) == Z_SUCCESS);
     eskilib_assert(db.count == 2);
 
     struct eskilib_String target = {.value = "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells/ncsh", .length = 57};
@@ -268,7 +268,7 @@ void z_match_find_finds_exact_match_test(void)
 void z_match_find_finds_match_test(void)
 {
     struct z_Database db = {0};
-    eskilib_assert(z_init(eskilib_String_Empty, &db) == Z_SUCCESS);
+    eskilib_assert(z_init(&config_location, &db) == Z_SUCCESS);
     eskilib_assert(db.count == 2);
 
     struct eskilib_String target = {.value = "ncsh", .length = 5};
@@ -291,7 +291,7 @@ void z_match_find_finds_match_test(void)
 void z_match_find_no_match_test(void)
 {
     struct z_Database db = {0};
-    eskilib_assert(z_init(eskilib_String_Empty, &db) == Z_SUCCESS);
+    eskilib_assert(z_init(&config_location, &db) == Z_SUCCESS);
     eskilib_assert(db.count == 2);
 
     struct eskilib_String target = {.value = "path", .length = 5};
@@ -312,7 +312,7 @@ void z_match_find_no_match_test(void)
 void z_match_find_multiple_matches_test(void)
 {
     struct z_Database db = {0};
-    eskilib_assert(z_init(eskilib_String_Empty, &db) == Z_SUCCESS);
+    eskilib_assert(z_init(&config_location, &db) == Z_SUCCESS);
     eskilib_assert(db.count == 2);
 
     struct eskilib_String target = {.value = "PersonalRepos", .length = 14};
@@ -331,7 +331,7 @@ void z_match_find_multiple_matches_test(void)
 void z_change_directory_test(void)
 {
     struct z_Database db = {0};
-    eskilib_assert(z_init(eskilib_String_Empty, &db) == Z_SUCCESS);
+    eskilib_assert(z_init(&config_location, &db) == Z_SUCCESS);
     eskilib_assert(db.count == 2);
 
     char buffer[CWD_LENGTH];
@@ -363,7 +363,7 @@ void z_change_directory_test(void)
 void z_home_empty_target_change_directory_test(void)
 {
     struct z_Database db = {0};
-    eskilib_assert(z_init(eskilib_String_Empty, &db) == Z_SUCCESS);
+    eskilib_assert(z_init(&config_location, &db) == Z_SUCCESS);
     eskilib_assert(db.count == 2);
 
     char buffer[CWD_LENGTH];
@@ -396,7 +396,7 @@ void z_home_empty_target_change_directory_test(void)
 void z_no_match_change_directory_test(void)
 {
     struct z_Database db = {0};
-    eskilib_assert(z_init(eskilib_String_Empty, &db) == Z_SUCCESS);
+    eskilib_assert(z_init(&config_location, &db) == Z_SUCCESS);
     eskilib_assert(db.count == 2);
 
     char buffer[CWD_LENGTH];
@@ -428,7 +428,7 @@ void z_no_match_change_directory_test(void)
 void z_valid_subdirectory_change_directory_test(void)
 {
     struct z_Database db = {0};
-    eskilib_assert(z_init(eskilib_String_Empty, &db) == Z_SUCCESS);
+    eskilib_assert(z_init(&config_location, &db) == Z_SUCCESS);
     eskilib_assert(db.count == 2);
 
     char buffer[CWD_LENGTH];
@@ -461,7 +461,7 @@ void z_valid_subdirectory_change_directory_test(void)
 void z_dir_slash_dir_change_directory_test(void)
 {
     struct z_Database db = {0};
-    eskilib_assert(z_init(eskilib_String_Empty, &db) == Z_SUCCESS);
+    eskilib_assert(z_init(&config_location, &db) == Z_SUCCESS);
     eskilib_assert(db.count == 2);
 
     char buffer[CWD_LENGTH];
@@ -497,7 +497,7 @@ void z_dir_slash_dir_change_directory_test(void)
 void z_double_dot_change_directory_test(void)
 {
     struct z_Database db = {0};
-    eskilib_assert(z_init(eskilib_String_Empty, &db) == Z_SUCCESS);
+    eskilib_assert(z_init(&config_location, &db) == Z_SUCCESS);
     eskilib_assert(db.count == 3);
 
     char buffer[CWD_LENGTH];
@@ -531,7 +531,7 @@ void z_empty_database_valid_subdirectory_change_directory_test(void)
     remove(Z_DATABASE_FILE);
 
     struct z_Database db = {0};
-    eskilib_assert(z_init(eskilib_String_Empty, &db) == Z_SUCCESS);
+    eskilib_assert(z_init(&config_location, &db) == Z_SUCCESS);
     eskilib_assert(db.count == 0);
 
     char buffer[CWD_LENGTH];
@@ -564,7 +564,7 @@ void z_empty_database_valid_subdirectory_change_directory_test(void)
 void z_contains_correct_match_test(void)
 {
     struct z_Database db = {0};
-    eskilib_assert(z_init(eskilib_String_Empty, &db) == Z_SUCCESS);
+    eskilib_assert(z_init(&config_location, &db) == Z_SUCCESS);
     eskilib_assert(db.count == 2);
 
     // "/mnt/c/Users/Alex/source/repos/PersonalRepos"

@@ -50,16 +50,24 @@ enum z_Result {
     Z_SUCCESS = 1
 };
 
-enum z_Result z_init(struct eskilib_String config_location, struct z_Database* database);
+enum z_Result z_init(const struct eskilib_String* const config_location,
+                     struct z_Database* const restrict database);
 
-void z(char* target, size_t target_length, const char* cwd, struct z_Database* db);
+void z(char* target,
+       const size_t target_length,
+       const char* const cwd,
+       struct z_Database* const restrict db);
 
-enum z_Result z_add(char* path, size_t path_length, struct z_Database* db);
+enum z_Result z_add(const char* const path,
+                    const size_t path_length,
+                    struct z_Database* const restrict db);
 
-enum z_Result z_remove(char* path, size_t path_length, struct z_Database* db);
+enum z_Result z_remove(const char* const path,
+                       const size_t path_length,
+                       struct z_Database* const restrict db);
 
-enum z_Result z_exit(struct z_Database* db);
+enum z_Result z_exit(struct z_Database* const restrict db);
 
-void z_print(struct z_Database* db);
+void z_print(const struct z_Database* const restrict db);
 
 #endif // !Z_H_
