@@ -129,7 +129,7 @@ static void copy_into_i16(i16_slice_t *src, fzf_i16_t *dest) {
 }
 
 // char* helpers
-static char *trim_whitespace_left(char *str, size_t *len) {
+/*static char *trim_whitespace_left(char *str, size_t *len) {
   for (size_t i = 0; i < *len; i++) {
     if (str[0] == ' ') {
       (*len)--;
@@ -139,7 +139,7 @@ static char *trim_whitespace_left(char *str, size_t *len) {
     }
   }
   return str;
-}
+}*/
 
 static bool has_prefix(const char *str, const char *prefix, size_t prefix_len) {
   return strncmp(prefix, str, prefix_len) == 0;
@@ -1005,7 +1005,8 @@ static void append_pattern(fzf_pattern_t *pattern, fzf_term_set_t *value) {
  * - always v2 alg
  */
 fzf_pattern_t *fzf_parse_pattern(fzf_case_types case_mode, /*bool normalize,*/
-                                 char *pattern, size_t pat_len/*, bool fuzzy*/) {
+                                 char* const pattern,
+                                 size_t pat_len /*, bool fuzzy*/) {
   /*(void)normalize;*/
   fzf_pattern_t *pat_obj = (fzf_pattern_t *)malloc(sizeof(fzf_pattern_t));
   memset(pat_obj, 0, sizeof(*pat_obj));
@@ -1017,14 +1018,14 @@ fzf_pattern_t *fzf_parse_pattern(fzf_case_types case_mode, /*bool normalize,*/
 
   assert(pattern[pat_len - 1] != '\0'); // not null terminated
 
-  pattern = trim_whitespace_left(pattern, &pat_len);
+  char *pattern_copy = str_replace(pattern, "\\ ", "\t");
+  // pattern = trim_whitespace_left(pattern, &pat_len);
   while (has_suffix(pattern, pat_len, " ", 1) &&
          !has_suffix(pattern, pat_len, "\\ ", 2)) {
     pattern[pat_len - 1] = 0;
     pat_len--;
   }
 
-  char *pattern_copy = str_replace(pattern, "\\ ", "\t");
   const char *delim = " ";
   char *ptr = strtok(pattern_copy, delim);
 

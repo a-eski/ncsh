@@ -68,7 +68,7 @@ int_fast32_t ncsh_init(struct ncsh_Shell* const restrict shell)
         return EXIT_FAILURE;
     }
 
-    enum z_Result z_result = z_init(shell->config.config_location, &shell->z_db);
+    enum z_Result z_result = z_init(&shell->config.config_location, &shell->z_db);
     if (z_result != Z_SUCCESS) {
         ncsh_config_free(&shell->config);
         ncsh_readline_exit(&shell->input);

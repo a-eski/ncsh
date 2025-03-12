@@ -97,8 +97,9 @@ fzf_result_t fzf_equal_match(bool case_sensitive, bool normalize,
 /* Parse the fzf pattern.
  * pat_len should be equivalent to strlen, do not include null terminator in length.
  */
-fzf_pattern_t *fzf_parse_pattern(fzf_case_types case_mode, /*bool normalize,*/
-                                 char *pattern, size_t pat_len/*, bool fuzzy*/);
+fzf_pattern_t *fzf_parse_pattern(fzf_case_types case_mode,
+                                 char* const pattern,
+                                 size_t pat_len);
 void fzf_free_pattern(fzf_pattern_t *pattern);
 
 /* Get score for specific entry based on fzf_pattern_t.
