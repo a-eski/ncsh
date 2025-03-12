@@ -272,7 +272,7 @@ def piped_stdout_redirection_test(row)
   @tty.send_line_then_sleep('head -1 t2.txt', SLEEP_TIME)
   @tty.assert_row_ends_with(row, %(head -1 t2.txt))
   row += 1
-  @tty.assert_row_starts_with(row, 'tests_z.sh')
+  @tty.assert_row_starts_with(row, HEAD_ONE_ITEM)
   row += 1
   assert_check_new_row(row)
   @tty.send_line('rm t2.txt')

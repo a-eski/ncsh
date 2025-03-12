@@ -4,8 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../eskilib/eskilib_test.h"
-#include "../ncsh_parser.h"
+#include "../src/eskilib/eskilib_test.h"
+#include "../src/ncsh_parser.h"
 
 void ncsh_parser_parse_ls_test(void)
 {

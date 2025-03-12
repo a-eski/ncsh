@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include "../eskilib/eskilib_test.h"
+#include "../src/eskilib/eskilib_test.h"
 #include "../development/draft/ncsh_arena.h"
 
 void ncsh_arena_init_zero_test(void)

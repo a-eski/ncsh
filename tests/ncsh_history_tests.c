@@ -4,10 +4,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../eskilib/eskilib_string.h"
-#include "../eskilib/eskilib_test.h"
+#include "../src/eskilib/eskilib_string.h"
+#include "../src/eskilib/eskilib_test.h"
 
-#include "../readline/ncsh_history.h"
+#include "../src/readline/ncsh_history.h"
 
 void ncsh_history_load_file_not_exists_test(void)
 {

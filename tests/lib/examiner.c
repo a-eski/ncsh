@@ -1,4 +1,4 @@
-// for license see examiner_LICENSE
+/* for license see examiner_LICENSE.md */
 
 #include "examiner.h"
 

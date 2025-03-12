@@ -6,11 +6,30 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "../../eskilib/eskilib_test.h"
-#include "../z.h"
-#include "../z_tests.h"
+#include "../src/eskilib/eskilib_test.h"
+#include "../src/z/z.h"
 
 #define CWD_LENGTH 528
+
+static const struct eskilib_String config_location = { .length = 0, .value = NULL };
+
+double z_score(struct z_Directory* const restrict directory,
+               const int fzf_score,
+               const time_t now);
+
+struct z_Directory* z_match_find(char* const target,
+                                 const size_t target_length,
+                                 const char* const cwd,
+                                 const size_t cwd_length,
+                                 struct z_Database* const restrict db);
+
+enum z_Result z_database_add(const char* const path,
+                             const size_t path_length,
+                             const char* const cwd,
+                             const size_t cwd_length,
+                             struct z_Database* const restrict db);
+
+void z_free(struct z_Database* const restrict db);
 
 // read from empty database file
 void z_read_empty_database_file_test(void)

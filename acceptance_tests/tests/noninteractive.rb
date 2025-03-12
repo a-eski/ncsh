@@ -3,9 +3,6 @@
 require 'ttytest'
 require './acceptance_tests/tests/common'
 
-WC_C_LENGTH_NO_Z = (WC_C_LENGTH.to_i - '_z_database.bin'.length - 1).to_s
-LS_ITEMS_NO_Z = LS_ITEMS - 1
-
 # single command like ls
 def single_command_test(row)
   assert_check_new_row_noninteractive(row)
@@ -92,7 +89,7 @@ def piped_stdout_redirection_test(row)
   @tty.send_line_then_sleep('./bin/ncsh head -1 t2.txt', SLEEP_TIME)
   @tty.assert_row_ends_with(row, %(head -1 t2.txt))
   row += 1
-  @tty.assert_row_starts_with(row, 'tests_z.sh')
+  @tty.assert_row_starts_with(row, HEAD_ONE_ITEM)
   row += 1
   assert_check_new_row_noninteractive(row)
   @tty.send_line('./bin/ncsh rm t2.txt')

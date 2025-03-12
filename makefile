@@ -106,7 +106,7 @@ l :
 
 .PHONY: test_history
 test_history :
-	$(CC) $(STD) $(debug_flags) -DNCSH_HISTORY_TEST ./src/eskilib/eskilib_string.c ./src/eskilib/eskilib_test.c ./src/eskilib/eskilib_file.c ./src/eskilib/eskilib_hashtable.c ./src/readline/ncsh_history.c ./src/tests/ncsh_history_tests.c -o ./$(BUILDDIR)/ncsh_history_tests
+	$(CC) $(STD) $(debug_flags) -DNCSH_HISTORY_TEST ./src/eskilib/eskilib_string.c ./src/eskilib/eskilib_test.c ./src/eskilib/eskilib_file.c ./src/eskilib/eskilib_hashtable.c ./src/readline/ncsh_history.c ./tests/ncsh_history_tests.c -o ./$(BUILDDIR)/ncsh_history_tests
 	./$(BUILDDIR)/ncsh_history_tests
 .PHONY: th
 th :
@@ -114,15 +114,16 @@ th :
 
 .PHONY: fuzz_history
 fuzz_history :
-	clang $(STD) $(fuzz_flags) -DNCSH_HISTORY_TEST ./src/tests/ncsh_history_fuzzing.c ./src/readline/ncsh_history.c ./src/eskilib/eskilib_string.c ./src/eskilib/eskilib_file.c
-	./a.out NCSH_HISTORY_CORPUS/ -detect_leaks=0 -rss_limit_mb=4096
+	mkdir -p NCSH_HISTORY_CORPUS
+	clang $(STD) $(fuzz_flags) -DNCSH_HISTORY_TEST ./tests/ncsh_history_fuzzing.c ./src/readline/ncsh_history.c ./src/eskilib/eskilib_string.c ./src/eskilib/eskilib_file.c -o ./$(BUILDIR)/history_fuzz
+	./$(BUILDIR)/history_fuzz NCSH_HISTORY_CORPUS/ -detect_leaks=0 -rss_limit_mb=4096
 .PHONY: fh
 fh :
 	make fuzz_history
 
 .PHONY: test_autocompletions
 test_autocompletions :
-	 $(CC) $(STD) $(debug_flags) ./src/eskilib/eskilib_string.c ./src/eskilib/eskilib_test.c ./src/readline/ncsh_autocompletions.c ./src/tests/ncsh_autocompletions_tests.c -o ./$(BUILDDIR)/ncsh_autocompletions_tests
+	 $(CC) $(STD) $(debug_flags) ./src/eskilib/eskilib_string.c ./src/eskilib/eskilib_test.c ./src/readline/ncsh_autocompletions.c ./tests/ncsh_autocompletions_tests.c -o ./$(BUILDDIR)/ncsh_autocompletions_tests
 	 ./$(BUILDDIR)/ncsh_autocompletions_tests
 .PHONY: ta
 ta :
@@ -130,15 +131,16 @@ ta :
 
 .PHONY: fuzz_autocompletions
 fuzz_autocompletions :
-	clang $(STD) $(fuzz_flags) ./src/tests/ncsh_autocompletions_fuzzing.c ./src/readline/ncsh_autocompletions.c ./src/eskilib/eskilib_string.c
-	./a.out NCSH_AUTOCOMPLETIONS_CORPUS/ -detect_leaks=0 -rss_limit_mb=8192
+	mkdir -p NCSH_AUTOCOMPLETIONS_CORPUS
+	clang $(STD) $(fuzz_flags) ./tests/ncsh_autocompletions_fuzzing.c ./src/readline/ncsh_autocompletions.c ./src/eskilib/eskilib_string.c -o ./$(BUILDIR)/autocompletions_fuzz
+	./$(BUILDIR)/autocompletions_fuzz NCSH_AUTOCOMPLETIONS_CORPUS/ -detect_leaks=0 -rss_limit_mb=8192
 .PHONY: fa
 fa :
 	make fuzz_autocompletions
 
 .PHONY: test_parser
 test_parser :
-	$(CC) $(STD) $(debug_flags) ./src/eskilib/eskilib_string.c ./src/eskilib/eskilib_test.c ./src/ncsh_parser.c ./src/tests/ncsh_parser_tests.c -o ./$(BUILDDIR)/ncsh_parser_tests
+	$(CC) $(STD) $(debug_flags) ./src/eskilib/eskilib_string.c ./src/eskilib/eskilib_test.c ./src/ncsh_parser.c ./tests/ncsh_parser_tests.c -o ./$(BUILDDIR)/ncsh_parser_tests
 	./$(BUILDDIR)/ncsh_parser_tests
 .PHONY: tp
 tp :
@@ -146,7 +148,8 @@ tp :
 
 .PHONY: fuzz_parser
 fuzz_parser :
-	clang $(STD) $(fuzz_flags) ./src/tests/ncsh_parser_fuzzing.c ./src/ncsh_parser.c ./src/eskilib/eskilib_string.c
+	mkdir -p NCSH_PARSER_CORPUS
+	clang $(STD) $(fuzz_flags) ./tests/ncsh_parser_fuzzing.c ./src/ncsh_parser.c ./src/eskilib/eskilib_string.c
 	./a.out NCSH_PARSER_CORPUS/ -detect_leaks=0 -rss_limit_mb=4096
 .PHONY: fp
 fp :
@@ -154,23 +157,41 @@ fp :
 
 .PHONY: test_z
 test_z :
-	chmod +x ./tests_z.sh
-	./tests_z.sh
+	gcc -std=c2x -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined,leak -DZ_TEST ./src/eskilib/eskilib_string.c ./src/eskilib/eskilib_test.c ./src/z/fzf.c ./src/z/z.c ./tests/z_tests.c -o ./bin/z_tests
+	./bin/z_tests
 .PHONY: tz
 tz :
 	make test_z
 
+.PHONY: fuzz_z
+fuzz_z:
+	mkdir -p Z_CORPUS
+	clang -std=c2x -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined,fuzzer -O3 -DNDEBUG -DZ_TEST ./tests/z_fuzzing.c ./src/z/z.c ./src/eskilib/eskilib_string.c -o ./$(BUILDIR)/z_fuzz
+	./$(BUILDIR)/z_fuzz Z_CORPUS/ -detect_leaks=0 -rss_limit_mb=8192
+.PHONY: fz
+fz:
+	make fuzz_z
+
+.PHONY: fuzz_z_add
+fuzz_z_add:
+	mkdir -p Z_ADD_CORPUS
+	clang -std=c2x -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined,fuzzer -O3 -DNDEBUG -DZ_TEST ./tests/z_add_fuzzing.c ./src/z/z.c ./src/eskilib/eskilib_string.c -o ./$(BUILDIR)/z_add_fuzz
+	./$(BUILDIR)/z_add_fuzz Z_ADD_CORPUS/ -detect_leaks=0 -rss_limit_mb=8192
+.PHONY: fza
+fza:
+	make fuzz_z_add
+
 .PHONY: test_fzf
 test_fzf :
-	$(CC) $(STD) -fsanitize=address,undefined,leak -g ./src/z/fzf.c ./src/z/tests/lib/examiner.c ./src/z/tests/fzf_tests.c -o ./$(BUILDDIR)/fzf_tests
-	@LD_LIBRARY_PATH=/usr/local/lib:./bin:${LD_LIBRARY_PATH} ./$(BUILDDIR)/fzf_tests
+	$(CC) $(STD) -fsanitize=address,undefined,leak -g ./src/z/fzf.c ./tests/lib/examiner.c ./tests/fzf_tests.c -o ./$(BUILDDIR)/fzf_tests
+	@LD_LIBRARY_PATH=/usr/local/lib:./$(BUILDIR):${LD_LIBRARY_PATH} ./$(BUILDDIR)/fzf_tests
 .PHONY: tf
 tf :
 	make test_fzf
 
 .PHONY: test_config
 test_config :
-	$(CC) $(STD) $(debug_flags) -DNCSH_HISTORY_TEST ./src/eskilib/eskilib_string.c ./src/eskilib/eskilib_test.c ./src/eskilib/eskilib_file.c ./src/ncsh_config.c ./src/tests/ncsh_config_tests.c -o ./$(BUILDDIR)/ncsh_config_tests
+	$(CC) $(STD) $(debug_flags) -DNCSH_HISTORY_TEST ./src/eskilib/eskilib_string.c ./src/eskilib/eskilib_test.c ./src/eskilib/eskilib_file.c ./src/ncsh_config.c ./tests/ncsh_config_tests.c -o ./$(BUILDDIR)/ncsh_config_tests
 	./$(BUILDDIR)/ncsh_config_tests
 .PHONY: tc
 tc :
@@ -178,7 +199,7 @@ tc :
 
 .PHONY: test_readline
 test_readline :
-	$(CC) $(STD) $(debug_flags) -DNCSH_HISTORY_TEST ./src/eskilib/eskilib_string.c ./src/eskilib/eskilib_test.c ./src/eskilib/eskilib_file.c ./src/eskilib/eskilib_hashtable.c ./src/readline/ncsh_terminal.c ./src/readline/ncsh_autocompletions.c ./src/readline/ncsh_history.c ./src/readline/ncsh_readline.c ./src/tests/ncsh_readline_tests.c -o ./$(BUILDDIR)/ncsh_readline_tests
+	$(CC) $(STD) $(debug_flags) -DNCSH_HISTORY_TEST ./src/eskilib/eskilib_string.c ./src/eskilib/eskilib_test.c ./src/eskilib/eskilib_file.c ./src/eskilib/eskilib_hashtable.c ./src/readline/ncsh_terminal.c ./src/readline/ncsh_autocompletions.c ./src/readline/ncsh_history.c ./src/readline/ncsh_readline.c ./tests/ncsh_readline_tests.c -o ./$(BUILDDIR)/ncsh_readline_tests
 	./$(BUILDDIR)/ncsh_readline_tests
 .PHONY: tr
 tr :

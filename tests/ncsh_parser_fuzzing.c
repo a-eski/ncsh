@@ -2,7 +2,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "../ncsh_parser.h"
+#include "../src/ncsh_parser.h"
 
 int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size)
 {

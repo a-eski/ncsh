@@ -1,7 +1,7 @@
 #include <stdlib.h>
 
-#include "../eskilib/eskilib_test.h"
-#include "../readline/ncsh_readline.h"
+#include "../src/eskilib/eskilib_test.h"
+#include "../src/readline/ncsh_readline.h"
 
 /* ncsh_readline_prompt_size forward declaration
  * get the prompt size accounting for prompt length, user length, and cwd length

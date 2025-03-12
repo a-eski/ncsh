@@ -3,10 +3,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../eskilib/eskilib_string.h"
-#include "../eskilib/eskilib_test.h"
-#include "../readline/ncsh_autocompletions.h"
-#include "../ncsh_defines.h"
+#include "../src/eskilib/eskilib_string.h"
+#include "../src/eskilib/eskilib_test.h"
+#include "../src/readline/ncsh_autocompletions.h"
+#include "../src/ncsh_defines.h"
 
 void ncsh_autocompletions_add_length_mismatch_test(void)
 {
