@@ -1,7 +1,7 @@
 #include <stdlib.h>
 
-#include "../eskilib/eskilib_test.h"
-#include "../ncsh_config.h"
+#include "../src/eskilib/eskilib_test.h"
+#include "../src/ncsh_config.h"
 
 void ncsh_config_alias_check_no_alias_test(void)
 {

@@ -4,10 +4,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../eskilib/eskilib_string.h"
-#include "../eskilib/eskilib_test.h"
+#include "../src/eskilib/eskilib_string.h"
+#include "../src/eskilib/eskilib_test.h"
 
-#include "../readline/ncsh_history.h"
+#include "../src/readline/ncsh_history.h"
 
 void ncsh_history_load_file_not_exists_test(void)
 {
@@ -53,7 +53,7 @@ void ncsh_history_get_empty_file_test(void)
     ncsh_history_exit(&history);
 }
 
-void ncsh_history_get_negative_input_test(void)
+/*void ncsh_history_get_negative_input_test(void)
 {
     enum eskilib_Result result;
     struct ncsh_History history = {0};
@@ -65,7 +65,7 @@ void ncsh_history_get_negative_input_test(void)
     eskilib_assert(entry.value == NULL);
 
     ncsh_history_exit(&history);
-}
+}*/
 
 void ncsh_history_get_null_entries_test(void)
 {
@@ -85,7 +85,7 @@ void ncsh_history_get_position_gt_history_count_test(void)
 
     // mark history count as greater than position.
     history.count = 2;
-    int position = 10;
+    size_t position = 10;
 
     struct eskilib_String entry = ncsh_history_get(position, &history);
     eskilib_assert(entry.length == 0);
@@ -106,7 +106,7 @@ void ncsh_history_get_position_equals_history_count_test(void)
 
     // mark history count as greater than position.
     history.count = 2;
-    int position = history.count;
+    size_t position = history.count;
 
     struct eskilib_String entry = ncsh_history_get(position, &history);
     eskilib_assert(entry.length == 0);
@@ -126,7 +126,7 @@ void ncsh_history_get_position_gt_max_test(void)
     eskilib_assert(result == E_SUCCESS);
 
     // mark position history in memory max.
-    int position = 10000;
+    size_t position = 10000;
 
     struct eskilib_String entry = ncsh_history_get(position, &history);
     eskilib_assert(entry.length == 0);
@@ -206,7 +206,7 @@ void ncsh_history_get_position_last_entry_test(void)
     eskilib_assert(result == E_SUCCESS);
 
     // try to get the last histroy entry.
-    int position = history.count - 1;
+    size_t position = history.count - 1;
 
     struct eskilib_String entry = ncsh_history_get(position, &history);
     eskilib_assert(entry.length != 0);
@@ -277,7 +277,7 @@ void ncsh_history_tests(void)
     eskilib_test_run(ncsh_history_load_file_not_exists_test);
     eskilib_test_run(ncsh_history_load_file_exists_test);
     eskilib_test_run(ncsh_history_get_empty_file_test);
-    eskilib_test_run(ncsh_history_get_negative_input_test);
+    // eskilib_test_run(ncsh_history_get_negative_input_test);
     eskilib_test_run(ncsh_history_get_null_entries_test);
     eskilib_test_run(ncsh_history_get_position_gt_history_count_test);
     eskilib_test_run(ncsh_history_get_position_equals_history_count_test);

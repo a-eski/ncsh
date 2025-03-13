@@ -3,12 +3,20 @@
 require 'ttytest'
 
 # Test related constants
-WC_C_LENGTH_NO_Z_DATABASE = '111'
-WC_C_LENGTH = '126'
+WC_C_LENGTH_I = 222
+WC_C_LENGTH_NO_Z = (WC_C_LENGTH_I - '_z_database.bin'.length - 1).to_s
+WC_C_LENGTH = WC_C_LENGTH_I.to_s
+
 SLEEP_TIME = 0.2
-LS_LINES = 2
-LS_ITEMS = 14
+
+LS_LINES = 3
+LS_LINES_NO_Z = LS_LINES - 1
+LS_ITEMS = 20
+LS_ITEMS_NO_Z = LS_ITEMS - 1
 LS_FIRST_ITEM = 'COMPILE.md'
+
+HEAD_ONE_ITEM = 'tests_at.sh'
+
 TAB_AUTOCOMPLETE_ROWS = 11
 
 # Shell compiler option related constants

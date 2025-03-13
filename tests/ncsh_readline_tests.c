@@ -1,7 +1,7 @@
 #include <stdlib.h>
 
-#include "../eskilib/eskilib_test.h"
-#include "../readline/ncsh_readline.h"
+#include "../src/eskilib/eskilib_test.h"
+#include "../src/readline/ncsh_readline.h"
 
 /* ncsh_readline_prompt_size forward declaration
  * get the prompt size accounting for prompt length, user length, and cwd length
@@ -9,8 +9,8 @@
  */
 size_t ncsh_readline_prompt_size(const size_t user_len, const size_t dir_len);
 
-static const char user[] = "alex";
-static const char dir[] = "/home/alex";
+const char user[] = "alex";
+const char dir[] = "/home/alex";
 
 void ncsh_readline_prompt_size_only_prompt_test()
 {

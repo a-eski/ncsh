@@ -20,7 +20,7 @@
 #define NCSH_MAX_HISTORY_IN_MEMORY 2400
 
 struct ncsh_History {
-    int count;
+    size_t count;
     char* file;
     struct eskilib_String* entries;
 };
@@ -32,7 +32,7 @@ void ncsh_history_exit(struct ncsh_History* const restrict history);
 
 enum eskilib_Result ncsh_history_add(const char* const line, const size_t length, struct ncsh_History* const restrict history);
 
-struct eskilib_String ncsh_history_get(const int position, struct ncsh_History* const restrict history);
+struct eskilib_String ncsh_history_get(const size_t position, struct ncsh_History* const restrict history);
 
 /* ncsh_history_command_...
  * History Commands called from ncsh_builtins when user enters commands like 'history',

@@ -22,7 +22,7 @@ For more details on compilation, see COMPILE.md
 ``` sh
 make
 
-# you can also build with clang.
+# you can also build with clang. Requires clang 19+.
 make CC=clang
 ```
 

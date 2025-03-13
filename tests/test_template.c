@@ -1,6 +1,6 @@
 #include <stdlib.h>
 
-#include "../eskilib/eskilib_test.h"
+#include "../src/eskilib/eskilib_test.h"
 
 void ncsh_template_example_test(void)
 {
@@ -10,7 +10,7 @@ void ncsh_template_tests(void)
 {
     eskilib_test_start();
 
-    eskilib_test_run("ncsh_template_example_test", ncsh_template_example_test);
+    eskilib_test_run(ncsh_template_example_test);
 
     eskilib_test_finish();
 }

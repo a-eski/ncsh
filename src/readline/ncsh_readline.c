@@ -24,6 +24,7 @@
  * get the prompt size accounting for prompt length, user length, and cwd length
  * Returns: length of the prompt
  */
+[[nodiscard]]
 size_t ncsh_readline_prompt_size(const size_t user_len, const size_t dir_len)
 {
     // shell prompt format:
@@ -208,6 +209,7 @@ enum ncsh_Line_Adjustment : uint_fast8_t {
  * Determines if the cursor is currently at the end of the current line.
  * Returns: true if at end of current line.
  */
+[[nodiscard]]
 bool ncsh_readline_is_end_of_line(struct ncsh_Input* const restrict input)
 {
     if (input->lines_y == 0) {
@@ -231,6 +233,7 @@ bool ncsh_readline_is_end_of_line(struct ncsh_Input* const restrict input)
  * Determines if the cursor is at the start of the current line.
  * Returns: true if at the start of the current line.
  */
+[[nodiscard]]
 bool ncsh_readline_is_start_of_line(const struct ncsh_Input* const restrict input)
 {
     return input->lines_y > 0 && input->lines_x[input->lines_y] == 0;
