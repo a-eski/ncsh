@@ -10,7 +10,7 @@ def single_command_test(row)
   @tty.assert_row_ends_with(row, 'ls')
   row += 1
   @tty.assert_row_starts_with(row, LS_FIRST_ITEM)
-  row += 1
+  row += LS_LINES_NO_Z
 
   test_passed('single command test')
   row

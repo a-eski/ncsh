@@ -1,14 +1,24 @@
-# ncsh Compilation, Debugging, Profiling, and Benchmarking Notes
+# ncsh Compilation, Debugging, and Profiling Notes
 
 ## Compile
 
 ### Notes
 
-I tried to have the makefile follow conventions as closely as possible. CC, CFLAGS, STD, DESTDIR, BUILDDIR, RELEASE can all be passed in from command line with make.
+I tried to have the makefile follow conventions as closely as possible. CC, CFLAGS, STD, DESTDIR, BUILDDIR, RELEASE can all be passed in from command line with make. Other standard options will eventually be added, but not all are supported at time of writing.
+
+There are also shorthand versions of the commands to make it easier to iterate. For example, you can run `make test_readline` with `make tr`. If you are running ncsh as your shell, it has a builtin alias for `make`, `m`. So you can run `m tr` instead of `make test_readline`. This comes in handy when running tests over and over and making lots of changes.
+
+### Compiling with clang
 
 You can build any of the builds listed below with clang if you have a version of clang installed which supports C23 and constexpr. Simply add `CC=clang` to the end of any of the build commands.
 
-There are also shorthand versions of the commands to make it easier to iterate. For example, you can run `make test_readline` with `make tr`. If you are running ncsh as your shell, it has a builtin alias for `make`, `m`. So you can run `m tr` instead of `make test_readline`. This comes in handy when running tests over and over and making lots of changes.
+``` sh
+sudo apt install clang clang-19 clang-tools-19
+
+# on ubuntu/debian, you may have to use clang-19
+make release CC=clang
+make release CC=clang-19
+```
 
 ### Compile Debug Builds
 
@@ -29,15 +39,19 @@ m ud #equivalent to make unity_debug
 ### Compile Release Builds
 
 ``` sh
-# standard build
+# standard build (all 3 are equivalent)
 make
+make release
+make r
 
-# unity build
+# unity build (both are equivalent)
 make unity
-make u # equivalent to make unity
+make u
 ```
 
 ## Debug
+
+These are just notes so I don't have to lookup these all of the time.
 
 ### GDB
 
@@ -105,6 +119,6 @@ make acceptance_tests # or make at
 make fuzz_autocompletions # of make fa
 make fuzz_history # or make fh
 make fuzz_parser # or make fp
-./src/z/z_fuzz.sh
-./src/z/z_add_fuzz.sh
+make fuzz_z # or make fz
+make fuzz_z_add # or make fza
 ```
