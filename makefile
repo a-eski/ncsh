@@ -113,8 +113,8 @@ th :
 
 .PHONY: fuzz_history
 fuzz_history :
-	clang-19 $(STD) $(fuzz_flags) -DNCSH_HISTORY_TEST ./tests/ncsh_history_fuzzing.c ./src/readline/ncsh_history.c ./src/eskilib/eskilib_string.c ./src/eskilib/eskilib_file.c ./src/eskilib/eskilib_hashtable.c -o ./$(BUILDIR)/history_fuzz
-	./$(BUILDIR)/history_fuzz NCSH_HISTORY_CORPUS/ -detect_leaks=0 -rss_limit_mb=4096
+	clang-19 $(STD) $(fuzz_flags) -DNCSH_HISTORY_TEST ./tests/ncsh_history_fuzzing.c ./src/readline/ncsh_history.c ./src/eskilib/eskilib_string.c ./src/eskilib/eskilib_file.c ./src/eskilib/eskilib_hashtable.c -o ./bin/history_fuzz
+	./bin/history_fuzz NCSH_HISTORY_CORPUS/ -detect_leaks=0 -rss_limit_mb=4096
 .PHONY: fh
 fh :
 	make fuzz_history
@@ -129,8 +129,8 @@ ta :
 
 .PHONY: fuzz_autocompletions
 fuzz_autocompletions :
-	clang-19 $(STD) $(fuzz_flags) ./tests/ncsh_autocompletions_fuzzing.c ./src/readline/ncsh_autocompletions.c ./src/eskilib/eskilib_string.c -o ./$(BUILDIR)/autocompletions_fuzz
-	./$(BUILDIR)/autocompletions_fuzz NCSH_AUTOCOMPLETIONS_CORPUS/ -detect_leaks=0 -rss_limit_mb=8192
+	clang-19 $(STD) $(fuzz_flags) ./tests/ncsh_autocompletions_fuzzing.c ./src/readline/ncsh_autocompletions.c ./src/eskilib/eskilib_string.c -o ./bin/autocompletions_fuzz
+	./bin/autocompletions_fuzz NCSH_AUTOCOMPLETIONS_CORPUS/ -detect_leaks=0 -rss_limit_mb=8192
 .PHONY: fa
 fa :
 	make fuzz_autocompletions
@@ -145,8 +145,8 @@ tp :
 
 .PHONY: fuzz_parser
 fuzz_parser :
-	clang-19 $(STD) $(fuzz_flags) ./tests/ncsh_parser_fuzzing.c ./src/ncsh_parser.c ./src/eskilib/eskilib_string.c
-	./a.out NCSH_PARSER_CORPUS/ -detect_leaks=0 -rss_limit_mb=4096
+	clang-19 $(STD) $(fuzz_flags) ./tests/ncsh_parser_fuzzing.c ./src/ncsh_parser.c ./src/eskilib/eskilib_string.c -o ./bin/parser_fuzz
+	./bin/parser_fuzz NCSH_PARSER_CORPUS/ -detect_leaks=0 -rss_limit_mb=4096
 .PHONY: fp
 fp :
 	make fuzz_parser
@@ -161,16 +161,16 @@ tz :
 
 .PHONY: fuzz_z
 fuzz_z:
-	clang-19 -std=c2x -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined,fuzzer -O3 -DNDEBUG -DZ_TEST ./tests/z_fuzzing.c ./src/z/fzf.c ./src/z/z.c ./src/eskilib/eskilib_string.c -o ./$(BUILDIR)/z_fuzz
-	./$(BUILDIR)/z_fuzz Z_CORPUS/ -detect_leaks=0 -rss_limit_mb=8192
+	clang-19 -std=c2x -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined,fuzzer -O3 -DNDEBUG -DZ_TEST ./tests/z_fuzzing.c ./src/z/fzf.c ./src/z/z.c ./src/eskilib/eskilib_string.c -o ./bin/z_fuzz
+	./bin/z_fuzz Z_CORPUS/ -detect_leaks=0 -rss_limit_mb=8192
 .PHONY: fz
 fz:
 	make fuzz_z
 
 .PHONY: fuzz_z_add
 fuzz_z_add:
-	clang-19 -std=c2x -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined,fuzzer -O3 -DNDEBUG -DZ_TEST ./tests/z_add_fuzzing.c ./src/z/fzf.c ./src/z/z.c ./src/eskilib/eskilib_string.c -o ./$(BUILDIR)/z_add_fuzz
-	./$(BUILDIR)/z_add_fuzz Z_ADD_CORPUS/ -detect_leaks=0 -rss_limit_mb=8192
+	clang-19 -std=c2x -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined,fuzzer -O3 -DNDEBUG -DZ_TEST ./tests/z_add_fuzzing.c ./src/z/fzf.c ./src/z/z.c ./src/eskilib/eskilib_string.c -o ./bin/z_add_fuzz
+	./bin/z_add_fuzz Z_ADD_CORPUS/ -detect_leaks=0 -rss_limit_mb=8192
 .PHONY: fza
 fza:
 	make fuzz_z_add
@@ -178,7 +178,7 @@ fza:
 .PHONY: test_fzf
 test_fzf :
 	$(CC) $(STD) -fsanitize=address,undefined,leak -g ./src/z/fzf.c ./tests/lib/examiner.c ./tests/fzf_tests.c -o ./bin/fzf_tests
-	@LD_LIBRARY_PATH=/usr/local/lib:./$(BUILDIR):${LD_LIBRARY_PATH} ./bin/fzf_tests
+	@LD_LIBRARY_PATH=/usr/local/lib:./bin/:${LD_LIBRARY_PATH} ./bin/fzf_tests
 .PHONY: tf
 tf :
 	make test_fzf

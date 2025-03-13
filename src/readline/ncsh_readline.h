@@ -35,7 +35,7 @@ struct ncsh_Input {
     struct ncsh_Coordinates terminal_size;
 
     // history
-    int history_position;
+    size_t history_position;
     struct eskilib_String history_entry;
     struct ncsh_History history;
 
