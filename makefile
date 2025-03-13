@@ -91,8 +91,6 @@ acceptance_tests :
 at :
 	make acceptance_tests
 
-# make check_local aka make l
-
 .PHONY: check_local
 check_local :
 	set -e
