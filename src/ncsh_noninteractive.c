@@ -18,6 +18,16 @@
 #include "ncsh_parser.h"
 #include "vm/ncsh_vm.h"
 
+int_fast32_t ncsh_noninteractive_run(const char** const restrict argv,
+                                     const size_t argc,
+                                     struct ncsh_Args* args,
+                                     struct ncsh_Arena scratch_arena)
+{
+    ncsh_parser_parse_noninteractive(argv, argc, args, &scratch_arena); // argv + 1 because ncsh is first argv
+
+    return ncsh_vm_execute_noninteractive(args);
+}
+
 /* ncsh_noninteractive
  * Main noninteractive loop of the shell.
  * Runs when calling shell via command-line like /bin/ncsh ls or via scripts.
@@ -39,14 +49,19 @@ int_fast32_t ncsh_noninteractive(const int argc,
     printf("ncsh running in noninteractive mode.\n");
 #endif /* ifdef NCSH_DEBUG */
 
+    constexpr int arena_capacity = 1<<16;
+    char* memory = malloc(arena_capacity);
+    struct ncsh_Arena arena = { .start = memory, .end = memory + (arena_capacity) };
+
+    constexpr int scratch_arena_capacity = 1<<16;
+    char* scratch_memory = malloc(scratch_arena_capacity);
+    struct ncsh_Arena scratch_arena = { .start = scratch_memory, .end = scratch_memory + (scratch_arena_capacity) };
+
     struct ncsh_Args args = {0};
     enum eskilib_Result result;
-    if ((result = ncsh_parser_args_malloc(&args)) != E_SUCCESS) {
+    if ((result = ncsh_parser_args_alloc(&args, &arena)) != E_SUCCESS) {
         perror(RED "ncsh: Error when allocating memory for parser" RESET);
         fflush(stderr);
-        if (result != E_FAILURE_MALLOC) {
-            ncsh_parser_args_free(&args);
-        }
         return EXIT_FAILURE;
     }
 
@@ -54,16 +69,14 @@ int_fast32_t ncsh_noninteractive(const int argc,
     ncsh_debug_argsv(argc, argv);
 #endif /* ifdef NCSH_DEBUG */
 
-    ncsh_parser_parse_noninteractive(argv + 1, (size_t)argc - 1, &args); // argv + 1 because ncsh is first argv
-
-    int_fast32_t command_result = ncsh_vm_execute_noninteractive(&args);
+    int_fast32_t command_result = ncsh_noninteractive_run(argv + 1, (size_t)argc - 1, &args, scratch_arena);
 
     int_fast32_t exit_code = command_result == NCSH_COMMAND_EXIT_FAILURE
         ? EXIT_FAILURE
         : EXIT_SUCCESS;
 
-    ncsh_parser_args_free_values(&args);
-    ncsh_parser_args_free(&args);
+    free(memory);
+    free(scratch_memory);
 
     return exit_code;
 }

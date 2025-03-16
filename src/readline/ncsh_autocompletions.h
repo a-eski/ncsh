@@ -5,6 +5,7 @@
 #define NCSH_AUTOCOMPLETIONS_H_
 
 #include "../eskilib/eskilib_string.h"
+#include "../ncsh_arena.h"
 
 #define NCSH_LETTERS 96 // ascii printable characters 32-127
 
@@ -32,15 +33,20 @@ inline char ncsh_index_to_char(const int index)
     return (char)index + ' ';
 }
 
-struct ncsh_Autocompletion_Node* ncsh_autocompletions_malloc(void);
+struct ncsh_Autocompletion_Node* ncsh_autocompletions_alloc(struct ncsh_Arena* const arena);
 
-void ncsh_autocompletions_free(struct ncsh_Autocompletion_Node* restrict tree);
+void ncsh_autocompletions_add(const char* const string,
+                              const size_t length,
+                              struct ncsh_Autocompletion_Node* restrict tree,
+                              struct ncsh_Arena* const arena);
 
-void ncsh_autocompletions_add(const char* const string, const size_t length, struct ncsh_Autocompletion_Node* restrict tree);
-void ncsh_autocompletions_add_multiple(const struct eskilib_String* const strings, const int count,
-                                       struct ncsh_Autocompletion_Node* restrict tree);
+void ncsh_autocompletions_add_multiple(const struct eskilib_String* const strings,
+                                       const int count,
+                                       struct ncsh_Autocompletion_Node* restrict tree,
+                                       struct ncsh_Arena* const arena);
 
-struct ncsh_Autocompletion_Node* ncsh_autocompletions_search(const char* const string, const size_t length,
+struct ncsh_Autocompletion_Node* ncsh_autocompletions_search(const char* const string,
+                                                             const size_t length,
                                                              struct ncsh_Autocompletion_Node* restrict tree);
 
 struct ncsh_Autocompletion_Node* ncsh_autocompletions_search_string(const struct eskilib_String string,
@@ -48,12 +54,18 @@ struct ncsh_Autocompletion_Node* ncsh_autocompletions_search_string(const struct
 
 // gets all matches based on traversing the tree.
 // populates matches into variable matches and returns 0 if no matches, number of matches length if any matches.
-uint_fast8_t ncsh_autocompletions_get(const char* const search, const size_t search_length, struct ncsh_Autocompletion* matches,
-                                      struct ncsh_Autocompletion_Node* restrict tree);
+uint_fast8_t ncsh_autocompletions_get(const char* const search,
+                                      const size_t search_length,
+                                      struct ncsh_Autocompletion* matches,
+                                      struct ncsh_Autocompletion_Node* restrict tree,
+                                      struct ncsh_Arena scratch_arena);
 
 // gets highest weighted match based on traversing the tree.
 // populates match into variable match and returns 0 if not matches, 1 if any matches.
-uint_fast8_t ncsh_autocompletions_first(const char* const search, const size_t search_length, char* match,
-                                        struct ncsh_Autocompletion_Node* restrict tree);
+uint_fast8_t ncsh_autocompletions_first(const char* const search,
+                                        const size_t search_length,
+                                        char* match,
+                                        struct ncsh_Autocompletion_Node* restrict tree,
+                                        struct ncsh_Arena scratch_arena);
 
 #endif // !NCSH_AUTOCOMPLETIONS_H_

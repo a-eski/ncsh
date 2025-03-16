@@ -10,6 +10,7 @@
 #include <string.h>
 
 #include "eskilib/eskilib_result.h"
+#include "ncsh_config.h"
 #include "ncsh_defines.h"
 #include "ncsh_parser.h"
 
@@ -51,15 +52,15 @@
 // currently unsupported
 // #define BANG '!'
 
-/* ncsh_parser_args_malloc
+/* ncsh_parser_args_alloc
  * Allocate memory for the parser that lives for the lifetime of the shell.
  * Allocates the memory for string values, bytecodes, and lengths of the string values.
  * This same memory is reused for the lifetime of the shell.
- * Returns: enum eskilib_Result, E_SUCCESS is successful, E_FAILURE_NULL_REFERENCE if *args is null,
- *      or E_FAILURE_MALLOC if malloc returns null.
+ * Returns: enum eskilib_Result, E_SUCCESS is successful, E_FAILURE_NULL_REFERENCE if *args is null
  */
 [[nodiscard]]
-enum eskilib_Result ncsh_parser_args_malloc(struct ncsh_Args* const restrict args)
+enum eskilib_Result ncsh_parser_args_alloc(struct ncsh_Args* const restrict args,
+                                            struct ncsh_Arena* const arena)
 {
     if (!args) {
         return E_FAILURE_NULL_REFERENCE;
@@ -67,76 +68,11 @@ enum eskilib_Result ncsh_parser_args_malloc(struct ncsh_Args* const restrict arg
 
     args->count = 0;
 
-    args->values = calloc(NCSH_PARSER_TOKENS, sizeof(char*));
-    if (!args->values) {
-        return E_FAILURE_MALLOC;
-    }
-
-    args->ops = calloc(NCSH_PARSER_TOKENS, sizeof(uint_fast8_t));
-    if (!args->ops) {
-        free(args->values);
-        return E_FAILURE_MALLOC;
-    }
-
-    args->lengths = calloc(NCSH_PARSER_TOKENS, sizeof(size_t));
-    if (!args->lengths) {
-        free(args->values);
-        free(args->ops);
-        return E_FAILURE_MALLOC;
-    }
+    args->values = alloc(arena, NCSH_PARSER_TOKENS, char*);
+    args->ops = alloc(arena, NCSH_PARSER_TOKENS, uint_fast8_t);
+    args->lengths = alloc(arena, NCSH_PARSER_TOKENS, size_t);
 
     return E_SUCCESS;
-}
-
-/* ncsh_parser_args_free
- * Free memory used by the parser at the end of shell's lifetime.
- * Safe to call multiple times, as it performs null checks before freeing memory,
- * and sets the pointer explicitly to null after freeing.
- */
-void ncsh_parser_args_free(struct ncsh_Args* const restrict args)
-{
-    if (!args) {
-        return;
-    }
-
-    ncsh_parser_args_free_values(args);
-    if (args->values) {
-        free(args->values);
-        args->values = NULL;
-    }
-    if (args->ops) {
-        free(args->ops);
-        args->ops = NULL;
-    }
-    if (args->lengths) {
-        free(args->lengths);
-        args->lengths = NULL;
-    }
-    args->count = 0;
-}
-
-/* ncsh_parser_args_free_values
- * Free memory used by the parser that is used during each main loop of the shell.
- * This means each main loop of the shell has values freed by this function.
- * It is safe to free individual args->values before calling, as long as you set the pointer to null.
- * The VM can free and set specific args->values to null, something to keep in mind when changing the
- * implementation of this function.
- * Sets args->count to 0, args itself lives for the main lifetime of the shell, only the values get
- * freed at the end of each shell loop.
- */
-void ncsh_parser_args_free_values(struct ncsh_Args* const restrict args)
-{
-    if (!args->count) {
-        return;
-    }
-
-    for (uint_fast32_t i = 0; i < args->count; ++i) {
-        if (args->values[i]) {
-            free(args->values[i]);
-            args->values[i] = NULL;
-        }
-    }
-    args->count = 0;
 }
 
 /* ncsh_parser_is_delimiter
@@ -291,7 +227,8 @@ enum ncsh_Parser_State {
  */
 void ncsh_parser_parse(const char* const restrict line,
                        const size_t length,
-                       struct ncsh_Args* const restrict args)
+                       struct ncsh_Args* const restrict args,
+                       struct ncsh_Arena* scratch_arena)
 {
     assert(args);
     assert(line);
@@ -314,7 +251,6 @@ void ncsh_parser_parse(const char* const restrict line,
 
     for (uint_fast32_t line_position = 0; line_position < length + 1; ++line_position) {
         if (args->count == NCSH_PARSER_TOKENS - 1 && line_position < length) { // can't parse all of the args
-            ncsh_parser_args_free_values(args); // when all args can't be parsed, the command is not ran
             args->count = 0;
             break;
         }
@@ -337,7 +273,7 @@ void ncsh_parser_parse(const char* const restrict line,
                         break;
                     }
                     buf_pos = glob_len;
-                    args->values[args->count] = malloc(buf_pos);
+                    args->values[args->count] = alloc(scratch_arena, buf_pos, char);
                     memcpy(args->values[args->count], glob_buf.gl_pathv[i], glob_len);
                     args->ops[args->count] = OP_CONSTANT;
                     args->lengths[args->count] = buf_pos;
@@ -351,7 +287,7 @@ void ncsh_parser_parse(const char* const restrict line,
                 glob_found = false;
             }
             else {
-                args->values[args->count] = malloc(buf_pos + 1);
+                args->values[args->count] = alloc(scratch_arena, buf_pos + 1, char);
                 memcpy(args->values[args->count], buffer, buf_pos + 1);
                 args->ops[args->count] = ncsh_parser_op_get(buffer, buf_pos);
                 args->lengths[args->count] = buf_pos + 1; // + 1 for null terminator
@@ -411,7 +347,6 @@ void ncsh_parser_parse(const char* const restrict line,
                 size_t home_length = strlen(home);
                 if (buf_pos + home_length > NCSH_MAX_INPUT) {
                     // protect from overflow
-                    ncsh_parser_args_free_values(args);
                     args->count = 0;
                     return;
                 }
@@ -450,7 +385,8 @@ void ncsh_parser_parse(const char* const restrict line,
  */
 void ncsh_parser_parse_noninteractive(const char** const restrict inputs,
                                       const size_t inputs_count,
-                                      struct ncsh_Args* const restrict args)
+                                      struct ncsh_Args* const restrict args,
+                                      struct ncsh_Arena* scratch_arena)
 {
     assert(args);
     assert(inputs);
@@ -462,7 +398,7 @@ void ncsh_parser_parse_noninteractive(const char** const restrict inputs,
     }
 
     for (size_t i = 0; i < inputs_count; ++i) {
-        ncsh_parser_parse(inputs[i], strlen(inputs[i]) + 1, args);
+        ncsh_parser_parse(inputs[i], strlen(inputs[i]) + 1, args, scratch_arena);
     }
 
 #ifdef NCSH_DEBUG

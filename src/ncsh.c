@@ -28,12 +28,7 @@
  */
 void ncsh_exit(struct ncsh_Shell* const restrict shell)
 {
-    ncsh_config_free(&shell->config);
-
     ncsh_readline_exit(&shell->input);
-
-    ncsh_parser_args_free(&shell->args);
-
     z_exit(&shell->z_db);
 }
 
@@ -44,38 +39,26 @@ void ncsh_exit(struct ncsh_Shell* const restrict shell)
 [[nodiscard]]
 int_fast32_t ncsh_init(struct ncsh_Shell* const restrict shell)
 {
-    enum eskilib_Result result;
-    if ((result = ncsh_config_init(&shell->config)) != E_SUCCESS) {
-        if (result != E_FAILURE_MALLOC) {
-            ncsh_config_free(&shell->config);
-        }
+    if (ncsh_config_init(&shell->config, &shell->arena, shell->scratch_arena) != E_SUCCESS) {
         return EXIT_FAILURE;
     }
 
-    if (ncsh_readline_init(&shell->config, &shell->input) != EXIT_SUCCESS) {
-        ncsh_config_free(&shell->config);
+    if (ncsh_readline_init(&shell->config, &shell->input, &shell->arena) != EXIT_SUCCESS) {
         ncsh_readline_exit(&shell->input);
+        return EXIT_FAILURE;
     }
 
-    if ((result = ncsh_parser_args_malloc(&shell->args)) != E_SUCCESS) {
+    enum eskilib_Result result;
+    if ((result = ncsh_parser_args_alloc(&shell->args, &shell->arena)) != E_SUCCESS) {
         perror(RED "ncsh: Error when allocating memory for parser" RESET);
         fflush(stderr);
-        ncsh_config_free(&shell->config);
         ncsh_readline_exit(&shell->input);
-        if (result != E_FAILURE_MALLOC) {
-            ncsh_parser_args_free(&shell->args);
-        }
         return EXIT_FAILURE;
     }
 
-    enum z_Result z_result = z_init(&shell->config.config_location, &shell->z_db);
+    enum z_Result z_result = z_init(&shell->config.config_location, &shell->z_db, &shell->arena);
     if (z_result != Z_SUCCESS) {
-        ncsh_config_free(&shell->config);
         ncsh_readline_exit(&shell->input);
-        ncsh_parser_args_free(&shell->args);
-        if (z_result != Z_MALLOC_ERROR) {
-            z_exit(&shell->z_db);
-        }
         return EXIT_FAILURE;
     }
 
@@ -88,12 +71,24 @@ int_fast32_t ncsh_init(struct ncsh_Shell* const restrict shell)
  */
 void ncsh_reset(struct ncsh_Shell* const restrict shell)
 {
-    ncsh_parser_args_free_values(&shell->args);
     memset(shell->input.buffer, '\0', shell->input.max_pos);
     shell->input.pos = 0;
     shell->input.max_pos = 0;
     shell->args.count = 0;
     shell->args.values[0] = NULL;
+}
+
+/* ncsh_run
+ * Parse and execute.
+ * Pass in copy of scratch arena so it is valid for scope of parser and VM, then resets when scope ends.
+ * The scratch arena needs to be valid for scope of ncsh_vm_execute, since values are stored in the scratch arena.
+ * Do not change scratch arena to struct ncsh_Arena* (pointer).
+ */
+int_fast32_t ncsh_run(struct ncsh_Shell* shell, struct ncsh_Arena scratch_arena)
+{
+    ncsh_parser_parse(shell->input.buffer, shell->input.pos, &shell->args, &scratch_arena);
+
+    return ncsh_vm_execute(shell);
 }
 
 /* ncsh
@@ -102,9 +97,9 @@ void ncsh_reset(struct ncsh_Shell* const restrict shell)
  * This function represents interactive mode, for noninteractive see ncsh_noninteractive.
  *
  * Has several lifetimes.
- * 1. The lifetime of the shell, managed through ncsh_init and ncsh_exit.
- * 2. The lifetime of the main loop of the shell, managed through ncsh_reset.
- * 3. ncsh_readline and ncsh_vm have their own inner lifetimes.
+ * 1. The lifetime of the shell, managed through the arena. See ncsh_init and ncsh_exit.
+ * 2. The lifetime of the main loop of the shell, managed through the scratch arena.
+ * 3. ncsh_readline has its own inner lifetime via the scratch arena.
  */
 [[nodiscard]]
 int_fast32_t ncsh(void)
@@ -120,23 +115,32 @@ int_fast32_t ncsh(void)
     }
 #endif
 
-    int_fast32_t exit_code = EXIT_SUCCESS;
-    int_fast32_t input_result = 0;
-    int_fast32_t command_result = 0;
-
     struct ncsh_Shell shell = {0};
+
+    constexpr int arena_capacity = 1<<24;
+    char* memory = malloc(arena_capacity);
+    shell.arena = (struct ncsh_Arena){ .start = memory, .end = memory + (arena_capacity) };
+
+    constexpr int scratch_arena_capacity = 1<<16;
+    char* scratch_memory = malloc(scratch_arena_capacity);
+    shell.scratch_arena = (struct ncsh_Arena){ .start = scratch_memory, .end = scratch_memory + (scratch_arena_capacity) };
+
     if (ncsh_init(&shell) == EXIT_FAILURE) {
         return EXIT_FAILURE;
     }
 
-#ifdef NCSH_START_TIME
+    int_fast32_t exit_code = EXIT_SUCCESS;
+    int_fast32_t input_result = 0;
+    int_fast32_t command_result = 0;
+
+    #ifdef NCSH_START_TIME
     clock_t end = clock();
     double elapsed_ms = ((double)(end - start)) / CLOCKS_PER_SEC * 1000;
     printf("ncsh: startup time: %.2f milliseconds\n", elapsed_ms);
 #endif
 
     while (1) {
-        input_result = ncsh_readline(&shell.input);
+        input_result = ncsh_readline(&shell.input, &shell.scratch_arena);
         switch (input_result) {
         case EXIT_FAILURE: {
             exit_code = EXIT_FAILURE;
@@ -150,9 +154,7 @@ int_fast32_t ncsh(void)
         }
         }
 
-        ncsh_parser_parse(shell.input.buffer, shell.input.pos, &shell.args);
-
-        command_result = ncsh_vm_execute(&shell);
+        command_result = ncsh_run(&shell, shell.scratch_arena);
         switch (command_result) {
         case NCSH_COMMAND_EXIT_FAILURE: {
             exit_code = EXIT_FAILURE;
@@ -168,7 +170,7 @@ int_fast32_t ncsh(void)
         }
         }
 
-        ncsh_readline_history_and_autocompletion_add(&shell.input);
+        ncsh_readline_history_and_autocompletion_add(&shell.input, &shell.arena);
 
     reset:
         ncsh_reset(&shell);
@@ -176,6 +178,8 @@ int_fast32_t ncsh(void)
 
 exit:
     ncsh_exit(&shell);
+    free(memory);
+    free(scratch_memory);
 
     return exit_code;
 }

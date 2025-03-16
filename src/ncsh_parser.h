@@ -8,6 +8,7 @@
 #include <stdint.h>
 
 #include "eskilib/eskilib_result.h"
+#include "ncsh_arena.h"
 
 #define NCSH_PARSER_TOKENS 128
 
@@ -74,12 +75,8 @@ struct ncsh_Args {
  * Allocate memory for the parser that lives for the lifetime of the shell.
  * Returns: enum eskilib_Result, E_SUCCESS is successful.
  */
-enum eskilib_Result ncsh_parser_args_malloc(struct ncsh_Args* const restrict args);
-
-/* ncsh_parser_args_free
- * Free memory used by the parser at the end of shell's lifetime.
- */
-void ncsh_parser_args_free(struct ncsh_Args* const restrict args);
+enum eskilib_Result ncsh_parser_args_alloc(struct ncsh_Args* const restrict args,
+                                            struct ncsh_Arena* const arena);
 
 /* ncsh_parser_parse
  * Parse the line into commands, command lengths, and op codes stored in struct ncsh_Args.
@@ -87,7 +84,8 @@ void ncsh_parser_args_free(struct ncsh_Args* const restrict args);
  */
 void ncsh_parser_parse(const char* const restrict line,
                        const size_t length,
-                       struct ncsh_Args* const restrict args);
+                       struct ncsh_Args* const restrict args,
+                       struct ncsh_Arena* const scratch_arena);
 
 /* ncsh_parser_parse_noninteractive
  * Parse the command line input into commands, command lengths, and op codes stored in struct ncsh_Args.
@@ -95,12 +93,7 @@ void ncsh_parser_parse(const char* const restrict line,
  */
 void ncsh_parser_parse_noninteractive(const char** const restrict inputs,
                                       const size_t inputs_count,
-                                      struct ncsh_Args* const restrict args);
-
-/* ncsh_parser_args_free_values
- * Free memory used by the parser that is used during each main loop of the shell.
- * This means each main loop of the shell has values freed by this function.
- */
-void ncsh_parser_args_free_values(struct ncsh_Args* const restrict args);
+                                      struct ncsh_Args* const restrict args,
+                                      struct ncsh_Arena* const scratch_arena);
 
 #endif // !NCSH_PARSER_H_

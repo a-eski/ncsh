@@ -183,7 +183,7 @@ int_fast32_t ncsh_vm_redirection_start_if_needed(struct ncsh_Args* const restric
     assert(vm);
 
     if (tokens->stdout_redirect_index && tokens->stdout_file) {
-        free(args->values[tokens->stdout_redirect_index]);  // free the arg to remove it from list of args passed to the
+        // free(args->values[tokens->stdout_redirect_index]);  // free the arg to remove it from list of args passed to the
                                                             // vm.
         args->values[tokens->stdout_redirect_index] = NULL; // set the arg to null to prevent double free
         ncsh_vm_stdout_redirection_start(tokens->stdout_file, tokens->output_append, &vm->output_redirect_io);
@@ -196,7 +196,7 @@ int_fast32_t ncsh_vm_redirection_start_if_needed(struct ncsh_Args* const restric
     }
 
     if (tokens->stdin_redirect_index && tokens->stdin_file) {
-        free(args->values[tokens->stdin_redirect_index]);
+        // free(args->values[tokens->stdin_redirect_index]);
         args->values[tokens->stdin_redirect_index] = NULL;
         ncsh_vm_stdin_redirection_start(tokens->stdin_file, &vm->input_redirect_io);
         if (vm->input_redirect_io.fd == -1) {
@@ -207,7 +207,7 @@ int_fast32_t ncsh_vm_redirection_start_if_needed(struct ncsh_Args* const restric
     }
 
     if (tokens->stderr_redirect_index && tokens->stderr_file) {
-        free(args->values[tokens->stderr_redirect_index]);
+        // free(args->values[tokens->stderr_redirect_index]);
         args->values[tokens->stderr_redirect_index] = NULL;
         ncsh_vm_stderr_redirection_start(tokens->stderr_file, tokens->output_append, &vm->output_redirect_io);
         if (vm->output_redirect_io.fd_stderr == -1) {
@@ -218,7 +218,7 @@ int_fast32_t ncsh_vm_redirection_start_if_needed(struct ncsh_Args* const restric
     }
 
     if (tokens->stdout_and_stderr_redirect_index && tokens->stdout_and_stderr_file) {
-        free(args->values[tokens->stdout_and_stderr_redirect_index]);
+        // free(args->values[tokens->stdout_and_stderr_redirect_index]);
         args->values[tokens->stdout_and_stderr_redirect_index] = NULL;
         ncsh_vm_stdout_and_stderr_redirection_start(tokens->stdout_and_stderr_file, tokens->output_append,
                                                  &vm->output_redirect_io);
@@ -611,11 +611,11 @@ int_fast32_t ncsh_vm_execute(struct ncsh_Shell* const restrict shell)
     // check if any jobs finished running
 
     if (eskilib_string_compare(shell->args.values[0], shell->args.lengths[0], NCSH_Z, sizeof(NCSH_Z))) {
-        return ncsh_builtins_z(&shell->z_db, &shell->args);
+        return ncsh_builtins_z(&shell->z_db, &shell->args, &shell->arena);
     }
 
     if (eskilib_string_compare(shell->args.values[0], shell->args.lengths[0], NCSH_HISTORY, sizeof(NCSH_HISTORY))) {
-        return ncsh_builtins_history(&shell->input.history, &shell->args);
+        return ncsh_builtins_history(&shell->input.history, &shell->args, &shell->arena);
     }
 
     ncsh_vm_alias(&shell->args);

@@ -3,6 +3,7 @@
 #ifndef NCSH_CONFIG_H_
 #define NCSH_CONFIG_H_
 
+#include "ncsh_arena.h"
 #include "eskilib/eskilib_result.h"
 #include "eskilib/eskilib_string.h"
 
@@ -20,21 +21,19 @@ struct ncsh_Config {
 };
 
 /* ncsh_config_init
- * Allocate memory to store information related to configuration/rc file.
+ * Allocate memory via the arena bump allocator to store information related to configuration/rc file.
  * Lives for lifetime of the shell.
  * Returns: enum eskilib_Result, E_SUCCESS is successful
  */
-enum eskilib_Result ncsh_config_init(struct ncsh_Config* const restrict config);
-
-/* ncsh_config_exit
- * Frees memory that was allocated to store configuration information.
- */
-void ncsh_config_free(struct ncsh_Config* const restrict config);
+enum eskilib_Result ncsh_config_init(struct ncsh_Config* const restrict config,
+                                     struct ncsh_Arena* const arena,
+                                     struct ncsh_Arena scratch_arena);
 
 /* ncsh_config_alias_check
  * Checks if the input matches to any of the compile-time defined aliased commands.
  * Returns: the actual command as a struct eskilib_String, a char* value and a size_t length.
  */
-struct eskilib_String ncsh_config_alias_check(const char* const restrict buffer, const size_t buf_len);
+struct eskilib_String ncsh_config_alias_check(const char* const restrict buffer,
+                                              const size_t buf_len);
 
 #endif // !NCSH_CONFIG_H_

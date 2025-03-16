@@ -23,7 +23,8 @@
 
 [[nodiscard]]
 int_fast32_t ncsh_builtins_z(struct z_Database* const restrict z_db,
-                             const struct ncsh_Args* const restrict args)
+                             const struct ncsh_Args* const restrict args,
+                             struct ncsh_Arena* const arena)
 {
     assert(z_db);
     assert(args->count > 0);
@@ -44,7 +45,7 @@ int_fast32_t ncsh_builtins_z(struct z_Database* const restrict z_db,
             return NCSH_COMMAND_EXIT_FAILURE;
         }
 
-        z(args->values[1], args->lengths[1], cwd, z_db);
+        z(args->values[1], args->lengths[1], cwd, z_db, arena);
         return NCSH_COMMAND_SUCCESS_CONTINUE;
     }
 
@@ -53,7 +54,7 @@ int_fast32_t ncsh_builtins_z(struct z_Database* const restrict z_db,
 
 	// z add
         if (eskilib_string_compare(args->values[1], args->lengths[1], NCSH_Z_ADD, sizeof(NCSH_Z_ADD))) {
-            if (z_add(args->values[2], args->lengths[2], z_db) != Z_SUCCESS) {
+            if (z_add(args->values[2], args->lengths[2], z_db, arena) != Z_SUCCESS) {
                 return NCSH_COMMAND_FAILED_CONTINUE;
             }
 
@@ -76,7 +77,8 @@ int_fast32_t ncsh_builtins_z(struct z_Database* const restrict z_db,
 
 [[nodiscard]]
 int_fast32_t ncsh_builtins_history(struct ncsh_History* const restrict history,
-                                   const struct ncsh_Args* const restrict args)
+                                   const struct ncsh_Args* const restrict args,
+                                   struct ncsh_Arena* const arena)
 {
     if (args->count == 1) {
         return ncsh_history_command_display(history);
@@ -100,7 +102,7 @@ int_fast32_t ncsh_builtins_history(struct ncsh_History* const restrict history,
 
         // z add
         if (eskilib_string_compare(args->values[1], args->lengths[1], NCSH_HISTORY_ADD, sizeof(NCSH_HISTORY_ADD))) {
-            if (ncsh_history_command_add(args->values[2], args->lengths[2], history) != Z_SUCCESS) {
+            if (ncsh_history_command_add(args->values[2], args->lengths[2], history, arena) != Z_SUCCESS) {
                 return NCSH_COMMAND_FAILED_CONTINUE;
             }
 

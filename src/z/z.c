@@ -188,7 +188,8 @@ enum z_Result z_write(struct z_Database* const restrict db)
 }
 
 enum z_Result z_read_entry(struct z_Directory* const restrict dir,
-                           FILE* const restrict file)
+                           FILE* const restrict file,
+                           struct ncsh_Arena* const arena)
 {
     assert(dir && file);
 
@@ -219,7 +220,7 @@ enum z_Result z_read_entry(struct z_Directory* const restrict dir,
         return Z_FILE_ERROR;
     }
 
-    dir->path = malloc(dir->path_length + 1);
+    dir->path = alloc(arena, dir->path_length + 1, char);
     if (!dir->path) {
         perror("Memory allocation for z path failed");
         free(dir);
@@ -243,7 +244,8 @@ enum z_Result z_read_entry(struct z_Directory* const restrict dir,
 #define Z_NO_COUNT_HEADER                                                                                              \
     "ncsh z: couldn't find number of entries header while trying to read z database file. File is empty or corrupted.\n"
 
-enum z_Result z_read(struct z_Database* const restrict db)
+enum z_Result z_read(struct z_Database* const restrict db,
+                     struct ncsh_Arena* const arena)
 {
     FILE* file = fopen(db->database_file, "rb");
 
@@ -306,7 +308,7 @@ enum z_Result z_read(struct z_Database* const restrict db)
 
     enum z_Result result;
     for (uint32_t i = 0; i < number_of_entries && number_of_entries < Z_DATABASE_IN_MEMORY_LIMIT && !feof(file); ++i) {
-        if ((result = z_read_entry((db->dirs + i), file)) != Z_SUCCESS) {
+        if ((result = z_read_entry((db->dirs + i), file, arena)) != Z_SUCCESS) {
             fclose(file);
             return result;
         }
@@ -325,7 +327,8 @@ enum z_Result z_read(struct z_Database* const restrict db)
 
 enum z_Result z_write_entry_new(const char* const path,
                                 const size_t path_length,
-                                struct z_Database* const restrict db)
+                                struct z_Database* const restrict db,
+                                struct ncsh_Arena* const arena)
 {
     assert(path && db && path_length > 1);
     assert(path[path_length - 1] == '\0');
@@ -333,7 +336,7 @@ enum z_Result z_write_entry_new(const char* const path,
         return Z_FAILURE;
     }
 
-    db->dirs[db->count].path = malloc(path_length);
+    db->dirs[db->count].path = alloc(arena, path_length, char);
     if (!db->dirs[db->count].path) {
         return Z_MALLOC_ERROR;
     }
@@ -353,7 +356,8 @@ enum z_Result z_database_add(const char* const path,
                              const size_t path_length,
                              const char* const cwd,
                              const size_t cwd_length,
-                             struct z_Database* const restrict db)
+                             struct z_Database* const restrict db,
+                             struct ncsh_Arena* const arena)
 {
     if (!path_length) {
         return Z_NULL_REFERENCE;
@@ -367,7 +371,7 @@ enum z_Result z_database_add(const char* const path,
     size_t total_length = path_length + cwd_length;
     assert(total_length > 0);
 
-    db->dirs[db->count].path = malloc(total_length);
+    db->dirs[db->count].path = alloc(arena, total_length, char);
     if (!db->dirs[db->count].path) {
         return Z_MALLOC_ERROR;
     }
@@ -392,13 +396,16 @@ enum z_Result z_database_add(const char* const path,
 }
 
 enum z_Result z_database_file_set(const struct eskilib_String* const config_file,
-                                  struct z_Database* const restrict db)
+                                  struct z_Database* const restrict db,
+                                  struct ncsh_Arena* const arena)
 {
+    constexpr size_t z_db_file_len = sizeof(Z_DATABASE_FILE);
 #ifdef Z_TEST
-    db->database_file = malloc(sizeof(Z_DATABASE_FILE));
-    if (!db->database_file)
+    db->database_file = alloc(arena, z_db_file_len, char);
+    if (!db->database_file) {
         return Z_MALLOC_ERROR;
-    memcpy(db->database_file, Z_DATABASE_FILE, sizeof(Z_DATABASE_FILE));
+    }
+    memcpy(db->database_file, Z_DATABASE_FILE, z_db_file_len);
     return Z_SUCCESS;
 #endif /* ifdef Z_TEST */
 
@@ -406,16 +413,17 @@ enum z_Result z_database_file_set(const struct eskilib_String* const config_file
         return Z_NULL_REFERENCE;
     }
 
-    if (config_file->length + sizeof(Z_DATABASE_FILE) > NCSH_MAX_INPUT) {
+    if (config_file->length + z_db_file_len > NCSH_MAX_INPUT) {
         return Z_FILE_LENGTH_TOO_LARGE;
     }
 
-    db->database_file = malloc(config_file->length + sizeof(Z_DATABASE_FILE));
-    if (!db->database_file)
+    db->database_file = alloc(arena, config_file->length + z_db_file_len, char);
+    if (!db->database_file) {
         return Z_MALLOC_ERROR;
+    }
 
     memcpy(db->database_file, config_file->value, config_file->length);
-    memcpy(db->database_file + config_file->length - 1, Z_DATABASE_FILE, sizeof(Z_DATABASE_FILE));
+    memcpy(db->database_file + config_file->length - 1, Z_DATABASE_FILE, z_db_file_len);
 
 #ifdef Z_DEBUG
     printf("db->database_file :%s\n", db->database_file);
@@ -425,7 +433,8 @@ enum z_Result z_database_file_set(const struct eskilib_String* const config_file
 }
 
 enum z_Result z_init(const struct eskilib_String* const config_file,
-                     struct z_Database* const restrict db)
+                     struct z_Database* const restrict db,
+                     struct ncsh_Arena* const arena)
 {
     assert(db);
     if (!db) {
@@ -433,11 +442,11 @@ enum z_Result z_init(const struct eskilib_String* const config_file,
     }
 
     enum z_Result result;
-    if ((result = z_database_file_set(config_file, db)) != Z_SUCCESS || !db->database_file) {
+    if ((result = z_database_file_set(config_file, db, arena)) != Z_SUCCESS || !db->database_file) {
         return result;
     }
 
-    return z_read(db);
+    return z_read(db, arena);
 }
 
 enum z_Result z_directory_match_exists(const char* const target,
@@ -489,7 +498,8 @@ enum z_Result z_directory_match_exists(const char* const target,
 void z(char* target,
        const size_t target_length,
        const char* const cwd,
-       struct z_Database* const restrict db)
+       struct z_Database* const restrict db,
+       struct ncsh_Arena* const arena)
 {
 #ifdef Z_DEBUG
     printf("z: %s\n", target.value);
@@ -536,7 +546,7 @@ void z(char* target,
         printf("dir matches %s\n", output.value);
 #endif /* ifdef Z_DEBUG */
 
-        if (!match && z_database_add(output.value, output.length, cwd, cwd_length, db) != Z_SUCCESS) {
+        if (!match && z_database_add(output.value, output.length, cwd, cwd_length, db, arena) != Z_SUCCESS) {
             if (output.value) {
                 free(output.value);
             }
@@ -579,7 +589,8 @@ void z(char* target,
 
 enum z_Result z_add(const char* const path,
                     const size_t path_length,
-                    struct z_Database* const restrict db)
+                    struct z_Database* const restrict db,
+                    struct ncsh_Arena* const arena)
 {
     if (!path || !db) {
         return Z_NULL_REFERENCE;
@@ -595,7 +606,7 @@ enum z_Result z_add(const char* const path,
         return Z_SUCCESS;
     }
 
-    if (z_write_entry_new(path, path_length, db) == Z_SUCCESS) {
+    if (z_write_entry_new(path, path_length, db, arena) == Z_SUCCESS) {
         if (write(STDERR_FILENO, Z_ADDED_NEW_ENTRY_MESSAGE, sizeof(Z_ADDED_NEW_ENTRY_MESSAGE) - 1) == -1) {
             return Z_FAILURE;
         }
@@ -650,22 +661,6 @@ enum z_Result z_remove(const char* const path,
     return Z_MATCH_NOT_FOUND;
 }
 
-void z_free(struct z_Database* const restrict db)
-{
-    assert(db);
-
-    if (db->database_file) {
-        free(db->database_file);
-    }
-
-    for (size_t i = 0; i < db->count; ++i) {
-        if (db->dirs[i].path) {
-            free(db->dirs[i].path);
-        }
-    }
-    db->count = 0;
-}
-
 enum z_Result z_exit(struct z_Database* const restrict db)
 {
     assert(db);
@@ -681,7 +676,6 @@ enum z_Result z_exit(struct z_Database* const restrict db)
         return result;
     }
 
-    z_free(db);
     return Z_SUCCESS;
 }
 

@@ -7,6 +7,7 @@
 
 #include "../eskilib/eskilib_result.h"
 #include "../eskilib/eskilib_string.h"
+#include "../ncsh_arena.h"
 #include "../ncsh_configurables.h"
 #include "../ncsh_parser.h"
 
@@ -26,21 +27,36 @@ struct ncsh_History {
 };
 
 /* History Setup and Manipulation */
-enum eskilib_Result ncsh_history_init(const struct eskilib_String config_location, struct ncsh_History* const restrict history);
+enum eskilib_Result ncsh_history_init(const struct eskilib_String config_location,
+                                      struct ncsh_History* const restrict history,
+                                      struct ncsh_Arena* const arena);
 
-void ncsh_history_exit(struct ncsh_History* const restrict history);
+enum eskilib_Result ncsh_history_save(struct ncsh_History* const restrict history);
 
-enum eskilib_Result ncsh_history_add(const char* const line, const size_t length, struct ncsh_History* const restrict history);
+enum eskilib_Result ncsh_history_add(const char* const line,
+                                     const size_t length,
+                                     struct ncsh_History* const restrict history,
+                                     struct ncsh_Arena* const arena);
 
-struct eskilib_String ncsh_history_get(const size_t position, struct ncsh_History* const restrict history);
+struct eskilib_String ncsh_history_get(const size_t position,
+                                       struct ncsh_History* const restrict history);
 
 /* ncsh_history_command_...
  * History Commands called from ncsh_builtins when user enters commands like 'history',
  * 'history count', 'history clean', 'history add {directory}', 'history remove {directory}'. */
 int_fast32_t ncsh_history_command_display(const struct ncsh_History* const restrict history);
+
 int_fast32_t ncsh_history_command_count(const struct ncsh_History* const restrict history);
+
 int_fast32_t ncsh_history_command_clean(struct ncsh_History* const restrict history);
-int_fast32_t ncsh_history_command_add(const char* const value, const size_t value_len,struct ncsh_History* const restrict history);
-int_fast32_t ncsh_history_command_remove(const char* const value, const size_t value_len, struct ncsh_History* const restrict history);
+
+int_fast32_t ncsh_history_command_add(const char* const value,
+                                      const size_t value_len,
+                                      struct ncsh_History* const restrict history,
+                                      struct ncsh_Arena* const arena);
+
+int_fast32_t ncsh_history_command_remove(const char* const value,
+                                         const size_t value_len,
+                                         struct ncsh_History* const restrict history);
 
 #endif // !NCSH_HISTORY_H_

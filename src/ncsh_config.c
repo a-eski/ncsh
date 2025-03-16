@@ -15,11 +15,13 @@
 #include "eskilib/eskilib_result.h"
 #include "eskilib/eskilib_string.h"
 #include "eskilib/eskilib_file.h"
+#include "ncsh_arena.h"
 #include "ncsh_config.h"
 #include "ncsh_defines.h"
 
 [[nodiscard]]
-enum eskilib_Result ncsh_config_home(struct ncsh_Config* const restrict config)
+enum eskilib_Result ncsh_config_home_init(struct ncsh_Config* const restrict config,
+                                     struct ncsh_Arena* const arena)
 {
     if (!config) {
         return E_FAILURE_NULL_REFERENCE;
@@ -34,12 +36,7 @@ enum eskilib_Result ncsh_config_home(struct ncsh_Config* const restrict config)
     }
 
     config->home_location.length = strlen(home);
-    config->home_location.value = malloc(config->home_location.length + 1);
-    if (!config->home_location.value) {
-        perror(RED "ncsh: Error when allocating memory for config" RESET);
-        fflush(stderr);
-        return E_FAILURE_MALLOC;
-    }
+    config->home_location.value = alloc(arena, config->home_location.length + 1, char);
     memcpy(config->home_location.value, home, config->home_location.length + 1);
 #ifdef NCSH_DEBUG
     printf("config->home_location.value: %s\n", config->home_location.value);
@@ -49,18 +46,14 @@ enum eskilib_Result ncsh_config_home(struct ncsh_Config* const restrict config)
 }
 
 [[nodiscard]]
-enum eskilib_Result ncsh_config(struct ncsh_Config* const restrict config)
+enum eskilib_Result ncsh_config_location_init(struct ncsh_Config* const restrict config,
+                                struct ncsh_Arena* const arena)
 {
     if (!config) {
         return E_FAILURE_NULL_REFERENCE;
     }
 
-    config->config_location.value = malloc(NCSH_MAX_INPUT);
-    if (!config->config_location.value) {
-        perror(RED "ncsh: Error when allocating memory for config" RESET);
-        fflush(stderr);
-        return E_FAILURE_MALLOC;
-    }
+    config->config_location.value = alloc(arena, NCSH_MAX_INPUT, char);
 
     const char* const config_original_ptr = config->config_location.value;
     config->config_location.length = config->home_location.length;
@@ -96,10 +89,11 @@ enum eskilib_Result ncsh_config(struct ncsh_Config* const restrict config)
 }
 
 [[nodiscard]]
-enum eskilib_Result ncsh_config_file_set(struct ncsh_Config* const restrict config)
+enum eskilib_Result ncsh_config_file_set(struct ncsh_Config* const restrict config,
+                                         struct ncsh_Arena* const arena)
 {
     if (!config->config_location.value || !config->config_location.length) {
-        config->config_file.value = malloc(sizeof(NCSH_RC));
+        config->config_file.value = alloc(arena, sizeof(NCSH_RC), char);
         memcpy(config->config_file.value, NCSH_RC, sizeof(NCSH_RC) - 1);
         config->config_file.value[sizeof(NCSH_RC) - 1] = '\0';
         config->config_file.length = sizeof(NCSH_RC);
@@ -112,11 +106,7 @@ enum eskilib_Result ncsh_config_file_set(struct ncsh_Config* const restrict conf
         return E_FAILURE_OVERFLOW_PROTECTION;
     }
 
-    config->config_file.value = malloc(config->config_location.length + sizeof(NCSH_RC));
-    if (!config->config_file.value) {
-        return E_FAILURE_MALLOC;
-    }
-
+    config->config_file.value = alloc(arena, config->config_location.length + sizeof(NCSH_RC), char);
     memcpy(config->config_file.value, config->config_location.value, config->config_location.length - 1);
     memcpy(config->config_file.value + config->config_location.length - 1, "/" NCSH_RC, sizeof(NCSH_RC));
     config->config_file.length = config->config_location.length + sizeof(NCSH_RC);
@@ -131,7 +121,9 @@ enum eskilib_Result ncsh_config_file_set(struct ncsh_Config* const restrict conf
 
 #define PATH "PATH"
 #define PATH_ADD "PATH+="
-void ncsh_config_path_add(char* value, int len)
+void ncsh_config_path_add(const char* const value,
+                          const int len,
+                          struct ncsh_Arena* const scratch_arena)
 {
     assert(len > 0);
     if (len < 0) {
@@ -140,7 +132,7 @@ void ncsh_config_path_add(char* value, int len)
 
     char* path = getenv("PATH");
     size_t path_len = strlen(path) + 1; // null terminator here becomes : in length calc below
-    char* new_path = malloc(path_len + (size_t)len);
+    char* new_path = alloc(scratch_arena, path_len + (size_t)len, char);
     memcpy(new_path, path, path_len - 1);
     new_path[path_len - 2] = ':';
     memcpy(new_path + path_len - 1, value, (size_t)len);
@@ -148,16 +140,16 @@ void ncsh_config_path_add(char* value, int len)
     printf("Got new path to set %s\n", new_path);
 #endif /* ifdef NCSH_DEBUG */
     setenv(PATH, new_path, true);
-    free(new_path);
 }
 
-void ncsh_config_process(FILE* const restrict file)
+void ncsh_config_process(FILE* const restrict file,
+                         struct ncsh_Arena* const scratch_arena)
 {
     int buffer_length;
     char buffer[MAX_INPUT] = {0};
     while ((buffer_length = eskilib_fgets(buffer, sizeof(buffer), file)) != EOF) {
         if (buffer_length > 6 && !strncmp(buffer, PATH_ADD, sizeof(PATH_ADD) - 1)) {
-            ncsh_config_path_add(buffer + 6, buffer_length - 6);
+            ncsh_config_path_add(buffer + 6, buffer_length - 6, scratch_arena);
         }
 
         memset(buffer, '\0', (size_t)buffer_length);
@@ -165,7 +157,8 @@ void ncsh_config_process(FILE* const restrict file)
 }
 
 [[nodiscard]]
-enum eskilib_Result ncsh_config_load(const struct ncsh_Config* const restrict config)
+enum eskilib_Result ncsh_config_file_load(const struct ncsh_Config* const restrict config,
+                                          struct ncsh_Arena* const scratch_arena)
 {
 
     FILE* file = fopen(config->config_file.value, "r");
@@ -192,46 +185,37 @@ enum eskilib_Result ncsh_config_load(const struct ncsh_Config* const restrict co
         return E_SUCCESS;
     }
 
-    ncsh_config_process(file);
+    ncsh_config_process(file, scratch_arena);
 
     fclose(file);
     return E_SUCCESS;
 }
 
 [[nodiscard]]
-enum eskilib_Result ncsh_config_init(struct ncsh_Config* const restrict config)
+enum eskilib_Result ncsh_config_init(struct ncsh_Config* const restrict config,
+                                     struct ncsh_Arena* const arena,
+                                     struct ncsh_Arena scratch_arena)
 {
+    assert(arena);
+
     enum eskilib_Result result;
-    if ((result = ncsh_config_home(config)) != E_SUCCESS) {
+    if ((result = ncsh_config_home_init(config, arena)) != E_SUCCESS) {
         return result;
     }
 
-    if ((result = ncsh_config(config)) != E_SUCCESS) {
+    if ((result = ncsh_config_location_init(config, arena)) != E_SUCCESS) {
         return result;
     }
 
-    if ((result = ncsh_config_file_set(config)) != E_SUCCESS) {
+    if ((result = ncsh_config_file_set(config, arena)) != E_SUCCESS) {
         return result;
     }
 
-    if ((result = ncsh_config_load(config)) != E_SUCCESS) {
+    if ((result = ncsh_config_file_load(config, &scratch_arena)) != E_SUCCESS) {
         return result;
     }
 
     return E_SUCCESS;
-}
-
-void ncsh_config_free(struct ncsh_Config* const restrict config)
-{
-    if (config->home_location.value) {
-        free(config->home_location.value);
-    }
-    if (config->config_location.value) {
-        free(config->config_location.value);
-    }
-    if (config->config_file.value) {
-        free(config->config_file.value);
-    }
 }
 
 #define GIT "git"

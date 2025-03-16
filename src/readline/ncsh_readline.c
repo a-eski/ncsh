@@ -456,7 +456,8 @@ int_fast32_t ncsh_readline_autocomplete_print(struct ncsh_Input* const restrict 
 }
 
 [[nodiscard]]
-int_fast32_t ncsh_readline_autocomplete(struct ncsh_Input* const restrict input)
+int_fast32_t ncsh_readline_autocomplete(struct ncsh_Input* const restrict input,
+                                        struct ncsh_Arena* scratch_arena)
 {
     if (input->buffer[0] == '\0' || input->buffer[input->pos] != '\0') {
         return EXIT_SUCCESS;
@@ -472,7 +473,8 @@ int_fast32_t ncsh_readline_autocomplete(struct ncsh_Input* const restrict input)
     }
 
     uint_fast8_t autocompletions_matches_count = ncsh_autocompletions_first(
-        input->buffer, input->pos + 1, input->current_autocompletion, input->autocompletions_tree);
+        input->buffer, input->pos + 1, input->current_autocompletion,
+        input->autocompletions_tree, *scratch_arena);
 
     if (!autocompletions_matches_count) {
         if (ncsh_readline_line_reset(input) != EXIT_SUCCESS) {
@@ -663,13 +665,15 @@ char ncsh_readline_read(void)
 }
 
 [[nodiscard]]
-int_fast32_t ncsh_readline_tab_autocomplete(struct ncsh_Input* const restrict input)
+int_fast32_t ncsh_readline_tab_autocomplete(struct ncsh_Input* const restrict input,
+                                            struct ncsh_Arena* const scratch_arena)
 {
     ncsh_write_literal(ERASE_CURRENT_LINE "\n");
 
     struct ncsh_Autocompletion autocompletion_matches[NCSH_MAX_AUTOCOMPLETION_MATCHES] = {0};
     int autocompletions_matches_count =
-        ncsh_autocompletions_get(input->buffer, input->pos + 1, autocompletion_matches, input->autocompletions_tree);
+        ncsh_autocompletions_get(input->buffer, input->pos + 1, autocompletion_matches,
+                                 input->autocompletions_tree, *scratch_arena);
 
     if (!autocompletions_matches_count) {
         return EXIT_SUCCESS;
@@ -748,42 +752,39 @@ int_fast32_t ncsh_readline_tab_autocomplete(struct ncsh_Input* const restrict in
  * Allocates memory that lives for the lifetime of the shell and is used by readline to process user input.
  * Returns: exit status, EXIT_SUCCESS, EXIT_FAILURE, or value in ncsh_defines.h (EXIT_...)
  */
-int_fast32_t ncsh_readline_init(struct ncsh_Config* const restrict config, struct ncsh_Input* const restrict input)
+int_fast32_t ncsh_readline_init(struct ncsh_Config* const restrict config,
+                                struct ncsh_Input* const restrict input,
+                                struct ncsh_Arena* const arena)
 {
     input->user.value = getenv("USER");
     input->user.length = strlen(input->user.value) + 1;
-    input->buffer = calloc(NCSH_MAX_INPUT, sizeof(char));
+    input->buffer = alloc(arena, NCSH_MAX_INPUT, char);
     if (!input->buffer) {
         return EXIT_FAILURE;
     }
 
     enum eskilib_Result result;
-    if ((result = ncsh_history_init(config->config_location, &input->history)) != E_SUCCESS) {
-        free(input->buffer);
-        if (result != E_FAILURE_MALLOC) {
-            ncsh_history_exit(&input->history);
-        }
+    if ((result = ncsh_history_init(config->config_location, &input->history, arena)) != E_SUCCESS) {
+        perror(RED "ncsh: Error when allocating data for and setting up history" RESET);
+        fflush(stderr);
         return EXIT_FAILURE;
     }
 
-    input->current_autocompletion = calloc(NCSH_MAX_INPUT, sizeof(char));
+    input->current_autocompletion = alloc(arena, NCSH_MAX_INPUT, char);
     if (!input->current_autocompletion) {
         perror(RED "ncsh: Error when allocating data for autocompletion results" RESET);
         fflush(stderr);
-        free(input->buffer);
-        ncsh_history_exit(&input->history);
+        return EXIT_FAILURE;
     }
 
-    input->autocompletions_tree = ncsh_autocompletions_malloc();
+    input->autocompletions_tree = ncsh_autocompletions_alloc(arena);
     if (!input->autocompletions_tree) {
         perror(RED "ncsh: Error when loading data from history as autocompletions" RESET);
         fflush(stderr);
-        free(input->buffer);
-        ncsh_history_exit(&input->history);
-        ncsh_autocompletions_free(input->autocompletions_tree);
         return EXIT_FAILURE;
     }
-    ncsh_autocompletions_add_multiple(input->history.entries, input->history.count, input->autocompletions_tree);
+
+    ncsh_autocompletions_add_multiple(input->history.entries, input->history.count, input->autocompletions_tree, arena);
 
     return EXIT_SUCCESS;
 }
@@ -851,7 +852,8 @@ int_fast32_t ncsh_readline_putchar(char character, struct ncsh_Input* const rest
  * Returns: exit status, EXIT_SUCCESS, EXIT_FAILURE, or value in ncsh_defines.h (EXIT_...)
  */
 [[nodiscard]]
-int_fast32_t ncsh_readline(struct ncsh_Input* const restrict input)
+int_fast32_t ncsh_readline(struct ncsh_Input* const restrict input,
+                           struct ncsh_Arena* const scratch_arena)
 {
     char character;
     int exit = EXIT_SUCCESS;
@@ -894,7 +896,7 @@ int_fast32_t ncsh_readline(struct ncsh_Input* const restrict input)
             }
         }
         else if (character == TAB_KEY) {
-	    if ((result = ncsh_readline_tab_autocomplete(input)) != EXIT_SUCCESS) {
+	    if ((result = ncsh_readline_tab_autocomplete(input, scratch_arena)) != EXIT_SUCCESS) {
 		exit = result;
 		break;
 	    }
@@ -1065,7 +1067,7 @@ int_fast32_t ncsh_readline(struct ncsh_Input* const restrict input)
         }
 
         ncsh_readline_adjust_line_if_needed(input);
-        if (ncsh_readline_autocomplete(input) != EXIT_SUCCESS) {
+        if (ncsh_readline_autocomplete(input, scratch_arena) != EXIT_SUCCESS) {
 	    exit = EXIT_FAILURE;
 	    break;
 	}
@@ -1079,20 +1081,18 @@ exit:
 /* ncsh_readline_history_and_autocompletion_add
  * Add user input that was able to be processed and executed by the VM to readline's history and autocompletion data stores.
  */
-void ncsh_readline_history_and_autocompletion_add(struct ncsh_Input* const restrict input)
+void ncsh_readline_history_and_autocompletion_add(struct ncsh_Input* const restrict input,
+                                                  struct ncsh_Arena* const arena)
 {
-    ncsh_history_add(input->buffer, input->pos, &input->history);
-    ncsh_autocompletions_add(input->buffer, input->pos, input->autocompletions_tree);
+    ncsh_history_add(input->buffer, input->pos, &input->history, arena);
+    ncsh_autocompletions_add(input->buffer, input->pos, input->autocompletions_tree, arena);
 }
 
 /* ncsh_readline_exit
- * Releases memory at the end of the shell's lifetime related to readline functionility around processing and manipulating user input.
+ * Saves history changes and restores the terminal settings from before the shell was started.
  */
 void ncsh_readline_exit(struct ncsh_Input* const restrict input)
 {
-    free(input->buffer);
-    ncsh_history_exit(&input->history);
-    free(input->current_autocompletion);
-    ncsh_autocompletions_free(input->autocompletions_tree);
+    ncsh_history_save(&input->history);
     ncsh_terminal_reset();
 }

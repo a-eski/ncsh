@@ -7,6 +7,7 @@
 #include <time.h>
 
 #include "../eskilib/eskilib_string.h"
+#include "../ncsh_arena.h"
 
 #define Z_DATABASE_FILE "_z_database.bin"
 #define Z_DATABASE_IN_MEMORY_LIMIT 100
@@ -51,16 +52,19 @@ enum z_Result {
 };
 
 enum z_Result z_init(const struct eskilib_String* const config_location,
-                     struct z_Database* const restrict database);
+                     struct z_Database* const restrict database,
+                     struct ncsh_Arena* const arena);
 
 void z(char* target,
        const size_t target_length,
        const char* const cwd,
-       struct z_Database* const restrict db);
+       struct z_Database* const restrict db,
+       struct ncsh_Arena* const arena);
 
 enum z_Result z_add(const char* const path,
                     const size_t path_length,
-                    struct z_Database* const restrict db);
+                    struct z_Database* const restrict db,
+                    struct ncsh_Arena* const arena);
 
 enum z_Result z_remove(const char* const path,
                        const size_t path_length,
