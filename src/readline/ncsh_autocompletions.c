@@ -18,10 +18,6 @@ char ncsh_index_to_char(int index);
 struct ncsh_Autocompletion_Node* ncsh_autocompletions_alloc(struct ncsh_Arena* const arena)
 {
     struct ncsh_Autocompletion_Node* tree = alloc(arena, 1, struct ncsh_Autocompletion_Node);
-    if (!tree) {
-        return NULL;
-    }
-
     tree->is_end_of_a_word = false;
     return tree;
 }
@@ -140,9 +136,6 @@ void ncsh_autocompletions_match(struct ncsh_Autocompletion* const matches,
 
             if (!matches[*matches_position].value) {
                 matches[*matches_position].value = alloc(scratch_arena, NCSH_MAX_INPUT, char);
-                if (!matches[*matches_position].value) {
-                    return;
-                }
 
                 if (*string_position > 0 && *matches_position > 0) {
                     memcpy(matches[*matches_position].value, matches[*matches_position - 1].value, *string_position);

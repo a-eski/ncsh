@@ -1,4 +1,4 @@
-// Copyright (c) ncsh by Alex Eski 2024
+/* Copyright (c) ncsh by Alex Eski 2024 */
 
 #include <assert.h>
 #include <limits.h>

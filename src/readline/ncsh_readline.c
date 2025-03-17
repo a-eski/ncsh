@@ -1,4 +1,4 @@
-// Copyright (c) ncsh by Alex Eski 2025
+/* Copyright (c) ncsh by Alex Eski 2025 */
 
 #include <assert.h>
 #include <limits.h>
@@ -755,9 +755,6 @@ int_fast32_t ncsh_readline_init(struct ncsh_Config* const restrict config,
     input->user.value = getenv("USER");
     input->user.length = strlen(input->user.value) + 1;
     input->buffer = alloc(arena, NCSH_MAX_INPUT, char);
-    if (!input->buffer) {
-        return EXIT_FAILURE;
-    }
 
     enum eskilib_Result result;
     if ((result = ncsh_history_init(config->config_location, &input->history, arena)) != E_SUCCESS) {
@@ -767,18 +764,7 @@ int_fast32_t ncsh_readline_init(struct ncsh_Config* const restrict config,
     }
 
     input->current_autocompletion = alloc(arena, NCSH_MAX_INPUT, char);
-    if (!input->current_autocompletion) {
-        perror(RED "ncsh: Error when allocating data for autocompletion results" RESET);
-        fflush(stderr);
-        return EXIT_FAILURE;
-    }
-
     input->autocompletions_tree = ncsh_autocompletions_alloc(arena);
-    if (!input->autocompletions_tree) {
-        perror(RED "ncsh: Error when loading data from history as autocompletions" RESET);
-        fflush(stderr);
-        return EXIT_FAILURE;
-    }
 
     ncsh_autocompletions_add_multiple(input->history.entries, input->history.count, input->autocompletions_tree, arena);
 

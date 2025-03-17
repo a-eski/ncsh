@@ -122,6 +122,11 @@ int_fast32_t ncsh(void)
     constexpr int total_capacity = arena_capacity + scratch_arena_capacity;
 
     char* memory = malloc(total_capacity);
+    if (!memory) {
+        puts(RED "ncsh: could not start up, not enough memory available." RESET);
+        return EXIT_FAILURE;
+    }
+
     shell.arena = (struct ncsh_Arena){ .start = memory, .end = memory + (arena_capacity) };
     char* scratch_memory_start = memory + (arena_capacity + 1);
     shell.scratch_arena = (struct ncsh_Arena){ .start = scratch_memory_start, .end = scratch_memory_start + (scratch_arena_capacity) };
