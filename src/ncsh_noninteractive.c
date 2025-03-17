@@ -25,11 +25,12 @@
 int_fast32_t ncsh_noninteractive_run(const char** const restrict argv,
                                      const size_t argc,
                                      struct ncsh_Args* args,
+                                     struct ncsh_Arena* const arena,
                                      struct ncsh_Arena scratch_arena)
 {
     ncsh_parser_parse_noninteractive(argv, argc, args, &scratch_arena);
 
-    return ncsh_vm_execute_noninteractive(args);
+    return ncsh_vm_execute_noninteractive(args, arena);
 }
 
 /* ncsh_noninteractive
@@ -57,6 +58,11 @@ int_fast32_t ncsh_noninteractive(const int argc,
     constexpr int total_capacity = arena_capacity + scratch_arena_capacity;
 
     char* memory = malloc(total_capacity);
+    if (!memory) {
+        puts(RED "ncsh: could not start up, not enough memory available." RESET);
+        return EXIT_FAILURE;
+    }
+
     struct ncsh_Arena arena = { .start = memory, .end = memory + (arena_capacity) };
     char* scratch_memory_start = memory + (arena_capacity + 1);
     struct ncsh_Arena scratch_arena = { .start = scratch_memory_start, .end = scratch_memory_start + (scratch_arena_capacity) };
@@ -73,7 +79,7 @@ int_fast32_t ncsh_noninteractive(const int argc,
     ncsh_debug_argsv(argc, argv);
 #endif /* ifdef NCSH_DEBUG */
 
-    int_fast32_t command_result = ncsh_noninteractive_run(argv + 1, (size_t)argc - 1, &args, scratch_arena);
+    int_fast32_t command_result = ncsh_noninteractive_run(argv + 1, (size_t)argc - 1, &args, &arena, scratch_arena);
 
     int_fast32_t exit_code = command_result == NCSH_COMMAND_EXIT_FAILURE
         ? EXIT_FAILURE
