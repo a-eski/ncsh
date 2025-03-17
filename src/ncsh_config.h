@@ -20,19 +20,10 @@ struct ncsh_Config {
     struct eskilib_String config_file;
 };
 
-/* ncsh_config_init
- * Allocate memory via the arena bump allocator to store information related to configuration/rc file.
- * Lives for lifetime of the shell.
- * Returns: enum eskilib_Result, E_SUCCESS is successful
- */
 enum eskilib_Result ncsh_config_init(struct ncsh_Config* const restrict config,
                                      struct ncsh_Arena* const arena,
                                      struct ncsh_Arena scratch_arena);
 
-/* ncsh_config_alias_check
- * Checks if the input matches to any of the compile-time defined aliased commands.
- * Returns: the actual command as a struct eskilib_String, a char* value and a size_t length.
- */
 struct eskilib_String ncsh_config_alias_check(const char* const restrict buffer,
                                               const size_t buf_len);
 

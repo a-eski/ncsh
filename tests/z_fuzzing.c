@@ -13,10 +13,14 @@ static const struct eskilib_String config_location = { .length = 0, .value = NUL
 int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size)
 {
     NCSH_ARENA_TEST_SETUP;
+    NCSH_SCRATCH_ARENA_TEST_SETUP;
+
     struct z_Database db = {};
     z_init(&config_location, &db, &arena);
-    z((char*)Data, Size, "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells/ncsh/src/z/tests", &db, &arena);
+    z((char*)Data, Size, "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells/ncsh/src/z/tests", &db, &arena, scratch_arena);
     z_exit(&db);
+
     NCSH_ARENA_TEST_TEARDOWN;
+    NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
     return 0;
 }

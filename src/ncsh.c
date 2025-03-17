@@ -117,13 +117,21 @@ int_fast32_t ncsh(void)
 
     struct ncsh_Shell shell = {0};
 
-    constexpr int arena_capacity = 1<<24;
+    /*constexpr int arena_capacity = 1<<24;
     char* memory = malloc(arena_capacity);
     shell.arena = (struct ncsh_Arena){ .start = memory, .end = memory + (arena_capacity) };
 
     constexpr int scratch_arena_capacity = 1<<16;
     char* scratch_memory = malloc(scratch_arena_capacity);
-    shell.scratch_arena = (struct ncsh_Arena){ .start = scratch_memory, .end = scratch_memory + (scratch_arena_capacity) };
+    shell.scratch_arena = (struct ncsh_Arena){ .start = scratch_memory, .end = scratch_memory + (scratch_arena_capacity) };*/
+    constexpr int arena_capacity = 1<<24;
+    constexpr int scratch_arena_capacity = 1<<16;
+    constexpr int total_capacity = arena_capacity + scratch_arena_capacity;
+
+    char* memory = malloc(total_capacity);
+    shell.arena = (struct ncsh_Arena){ .start = memory, .end = memory + (arena_capacity) };
+    char* scratch_memory_start = memory + (arena_capacity + 1);
+    shell.scratch_arena = (struct ncsh_Arena){ .start = scratch_memory_start, .end = scratch_memory_start + (scratch_arena_capacity) };
 
     if (ncsh_init(&shell) == EXIT_FAILURE) {
         return EXIT_FAILURE;
@@ -179,7 +187,7 @@ int_fast32_t ncsh(void)
 exit:
     ncsh_exit(&shell);
     free(memory);
-    free(scratch_memory);
+    // free(scratch_memory);
 
     return exit_code;
 }

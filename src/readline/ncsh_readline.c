@@ -735,10 +735,6 @@ int_fast32_t ncsh_readline_tab_autocomplete(struct ncsh_Input* const restrict in
         }
     }
 
-    for (int i = 0; i < autocompletions_matches_count; ++i) {
-        free(autocompletion_matches[i].value);
-    }
-
     ncsh_terminal_move_down(autocompletions_matches_count + 1 - position);
     if (input->buffer && exit == EXIT_SUCCESS_EXECUTE) {
         printf(ncsh_YELLOW "%s\n" RESET, input->buffer);

@@ -71,26 +71,14 @@ struct ncsh_Args {
     char** values;       // Constant values needed to be referenced by the VM
 };
 
-/* ncsh_parser_args_malloc
- * Allocate memory for the parser that lives for the lifetime of the shell.
- * Returns: enum eskilib_Result, E_SUCCESS is successful.
- */
 enum eskilib_Result ncsh_parser_args_alloc(struct ncsh_Args* const restrict args,
                                             struct ncsh_Arena* const arena);
 
-/* ncsh_parser_parse
- * Parse the line into commands, command lengths, and op codes stored in struct ncsh_Args.
- * Allocates memory that is freed by ncsh_parser_free_values at the end of each main loop of the shell.
- */
 void ncsh_parser_parse(const char* const restrict line,
                        const size_t length,
                        struct ncsh_Args* const restrict args,
                        struct ncsh_Arena* const scratch_arena);
 
-/* ncsh_parser_parse_noninteractive
- * Parse the command line input into commands, command lengths, and op codes stored in struct ncsh_Args.
- * Allocates memory that is freed by ncsh_parser_free_values at the end of each main loop of the shell.
- */
 void ncsh_parser_parse_noninteractive(const char** const restrict inputs,
                                       const size_t inputs_count,
                                       struct ncsh_Args* const restrict args,

@@ -18,7 +18,8 @@
 #define NCSH_Z_PRINT "print"
 int_fast32_t ncsh_builtins_z(struct z_Database* const restrict z_db,
                              const struct ncsh_Args* const restrict args,
-                             struct ncsh_Arena* const arena);
+                             struct ncsh_Arena* const arena,
+                             struct ncsh_Arena* const scratch_arena);
 
 #define NCSH_HISTORY "history" // the base command, displays history
 #define NCSH_HISTORY_COUNT "count"

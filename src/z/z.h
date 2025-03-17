@@ -59,7 +59,8 @@ void z(char* target,
        const size_t target_length,
        const char* const cwd,
        struct z_Database* const restrict db,
-       struct ncsh_Arena* const arena);
+       struct ncsh_Arena* const arena,
+       struct ncsh_Arena scratch_arena);
 
 enum z_Result z_add(const char* const path,
                     const size_t path_length,

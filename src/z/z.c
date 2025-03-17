@@ -221,11 +221,6 @@ enum z_Result z_read_entry(struct z_Directory* const restrict dir,
     }
 
     dir->path = alloc(arena, dir->path_length + 1, char);
-    if (!dir->path) {
-        perror("Memory allocation for z path failed");
-        free(dir);
-        return Z_MALLOC_ERROR;
-    }
 
     bytes_read = fread(dir->path, sizeof(char), dir->path_length, file);
     if (!bytes_read) {
@@ -337,9 +332,6 @@ enum z_Result z_write_entry_new(const char* const path,
     }
 
     db->dirs[db->count].path = alloc(arena, path_length, char);
-    if (!db->dirs[db->count].path) {
-        return Z_MALLOC_ERROR;
-    }
 
     memcpy(db->dirs[db->count].path, path, path_length);
     assert(db->dirs[db->count].path[path_length - 1] == '\0');
@@ -372,9 +364,6 @@ enum z_Result z_database_add(const char* const path,
     assert(total_length > 0);
 
     db->dirs[db->count].path = alloc(arena, total_length, char);
-    if (!db->dirs[db->count].path) {
-        return Z_MALLOC_ERROR;
-    }
 
     memcpy(db->dirs[db->count].path, cwd, cwd_length);
     memcpy(db->dirs[db->count].path + cwd_length - 1, "/", 2);
@@ -402,9 +391,6 @@ enum z_Result z_database_file_set(const struct eskilib_String* const config_file
     constexpr size_t z_db_file_len = sizeof(Z_DATABASE_FILE);
 #ifdef Z_TEST
     db->database_file = alloc(arena, z_db_file_len, char);
-    if (!db->database_file) {
-        return Z_MALLOC_ERROR;
-    }
     memcpy(db->database_file, Z_DATABASE_FILE, z_db_file_len);
     return Z_SUCCESS;
 #endif /* ifdef Z_TEST */
@@ -418,9 +404,6 @@ enum z_Result z_database_file_set(const struct eskilib_String* const config_file
     }
 
     db->database_file = alloc(arena, config_file->length + z_db_file_len, char);
-    if (!db->database_file) {
-        return Z_MALLOC_ERROR;
-    }
 
     memcpy(db->database_file, config_file->value, config_file->length);
     memcpy(db->database_file + config_file->length - 1, Z_DATABASE_FILE, z_db_file_len);
@@ -452,7 +435,8 @@ enum z_Result z_init(const struct eskilib_String* const config_file,
 enum z_Result z_directory_match_exists(const char* const target,
                                        const size_t target_length,
                                        const char* const cwd,
-                                       struct eskilib_String* const output)
+                                       struct eskilib_String* const output,
+                                       struct ncsh_Arena* const scratch_arena)
 {
     assert(target && cwd && target_length > 0);
 
@@ -471,10 +455,7 @@ enum z_Result z_directory_match_exists(const char* const target,
 
         directory_length = strlen(directory_entry->d_name) + 1;
         if (eskilib_string_compare_const(target, target_length, directory_entry->d_name, directory_length)) {
-            output->value = malloc(directory_length);
-            if (!output->value) {
-                return Z_MALLOC_ERROR;
-            }
+            output->value = alloc(scratch_arena, directory_length, char);
             output->length = directory_length;
             memcpy(output->value, directory_entry->d_name, directory_length);
 
@@ -499,7 +480,8 @@ void z(char* target,
        const size_t target_length,
        const char* const cwd,
        struct z_Database* const restrict db,
-       struct ncsh_Arena* const arena)
+       struct ncsh_Arena* const arena,
+       struct ncsh_Arena scratch_arena)
 {
 #ifdef Z_DEBUG
     printf("z: %s\n", target.value);
@@ -541,33 +523,23 @@ void z(char* target,
     struct eskilib_String output = {0};
     struct z_Directory* match = z_match_find(target, target_length, cwd, cwd_length, db);
 
-    if (z_directory_match_exists(target, target_length, cwd, &output) == Z_SUCCESS) {
+    if (z_directory_match_exists(target, target_length, cwd, &output, &scratch_arena) == Z_SUCCESS) {
 #ifdef Z_DEBUG
         printf("dir matches %s\n", output.value);
 #endif /* ifdef Z_DEBUG */
 
         if (!match && z_database_add(output.value, output.length, cwd, cwd_length, db, arena) != Z_SUCCESS) {
-            if (output.value) {
-                free(output.value);
-            }
             return;
         }
 
         if (chdir(output.value) == -1) {
-            if (output.value) {
-                free(output.value);
-            }
             if (!match) {
                 perror("z: couldn't change directory (3)");
                 return;
             }
         }
-        else {
-            if (output.value) {
-                free(output.value);
-            }
-            return;
-        }
+
+        return;
     }
 
     if (match && match->path && match->path_length > 0) {
@@ -647,7 +619,6 @@ enum z_Result z_remove(const char* const path,
 
     for (size_t i = 0; i < db->count; ++i) {
         if (eskilib_string_compare((db->dirs + i)->path, (db->dirs + i)->path_length, (char*)path, path_length)) {
-            free((db->dirs + i)->path);
             (db->dirs + i)->path = NULL;
             (db->dirs + i)->path_length = 0;
             (db->dirs + i)->last_accessed = 0;

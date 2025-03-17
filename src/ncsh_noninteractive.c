@@ -18,6 +18,10 @@
 #include "ncsh_parser.h"
 #include "vm/ncsh_vm.h"
 
+/* ncsh_noninteractive_run
+ * Parses and sends output of parser to VM. Parser data stored in scratch arena, which is then used by VM.
+ * Scratch arena reset after scope ends due to passing by value.
+ */
 int_fast32_t ncsh_noninteractive_run(const char** const restrict argv,
                                      const size_t argc,
                                      struct ncsh_Args* args,

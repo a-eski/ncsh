@@ -24,7 +24,8 @@
 [[nodiscard]]
 int_fast32_t ncsh_builtins_z(struct z_Database* const restrict z_db,
                              const struct ncsh_Args* const restrict args,
-                             struct ncsh_Arena* const arena)
+                             struct ncsh_Arena* const arena,
+                             struct ncsh_Arena* const scratch_arena)
 {
     assert(z_db);
     assert(args->count > 0);
@@ -45,7 +46,7 @@ int_fast32_t ncsh_builtins_z(struct z_Database* const restrict z_db,
             return NCSH_COMMAND_EXIT_FAILURE;
         }
 
-        z(args->values[1], args->lengths[1], cwd, z_db, arena);
+        z(args->values[1], args->lengths[1], cwd, z_db, arena, *scratch_arena);
         return NCSH_COMMAND_SUCCESS_CONTINUE;
     }
 
@@ -93,25 +94,25 @@ int_fast32_t ncsh_builtins_history(struct ncsh_History* const restrict history,
         }
         else if (eskilib_string_compare(args->values[1], args->lengths[1], NCSH_HISTORY_CLEAN,
                                         sizeof(NCSH_HISTORY_CLEAN))) {
-            return ncsh_history_command_clean(history);
+            return ncsh_history_command_clean(history, arena);
         }
     }
 
     if (args->count == 3) {
         assert(args->values[1] && args->values[2]);
 
-        // z add
+            // z add
         if (eskilib_string_compare(args->values[1], args->lengths[1], NCSH_HISTORY_ADD, sizeof(NCSH_HISTORY_ADD))) {
-            if (ncsh_history_command_add(args->values[2], args->lengths[2], history, arena) != Z_SUCCESS) {
-                return NCSH_COMMAND_FAILED_CONTINUE;
-            }
+                if (ncsh_history_command_add(args->values[2], args->lengths[2], history, arena) != Z_SUCCESS) {
+                    return NCSH_COMMAND_FAILED_CONTINUE;
+                }
 
             return NCSH_COMMAND_SUCCESS_CONTINUE;
         }
 	// z rm/remove
         else if (eskilib_string_compare(args->values[1], args->lengths[1], NCSH_HISTORY_RM, sizeof(NCSH_HISTORY_RM)) ||
                 eskilib_string_compare(args->values[1], args->lengths[1], NCSH_HISTORY_REMOVE, sizeof(NCSH_HISTORY_REMOVE))) {
-            if (ncsh_history_command_remove(args->values[2], args->lengths[2], history) != Z_SUCCESS) {
+            if (ncsh_history_command_remove(args->values[2], args->lengths[2], history, arena) != Z_SUCCESS) {
                 return NCSH_COMMAND_FAILED_CONTINUE;
             }
 

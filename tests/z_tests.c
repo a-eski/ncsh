@@ -388,6 +388,7 @@ void z_match_find_multiple_matches_test(void)
 void z_change_directory_test(void)
 {
     NCSH_ARENA_TEST_SETUP;
+    NCSH_SCRATCH_ARENA_TEST_SETUP;
 
     struct z_Database db = {0};
     eskilib_assert(z_init(&config_location, &db, &arena) == Z_SUCCESS);
@@ -398,14 +399,16 @@ void z_change_directory_test(void)
 
     if (!getcwd(buffer, CWD_LENGTH)) {
         NCSH_ARENA_TEST_TEARDOWN;
+        NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
         eskilib_assert(false);
     }
 
     struct eskilib_String target = {.value = "ncsh", .length = 5};
-    z(target.value, target.length, buffer, &db, &arena);
+    z(target.value, target.length, buffer, &db, &arena, scratch_arena);
 
     if (!getcwd(buffer_after, CWD_LENGTH)) {
         NCSH_ARENA_TEST_TEARDOWN;
+        NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
         eskilib_assert(false);
     }
 
@@ -417,11 +420,13 @@ void z_change_directory_test(void)
     }
 
     NCSH_ARENA_TEST_TEARDOWN;
+    NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 void z_home_empty_target_change_directory_test(void)
 {
     NCSH_ARENA_TEST_SETUP;
+    NCSH_SCRATCH_ARENA_TEST_SETUP;
 
     struct z_Database db = {0};
     eskilib_assert(z_init(&config_location, &db, &arena) == Z_SUCCESS);
@@ -432,14 +437,16 @@ void z_home_empty_target_change_directory_test(void)
 
     if (!getcwd(buffer, CWD_LENGTH)) {
         NCSH_ARENA_TEST_TEARDOWN;
+        NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
         eskilib_assert(false);
     }
 
     struct eskilib_String target = eskilib_String_Empty;
-    z(target.value, target.length, buffer, &db, &arena);
+    z(target.value, target.length, buffer, &db, &arena, scratch_arena);
 
     if (!getcwd(buffer_after, CWD_LENGTH)) {
         NCSH_ARENA_TEST_TEARDOWN;
+        NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
         eskilib_assert(false);
     }
 
@@ -448,15 +455,19 @@ void z_home_empty_target_change_directory_test(void)
 
     if (chdir(buffer) == -1) { // remove when database file location support added
         perror("Couldn't change back to previous directory");
+        NCSH_ARENA_TEST_TEARDOWN;
+        NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
         eskilib_assert(false);
     }
 
     NCSH_ARENA_TEST_TEARDOWN;
+    NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 void z_no_match_change_directory_test(void)
 {
     NCSH_ARENA_TEST_SETUP;
+    NCSH_SCRATCH_ARENA_TEST_SETUP;
 
     struct z_Database db = {0};
     eskilib_assert(z_init(&config_location, &db, &arena) == Z_SUCCESS);
@@ -467,14 +478,16 @@ void z_no_match_change_directory_test(void)
 
     if (!getcwd(buffer, CWD_LENGTH)) {
         NCSH_ARENA_TEST_TEARDOWN;
+        NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
         eskilib_assert(false);
     }
 
     struct eskilib_String target = {.value = "zzz", .length = 4};
-    z(target.value, target.length, buffer, &db, &arena);
+    z(target.value, target.length, buffer, &db, &arena, scratch_arena);
 
     if (!getcwd(buffer_after, CWD_LENGTH)) {
         NCSH_ARENA_TEST_TEARDOWN;
+        NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
         eskilib_assert(false);
     }
 
@@ -482,15 +495,19 @@ void z_no_match_change_directory_test(void)
 
     if (chdir(buffer) == -1) { // remove when directory location added
         perror("Couldn't change back to previous directory");
+        NCSH_ARENA_TEST_TEARDOWN;
+        NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
         eskilib_assert(false);
     }
 
     NCSH_ARENA_TEST_TEARDOWN;
+    NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 void z_valid_subdirectory_change_directory_test(void)
 {
     NCSH_ARENA_TEST_SETUP;
+    NCSH_SCRATCH_ARENA_TEST_SETUP;
 
     struct z_Database db = {0};
     eskilib_assert(z_init(&config_location, &db, &arena) == Z_SUCCESS);
@@ -501,14 +518,16 @@ void z_valid_subdirectory_change_directory_test(void)
 
     if (!getcwd(buffer, CWD_LENGTH)) {
         NCSH_ARENA_TEST_TEARDOWN;
+        NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
         eskilib_assert(false);
     }
 
     struct eskilib_String target = {.value = "tests", .length = 6};
-    z(target.value, target.length, buffer, &db, &arena);
+    z(target.value, target.length, buffer, &db, &arena, scratch_arena);
 
     if (!getcwd(buffer_after, CWD_LENGTH)) {
         NCSH_ARENA_TEST_TEARDOWN;
+        NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
         eskilib_assert(false);
     }
 
@@ -516,16 +535,20 @@ void z_valid_subdirectory_change_directory_test(void)
 
     if (chdir(buffer) == -1) { // remove when database file location support added
         perror("Couldn't change back to previous directory");
+        NCSH_ARENA_TEST_TEARDOWN;
+        NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
         eskilib_assert(false);
     }
 
     NCSH_ARENA_TEST_TEARDOWN;
+    NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 // multiple dirs i.e. ncsh -> src/z
 void z_dir_slash_dir_change_directory_test(void)
 {
     NCSH_ARENA_TEST_SETUP;
+    NCSH_SCRATCH_ARENA_TEST_SETUP;
 
     struct z_Database db = {0};
     eskilib_assert(z_init(&config_location, &db, &arena) == Z_SUCCESS);
@@ -536,16 +559,18 @@ void z_dir_slash_dir_change_directory_test(void)
 
     if (!getcwd(buffer, CWD_LENGTH)) {
         NCSH_ARENA_TEST_TEARDOWN;
+        NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
         eskilib_assert(false);
     }
     size_t buffer_length = strlen(buffer) + 1;
     struct eskilib_String target = {.value = "tests/test_dir", .length = 15};
     z_database_add(target.value, target.length, buffer, buffer_length, &db, &arena);
 
-    z(target.value, target.length, buffer, &db, &arena);
+    z(target.value, target.length, buffer, &db, &arena, scratch_arena);
 
     if (!getcwd(buffer_after, CWD_LENGTH)) {
         NCSH_ARENA_TEST_TEARDOWN;
+        NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
         eskilib_assert(false);
     }
 
@@ -554,17 +579,21 @@ void z_dir_slash_dir_change_directory_test(void)
 
     if (chdir(buffer) == -1) { // remove when database file location support added
         perror("Couldn't change back to previous directory");
+        NCSH_ARENA_TEST_TEARDOWN;
+        NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
         eskilib_assert(false);
     }
 
     z_exit(&db);
     NCSH_ARENA_TEST_TEARDOWN;
+    NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 // normal things like ..
 void z_double_dot_change_directory_test(void)
 {
     NCSH_ARENA_TEST_SETUP;
+    NCSH_SCRATCH_ARENA_TEST_SETUP;
 
     struct z_Database db = {0};
     eskilib_assert(z_init(&config_location, &db, &arena) == Z_SUCCESS);
@@ -575,14 +604,16 @@ void z_double_dot_change_directory_test(void)
 
     if (!getcwd(buffer, CWD_LENGTH)) {
         NCSH_ARENA_TEST_TEARDOWN;
+        NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
         eskilib_assert(false);
     }
 
     struct eskilib_String target = {.value = "..", .length = 3};
-    z(target.value, target.length, buffer, &db, &arena);
+    z(target.value, target.length, buffer, &db, &arena, scratch_arena);
 
     if (!getcwd(buffer_after, CWD_LENGTH)) {
         NCSH_ARENA_TEST_TEARDOWN;
+        NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
         eskilib_assert(false);
     }
 
@@ -590,17 +621,21 @@ void z_double_dot_change_directory_test(void)
 
     if (chdir(buffer) == -1) { // remove when database file location support added
         perror("Couldn't change back to previous directory");
+        NCSH_ARENA_TEST_TEARDOWN;
+        NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
         eskilib_assert(false);
     }
 
     z_exit(&db);
     NCSH_ARENA_TEST_TEARDOWN;
+    NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 void z_empty_database_valid_subdirectory_change_directory_test(void)
 {
-    NCSH_ARENA_TEST_SETUP;
     remove(Z_DATABASE_FILE);
+    NCSH_ARENA_TEST_SETUP;
+    NCSH_SCRATCH_ARENA_TEST_SETUP;
 
     struct z_Database db = {0};
     eskilib_assert(z_init(&config_location, &db, &arena) == Z_SUCCESS);
@@ -611,14 +646,16 @@ void z_empty_database_valid_subdirectory_change_directory_test(void)
 
     if (!getcwd(buffer, CWD_LENGTH)) {
         NCSH_ARENA_TEST_TEARDOWN;
+        NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
         eskilib_assert(false);
     }
 
     struct eskilib_String target = {.value = "tests", .length = 6};
-    z(target.value, target.length, buffer, &db, &arena);
+    z(target.value, target.length, buffer, &db, &arena, scratch_arena);
 
     if (!getcwd(buffer_after, CWD_LENGTH)) {
         NCSH_ARENA_TEST_TEARDOWN;
+        NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
         eskilib_assert(false);
     }
 
@@ -626,16 +663,20 @@ void z_empty_database_valid_subdirectory_change_directory_test(void)
 
     if (chdir(buffer) == -1) { // remove when database file location support added
         perror("Couldn't change back to previous directory");
+        NCSH_ARENA_TEST_TEARDOWN;
+        NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
         eskilib_assert(false);
     }
 
     NCSH_ARENA_TEST_TEARDOWN;
+    NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 // checks that when multiple entries are contained in another, it chooses the correct entry.
 void z_contains_correct_match_test(void)
 {
     NCSH_ARENA_TEST_SETUP;
+    NCSH_SCRATCH_ARENA_TEST_SETUP;
 
     struct z_Database db = {0};
     eskilib_assert(z_init(&config_location, &db, &arena) == Z_SUCCESS);
@@ -649,15 +690,17 @@ void z_contains_correct_match_test(void)
 
     if (!getcwd(buffer, CWD_LENGTH)) {
         NCSH_ARENA_TEST_TEARDOWN;
+        NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
         eskilib_assert(false);
     }
 
     struct eskilib_String target = {.value = "PersonalRepos", .length = 14};
-    z(target.value, target.length, buffer, &db, &arena);
+    z(target.value, target.length, buffer, &db, &arena, scratch_arena);
     const char* path = "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells";
 
     if (!getcwd(buffer_after, CWD_LENGTH)) {
         NCSH_ARENA_TEST_TEARDOWN;
+        NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
         eskilib_assert(false);
     }
 
@@ -666,10 +709,13 @@ void z_contains_correct_match_test(void)
 
     if (chdir(buffer) == -1) { // remove when database file location support added
         perror("Couldn't change back to previous directory");
+        NCSH_ARENA_TEST_TEARDOWN;
+        NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
         eskilib_assert(false);
     }
 
     NCSH_ARENA_TEST_TEARDOWN;
+    NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 int main(void)

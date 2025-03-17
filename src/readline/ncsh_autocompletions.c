@@ -26,18 +26,6 @@ struct ncsh_Autocompletion_Node* ncsh_autocompletions_alloc(struct ncsh_Arena* c
     return tree;
 }
 
-void ncsh_autocompletions_free_matches(struct ncsh_Autocompletion* const matches, const uint_fast8_t matches_count)
-{
-    assert(matches);
-    if (!matches) {
-        return;
-    }
-
-    for (uint_fast8_t i = 0; i <= matches_count; ++i) {
-        free(matches[i].value);
-    }
-}
-
 void ncsh_autocompletions_add(const char* const string,
                               const size_t length,
                               struct ncsh_Autocompletion_Node* restrict tree,
@@ -242,7 +230,6 @@ uint_fast8_t ncsh_autocompletions_first(const char* const search,
     }
 
     memcpy(match, potential_match.value, NCSH_MAX_INPUT);
-    ncsh_autocompletions_free_matches(matches, matches_count);
 
     return 1;
 }

@@ -119,6 +119,9 @@ enum eskilib_Result ncsh_config_file_set(struct ncsh_Config* const restrict conf
     return E_SUCCESS;
 }
 
+/* ncsh_config_path_add
+ * The function which handles config items which add values to PATH.
+ */
 #define PATH "PATH"
 #define PATH_ADD "PATH+="
 void ncsh_config_path_add(const char* const value,
@@ -142,6 +145,9 @@ void ncsh_config_path_add(const char* const value,
     setenv(PATH, new_path, true);
 }
 
+/* ncsh_config_process
+ * Iterate through the .ncshrc config file and perform any actions needed.
+ */
 void ncsh_config_process(FILE* const restrict file,
                          struct ncsh_Arena* const scratch_arena)
 {
@@ -156,6 +162,10 @@ void ncsh_config_process(FILE* const restrict file,
     }
 }
 
+/* ncsh_config_file_load
+ * Loads the .ncshrc file and processes it by calling ncsh_config_process if file could be loaded.
+ * Returns: enum eskilib_Result, E_SUCCESS if config file loaded or user doesn't want one.
+ */
 [[nodiscard]]
 enum eskilib_Result ncsh_config_file_load(const struct ncsh_Config* const restrict config,
                                           struct ncsh_Arena* const scratch_arena)
@@ -191,6 +201,11 @@ enum eskilib_Result ncsh_config_file_load(const struct ncsh_Config* const restri
     return E_SUCCESS;
 }
 
+/* ncsh_config_init
+ * Allocate memory via the arena bump allocator to store information related to configuration/rc file.
+ * Lives for lifetime of the shell.
+ * Returns: enum eskilib_Result, E_SUCCESS is successful
+ */
 [[nodiscard]]
 enum eskilib_Result ncsh_config_init(struct ncsh_Config* const restrict config,
                                      struct ncsh_Arena* const arena,
@@ -238,8 +253,7 @@ struct ncsh_Alias {
     struct eskilib_String actual_command;
 };
 
-/* aliases
- * A constant array of compile time aliases
+/* Compile-time aliases
  */
 const struct ncsh_Alias aliases[] = {
     { .alias = { .length = sizeof(GIT_ALIAS), .value = GIT_ALIAS }, .actual_command = { .length = sizeof(GIT), .value = GIT }},
@@ -249,6 +263,10 @@ const struct ncsh_Alias aliases[] = {
     { .alias = { .length = sizeof(CARGO_ALIAS ), .value = CARGO_ALIAS }, .actual_command = { .length = sizeof(CARGO), .value = CARGO }},
 };
 
+/* ncsh_config_alias_check
+ * Checks if the input matches to any of the compile-time defined aliased commands.
+ * Returns: the actual command as a struct eskilib_String, a char* value and a size_t length.
+ */
 struct eskilib_String ncsh_config_alias_check(const char* const restrict buffer, const size_t buf_len)
 {
     if (!buffer || buf_len < 2) {
