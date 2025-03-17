@@ -117,13 +117,6 @@ int_fast32_t ncsh(void)
 
     struct ncsh_Shell shell = {0};
 
-    /*constexpr int arena_capacity = 1<<24;
-    char* memory = malloc(arena_capacity);
-    shell.arena = (struct ncsh_Arena){ .start = memory, .end = memory + (arena_capacity) };
-
-    constexpr int scratch_arena_capacity = 1<<16;
-    char* scratch_memory = malloc(scratch_arena_capacity);
-    shell.scratch_arena = (struct ncsh_Arena){ .start = scratch_memory, .end = scratch_memory + (scratch_arena_capacity) };*/
     constexpr int arena_capacity = 1<<24;
     constexpr int scratch_arena_capacity = 1<<16;
     constexpr int total_capacity = arena_capacity + scratch_arena_capacity;
@@ -137,18 +130,16 @@ int_fast32_t ncsh(void)
         return EXIT_FAILURE;
     }
 
-    int_fast32_t exit_code = EXIT_SUCCESS;
-    int_fast32_t input_result = 0;
-    int_fast32_t command_result = 0;
-
-    #ifdef NCSH_START_TIME
+#ifdef NCSH_START_TIME
     clock_t end = clock();
     double elapsed_ms = ((double)(end - start)) / CLOCKS_PER_SEC * 1000;
     printf("ncsh: startup time: %.2f milliseconds\n", elapsed_ms);
 #endif
 
+    int_fast32_t exit_code = EXIT_SUCCESS;
+
     while (1) {
-        input_result = ncsh_readline(&shell.input, &shell.scratch_arena);
+        int_fast32_t input_result = ncsh_readline(&shell.input, &shell.scratch_arena);
         switch (input_result) {
         case EXIT_FAILURE: {
             exit_code = EXIT_FAILURE;
@@ -162,7 +153,7 @@ int_fast32_t ncsh(void)
         }
         }
 
-        command_result = ncsh_run(&shell, shell.scratch_arena);
+        int_fast32_t command_result = ncsh_run(&shell, shell.scratch_arena);
         switch (command_result) {
         case NCSH_COMMAND_EXIT_FAILURE: {
             exit_code = EXIT_FAILURE;
@@ -187,7 +178,6 @@ int_fast32_t ncsh(void)
 exit:
     ncsh_exit(&shell);
     free(memory);
-    // free(scratch_memory);
 
     return exit_code;
 }

@@ -11,7 +11,9 @@
 
 #define eskilib_String_Empty ((const struct eskilib_String){.value = NULL, .length = 0})
 
-#define eskilib_String_New(str) (struct eskilib_String){ .value = str, .length = sizeof(str) - 1 };
+// WARN: currently all string functions using this code incorporate null terminator in length
+// TODO: fix this, use length everywhere without null terminator... .length = sizeof(str) - 1
+#define eskilib_String_New(str) (struct eskilib_String){ .value = str, .length = sizeof(str) };
 
 struct eskilib_String {
     size_t length;

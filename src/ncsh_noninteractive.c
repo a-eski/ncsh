@@ -27,7 +27,7 @@ int_fast32_t ncsh_noninteractive_run(const char** const restrict argv,
                                      struct ncsh_Args* args,
                                      struct ncsh_Arena scratch_arena)
 {
-    ncsh_parser_parse_noninteractive(argv, argc, args, &scratch_arena); // argv + 1 because ncsh is first argv
+    ncsh_parser_parse_noninteractive(argv, argc, args, &scratch_arena);
 
     return ncsh_vm_execute_noninteractive(args);
 }
@@ -52,14 +52,14 @@ int_fast32_t ncsh_noninteractive(const int argc,
 #ifdef NCSH_DEBUG
     printf("ncsh running in noninteractive mode.\n");
 #endif /* ifdef NCSH_DEBUG */
-
     constexpr int arena_capacity = 1<<16;
-    char* memory = malloc(arena_capacity);
-    struct ncsh_Arena arena = { .start = memory, .end = memory + (arena_capacity) };
-
     constexpr int scratch_arena_capacity = 1<<16;
-    char* scratch_memory = malloc(scratch_arena_capacity);
-    struct ncsh_Arena scratch_arena = { .start = scratch_memory, .end = scratch_memory + (scratch_arena_capacity) };
+    constexpr int total_capacity = arena_capacity + scratch_arena_capacity;
+
+    char* memory = malloc(total_capacity);
+    struct ncsh_Arena arena = { .start = memory, .end = memory + (arena_capacity) };
+    char* scratch_memory_start = memory + (arena_capacity + 1);
+    struct ncsh_Arena scratch_arena = { .start = scratch_memory_start, .end = scratch_memory_start + (scratch_arena_capacity) };
 
     struct ncsh_Args args = {0};
     enum eskilib_Result result;
@@ -80,7 +80,6 @@ int_fast32_t ncsh_noninteractive(const int argc,
         : EXIT_SUCCESS;
 
     free(memory);
-    free(scratch_memory);
 
     return exit_code;
 }
