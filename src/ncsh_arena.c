@@ -1,0 +1,26 @@
+#include <assert.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "eskilib/eskilib_colors.h"
+#include "ncsh_arena.h"
+
+void* ncsh_arena_new_internal(struct ncsh_Arena* arena,
+                     uintptr_t count,
+                     uintptr_t size,
+                     uintptr_t alignment)
+{
+    uintptr_t padding = -(uintptr_t)arena->start & (alignment - 1);
+    uintptr_t available = (uintptr_t)arena->end - (uintptr_t)arena->start - padding;
+    assert(count < available / size);
+    if (available == 0 || count > available / size) {
+        puts(RED "ncsh: ran out of allocated memory." RESET);
+        abort();
+    }
+    void* val = arena->start + padding;
+    arena->start += padding + count * size;
+    return memset(val, 0, count * size);
+}

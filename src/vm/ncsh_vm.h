@@ -10,6 +10,7 @@
 
 int_fast32_t ncsh_vm_execute(struct ncsh_Shell* const restrict shell);
 
-int_fast32_t ncsh_vm_execute_noninteractive(struct ncsh_Args* const restrict args);
+int_fast32_t ncsh_vm_execute_noninteractive(struct ncsh_Args* const restrict args,
+                                            struct ncsh_Arena* const arena);
 
 #endif // !NCSH_VM_H_

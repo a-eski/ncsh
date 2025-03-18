@@ -17,7 +17,9 @@
 #define NCSH_Z_REMOVE "remove" // alias for rm
 #define NCSH_Z_PRINT "print"
 int_fast32_t ncsh_builtins_z(struct z_Database* const restrict z_db,
-                             const struct ncsh_Args* const restrict args);
+                             const struct ncsh_Args* const restrict args,
+                             struct ncsh_Arena* const arena,
+                             struct ncsh_Arena* const scratch_arena);
 
 #define NCSH_HISTORY "history" // the base command, displays history
 #define NCSH_HISTORY_COUNT "count"
@@ -26,7 +28,8 @@ int_fast32_t ncsh_builtins_z(struct z_Database* const restrict z_db,
 #define NCSH_HISTORY_RM "rm" // alias for rm
 #define NCSH_HISTORY_REMOVE "remove"
 int_fast32_t ncsh_builtins_history(struct ncsh_History* const restrict history,
-                                   const struct ncsh_Args* const restrict args);
+                                   const struct ncsh_Args* const restrict args,
+                                   struct ncsh_Arena* const arena);
 
 #define NCSH_EXIT "exit" // the base command
 #define NCSH_QUIT "quit" // alias for exit
@@ -54,7 +57,7 @@ int_fast32_t ncsh_builtins_set(const struct ncsh_Args* const restrict args);
 struct ncsh_Builtin {
     size_t length;
     char* value;
-    int_fast32_t (*func)(const struct ncsh_Args*);
+    int_fast32_t (*func)(const struct ncsh_Args* const restrict);
 };
 
 static const struct ncsh_Builtin builtins[] = {

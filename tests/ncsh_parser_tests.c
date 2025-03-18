@@ -4,64 +4,74 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "lib/ncsh_arena_test_helper.h"
 #include "../src/eskilib/eskilib_test.h"
 #include "../src/ncsh_parser.h"
 
 void ncsh_parser_parse_ls_test(void)
 {
+    NCSH_ARENA_TEST_SETUP;
+    NCSH_SCRATCH_ARENA_TEST_SETUP;
+
     char* line = "ls\0";
     size_t length = 3;
 
     struct ncsh_Args args;
-    bool result = ncsh_parser_args_malloc(&args);
+    bool result = ncsh_parser_args_alloc(&args, &arena);
     eskilib_assert(result == true);
-    ncsh_parser_parse(line, length, &args);
+    ncsh_parser_parse(line, length, &args, &scratch_arena);
 
     eskilib_assert(args.values != NULL);
     eskilib_assert(args.count == 1);
 
-    eskilib_assert(memcmp(args.values[0], line, length) == 0);
+    eskilib_assert(!memcmp(args.values[0], line, length));
     eskilib_assert(args.ops[0] == OP_CONSTANT);
     eskilib_assert(args.lengths[0] == length);
 
-    ncsh_parser_args_free_values(&args);
-    ncsh_parser_args_free(&args);
+    NCSH_ARENA_TEST_TEARDOWN;
+    NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 void ncsh_parser_parse_ls_dash_l_test(void)
 {
+    NCSH_ARENA_TEST_SETUP;
+    NCSH_SCRATCH_ARENA_TEST_SETUP;
+
     char* line = "ls -l\0";
     size_t length = 6;
 
     struct ncsh_Args args;
-    bool result = ncsh_parser_args_malloc(&args);
+    bool result = ncsh_parser_args_alloc(&args, &arena);
     eskilib_assert(result == true);
-    ncsh_parser_parse(line, length, &args);
+    ncsh_parser_parse(line, length, &args, &scratch_arena);
 
     eskilib_assert(args.values != NULL);
     eskilib_assert(args.count == 2);
 
-    eskilib_assert(memcmp(args.values[0], "ls", 3) == 0);
+    eskilib_assert(!memcmp(args.values[0], "ls", 3));
     eskilib_assert(args.ops[0] == OP_CONSTANT);
     eskilib_assert(args.lengths[0] == 3);
 
-    eskilib_assert(memcmp(args.values[1], "-l", 3) == 0);
+    eskilib_assert(!memcmp(args.values[1], "-l", 3));
     eskilib_assert(args.ops[1] == OP_CONSTANT);
     eskilib_assert(args.lengths[1] == 3);
 
-    ncsh_parser_args_free_values(&args);
-    ncsh_parser_args_free(&args);
+    NCSH_ARENA_TEST_TEARDOWN;
+    NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 void ncsh_parser_parse_pipe_test(void)
 {
+    NCSH_ARENA_TEST_SETUP;
+    NCSH_SCRATCH_ARENA_TEST_SETUP;
+
     char* line = "ls | sort\0";
     size_t length = 10;
 
     struct ncsh_Args args;
-    bool result = ncsh_parser_args_malloc(&args);
+    bool result = ncsh_parser_args_alloc(&args, &arena);
     eskilib_assert(result == true);
-    ncsh_parser_parse(line, length, &args);
+    ncsh_parser_parse(line, length, &args, &scratch_arena);
 
     eskilib_assert(args.values != NULL);
     eskilib_assert(args.count == 3);
@@ -78,19 +88,22 @@ void ncsh_parser_parse_pipe_test(void)
     eskilib_assert(args.ops[2] == OP_CONSTANT);
     eskilib_assert(args.lengths[2] == 5);
 
-    ncsh_parser_args_free_values(&args);
-    ncsh_parser_args_free(&args);
+    NCSH_ARENA_TEST_TEARDOWN;
+    NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 void ncsh_parser_parse_multiple_pipe_test(void)
 {
+    NCSH_ARENA_TEST_SETUP;
+    NCSH_SCRATCH_ARENA_TEST_SETUP;
+
     char* line = "ls | sort | table";
     size_t length = 18;
 
     struct ncsh_Args args;
-    bool result = ncsh_parser_args_malloc(&args);
+    bool result = ncsh_parser_args_alloc(&args, &arena);
     eskilib_assert(result == true);
-    ncsh_parser_parse(line, length, &args);
+    ncsh_parser_parse(line, length, &args, &scratch_arena);
 
     eskilib_assert(args.values != NULL);
     eskilib_assert(args.count == 5);
@@ -115,19 +128,22 @@ void ncsh_parser_parse_multiple_pipe_test(void)
     eskilib_assert(args.ops[4] == OP_CONSTANT);
     eskilib_assert(args.lengths[4] == 6);
 
-    ncsh_parser_args_free_values(&args);
-    ncsh_parser_args_free(&args);
+    NCSH_ARENA_TEST_TEARDOWN;
+    NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 void ncsh_parser_parse_background_job_test(void)
 {
+    NCSH_ARENA_TEST_SETUP;
+    NCSH_SCRATCH_ARENA_TEST_SETUP;
+
     char* line = "longrunningprogram &\0";
     size_t length = 21;
 
     struct ncsh_Args args;
-    bool result = ncsh_parser_args_malloc(&args);
+    bool result = ncsh_parser_args_alloc(&args, &arena);
     eskilib_assert(result == true);
-    ncsh_parser_parse(line, length, &args);
+    ncsh_parser_parse(line, length, &args, &scratch_arena);
 
     eskilib_assert(args.values != NULL);
     eskilib_assert(args.count == 2);
@@ -140,19 +156,22 @@ void ncsh_parser_parse_background_job_test(void)
     eskilib_assert(args.ops[1] == OP_BACKGROUND_JOB);
     eskilib_assert(args.lengths[1] == 2);
 
-    ncsh_parser_args_free_values(&args);
-    ncsh_parser_args_free(&args);
+    NCSH_ARENA_TEST_TEARDOWN;
+    NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 void ncsh_parser_parse_output_redirection_test(void)
 {
+    NCSH_ARENA_TEST_SETUP;
+    NCSH_SCRATCH_ARENA_TEST_SETUP;
+
     char* line = "ls > text.txt\0";
     size_t length = 14;
 
     struct ncsh_Args args;
-    bool result = ncsh_parser_args_malloc(&args);
+    bool result = ncsh_parser_args_alloc(&args, &arena);
     eskilib_assert(result == true);
-    ncsh_parser_parse(line, length, &args);
+    ncsh_parser_parse(line, length, &args, &scratch_arena);
 
     eskilib_assert(args.values != NULL);
     eskilib_assert(args.count == 3);
@@ -169,19 +188,22 @@ void ncsh_parser_parse_output_redirection_test(void)
     eskilib_assert(args.ops[2] == OP_CONSTANT);
     eskilib_assert(args.lengths[2] == 9);
 
-    ncsh_parser_args_free_values(&args);
-    ncsh_parser_args_free(&args);
+    NCSH_ARENA_TEST_TEARDOWN;
+    NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 void ncsh_parser_parse_output_redirection_append_test(void)
 {
+    NCSH_ARENA_TEST_SETUP;
+    NCSH_SCRATCH_ARENA_TEST_SETUP;
+
     char* line = "ls >> text.txt\0";
     size_t length = 15;
 
     struct ncsh_Args args;
-    bool result = ncsh_parser_args_malloc(&args);
+    bool result = ncsh_parser_args_alloc(&args, &arena);
     eskilib_assert(result == true);
-    ncsh_parser_parse(line, length, &args);
+    ncsh_parser_parse(line, length, &args, &scratch_arena);
 
     eskilib_assert(args.values != NULL);
     eskilib_assert(args.count == 3);
@@ -198,19 +220,22 @@ void ncsh_parser_parse_output_redirection_append_test(void)
     eskilib_assert(args.ops[2] == OP_CONSTANT);
     eskilib_assert(args.lengths[2] == 9);
 
-    ncsh_parser_args_free_values(&args);
-    ncsh_parser_args_free(&args);
+    NCSH_ARENA_TEST_TEARDOWN;
+    NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 void ncsh_parser_parse_double_quotes_test(void)
 {
+    NCSH_ARENA_TEST_SETUP;
+    NCSH_SCRATCH_ARENA_TEST_SETUP;
+
     char* line = "echo \"hello\"\0";
     size_t length = 13;
 
     struct ncsh_Args args;
-    bool result = ncsh_parser_args_malloc(&args);
+    bool result = ncsh_parser_args_alloc(&args, &arena);
     eskilib_assert(result == true);
-    ncsh_parser_parse(line, length, &args);
+    ncsh_parser_parse(line, length, &args, &scratch_arena);
 
     eskilib_assert(args.values != NULL);
     eskilib_assert(args.count == 2);
@@ -221,19 +246,22 @@ void ncsh_parser_parse_double_quotes_test(void)
     eskilib_assert(memcmp(args.values[1], "hello", 6) == 0);
     eskilib_assert(args.lengths[1] == 6);
 
-    ncsh_parser_args_free_values(&args);
-    ncsh_parser_args_free(&args);
+    NCSH_ARENA_TEST_TEARDOWN;
+    NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 void ncsh_parser_parse_single_quotes_test(void)
 {
+    NCSH_ARENA_TEST_SETUP;
+    NCSH_SCRATCH_ARENA_TEST_SETUP;
+
     char* line = "echo \'hello\'\0";
     size_t length = 13;
 
     struct ncsh_Args args;
-    bool result = ncsh_parser_args_malloc(&args);
+    bool result = ncsh_parser_args_alloc(&args, &arena);
     eskilib_assert(result == true);
-    ncsh_parser_parse(line, length, &args);
+    ncsh_parser_parse(line, length, &args, &scratch_arena);
 
     eskilib_assert(args.values != NULL);
     eskilib_assert(args.count == 2);
@@ -244,19 +272,22 @@ void ncsh_parser_parse_single_quotes_test(void)
     eskilib_assert(memcmp(args.values[1], "hello", 6) == 0);
     eskilib_assert(args.lengths[1] == 6);
 
-    ncsh_parser_args_free_values(&args);
-    ncsh_parser_args_free(&args);
+    NCSH_ARENA_TEST_TEARDOWN;
+    NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 void ncsh_parser_parse_backtick_quotes_test(void)
 {
+    NCSH_ARENA_TEST_SETUP;
+    NCSH_SCRATCH_ARENA_TEST_SETUP;
+
     char* line = "echo `hello`\0";
     size_t length = 13;
 
     struct ncsh_Args args;
-    bool result = ncsh_parser_args_malloc(&args);
+    bool result = ncsh_parser_args_alloc(&args, &arena);
     eskilib_assert(result == true);
-    ncsh_parser_parse(line, length, &args);
+    ncsh_parser_parse(line, length, &args, &scratch_arena);
 
     eskilib_assert(args.values != NULL);
     eskilib_assert(args.count == 2);
@@ -267,19 +298,22 @@ void ncsh_parser_parse_backtick_quotes_test(void)
     eskilib_assert(memcmp(args.values[1], "hello", 6) == 0);
     eskilib_assert(args.lengths[1] == 6);
 
-    ncsh_parser_args_free_values(&args);
-    ncsh_parser_args_free(&args);
+    NCSH_ARENA_TEST_TEARDOWN;
+    NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 void ncsh_parser_parse_git_commit_test(void)
 {
+    NCSH_ARENA_TEST_SETUP;
+    NCSH_SCRATCH_ARENA_TEST_SETUP;
+
     char* line = "git commit -m \"this is a commit message\"\0";
     size_t length = strlen(line) + 1;
 
     struct ncsh_Args args;
-    bool result = ncsh_parser_args_malloc(&args);
+    bool result = ncsh_parser_args_alloc(&args, &arena);
     eskilib_assert(result == true);
-    ncsh_parser_parse(line, length, &args);
+    ncsh_parser_parse(line, length, &args, &scratch_arena);
 
     eskilib_assert(args.values != NULL);
     eskilib_assert(args.count == 4);
@@ -300,19 +334,22 @@ void ncsh_parser_parse_git_commit_test(void)
     eskilib_assert(args.lengths[3] == 25);
     eskilib_assert(args.ops[3] == OP_CONSTANT);
 
-    ncsh_parser_args_free_values(&args);
-    ncsh_parser_args_free(&args);
+    NCSH_ARENA_TEST_TEARDOWN;
+    NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 void ncsh_parser_parse_home_test(void)
 {
+    NCSH_ARENA_TEST_SETUP;
+    NCSH_SCRATCH_ARENA_TEST_SETUP;
+
     char* line = "ls ~\0";
     size_t length = 5;
 
     struct ncsh_Args args;
-    bool result = ncsh_parser_args_malloc(&args);
+    bool result = ncsh_parser_args_alloc(&args, &arena);
     eskilib_assert(result == true);
-    ncsh_parser_parse(line, length, &args);
+    ncsh_parser_parse(line, length, &args, &scratch_arena);
 
     eskilib_assert(args.values != NULL);
     eskilib_assert(args.count == 2);
@@ -323,19 +360,22 @@ void ncsh_parser_parse_home_test(void)
     eskilib_assert(memcmp(args.values[1], "/home/alex", 11) == 0);
     eskilib_assert(args.lengths[1] == 11);
 
-    ncsh_parser_args_free_values(&args);
-    ncsh_parser_args_free(&args);
+    NCSH_ARENA_TEST_TEARDOWN;
+    NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 void ncsh_parser_parse_home_at_start_test(void)
 {
+    NCSH_ARENA_TEST_SETUP;
+    NCSH_SCRATCH_ARENA_TEST_SETUP;
+
     char* line = "ls ~/snap\0";
     size_t length = 10;
 
     struct ncsh_Args args;
-    bool result = ncsh_parser_args_malloc(&args);
+    bool result = ncsh_parser_args_alloc(&args, &arena);
     eskilib_assert(result == true);
-    ncsh_parser_parse(line, length, &args);
+    ncsh_parser_parse(line, length, &args, &scratch_arena);
 
     eskilib_assert(args.values != NULL);
     eskilib_assert(args.count == 2);
@@ -346,18 +386,21 @@ void ncsh_parser_parse_home_at_start_test(void)
     eskilib_assert(memcmp(args.values[1], "/home/alex/snap", 16) == 0);
     eskilib_assert(args.lengths[1] == 16);
 
-    ncsh_parser_args_free_values(&args);
-    ncsh_parser_args_free(&args);
+    NCSH_ARENA_TEST_TEARDOWN;
+    NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 void ncsh_parser_parse_math_operators(void)
 {
+    NCSH_ARENA_TEST_SETUP;
+    NCSH_SCRATCH_ARENA_TEST_SETUP;
+
     char* line = "( 1 + 1 - 1 * 1 / 1 % 1 ** 1 )";
     size_t length = strlen(line) + 1;
     struct ncsh_Args args;
-    bool result = ncsh_parser_args_malloc(&args);
+    bool result = ncsh_parser_args_alloc(&args, &arena);
     eskilib_assert(result == true);
-    ncsh_parser_parse(line, length, &args);
+    ncsh_parser_parse(line, length, &args, &scratch_arena);
 
     eskilib_assert(args.ops[0] == OP_MATH_EXPRESSION_START);
 
@@ -378,61 +421,70 @@ void ncsh_parser_parse_math_operators(void)
 
     eskilib_assert(args.ops[14] == OP_MATH_EXPRESSION_END);
 
-    ncsh_parser_args_free_values(&args);
-    ncsh_parser_args_free(&args);
+    NCSH_ARENA_TEST_TEARDOWN;
+    NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 void ncsh_parser_parse_glob_star_shouldnt_crash(void)
 {
+    NCSH_ARENA_TEST_SETUP;
+    NCSH_SCRATCH_ARENA_TEST_SETUP;
+
     // found from fuzzer crashing inputs
     char* line = "* * * * * * * * * * * * * * * * * *";
     size_t length = strlen(line) + 1;
 
     struct ncsh_Args args;
-    bool result = ncsh_parser_args_malloc(&args);
+    bool result = ncsh_parser_args_alloc(&args, &arena);
     eskilib_assert(result == true);
-    ncsh_parser_parse(line, length, &args);
+    ncsh_parser_parse(line, length, &args, &scratch_arena);
 
     eskilib_assert(args.count == 0);
 
-    ncsh_parser_args_free_values(&args);
-    ncsh_parser_args_free(&args);
+    NCSH_ARENA_TEST_TEARDOWN;
+    NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 void ncsh_parser_parse_tilde_home_shouldnt_crash(void)
 {
+    NCSH_ARENA_TEST_SETUP;
+    NCSH_SCRATCH_ARENA_TEST_SETUP;
+
     // found from fuzzer crashing inputs
     char* line =
         "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~?~";
     size_t length = strlen(line) + 1;
 
     struct ncsh_Args args;
-    bool result = ncsh_parser_args_malloc(&args);
+    bool result = ncsh_parser_args_alloc(&args, &arena);
     eskilib_assert(result == true);
-    ncsh_parser_parse(line, length, &args);
+    ncsh_parser_parse(line, length, &args, &scratch_arena);
 
     eskilib_assert(args.count == 0);
 
-    ncsh_parser_args_free_values(&args);
-    ncsh_parser_args_free(&args);
+    NCSH_ARENA_TEST_TEARDOWN;
+    NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 void ncsh_parser_parse_glob_question_and_tilde_home_shouldnt_crash(void)
 {
+    NCSH_ARENA_TEST_SETUP;
+    NCSH_SCRATCH_ARENA_TEST_SETUP;
+
     // found from fuzzer crashing inputs
     char* line = "??~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
                  "~~~~?~>w?";
     size_t length = strlen(line) + 1;
 
     struct ncsh_Args args;
-    bool result = ncsh_parser_args_malloc(&args);
+    bool result = ncsh_parser_args_alloc(&args, &arena);
     eskilib_assert(result == true);
-    ncsh_parser_parse(line, length, &args);
+    ncsh_parser_parse(line, length, &args, &scratch_arena);
 
     eskilib_assert(args.count == 0);
 
-    ncsh_parser_args_free_values(&args);
-    ncsh_parser_args_free(&args);
+    NCSH_ARENA_TEST_TEARDOWN;
+    NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 // forward declaration: implementation put at the end because it messes with clangd lsp
@@ -489,17 +541,20 @@ int main(void)
 // put at the end because it messes with clangd lsp
 void ncsh_parser_parse_bad_input_shouldnt_crash(void)
 {
+    NCSH_ARENA_TEST_SETUP;
+    NCSH_SCRATCH_ARENA_TEST_SETUP;
+
     char* line = "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~C~~~~~~~~~~~~~k~"
                  "~~~~>ÿÿ> >ÿ>\w\>ÿ> >ÿ> \> >";
     size_t length = strlen(line) + 1;
 
     struct ncsh_Args args;
-    bool result = ncsh_parser_args_malloc(&args);
+    bool result = ncsh_parser_args_alloc(&args, &arena);
     eskilib_assert(result == true);
-    ncsh_parser_parse(line, length, &args);
+    ncsh_parser_parse(line, length, &args, &scratch_arena);
 
-    // eskilib_assert(args.count == 0);
+    // no crash is passing test here
 
-    ncsh_parser_args_free_values(&args);
-    ncsh_parser_args_free(&args);
+    NCSH_ARENA_TEST_TEARDOWN;
+    NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
 }

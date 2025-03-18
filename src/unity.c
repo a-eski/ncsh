@@ -14,6 +14,7 @@
 #include "z/z.c"
 
 #include "main.c"
+#include "ncsh_arena.c"
 #include "ncsh.c"
 #include "ncsh_config.c"
 #include "readline/ncsh_terminal.c"

@@ -5,6 +5,7 @@
 
 #include <stdint.h>
 
+#include "ncsh_arena.h"
 #include "ncsh_config.h"
 #include "ncsh_parser.h"
 #include "readline/ncsh_readline.h"
@@ -27,6 +28,9 @@ struct ncsh_Processes {
  * they live for the lifetime of the main shell loop.
  */
 struct ncsh_Shell {
+    struct ncsh_Arena arena;
+    struct ncsh_Arena scratch_arena;
+
     struct ncsh_Config config;
 
     struct ncsh_Input input;

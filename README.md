@@ -24,19 +24,19 @@ make
 
 # you can also build with clang. Requires clang 19+.
 make CC=clang
+
+# on ubuntu/debian, you may have to install and use clang-19 explicitly.
+make CC=clang-19
 ```
 
 ## installing
 
 ``` sh
-sudo make install
-
-# or can use cmake
-cd bin
+# install after building
 sudo make install
 
 # set as your shell
-usermod -s /bin/ncsh <username>
+sudo usermod -s /bin/ncsh <username>
 ```
 
 ## installation notes

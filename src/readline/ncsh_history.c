@@ -19,12 +19,13 @@
 #include "ncsh_history.h"
 
 void ncsh_history_file_set(const struct eskilib_String config_file,
-			   struct ncsh_History* const restrict history)
+			   struct ncsh_History* const restrict history,
+                           struct ncsh_Arena* const arena)
 {
 
     constexpr size_t history_file_len = sizeof(NCSH_HISTORY_FILE);
 #ifdef NCSH_HISTORY_TEST
-    history->file = malloc(history_file_len);
+    history->file = alloc(arena, history_file_len, char);
     memcpy(history->file, NCSH_HISTORY_FILE, history_file_len);
     return;
 #endif /* ifdef NCSH_HISTORY_TEST */
@@ -39,7 +40,7 @@ void ncsh_history_file_set(const struct eskilib_String config_file,
         return;
     }
 
-    history->file = malloc(config_file.length + history_file_len);
+    history->file = alloc(arena, config_file.length + history_file_len, char);
     memcpy(history->file, config_file.value, config_file.length);
     memcpy(history->file + config_file.length - 1, NCSH_HISTORY_FILE, history_file_len);
 
@@ -49,7 +50,8 @@ void ncsh_history_file_set(const struct eskilib_String config_file,
 }
 
 [[nodiscard]]
-enum eskilib_Result ncsh_history_malloc(struct ncsh_History* const restrict history)
+enum eskilib_Result ncsh_history_alloc(struct ncsh_History* const restrict history,
+                                        struct ncsh_Arena* const arena)
 {
     assert(history);
     if (!history) {
@@ -57,23 +59,20 @@ enum eskilib_Result ncsh_history_malloc(struct ncsh_History* const restrict hist
     }
 
     history->count = 0;
-    constexpr size_t entries_size = sizeof(struct eskilib_String) * NCSH_MAX_HISTORY_IN_MEMORY;
-    history->entries = malloc(entries_size);
-    if (history->entries == NULL) {
-        return E_FAILURE_MALLOC;
-    }
+    history->entries = alloc(arena, NCSH_MAX_HISTORY_IN_MEMORY, struct eskilib_String);
 
     return E_SUCCESS;
 }
 
 [[nodiscard]]
-enum eskilib_Result ncsh_history_load(struct ncsh_History* const restrict history)
+enum eskilib_Result ncsh_history_load(struct ncsh_History* const restrict history,
+                                      struct ncsh_Arena* const arena)
 {
     assert(history);
     assert(history->file);
 
     FILE* file = fopen(history->file, "r");
-    if (file == NULL) {
+    if (!file) {
 	/*printf("ncsh: would you like to create a history file %s? [Y/n]: ", history->file);
         fflush(stdout);
 
@@ -87,7 +86,7 @@ enum eskilib_Result ncsh_history_load(struct ncsh_History* const restrict histor
 	    return E_SUCCESS;*/
 
         file = fopen(history->file, "w");
-        if (file == NULL) {
+        if (!file) {
             perror(RED "ncsh: Could not load or create history file" RESET);
             return E_FAILURE_FILE_OP;
         }
@@ -102,11 +101,7 @@ enum eskilib_Result ncsh_history_load(struct ncsh_History* const restrict histor
          ++i) {
             ++history->count;
             history->entries[i].length = (size_t)buffer_length;
-            history->entries[i].value = malloc((size_t)buffer_length);
-            if (history->entries[i].value == NULL) {
-                return E_FAILURE_MALLOC;
-            }
-
+            history->entries[i].value = alloc(arena, (uintptr_t)buffer_length, char);
             memcpy(history->entries[i].value, buffer, (size_t)buffer_length);
     }
 
@@ -116,17 +111,17 @@ enum eskilib_Result ncsh_history_load(struct ncsh_History* const restrict histor
 }
 
 [[nodiscard]]
-enum eskilib_Result ncsh_history_reload(struct ncsh_History* const restrict history)
+enum eskilib_Result ncsh_history_reload(struct ncsh_History* const restrict history,
+                                        struct ncsh_Arena* const arena)
 {
     assert(history);
     assert(history->file);
-    size_t history_original_count = history->count;
     history->count = 0;
 
     FILE* file = fopen(history->file, "r");
-    if (file == NULL) {
+    if (!file) {
         file = fopen(history->file, "w");
-        if (file == NULL) {
+        if (!file) {
             perror(RED "ncsh: Could not load or create history file" RESET);
             return E_FAILURE_FILE_OP;
         }
@@ -141,45 +136,36 @@ enum eskilib_Result ncsh_history_reload(struct ncsh_History* const restrict hist
         if (buffer_length > 0) {
             ++history->count;
             history->entries[i].length = (size_t)buffer_length;
-            history->entries[i].value = realloc(history->entries[i].value, (size_t)buffer_length);
-            if (history->entries[i].value == NULL) {
-                return E_FAILURE_MALLOC;
-            }
-
+            history->entries[i].value = alloc(arena, (uintptr_t)buffer_length, char);
             memcpy(history->entries[i].value, buffer, (size_t)buffer_length);
         }
     }
 
     fclose(file);
 
-    if (history->count < history_original_count) {
-        for (size_t i = history->count; i < history_original_count; ++i) {
-            if (history->entries[i].value) {
-                free(history->entries[i].value);
-            }
-        }
-    }
-
     return E_SUCCESS;
 }
 
 [[nodiscard]]
 enum eskilib_Result ncsh_history_init(const struct eskilib_String config_location,
-                                                        struct ncsh_History* const restrict history)
+                                      struct ncsh_History* const restrict history,
+                                      struct ncsh_Arena* const arena)
 {
+    assert(arena);
+
     enum eskilib_Result result;
-    if ((result = ncsh_history_malloc(history)) != E_SUCCESS) {
+    if ((result = ncsh_history_alloc(history, arena)) != E_SUCCESS) {
         perror(RED "ncsh: Error when allocating memory for history" RESET);
         fflush(stderr);
         return result;
     }
 
-    ncsh_history_file_set(config_location, history);
-    if (history->file == NULL) {
+    ncsh_history_file_set(config_location, history, arena);
+    if (!history->file) {
         return E_FAILURE;
     }
 
-    if ((result = ncsh_history_load(history)) != E_SUCCESS) {
+    if ((result = ncsh_history_load(history, arena)) != E_SUCCESS) {
         perror(RED "ncsh: Error when loading data from history file" RESET);
         fflush(stderr);
         return result;
@@ -189,7 +175,8 @@ enum eskilib_Result ncsh_history_init(const struct eskilib_String config_locatio
 }
 
 [[nodiscard]]
-enum eskilib_Result ncsh_history_clean(struct ncsh_History* const restrict history)
+enum eskilib_Result ncsh_history_clean(struct ncsh_History* const restrict history,
+                                       struct ncsh_Arena* const arena)
 {
     assert(history);
     if (!history->count || !history->entries[0].value) {
@@ -200,20 +187,21 @@ enum eskilib_Result ncsh_history_clean(struct ncsh_History* const restrict histo
 
     struct eskilib_HashTable ht = {0};
 
+    // doesn't use arena for now, could use the scratch arena
     bool ht_malloc_result = eskilib_hashtable_malloc(&ht);
     if (!ht_malloc_result) {
         return E_FAILURE_MALLOC;
     }
 
     FILE* file = fopen(history->file, "w");
-    if (file == NULL) {
+    if (!file) {
         perror(RED "ncsh: Could not open .ncsh_history file to clean history" RESET);
         eskilib_hashtable_free(&ht);
         return E_FAILURE_FILE_OP;
     }
 
     for (size_t i = 0; i < history->count; ++i) {
-        if (!history->entries[i].length || history->entries[i].value == NULL) {
+        if (!history->entries[i].length || !history->entries[i].value) {
             continue;
         }
 
@@ -239,7 +227,7 @@ enum eskilib_Result ncsh_history_clean(struct ncsh_History* const restrict histo
     eskilib_hashtable_free(&ht);
 
     enum eskilib_Result result;
-    if ((result = ncsh_history_reload(history)) != E_SUCCESS) {
+    if ((result = ncsh_history_reload(history, arena)) != E_SUCCESS) {
         perror(RED "ncsh history: Error when reloading data from history file" RESET);
         fflush(stderr);
         return result;
@@ -252,8 +240,7 @@ enum eskilib_Result ncsh_history_clean(struct ncsh_History* const restrict histo
 
 enum eskilib_Result ncsh_history_save(struct ncsh_History* const restrict history)
 {
-    assert(history->count > 0);
-    if (!history->count || !history->entries || !history->entries[0].value) {
+    if (!history || !history->count || !history->entries || !history->entries[0].value) {
         return E_FAILURE_NULL_REFERENCE;
     }
 
@@ -269,7 +256,7 @@ enum eskilib_Result ncsh_history_save(struct ncsh_History* const restrict histor
     // when lots of duplicates exists
 
     FILE* file = fopen(history->file, "w"); // write over entire file each time for now
-    if (file == NULL) {
+    if (!file) {
         perror(RED "ncsh: Could not open .ncsh_history file to save history" RESET);
         return E_FAILURE_FILE_OP;
     }
@@ -295,38 +282,11 @@ enum eskilib_Result ncsh_history_save(struct ncsh_History* const restrict histor
     return E_SUCCESS;
 }
 
-void ncsh_history_free(struct ncsh_History* const restrict history)
-{
-    assert(history);
-
-    for (size_t i = 0; i < history->count; ++i) {
-	if (history->entries[i].value) {
-            free(history->entries[i].value);
-	}
-    }
-
-    if (history->file) {
-        free(history->file);
-    }
-    if (history->entries) {
-        free(history->entries);
-    }
-}
-
-void ncsh_history_exit(struct ncsh_History* const restrict history)
-{
-    if (history) {
-        if (history->count > 0) {
-            ncsh_history_save(history);
-        }
-        ncsh_history_free(history);
-    }
-}
-
 [[nodiscard]]
 enum eskilib_Result ncsh_history_add(const char* const line,
 				     const size_t length,
-                                     struct ncsh_History* const restrict history)
+                                     struct ncsh_History* const restrict history,
+                                     struct ncsh_Arena* const arena)
 {
     assert(history);
     assert(line);
@@ -350,7 +310,7 @@ enum eskilib_Result ncsh_history_add(const char* const line,
     }
 
     history->entries[history->count].length = length;
-    history->entries[history->count].value = malloc(length);
+    history->entries[history->count].value = alloc(arena, length, char);
     memcpy(history->entries[history->count].value, line, length);
     ++history->count;
     return E_SUCCESS;
@@ -360,9 +320,9 @@ enum eskilib_Result ncsh_history_add(const char* const line,
 struct eskilib_String ncsh_history_get(const size_t position,
 				       struct ncsh_History* const restrict history)
 {
-    assert(history != NULL);
+    assert(history);
 
-    if (history == NULL || !history->count || history->entries == NULL) {
+    if (!history || !history->count || !history->entries) {
         return eskilib_String_Empty;
     }
     else if (position >= history->count) {
@@ -401,9 +361,10 @@ int_fast32_t ncsh_history_command_count(const struct ncsh_History* history)
 }
 
 [[nodiscard]]
-int_fast32_t ncsh_history_command_clean(struct ncsh_History* const restrict history)
+int_fast32_t ncsh_history_command_clean(struct ncsh_History* const restrict history,
+                                        struct ncsh_Arena* const arena)
 {
-    if (ncsh_history_clean(history) != E_SUCCESS) {
+    if (ncsh_history_clean(history, arena) != E_SUCCESS) {
         return NCSH_COMMAND_FAILED_CONTINUE;
     }
 
@@ -412,9 +373,11 @@ int_fast32_t ncsh_history_command_clean(struct ncsh_History* const restrict hist
 
 [[nodiscard]]
 int_fast32_t ncsh_history_command_add(const char* const value,
-				      const size_t value_len, struct ncsh_History* const restrict history)
+				      const size_t value_len,
+                                      struct ncsh_History* const restrict history,
+                                      struct ncsh_Arena* const arena)
 {
-    return ncsh_history_add(value, value_len, history);
+    return ncsh_history_add(value, value_len, history, arena);
 }
 
 void ncsh_history_remove_entries_shift(const size_t offset,
@@ -432,19 +395,19 @@ void ncsh_history_remove_entries_shift(const size_t offset,
 [[nodiscard]]
 int_fast32_t ncsh_history_command_remove(const char* const value,
 					 const size_t value_len,
-                                         struct ncsh_History* const restrict history)
+                                         struct ncsh_History* const restrict history,
+                                         struct ncsh_Arena* const arena)
 {
     assert(value);
     assert(value_len > 0);
     assert(history);
 
-    if (ncsh_history_clean(history) != E_SUCCESS) {
+    if (ncsh_history_clean(history, arena) != E_SUCCESS) {
         return NCSH_COMMAND_FAILED_CONTINUE;
     }
 
     for (size_t i = 0; i < history->count; ++i) {
 	if (eskilib_string_compare_const(value, value_len, history->entries[i].value, history->entries[i].length)) {
-	    free(history->entries[i].value);
 	    history->entries[i].value = NULL;
 	    history->entries[i].length = 0;
 	    ncsh_history_remove_entries_shift(i, history);

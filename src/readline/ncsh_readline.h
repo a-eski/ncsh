@@ -46,24 +46,29 @@ struct ncsh_Input {
 };
 
 /* ncsh_readline_init
- * Allocates memory that lives for the lifetime of the shell and is used by readline to process user input.
+ * Allocates memory using the arena that lives for the lifetime of the shell and is used by readline to process user input.
  * Returns: exit status, EXIT_SUCCESS, EXIT_FAILURE, or value in ncsh_defines.h (EXIT_...)
  */
-int_fast32_t ncsh_readline_init(struct ncsh_Config* const restrict config, struct ncsh_Input* const restrict input);
+int_fast32_t ncsh_readline_init(struct ncsh_Config* const restrict config,
+                                struct ncsh_Input* const restrict input,
+                                struct ncsh_Arena* const arena);
 
 /* ncsh_readline
  * Read user input while supporting different operations like backspace, delete, history, autocompletions, home/end, and other inputs.
+ * Accepts a pointer to the scratch arena, but it passes a copy (by value) to autocompletion logic when it is needed to be used.
  * Returns: exit status, EXIT_SUCCESS, EXIT_FAILURE, or value in ncsh_defines.h (EXIT_...)
  */
-int_fast32_t ncsh_readline(struct ncsh_Input* const restrict input);
+int_fast32_t ncsh_readline(struct ncsh_Input* const restrict input,
+                           struct ncsh_Arena* const scratch_arena);
 
 /* ncsh_readline_history_and_autocompletion_add
- * Add user input that was able to be processed and executed by the VM to readline's history and autocompletion data stores.
+ * Add user input that was able to be processed and executed by the VM to readline's history and autocompletion data stores via the arena.
  */
-void ncsh_readline_history_and_autocompletion_add(struct ncsh_Input* const restrict input);
+void ncsh_readline_history_and_autocompletion_add(struct ncsh_Input* const restrict input,
+                                                  struct ncsh_Arena* const arena);
 
 /* ncsh_readline_exit
- * Releases memory at the end of the shell's lifetime related to readline functionility around processing and manipulating user input.
+ * Saves history changes and restores the terminal settings from before the shell was started.
  */
 void ncsh_readline_exit(struct ncsh_Input* const restrict input);
 
