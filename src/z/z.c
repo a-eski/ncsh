@@ -59,14 +59,15 @@ struct z_Directory* z_match_find(char* const target,
                                  const size_t target_length,
                                  const char* const cwd,
                                  const size_t cwd_length,
-                                 struct z_Database* const restrict db)
+                                 struct z_Database* const restrict db,
+                                 struct ncsh_Arena* const scratch_arena)
 {
     assert(db);
     if (!db->count || cwd_length < 2) {
         return NULL;
     }
 
-    fzf_slab_t* slab = fzf_make_default_slab();
+    fzf_slab_t* slab = fzf_make_slab((fzf_slab_config_t){(size_t)1<<6, 1<<6}, scratch_arena);
     fzf_pattern_t* pattern = fzf_parse_pattern(CaseSmart, target, target_length - 1);
     struct z_Match current_match = {0};
     time_t now = time(NULL);
@@ -101,7 +102,7 @@ struct z_Directory* z_match_find(char* const target,
     }
 
     fzf_free_pattern(pattern);
-    fzf_free_slab(slab);
+    // fzf_free_slab(slab);
 
     return current_match.dir;
 }
@@ -504,6 +505,7 @@ void z(char* target,
         return;
     }
 
+    // handle z .
     if (target_length == 2 && target[0] == '.') {
         if (chdir(target) == -1) {
             perror("z: couldn't change directory (1)");
@@ -511,6 +513,19 @@ void z(char* target,
 
         return;
     }
+    // handle z ~
+    else if (target_length == 2 && target[0] == '~') {
+        char* home = getenv("HOME");
+        if (!home) {
+            perror("z: couldn't get HOME from environment");
+        }
+        else if (chdir(home) == -1) {
+            perror("z: couldn't change directory to home");
+        }
+
+        return;
+    }
+    // handle z ..
     else if (target_length == 3 && target[0] == '.' && target[1] == '.') {
         if (chdir(target) == -1) {
             perror("z: couldn't change directory (2)");
@@ -521,7 +536,7 @@ void z(char* target,
 
     size_t cwd_length = strlen(cwd) + 1;
     struct eskilib_String output = {0};
-    struct z_Directory* match = z_match_find(target, target_length, cwd, cwd_length, db);
+    struct z_Directory* match = z_match_find(target, target_length, cwd, cwd_length, db, &scratch_arena);
 
     if (z_directory_match_exists(target, target_length, cwd, &output, &scratch_arena) == Z_SUCCESS) {
 #ifdef Z_DEBUG

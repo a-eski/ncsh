@@ -6,6 +6,7 @@
 #pragma GCC diagnostic ignored "-Wsign-conversion"
 
 #include "lib/examiner.h"
+#include "lib/ncsh_arena_test_helper.h"
 #include "../src/z/fzf.h"
 
 #include <stdlib.h>
@@ -25,17 +26,18 @@ typedef enum {
 #define call_alg(alg, case, txt, pat, assert_block)                            \
   {                                                                            \
     fzf_position_t *pos = fzf_pos_array(0);                                    \
-    fzf_result_t res = alg(case, false, txt, pat, pos, NULL);                  \
+    fzf_result_t res = alg(case, txt, pat, pos, NULL);                         \
     assert_block;                                                              \
     fzf_free_positions(pos);                                                   \
   }                                                                            \
   {                                                                            \
+    NCSH_SCRATCH_ARENA_TEST_SETUP;                                             \
     fzf_position_t *pos = fzf_pos_array(0);                                    \
-    fzf_slab_t *slab = fzf_make_default_slab();                                \
-    fzf_result_t res = alg(case, false, txt, pat, pos, slab);                  \
+    fzf_slab_t *slab = fzf_make_default_slab(&scratch_arena);                  \
+    fzf_result_t res = alg(case, txt, pat, pos, slab);                         \
     assert_block;                                                              \
     fzf_free_positions(pos);                                                   \
-    fzf_free_slab(slab);                                                       \
+    NCSH_SCRATCH_ARENA_TEST_TEARDOWN;                                          \
   }
 
 static int8_t max_i8(int8_t a, int8_t b) {
@@ -43,12 +45,12 @@ static int8_t max_i8(int8_t a, int8_t b) {
 }
 
 #define MATCH_WRAPPER(nn, og)                                                  \
-  fzf_result_t nn(bool case_sensitive, bool normalize, const char *text,       \
+  fzf_result_t nn(bool case_sensitive, const char *text,       \
                   const char *pattern, fzf_position_t *pos,                    \
                   fzf_slab_t *slab) {                                          \
     fzf_string_t input = {.data = text, .size = strlen(text)};                 \
     fzf_string_t pattern_wrap = {.data = pattern, .size = strlen(pattern)};    \
-    return og(case_sensitive, normalize, &input, &pattern_wrap, pos, slab);    \
+    return og(case_sensitive, &input, &pattern_wrap, pos, slab);    \
   }
 
 MATCH_WRAPPER(fuzzy_match_v2, fzf_fuzzy_match_v2);
@@ -628,13 +630,15 @@ TEST(PatternParsing, complexAnd) {
 }
 
 static void score_wrapper(char *pattern, char **input, int *expected) {
-  fzf_slab_t *slab = fzf_make_default_slab();
+
+  NCSH_SCRATCH_ARENA_TEST_SETUP;
+  fzf_slab_t *slab = fzf_make_default_slab(&scratch_arena);
   fzf_pattern_t *pat = fzf_parse_pattern(CaseSmart, pattern, strlen(pattern));
   for (size_t i = 0; input[i] != NULL; ++i) {
     ASSERT_EQ(expected[i], fzf_get_score(input[i], strlen(input[i]), pat, slab));
   }
   fzf_free_pattern(pat);
-  fzf_free_slab(slab);
+  NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 TEST(ScoreIntegration, simple) {
@@ -677,7 +681,8 @@ TEST(ScoreIntegration, complexTerm) {
 }
 
 static void pos_wrapper(char *pattern, char **input, int **expected) {
-  fzf_slab_t *slab = fzf_make_default_slab();
+  NCSH_SCRATCH_ARENA_TEST_SETUP;
+  fzf_slab_t *slab = fzf_make_default_slab(&scratch_arena);
   fzf_pattern_t *pat = fzf_parse_pattern(CaseSmart, pattern, strlen(pattern));
   for (size_t i = 0; input[i] != NULL; ++i) {
     fzf_position_t *pos = fzf_get_positions(input[i], pat, slab);
@@ -696,7 +701,7 @@ static void pos_wrapper(char *pattern, char **input, int **expected) {
     fzf_free_positions(pos);
   }
   fzf_free_pattern(pat);
-  fzf_free_slab(slab);
+  NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 TEST(PosIntegration, simple) {

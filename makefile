@@ -175,7 +175,7 @@ fza:
 
 .PHONY: test_fzf
 test_fzf :
-	$(CC) $(STD) -fsanitize=address,undefined,leak -g ./src/z/fzf.c ./tests/lib/examiner.c ./tests/fzf_tests.c -o ./bin/fzf_tests
+	$(CC) $(STD) -fsanitize=address,undefined,leak -g ./src/ncsh_arena.c ./src/z/fzf.c ./tests/lib/examiner.c ./tests/fzf_tests.c -o ./bin/fzf_tests
 	@LD_LIBRARY_PATH=/usr/local/lib:./bin/:${LD_LIBRARY_PATH} ./bin/fzf_tests
 .PHONY: tf
 tf :
