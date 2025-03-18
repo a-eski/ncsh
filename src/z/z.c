@@ -68,13 +68,13 @@ struct z_Directory* z_match_find(char* const target,
     }
 
     fzf_slab_t* slab = fzf_make_slab((fzf_slab_config_t){(size_t)1<<6, 1<<6}, scratch_arena);
-    fzf_pattern_t* pattern = fzf_parse_pattern(CaseSmart, target, target_length - 1);
+    fzf_pattern_t* pattern = fzf_parse_pattern(target, target_length - 1, scratch_arena);
     struct z_Match current_match = {0};
     time_t now = time(NULL);
 
     for (size_t i = 0; i < db->count; ++i) {
         if (!eskilib_string_compare((db->dirs + i)->path, (db->dirs + i)->path_length, (char*)cwd, cwd_length)) {
-            int fzf_score = fzf_get_score((db->dirs + i)->path, (db->dirs + i)->path_length - 1, pattern, slab);
+            int fzf_score = fzf_get_score((db->dirs + i)->path, (db->dirs + i)->path_length - 1, pattern, slab, scratch_arena);
             if (!fzf_score)
                 continue;
 
@@ -101,7 +101,7 @@ struct z_Directory* z_match_find(char* const target,
 #endif /* ifdef Z_DEBUG */
     }
 
-    fzf_free_pattern(pattern);
+    // fzf_free_pattern(pattern);
     // fzf_free_slab(slab);
 
     return current_match.dir;
@@ -509,18 +509,6 @@ void z(char* target,
     if (target_length == 2 && target[0] == '.') {
         if (chdir(target) == -1) {
             perror("z: couldn't change directory (1)");
-        }
-
-        return;
-    }
-    // handle z ~
-    else if (target_length == 2 && target[0] == '~') {
-        char* home = getenv("HOME");
-        if (!home) {
-            perror("z: couldn't get HOME from environment");
-        }
-        else if (chdir(home) == -1) {
-            perror("z: couldn't change directory to home");
         }
 
         return;

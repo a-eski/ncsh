@@ -105,7 +105,7 @@ make check # or make c
 make check_local # or make l
 
 # run tests individually
-make test_autocompletions # or make ta
+make test_autocompletions # or make tac
 make test_history # or make th
 make test_parser # or make tp
 make test_fzf # or make tf

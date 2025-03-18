@@ -587,7 +587,7 @@ void ncsh_vm_alias(struct ncsh_Args* const restrict args,
 {
     struct eskilib_String alias = ncsh_config_alias_check(args->values[0], args->lengths[0]);
     if (alias.length) {
-        args->values[0] = alloc(arena, alias.length, char);
+        args->values[0] = arena_realloc(arena, alias.length, char, args->values[0], args->lengths[0]);
         memcpy(args->values[0], alias.value, alias.length);
         args->lengths[0] = alias.length;
     }

@@ -1,4 +1,4 @@
-// Copyright (c) ncsh by Alex Eski 2024
+/* Copyright (c) ncsh by Alex Eski 2024 */
 
 #include <assert.h>
 #include <linux/limits.h>
@@ -135,9 +135,11 @@ enum eskilib_Result ncsh_history_reload(struct ncsh_History* const restrict hist
          (buffer_length = eskilib_fgets(buffer, sizeof(buffer), file)) != EOF && i < NCSH_MAX_HISTORY_FILE; ++i) {
         if (buffer_length > 0) {
             ++history->count;
-            history->entries[i].length = (size_t)buffer_length;
+            /*history->entries[i].length = (size_t)buffer_length;
             history->entries[i].value = alloc(arena, (uintptr_t)buffer_length, char);
-            memcpy(history->entries[i].value, buffer, (size_t)buffer_length);
+            memcpy(history->entries[i].value, buffer, (size_t)buffer_length);*/
+            history->entries[i].value = arena_realloc(arena, (uintptr_t)buffer_length, char, history->entries[i].value, history->entries[i].length);
+            history->entries[i].length = (size_t)buffer_length;
         }
     }
 

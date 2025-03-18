@@ -1,8 +1,6 @@
-#!/usr/bin/env ruby
 # frozen_string_literal: true
 
 # acceptance_tests.rb: the main acceptance tests for ncsh.
-# Uses prompt options PROMPT_DIRECTORY_SHORT and PROMPT_SHOW_USER_NORMAL
 
 require './acceptance_tests/tests/common'
 require './acceptance_tests/tests/expansion'
@@ -496,8 +494,7 @@ def run_acceptance_tests(prompt_directory_option, prompt_user_option, is_custom_
   row = builtin_tests(row)
   row = delete_line_tests(row)
   delete_word_tests(row)
-  @tty.send_keys_exact(%(quit))
-  @tty.send_newline
+  @tty.send_line(%(exit))
 
   row = 0
   @tty = TTYtest.new_terminal(%(PS1='$ ' ./bin/ncsh), width: 180, height: 150)
