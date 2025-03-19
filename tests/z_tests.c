@@ -745,9 +745,7 @@ int main(void)
     eskilib_test_run(z_match_find_no_match_test);
     eskilib_test_run(z_match_find_multiple_matches_test);
 
-#ifdef NDEBUG
     eskilib_test_run(z_change_directory_test);
-#endif /* ifdef NDEBUG */
     eskilib_test_run(z_home_empty_target_change_directory_test);
     eskilib_test_run(z_no_match_change_directory_test);
     eskilib_test_run(z_valid_subdirectory_change_directory_test);
