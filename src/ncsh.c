@@ -118,7 +118,7 @@ int_fast32_t ncsh(void)
     struct ncsh_Shell shell = {0};
 
     constexpr int arena_capacity = 1<<24;
-    constexpr int scratch_arena_capacity = 1<<20;
+    constexpr int scratch_arena_capacity = 1<<16;
     constexpr int total_capacity = arena_capacity + scratch_arena_capacity;
 
     char* memory = malloc(total_capacity);
