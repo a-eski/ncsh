@@ -67,8 +67,7 @@ struct z_Directory* z_match_find(char* const target,
         return NULL;
     }
 
-    // fzf_slab_t* slab = fzf_make_slab((fzf_slab_config_t){(size_t)1<<6, 1<<6}, scratch_arena);
-    fzf_slab_t* slab = fzf_make_default_slab(scratch_arena);
+    fzf_slab_t* slab = fzf_make_slab((fzf_slab_config_t){(size_t)1<<6, 1<<6}, scratch_arena);
     fzf_pattern_t* pattern = fzf_parse_pattern(target, target_length - 1, scratch_arena);
     struct z_Match current_match = {0};
     time_t now = time(NULL);
