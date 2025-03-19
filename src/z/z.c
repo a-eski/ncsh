@@ -485,12 +485,13 @@ void z(char* target,
     printf("z: %s\n", target.value);
 #endif /* ifdef Z_DEBUG */
 
+    char* home = getenv("HOME");
+    if (!home) {
+        perror("z: couldn't get HOME from environment");
+    }
+
     if (!target) {
-        char* home = getenv("HOME");
-        if (!home) {
-            perror("z: couldn't get HOME from environment");
-        }
-        else if (chdir(home) == -1) {
+        if (chdir(home) == -1) {
             perror("z: couldn't change directory to home");
         }
 
@@ -499,6 +500,14 @@ void z(char* target,
 
     assert(target && target_length > 0 && cwd && db);
     if (!cwd || !db || !target || target_length < 2) {
+        return;
+    }
+
+    if (!strcmp(target, home)) {
+        if (chdir(home) == -1) {
+            perror("z: couldn't change directory to home");
+        }
+
         return;
     }
 

@@ -30,6 +30,11 @@ int_fast32_t ncsh_builtins_z(struct z_Database* const restrict z_db,
     assert(z_db);
     assert(args->count > 0);
 
+    if (args->count == 1) {
+        z(NULL, 0, NULL, z_db, arena, *scratch_arena);
+        return NCSH_COMMAND_SUCCESS_CONTINUE;
+    }
+
     if (args->count == 2) {
         assert(args->values[1]);
 
