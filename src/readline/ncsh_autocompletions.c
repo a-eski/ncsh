@@ -34,10 +34,8 @@ void ncsh_autocompletions_add(const char* const string,
         return;
     }
 
-    int index = 0;
-
     for (size_t i = 0; i < length - 1; ++i) { // string.length - 1 because it includes null terminator
-        index = ncsh_char_to_index(string[i]);
+        int index = ncsh_char_to_index(string[i]);
         if (index < 0 || index > 96) {
             continue;
         }
@@ -82,10 +80,8 @@ struct ncsh_Autocompletion_Node* ncsh_autocompletions_search(const char* const s
         return NULL;
     }
 
-    int index = 0;
-
     for (size_t i = 0; i < length - 1; ++i) {
-        index = ncsh_char_to_index(string[i]);
+        int index = ncsh_char_to_index(string[i]);
 
         if (!tree->nodes[index]) {
             return NULL;
@@ -100,26 +96,7 @@ struct ncsh_Autocompletion_Node* ncsh_autocompletions_search(const char* const s
 struct ncsh_Autocompletion_Node* ncsh_autocompletions_search_string(const struct eskilib_String string,
                                                                     struct ncsh_Autocompletion_Node* restrict tree)
 {
-    assert(string.value);
-    assert(string.length > 0);
-    assert(tree);
-    if (!string.value || !string.length || !tree) {
-        return NULL;
-    }
-
-    int index = 0;
-
-    for (size_t i = 0; i < string.length - 1; ++i) {
-        index = ncsh_char_to_index(string.value[i]);
-
-        if (!tree->nodes[index]) {
-            return NULL;
-        }
-
-        tree = tree->nodes[index];
-    }
-
-    return tree;
+    return ncsh_autocompletions_search(string.value, string.length, tree);
 }
 
 void ncsh_autocompletions_match(struct ncsh_Autocompletion* const matches,

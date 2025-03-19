@@ -67,7 +67,8 @@ struct z_Directory* z_match_find(char* const target,
         return NULL;
     }
 
-    fzf_slab_t* slab = fzf_make_slab((fzf_slab_config_t){(size_t)1<<6, 1<<6}, scratch_arena);
+    // fzf_slab_t* slab = fzf_make_slab((fzf_slab_config_t){(size_t)1<<6, 1<<6}, scratch_arena);
+    fzf_slab_t* slab = fzf_make_default_slab(scratch_arena);
     fzf_pattern_t* pattern = fzf_parse_pattern(target, target_length - 1, scratch_arena);
     struct z_Match current_match = {0};
     time_t now = time(NULL);
@@ -482,7 +483,7 @@ void z(char* target,
        struct ncsh_Arena scratch_arena)
 {
 #ifdef Z_DEBUG
-    printf("z: %s\n", target.value);
+    printf("z: %s\n", target);
 #endif /* ifdef Z_DEBUG */
 
     char* home = getenv("HOME");
@@ -503,7 +504,7 @@ void z(char* target,
         return;
     }
 
-    if (!strcmp(target, home)) {
+    if (eskilib_string_compare(target, target_length, home, strlen(home) + 1)) {
         if (chdir(home) == -1) {
             perror("z: couldn't change directory to home");
         }
@@ -558,6 +559,7 @@ void z(char* target,
         return;
     }
 
+    printf("%s\n", target);
     if (chdir(target) == -1) {
         perror("z: couldn't change directory");
         return;

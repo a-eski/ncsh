@@ -3,7 +3,7 @@
 require 'ttytest'
 
 # Test related constants
-WC_C_LENGTH_I = 222
+WC_C_LENGTH_I = 230
 WC_C_LENGTH_NO_Z = (WC_C_LENGTH_I - '_z_database.bin'.length - 1).to_s
 WC_C_LENGTH = WC_C_LENGTH_I.to_s
 
@@ -15,7 +15,7 @@ LS_ITEMS = 20
 LS_ITEMS_NO_Z = LS_ITEMS - 1
 LS_FIRST_ITEM = 'COMPILE.md'
 
-HEAD_ONE_ITEM = 'tests_at.sh'
+HEAD_ONE_ITEM = 'tests'
 
 TAB_AUTOCOMPLETE_ROWS = 11
 

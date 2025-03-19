@@ -86,8 +86,8 @@ c :
 
 .PHONY: acceptance_tests
 acceptance_tests :
-	chmod +x ./tests_at.sh
-	./tests_at.sh
+	chmod +x ./acceptance_tests.sh
+	./acceptance_tests.sh
 .PHONY: at
 at :
 	make acceptance_tests

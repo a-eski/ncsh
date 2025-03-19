@@ -88,7 +88,7 @@ int_fast32_t ncsh_run(struct ncsh_Shell* shell, struct ncsh_Arena scratch_arena)
 {
     ncsh_parser_parse(shell->input.buffer, shell->input.pos, &shell->args, &scratch_arena);
 
-    return ncsh_vm_execute(shell);
+    return ncsh_vm_execute(shell, &scratch_arena);
 }
 
 /* ncsh
@@ -118,7 +118,7 @@ int_fast32_t ncsh(void)
     struct ncsh_Shell shell = {0};
 
     constexpr int arena_capacity = 1<<24;
-    constexpr int scratch_arena_capacity = 1<<16;
+    constexpr int scratch_arena_capacity = 1<<20;
     constexpr int total_capacity = arena_capacity + scratch_arena_capacity;
 
     char* memory = malloc(total_capacity);
