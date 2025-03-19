@@ -2,12 +2,19 @@
 
 require './acceptance_tests/tests/common'
 
-def z_add_tests(row)
-  assert_check_new_row(row)
+# def z_database_new_test(row) is located in startup.rb
+
+def z_add_entry_checked(row)
   @tty.send_line('z add ~/.config')
   row += 1
   @tty.assert_row_ends_with(row, %(Added new entry to z database.))
   row += 1
+  row
+end
+
+def z_add_tests(row)
+  assert_check_new_row(row)
+  row = z_add_entry_checked(row)
   @tty.send_line('z add ~/.config')
   row += 1
   @tty.assert_row_ends_with(row, 'Entry already exists in z database.')
@@ -16,9 +23,35 @@ def z_add_tests(row)
   row
 end
 
+def z_remove_test(row)
+  assert_check_new_row(row)
+  row = z_add_entry_checked(row)
+  @tty.send_line('z remove ~/.config')
+  row += 1
+  test_passed('z remove test')
+  row
+end
+
+# rm is alias for remove, both should work the same way
+def z_rm_test(row)
+  assert_check_new_row(row)
+  row = z_add_entry_checked(row)
+  @tty.send_line('z rm ~/.config')
+  row += 1
+  test_passed('z rm test')
+  row
+end
+
+def z_remove_tests(row)
+  row = z_remove_test(row)
+  row = z_rm_test(row)
+  test_passed('z remove tests')
+  row
+end
+
 def z_tests(row)
   starting_tests('z_add')
+  row = z_remove_tests(row)
   z_add_tests(row)
-  # row = z_remove_tests(row)
-  # row = z_print_tests(row)
+  # z_print_tests(row)
 end

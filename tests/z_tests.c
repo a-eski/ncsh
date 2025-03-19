@@ -1,4 +1,4 @@
-// Copyright (c) z by Alex Eski 2024
+/* Copyright (c) z by Alex Eski 2024 */
 
 #include <stdbool.h>
 #include <stdio.h>
@@ -22,7 +22,8 @@ struct z_Directory* z_match_find(char* const target,
                                  const size_t target_length,
                                  const char* const cwd,
                                  const size_t cwd_length,
-                                 struct z_Database* const restrict db);
+                                 struct z_Database* const restrict db,
+                                 struct ncsh_Arena* const scratch_arena);
 
 enum z_Result z_database_add(const char* const path,
                              const size_t path_length,
@@ -48,6 +49,7 @@ void z_read_empty_database_file_test(void)
 void z_read_non_empty_database_test(void)
 {
     NCSH_ARENA_TEST_SETUP;
+    NCSH_SCRATCH_ARENA_TEST_SETUP;
 
     struct z_Database db = {0};
     eskilib_assert(z_init(&config_location, &db, &arena) == Z_SUCCESS);
@@ -64,7 +66,7 @@ void z_read_non_empty_database_test(void)
         eskilib_assert(false);
     }
 
-    struct z_Directory* match = z_match_find(new_value.value, new_value.length, cwd, strlen(cwd) + 1, &db);
+    struct z_Directory* match = z_match_find(new_value.value, new_value.length, cwd, strlen(cwd) + 1, &db, &scratch_arena);
     eskilib_assert(match != NULL);
     eskilib_assert(db.count == 1);
     eskilib_assert(match->path_length == 57);
@@ -76,6 +78,7 @@ void z_read_non_empty_database_test(void)
     free(new_value.value);
 
     NCSH_ARENA_TEST_TEARDOWN;
+    NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 // add to empty database
@@ -190,8 +193,6 @@ void z_add_new_entry_contained_in_another_entry_but_different_test(void)
     eskilib_assert(db.count == 2);
     eskilib_assert(db.dirs[1].path_length == 45);
 
-    // z_print(&db);
-
     z_exit(&db);
     NCSH_ARENA_TEST_TEARDOWN;
 }
@@ -201,6 +202,7 @@ void z_match_find_empty_database_test(void)
 {
     remove(Z_DATABASE_FILE);
     NCSH_ARENA_TEST_SETUP;
+    NCSH_SCRATCH_ARENA_TEST_SETUP;
 
     struct z_Database db = {0};
     eskilib_assert(z_init(&config_location, &db, &arena) == Z_SUCCESS);
@@ -213,10 +215,11 @@ void z_match_find_empty_database_test(void)
         eskilib_assert(false);
     }
 
-    struct z_Directory* result = z_match_find(target.value, target.length, cwd, strlen(cwd) + 1, &db);
+    struct z_Directory* result = z_match_find(target.value, target.length, cwd, strlen(cwd) + 1, &db, &scratch_arena);
     eskilib_assert(result == NULL);
 
     NCSH_ARENA_TEST_TEARDOWN;
+    NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 // write to empty database
@@ -294,6 +297,7 @@ void z_write_nonempty_database_test(void)
 void z_match_find_finds_exact_match_test(void)
 {
     NCSH_ARENA_TEST_SETUP;
+    NCSH_SCRATCH_ARENA_TEST_SETUP;
 
     struct z_Database db = {0};
     eskilib_assert(z_init(&config_location, &db, &arena) == Z_SUCCESS);
@@ -306,19 +310,21 @@ void z_match_find_finds_exact_match_test(void)
         eskilib_assert(false);
     }
 
-    struct z_Directory* result = z_match_find(target.value, target.length, cwd, strlen(cwd) + 1, &db);
+    struct z_Directory* result = z_match_find(target.value, target.length, cwd, strlen(cwd) + 1, &db, &scratch_arena);
     eskilib_assert(result != NULL);
     eskilib_assert(result->path_length == 57);
     eskilib_assert(memcmp(result->path, "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells/ncsh", 57) == 0);
     eskilib_assert(result->rank > 0 && result->last_accessed > 0);
 
     NCSH_ARENA_TEST_TEARDOWN;
+    NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 // find from non-empty database, match
 void z_match_find_finds_match_test(void)
 {
     NCSH_ARENA_TEST_SETUP;
+    NCSH_SCRATCH_ARENA_TEST_SETUP;
 
     struct z_Database db = {0};
     eskilib_assert(z_init(&config_location, &db, &arena) == Z_SUCCESS);
@@ -331,19 +337,21 @@ void z_match_find_finds_match_test(void)
         eskilib_assert(false);
     }
 
-    struct z_Directory* result = z_match_find(target.value, target.length, cwd, strlen(cwd) + 1, &db);
+    struct z_Directory* result = z_match_find(target.value, target.length, cwd, strlen(cwd) + 1, &db, &scratch_arena);
     eskilib_assert(result != NULL);
     eskilib_assert(result->path_length == 57);
     eskilib_assert(memcmp(result->path, "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells/ncsh", 57) == 0);
     eskilib_assert(result->rank > 0 && result->last_accessed > 0);
 
     NCSH_ARENA_TEST_TEARDOWN;
+    NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 // find from non-empty database, no match
 void z_match_find_no_match_test(void)
 {
     NCSH_ARENA_TEST_SETUP;
+    NCSH_SCRATCH_ARENA_TEST_SETUP;
 
     struct z_Database db = {0};
     eskilib_assert(z_init(&config_location, &db, &arena) == Z_SUCCESS);
@@ -355,18 +363,20 @@ void z_match_find_no_match_test(void)
         NCSH_ARENA_TEST_TEARDOWN;
         eskilib_assert(false);
     }
-    struct z_Directory* result = z_match_find(target.value, target.length, cwd, strlen(cwd) + 1, &db);
+    struct z_Directory* result = z_match_find(target.value, target.length, cwd, strlen(cwd) + 1, &db, &scratch_arena);
     if (result)
         printf("result: %s\n", result->path);
     eskilib_assert(result == NULL);
 
     NCSH_ARENA_TEST_TEARDOWN;
+    NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 // find from non-empty database, multiple matches, takes highest score
 void z_match_find_multiple_matches_test(void)
 {
     NCSH_ARENA_TEST_SETUP;
+    NCSH_SCRATCH_ARENA_TEST_SETUP;
 
     struct z_Database db = {0};
     eskilib_assert(z_init(&config_location, &db, &arena) == Z_SUCCESS);
@@ -378,11 +388,12 @@ void z_match_find_multiple_matches_test(void)
         NCSH_ARENA_TEST_TEARDOWN;
         eskilib_assert(false);
     }
-    struct z_Directory* result = z_match_find(target.value, target.length, cwd, strlen(cwd) + 1, &db);
+    struct z_Directory* result = z_match_find(target.value, target.length, cwd, strlen(cwd) + 1, &db, &scratch_arena);
     eskilib_assert(result != NULL);
     eskilib_assert(result->path_length == 57);
 
     NCSH_ARENA_TEST_TEARDOWN;
+    NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 void z_change_directory_test(void)
@@ -731,12 +742,10 @@ int main(void)
     eskilib_test_run(z_write_nonempty_database_test);
     eskilib_test_run(z_match_find_finds_exact_match_test);
     eskilib_test_run(z_match_find_finds_match_test);
-    // eskilib_test_run(z_match_find_no_match_test);
+    eskilib_test_run(z_match_find_no_match_test);
     eskilib_test_run(z_match_find_multiple_matches_test);
 
-#ifdef NDEBUG
     eskilib_test_run(z_change_directory_test);
-#endif /* ifdef NDEBUG */
     eskilib_test_run(z_home_empty_target_change_directory_test);
     eskilib_test_run(z_no_match_change_directory_test);
     eskilib_test_run(z_valid_subdirectory_change_directory_test);
@@ -750,7 +759,7 @@ int main(void)
     eskilib_test_run(z_add_null_parameters);
     eskilib_test_run(z_add_bad_parameters);
     eskilib_test_run(z_add_new_entry_contained_in_another_entry_but_different_test);
-    // eskilib_test_run(z_contains_correct_match_test);
+    eskilib_test_run(z_contains_correct_match_test);
 
     eskilib_test_finish();
 

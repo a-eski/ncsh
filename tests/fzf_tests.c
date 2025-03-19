@@ -1,4 +1,4 @@
-// For license see fzf_LICENSE.
+/* For license see fzf_LICENSE.*/
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpedantic"
@@ -6,8 +6,10 @@
 #pragma GCC diagnostic ignored "-Wsign-conversion"
 
 #include "lib/examiner.h"
+#include "lib/ncsh_arena_test_helper.h"
 #include "../src/z/fzf.h"
 
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -22,33 +24,38 @@ typedef enum {
   BonusFirstCharMultiplier = 2,
 } score_t;
 
+fzf_position_t *fzf_pos_array(size_t len, struct ncsh_Arena* const scratch_arena);
+fzf_position_t *fzf_get_positions(const char *text,
+                                  fzf_pattern_t *pattern,
+                                  fzf_slab_t *slab,
+                                  struct ncsh_Arena* const scratch_arena);
+
 #define call_alg(alg, case, txt, pat, assert_block)                            \
+  NCSH_SCRATCH_ARENA_TEST_SETUP;                                               \
   {                                                                            \
-    fzf_position_t *pos = fzf_pos_array(0);                                    \
-    fzf_result_t res = alg(case, false, txt, pat, pos, NULL);                  \
+    fzf_position_t *pos = fzf_pos_array(0, &scratch_arena);                    \
+    fzf_result_t res = alg(case, txt, pat, pos, NULL, &scratch_arena);         \
     assert_block;                                                              \
-    fzf_free_positions(pos);                                                   \
   }                                                                            \
   {                                                                            \
-    fzf_position_t *pos = fzf_pos_array(0);                                    \
-    fzf_slab_t *slab = fzf_make_default_slab();                                \
-    fzf_result_t res = alg(case, false, txt, pat, pos, slab);                  \
+    fzf_position_t *pos = fzf_pos_array(0, &scratch_arena);                    \
+    fzf_slab_t *slab = fzf_make_default_slab(&scratch_arena);                  \
+    fzf_result_t res = alg(case, txt, pat, pos, slab, &scratch_arena);         \
     assert_block;                                                              \
-    fzf_free_positions(pos);                                                   \
-    fzf_free_slab(slab);                                                       \
-  }
+  }                                                                            \
+  NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
 
 static int8_t max_i8(int8_t a, int8_t b) {
   return a > b ? a : b;
 }
 
 #define MATCH_WRAPPER(nn, og)                                                  \
-  fzf_result_t nn(bool case_sensitive, bool normalize, const char *text,       \
+  fzf_result_t nn(bool case_sensitive, const char *text,       \
                   const char *pattern, fzf_position_t *pos,                    \
-                  fzf_slab_t *slab) {                                          \
+                  fzf_slab_t *slab, struct ncsh_Arena* const scratch_arena) {   \
     fzf_string_t input = {.data = text, .size = strlen(text)};                 \
     fzf_string_t pattern_wrap = {.data = pattern, .size = strlen(pattern)};    \
-    return og(case_sensitive, normalize, &input, &pattern_wrap, pos, slab);    \
+    return og(case_sensitive, &input, &pattern_wrap, pos, slab, scratch_arena);    \
   }
 
 MATCH_WRAPPER(fuzzy_match_v2, fzf_fuzzy_match_v2);
@@ -443,16 +450,18 @@ TEST(EqualMatch, case3) {
 }
 
 TEST(PatternParsing, empty) {
-  fzf_pattern_t *pat = fzf_parse_pattern(CaseSmart, "", strlen(""));
+  NCSH_SCRATCH_ARENA_TEST_SETUP;
+  fzf_pattern_t *pat = fzf_parse_pattern("", strlen(""), &scratch_arena);
   ASSERT_EQ(0, pat->size);
   ASSERT_EQ(0, pat->cap);
   ASSERT_FALSE(pat->only_inv);
 
-  fzf_free_pattern(pat);
+  NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 TEST(PatternParsing, simple) {
-  fzf_pattern_t *pat = fzf_parse_pattern(CaseSmart, "lua", strlen("lua"));
+  NCSH_SCRATCH_ARENA_TEST_SETUP;
+  fzf_pattern_t *pat = fzf_parse_pattern("lua", strlen("lua"), &scratch_arena);
   ASSERT_EQ(1, pat->size);
   ASSERT_EQ(1, pat->cap);
   ASSERT_FALSE(pat->only_inv);
@@ -463,11 +472,12 @@ TEST(PatternParsing, simple) {
   ASSERT_EQ((void *)fzf_fuzzy_match_v2, pat->ptr[0]->ptr[0].fn);
   ASSERT_EQ("lua", ((fzf_string_t *)(pat->ptr[0]->ptr[0].text))->data);
   ASSERT_FALSE(pat->ptr[0]->ptr[0].case_sensitive);
-  fzf_free_pattern(pat);
+  NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 TEST(PatternParsing, withEscapedSpace) {
-  fzf_pattern_t *pat = fzf_parse_pattern(CaseSmart, "file\\ ", strlen("file\\ "));
+  NCSH_SCRATCH_ARENA_TEST_SETUP;
+  fzf_pattern_t *pat = fzf_parse_pattern("file\\ ", strlen("file\\ "), &scratch_arena);
   ASSERT_EQ(1, pat->size);
   ASSERT_EQ(1, pat->cap);
   ASSERT_FALSE(pat->only_inv);
@@ -478,12 +488,13 @@ TEST(PatternParsing, withEscapedSpace) {
   ASSERT_EQ((void *)fzf_fuzzy_match_v2, pat->ptr[0]->ptr[0].fn);
   ASSERT_EQ("file ", ((fzf_string_t *)(pat->ptr[0]->ptr[0].text))->data);
   ASSERT_FALSE(pat->ptr[0]->ptr[0].case_sensitive);
-  fzf_free_pattern(pat);
+  NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 TEST(PatternParsing, withComplexEscapedSpace) {
+  NCSH_SCRATCH_ARENA_TEST_SETUP;
   fzf_pattern_t *pat =
-      fzf_parse_pattern(CaseSmart, "file\\ with\\ space", strlen("file\\ with\\ space"));
+      fzf_parse_pattern("file\\ with\\ space", strlen("file\\ with\\ space"), &scratch_arena);
   ASSERT_EQ(1, pat->size);
   ASSERT_EQ(1, pat->cap);
   ASSERT_FALSE(pat->only_inv);
@@ -495,11 +506,13 @@ TEST(PatternParsing, withComplexEscapedSpace) {
   ASSERT_EQ("file with space",
             ((fzf_string_t *)(pat->ptr[0]->ptr[0].text))->data);
   ASSERT_FALSE(pat->ptr[0]->ptr[0].case_sensitive);
-  fzf_free_pattern(pat);
+  NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 TEST(PatternParsing, withEscapedSpaceAndNormalSpace) {
-  fzf_pattern_t *pat = fzf_parse_pattern(CaseSmart, "file\\  new", strlen("file\\  new"));
+  NCSH_SCRATCH_ARENA_TEST_SETUP;
+  const char str[] = "file\\  new";
+  fzf_pattern_t *pat = fzf_parse_pattern((char*)str, sizeof(str) - 1, &scratch_arena);
   ASSERT_EQ(2, pat->size);
   ASSERT_EQ(2, pat->cap);
   ASSERT_FALSE(pat->only_inv);
@@ -516,11 +529,12 @@ TEST(PatternParsing, withEscapedSpaceAndNormalSpace) {
   ASSERT_EQ((void *)fzf_fuzzy_match_v2, pat->ptr[1]->ptr[0].fn);
   ASSERT_EQ("new", ((fzf_string_t *)(pat->ptr[1]->ptr[0].text))->data);
   ASSERT_FALSE(pat->ptr[1]->ptr[0].case_sensitive);
-  fzf_free_pattern(pat);
+  NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 TEST(PatternParsing, invert) {
-  fzf_pattern_t *pat = fzf_parse_pattern(CaseSmart, "!Lua", strlen("!Lua"));
+  NCSH_SCRATCH_ARENA_TEST_SETUP;
+  fzf_pattern_t *pat = fzf_parse_pattern("!Lua", strlen("!Lua"), &scratch_arena);
   ASSERT_EQ(1, pat->size);
   ASSERT_EQ(1, pat->cap);
   ASSERT_TRUE(pat->only_inv);
@@ -532,11 +546,12 @@ TEST(PatternParsing, invert) {
   ASSERT_EQ("Lua", ((fzf_string_t *)(pat->ptr[0]->ptr[0].text))->data);
   ASSERT_TRUE(pat->ptr[0]->ptr[0].case_sensitive);
   ASSERT_TRUE(pat->ptr[0]->ptr[0].inv);
-  fzf_free_pattern(pat);
+  NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 TEST(PatternParsing, invertMultiple) {
-  fzf_pattern_t *pat = fzf_parse_pattern(CaseSmart, "!fzf !test", strlen("!fzf !test"));
+  NCSH_SCRATCH_ARENA_TEST_SETUP;
+  fzf_pattern_t *pat = fzf_parse_pattern("!fzf !test", strlen("!fzf !test"), &scratch_arena);
   ASSERT_EQ(2, pat->size);
   ASSERT_EQ(2, pat->cap);
   ASSERT_TRUE(pat->only_inv);
@@ -555,11 +570,12 @@ TEST(PatternParsing, invertMultiple) {
   ASSERT_EQ("test", ((fzf_string_t *)(pat->ptr[1]->ptr[0].text))->data);
   ASSERT_FALSE(pat->ptr[1]->ptr[0].case_sensitive);
   ASSERT_TRUE(pat->ptr[1]->ptr[0].inv);
-  fzf_free_pattern(pat);
+  NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 TEST(PatternParsing, smartCase) {
-  fzf_pattern_t *pat = fzf_parse_pattern(CaseSmart, "Lua", strlen("Lua"));
+  NCSH_SCRATCH_ARENA_TEST_SETUP;
+  fzf_pattern_t *pat = fzf_parse_pattern("Lua", strlen("Lua"), &scratch_arena);
   ASSERT_EQ(1, pat->size);
   ASSERT_EQ(1, pat->cap);
   ASSERT_FALSE(pat->only_inv);
@@ -570,11 +586,12 @@ TEST(PatternParsing, smartCase) {
   ASSERT_EQ((void *)fzf_fuzzy_match_v2, pat->ptr[0]->ptr[0].fn);
   ASSERT_EQ("Lua", ((fzf_string_t *)(pat->ptr[0]->ptr[0].text))->data);
   ASSERT_TRUE(pat->ptr[0]->ptr[0].case_sensitive);
-  fzf_free_pattern(pat);
+  NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 TEST(PatternParsing, simpleOr) {
-  fzf_pattern_t *pat = fzf_parse_pattern(CaseSmart, "'src | ^Lua", strlen("'src | ^Lua"));
+  NCSH_SCRATCH_ARENA_TEST_SETUP;
+  fzf_pattern_t *pat = fzf_parse_pattern("'src | ^Lua", strlen("'src | ^Lua"), &scratch_arena);
   ASSERT_EQ(1, pat->size);
   ASSERT_EQ(1, pat->cap);
   ASSERT_FALSE(pat->only_inv);
@@ -589,11 +606,12 @@ TEST(PatternParsing, simpleOr) {
   ASSERT_EQ((void *)fzf_prefix_match, pat->ptr[0]->ptr[1].fn);
   ASSERT_EQ("Lua", ((fzf_string_t *)(pat->ptr[0]->ptr[1].text))->data);
   ASSERT_TRUE(pat->ptr[0]->ptr[1].case_sensitive);
-  fzf_free_pattern(pat);
+  NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 TEST(PatternParsing, complexAnd) {
-  fzf_pattern_t *pat = fzf_parse_pattern(CaseSmart, ".lua$ 'previewer !'term !asdf", strlen(".lua$ 'previewer !'term !asdf"));
+  NCSH_SCRATCH_ARENA_TEST_SETUP;
+  fzf_pattern_t *pat = fzf_parse_pattern(".lua$ 'previewer !'term !asdf", strlen(".lua$ 'previewer !'term !asdf"), &scratch_arena);
   ASSERT_EQ(4, pat->size);
   ASSERT_EQ(4, pat->cap);
   ASSERT_FALSE(pat->only_inv);
@@ -624,17 +642,18 @@ TEST(PatternParsing, complexAnd) {
   ASSERT_EQ("asdf", ((fzf_string_t *)(pat->ptr[3]->ptr[0].text))->data);
   ASSERT_FALSE(pat->ptr[3]->ptr[0].case_sensitive);
   ASSERT_TRUE(pat->ptr[3]->ptr[0].inv);
-  fzf_free_pattern(pat);
+  NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 static void score_wrapper(char *pattern, char **input, int *expected) {
-  fzf_slab_t *slab = fzf_make_default_slab();
-  fzf_pattern_t *pat = fzf_parse_pattern(CaseSmart, pattern, strlen(pattern));
+
+  NCSH_SCRATCH_ARENA_TEST_SETUP;
+  fzf_slab_t *slab = fzf_make_default_slab(&scratch_arena);
+  fzf_pattern_t *pat = fzf_parse_pattern(pattern, strlen(pattern), &scratch_arena);
   for (size_t i = 0; input[i] != NULL; ++i) {
-    ASSERT_EQ(expected[i], fzf_get_score(input[i], strlen(input[i]), pat, slab));
+    ASSERT_EQ(expected[i], fzf_get_score(input[i], strlen(input[i]), pat, slab, &scratch_arena));
   }
-  fzf_free_pattern(pat);
-  fzf_free_slab(slab);
+  NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 TEST(ScoreIntegration, simple) {
@@ -677,10 +696,11 @@ TEST(ScoreIntegration, complexTerm) {
 }
 
 static void pos_wrapper(char *pattern, char **input, int **expected) {
-  fzf_slab_t *slab = fzf_make_default_slab();
-  fzf_pattern_t *pat = fzf_parse_pattern(CaseSmart, pattern, strlen(pattern));
+  NCSH_SCRATCH_ARENA_TEST_SETUP;
+  fzf_slab_t *slab = fzf_make_default_slab(&scratch_arena);
+  fzf_pattern_t *pat = fzf_parse_pattern(pattern, strlen(pattern), &scratch_arena);
   for (size_t i = 0; input[i] != NULL; ++i) {
-    fzf_position_t *pos = fzf_get_positions(input[i], pat, slab);
+    fzf_position_t *pos = fzf_get_positions(input[i], pat, slab, &scratch_arena);
     if (!pos) {
       ASSERT_EQ((void *)pos, expected[i]);
       continue;
@@ -693,10 +713,8 @@ static void pos_wrapper(char *pattern, char **input, int **expected) {
       ASSERT_EQ(0, pos->size);
     }
     ASSERT_EQ_MEM(expected[i], pos->data, pos->size * sizeof(pos->data[0]));
-    fzf_free_positions(pos);
   }
-  fzf_free_pattern(pat);
-  fzf_free_slab(slab);
+  NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 TEST(PosIntegration, simple) {

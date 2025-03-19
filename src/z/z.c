@@ -1,4 +1,4 @@
-// Copyright (c) z by Alex Eski 2024
+/* Copyright (c) z by Alex Eski 2024 */
 
 #include <assert.h>
 #include <dirent.h>
@@ -59,21 +59,22 @@ struct z_Directory* z_match_find(char* const target,
                                  const size_t target_length,
                                  const char* const cwd,
                                  const size_t cwd_length,
-                                 struct z_Database* const restrict db)
+                                 struct z_Database* const restrict db,
+                                 struct ncsh_Arena* const scratch_arena)
 {
     assert(db);
     if (!db->count || cwd_length < 2) {
         return NULL;
     }
 
-    fzf_slab_t* slab = fzf_make_default_slab();
-    fzf_pattern_t* pattern = fzf_parse_pattern(CaseSmart, target, target_length - 1);
+    fzf_slab_t* slab = fzf_make_slab((fzf_slab_config_t){(size_t)1<<6, 1<<6}, scratch_arena);
+    fzf_pattern_t* pattern = fzf_parse_pattern(target, target_length - 1, scratch_arena);
     struct z_Match current_match = {0};
     time_t now = time(NULL);
 
     for (size_t i = 0; i < db->count; ++i) {
         if (!eskilib_string_compare((db->dirs + i)->path, (db->dirs + i)->path_length, (char*)cwd, cwd_length)) {
-            int fzf_score = fzf_get_score((db->dirs + i)->path, (db->dirs + i)->path_length - 1, pattern, slab);
+            int fzf_score = fzf_get_score((db->dirs + i)->path, (db->dirs + i)->path_length - 1, pattern, slab, scratch_arena);
             if (!fzf_score)
                 continue;
 
@@ -99,9 +100,6 @@ struct z_Directory* z_match_find(char* const target,
         printf("Best match fzf_score %d\n", current_match.fzf_score);
 #endif /* ifdef Z_DEBUG */
     }
-
-    fzf_free_pattern(pattern);
-    fzf_free_slab(slab);
 
     return current_match.dir;
 }
@@ -220,7 +218,7 @@ enum z_Result z_read_entry(struct z_Directory* const restrict dir,
         return Z_FILE_ERROR;
     }
 
-    dir->path = alloc(arena, dir->path_length + 1, char);
+    dir->path = arena_malloc(arena, dir->path_length + 1, char);
 
     bytes_read = fread(dir->path, sizeof(char), dir->path_length, file);
     if (!bytes_read) {
@@ -331,7 +329,7 @@ enum z_Result z_write_entry_new(const char* const path,
         return Z_FAILURE;
     }
 
-    db->dirs[db->count].path = alloc(arena, path_length, char);
+    db->dirs[db->count].path = arena_malloc(arena, path_length, char);
 
     memcpy(db->dirs[db->count].path, path, path_length);
     assert(db->dirs[db->count].path[path_length - 1] == '\0');
@@ -363,7 +361,7 @@ enum z_Result z_database_add(const char* const path,
     size_t total_length = path_length + cwd_length;
     assert(total_length > 0);
 
-    db->dirs[db->count].path = alloc(arena, total_length, char);
+    db->dirs[db->count].path = arena_malloc(arena, total_length, char);
 
     memcpy(db->dirs[db->count].path, cwd, cwd_length);
     memcpy(db->dirs[db->count].path + cwd_length - 1, "/", 2);
@@ -390,7 +388,7 @@ enum z_Result z_database_file_set(const struct eskilib_String* const config_file
 {
     constexpr size_t z_db_file_len = sizeof(Z_DATABASE_FILE);
 #ifdef Z_TEST
-    db->database_file = alloc(arena, z_db_file_len, char);
+    db->database_file = arena_malloc(arena, z_db_file_len, char);
     memcpy(db->database_file, Z_DATABASE_FILE, z_db_file_len);
     return Z_SUCCESS;
 #endif /* ifdef Z_TEST */
@@ -403,7 +401,7 @@ enum z_Result z_database_file_set(const struct eskilib_String* const config_file
         return Z_FILE_LENGTH_TOO_LARGE;
     }
 
-    db->database_file = alloc(arena, config_file->length + z_db_file_len, char);
+    db->database_file = arena_malloc(arena, config_file->length + z_db_file_len, char);
 
     memcpy(db->database_file, config_file->value, config_file->length);
     memcpy(db->database_file + config_file->length - 1, Z_DATABASE_FILE, z_db_file_len);
@@ -455,7 +453,7 @@ enum z_Result z_directory_match_exists(const char* const target,
 
         directory_length = strlen(directory_entry->d_name) + 1;
         if (eskilib_string_compare_const(target, target_length, directory_entry->d_name, directory_length)) {
-            output->value = alloc(scratch_arena, directory_length, char);
+            output->value = arena_malloc(scratch_arena, directory_length, char);
             output->length = directory_length;
             memcpy(output->value, directory_entry->d_name, directory_length);
 
@@ -487,12 +485,13 @@ void z(char* target,
     printf("z: %s\n", target.value);
 #endif /* ifdef Z_DEBUG */
 
+    char* home = getenv("HOME");
+    if (!home) {
+        perror("z: couldn't get HOME from environment");
+    }
+
     if (!target) {
-        char* home = getenv("HOME");
-        if (!home) {
-            perror("z: couldn't get HOME from environment");
-        }
-        else if (chdir(home) == -1) {
+        if (chdir(home) == -1) {
             perror("z: couldn't change directory to home");
         }
 
@@ -504,6 +503,15 @@ void z(char* target,
         return;
     }
 
+    if (!strcmp(target, home)) {
+        if (chdir(home) == -1) {
+            perror("z: couldn't change directory to home");
+        }
+
+        return;
+    }
+
+    // handle z .
     if (target_length == 2 && target[0] == '.') {
         if (chdir(target) == -1) {
             perror("z: couldn't change directory (1)");
@@ -511,6 +519,7 @@ void z(char* target,
 
         return;
     }
+    // handle z ..
     else if (target_length == 3 && target[0] == '.' && target[1] == '.') {
         if (chdir(target) == -1) {
             perror("z: couldn't change directory (2)");
@@ -521,7 +530,7 @@ void z(char* target,
 
     size_t cwd_length = strlen(cwd) + 1;
     struct eskilib_String output = {0};
-    struct z_Directory* match = z_match_find(target, target_length, cwd, cwd_length, db);
+    struct z_Directory* match = z_match_find(target, target_length, cwd, cwd_length, db, &scratch_arena);
 
     if (z_directory_match_exists(target, target_length, cwd, &output, &scratch_arena) == Z_SUCCESS) {
 #ifdef Z_DEBUG

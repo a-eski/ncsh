@@ -79,6 +79,7 @@ check :
 	make test_parser
 	make test_config
 	make test_readline
+	make test_arena
 .PHONY: c
 c :
 	make check
@@ -121,8 +122,8 @@ fh :
 test_autocompletions :
 	 $(CC) $(STD) $(debug_flags) ./src/eskilib/eskilib_string.c ./src/eskilib/eskilib_test.c ./src/ncsh_arena.c ./src/readline/ncsh_autocompletions.c ./tests/ncsh_autocompletions_tests.c -o ./bin/ncsh_autocompletions_tests
 	 ./bin/ncsh_autocompletions_tests
-.PHONY: ta
-ta :
+.PHONY: tac
+tac :
 	make test_autocompletions
 
 .PHONY: fuzz_autocompletions
@@ -175,7 +176,7 @@ fza:
 
 .PHONY: test_fzf
 test_fzf :
-	$(CC) $(STD) -fsanitize=address,undefined,leak -g ./src/z/fzf.c ./tests/lib/examiner.c ./tests/fzf_tests.c -o ./bin/fzf_tests
+	$(CC) $(STD) -fsanitize=address,undefined,leak -g ./src/ncsh_arena.c ./src/z/fzf.c ./tests/lib/examiner.c ./tests/fzf_tests.c -o ./bin/fzf_tests
 	@LD_LIBRARY_PATH=/usr/local/lib:./bin/:${LD_LIBRARY_PATH} ./bin/fzf_tests
 .PHONY: tf
 tf :
@@ -196,6 +197,14 @@ test_readline :
 .PHONY: tr
 tr :
 	make test_readline
+
+.PHONY: test_arena
+test_arena :
+	$(CC) $(STD) $(debug_flags) -DNCSH_HISTORY_TEST ./src/ncsh_arena.c ./src/eskilib/eskilib_test.c ./tests/ncsh_arena_tests.c -o ./bin/ncsh_arena_tests
+	./bin/ncsh_arena_tests
+.PHONY: ta
+ta :
+	make test_arena
 
 .PHONY: clang_format
 clang_format :
