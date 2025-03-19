@@ -17,7 +17,7 @@ char ncsh_index_to_char(int index);
 
 struct ncsh_Autocompletion_Node* ncsh_autocompletions_alloc(struct ncsh_Arena* const arena)
 {
-    struct ncsh_Autocompletion_Node* tree = alloc(arena, 1, struct ncsh_Autocompletion_Node);
+    struct ncsh_Autocompletion_Node* tree = arena_malloc(arena, 1, struct ncsh_Autocompletion_Node);
     tree->is_end_of_a_word = false;
     return tree;
 }
@@ -43,7 +43,7 @@ void ncsh_autocompletions_add(const char* const string,
         }
 
         if (!tree->nodes[index]) {
-            tree->nodes[index] = alloc(arena, 1, struct ncsh_Autocompletion_Node);
+            tree->nodes[index] = arena_malloc(arena, 1, struct ncsh_Autocompletion_Node);
             tree->nodes[index]->is_end_of_a_word = false;
             tree->nodes[index]->weight = 1;
         }
@@ -135,7 +135,7 @@ void ncsh_autocompletions_match(struct ncsh_Autocompletion* const matches,
             }
 
             if (!matches[*matches_position].value) {
-                matches[*matches_position].value = alloc(scratch_arena, NCSH_MAX_INPUT, char);
+                matches[*matches_position].value = arena_malloc(scratch_arena, NCSH_MAX_INPUT, char);
 
                 if (*string_position > 0 && *matches_position > 0) {
                     memcpy(matches[*matches_position].value, matches[*matches_position - 1].value, *string_position);

@@ -1,4 +1,4 @@
-// For license see fzf_LICENSE.
+/* For license see fzf_LICENSE. */
 
 #ifndef FZF_H_
 #define FZF_H_
@@ -99,8 +99,7 @@ fzf_result_t fzf_equal_match(bool case_sensitive, fzf_string_t* text, fzf_string
  * pat_len should be equivalent to strlen, do not include null terminator in length.
  * Returns: a pointer to the pattern.
  */
-fzf_pattern_t* fzf_parse_pattern(// fzf_case_types case_mode,
-                                 char* const pattern,
+fzf_pattern_t* fzf_parse_pattern(char* const pattern,
                                  size_t pat_len,
                                  struct ncsh_Arena* const scratch_arena);
 

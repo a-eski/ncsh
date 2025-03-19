@@ -1,4 +1,4 @@
-// For license see fzf_LICENSE.
+/* For license see fzf_LICENSE.*/
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpedantic"
@@ -451,7 +451,6 @@ TEST(EqualMatch, case3) {
 
 TEST(PatternParsing, empty) {
   NCSH_SCRATCH_ARENA_TEST_SETUP;
-  // fzf_pattern_t *pat = fzf_parse_pattern(CaseSmart, "", strlen(""));
   fzf_pattern_t *pat = fzf_parse_pattern("", strlen(""), &scratch_arena);
   ASSERT_EQ(0, pat->size);
   ASSERT_EQ(0, pat->cap);
@@ -462,7 +461,6 @@ TEST(PatternParsing, empty) {
 
 TEST(PatternParsing, simple) {
   NCSH_SCRATCH_ARENA_TEST_SETUP;
-  // fzf_pattern_t *pat = fzf_parse_pattern(CaseSmart, "lua", strlen("lua"));
   fzf_pattern_t *pat = fzf_parse_pattern("lua", strlen("lua"), &scratch_arena);
   ASSERT_EQ(1, pat->size);
   ASSERT_EQ(1, pat->cap);
@@ -479,7 +477,6 @@ TEST(PatternParsing, simple) {
 
 TEST(PatternParsing, withEscapedSpace) {
   NCSH_SCRATCH_ARENA_TEST_SETUP;
-  // fzf_pattern_t *pat = fzf_parse_pattern(CaseSmart, "file\\ ", strlen("file\\ "));
   fzf_pattern_t *pat = fzf_parse_pattern("file\\ ", strlen("file\\ "), &scratch_arena);
   ASSERT_EQ(1, pat->size);
   ASSERT_EQ(1, pat->cap);
@@ -497,7 +494,6 @@ TEST(PatternParsing, withEscapedSpace) {
 TEST(PatternParsing, withComplexEscapedSpace) {
   NCSH_SCRATCH_ARENA_TEST_SETUP;
   fzf_pattern_t *pat =
-      // fzf_parse_pattern(CaseSmart, "file\\ with\\ space", strlen("file\\ with\\ space"));
       fzf_parse_pattern("file\\ with\\ space", strlen("file\\ with\\ space"), &scratch_arena);
   ASSERT_EQ(1, pat->size);
   ASSERT_EQ(1, pat->cap);
@@ -515,7 +511,6 @@ TEST(PatternParsing, withComplexEscapedSpace) {
 
 TEST(PatternParsing, withEscapedSpaceAndNormalSpace) {
   NCSH_SCRATCH_ARENA_TEST_SETUP;
-  // fzf_pattern_t *pat = fzf_parse_pattern(CaseSmart, "file\\  new", strlen("file\\  new"));
   const char str[] = "file\\  new";
   fzf_pattern_t *pat = fzf_parse_pattern((char*)str, sizeof(str) - 1, &scratch_arena);
   ASSERT_EQ(2, pat->size);
@@ -539,7 +534,6 @@ TEST(PatternParsing, withEscapedSpaceAndNormalSpace) {
 
 TEST(PatternParsing, invert) {
   NCSH_SCRATCH_ARENA_TEST_SETUP;
-  // fzf_pattern_t *pat = fzf_parse_pattern(CaseSmart, "!Lua", strlen("!Lua"));
   fzf_pattern_t *pat = fzf_parse_pattern("!Lua", strlen("!Lua"), &scratch_arena);
   ASSERT_EQ(1, pat->size);
   ASSERT_EQ(1, pat->cap);
@@ -557,7 +551,6 @@ TEST(PatternParsing, invert) {
 
 TEST(PatternParsing, invertMultiple) {
   NCSH_SCRATCH_ARENA_TEST_SETUP;
-  // fzf_pattern_t *pat = fzf_parse_pattern(CaseSmart, "!fzf !test", strlen("!fzf !test"));
   fzf_pattern_t *pat = fzf_parse_pattern("!fzf !test", strlen("!fzf !test"), &scratch_arena);
   ASSERT_EQ(2, pat->size);
   ASSERT_EQ(2, pat->cap);
@@ -582,7 +575,6 @@ TEST(PatternParsing, invertMultiple) {
 
 TEST(PatternParsing, smartCase) {
   NCSH_SCRATCH_ARENA_TEST_SETUP;
-  // fzf_pattern_t *pat = fzf_parse_pattern(CaseSmart, "Lua", strlen("Lua"));
   fzf_pattern_t *pat = fzf_parse_pattern("Lua", strlen("Lua"), &scratch_arena);
   ASSERT_EQ(1, pat->size);
   ASSERT_EQ(1, pat->cap);
@@ -599,9 +591,7 @@ TEST(PatternParsing, smartCase) {
 
 TEST(PatternParsing, simpleOr) {
   NCSH_SCRATCH_ARENA_TEST_SETUP;
-  // fzf_pattern_t *pat = fzf_parse_pattern(CaseSmart, "'src | ^Lua", strlen("'src | ^Lua"));
   fzf_pattern_t *pat = fzf_parse_pattern("'src | ^Lua", strlen("'src | ^Lua"), &scratch_arena);
-  // assert(pat);
   ASSERT_EQ(1, pat->size);
   ASSERT_EQ(1, pat->cap);
   ASSERT_FALSE(pat->only_inv);
@@ -609,12 +599,10 @@ TEST(PatternParsing, simpleOr) {
   ASSERT_EQ(2, pat->ptr[0]->size);
   ASSERT_EQ(2, pat->ptr[0]->cap);
 
-  // assert(pat->ptr[0]->ptr[0].fn);
   ASSERT_EQ((void *)fzf_exact_match_naive, pat->ptr[0]->ptr[0].fn);
   ASSERT_EQ("src", ((fzf_string_t *)(pat->ptr[0]->ptr[0].text))->data);
   ASSERT_FALSE(pat->ptr[0]->ptr[0].case_sensitive);
 
-  // assert(pat->ptr[0]->ptr[1].fn);
   ASSERT_EQ((void *)fzf_prefix_match, pat->ptr[0]->ptr[1].fn);
   ASSERT_EQ("Lua", ((fzf_string_t *)(pat->ptr[0]->ptr[1].text))->data);
   ASSERT_TRUE(pat->ptr[0]->ptr[1].case_sensitive);
@@ -623,7 +611,6 @@ TEST(PatternParsing, simpleOr) {
 
 TEST(PatternParsing, complexAnd) {
   NCSH_SCRATCH_ARENA_TEST_SETUP;
-  // fzf_pattern_t *pat = fzf_parse_pattern(CaseSmart, ".lua$ 'previewer !'term !asdf", strlen(".lua$ 'previewer !'term !asdf"));
   fzf_pattern_t *pat = fzf_parse_pattern(".lua$ 'previewer !'term !asdf", strlen(".lua$ 'previewer !'term !asdf"), &scratch_arena);
   ASSERT_EQ(4, pat->size);
   ASSERT_EQ(4, pat->cap);
@@ -662,7 +649,6 @@ static void score_wrapper(char *pattern, char **input, int *expected) {
 
   NCSH_SCRATCH_ARENA_TEST_SETUP;
   fzf_slab_t *slab = fzf_make_default_slab(&scratch_arena);
-  // fzf_pattern_t *pat = fzf_parse_pattern(CaseSmart, pattern, strlen(pattern));
   fzf_pattern_t *pat = fzf_parse_pattern(pattern, strlen(pattern), &scratch_arena);
   for (size_t i = 0; input[i] != NULL; ++i) {
     ASSERT_EQ(expected[i], fzf_get_score(input[i], strlen(input[i]), pat, slab, &scratch_arena));
@@ -712,7 +698,6 @@ TEST(ScoreIntegration, complexTerm) {
 static void pos_wrapper(char *pattern, char **input, int **expected) {
   NCSH_SCRATCH_ARENA_TEST_SETUP;
   fzf_slab_t *slab = fzf_make_default_slab(&scratch_arena);
-  // fzf_pattern_t *pat = fzf_parse_pattern(CaseSmart, pattern, strlen(pattern));
   fzf_pattern_t *pat = fzf_parse_pattern(pattern, strlen(pattern), &scratch_arena);
   for (size_t i = 0; input[i] != NULL; ++i) {
     fzf_position_t *pos = fzf_get_positions(input[i], pat, slab, &scratch_arena);

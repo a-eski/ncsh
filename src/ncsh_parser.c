@@ -68,9 +68,9 @@ enum eskilib_Result ncsh_parser_args_alloc(struct ncsh_Args* const restrict args
 
     args->count = 0;
 
-    args->values = alloc(arena, NCSH_PARSER_TOKENS, char*);
-    args->ops = alloc(arena, NCSH_PARSER_TOKENS, uint_fast8_t);
-    args->lengths = alloc(arena, NCSH_PARSER_TOKENS, size_t);
+    args->values = arena_malloc(arena, NCSH_PARSER_TOKENS, char*);
+    args->ops = arena_malloc(arena, NCSH_PARSER_TOKENS, uint_fast8_t);
+    args->lengths = arena_malloc(arena, NCSH_PARSER_TOKENS, size_t);
 
     return E_SUCCESS;
 }
@@ -273,7 +273,7 @@ void ncsh_parser_parse(const char* const restrict line,
                         break;
                     }
                     buf_pos = glob_len;
-                    args->values[args->count] = alloc(scratch_arena, buf_pos, char);
+                    args->values[args->count] = arena_malloc(scratch_arena, buf_pos, char);
                     memcpy(args->values[args->count], glob_buf.gl_pathv[i], glob_len);
                     args->ops[args->count] = OP_CONSTANT;
                     args->lengths[args->count] = buf_pos;
@@ -287,7 +287,7 @@ void ncsh_parser_parse(const char* const restrict line,
                 glob_found = false;
             }
             else {
-                args->values[args->count] = alloc(scratch_arena, buf_pos + 1, char);
+                args->values[args->count] = arena_malloc(scratch_arena, buf_pos + 1, char);
                 memcpy(args->values[args->count], buffer, buf_pos + 1);
                 args->ops[args->count] = ncsh_parser_op_get(buffer, buf_pos);
                 args->lengths[args->count] = buf_pos + 1; // + 1 for null terminator

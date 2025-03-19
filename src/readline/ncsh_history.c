@@ -25,7 +25,7 @@ void ncsh_history_file_set(const struct eskilib_String config_file,
 
     constexpr size_t history_file_len = sizeof(NCSH_HISTORY_FILE);
 #ifdef NCSH_HISTORY_TEST
-    history->file = alloc(arena, history_file_len, char);
+    history->file = arena_malloc(arena, history_file_len, char);
     memcpy(history->file, NCSH_HISTORY_FILE, history_file_len);
     return;
 #endif /* ifdef NCSH_HISTORY_TEST */
@@ -40,7 +40,7 @@ void ncsh_history_file_set(const struct eskilib_String config_file,
         return;
     }
 
-    history->file = alloc(arena, config_file.length + history_file_len, char);
+    history->file = arena_malloc(arena, config_file.length + history_file_len, char);
     memcpy(history->file, config_file.value, config_file.length);
     memcpy(history->file + config_file.length - 1, NCSH_HISTORY_FILE, history_file_len);
 
@@ -59,7 +59,7 @@ enum eskilib_Result ncsh_history_alloc(struct ncsh_History* const restrict histo
     }
 
     history->count = 0;
-    history->entries = alloc(arena, NCSH_MAX_HISTORY_IN_MEMORY, struct eskilib_String);
+    history->entries = arena_malloc(arena, NCSH_MAX_HISTORY_IN_MEMORY, struct eskilib_String);
 
     return E_SUCCESS;
 }
@@ -101,7 +101,7 @@ enum eskilib_Result ncsh_history_load(struct ncsh_History* const restrict histor
          ++i) {
             ++history->count;
             history->entries[i].length = (size_t)buffer_length;
-            history->entries[i].value = alloc(arena, (uintptr_t)buffer_length, char);
+            history->entries[i].value = arena_malloc(arena, (uintptr_t)buffer_length, char);
             memcpy(history->entries[i].value, buffer, (size_t)buffer_length);
     }
 
@@ -135,9 +135,6 @@ enum eskilib_Result ncsh_history_reload(struct ncsh_History* const restrict hist
          (buffer_length = eskilib_fgets(buffer, sizeof(buffer), file)) != EOF && i < NCSH_MAX_HISTORY_FILE; ++i) {
         if (buffer_length > 0) {
             ++history->count;
-            /*history->entries[i].length = (size_t)buffer_length;
-            history->entries[i].value = alloc(arena, (uintptr_t)buffer_length, char);
-            memcpy(history->entries[i].value, buffer, (size_t)buffer_length);*/
             history->entries[i].value = arena_realloc(arena, (uintptr_t)buffer_length, char, history->entries[i].value, history->entries[i].length);
             history->entries[i].length = (size_t)buffer_length;
         }
@@ -312,7 +309,7 @@ enum eskilib_Result ncsh_history_add(const char* const line,
     }
 
     history->entries[history->count].length = length;
-    history->entries[history->count].value = alloc(arena, length, char);
+    history->entries[history->count].value = arena_malloc(arena, length, char);
     memcpy(history->entries[history->count].value, line, length);
     ++history->count;
     return E_SUCCESS;

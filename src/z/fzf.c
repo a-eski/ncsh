@@ -1,4 +1,4 @@
-// For license see fzf_LICENSE.
+/* For license see fzf_LICENSE. */
 #include "fzf.h"
 
 #include <assert.h>
@@ -164,7 +164,7 @@ char *str_replace_slashes(char *orig,
     ins = tmp + replace_len;
   }
 
-  tmp = result = alloc(scratch_arena, orig_len + (replacement_len - replace_len) * count + 1, char);
+  tmp = result = arena_malloc(scratch_arena, orig_len + (replacement_len - replace_len) * count + 1, char);
   if (!result) {
     return NULL;
   }
@@ -186,25 +186,12 @@ char *str_replace_slashes(char *orig,
 // TODO(conni2461): REFACTOR
 char *str_tolower(char *str, size_t size, struct ncsh_Arena* const scratch_arena) {
   assert(str);
-  char *lower_str = alloc(scratch_arena, size + 1, char);
+  char *lower_str = arena_malloc(scratch_arena, size + 1, char);
   for (size_t i = 0; i < size; i++) {
     lower_str[i] = (char)tolower((uint8_t)str[i]);
   }
   lower_str[size] = '\0';
   return lower_str;
-}
-
-char* str_dup(char* str, struct ncsh_Arena* scratch_arena)
-{
-  assert(str);
-  size_t actual_size = 0;
-  while (str[actual_size] != '\0') {
-    ++actual_size;
-  }
-  char* out = alloc(scratch_arena, actual_size, char);
-  memcpy(out, str, actual_size);
-  assert(out);
-  return out;
 }
 
 int16_t max16(int16_t a, int16_t b) {
@@ -216,11 +203,11 @@ size_t min64u(size_t a, size_t b) {
 }
 
 fzf_position_t *fzf_pos_array(size_t len, struct ncsh_Arena* const scratch_arena) {
-  fzf_position_t *pos = alloc(scratch_arena, 1, fzf_position_t);
+  fzf_position_t *pos = arena_malloc(scratch_arena, 1, fzf_position_t);
   pos->size = 0;
   pos->cap = len;
   if (len > 0) {
-    pos->data = alloc(scratch_arena, len, uint32_t);
+    pos->data = arena_malloc(scratch_arena, len, uint32_t);
   } else {
     pos->data = NULL;
   }
@@ -242,7 +229,7 @@ void resize_pos(fzf_position_t *pos,
     }
     else {
       pos->cap += add_len > 0 ? add_len : 1;
-      pos->data = alloc(scratch_arena, pos->cap, uint32_t);
+      pos->data = arena_malloc(scratch_arena, pos->cap, uint32_t);
     }
   }
 }
@@ -294,7 +281,7 @@ fzf_i16_t alloc16(size_t *offset, fzf_slab_t *slab, size_t size, struct ncsh_Are
                        .cap = slice.size,
                        .allocated = false};
   }
-  int16_t *data = alloc(scratch_arena, size, int16_t);
+  int16_t *data = arena_malloc(scratch_arena, size, int16_t);
   memset(data, 0, size * sizeof(int16_t));
   return (fzf_i16_t){
       .data = data, .size = size, .cap = size, .allocated = true};
@@ -309,13 +296,16 @@ fzf_i32_t alloc32(size_t *offset, fzf_slab_t *slab, size_t size, struct ncsh_Are
                        .cap = slice.size,
                        .allocated = false};
   }
-  int32_t *data = alloc(scratch_arena, size, int32_t);
+  int32_t *data = arena_malloc(scratch_arena, size, int32_t);
   memset(data, 0, size * sizeof(int32_t));
   return (fzf_i32_t){
       .data = data, .size = size, .cap = size, .allocated = true};
 }
 
-char_class char_class_of_ascii(char ch) {
+/* char_class_of
+ * Supports ascii only.
+ */
+char_class char_class_of(char ch) {
   if (ch >= 'a' && ch <= 'z') {
     return CharLower;
   }
@@ -326,14 +316,6 @@ char_class char_class_of_ascii(char ch) {
     return CharNumber;
   }
   return CharNonWord;
-}
-
-char_class char_class_of(char ch) {
-  return char_class_of_ascii(ch);
-  // if (ch <= 0x7f) {
-  //   return char_class_of_ascii(ch);
-  // }
-  // return char_class_of_non_ascii(ch);
 }
 
 int16_t bonus_for(char_class prev_class, char_class class) {
@@ -473,7 +455,6 @@ fzf_result_t fzf_fuzzy_match_v1(bool case_sensitive,
                                 fzf_slab_t *slab,
                                 struct ncsh_Arena* const scratch_arena) {
   (void)slab;
-  (void)scratch_arena;
   const size_t M = pattern->size;
   const size_t N = text->size;
   if (M == 0) {
@@ -593,7 +574,7 @@ fzf_result_t fzf_fuzzy_match_v2(bool case_sensitive,
   for (size_t off = 0; off < t_sub.size; off++) {
     char_class class;
     char c = (char)t_sub.data[off];
-    class = char_class_of_ascii(c);
+    class = char_class_of(c);
     if (!case_sensitive && class == CharUpper) {
       /* TODO(conni2461): unicode support */
       c = (char)tolower((uint8_t)c);
@@ -767,7 +748,6 @@ fzf_result_t fzf_exact_match_naive(bool case_sensitive,
                                    struct ncsh_Arena* const scratch_arena)
 {
   (void)slab;
-  (void)scratch_arena;
   const size_t M = pattern->size;
   const size_t N = text->size;
 
@@ -833,7 +813,6 @@ fzf_result_t fzf_prefix_match(bool case_sensitive,
                               struct ncsh_Arena* const scratch_arena)
 {
   (void)slab;
-  (void)scratch_arena;
   const size_t M = pattern->size;
   if (M == 0) {
     return (fzf_result_t){0, 0, 0};
@@ -867,9 +846,9 @@ fzf_result_t fzf_prefix_match(bool case_sensitive,
 fzf_result_t fzf_suffix_match(bool case_sensitive,
                               fzf_string_t *text, fzf_string_t *pattern,
                               fzf_position_t *pos, fzf_slab_t *slab,
-                              struct ncsh_Arena* const scratch_arena) {
+                              struct ncsh_Arena* const scratch_arena)
+{
   (void)slab;
-  (void)scratch_arena;
   size_t trimmed_len = text->size;
   const size_t M = pattern->size;
   /* TODO(conni2461): i think this is wrong */
@@ -907,7 +886,6 @@ fzf_result_t fzf_equal_match(bool case_sensitive,
                              struct ncsh_Arena* const scratch_arena)
 {
     (void)slab;
-    (void)scratch_arena;
     const size_t M = pattern->size;
     if (M == 0) {
         return (fzf_result_t){-1, -1, 0};
@@ -941,10 +919,12 @@ fzf_result_t fzf_equal_match(bool case_sensitive,
     return (fzf_result_t){-1, -1, 0};
 }
 
-void append_set(fzf_term_set_t *set, fzf_term_t value, struct ncsh_Arena* const scratch_arena) {
+void append_set(fzf_term_set_t *set,
+		fzf_term_t value,
+		struct ncsh_Arena* const scratch_arena) {
   if (set->cap == 0) {
     set->cap = 1;
-    set->ptr = alloc(scratch_arena, 1, fzf_term_t);
+    set->ptr = arena_malloc(scratch_arena, 1, fzf_term_t);
   } else if (set->size + 1 > set->cap) {
     size_t cap_before = set->cap;
     set->cap *= 2;
@@ -955,11 +935,12 @@ void append_set(fzf_term_set_t *set, fzf_term_t value, struct ncsh_Arena* const 
   set->size++;
 }
 
-void append_pattern(fzf_pattern_t *pattern, fzf_term_set_t *value,
+void append_pattern(fzf_pattern_t *pattern,
+		    fzf_term_set_t *value,
 		    struct ncsh_Arena* const scratch_arena) {
   if (pattern->cap == 0) {
     pattern->cap = 1;
-    pattern->ptr = alloc(scratch_arena, 1, fzf_term_set_t*);
+    pattern->ptr = arena_malloc(scratch_arena, 1, fzf_term_set_t*);
   } else if (pattern->size + 1 > pattern->cap) {
     size_t cap_before = pattern->cap;
     pattern->cap *= 2;
@@ -979,14 +960,13 @@ void append_pattern(fzf_pattern_t *pattern, fzf_term_set_t *value,
 /* assumption (maybe i change that later)
  * - always v2 alg
  */
-fzf_pattern_t* fzf_parse_pattern(// fzf_case_types case_mode,
-                                 char* const pattern,
+fzf_pattern_t* fzf_parse_pattern(char* const pattern,
                                  size_t pat_len,
                                  struct ncsh_Arena* const scratch_arena)
 {
   assert(scratch_arena);
 
-  fzf_pattern_t* pat_obj = alloc(scratch_arena, 1, fzf_pattern_t);
+  fzf_pattern_t* pat_obj = arena_malloc(scratch_arena, 1, fzf_pattern_t);
   if (pat_len == 0) {
     return pat_obj;
   }
@@ -1004,7 +984,7 @@ fzf_pattern_t* fzf_parse_pattern(// fzf_case_types case_mode,
   const char* delim = " ";
   char *ptr = strtok(pattern_copy, delim);
 
-  fzf_term_set_t *set = alloc(scratch_arena, 1, fzf_term_set_t);
+  fzf_term_set_t *set = arena_malloc(scratch_arena, 1, fzf_term_set_t);
 
   bool switch_set = false;
   bool after_bar = false;
@@ -1014,13 +994,7 @@ fzf_pattern_t* fzf_parse_pattern(// fzf_case_types case_mode,
 
     size_t len = strlen(ptr);
     str_replace_char(ptr, '\t', ' ');
-    // char *text = str_dup(ptr, scratch_arena);
-    // char *text = strdup(ptr);
     char *text = ptr;
-    /*char *text = alloc(scratch_arena, len, char);
-    for (size_t i = 0; ptr[i] && i < len; ++i) {
-      text[i] = ptr[i];
-    }*/
 
     char *og_str = text;
     char *lower_text = str_tolower(text, len, scratch_arena);
@@ -1074,11 +1048,11 @@ fzf_pattern_t* fzf_parse_pattern(// fzf_case_types case_mode,
     if (len > 0) {
       if (switch_set) {
         append_pattern(pat_obj, set, scratch_arena);
-        set = alloc(scratch_arena, 1, fzf_term_set_t);
+        set = arena_malloc(scratch_arena, 1, fzf_term_set_t);
         set->cap = 0;
         set->size = 0;
       }
-      fzf_string_t *text_ptr = alloc(scratch_arena, 1, fzf_string_t);
+      fzf_string_t *text_ptr = arena_malloc(scratch_arena, 1, fzf_string_t);
       text_ptr->data = text;
       text_ptr->size = len;
       append_set(set, (fzf_term_t){.fn = fn,
@@ -1115,8 +1089,11 @@ fzf_pattern_t* fzf_parse_pattern(// fzf_case_types case_mode,
   return pat_obj;
 }
 
-int32_t fzf_get_score(const char *text, size_t text_len, fzf_pattern_t *pattern,
-                      fzf_slab_t *slab, struct ncsh_Arena* const scratch_arena) {
+int32_t fzf_get_score(const char *text,
+		      size_t text_len,
+		      fzf_pattern_t *pattern,
+                      fzf_slab_t *slab,
+		      struct ncsh_Arena* const scratch_arena) {
   // If the pattern is an empty string then pattern->ptr will be NULL and we
   // basically don't want to filter. Return 1 for telescope
   if (!pattern->ptr) {
@@ -1168,8 +1145,11 @@ int32_t fzf_get_score(const char *text, size_t text_len, fzf_pattern_t *pattern,
   return total_score;
 }
 
-fzf_position_t *fzf_get_positions(const char *text, fzf_pattern_t *pattern,
-                                  fzf_slab_t *slab, struct ncsh_Arena* const scratch_arena) {
+fzf_position_t *fzf_get_positions(const char *text,
+				  fzf_pattern_t *pattern,
+                                  fzf_slab_t *slab,
+				  struct ncsh_Arena* const scratch_arena)
+{
   // If the pattern is an empty string then pattern->ptr will be NULL and we
   // basically don't want to filter. Return 1 for telescope
   if (!pattern->ptr) {
@@ -1210,14 +1190,14 @@ fzf_position_t *fzf_get_positions(const char *text, fzf_pattern_t *pattern,
 fzf_slab_t *fzf_make_slab(fzf_slab_config_t config,
                           struct ncsh_Arena* const scratch_arena)
 {
-  fzf_slab_t *slab = alloc(scratch_arena, 1, fzf_slab_t);
+  fzf_slab_t *slab = arena_malloc(scratch_arena, 1, fzf_slab_t);
 
-  slab->I16.data = alloc(scratch_arena, config.size_16, int16_t);
+  slab->I16.data = arena_malloc(scratch_arena, config.size_16, int16_t);
   slab->I16.cap = config.size_16;
   slab->I16.size = 0;
   slab->I16.allocated = true;
 
-  slab->I32.data = alloc(scratch_arena, config.size_32, int32_t);
+  slab->I32.data = arena_malloc(scratch_arena, config.size_32, int32_t);
   slab->I32.cap = config.size_32;
   slab->I32.size = 0;
   slab->I32.allocated = true;

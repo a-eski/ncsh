@@ -754,7 +754,7 @@ int_fast32_t ncsh_readline_init(struct ncsh_Config* const restrict config,
 {
     input->user.value = getenv("USER");
     input->user.length = strlen(input->user.value) + 1;
-    input->buffer = alloc(arena, NCSH_MAX_INPUT, char);
+    input->buffer = arena_malloc(arena, NCSH_MAX_INPUT, char);
 
     enum eskilib_Result result;
     if ((result = ncsh_history_init(config->config_location, &input->history, arena)) != E_SUCCESS) {
@@ -763,7 +763,7 @@ int_fast32_t ncsh_readline_init(struct ncsh_Config* const restrict config,
         return EXIT_FAILURE;
     }
 
-    input->current_autocompletion = alloc(arena, NCSH_MAX_INPUT, char);
+    input->current_autocompletion = arena_malloc(arena, NCSH_MAX_INPUT, char);
     input->autocompletions_tree = ncsh_autocompletions_alloc(arena);
 
     ncsh_autocompletions_add_multiple(input->history.entries, input->history.count, input->autocompletions_tree, arena);

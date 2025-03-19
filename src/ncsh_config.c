@@ -36,7 +36,7 @@ enum eskilib_Result ncsh_config_home_init(struct ncsh_Config* const restrict con
     }
 
     config->home_location.length = strlen(home);
-    config->home_location.value = alloc(arena, config->home_location.length + 1, char);
+    config->home_location.value = arena_malloc(arena, config->home_location.length + 1, char);
     memcpy(config->home_location.value, home, config->home_location.length + 1);
 #ifdef NCSH_DEBUG
     printf("config->home_location.value: %s\n", config->home_location.value);
@@ -53,7 +53,7 @@ enum eskilib_Result ncsh_config_location_init(struct ncsh_Config* const restrict
         return E_FAILURE_NULL_REFERENCE;
     }
 
-    config->config_location.value = alloc(arena, NCSH_MAX_INPUT, char);
+    config->config_location.value = arena_malloc(arena, NCSH_MAX_INPUT, char);
 
     const char* const config_original_ptr = config->config_location.value;
     config->config_location.length = config->home_location.length;
@@ -93,7 +93,7 @@ enum eskilib_Result ncsh_config_file_set(struct ncsh_Config* const restrict conf
                                          struct ncsh_Arena* const arena)
 {
     if (!config->config_location.value || !config->config_location.length) {
-        config->config_file.value = alloc(arena, sizeof(NCSH_RC), char);
+        config->config_file.value = arena_malloc(arena, sizeof(NCSH_RC), char);
         memcpy(config->config_file.value, NCSH_RC, sizeof(NCSH_RC) - 1);
         config->config_file.value[sizeof(NCSH_RC) - 1] = '\0';
         config->config_file.length = sizeof(NCSH_RC);
@@ -106,7 +106,7 @@ enum eskilib_Result ncsh_config_file_set(struct ncsh_Config* const restrict conf
         return E_FAILURE_OVERFLOW_PROTECTION;
     }
 
-    config->config_file.value = alloc(arena, config->config_location.length + sizeof(NCSH_RC), char);
+    config->config_file.value = arena_malloc(arena, config->config_location.length + sizeof(NCSH_RC), char);
     memcpy(config->config_file.value, config->config_location.value, config->config_location.length - 1);
     memcpy(config->config_file.value + config->config_location.length - 1, "/" NCSH_RC, sizeof(NCSH_RC));
     config->config_file.length = config->config_location.length + sizeof(NCSH_RC);
@@ -135,7 +135,7 @@ void ncsh_config_path_add(const char* const value,
 
     char* path = getenv("PATH");
     size_t path_len = strlen(path) + 1; // null terminator here becomes : in length calc below
-    char* new_path = alloc(scratch_arena, path_len + (size_t)len, char);
+    char* new_path = arena_malloc(scratch_arena, path_len + (size_t)len, char);
     memcpy(new_path, path, path_len - 1);
     new_path[path_len - 2] = ':';
     memcpy(new_path + path_len - 1, value, (size_t)len);

@@ -1,4 +1,4 @@
-// Copyright (c) z by Alex Eski 2024
+/* Copyright (c) z by Alex Eski 2024 */
 
 #include <assert.h>
 #include <dirent.h>
@@ -100,9 +100,6 @@ struct z_Directory* z_match_find(char* const target,
         printf("Best match fzf_score %d\n", current_match.fzf_score);
 #endif /* ifdef Z_DEBUG */
     }
-
-    // fzf_free_pattern(pattern);
-    // fzf_free_slab(slab);
 
     return current_match.dir;
 }
@@ -221,7 +218,7 @@ enum z_Result z_read_entry(struct z_Directory* const restrict dir,
         return Z_FILE_ERROR;
     }
 
-    dir->path = alloc(arena, dir->path_length + 1, char);
+    dir->path = arena_malloc(arena, dir->path_length + 1, char);
 
     bytes_read = fread(dir->path, sizeof(char), dir->path_length, file);
     if (!bytes_read) {
@@ -332,7 +329,7 @@ enum z_Result z_write_entry_new(const char* const path,
         return Z_FAILURE;
     }
 
-    db->dirs[db->count].path = alloc(arena, path_length, char);
+    db->dirs[db->count].path = arena_malloc(arena, path_length, char);
 
     memcpy(db->dirs[db->count].path, path, path_length);
     assert(db->dirs[db->count].path[path_length - 1] == '\0');
@@ -364,7 +361,7 @@ enum z_Result z_database_add(const char* const path,
     size_t total_length = path_length + cwd_length;
     assert(total_length > 0);
 
-    db->dirs[db->count].path = alloc(arena, total_length, char);
+    db->dirs[db->count].path = arena_malloc(arena, total_length, char);
 
     memcpy(db->dirs[db->count].path, cwd, cwd_length);
     memcpy(db->dirs[db->count].path + cwd_length - 1, "/", 2);
@@ -391,7 +388,7 @@ enum z_Result z_database_file_set(const struct eskilib_String* const config_file
 {
     constexpr size_t z_db_file_len = sizeof(Z_DATABASE_FILE);
 #ifdef Z_TEST
-    db->database_file = alloc(arena, z_db_file_len, char);
+    db->database_file = arena_malloc(arena, z_db_file_len, char);
     memcpy(db->database_file, Z_DATABASE_FILE, z_db_file_len);
     return Z_SUCCESS;
 #endif /* ifdef Z_TEST */
@@ -404,7 +401,7 @@ enum z_Result z_database_file_set(const struct eskilib_String* const config_file
         return Z_FILE_LENGTH_TOO_LARGE;
     }
 
-    db->database_file = alloc(arena, config_file->length + z_db_file_len, char);
+    db->database_file = arena_malloc(arena, config_file->length + z_db_file_len, char);
 
     memcpy(db->database_file, config_file->value, config_file->length);
     memcpy(db->database_file + config_file->length - 1, Z_DATABASE_FILE, z_db_file_len);
@@ -456,7 +453,7 @@ enum z_Result z_directory_match_exists(const char* const target,
 
         directory_length = strlen(directory_entry->d_name) + 1;
         if (eskilib_string_compare_const(target, target_length, directory_entry->d_name, directory_length)) {
-            output->value = alloc(scratch_arena, directory_length, char);
+            output->value = arena_malloc(scratch_arena, directory_length, char);
             output->length = directory_length;
             memcpy(output->value, directory_entry->d_name, directory_length);
 

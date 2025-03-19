@@ -1,4 +1,4 @@
-// Copyright (c) z by Alex Eski 2024
+/* Copyright (c) z by Alex Eski 2024 */
 
 #include <stdbool.h>
 #include <stdio.h>
@@ -192,8 +192,6 @@ void z_add_new_entry_contained_in_another_entry_but_different_test(void)
 
     eskilib_assert(db.count == 2);
     eskilib_assert(db.dirs[1].path_length == 45);
-
-    // z_print(&db);
 
     z_exit(&db);
     NCSH_ARENA_TEST_TEARDOWN;
@@ -744,7 +742,7 @@ int main(void)
     eskilib_test_run(z_write_nonempty_database_test);
     eskilib_test_run(z_match_find_finds_exact_match_test);
     eskilib_test_run(z_match_find_finds_match_test);
-    // eskilib_test_run(z_match_find_no_match_test);
+    eskilib_test_run(z_match_find_no_match_test);
     eskilib_test_run(z_match_find_multiple_matches_test);
 
 #ifdef NDEBUG
@@ -763,7 +761,7 @@ int main(void)
     eskilib_test_run(z_add_null_parameters);
     eskilib_test_run(z_add_bad_parameters);
     eskilib_test_run(z_add_new_entry_contained_in_another_entry_but_different_test);
-    // eskilib_test_run(z_contains_correct_match_test);
+    eskilib_test_run(z_contains_correct_match_test);
 
     eskilib_test_finish();
 

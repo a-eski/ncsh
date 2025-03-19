@@ -8,10 +8,10 @@ struct ncsh_Arena {
     char* end;
 };
 
-#define alloc(arena, count, type) \
-    (type*)ncsh_arena_alloc_internal(arena, count, sizeof(type), _Alignof(type))
+#define arena_malloc(arena, count, type) \
+    (type*)ncsh_arena_malloc_internal(arena, count, sizeof(type), _Alignof(type))
 
-void* ncsh_arena_alloc_internal(struct ncsh_Arena* arena,
+void* ncsh_arena_malloc_internal(struct ncsh_Arena* arena,
                      uintptr_t count,
                      uintptr_t size,
                      uintptr_t alignment);
