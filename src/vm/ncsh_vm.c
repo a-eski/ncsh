@@ -357,6 +357,7 @@ int_fast32_t ncsh_vm_fork_failure(const uint_fast32_t command_position,
 }
 
 /* Background Jobs */
+// Implementation not finished, still experimenting...
 [[nodiscard]]
 int_fast32_t ncsh_vm_run_background_job(struct ncsh_Args* const restrict args,
                                         struct ncsh_Processes* const restrict processes,
@@ -446,9 +447,64 @@ void ncsh_vm_buffer_set_command_next(struct ncsh_Args* const restrict args,
     ++vm->args_position;
 }
 
+void ncsh_vm_waitpid(struct ncsh_Vm_Data* vm)
+{
+    pid_t waitpid_result;
+    while (1) {
+        vm->status = 0;
+        waitpid_result = waitpid(vm->pid, &vm->status, WUNTRACED);
+
+        // check for errors
+        if (waitpid_result == -1) {
+            /* ignore EINTR, occurs when SA_RESTART is not specified in sigaction flags */
+            if (errno == EINTR) {
+                continue;
+            }
+
+            perror(RED "ncsh: Error waiting for child process to exit" RESET);
+            vm->status = EXIT_FAILURE;
+            break;
+        }
+
+        // check if child process has exited
+        if (waitpid_result == vm->pid) {
+#ifdef NCSH_DEBUG
+            ncsh_vm_debug_status(&vm);
+#endif /* ifdef NCSH_DEBUG */
+            break;
+        }
+    }
+}
+
+
+int_fast32_t ncsh_vm_fork_and_exec(struct ncsh_Tokens* tokens,
+                           struct ncsh_Vm_Data* vm)
+{
+    vm->pid = fork();
+
+    if (vm->pid < 0) {
+        return ncsh_vm_fork_failure(vm->command_position, tokens->number_of_pipe_commands, &vm->pipes_io);
+    }
+
+    if (vm->pid == 0) { // runs in the child process
+        if (vm->op_current == OP_PIPE) {
+            ncsh_vm_pipe_connect(vm->command_position, tokens->number_of_pipe_commands, &vm->pipes_io);
+        }
+
+        if ((vm->execvp_result = execvp(vm->buffer[0], vm->buffer)) == EXECVP_FAILED) {
+            vm->args_end = true;
+            perror(RED "ncsh: Could not run command" RESET);
+            fflush(stdout);
+            kill(getpid(), SIGTERM);
+        }
+    }
+
+    return NCSH_COMMAND_SUCCESS_CONTINUE;
+}
+
 [[nodiscard]]
 int_fast32_t ncsh_vm_run(struct ncsh_Args* const restrict args,
-                         struct ncsh_Tokens* tokens)
+                         struct ncsh_Tokens* const restrict tokens)
 {
     int_fast32_t result;
     struct ncsh_Vm_Data vm = {0};
@@ -490,23 +546,8 @@ int_fast32_t ncsh_vm_run(struct ncsh_Args* const restrict args,
                 return NCSH_COMMAND_EXIT_FAILURE;
             }
 
-            vm.pid = fork();
-
-            if (vm.pid < 0) {
-                return ncsh_vm_fork_failure(vm.command_position, tokens->number_of_pipe_commands, &vm.pipes_io);
-            }
-
-            if (vm.pid == 0) { // runs in the child process
-                if (vm.op_current == OP_PIPE) {
-                    ncsh_vm_pipe_connect(vm.command_position, tokens->number_of_pipe_commands, &vm.pipes_io);
-                }
-
-                if ((vm.execvp_result = execvp(vm.buffer[0], vm.buffer)) == EXECVP_FAILED) {
-                    vm.args_end = true;
-                    perror(RED "ncsh: Could not run command" RESET);
-                    fflush(stdout);
-                    kill(getpid(), SIGTERM);
-                }
+            if ((result = ncsh_vm_fork_and_exec(tokens, &vm)) != NCSH_COMMAND_SUCCESS_CONTINUE) {
+                return result;
             }
 
             if (vm.op_current == OP_PIPE) {
@@ -518,32 +559,7 @@ int_fast32_t ncsh_vm_run(struct ncsh_Args* const restrict args,
             }
 
             ncsh_vm_atomic_child_pid_set(vm.pid);
-
-            pid_t waitpid_result;
-            while (1) {
-                vm.status = 0;
-                waitpid_result = waitpid(vm.pid, &vm.status, WUNTRACED);
-
-                // check for errors
-                if (waitpid_result == -1) {
-                    /* ignore EINTR, occurs when SA_RESTART is not specified in sigaction flags */
-                    if (errno == EINTR) {
-                        continue;
-                    }
-
-                    perror(RED "ncsh: Error waiting for child process to exit" RESET);
-                    vm.status = EXIT_FAILURE;
-                    break;
-                }
-
-                // check if child process has exited
-                if (waitpid_result == vm.pid) {
-#ifdef NCSH_DEBUG
-                    ncsh_vm_debug_status(&vm);
-#endif /* ifdef NCSH_DEBUG */
-                    break;
-                }
-            }
+            ncsh_vm_waitpid(&vm);
         }
 
         vm.command_type = CT_EXTERNAL;
@@ -558,8 +574,9 @@ int_fast32_t ncsh_vm_run(struct ncsh_Args* const restrict args,
     if (vm.status == EXIT_FAILURE) {
         return NCSH_COMMAND_EXIT_FAILURE;
     }
-    if (vm.command_result != NCSH_COMMAND_NONE)
+    if (vm.command_result != NCSH_COMMAND_NONE) {
         return vm.command_result;
+    }
 
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
@@ -594,7 +611,8 @@ void ncsh_vm_alias(struct ncsh_Args* const restrict args,
 }
 
 [[nodiscard]]
-int_fast32_t ncsh_vm_execute(struct ncsh_Shell* const restrict shell)
+int_fast32_t ncsh_vm_execute(struct ncsh_Shell* const restrict shell,
+                             struct ncsh_Arena* const scratch_arena)
 {
     assert(shell);
     assert(&shell->args);
@@ -606,7 +624,7 @@ int_fast32_t ncsh_vm_execute(struct ncsh_Shell* const restrict shell)
     // check if any jobs finished running
 
     if (eskilib_string_compare(shell->args.values[0], shell->args.lengths[0], NCSH_Z, sizeof(NCSH_Z))) {
-        return ncsh_builtins_z(&shell->z_db, &shell->args, &shell->arena, &shell->scratch_arena);
+        return ncsh_builtins_z(&shell->z_db, &shell->args, &shell->arena, scratch_arena);
     }
 
     if (eskilib_string_compare(shell->args.values[0], shell->args.lengths[0], NCSH_HISTORY, sizeof(NCSH_HISTORY))) {

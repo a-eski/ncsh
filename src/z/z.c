@@ -482,7 +482,7 @@ void z(char* target,
        struct ncsh_Arena scratch_arena)
 {
 #ifdef Z_DEBUG
-    printf("z: %s\n", target.value);
+    printf("z: %s\n", target);
 #endif /* ifdef Z_DEBUG */
 
     char* home = getenv("HOME");
@@ -503,7 +503,7 @@ void z(char* target,
         return;
     }
 
-    if (!strcmp(target, home)) {
+    if (eskilib_string_compare(target, target_length, home, strlen(home) + 1)) {
         if (chdir(home) == -1) {
             perror("z: couldn't change directory to home");
         }
@@ -558,6 +558,7 @@ void z(char* target,
         return;
     }
 
+    printf("%s\n", target);
     if (chdir(target) == -1) {
         perror("z: couldn't change directory");
         return;

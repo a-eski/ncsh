@@ -12,6 +12,7 @@
 
 #include "eskilib/eskilib_colors.h"
 #include "eskilib/eskilib_result.h"
+#include "ncsh_config.h"
 #include "ncsh_defines.h"
 #include "ncsh_debug.h"
 #include "ncsh_noninteractive.h"
@@ -66,6 +67,11 @@ int_fast32_t ncsh_noninteractive(const int argc,
     struct ncsh_Arena arena = { .start = memory, .end = memory + (arena_capacity) };
     char* scratch_memory_start = memory + (arena_capacity + 1);
     struct ncsh_Arena scratch_arena = { .start = scratch_memory_start, .end = scratch_memory_start + (scratch_arena_capacity) };
+
+    struct ncsh_Config config;
+    if (ncsh_config_init(&config, &arena, scratch_arena) != E_SUCCESS) {
+        return EXIT_FAILURE;
+    }
 
     struct ncsh_Args args = {0};
     enum eskilib_Result result;

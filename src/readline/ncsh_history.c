@@ -333,9 +333,8 @@ struct eskilib_String ncsh_history_get(const size_t position,
     else if (position > NCSH_MAX_HISTORY_IN_MEMORY) {
         return history->entries[NCSH_MAX_HISTORY_IN_MEMORY];
     }
-    else {
-        return history->entries[history->count - position - 1];
-    }
+
+    return history->entries[history->count - position - 1];
 }
 
 [[nodiscard]]

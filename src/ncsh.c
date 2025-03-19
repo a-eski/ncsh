@@ -88,7 +88,7 @@ int_fast32_t ncsh_run(struct ncsh_Shell* shell, struct ncsh_Arena scratch_arena)
 {
     ncsh_parser_parse(shell->input.buffer, shell->input.pos, &shell->args, &scratch_arena);
 
-    return ncsh_vm_execute(shell);
+    return ncsh_vm_execute(shell, &scratch_arena);
 }
 
 /* ncsh
