@@ -79,6 +79,7 @@ check :
 	make test_parser
 	make test_config
 	make test_readline
+	make test_arena
 .PHONY: c
 c :
 	make check

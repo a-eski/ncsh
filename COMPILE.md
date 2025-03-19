@@ -111,6 +111,7 @@ make test_parser # or make tp
 make test_fzf # or make tf
 make test_z # or make tz
 make acceptance_tests # or make at
+make test_arena # or make ta
 ```
 
 ### Fuzz Testing
