@@ -25,6 +25,7 @@ end
 
 def z_remove_test(row)
   assert_check_new_row(row)
+  row = z_add_entry_checked(row)
   @tty.send_line('z remove ~/.config')
   row += 1
   test_passed('z remove test')
@@ -50,7 +51,7 @@ end
 
 def z_tests(row)
   starting_tests('z_add')
-  row = z_add_tests(row)
-  z_remove_tests(row)
+  row = z_remove_tests(row)
+  z_add_tests(row)
   # z_print_tests(row)
 end

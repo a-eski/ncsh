@@ -121,11 +121,13 @@ void copy_into_i16(i16_slice_t *src, fzf_i16_t *dest) {
 
 // char* helpers
 bool has_prefix(const char *str, const char *prefix, size_t prefix_len) {
+  assert(str);
   return !strncmp(prefix, str, prefix_len);
 }
 
 bool has_suffix(const char *str, size_t len, const char *suffix,
                        size_t suffix_len) {
+  assert(str);
   return len >= suffix_len &&
          !strncmp(slice_str(str, len - suffix_len, len).data, suffix, suffix_len);
 }
@@ -149,6 +151,7 @@ char *str_replace_slashes(char *orig,
 
   constexpr char replace[] = "\\ ";
   constexpr size_t replace_len = sizeof(replace) - 1;
+  assert(replace_len == strlen(replace));
   constexpr char replacement[] = "\t";
   constexpr size_t replacement_len = sizeof(replacement) - 1;
 
@@ -182,12 +185,26 @@ char *str_replace_slashes(char *orig,
 
 // TODO(conni2461): REFACTOR
 char *str_tolower(char *str, size_t size, struct ncsh_Arena* const scratch_arena) {
+  assert(str);
   char *lower_str = alloc(scratch_arena, size + 1, char);
   for (size_t i = 0; i < size; i++) {
     lower_str[i] = (char)tolower((uint8_t)str[i]);
   }
   lower_str[size] = '\0';
   return lower_str;
+}
+
+char* str_dup(char* str, struct ncsh_Arena* scratch_arena)
+{
+  assert(str);
+  size_t actual_size = 0;
+  while (str[actual_size] != '\0') {
+    ++actual_size;
+  }
+  char* out = alloc(scratch_arena, actual_size, char);
+  memcpy(out, str, actual_size);
+  assert(out);
+  return out;
 }
 
 int16_t max16(int16_t a, int16_t b) {
@@ -218,10 +235,15 @@ void resize_pos(fzf_position_t *pos,
     return;
   }
   if (pos->size + comp > pos->cap) {
-    size_t cap_before = pos->cap;
-    pos->cap += add_len > 0 ? add_len : 1;
-    // pos->data = (uint32_t *)realloc(pos->data, sizeof(uint32_t) * pos->cap);
-    pos->data = arena_realloc(scratch_arena, pos->cap, uint32_t, pos->data, cap_before);
+    if (pos->data) {
+      size_t cap_before = pos->cap;
+      pos->cap += add_len > 0 ? add_len : 1;
+      pos->data = arena_realloc(scratch_arena, pos->cap, uint32_t, pos->data, cap_before);
+    }
+    else {
+      pos->cap += add_len > 0 ? add_len : 1;
+      pos->data = alloc(scratch_arena, pos->cap, uint32_t);
+    }
   }
 }
 
@@ -924,8 +946,10 @@ void append_set(fzf_term_set_t *set, fzf_term_t value, struct ncsh_Arena* const 
     set->cap = 1;
     set->ptr = alloc(scratch_arena, 1, fzf_term_t);
   } else if (set->size + 1 > set->cap) {
+    size_t cap_before = set->cap;
     set->cap *= 2;
-    set->ptr = alloc(scratch_arena, set->cap, fzf_term_t);
+    assert(set->ptr);
+    set->ptr = arena_realloc(scratch_arena, set->cap, fzf_term_t, set->ptr, cap_before);
   }
   set->ptr[set->size] = value;
   set->size++;
@@ -939,7 +963,7 @@ void append_pattern(fzf_pattern_t *pattern, fzf_term_set_t *value,
   } else if (pattern->size + 1 > pattern->cap) {
     size_t cap_before = pattern->cap;
     pattern->cap *= 2;
-
+    assert(pattern->ptr);
     pattern->ptr = arena_realloc(scratch_arena, pattern->cap, fzf_term_set_t*, pattern->ptr, cap_before);
   }
 
@@ -963,7 +987,6 @@ fzf_pattern_t* fzf_parse_pattern(// fzf_case_types case_mode,
   assert(scratch_arena);
 
   fzf_pattern_t* pat_obj = alloc(scratch_arena, 1, fzf_pattern_t);
-
   if (pat_len == 0) {
     return pat_obj;
   }
@@ -991,8 +1014,13 @@ fzf_pattern_t* fzf_parse_pattern(// fzf_case_types case_mode,
 
     size_t len = strlen(ptr);
     str_replace_char(ptr, '\t', ' ');
+    // char *text = str_dup(ptr, scratch_arena);
     // char *text = strdup(ptr);
     char *text = ptr;
+    /*char *text = alloc(scratch_arena, len, char);
+    for (size_t i = 0; ptr[i] && i < len; ++i) {
+      text[i] = ptr[i];
+    }*/
 
     char *og_str = text;
     char *lower_text = str_tolower(text, len, scratch_arena);
@@ -1147,6 +1175,7 @@ fzf_position_t *fzf_get_positions(const char *text, fzf_pattern_t *pattern,
   if (!pattern->ptr) {
     return NULL;
   }
+  assert(scratch_arena);
 
   fzf_string_t input = {.data = text, .size = strlen(text)};
   fzf_position_t *all_pos = fzf_pos_array(0, scratch_arena);

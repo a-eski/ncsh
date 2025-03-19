@@ -51,9 +51,36 @@ void ncsh_arena_realloc_test(void)
     size_t test_value_two_len = strlen(test_value_two);
     char* realloced_value = arena_realloc(&arena, test_value_two_len, char, value, test_value_len);
     eskilib_assert(realloced_value);
-    printf("%s\n", realloced_value);
     eskilib_assert(!memcmp(realloced_value, test_value, test_value_len));
     eskilib_assert(!realloced_value[test_value_len]);
+
+    NCSH_ARENA_TEST_TEARDOWN;
+}
+
+struct ncsh_Test {
+   size_t test;
+};
+
+void ncsh_arena_realloc_non_char_test(void)
+{
+    NCSH_ARENA_TEST_SETUP;
+
+    const size_t initial_size = 5;
+    struct ncsh_Test* test_values = alloc(&arena, initial_size, struct ncsh_Test);
+    test_values[0] = (struct ncsh_Test){ .test = 100 };
+    test_values[1] = (struct ncsh_Test){ .test = 200 };
+    test_values[2] = (struct ncsh_Test){ .test = 300 };
+
+    const size_t new_size = 10;
+    struct ncsh_Test* realloced_value = arena_realloc(&arena, new_size, struct ncsh_Test, test_values, initial_size);
+    eskilib_assert(realloced_value);
+    eskilib_assert(realloced_value[0].test == 100);
+    eskilib_assert(realloced_value[1].test == 200);
+    eskilib_assert(realloced_value[2].test == 300);
+    for (size_t i = 3; i < 10; ++i) {
+        eskilib_assert(!realloced_value[i].test);
+    }
+    eskilib_assert(!memcmp(realloced_value, test_values, initial_size));
 
     NCSH_ARENA_TEST_TEARDOWN;
 }
@@ -65,6 +92,7 @@ void ncsh_arena_tests(void)
     eskilib_test_run(ncsh_arena_alloc_test);
     eskilib_test_run(ncsh_arena_multiple_alloc_test);
     eskilib_test_run(ncsh_arena_realloc_test);
+    eskilib_test_run(ncsh_arena_realloc_non_char_test);
 
     eskilib_test_finish();
 }

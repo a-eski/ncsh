@@ -43,7 +43,7 @@ fzf_position_t *fzf_get_positions(const char *text,
     fzf_result_t res = alg(case, txt, pat, pos, slab, &scratch_arena);         \
     assert_block;                                                              \
   }                                                                            \
-  NCSH_SCRATCH_ARENA_TEST_TEARDOWN;                                            \
+  NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
 
 static int8_t max_i8(int8_t a, int8_t b) {
   return a > b ? a : b;
@@ -601,6 +601,7 @@ TEST(PatternParsing, simpleOr) {
   NCSH_SCRATCH_ARENA_TEST_SETUP;
   // fzf_pattern_t *pat = fzf_parse_pattern(CaseSmart, "'src | ^Lua", strlen("'src | ^Lua"));
   fzf_pattern_t *pat = fzf_parse_pattern("'src | ^Lua", strlen("'src | ^Lua"), &scratch_arena);
+  // assert(pat);
   ASSERT_EQ(1, pat->size);
   ASSERT_EQ(1, pat->cap);
   ASSERT_FALSE(pat->only_inv);
@@ -608,10 +609,12 @@ TEST(PatternParsing, simpleOr) {
   ASSERT_EQ(2, pat->ptr[0]->size);
   ASSERT_EQ(2, pat->ptr[0]->cap);
 
+  // assert(pat->ptr[0]->ptr[0].fn);
   ASSERT_EQ((void *)fzf_exact_match_naive, pat->ptr[0]->ptr[0].fn);
   ASSERT_EQ("src", ((fzf_string_t *)(pat->ptr[0]->ptr[0].text))->data);
   ASSERT_FALSE(pat->ptr[0]->ptr[0].case_sensitive);
 
+  // assert(pat->ptr[0]->ptr[1].fn);
   ASSERT_EQ((void *)fzf_prefix_match, pat->ptr[0]->ptr[1].fn);
   ASSERT_EQ("Lua", ((fzf_string_t *)(pat->ptr[0]->ptr[1].text))->data);
   ASSERT_TRUE(pat->ptr[0]->ptr[1].case_sensitive);
@@ -691,12 +694,12 @@ TEST(ScoreIntegration, onlyEscapedSpace) {
   score_wrapper("\\ ", input, expected);
 }
 
-/*TEST(ScoreIntegration, simpleOr) {
+TEST(ScoreIntegration, simpleOr) {
   char *input[] = {"src/fzf.h",       "README.md",       "build/fzf",
                    "lua/fzf_lib.lua", "Lua/fzf_lib.lua", NULL};
   int expected[] = {80, 0, 0, 0, 80};
   score_wrapper("'src | ^Lua", input, expected);
-}*/
+}
 
 TEST(ScoreIntegration, complexTerm) {
   char *input[] = {"lua/random_previewer", "README.md",
@@ -775,7 +778,7 @@ TEST(PosIntegration, onlyEscapedSpace) {
   pos_wrapper("\\ ", input, expected);
 }
 
-/*TEST(PosIntegration, simpleOr) {
+TEST(PosIntegration, simpleOr) {
   char *input[] = {"src/fzf.h",       "README.md",       "build/fzf",
                    "lua/fzf_lib.lua", "Lua/fzf_lib.lua", NULL};
   int match1[] = {0, 1, 2, -1};
@@ -789,7 +792,7 @@ TEST(PosIntegration, orMemLeak) {
   int match1[] = {2, 1, 0, -1};
   int *expected[] = {match1};
   pos_wrapper("src | src", input, expected);
-}*/
+}
 
 TEST(PosIntegration, complexTerm) {
   char *input[] = {"lua/random_previewer", "README.md",

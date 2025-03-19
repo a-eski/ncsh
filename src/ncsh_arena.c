@@ -46,5 +46,6 @@ void* ncsh_arena_realloc_internal(struct ncsh_Arena* arena,
     void* val = arena->start + padding;
     arena->start += padding + count * size;
     memset(val, 0, count * size);
+    assert(old_ptr);
     return memcpy(val, old_ptr, old_count * size);
 }
