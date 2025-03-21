@@ -38,43 +38,6 @@ struct ncsh_Directory
     char path[PATH_MAX];
 };
 
-uint_fast32_t shl_launch_process(char* buffer)
-{
-	#if shl_DEBUG
-		shl_debug_launch_process(args);
-	#endif /* ifdef shl_DEBUG */
-
-	pid_t pid;
-	int status;
-
-	pid = fork();
-	if (pid == 0)
-	{
-		int exec_result = execvp(buffer, &buffer);
-		if (exec_result == -1)
-		{
-			perror("Could not find command");
-			fflush(stdout);
-			return 0;
-		}
-		return 1;
-	}
-	else if (pid < 0)
-	{
-		perror("Error when forking process");
-		fflush(stdout);
-		return 0;
-	}
-	else
-	{
-		do {
-			waitpid(pid, &status, WUNTRACED);
-		}while (!WIFEXITED(status) && !WIFSIGNALED(status));
-	}
-
-	return 1;
-}
-
 void cash_perror(const char *msg)
 {
     char err_msg[256];
@@ -171,8 +134,8 @@ void cash_init_color(void)
 void cash_init(void)
 {
     initscr();
-    // reset_prog_mode();
-    // reset_shell_mode();
+    reset_prog_mode();
+    reset_shell_mode();
     raw();
     cbreak();
     keypad(stdscr, TRUE);
@@ -330,16 +293,14 @@ void handle_input(char *buffer, struct ncsh_Directory *prompt_info)
         }
 
         if (buffer[0]) {
-            // addch('\n');
             move(getcury(stdscr) + 1, 0);
             refresh();
-	    shl_launch_process(buffer);
+	    printw("%s", buffer);
             refresh();
             move(getcury(stdscr) + 1, 0);
             refresh();
         }
         else {
-            // addch('\n');
             move(getcury(stdscr) + 1, 0);
             refresh();
         }

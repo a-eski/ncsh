@@ -91,16 +91,6 @@ struct z_Directory* z_match_find(char* const target,
         }
     }
 
-    if (current_match.dir) {
-        ++current_match.dir->rank;
-        current_match.dir->last_accessed = time(NULL);
-#ifdef Z_DEBUG
-        printf("Best match: %s\n", current_match.dir->path);
-        printf("Best match score: %f\n", current_match.dir->rank);
-        printf("Best match fzf_score %d\n", current_match.fzf_score);
-#endif /* ifdef Z_DEBUG */
-    }
-
     return current_match.dir;
 }
 
@@ -552,13 +542,19 @@ void z(char* target,
     }
 
     if (match && match->path && match->path_length > 0) {
+        match->last_accessed = time(NULL);
+        ++match->rank;
+
         if (chdir(match->path) == -1) {
             perror("z: couldn't change directory (4)");
         }
         return;
     }
 
-    printf("%s\n", target);
+    if (z_database_add(target, target_length, cwd, cwd_length, db, arena) != Z_SUCCESS) {
+        return;
+    }
+
     if (chdir(target) == -1) {
         perror("z: couldn't change directory");
         return;

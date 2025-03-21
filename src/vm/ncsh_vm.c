@@ -477,31 +477,6 @@ void ncsh_vm_waitpid(struct ncsh_Vm_Data* vm)
 }
 
 
-int_fast32_t ncsh_vm_fork_and_exec(struct ncsh_Tokens* tokens,
-                           struct ncsh_Vm_Data* vm)
-{
-    vm->pid = fork();
-
-    if (vm->pid < 0) {
-        return ncsh_vm_fork_failure(vm->command_position, tokens->number_of_pipe_commands, &vm->pipes_io);
-    }
-
-    if (vm->pid == 0) { // runs in the child process
-        if (vm->op_current == OP_PIPE) {
-            ncsh_vm_pipe_connect(vm->command_position, tokens->number_of_pipe_commands, &vm->pipes_io);
-        }
-
-        if ((vm->execvp_result = execvp(vm->buffer[0], vm->buffer)) == EXECVP_FAILED) {
-            vm->args_end = true;
-            perror(RED "ncsh: Could not run command" RESET);
-            fflush(stdout);
-            kill(getpid(), SIGTERM);
-        }
-    }
-
-    return NCSH_COMMAND_SUCCESS_CONTINUE;
-}
-
 [[nodiscard]]
 int_fast32_t ncsh_vm_run(struct ncsh_Args* const restrict args,
                          struct ncsh_Tokens* const restrict tokens)
@@ -546,8 +521,23 @@ int_fast32_t ncsh_vm_run(struct ncsh_Args* const restrict args,
                 return NCSH_COMMAND_EXIT_FAILURE;
             }
 
-            if ((result = ncsh_vm_fork_and_exec(tokens, &vm)) != NCSH_COMMAND_SUCCESS_CONTINUE) {
-                return result;
+            vm.pid = fork();
+
+            if (vm.pid < 0) {
+                return ncsh_vm_fork_failure(vm.command_position, tokens->number_of_pipe_commands, &vm.pipes_io);
+            }
+
+            if (vm.pid == 0) { // runs in the child process
+                if (vm.op_current == OP_PIPE) {
+                    ncsh_vm_pipe_connect(vm.command_position, tokens->number_of_pipe_commands, &vm.pipes_io);
+                }
+
+                if ((vm.execvp_result = execvp(vm.buffer[0], vm.buffer)) == EXECVP_FAILED) {
+                    vm.args_end = true;
+                    perror(RED "ncsh: Could not run command" RESET);
+                    fflush(stdout);
+                    kill(getpid(), SIGTERM);
+                }
             }
 
             if (vm.op_current == OP_PIPE) {
@@ -559,7 +549,32 @@ int_fast32_t ncsh_vm_run(struct ncsh_Args* const restrict args,
             }
 
             ncsh_vm_atomic_child_pid_set(vm.pid);
-            ncsh_vm_waitpid(&vm);
+
+            pid_t waitpid_result;
+            while (1) {
+                vm.status = 0;
+                waitpid_result = waitpid(vm.pid, &vm.status, WUNTRACED);
+
+                // check for errors
+                if (waitpid_result == -1) {
+                    /* ignore EINTR, occurs when SA_RESTART is not specified in sigaction flags */
+                    if (errno == EINTR) {
+                        continue;
+                    }
+
+                    perror(RED "ncsh: Error waiting for child process to exit" RESET);
+                    vm.status = EXIT_FAILURE;
+                    break;
+                }
+
+                // check if child process has exited
+                if (waitpid_result == vm.pid) {
+#ifdef NCSH_DEBUG
+                    ncsh_vm_debug_status(&vm);
+#endif /* ifdef NCSH_DEBUG */
+                    break;
+                }
+            }
         }
 
         vm.command_type = CT_EXTERNAL;
@@ -579,24 +594,6 @@ int_fast32_t ncsh_vm_run(struct ncsh_Args* const restrict args,
     }
 
     return NCSH_COMMAND_SUCCESS_CONTINUE;
-}
-
-[[nodiscard]]
-int_fast32_t ncsh_vm(struct ncsh_Args* const restrict args, struct ncsh_Processes* const restrict processes)
-{
-    assert(args);
-
-    struct ncsh_Tokens tokens = {0};
-    int_fast32_t result = ncsh_vm_tokenizer_tokenize(args, &tokens);
-    if (result != NCSH_COMMAND_SUCCESS_CONTINUE) {
-        return result;
-    }
-
-    if (tokens.is_background_job == true) {
-	return ncsh_vm_run_background_job(args, processes, &tokens);
-    }
-
-    return ncsh_vm_run(args, &tokens);
 }
 
 void ncsh_vm_alias(struct ncsh_Args* const restrict args,
@@ -633,7 +630,17 @@ int_fast32_t ncsh_vm_execute(struct ncsh_Shell* const restrict shell,
 
     ncsh_vm_alias(&shell->args, &shell->arena);
 
-    return ncsh_vm(&shell->args, &shell->processes);
+    struct ncsh_Tokens tokens = {0};
+    int_fast32_t result = ncsh_vm_tokenizer_tokenize(&shell->args, &tokens);
+    if (result != NCSH_COMMAND_SUCCESS_CONTINUE) {
+        return result;
+    }
+
+    if (tokens.is_background_job == true) {
+	return ncsh_vm_run_background_job(&shell->args, &shell->processes, &tokens);
+    }
+
+    return ncsh_vm_run(&shell->args, &tokens);
 }
 
 [[nodiscard]]
@@ -647,5 +654,11 @@ int_fast32_t ncsh_vm_execute_noninteractive(struct ncsh_Args* const restrict arg
 
     ncsh_vm_alias(args, arena);
 
-    return ncsh_vm(args, NULL);
+    struct ncsh_Tokens tokens = {0};
+    int_fast32_t result = ncsh_vm_tokenizer_tokenize(args, &tokens);
+    if (result != NCSH_COMMAND_SUCCESS_CONTINUE) {
+        return result;
+    }
+
+    return ncsh_vm_run(args, &tokens);
 }

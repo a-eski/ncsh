@@ -59,7 +59,6 @@ void z_read_non_empty_database_test(void)
     new_value.value = malloc(new_value.length);
     strcpy(new_value.value, "ncsh");
 
-    double initial_rank = db.dirs[0].rank;
     char cwd[CWD_LENGTH];
     if (!getcwd(cwd, CWD_LENGTH)) {
         NCSH_ARENA_TEST_TEARDOWN;
@@ -70,7 +69,6 @@ void z_read_non_empty_database_test(void)
     eskilib_assert(match != NULL);
     eskilib_assert(db.count == 1);
     eskilib_assert(match->path_length == 57);
-    eskilib_assert(match->rank > initial_rank);
     eskilib_assert(memcmp(match->path, "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells/ncsh", 57) == 0);
     eskilib_assert(match->last_accessed > 0);
 
