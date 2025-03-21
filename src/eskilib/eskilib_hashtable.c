@@ -10,7 +10,7 @@
 
 bool eskilib_hashtable_malloc(struct eskilib_HashTable* table)
 {
-    table->length = 0;
+    table->size = 0;
     table->capacity = ESKILIB_HASHTABLE_DEFAULT_CAPACITY;
 
     table->entries = calloc(table->capacity, sizeof(struct eskilib_HashTable_Entry));
@@ -147,11 +147,11 @@ const char* eskilib_hashtable_set(const char* key, struct eskilib_String value, 
         return NULL;
     }
 
-    if (table->length >= table->capacity / 2) {
+    if (table->size >= table->capacity / 2) {
         if (!eskilib_hashtable_expand(table)) {
             return NULL;
         }
     }
 
-    return eskilib_hashtable_set_entry(table->entries, table->capacity, key, value, &table->length);
+    return eskilib_hashtable_set_entry(table->entries, table->capacity, key, value, &table->size);
 }

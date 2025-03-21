@@ -16,8 +16,8 @@ struct eskilib_HashTable_Entry {
 };
 
 struct eskilib_HashTable {
+    size_t size;
     size_t capacity;
-    size_t length;
     struct eskilib_HashTable_Entry* entries;
 };
 

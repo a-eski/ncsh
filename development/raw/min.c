@@ -7,7 +7,7 @@
 #include <stdbool.h>
 #include <unistd.h>
 
-#include "../../ncsh_terminal.h"
+#include "../../src/readline/ncsh_terminal.h"
 
 #define LINE_LIMIT 10
 
