@@ -1,4 +1,4 @@
-/* Copyright (c) eskilib by Alex Eski 2024 */
+/* Copyright eskilib by Alex Eski 2024 */
 
 #include <assert.h>
 #include <stdint.h>

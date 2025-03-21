@@ -1,5 +1,3 @@
-/* Copyright (c) ncsh by Alex Eski 2025 */
-
 #include <stdint.h>
 #ifndef NCSH_ARENA_H_
 

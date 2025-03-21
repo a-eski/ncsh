@@ -1,4 +1,4 @@
-// Copyright (c) ncsh by Alex Eski 2024
+/* Copyright (c) ncsh by Alex Eski 2024 */
 
 #ifndef NCSH_TERMINAL_H_
 #define NCSH_TERMINAL_H_

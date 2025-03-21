@@ -1,4 +1,4 @@
-/* Copyright (c) ncsh by Alex Eski 2024 */
+/* Copyright ncsh by Alex Eski 2024 */
 
 /* Used to build ncsh with a single translation unit, aka a unity build.
  * Try it out with 'make unity_debug' or 'make unity'.

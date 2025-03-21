@@ -1,4 +1,4 @@
-/* Copyright (c) z by Alex Eski 2024 */
+/* Copyright z by Alex Eski 2024 */
 
 #include <assert.h>
 #include <dirent.h>
