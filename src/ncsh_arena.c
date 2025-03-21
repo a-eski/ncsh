@@ -32,10 +32,6 @@ void* ncsh_arena_realloc_internal(struct ncsh_Arena* arena,
                      void* old_ptr,
                      uintptr_t old_count)
 {
-    if (old_count <= count) {
-        return old_ptr;
-    }
-
     uintptr_t padding = -(uintptr_t)arena->start & (alignment - 1);
     uintptr_t available = (uintptr_t)arena->end - (uintptr_t)arena->start - padding;
     assert(count < available / size);
