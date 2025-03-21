@@ -428,34 +428,6 @@ int_fast32_t ncsh_readline_line_reset(struct ncsh_Input* const restrict input)
 }
 
 [[nodiscard]]
-int_fast32_t ncsh_readline_autocomplete_print(struct ncsh_Input* const restrict input)
-{
-    printf(ERASE_CURRENT_LINE WHITE_DIM "%s" RESET, input->current_autocompletion);
-    input->current_autocompletion_len = strlen(input->current_autocompletion);
-    /*int start_y = input->lines_y;
-    if (start_y == 0) {
-        int new_len = input->prompt_len + input->pos + current_autocompletion_len;
-        for (int i = 0; new_len > input->terminal_size.x; ++i) {
-            input->lines_x[i] = input->terminal_size.x - input->prompt_len;
-            ++input->lines_y;
-            new_len -= input->terminal_size.x;
-        }
-    }*/
-    // if (current_autocompletion_len)
-    // ncsh_write_literal(ERASE_CURRENT_LINE WHITE_DIM);
-    /*char* current_autocompletion = input->current_autocompletion;
-    while (!*current_autocompletion) {
-	putchar(*current_autocompletion++);
-    }
-    fflush(stdout);*/
-    // ncsh_write(input->current_autocompletion, strlen(input->current_autocompletion));
-    // ncsh_write_literal(RESET);
-    ncsh_terminal_move_left(input->current_autocompletion_len);
-    fflush(stdout);
-    return EXIT_SUCCESS;
-}
-
-[[nodiscard]]
 int_fast32_t ncsh_readline_autocomplete(struct ncsh_Input* const restrict input,
                                         struct ncsh_Arena* scratch_arena)
 {
@@ -481,10 +453,45 @@ int_fast32_t ncsh_readline_autocomplete(struct ncsh_Input* const restrict input,
             return EXIT_FAILURE;
         }
         input->current_autocompletion[0] = '\0';
+	input->current_autocompletion_len = 0;
         return EXIT_SUCCESS;
     }
 
-    return ncsh_readline_autocomplete_print(input);
+    input->current_autocompletion_len = strlen(input->current_autocompletion);
+    if (input->current_y == 0 && input->prompt_len + (size_t)input->lines_x[input->lines_y] +
+        input->current_autocompletion_len > (size_t)input->terminal_size.x) {
+	input->current_autocompletion[0] = '\0';
+	input->current_autocompletion_len = 0;
+        return EXIT_SUCCESS;
+    }
+    else if ((size_t)input->lines_x[input->lines_y] + input->current_autocompletion_len > (size_t)input->terminal_size.x) {
+	input->current_autocompletion[0] = '\0';
+	input->current_autocompletion_len = 0;
+        return EXIT_SUCCESS;
+    }
+
+    printf(ERASE_CURRENT_LINE WHITE_DIM "%s" RESET, input->current_autocompletion);
+    /*int start_y = input->lines_y;
+    if (start_y == 0) {
+        int new_len = input->prompt_len + input->pos + current_autocompletion_len;
+        for (int i = 0; new_len > input->terminal_size.x; ++i) {
+            input->lines_x[i] = input->terminal_size.x - input->prompt_len;
+            ++input->lines_y;
+            new_len -= input->terminal_size.x;
+        }
+    }*/
+    // if (current_autocompletion_len)
+    // ncsh_write_literal(ERASE_CURRENT_LINE WHITE_DIM);
+    /*char* current_autocompletion = input->current_autocompletion;
+    while (!*current_autocompletion) {
+	putchar(*current_autocompletion++);
+    }
+    fflush(stdout);*/
+    // ncsh_write(input->current_autocompletion, strlen(input->current_autocompletion));
+    // ncsh_write_literal(RESET);
+    ncsh_terminal_move_left(input->current_autocompletion_len);
+    fflush(stdout);
+    return EXIT_SUCCESS;
 }
 
 /* ncsh_readline_autocomplete_select
