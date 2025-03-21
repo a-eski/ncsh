@@ -1,4 +1,4 @@
-/* Copyright (c) z by Alex Eski 2024 */
+/* Copyright z by Alex Eski 2024 */
 
 #ifndef Z_H_
 #define Z_H_

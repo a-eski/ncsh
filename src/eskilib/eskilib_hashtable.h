@@ -1,4 +1,4 @@
-/* Copyright (c) eskilib by Alex Eski 2024 */
+/* Copyright eskilib by Alex Eski 2024 */
 
 #ifndef ESKILIB_HASHTABLE_H_
 #define ESKILIB_HASHTABLE_H_

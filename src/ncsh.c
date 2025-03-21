@@ -1,4 +1,4 @@
-/* Copyright (c) ncsh by Alex Eski 2024 */
+/* Copyright ncsh by Alex Eski 2024 */
 
 #include <assert.h>
 #include <limits.h>
@@ -63,19 +63,6 @@ int_fast32_t ncsh_init(struct ncsh_Shell* const restrict shell)
     }
 
     return EXIT_SUCCESS;
-}
-
-/* ncsh_reset
- * Manages freeing the lifetime of the main shell loop.
- * Frees memory used by the parser to populate ncsh_Args.
- */
-void ncsh_reset(struct ncsh_Shell* const restrict shell)
-{
-    memset(shell->input.buffer, '\0', shell->input.max_pos);
-    shell->input.pos = 0;
-    shell->input.max_pos = 0;
-    shell->args.count = 0;
-    shell->args.values[0] = NULL;
 }
 
 /* ncsh_run
@@ -177,7 +164,11 @@ int_fast32_t ncsh(void)
         ncsh_readline_history_and_autocompletion_add(&shell.input, &shell.arena);
 
     reset:
-        ncsh_reset(&shell);
+        memset(shell.input.buffer, '\0', shell.input.max_pos);
+        shell.input.pos = 0;
+        shell.input.max_pos = 0;
+        shell.args.count = 0;
+        shell.args.values[0] = NULL;
     }
 
 exit:

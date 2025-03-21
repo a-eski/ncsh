@@ -1,4 +1,4 @@
-/* Copyright (c) ncsh by Alex Eski 2025 */
+/* Copyright ncsh by Alex Eski 2025 */
 
 #ifndef NCSH_NONINTERACTIVE_H_
 #define NCSH_NONINTERACTIVE_H_
