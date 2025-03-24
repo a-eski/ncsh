@@ -1,4 +1,4 @@
-// raw experiment, trying to figure out multiline without ncurses.
+/* experiment with handling terminal output without ncurses */
 
 #include <assert.h>
 #include <stdio.h>
@@ -8,8 +8,8 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "../../ncsh_terminal.h"
-#include "../../ncsh_defines.h"
+#include "../../src/readline/ncsh_terminal.h"
+#include "../../src/ncsh_defines.h"
 
 #define LINE_LIMIT 10
 

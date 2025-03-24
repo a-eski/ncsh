@@ -1,7 +1,6 @@
 /* Copyright ncsh by Alex Eski 2025 */
 
-#ifndef NCSH_TYPES_H_
-#define NCSH_TYPES_H_
+#pragma once
 
 #include <stdint.h>
 
@@ -39,5 +38,3 @@ struct ncsh_Shell {
 
     struct z_Database z_db;
 };
-
-#endif // !NCSH_TYPES_H_

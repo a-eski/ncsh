@@ -1,4 +1,4 @@
-// raw experiment
+/* experiment with handling terminal output without ncurses, minimal impl */
 
 #include <assert.h>
 #include <stdio.h>

@@ -1,5 +1,7 @@
 /* Copyright ncsh by Alex Eski 2025 */
 
+#pragma once
+
 /* Debug Settings */
 /* NCSH_DEBUG: enable debug mode for the shell */
 #ifndef NCSH_DEBUG

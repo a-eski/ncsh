@@ -13,5 +13,6 @@ t.txt
 database.z
 ztests
 _z_database.bin
-src/development/cash/cash
-src/development/termboxshl/tb2sh
+development/cash/cash
+development/curses/curses
+development/readline/readline

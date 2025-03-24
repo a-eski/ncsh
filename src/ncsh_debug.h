@@ -1,5 +1,7 @@
 /* Copyright ncsh by Alex Eski 2024 */
 
+#pragma once
+
 #ifdef NCSH_DEBUG
 
 #ifndef NCSH_DEBUG_H_

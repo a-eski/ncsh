@@ -1,7 +1,6 @@
 /* Copyright ncsh by Alex Eski 2024 */
 
-#ifndef NCSH_PARSER_H_
-#define NCSH_PARSER_H_
+#pragma once
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -83,5 +82,3 @@ void ncsh_parser_parse_noninteractive(const char** const restrict inputs,
                                       const size_t inputs_count,
                                       struct ncsh_Args* const restrict args,
                                       struct ncsh_Arena* const scratch_arena);
-
-#endif // !NCSH_PARSER_H_

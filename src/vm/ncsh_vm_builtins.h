@@ -1,7 +1,6 @@
 /* Copyright ncsh by Alex Eski 2024 */
 
-#ifndef NCSH_BUILTINS_H_
-#define NCSH_BUILTINS_H_
+#pragma once
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -73,5 +72,3 @@ static const struct ncsh_Builtin builtins[] = {
 };
 
 static constexpr size_t builtins_count = sizeof(builtins) / sizeof(struct ncsh_Builtin);
-
-#endif // !NCSH_BUILTINS_H_

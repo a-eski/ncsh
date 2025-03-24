@@ -10,7 +10,6 @@
 #include <string.h>
 
 #include "eskilib/eskilib_result.h"
-#include "ncsh_config.h"
 #include "ncsh_defines.h"
 #include "ncsh_parser.h"
 

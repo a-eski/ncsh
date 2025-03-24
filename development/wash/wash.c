@@ -1,3 +1,5 @@
+/* experiment with writing a shell for windows */
+
 #include <windows.h>
 #include <conio.h>
 #include <stdio.h>

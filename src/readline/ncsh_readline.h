@@ -1,7 +1,6 @@
 /* Copyright ncsh by Alex Eski 2025 */
 
-#ifndef NCSH_READLINE_H_
-#define NCSH_READLINE_H_
+#pragma once
 
 #include <stddef.h>
 #include <stdint.h>
@@ -71,5 +70,3 @@ void ncsh_readline_history_and_autocompletion_add(struct ncsh_Input* const restr
  * Saves history changes and restores the terminal settings from before the shell was started.
  */
 void ncsh_readline_exit(struct ncsh_Input* const restrict input);
-
-#endif // !NCSH_READLINE_H_

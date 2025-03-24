@@ -1,7 +1,6 @@
 /* Copyright eskilib by Alex Eski 2024 */
 
-#ifndef ESKILIB_COLORS_H_
-#define ESKILIB_COLORS_H_
+#pragma once
 
 /*
 Escape Key
@@ -55,5 +54,3 @@ Escape Key
 #define ncsh_TURQUOISE "\033[38;2;0;225;154m"
 #define ncsh_INDIGO "\033[38;2;66;6;84m"
 #define ncsh_BLACK "\033[38;2;2;3;20m"
-
-#endif // !ESKILIB_COLORS_H_

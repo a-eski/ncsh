@@ -1,7 +1,6 @@
 /* Copyright eskilib by Alex Eski 2024 */
 
-#ifndef ESKILIB_RESULT_H_
-#define ESKILIB_RESULT_H_
+#pragma once
 
 enum eskilib_Result {
     E_FAILURE_BAD_STRING = -8,
@@ -17,5 +16,3 @@ enum eskilib_Result {
     E_NO_OP = 2,
     E_NO_OP_MAX_LIMIT_REACHED = 3
 };
-
-#endif // !ESKILIB_RESULT_H_
