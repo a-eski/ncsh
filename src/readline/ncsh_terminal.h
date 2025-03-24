@@ -8,7 +8,6 @@
 
 #include "../eskilib/eskilib_result.h"
 #include "../eskilib/eskilib_string.h"
-// #include "../ncsh_arena.h"
 
 // input definitions
 #define ESCAPE_CHARACTER 27 // "\033" or "^["
@@ -69,8 +68,6 @@ struct ncsh_Coordinates {
     int x;
     int y;
 };
-
-// void ncsh_terminal_setup(struct ncsh_Arena scratch_arena);
 
 /* ncsh_terminal_init
 * Put the terminal in the proper modes for ncsh and save the previous state of the terminal in memory.

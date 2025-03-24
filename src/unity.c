@@ -17,7 +17,6 @@
 #include "ncsh_arena.c"
 #include "ncsh.c"
 #include "ncsh_config.c"
-// #include "readline/ncsh_terminfo.c"
 #include "readline/ncsh_terminal.c"
 #include "readline/ncsh_readline.c"
 #include "readline/ncsh_autocompletions.c"
