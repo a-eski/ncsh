@@ -1,7 +1,6 @@
 /* Copyright ncsh by Alex Eski 2024 */
 
-#ifndef NCSH_HISTORY_H_
-#define NCSH_HISTORY_H_
+#pragma once
 
 #include <stdint.h>
 
@@ -60,5 +59,3 @@ int_fast32_t ncsh_history_command_remove(const char* const value,
                                          const size_t value_len,
                                          struct ncsh_History* const restrict history,
                                          struct ncsh_Arena* const arena);
-
-#endif // !NCSH_HISTORY_H_

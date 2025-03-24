@@ -1,7 +1,6 @@
 /* Copyright ncsh by Alex Eski 2025 */
 
-#ifndef NCSH_VM_DATA_
-#define NCSH_VM_DATA_
+#pragma once
 
 #include <fcntl.h>
 #include <linux/limits.h>
@@ -73,5 +72,3 @@ struct ncsh_Vm_Data {
     struct ncsh_Input_Redirect_IO input_redirect_io;
     struct ncsh_Pipe_IO pipes_io;
 };
-
-#endif // !NCSH_VM_DATA_

@@ -1,7 +1,6 @@
 /* Copyright eskilib by Alex Eski 2024 */
 
-#ifndef ESKILIB_TEST_H_
-#define ESKILIB_TEST_H_
+#pragma once
 
 #include <stdbool.h>
 #include <stdio.h>
@@ -32,5 +31,3 @@ extern void eskilib_test_finish_internal(char* file);
 
 // Call at the end of a series of tests
 #define eskilib_test_finish() eskilib_test_finish_internal(__FILE__);
-
-#endif /* !ESKILIB_TEST_H_ */

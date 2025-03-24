@@ -1,8 +1,7 @@
 /* Copyright ncsh by Alex Eski 2024 */
 /* Based on eskilib_trie prefix tree implementation */
 
-#ifndef NCSH_AUTOCOMPLETIONS_H_
-#define NCSH_AUTOCOMPLETIONS_H_
+#pragma once
 
 #include "../eskilib/eskilib_string.h"
 #include "../ncsh_arena.h"
@@ -67,5 +66,3 @@ uint_fast8_t ncsh_autocompletions_first(const char* const search,
                                         char* match,
                                         struct ncsh_Autocompletion_Node* restrict tree,
                                         struct ncsh_Arena scratch_arena);
-
-#endif // !NCSH_AUTOCOMPLETIONS_H_

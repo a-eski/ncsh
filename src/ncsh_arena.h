@@ -1,5 +1,8 @@
+/* Copyright ncsh by Alex Eski 2025 */
+
+#pragma once
+
 #include <stdint.h>
-#ifndef NCSH_ARENA_H_
 
 struct ncsh_Arena {
     char* start;
@@ -23,6 +26,3 @@ void* ncsh_arena_realloc_internal(struct ncsh_Arena* arena,
                      uintptr_t alignment,
                      void* old_ptr,
                      uintptr_t old_count);
-
-#define NCSH_ARENA_H_
-#endif /* !NCSH_ARENA_H_ */

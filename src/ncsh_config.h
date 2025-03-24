@@ -1,7 +1,6 @@
 /* Copyright ncsh by Alex Eski 2024 */
 
-#ifndef NCSH_CONFIG_H_
-#define NCSH_CONFIG_H_
+#pragma once
 
 #include "ncsh_arena.h"
 #include "eskilib/eskilib_result.h"
@@ -26,5 +25,3 @@ enum eskilib_Result ncsh_config_init(struct ncsh_Config* const restrict config,
 
 struct eskilib_String ncsh_config_alias_check(const char* const restrict buffer,
                                               const size_t buf_len);
-
-#endif // !NCSH_CONFIG_H_

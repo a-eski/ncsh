@@ -10,13 +10,14 @@ There are also shorthand versions of the commands to make it easier to iterate. 
 
 ### Compiling with clang
 
-You can build any of the builds listed below with clang if you have a version of clang installed which supports C23 and constexpr. Simply add `CC=clang` to the end of any of the build commands.
+You can build any of the builds listed below with clang if you have a version of clang installed which supports C23 and constexpr (clang 19+). Simply add `CC=clang` to the end of any of the build commands.
 
 ``` sh
-sudo apt install clang clang-19 clang-tools-19
 
-# on ubuntu/debian, you may have to use clang-19
 make release CC=clang
+
+# on ubuntu/debian, you may have to explicitly use clang-19
+sudo apt install clang clang-19 clang-tools-19
 make release CC=clang-19
 ```
 

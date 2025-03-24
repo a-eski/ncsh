@@ -1,22 +1,14 @@
-// ncurses experiment
+/* experiment with using ncurses in a shell */
 
 #define _POSIX_C_SOURCE 200809L
-
 #include <errno.h>
 #include <linux/limits.h>
 #include <ncurses.h>
-#include <signal.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/wait.h>
 #include <unistd.h>
-
-#if __has_c_attribute(nodiscard)
-#define cash_no_discard [[nodiscard]]
-#else
-#define cash_no_discard
-#endif
 
 #define CASH_MAX_INPUT 528
 
@@ -30,6 +22,12 @@
     attron(COLOR_PAIR(color_pair));                                                                                    \
     printw(fmt, str);                                                                                                  \
     attroff(COLOR_PAIR(color_pair))
+
+#define addstr_color(str, color_pair)                                                                             \
+    attron(COLOR_PAIR(color_pair));                                                                                    \
+    addstr(str);                                                                                                  \
+    attroff(COLOR_PAIR(color_pair))
+
 
 struct ncsh_Directory
 {
@@ -101,7 +99,8 @@ void ncsh_prompt_directory(char *cwd, char *output)
     memcpy(output, &cwd[second_to_last_slash] - 1, i - second_to_last_slash + 1);
 }
 
-cash_no_discard int_fast32_t prompt(struct ncsh_Directory *prompt_info)
+[[nodiscard]]
+int_fast32_t prompt(struct ncsh_Directory *prompt_info)
 {
     char *wd_result = getcwd(prompt_info->path, sizeof(prompt_info->path));
     if (wd_result == NULL)
@@ -110,14 +109,11 @@ cash_no_discard int_fast32_t prompt(struct ncsh_Directory *prompt_info)
         return EXIT_FAILURE;
     }
 
-    printw_color("%s ", prompt_info->user, PAIR_USER);
-    printw_color("%s ", prompt_info->path, PAIR_DIRECTORY);
-    /*attron(COLOR_PAIR(PAIR_USER));
-    printw("%s ", prompt_info->user);
-    attroff(COLOR_PAIR(PAIR_USER));
-    attron(COLOR_PAIR(PAIR_DIRECTORY));
-    printw("%s ", prompt_info->path);
-    attroff(COLOR_PAIR(PAIR_DIRECTORY));*/
+    addstr_color(prompt_info->user, PAIR_USER);
+    addch(' ');
+    addstr_color(prompt_info->path, PAIR_DIRECTORY);
+    addch(' ');
+    refresh();
 
     return EXIT_SUCCESS;
 }
@@ -133,6 +129,7 @@ void cash_init_color(void)
 
 void cash_init(void)
 {
+    // filter();
     initscr();
     reset_prog_mode();
     reset_shell_mode();
@@ -155,75 +152,13 @@ void cash_exit(void)
 // printw (works like printf)
 // addstr (works like print)
 
-void cash_vm(char *buffer)
-{
-    pid_t pid = fork();
-
-    if (pid == -1)
-        return;
-
-    if (pid == 0)
-    {
-	char** args = malloc(sizeof(char*));
-	args[0] = buffer;
-	printw("%s\n", args[0]);
-        if (execvp(args[0], args) == -1)
-        {
-            kill(getpid(), SIGTERM);
-        }
-
-        int result;
-        while (1)
-        {
-            int status = 0;
-            result = waitpid(pid, &status, WUNTRACED);
-
-            // check for errors
-            if (result == -1)
-            {
-                /* ignore EINTR, occurs when SA_RESTART is not specified in sigaction flags */
-                if (errno == EINTR)
-                    continue;
-
-                status = EXIT_FAILURE;
-                break;
-            }
-
-            // check if child process has exited
-            if (result == pid)
-            {
-                if (WIFEXITED(status))
-                {
-                    if (WEXITSTATUS(status))
-                        printw("ncsh: Command child process failed with status %d\n", WEXITSTATUS(status));
-                    else
-                        printw("ncsh: Command child process exited successfully.\n");
-                }
-                else if (WIFSIGNALED(status))
-                {
-                    printw("ncsh: Command child process died from signal #%d\n", WTERMSIG(status));
-                }
-                else
-                {
-                    if (write(STDERR_FILENO, "ncsh: Command child process died, cause unknown.\n", 49) == -1)
-                    {
-                        cash_perror("ncsh: Error writing to stderr");
-                    }
-                }
-
-                break;
-            }
-        }
-    }
-}
-
 void handle_input(char *buffer, struct ncsh_Directory *prompt_info)
 {
     size_t pos = 0;
     int character;
 
     printw("cash shell\n");
-    cash_perror("cash: Perror test");
+    // cash_perror("cash: Perror test");
     refresh();
 
     while (1)
@@ -232,7 +167,6 @@ void handle_input(char *buffer, struct ncsh_Directory *prompt_info)
         {
             break;
         }
-        refresh();
 
         while ((character = getch()) != '\004')
         {
@@ -293,19 +227,17 @@ void handle_input(char *buffer, struct ncsh_Directory *prompt_info)
         }
 
         if (buffer[0]) {
-            move(getcury(stdscr) + 1, 0);
-            refresh();
-	    printw("%s", buffer);
-            refresh();
-            move(getcury(stdscr) + 1, 0);
+	    addch('\n');
+	    addstr(buffer);
+	    addch('\n');
             refresh();
         }
         else {
-            move(getcury(stdscr) + 1, 0);
+	    addch('\n');
             refresh();
         }
 
-        cash_clear_perror();
+        // cash_clear_perror();
         pos = 0;
         memset(buffer, '\0', CASH_MAX_INPUT);
     }

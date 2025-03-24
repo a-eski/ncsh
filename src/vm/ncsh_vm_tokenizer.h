@@ -1,7 +1,6 @@
 /* Copyright ncsh by Alex Eski 2025 */
 
-#ifndef NCSH_VM_TOKENIZER_H_
-#define NCSH_VM_TOKENIZER_H_
+#pragma once
 
 #include <stdint.h>
 
@@ -31,5 +30,3 @@ struct ncsh_Tokens {
 
 int_fast32_t ncsh_vm_tokenizer_tokenize(const struct ncsh_Args* const restrict args,
                                         struct ncsh_Tokens* const restrict tokens);
-
-#endif // !NCSH_VM_TOKENIZER_H_

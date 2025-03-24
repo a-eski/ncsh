@@ -1,7 +1,6 @@
 /* Copyright (c) ncsh by Alex Eski 2024 */
 
-#ifndef NCSH_TERMINAL_H_
-#define NCSH_TERMINAL_H_
+#pragma once
 
 #include <linux/limits.h>
 #include <stdbool.h>
@@ -9,6 +8,7 @@
 
 #include "../eskilib/eskilib_result.h"
 #include "../eskilib/eskilib_string.h"
+// #include "../ncsh_arena.h"
 
 // input definitions
 #define ESCAPE_CHARACTER 27 // "\033" or "^["
@@ -70,6 +70,8 @@ struct ncsh_Coordinates {
     int y;
 };
 
+// void ncsh_terminal_setup(struct ncsh_Arena scratch_arena);
+
 /* ncsh_terminal_init
 * Put the terminal in the proper modes for ncsh and save the previous state of the terminal in memory.
 * ncsh puts the shell in noncanonical mode, so input can be processed one character at a time.
@@ -95,5 +97,3 @@ void ncsh_terminal_move_to_start_of_next_line();
 // void ncsh_terminal_line_insert(char* line);
 // void ncsh_terminal_line_delete(int line);
 // void ncsh_terminal_characters_delete(int i);
-
-#endif // !NCSH_TERMINAL_H_

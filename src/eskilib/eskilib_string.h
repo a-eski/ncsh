@@ -1,7 +1,6 @@
 /* Copyright eskilib by Alex Eski 2024 */
 
-#ifndef ESKILIB_STRING_H_
-#define ESKILIB_STRING_H_
+#pragma once
 
 #include <stddef.h>
 #include <stdint.h>
@@ -46,5 +45,3 @@ bool eskilib_string_compare_const(const char* const str, const size_t str_len,
 
 bool eskilib_string_contains(const char* string, size_t string_length, const char* string_two,
                              size_t string_two_length);
-
-#endif // !ESKILIB_STRING_H_

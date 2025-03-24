@@ -14,6 +14,7 @@
 #include "../eskilib/eskilib_colors.h"
 #include "../ncsh_defines.h"
 #include "ncsh_terminal.h"
+// #include "ncsh_terminfo.h"
 #define TERMINAL_RETURN 'R'
 #define T_BUFFER_LENGTH 30
 
