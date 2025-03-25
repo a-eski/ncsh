@@ -584,7 +584,7 @@ void z_dir_slash_dir_change_directory_test(void)
     }
 
     eskilib_assert(strcmp(buffer, buffer_after) != 0);
-    eskilib_assert(eskilib_string_contains(buffer_after, buffer_length, "tests/test_dir", 15));
+    eskilib_assert(!strstr(buffer_after, "tests/test_dir"));
 
     if (chdir(buffer) == -1) { // remove when database file location support added
         perror("Couldn't change back to previous directory");

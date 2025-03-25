@@ -8,7 +8,6 @@
 
 #include "eskilib/eskilib_file.c"
 #include "eskilib/eskilib_hashtable.c"
-#include "eskilib/eskilib_string.c"
 
 #include "z/fzf.c"
 #include "z/z.c"
