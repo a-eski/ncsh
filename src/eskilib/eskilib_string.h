@@ -42,6 +42,3 @@ bool eskilib_string_compare_const(const char* const str, const size_t str_len,
 
     return !str_len || !memcmp(str, str_two, str_len);
 }
-
-bool eskilib_string_contains(const char* string, size_t string_length, const char* string_two,
-                             size_t string_two_length);

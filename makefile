@@ -5,7 +5,7 @@ RELEASE ?= 1
 debug_flags = -Wall -Wextra -Werror -Wpedantic -pedantic-errors -Wsign-conversion -Wformat=2 -Wshadow -Wvla -fstack-protector-all -fsanitize=address,undefined,leak -g
 release_flags = -Wall -Wextra -Werror -pedantic-errors -Wsign-conversion -Wformat=2 -Wshadow -Wvla -O3 -DNDEBUG
 fuzz_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,leak,fuzzer -DNDEBUG -g
-objects = obj/main.o obj/ncsh.o obj/ncsh_arena.o obj/ncsh_noninteractive.o obj/ncsh_readline.o obj/ncsh_vm.o obj/ncsh_vm_tokenizer.o obj/ncsh_terminal.o obj/eskilib_string.o obj/eskilib_file.o obj/eskilib_hashtable.o obj/ncsh_parser.o obj/ncsh_vm_builtins.o obj/ncsh_history.o obj/ncsh_autocompletions.o obj/ncsh_config.o obj/fzf.o obj/z.o
+objects = obj/main.o obj/ncsh.o obj/ncsh_arena.o obj/ncsh_noninteractive.o obj/ncsh_readline.o obj/ncsh_vm.o obj/ncsh_vm_tokenizer.o obj/ncsh_terminal.o obj/eskilib_file.o obj/eskilib_hashtable.o obj/ncsh_parser.o obj/ncsh_vm_builtins.o obj/ncsh_history.o obj/ncsh_autocompletions.o obj/ncsh_config.o obj/fzf.o obj/z.o
 target = ./bin/ncsh
 
 ifeq ($(CC), gcc)
@@ -104,7 +104,7 @@ l :
 
 .PHONY: test_history
 test_history :
-	$(CC) $(STD) $(debug_flags) -DNCSH_HISTORY_TEST ./src/eskilib/eskilib_string.c ./src/eskilib/eskilib_test.c ./src/eskilib/eskilib_file.c ./src/eskilib/eskilib_hashtable.c ./src/ncsh_arena.c ./src/readline/ncsh_history.c ./tests/ncsh_history_tests.c -o ./bin/ncsh_history_tests
+	$(CC) $(STD) $(debug_flags) -DNCSH_HISTORY_TEST ./src/eskilib/eskilib_test.c ./src/eskilib/eskilib_file.c ./src/eskilib/eskilib_hashtable.c ./src/ncsh_arena.c ./src/readline/ncsh_history.c ./tests/ncsh_history_tests.c -o ./bin/ncsh_history_tests
 	./bin/ncsh_history_tests
 .PHONY: th
 th :
@@ -112,7 +112,7 @@ th :
 
 .PHONY: fuzz_history
 fuzz_history :
-	clang-19 $(STD) $(fuzz_flags) -DNCSH_HISTORY_TEST ./tests/ncsh_history_fuzzing.c ./src/ncsh_arena.c ./src/readline/ncsh_history.c ./src/eskilib/eskilib_string.c ./src/eskilib/eskilib_file.c ./src/eskilib/eskilib_hashtable.c -o ./bin/history_fuzz
+	clang-19 $(STD) $(fuzz_flags) -DNCSH_HISTORY_TEST ./tests/ncsh_history_fuzzing.c ./src/ncsh_arena.c ./src/readline/ncsh_history.c ./src/eskilib/eskilib_file.c ./src/eskilib/eskilib_hashtable.c -o ./bin/history_fuzz
 	./bin/history_fuzz NCSH_HISTORY_CORPUS/ -detect_leaks=0 -rss_limit_mb=4096
 .PHONY: fh
 fh :
@@ -120,7 +120,7 @@ fh :
 
 .PHONY: test_autocompletions
 test_autocompletions :
-	 $(CC) $(STD) $(debug_flags) ./src/eskilib/eskilib_string.c ./src/eskilib/eskilib_test.c ./src/ncsh_arena.c ./src/readline/ncsh_autocompletions.c ./tests/ncsh_autocompletions_tests.c -o ./bin/ncsh_autocompletions_tests
+	 $(CC) $(STD) $(debug_flags) ./src/eskilib/eskilib_test.c ./src/ncsh_arena.c ./src/readline/ncsh_autocompletions.c ./tests/ncsh_autocompletions_tests.c -o ./bin/ncsh_autocompletions_tests
 	 ./bin/ncsh_autocompletions_tests
 .PHONY: tac
 tac :
@@ -128,7 +128,7 @@ tac :
 
 .PHONY: fuzz_autocompletions
 fuzz_autocompletions :
-	clang-19 $(STD) $(fuzz_flags) ./tests/ncsh_autocompletions_fuzzing.c ./src/ncsh_arena.c ./src/readline/ncsh_autocompletions.c ./src/eskilib/eskilib_string.c -o ./bin/autocompletions_fuzz
+	clang-19 $(STD) $(fuzz_flags) ./tests/ncsh_autocompletions_fuzzing.c ./src/ncsh_arena.c ./src/readline/ncsh_autocompletions.c -o ./bin/autocompletions_fuzz
 	./bin/autocompletions_fuzz NCSH_AUTOCOMPLETIONS_CORPUS/ -detect_leaks=0 -rss_limit_mb=8192
 .PHONY: fa
 fa :
@@ -136,7 +136,7 @@ fa :
 
 .PHONY: test_parser
 test_parser :
-	$(CC) $(STD) $(debug_flags) ./src/eskilib/eskilib_string.c ./src/eskilib/eskilib_test.c ./src/ncsh_arena.c ./src/ncsh_parser.c ./tests/ncsh_parser_tests.c -o ./bin/ncsh_parser_tests
+	$(CC) $(STD) $(debug_flags) ./src/eskilib/eskilib_test.c ./src/ncsh_arena.c ./src/ncsh_parser.c ./tests/ncsh_parser_tests.c -o ./bin/ncsh_parser_tests
 	./bin/ncsh_parser_tests
 .PHONY: tp
 tp :
@@ -144,7 +144,7 @@ tp :
 
 .PHONY: fuzz_parser
 fuzz_parser :
-	clang-19 $(STD) $(fuzz_flags) ./tests/ncsh_parser_fuzzing.c ./src/ncsh_arena.c ./src/ncsh_parser.c ./src/eskilib/eskilib_string.c -o ./bin/parser_fuzz
+	clang-19 $(STD) $(fuzz_flags) ./tests/ncsh_parser_fuzzing.c ./src/ncsh_arena.c ./src/ncsh_parser.c -o ./bin/parser_fuzz
 	./bin/parser_fuzz NCSH_PARSER_CORPUS/ -detect_leaks=0 -rss_limit_mb=4096
 .PHONY: fp
 fp :
@@ -152,7 +152,7 @@ fp :
 
 .PHONY: test_z
 test_z :
-	gcc -std=c2x -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined,leak -DZ_TEST ./src/ncsh_arena.c ./src/eskilib/eskilib_string.c ./src/eskilib/eskilib_test.c ./src/z/fzf.c ./src/z/z.c ./tests/z_tests.c -o ./bin/z_tests
+	gcc -std=c2x -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined,leak -DZ_TEST ./src/ncsh_arena.c ./src/eskilib/eskilib_test.c ./src/z/fzf.c ./src/z/z.c ./tests/z_tests.c -o ./bin/z_tests
 	./bin/z_tests
 .PHONY: tz
 tz :
@@ -160,7 +160,7 @@ tz :
 
 .PHONY: fuzz_z
 fuzz_z:
-	clang-19 -std=c2x -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined,fuzzer -O3 -DNDEBUG -DZ_TEST ./src/ncsh_arena.c ./tests/z_fuzzing.c ./src/z/fzf.c ./src/z/z.c ./src/eskilib/eskilib_string.c -o ./bin/z_fuzz
+	clang-19 -std=c2x -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined,fuzzer -O3 -DNDEBUG -DZ_TEST ./src/ncsh_arena.c ./tests/z_fuzzing.c ./src/z/fzf.c ./src/z/z.c -o ./bin/z_fuzz
 	./bin/z_fuzz Z_CORPUS/ -detect_leaks=0 -rss_limit_mb=8192
 .PHONY: fz
 fz:
@@ -168,7 +168,7 @@ fz:
 
 .PHONY: fuzz_z_add
 fuzz_z_add:
-	clang-19 -std=c2x -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined,fuzzer -O3 -DNDEBUG -DZ_TEST ./src/ncsh_arena.c ./tests/z_add_fuzzing.c ./src/z/fzf.c ./src/z/z.c ./src/eskilib/eskilib_string.c -o ./bin/z_add_fuzz
+	clang-19 -std=c2x -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined,fuzzer -O3 -DNDEBUG -DZ_TEST ./src/ncsh_arena.c ./tests/z_add_fuzzing.c ./src/z/fzf.c ./src/z/z.c -o ./bin/z_add_fuzz
 	./bin/z_add_fuzz Z_ADD_CORPUS/ -detect_leaks=0 -rss_limit_mb=8192
 .PHONY: fza
 fza:
@@ -184,7 +184,7 @@ tf :
 
 .PHONY: test_config
 test_config :
-	$(CC) $(STD) $(debug_flags) -DNCSH_HISTORY_TEST ./src/ncsh_arena.c ./src/eskilib/eskilib_string.c ./src/eskilib/eskilib_test.c ./src/eskilib/eskilib_file.c ./src/ncsh_config.c ./tests/ncsh_config_tests.c -o ./bin/ncsh_config_tests
+	$(CC) $(STD) $(debug_flags) -DNCSH_HISTORY_TEST ./src/ncsh_arena.c ./src/eskilib/eskilib_test.c ./src/eskilib/eskilib_file.c ./src/ncsh_config.c ./tests/ncsh_config_tests.c -o ./bin/ncsh_config_tests
 	./bin/ncsh_config_tests
 .PHONY: tc
 tc :
@@ -192,7 +192,7 @@ tc :
 
 .PHONY: test_readline
 test_readline :
-	$(CC) $(STD) $(debug_flags) -DNCSH_HISTORY_TEST ./src/ncsh_arena.c ./src/eskilib/eskilib_string.c ./src/eskilib/eskilib_test.c ./src/eskilib/eskilib_file.c ./src/eskilib/eskilib_hashtable.c ./src/readline/ncsh_terminal.c ./src/readline/ncsh_autocompletions.c ./src/readline/ncsh_history.c ./src/readline/ncsh_readline.c ./tests/ncsh_readline_tests.c -o ./bin/ncsh_readline_tests
+	$(CC) $(STD) $(debug_flags) -DNCSH_HISTORY_TEST ./src/ncsh_arena.c ./src/eskilib/eskilib_test.c ./src/eskilib/eskilib_file.c ./src/eskilib/eskilib_hashtable.c ./src/readline/ncsh_terminal.c ./src/readline/ncsh_autocompletions.c ./src/readline/ncsh_history.c ./src/readline/ncsh_readline.c ./tests/ncsh_readline_tests.c -o ./bin/ncsh_readline_tests
 	./bin/ncsh_readline_tests
 .PHONY: tr
 tr :
