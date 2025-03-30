@@ -32,37 +32,59 @@ void ncsh_exit(struct ncsh_Shell* const restrict shell)
     z_exit(&shell->z_db);
 }
 
+[[nodiscard]]
+char* ncsh_init_arena(struct ncsh_Shell* const restrict shell)
+{
+    constexpr int arena_capacity = 1<<24;
+    constexpr int scratch_arena_capacity = 1<<16;
+    constexpr int total_capacity = arena_capacity + scratch_arena_capacity;
+
+    char* memory = malloc(total_capacity);
+    if (!memory) {
+        return NULL;
+    }
+
+    shell->arena = (struct ncsh_Arena){ .start = memory, .end = memory + (arena_capacity) };
+    char* scratch_memory_start = memory + (arena_capacity + 1);
+    shell->scratch_arena = (struct ncsh_Arena){ .start = scratch_memory_start, .end = scratch_memory_start + (scratch_arena_capacity) };
+
+    return memory;
+}
+
 /* ncsh_init
  * Called on startup to allocate memory related to the shells lifetime.
  * Returns: exit result, EXIT_SUCCESS or EXIT_FAILURE
  */
 [[nodiscard]]
-int_fast32_t ncsh_init(struct ncsh_Shell* const restrict shell)
+char* ncsh_init(struct ncsh_Shell* const restrict shell)
 {
+    char* memory = ncsh_init_arena(shell);
+    if (!memory) {
+        puts(RED "ncsh: could not start up, not enough memory available." RESET);
+        return NULL;
+    }
+
     if (ncsh_config_init(&shell->config, &shell->arena, shell->scratch_arena) != E_SUCCESS) {
-        return EXIT_FAILURE;
+        return NULL;
     }
 
     if (ncsh_readline_init(&shell->config, &shell->input, &shell->arena) != EXIT_SUCCESS) {
-        ncsh_readline_exit(&shell->input);
-        return EXIT_FAILURE;
+        return NULL;
     }
 
     enum eskilib_Result result;
     if ((result = ncsh_parser_args_alloc(&shell->args, &shell->arena)) != E_SUCCESS) {
         perror(RED "ncsh: Error when allocating memory for parser" RESET);
         fflush(stderr);
-        ncsh_readline_exit(&shell->input);
-        return EXIT_FAILURE;
+        return NULL;
     }
 
     enum z_Result z_result = z_init(&shell->config.config_location, &shell->z_db, &shell->arena);
     if (z_result != Z_SUCCESS) {
-        ncsh_readline_exit(&shell->input);
-        return EXIT_FAILURE;
+        return NULL;
     }
 
-    return EXIT_SUCCESS;
+    return memory;
 }
 
 /* ncsh_run
@@ -104,21 +126,8 @@ int_fast32_t ncsh(void)
 
     struct ncsh_Shell shell = {0};
 
-    constexpr int arena_capacity = 1<<24;
-    constexpr int scratch_arena_capacity = 1<<16;
-    constexpr int total_capacity = arena_capacity + scratch_arena_capacity;
-
-    char* memory = malloc(total_capacity);
+    char* memory = ncsh_init(&shell);
     if (!memory) {
-        puts(RED "ncsh: could not start up, not enough memory available." RESET);
-        return EXIT_FAILURE;
-    }
-
-    shell.arena = (struct ncsh_Arena){ .start = memory, .end = memory + (arena_capacity) };
-    char* scratch_memory_start = memory + (arena_capacity + 1);
-    shell.scratch_arena = (struct ncsh_Arena){ .start = scratch_memory_start, .end = scratch_memory_start + (scratch_arena_capacity) };
-
-    if (ncsh_init(&shell) == EXIT_FAILURE) {
         return EXIT_FAILURE;
     }
 

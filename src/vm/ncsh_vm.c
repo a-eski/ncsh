@@ -23,22 +23,12 @@
 #include "ncsh_vm.h"
 
 /* Signal Handling */
-static _Atomic pid_t ncsh_vm_atomic_internal_child_pid = 0;
-
-static inline void ncsh_vm_atomic_child_pid_set(pid_t pid)
-{
-    ncsh_vm_atomic_internal_child_pid = pid;
-}
-
-static inline pid_t ncsh_vm_atomic_child_pid_get(void)
-{
-    return ncsh_vm_atomic_internal_child_pid;
-}
+pid_t vm_child_pid = 0;
 
 static void ncsh_vm_signal_handler(int signum, siginfo_t* const info, void* const context)
 {
     (void)context;
-    const pid_t target = ncsh_vm_atomic_child_pid_get();
+    const pid_t target = vm_child_pid;
 
     if (target != 0 && info->si_pid != target) {
         if (!kill(target, signum)) {
@@ -46,7 +36,7 @@ static void ncsh_vm_signal_handler(int signum, siginfo_t* const info, void* cons
                 perror(RED "ncsh: Error writing to standard output while processing a signal" RESET);
             }
         }
-        ncsh_vm_atomic_child_pid_set(0);
+        vm_child_pid = 0;
     }
     else {
         /*if (write(STDOUT_FILENO, "exit\n", 5) == -1) {
@@ -548,7 +538,7 @@ int_fast32_t ncsh_vm_run(struct ncsh_Args* const restrict args,
                 break;
             }
 
-            ncsh_vm_atomic_child_pid_set(vm.pid);
+            vm_child_pid = vm.pid;
 
             pid_t waitpid_result;
             while (1) {
