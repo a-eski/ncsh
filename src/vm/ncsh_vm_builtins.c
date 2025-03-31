@@ -150,8 +150,10 @@ int_fast32_t ncsh_builtins_echo(const struct ncsh_Args* const restrict args)
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
+#define NCSH_TITLE "ncsh " NCSH_VERSION "\n"
 #define NCSH_COPYRIGHT                                                                                                 \
-    "ncsh: Copyright (C) 2025 Alex Eski\n"                                                                              \
+    "Copyright (C) 2025 Alex Eski\n"                                                                                   \
+    "License GPLv3+: GNU GPL version 3 or later <https://gnu.org/licenses/gpl.html>."                                  \
     "This program comes with ABSOLUTELY NO WARRANTY.\n"                                                                \
     "This is free software, and you are welcome to redistribute it "                                                   \
     "under certain conditions.\n\n"
@@ -184,7 +186,13 @@ int_fast32_t ncsh_builtins_echo(const struct ncsh_Args* const restrict args)
 [[nodiscard]]
 int_fast32_t ncsh_builtins_help(const struct ncsh_Args* const restrict args)
 {
-    (void)args; // to not get compiler warnings
+    (void)args; // to prevent compiler warnings
+
+    constexpr size_t len = sizeof(NCSH_TITLE) - 1;
+    if (write(STDOUT_FILENO, NCSH_TITLE, len) == -1) {
+        perror(RED NCSH_ERROR_STDOUT RESET);
+        return NCSH_COMMAND_EXIT_FAILURE;
+    }
 
     HELP_WRITE(NCSH_COPYRIGHT);
     HELP_WRITE(HELP_MESSAGE);
@@ -237,7 +245,8 @@ int_fast32_t ncsh_builtins_cd(const struct ncsh_Args* const restrict args)
 [[nodiscard]]
 int_fast32_t ncsh_builtins_pwd(const struct ncsh_Args* const restrict args)
 {
-    (void)args;
+    (void)args; // to prevent compiler warnings
+
     char path[PATH_MAX];
     if (!getcwd(path, sizeof(path))) {
         perror(RED "ncsh pwd: Error when getting current directory" RESET);
@@ -274,6 +283,15 @@ int_fast32_t ncsh_builtins_kill(const struct ncsh_Args* const restrict args)
         printf("ncsh kill: could not kill process with process ID (PID): %d\n", pid);
         return NCSH_COMMAND_FAILED_CONTINUE;
     }
+
+    return NCSH_COMMAND_SUCCESS_CONTINUE;
+}
+
+int_fast32_t ncsh_builtins_version(const struct ncsh_Args* const restrict args)
+{
+    (void)args; // to prevent compiler warnings
+
+    ncsh_write_literal(NCSH_VERSION "\n");
 
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
