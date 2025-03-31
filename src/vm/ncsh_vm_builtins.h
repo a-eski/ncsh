@@ -50,6 +50,9 @@ int_fast32_t ncsh_builtins_pwd(const struct ncsh_Args* const restrict args);
 #define NCSH_KILL "kill"
 int_fast32_t ncsh_builtins_kill(const struct ncsh_Args* const restrict args);
 
+#define NCSH_VERSION_CMD "version"
+int_fast32_t ncsh_builtins_version(const struct ncsh_Args* const restrict args);
+
 #define NCSH_SET "set" // not fully implemented
 int_fast32_t ncsh_builtins_set(const struct ncsh_Args* const restrict args);
 
@@ -68,6 +71,7 @@ static const struct ncsh_Builtin builtins[] = {
     { .length = sizeof(NCSH_CD), .value = NCSH_CD, .func = &ncsh_builtins_cd },
     { .length = sizeof(NCSH_PWD), .value = NCSH_PWD, .func = &ncsh_builtins_pwd },
     { .length = sizeof(NCSH_KILL), .value = NCSH_KILL, .func = &ncsh_builtins_kill },
+    { .length = sizeof(NCSH_VERSION_CMD), .value = NCSH_VERSION_CMD, .func = &ncsh_builtins_version },
     { .length = sizeof(NCSH_SET), .value = NCSH_SET, .func = &ncsh_builtins_set },
 };
 
