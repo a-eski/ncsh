@@ -4,10 +4,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/cdefs.h>
 
 #include "eskilib/eskilib_colors.h"
 #include "ncsh_arena.h"
 
+__attribute_malloc__
 void* ncsh_arena_malloc_internal(struct ncsh_Arena* arena,
                      uintptr_t count,
                      uintptr_t size,
@@ -25,6 +27,8 @@ void* ncsh_arena_malloc_internal(struct ncsh_Arena* arena,
     return memset(val, 0, count * size);
 }
 
+
+__attribute_malloc__
 void* ncsh_arena_realloc_internal(struct ncsh_Arena* arena,
                      uintptr_t count,
                      uintptr_t size,
