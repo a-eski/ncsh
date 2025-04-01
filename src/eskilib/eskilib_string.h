@@ -24,11 +24,11 @@ eskilib_nodiscard
 static inline
 bool eskilib_string_compare(char* str, size_t str_len, char* str_two, size_t str_two_len)
 {
-    if (str_len != str_two_len) {
+    if (str_len != str_two_len || !str_len) {
         return false;
     }
 
-    return !str_len || !memcmp(str, str_two, str_len);
+    return !str || !memcmp(str, str_two, str_len);
 }
 
 eskilib_nodiscard
@@ -36,9 +36,9 @@ static inline
 bool eskilib_string_compare_const(const char* const str, const size_t str_len,
                                   const char* const str_two, const size_t str_two_len)
 {
-    if (str_len != str_two_len) {
+    if (str_len != str_two_len || !str_len) {
         return false;
     }
 
-    return !str_len || !memcmp(str, str_two, str_len);
+    return !str || !memcmp(str, str_two, str_len);
 }

@@ -444,11 +444,9 @@ void ncsh_autocompletions_tests(void)
     eskilib_test_finish();
 }
 
-#ifndef ncsh_TEST_ALL
 int main(void)
 {
     ncsh_autocompletions_tests();
 
     return EXIT_SUCCESS;
 }
-#endif /* ifndef ncsh_TEST_ALL */

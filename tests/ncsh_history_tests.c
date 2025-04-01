@@ -296,7 +296,6 @@ void ncsh_history_tests(void)
     eskilib_test_run(ncsh_history_load_file_not_exists_test);
     eskilib_test_run(ncsh_history_load_file_exists_test);
     eskilib_test_run(ncsh_history_get_empty_file_test);
-    // eskilib_test_run(ncsh_history_get_negative_input_test);
     eskilib_test_run(ncsh_history_get_null_entries_test);
     eskilib_test_run(ncsh_history_get_position_gt_history_count_test);
     eskilib_test_run(ncsh_history_get_position_equals_history_count_test);
@@ -310,11 +309,9 @@ void ncsh_history_tests(void)
     eskilib_test_finish();
 }
 
-#ifndef ncsh_TEST_ALL
 int main(void)
 {
     ncsh_history_tests();
 
     return EXIT_SUCCESS;
 }
-#endif /* ifndef ncsh_TEST_ALL */
