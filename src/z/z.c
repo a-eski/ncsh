@@ -436,11 +436,11 @@ enum z_Result z_init(const struct ncsh_String* const config_file,
 [[nodiscard]]
 bool z_is_dir(struct dirent* dir)
 {
-#ifdef _DIRENT_HAVE_D_TYPE
-    if (dir->d_type != DT_UNKNOWN) {
-	return dir->d_type == DT_DIR;
-    }
-#endif /* ifdef _DIRENT_HAVE_D_TYPE */
+#   ifdef _DIRENT_HAVE_D_TYPE
+        if (dir->d_type != DT_UNKNOWN) {
+	    return dir->d_type == DT_DIR;
+    	}
+#   endif /* ifdef _DIRENT_HAVE_D_TYPE */
 
     struct stat sb;
     return !stat(dir->d_name, &sb) && S_ISDIR(sb.st_mode);
