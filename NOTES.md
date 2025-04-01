@@ -4,7 +4,6 @@
 
 ### Misc
 
-* [bash](https://aosabook.org/en/v1/bash.html)
 * [ascii codes](https://theasciicode.com.ar/)
 * [gcc options](https://gcc.gnu.org/onlinedocs/gcc-10.4.0/gcc/Instrumentation-Options.html)
 * [XTerm control sequences](http://invisible-island.net/xterm/ctlseqs/ctlseqs.html)
@@ -19,44 +18,27 @@
 * [bash](https://github.com/bminor/bash)
 * [esh google](https://github.com/google/esh)
 
-### Libraries Considered
-
-#### Line Readers
+### Line Readers/TUI Libraries Considered
 
 * [linenoise](https://github.com/antirez/linenoise/blob/master/README.markdown)
 * [termbox2](https://github.com/termbox/termbox2/blob/master/README.md)
 * [tuibox](https://github.com/Cubified/tuibox)
 * [isocline](https://github.com/daanx/isocline/blob/main/src/common.h)
 * [gnu readline](https://savannah.gnu.org/git/?group=readline)
-
-#### curses/ncurses-like Libraries
-
 * [notcurses](https://github.com/dankamongmen/notcurses?tab=readme-ov-file)
-* [CursedGl](https://github.com/saccharineboi/CursedGL)
 
-### fzf
+### Libraries Used
 
-* [fzf-native original](https://github.com/nvim-telescope/telescope-fzf-native.nvim)
-* [fzf-native fork](https://github.com/a-eski/telescope-fzf-native.nvim)
+#### fzf
 
-## Bugs
+Used for z fuzzy matching.
 
-* handle pasting when input matches to autocomplete (autocomplete can interfere with pasting)
-* handle multiline when current line is at the bottom of the screen and scrolling has occurred
+* [telescope-fzf-native.nvim](https://github.com/nvim-telescope/telescope-fzf-native.nvim)
 
-## Windows Notes
+#### GNU readline
 
-``` C
-#ifdef WIN32 || _WIN32 || _WIN64
-
-#endif // WIN32
-
-#ifdef linux || __unix__
-
-#endif // linux
-
-//CreateProcess
-```
+* [gnu readline](https://savannah.gnu.org/git/?group=readline)
+* [docs](https://tiswww.case.edu/php/chet/readline/readline.html)
 
 ## Fuzzing Notes
 

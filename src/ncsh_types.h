@@ -4,11 +4,13 @@
 
 #include <stdint.h>
 
-#include "ncsh_arena.h"
+#include <readline/ncsh_arena.h>
+
 #include "ncsh_config.h"
 #include "ncsh_parser.h"
-#include "readline/ncsh_readline.h"
+#include "readline/ncsh_input.h"
 #include "z/z.h"
+
 
 #define NCSH_MAX_PROCESSES 100
 

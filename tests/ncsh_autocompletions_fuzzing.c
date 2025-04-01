@@ -3,8 +3,9 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#include <readline/ncsh_autocompletions.h>
+
 #include "lib/ncsh_arena_test_helper.h"
-#include "../src/readline/ncsh_autocompletions.h"
 
 int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size)
 {

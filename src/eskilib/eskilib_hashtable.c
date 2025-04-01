@@ -34,7 +34,7 @@ uint64_t eskilib_hashtable_key(const char* key)
     return hash;
 }
 
-struct eskilib_String eskilib_hashtable_get(const char* key, struct eskilib_HashTable* table)
+struct ncsh_String eskilib_hashtable_get(const char* key, struct eskilib_HashTable* table)
 {
     uint64_t hash = eskilib_hashtable_key(key);
     size_t index = (size_t)(hash & (uint64_t)(table->capacity - 1));
@@ -50,7 +50,7 @@ struct eskilib_String eskilib_hashtable_get(const char* key, struct eskilib_Hash
         }
     }
 
-    return eskilib_String_Empty;
+    return ncsh_String_Empty;
 }
 
 bool eskilib_hashtable_exists(const char* key, struct eskilib_HashTable* table)
@@ -73,7 +73,7 @@ bool eskilib_hashtable_exists(const char* key, struct eskilib_HashTable* table)
 }
 
 const char* eskilib_hashtable_set_entry(struct eskilib_HashTable_Entry* entries, size_t capacity, const char* key,
-                                        struct eskilib_String value, size_t* plength)
+                                        struct ncsh_String value, size_t* plength)
 {
     uint64_t hash = eskilib_hashtable_key(key);
     size_t index = (size_t)(hash & (uint64_t)(capacity - 1));
@@ -129,7 +129,7 @@ bool eskilib_hashtable_expand(struct ncsh_Arena* const arena, struct eskilib_Has
 }
 
 const char* eskilib_hashtable_set(const char* key,
-                                  struct eskilib_String value,
+                                  struct ncsh_String value,
                                   struct ncsh_Arena* const arena,
                                   struct eskilib_HashTable* table)
 {

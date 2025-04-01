@@ -12,7 +12,7 @@ int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size)
     NCSH_ARENA_TEST_SETUP;
 
     struct ncsh_History history = {};
-    ncsh_history_init(eskilib_String_Empty, &history, &arena);
+    ncsh_history_init(ncsh_String_Empty, &history, &arena);
     ncsh_history_add((char*)Data, Size, &history, &arena);
     ncsh_history_save(&history);
 

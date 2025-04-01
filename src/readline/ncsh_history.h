@@ -4,9 +4,10 @@
 
 #include <stdint.h>
 
+#include <readline/ncsh_arena.h>
+#include <readline/ncsh_string.h>
+
 #include "../eskilib/eskilib_result.h"
-#include "../eskilib/eskilib_string.h"
-#include "../ncsh_arena.h"
 #include "../ncsh_configurables.h"
 #include "../ncsh_parser.h"
 
@@ -22,11 +23,11 @@
 struct ncsh_History {
     size_t count;
     char* file;
-    struct eskilib_String* entries;
+    struct ncsh_String* entries;
 };
 
 /* History Setup and Manipulation */
-enum eskilib_Result ncsh_history_init(const struct eskilib_String config_location,
+enum eskilib_Result ncsh_history_init(const struct ncsh_String config_location,
                                       struct ncsh_History* const restrict history,
                                       struct ncsh_Arena* const arena);
 
@@ -37,7 +38,7 @@ enum eskilib_Result ncsh_history_add(const char* const line,
                                      struct ncsh_History* const restrict history,
                                      struct ncsh_Arena* const arena);
 
-struct eskilib_String ncsh_history_get(const size_t position,
+struct ncsh_String ncsh_history_get(const size_t position,
                                        struct ncsh_History* const restrict history);
 
 /* ncsh_history_command_...

@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <stddef.h>
 #include <stdio.h>
 
 int eskilib_fgets(char* const input_buffer, const size_t size_of_input_buffer, FILE* const restrict file_pointer);

@@ -1,12 +1,11 @@
 /* experiment with using GNU readline */
 
 #include <stdio.h>
-// #include <readline/ncsh_arena.h>
-// #include <readline/ncsh_autocompletions.h>
-// #include <readline/ncsh_string.h>
+#include <stdlib.h>
+
+#include <readline/readline.h>
 #include <readline/ncsh_readline.h>
 #include <readline/history.h>
-#include <stdlib.h>
 
 int main(void)
 {

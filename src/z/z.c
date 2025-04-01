@@ -45,7 +45,7 @@ bool z_match_exists(const char* const target,
     assert(db && target && target_length > 0);
 
     for (size_t i = 0; i < db->count; ++i) {
-        if (eskilib_string_compare_const((db->dirs + i)->path, (db->dirs + i)->path_length, target, target_length)) {
+        if (ncsh_string_compare_const((db->dirs + i)->path, (db->dirs + i)->path_length, target, target_length)) {
             ++(db->dirs + i)->rank;
             (db->dirs + i)->last_accessed = time(NULL);
             return true;
@@ -73,7 +73,7 @@ struct z_Directory* z_match_find(char* const target,
     time_t now = time(NULL);
 
     for (size_t i = 0; i < db->count; ++i) {
-        if (!eskilib_string_compare((db->dirs + i)->path, (db->dirs + i)->path_length, (char*)cwd, cwd_length)) {
+        if (!ncsh_string_compare((db->dirs + i)->path, (db->dirs + i)->path_length, (char*)cwd, cwd_length)) {
             int fzf_score = fzf_get_score((db->dirs + i)->path, (db->dirs + i)->path_length - 1, pattern, slab, scratch_arena);
             if (!fzf_score)
                 continue;
@@ -372,7 +372,7 @@ enum z_Result z_database_add(const char* const path,
     return Z_SUCCESS;
 }
 
-enum z_Result z_database_file_set(const struct eskilib_String* const config_file,
+enum z_Result z_database_file_set(const struct ncsh_String* const config_file,
                                   struct z_Database* const restrict db,
                                   struct ncsh_Arena* const arena)
 {
@@ -403,7 +403,7 @@ enum z_Result z_database_file_set(const struct eskilib_String* const config_file
     return Z_SUCCESS;
 }
 
-enum z_Result z_init(const struct eskilib_String* const config_file,
+enum z_Result z_init(const struct ncsh_String* const config_file,
                      struct z_Database* const restrict db,
                      struct ncsh_Arena* const arena)
 {
@@ -423,7 +423,7 @@ enum z_Result z_init(const struct eskilib_String* const config_file,
 enum z_Result z_directory_match_exists(const char* const target,
                                        const size_t target_length,
                                        const char* const cwd,
-                                       struct eskilib_String* const output,
+                                       struct ncsh_String* const output,
                                        struct ncsh_Arena* const scratch_arena)
 {
     assert(target && cwd && target_length > 0);
@@ -442,7 +442,7 @@ enum z_Result z_directory_match_exists(const char* const target,
         }
 
         directory_length = strlen(directory_entry->d_name) + 1;
-        if (eskilib_string_compare_const(target, target_length, directory_entry->d_name, directory_length)) {
+        if (ncsh_string_compare_const(target, target_length, directory_entry->d_name, directory_length)) {
             output->value = arena_malloc(scratch_arena, directory_length, char);
             output->length = directory_length;
             memcpy(output->value, directory_entry->d_name, directory_length);
@@ -493,7 +493,7 @@ void z(char* target,
         return;
     }
 
-    if (eskilib_string_compare(target, target_length, home, strlen(home) + 1)) {
+    if (ncsh_string_compare(target, target_length, home, strlen(home) + 1)) {
         if (chdir(home) == -1) {
             perror("z: couldn't change directory to home");
         }
@@ -519,7 +519,7 @@ void z(char* target,
     }
 
     size_t cwd_length = strlen(cwd) + 1;
-    struct eskilib_String output = {0};
+    struct ncsh_String output = {0};
     struct z_Directory* match = z_match_find(target, target_length, cwd, cwd_length, db, &scratch_arena);
 
     if (z_directory_match_exists(target, target_length, cwd, &output, &scratch_arena) == Z_SUCCESS) {
@@ -624,7 +624,7 @@ enum z_Result z_remove(const char* const path,
     }
 
     for (size_t i = 0; i < db->count; ++i) {
-        if (eskilib_string_compare((db->dirs + i)->path, (db->dirs + i)->path_length, (char*)path, path_length)) {
+        if (ncsh_string_compare((db->dirs + i)->path, (db->dirs + i)->path_length, (char*)path, path_length)) {
             (db->dirs + i)->path = NULL;
             (db->dirs + i)->path_length = 0;
             (db->dirs + i)->last_accessed = 0;

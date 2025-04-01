@@ -1,9 +1,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <readline/ncsh_arena.h>
+
 #include "lib/ncsh_arena_test_helper.h"
 #include "../src/eskilib/eskilib_test.h"
-#include "../src/ncsh_arena.h"
 
 void ncsh_arena_malloc_test(void)
 {

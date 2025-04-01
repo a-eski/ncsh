@@ -16,7 +16,7 @@
 #include "ncsh_debug.h"
 #endif /* ifdef NCSH_DEBUG */
 
-#define NCSH_VERSION "0.0.2.2"
+#define NCSH_VERSION "0.0.3.0"
 
 /* EXIT_* Constants
  * Exit values used by a multitude of functions and areas in the shell.
@@ -75,7 +75,7 @@
 #define NCSH_MAX_AUTOCOMPLETION_MATCHES 32
 
 /* NCSH_MAX_INPUT Macro constant
- * The max input for reading in a line. Relevant to ncsh_readline when processing user input.
+ * The max input for reading in a line. Relevant to ncsh_input when processing user input.
  */
 #define NCSH_MAX_INPUT 1024
 

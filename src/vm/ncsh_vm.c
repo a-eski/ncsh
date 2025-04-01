@@ -493,7 +493,7 @@ int_fast32_t ncsh_vm_run(struct ncsh_Args* const restrict args,
         }
 
         for (uint_fast32_t i = 0; i < builtins_count; ++i) {
-            if (eskilib_string_compare(vm.buffer[0], vm.buffer_len[0], builtins[i].value, builtins[i].length)) {
+            if (ncsh_string_compare(vm.buffer[0], vm.buffer_len[0], builtins[i].value, builtins[i].length)) {
                 vm.command_type = CT_BUILTIN;
                 vm.command_result = (*builtins[i].func)(args);
 
@@ -588,7 +588,7 @@ int_fast32_t ncsh_vm_run(struct ncsh_Args* const restrict args,
 void ncsh_vm_alias(struct ncsh_Args* const restrict args,
                    struct ncsh_Arena* const arena)
 {
-    struct eskilib_String alias = ncsh_config_alias_check(args->values[0], args->lengths[0]);
+    struct ncsh_String alias = ncsh_config_alias_check(args->values[0], args->lengths[0]);
     if (alias.length) {
         args->values[0] = arena_realloc(arena, alias.length, char, args->values[0], args->lengths[0]);
         memcpy(args->values[0], alias.value, alias.length);
@@ -609,11 +609,11 @@ int_fast32_t ncsh_vm_execute(struct ncsh_Shell* const restrict shell,
 
     // check if any jobs finished running
 
-    if (eskilib_string_compare(shell->args.values[0], shell->args.lengths[0], NCSH_Z, sizeof(NCSH_Z))) {
+    if (ncsh_string_compare(shell->args.values[0], shell->args.lengths[0], NCSH_Z, sizeof(NCSH_Z))) {
         return ncsh_builtins_z(&shell->z_db, &shell->args, &shell->arena, scratch_arena);
     }
 
-    if (eskilib_string_compare(shell->args.values[0], shell->args.lengths[0], NCSH_HISTORY, sizeof(NCSH_HISTORY))) {
+    if (ncsh_string_compare(shell->args.values[0], shell->args.lengths[0], NCSH_HISTORY, sizeof(NCSH_HISTORY))) {
         return ncsh_builtins_history(&shell->input.history, &shell->args, &shell->arena, scratch_arena);
     }
 
