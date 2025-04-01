@@ -529,14 +529,12 @@ void ncsh_parser_parse_tests(void)
     eskilib_test_finish();
 }
 
-#ifndef ncsh_TEST_ALL
 int main(void)
 {
     ncsh_parser_parse_tests();
 
     return EXIT_SUCCESS;
 }
-#endif /* ifndef ncsh_TEST_ALL */
 
 // put at the end because it messes with clangd lsp
 void ncsh_parser_parse_bad_input_shouldnt_crash(void)

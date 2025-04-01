@@ -178,7 +178,8 @@ enum eskilib_Result ncsh_history_init(const struct eskilib_String config_locatio
 
 [[nodiscard]]
 enum eskilib_Result ncsh_history_clean(struct ncsh_History* const restrict history,
-                                       struct ncsh_Arena* const arena)
+                                       struct ncsh_Arena* const arena,
+                                       struct ncsh_Arena scratch_arena)
 {
     assert(history);
     if (!history->count || !history->entries[0].value) {
@@ -190,7 +191,7 @@ enum eskilib_Result ncsh_history_clean(struct ncsh_History* const restrict histo
     struct eskilib_HashTable ht = {0};
 
     // doesn't use arena for now, could use the scratch arena
-    bool ht_malloc_result = eskilib_hashtable_malloc(&ht);
+    bool ht_malloc_result = eskilib_hashtable_malloc(&scratch_arena, &ht);
     if (!ht_malloc_result) {
         return E_FAILURE_MALLOC;
     }
@@ -198,7 +199,6 @@ enum eskilib_Result ncsh_history_clean(struct ncsh_History* const restrict histo
     FILE* file = fopen(history->file, "w");
     if (!file) {
         perror(RED "ncsh: Could not open .ncsh_history file to clean history" RESET);
-        eskilib_hashtable_free(&ht);
         return E_FAILURE_FILE_OP;
     }
 
@@ -208,17 +208,15 @@ enum eskilib_Result ncsh_history_clean(struct ncsh_History* const restrict histo
         }
 
         if (!eskilib_hashtable_exists(history->entries[i].value, &ht)) {
-            eskilib_hashtable_set(history->entries[i].value, history->entries[i], &ht);
+            eskilib_hashtable_set(history->entries[i].value, history->entries[i], &scratch_arena, &ht);
 
             if (!fputs(history->entries[i].value, file)) {
                 perror(RED "ncsh history: Error writing to file" RESET);
-                eskilib_hashtable_free(&ht);
                 fclose(file);
                 return E_FAILURE_FILE_OP;
             }
             if (!fputc('\n', file)) {
                 perror(RED "ncsh history: Error writing to file" RESET);
-                eskilib_hashtable_free(&ht);
                 fclose(file);
                 return E_FAILURE_FILE_OP;
             }
@@ -226,7 +224,6 @@ enum eskilib_Result ncsh_history_clean(struct ncsh_History* const restrict histo
     }
 
     fclose(file);
-    eskilib_hashtable_free(&ht);
 
     enum eskilib_Result result;
     if ((result = ncsh_history_reload(history, arena)) != E_SUCCESS) {
@@ -363,9 +360,10 @@ int_fast32_t ncsh_history_command_count(const struct ncsh_History* history)
 
 [[nodiscard]]
 int_fast32_t ncsh_history_command_clean(struct ncsh_History* const restrict history,
-                                        struct ncsh_Arena* const arena)
+                                        struct ncsh_Arena* const arena,
+					struct ncsh_Arena* const scratch_arena)
 {
-    if (ncsh_history_clean(history, arena) != E_SUCCESS) {
+    if (ncsh_history_clean(history, arena, *scratch_arena) != E_SUCCESS) {
         return NCSH_COMMAND_FAILED_CONTINUE;
     }
 
@@ -397,13 +395,14 @@ void ncsh_history_remove_entries_shift(const size_t offset,
 int_fast32_t ncsh_history_command_remove(const char* const value,
 					 const size_t value_len,
                                          struct ncsh_History* const restrict history,
-                                         struct ncsh_Arena* const arena)
+                                         struct ncsh_Arena* const arena,
+					 struct ncsh_Arena* const scratch_arena)
 {
     assert(value);
     assert(value_len > 0);
     assert(history);
 
-    if (ncsh_history_clean(history, arena) != E_SUCCESS) {
+    if (ncsh_history_clean(history, arena, *scratch_arena) != E_SUCCESS) {
         return NCSH_COMMAND_FAILED_CONTINUE;
     }
 

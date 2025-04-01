@@ -80,6 +80,8 @@ check :
 	make test_config
 	make test_readline
 	make test_arena
+	make test_hashtable
+	make test_string
 .PHONY: c
 c :
 	make check
@@ -205,6 +207,22 @@ test_arena :
 .PHONY: ta
 ta :
 	make test_arena
+
+.PHONY: test_hashtable
+test_hashtable :
+	$(CC) $(STD) $(debug_flags) ./src/ncsh_arena.c ./src/eskilib/eskilib_hashtable.c ./src/eskilib/eskilib_test.c ./tests/eskilib_hashtable_tests.c -o ./bin/eskilib_hashtable_tests
+	./bin/eskilib_hashtable_tests
+.PHONY: tht
+tht :
+	make test_hashtable
+
+.PHONY: test_string
+test_string :
+	$(CC) $(STD) $(debug_flags) ./src/ncsh_arena.c ./src/eskilib/eskilib_test.c ./tests/eskilib_string_tests.c -o ./bin/eskilib_string_tests
+	./bin/eskilib_string_tests
+.PHONY: ts
+ts :
+	make test_string
 
 .PHONY: clang_format
 clang_format :
