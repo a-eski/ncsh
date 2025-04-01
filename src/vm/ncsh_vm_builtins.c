@@ -84,7 +84,8 @@ int_fast32_t ncsh_builtins_z(struct z_Database* const restrict z_db,
 [[nodiscard]]
 int_fast32_t ncsh_builtins_history(struct ncsh_History* const restrict history,
                                    const struct ncsh_Args* const restrict args,
-                                   struct ncsh_Arena* const arena)
+                                   struct ncsh_Arena* const arena,
+                                   struct ncsh_Arena* const scratch_arena)
 {
     if (args->count == 1) {
         return ncsh_history_command_display(history);
@@ -99,7 +100,7 @@ int_fast32_t ncsh_builtins_history(struct ncsh_History* const restrict history,
         }
         else if (eskilib_string_compare(args->values[1], args->lengths[1], NCSH_HISTORY_CLEAN,
                                         sizeof(NCSH_HISTORY_CLEAN))) {
-            return ncsh_history_command_clean(history, arena);
+            return ncsh_history_command_clean(history, arena, scratch_arena);
         }
     }
 
@@ -117,7 +118,7 @@ int_fast32_t ncsh_builtins_history(struct ncsh_History* const restrict history,
 	// z rm/remove
         else if (eskilib_string_compare(args->values[1], args->lengths[1], NCSH_HISTORY_RM, sizeof(NCSH_HISTORY_RM)) ||
                 eskilib_string_compare(args->values[1], args->lengths[1], NCSH_HISTORY_REMOVE, sizeof(NCSH_HISTORY_REMOVE))) {
-            if (ncsh_history_command_remove(args->values[2], args->lengths[2], history, arena) != Z_SUCCESS) {
+            if (ncsh_history_command_remove(args->values[2], args->lengths[2], history, arena, scratch_arena) != Z_SUCCESS) {
                 return NCSH_COMMAND_FAILED_CONTINUE;
             }
 
@@ -210,12 +211,18 @@ int_fast32_t ncsh_builtins_help(const struct ncsh_Args* const restrict args)
     HELP_WRITE(HELP_HISTORY_ADD);
     HELP_WRITE(HELP_HISTORY_RM);
     HELP_WRITE(HELP_PWD);
+    // HELP_WRITE(HELP_VERSION);
     HELP_WRITE(HELP_KILL);
 
     // controls
+    // HELP_WRITE(HELP_BASIC_CONTROLS);
+    // CTRL + W, CTRL + U, etc.
+    // HELP_WRITE(HELP_READLINE_INFO);
+    // HELP_WRITE(HELP_READLINE_MORE_INFO);
     // autocomplete
-    // tab autocomplete
-    // CTRL + W, CTRL + U
+    // HELP_WRITE(HELP_AUTOCOMPLETIONS);
+    // HELP_WRITE(HELP_TAB_AUTOCOMPLETIONS);
+    // HELP_WRITE(HELP_AUTOCOMPLETIONS_MORE_INFO);
 
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }

@@ -48,7 +48,8 @@ int_fast32_t ncsh_history_command_display(const struct ncsh_History* const restr
 int_fast32_t ncsh_history_command_count(const struct ncsh_History* const restrict history);
 
 int_fast32_t ncsh_history_command_clean(struct ncsh_History* const restrict history,
-                                        struct ncsh_Arena* const arena);
+                                        struct ncsh_Arena* const arena,
+					struct ncsh_Arena* const scratch_arena);
 
 int_fast32_t ncsh_history_command_add(const char* const value,
                                       const size_t value_len,
@@ -56,6 +57,7 @@ int_fast32_t ncsh_history_command_add(const char* const value,
                                       struct ncsh_Arena* const arena);
 
 int_fast32_t ncsh_history_command_remove(const char* const value,
-                                         const size_t value_len,
+					 const size_t value_len,
                                          struct ncsh_History* const restrict history,
-                                         struct ncsh_Arena* const arena);
+                                         struct ncsh_Arena* const arena,
+					 struct ncsh_Arena* const scratch_arena);

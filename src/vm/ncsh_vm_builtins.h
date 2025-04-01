@@ -28,7 +28,8 @@ int_fast32_t ncsh_builtins_z(struct z_Database* const restrict z_db,
 #define NCSH_HISTORY_REMOVE "remove"
 int_fast32_t ncsh_builtins_history(struct ncsh_History* const restrict history,
                                    const struct ncsh_Args* const restrict args,
-                                   struct ncsh_Arena* const arena);
+                                   struct ncsh_Arena* const arena,
+                                   struct ncsh_Arena* const scratch_arena);
 
 #define NCSH_EXIT "exit" // the base command
 #define NCSH_QUIT "quit" // alias for exit

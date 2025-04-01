@@ -466,7 +466,6 @@ void ncsh_vm_waitpid(struct ncsh_Vm_Data* vm)
     }
 }
 
-
 [[nodiscard]]
 int_fast32_t ncsh_vm_run(struct ncsh_Args* const restrict args,
                          struct ncsh_Tokens* const restrict tokens)
@@ -615,7 +614,7 @@ int_fast32_t ncsh_vm_execute(struct ncsh_Shell* const restrict shell,
     }
 
     if (eskilib_string_compare(shell->args.values[0], shell->args.lengths[0], NCSH_HISTORY, sizeof(NCSH_HISTORY))) {
-        return ncsh_builtins_history(&shell->input.history, &shell->args, &shell->arena);
+        return ncsh_builtins_history(&shell->input.history, &shell->args, &shell->arena, scratch_arena);
     }
 
     ncsh_vm_alias(&shell->args, &shell->arena);

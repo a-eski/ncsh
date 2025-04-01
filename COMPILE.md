@@ -4,7 +4,7 @@
 
 ### Notes
 
-I tried to have the makefile follow conventions as closely as possible. CC, CFLAGS, STD, DESTDIR, BUILDDIR, RELEASE can all be passed in from command line with make. Other standard options will eventually be added, but not all are supported at time of writing.
+I tried to have the makefile follow conventions as closely as possible. CC, CFLAGS, STD, DESTDIR, BUILDDIR, RELEASE, DEFINES can all be passed in from command line with make. Other standard options will eventually be added, but not all are supported at time of writing.
 
 There are also shorthand versions of the commands to make it easier to iterate. For example, you can run `make test_readline` with `make tr`. If you are running ncsh as your shell, it has a builtin alias for `make`, `m`. So you can run `m tr` instead of `make test_readline`. This comes in handy when running tests over and over and making lots of changes.
 

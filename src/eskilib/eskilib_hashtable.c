@@ -6,28 +6,17 @@
 #include <string.h>
 
 #include "eskilib_hashtable.h"
-#include "eskilib_string.h"
 
-bool eskilib_hashtable_malloc(struct eskilib_HashTable* table)
+bool eskilib_hashtable_malloc(struct ncsh_Arena* const arena, struct eskilib_HashTable* table)
 {
     table->size = 0;
     table->capacity = ESKILIB_HASHTABLE_DEFAULT_CAPACITY;
 
-    table->entries = calloc(table->capacity, sizeof(struct eskilib_HashTable_Entry));
+    table->entries = arena_malloc(arena, table->capacity, struct eskilib_HashTable_Entry);
     if (table->entries == NULL) {
         return false;
     }
     return true;
-}
-
-void eskilib_hashtable_free(struct eskilib_HashTable* table)
-{
-    for (size_t i = 0; i < table->capacity; i++) {
-        if (table->entries[i].key)
-            free((char*)table->entries[i].key);
-    }
-
-    free(table->entries);
 }
 
 #define ESKILIB_FNV_OFFSET 14695981039346656037UL
@@ -102,10 +91,10 @@ const char* eskilib_hashtable_set_entry(struct eskilib_HashTable_Entry* entries,
     }
 
     if (plength != NULL) {
-        key = strdup(key);
+        /*key = strdup(key);
         if (key == NULL) {
             return NULL;
-        }
+        }*/
         (*plength)++;
     }
 
@@ -114,14 +103,14 @@ const char* eskilib_hashtable_set_entry(struct eskilib_HashTable_Entry* entries,
     return key;
 }
 
-bool eskilib_hashtable_expand(struct eskilib_HashTable* table)
+bool eskilib_hashtable_expand(struct ncsh_Arena* const arena, struct eskilib_HashTable* table)
 {
     size_t new_capacity = table->capacity * 2;
     if (new_capacity < table->capacity) {
         return false;
     }
 
-    struct eskilib_HashTable_Entry* new_entries = calloc(new_capacity, sizeof(struct eskilib_HashTable_Entry));
+    struct eskilib_HashTable_Entry* new_entries = arena_malloc(arena, new_capacity, struct eskilib_HashTable_Entry);
     if (new_entries == NULL) {
         return false;
     }
@@ -134,13 +123,15 @@ bool eskilib_hashtable_expand(struct eskilib_HashTable* table)
         }
     }
 
-    free(table->entries);
     table->entries = new_entries;
     table->capacity = new_capacity;
     return true;
 }
 
-const char* eskilib_hashtable_set(const char* key, struct eskilib_String value, struct eskilib_HashTable* table)
+const char* eskilib_hashtable_set(const char* key,
+                                  struct eskilib_String value,
+                                  struct ncsh_Arena* const arena,
+                                  struct eskilib_HashTable* table)
 {
     assert(value.value != NULL && value.length > 0);
     if (value.value == NULL || value.length == 0) {
@@ -148,7 +139,7 @@ const char* eskilib_hashtable_set(const char* key, struct eskilib_String value, 
     }
 
     if (table->size >= table->capacity / 2) {
-        if (!eskilib_hashtable_expand(table)) {
+        if (!eskilib_hashtable_expand(arena, table)) {
             return NULL;
         }
     }
