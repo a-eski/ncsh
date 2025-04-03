@@ -1,5 +1,9 @@
 /* Copyright z by Alex Eski 2024 */
 
+#ifndef _DEFAULT_SOURCE
+#	define _DEFAULT_SOURCE // for anon enum DT_*
+#endif /* ifndef _DEFAULT_SOURCE */
+
 #include <assert.h>
 #include <dirent.h>
 #include <linux/limits.h>
@@ -9,6 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/stat.h>
 
 #include "../eskilib/eskilib_colors.h"
 #include "../ncsh_defines.h"
@@ -62,7 +67,7 @@ struct z_Directory* z_match_find(char* const target,
                                  struct z_Database* const restrict db,
                                  struct ncsh_Arena* const scratch_arena)
 {
-    assert(db);
+    assert(target && target_length && cwd && cwd_length && scratch_arena && db);
     if (!db->count || cwd_length < 2) {
         return NULL;
     }
@@ -71,6 +76,9 @@ struct z_Directory* z_match_find(char* const target,
     fzf_pattern_t* pattern = fzf_parse_pattern(target, target_length - 1, scratch_arena);
     struct z_Match current_match = {0};
     time_t now = time(NULL);
+#ifdef Z_DEBUG
+    printf("cwd %s, len %zu\n", cwd, cwd_length);
+#endif
 
     for (size_t i = 0; i < db->count; ++i) {
         if (!ncsh_string_compare((db->dirs + i)->path, (db->dirs + i)->path_length, (char*)cwd, cwd_length)) {
@@ -80,6 +88,7 @@ struct z_Directory* z_match_find(char* const target,
 
             double potential_match_z_score = z_score((db->dirs + i), fzf_score, now);
 #ifdef Z_DEBUG
+	    printf("%zu %s len: %zu\n", i, (db->dirs + i)->path, (db->dirs + i)->path_length);
             printf("%s fzf_score %d\n", (db->dirs + i)->path, fzf_score);
             printf("%s z_score %f\n", (db->dirs + i)->path, potential_match_z_score);
 #endif /* ifdef Z_DEBUG */
@@ -90,6 +99,10 @@ struct z_Directory* z_match_find(char* const target,
             }
         }
     }
+
+#ifdef Z_DEBUG
+    printf("match %s\n", current_match.dir->path);
+#endif /* ifdef Z_DEBUG */
 
     return current_match.dir;
 }
@@ -420,6 +433,19 @@ enum z_Result z_init(const struct ncsh_String* const config_file,
     return z_read(db, arena);
 }
 
+[[nodiscard]]
+bool z_is_dir(struct dirent* dir)
+{
+#ifdef _DIRENT_HAVE_D_TYPE
+    if (dir->d_type != DT_UNKNOWN) {
+	return dir->d_type == DT_DIR;
+    }
+#endif /* ifdef _DIRENT_HAVE_D_TYPE */
+
+    struct stat sb;
+    return !stat(dir->d_name, &sb) && S_ISDIR(sb.st_mode);
+}
+
 enum z_Result z_directory_match_exists(const char* const target,
                                        const size_t target_length,
                                        const char* const cwd,
@@ -428,26 +454,31 @@ enum z_Result z_directory_match_exists(const char* const target,
 {
     assert(target && cwd && target_length > 0);
 
-    struct dirent* directory_entry;
-    DIR* current_directory = opendir(cwd);
-    if (!current_directory) {
+    struct dirent* dir;
+    DIR* current_dir = opendir(cwd);
+    if (!current_dir) {
         perror("z: could not open directory");
         return Z_FAILURE;
     }
 
-    size_t directory_length;
-    while ((directory_entry = readdir(current_directory))) {
-        if (directory_entry->d_name[0] == '\0') {
+    size_t dir_len;
+    while ((dir = readdir(current_dir))) {
+        if (dir->d_name[0] == '\0' && dir->d_type) {
             continue;
         }
 
-        directory_length = strlen(directory_entry->d_name) + 1;
-        if (ncsh_string_compare_const(target, target_length, directory_entry->d_name, directory_length)) {
-            output->value = arena_malloc(scratch_arena, directory_length, char);
-            output->length = directory_length;
-            memcpy(output->value, directory_entry->d_name, directory_length);
+#       ifdef _DIRENT_HAVE_D_RECLEN
+            dir_len = dir->d_reclen + 1;
+#       else
+            dir_len = strlen(dir->d_name) + 1;
+#       endif /* _DIRENT_HAVE_D_RECLEN */
 
-            if ((closedir(current_directory)) == -1) {
+        if (z_is_dir(dir) && ncsh_string_compare_const(target, target_length, dir->d_name, dir_len)) {
+            output->value = arena_malloc(scratch_arena, dir_len, char);
+            output->length = dir_len;
+            memcpy(output->value, dir->d_name, dir_len);
+
+            if ((closedir(current_dir)) == -1) {
                 perror("z: could not close directory");
                 return Z_FAILURE;
             }
@@ -456,7 +487,7 @@ enum z_Result z_directory_match_exists(const char* const target,
         }
     }
 
-    if ((closedir(current_directory)) == -1) {
+    if ((closedir(current_dir)) == -1) {
         perror("z: could not close directory");
         return Z_FAILURE;
     }
@@ -488,7 +519,7 @@ void z(char* target,
         return;
     }
 
-    assert(target && target_length > 0 && cwd && db);
+    assert(target && target_length && cwd && db && arena && scratch_arena.start);
     if (!cwd || !db || !target || target_length < 2) {
         return;
     }
@@ -541,7 +572,7 @@ void z(char* target,
         return;
     }
 
-    if (match && match->path && match->path_length > 0) {
+    if (match && match->path) {
         match->last_accessed = time(NULL);
         ++match->rank;
 
@@ -671,9 +702,9 @@ void z_print(const struct z_Database* const restrict db)
     }
 
     for (size_t i = 0; i < db->count; ++i) {
-        printf("z_db.entries[%zu].path: %s\n", i, db->dirs[i].path);
-        printf("z_db.entries[%zu].path_length: %zu\n", i, db->dirs[i].path_length);
-        printf("z_db.entries[%zu].last_accessed: %zu\n", i, db->dirs[i].last_accessed);
-        printf("z_db.entries[%zu].rank: %f\n\n", i, db->dirs[i].rank);
+        printf("z[%zu].path: %s\n", i, db->dirs[i].path);
+        printf("z[%zu].path_length: %zu\n", i, db->dirs[i].path_length);
+        printf("z[%zu].last_accessed: %zu\n", i, db->dirs[i].last_accessed);
+        printf("z[%zu].rank: %f\n\n", i, db->dirs[i].rank);
     }
 }
