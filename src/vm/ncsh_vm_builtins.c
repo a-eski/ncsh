@@ -298,7 +298,7 @@ int_fast32_t ncsh_builtins_version(const struct ncsh_Args* const restrict args)
 {
     (void)args; // to prevent compiler warnings
 
-    ncsh_write_literal(NCSH_VERSION "\n");
+    ncsh_write_literal(NCSH_TITLE);
 
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
