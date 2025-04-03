@@ -235,7 +235,7 @@ end
 def ls_star_expansion_test(row)
   @tty.send_line('./bin/ncsh ls *.md')
   row += 1
-  @tty.assert_row(row, 'COMPILE.md  NOTES.md  README.md')
+  @tty.assert_row(row, LS_STAR_DOT_MD)
   row += 1
   test_passed('ls star expansion test')
   row
@@ -279,5 +279,5 @@ def run_noninteractive_acceptance_tests
   row = pipe_tests(row)
   row = stdout_redirection_tests(row)
   row = stdin_redirection_tests(row)
-  row = expansion_tests(row)
+  expansion_tests(row)
 end

@@ -2,11 +2,13 @@ STD = -std=c2x
 CC ?= gcc
 DESTDIR ?= /bin
 RELEASE ?= 1
+DEFINES ?=
 debug_flags = -Wall -Wextra -Werror -Wpedantic -pedantic-errors -Wsign-conversion -Wformat=2 -Wshadow -Wvla -fstack-protector-all -fsanitize=address,undefined,leak -g
 release_flags = -Wall -Wextra -Werror -pedantic-errors -Wsign-conversion -Wformat=2 -Wshadow -Wvla -O3 -DNDEBUG
 fuzz_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,leak,fuzzer -DNDEBUG -g
-objects = obj/main.o obj/ncsh.o obj/ncsh_arena.o obj/ncsh_noninteractive.o obj/ncsh_readline.o obj/ncsh_vm.o obj/ncsh_vm_tokenizer.o obj/ncsh_terminal.o obj/eskilib_file.o obj/eskilib_hashtable.o obj/ncsh_parser.o obj/ncsh_vm_builtins.o obj/ncsh_history.o obj/ncsh_autocompletions.o obj/ncsh_config.o obj/fzf.o obj/z.o
+objects = obj/main.o obj/ncsh.o obj/ncsh_arena.o obj/ncsh_noninteractive.o obj/ncsh_input.o obj/ncsh_vm.o obj/ncsh_vm_tokenizer.o obj/ncsh_terminal.o obj/eskilib_file.o obj/eskilib_hashtable.o obj/ncsh_parser.o obj/ncsh_vm_builtins.o obj/ncsh_history.o obj/ncsh_autocompletions.o obj/ncsh_config.o obj/fzf.o obj/z.o
 target = ./bin/ncsh
+lib = -I/usr/local/include/readline -L/usr/local/lib -ltermcap -lncurses -lreadline -lncsh_readline
 
 ifeq ($(CC), gcc)
 	release_flags += -s
@@ -17,26 +19,26 @@ ifeq ($(RELEASE), 1)
 	cc_with_flags = $(CC) $(STD) $(CFLAGS)
 else
 	CFLAGS ?= $(debug_flags)
-	cc_with_flags = $(CC) $(STD) $(CFLAGS)
+	cc_with_flags = $(CC) $(STD) $(CFLAGS) $(DEFINES)
 endif
 
 $(target) : $(objects)
-	$(cc_with_flags) -o $(target) $(objects)
+	$(cc_with_flags) -o $(target) $(objects) $(lib)
 
 obj/%.o: src/readline/%.c
-	$(cc_with_flags) -c $< -o $@
+	$(cc_with_flags) -c $< $(lib) -o $@
 
 obj/%.o: src/vm/%.c
-	$(cc_with_flags) -c $< -o $@
+	$(cc_with_flags) -c $< $(lib) -o $@
 
 obj/%.o: src/eskilib/%.c
-	$(cc_with_flags) -c $< -o $@
+	$(cc_with_flags) -c $< $(lib) -o $@
 
 obj/%.o: src/z/%.c
-	$(cc_with_flags) -c $< -o $@
+	$(cc_with_flags) -c $< $(lib) -o $@
 
 obj/%.o: src/%.c
-	$(cc_with_flags) -c $< -o $@
+	$(cc_with_flags) -c $< $(lib) -o $@
 
 .PHONY: release
 release :
@@ -54,14 +56,14 @@ d:
 
 .PHONY: unity
 unity :
-	$(CC) $(STD) $(release_flags) src/unity.c -o $(target)
+	$(CC) $(STD) $(release_flags) src/unity.c $(lib) -o $(target)
 .PHONY: u
 u :
 	make unity
 
 .PHONY: unity_debug
 unity_debug :
-	$(CC) $(STD) $(debug_flags) src/unity.c -o $(target)
+	$(CC) $(STD) $(debug_flags) src/unity.c $(lib) -o $(target)
 .PHONY: ud
 ud :
 	make unity_debug
@@ -78,7 +80,6 @@ check :
 	make test_history
 	make test_parser
 	make test_config
-	make test_readline
 	make test_arena
 	make test_hashtable
 	make test_string
@@ -106,7 +107,7 @@ l :
 
 .PHONY: test_history
 test_history :
-	$(CC) $(STD) $(debug_flags) -DNCSH_HISTORY_TEST ./src/eskilib/eskilib_test.c ./src/eskilib/eskilib_file.c ./src/eskilib/eskilib_hashtable.c ./src/ncsh_arena.c ./src/readline/ncsh_history.c ./tests/ncsh_history_tests.c -o ./bin/ncsh_history_tests
+	$(CC) $(STD) $(debug_flags) -DNCSH_HISTORY_TEST ./src/eskilib/eskilib_test.c ./src/eskilib/eskilib_file.c ./src/eskilib/eskilib_hashtable.c ./src/ncsh_arena.c ./src/readline/ncsh_history.c ./tests/ncsh_history_tests.c $(lib) -o ./bin/ncsh_history_tests
 	./bin/ncsh_history_tests
 .PHONY: th
 th :
@@ -114,7 +115,7 @@ th :
 
 .PHONY: fuzz_history
 fuzz_history :
-	clang-19 $(STD) $(fuzz_flags) -DNCSH_HISTORY_TEST ./tests/ncsh_history_fuzzing.c ./src/ncsh_arena.c ./src/readline/ncsh_history.c ./src/eskilib/eskilib_file.c ./src/eskilib/eskilib_hashtable.c -o ./bin/history_fuzz
+	clang-19 $(STD) $(fuzz_flags) -DNCSH_HISTORY_TEST ./tests/ncsh_history_fuzzing.c ./src/ncsh_arena.c ./src/readline/ncsh_history.c ./src/eskilib/eskilib_file.c ./src/eskilib/eskilib_hashtable.c $(lib) -o ./bin/history_fuzz
 	./bin/history_fuzz NCSH_HISTORY_CORPUS/ -detect_leaks=0 -rss_limit_mb=4096
 .PHONY: fh
 fh :
@@ -191,14 +192,6 @@ test_config :
 .PHONY: tc
 tc :
 	make test_config
-
-.PHONY: test_readline
-test_readline :
-	$(CC) $(STD) $(debug_flags) -DNCSH_HISTORY_TEST ./src/ncsh_arena.c ./src/eskilib/eskilib_test.c ./src/eskilib/eskilib_file.c ./src/eskilib/eskilib_hashtable.c ./src/readline/ncsh_terminal.c ./src/readline/ncsh_autocompletions.c ./src/readline/ncsh_history.c ./src/readline/ncsh_readline.c ./tests/ncsh_readline_tests.c -o ./bin/ncsh_readline_tests
-	./bin/ncsh_readline_tests
-.PHONY: tr
-tr :
-	make test_readline
 
 .PHONY: test_arena
 test_arena :

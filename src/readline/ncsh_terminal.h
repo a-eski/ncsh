@@ -7,7 +7,8 @@
 #include <stdint.h>
 
 #include "../eskilib/eskilib_result.h"
-#include "../eskilib/eskilib_string.h"
+#include <readline/ncsh_string.h>
+// #include "../eskilib/eskilib_string.h"
 
 // input definitions
 #define ESCAPE_CHARACTER 27 // "\033" or "^["
@@ -64,33 +65,9 @@
 #define HIDE_CURSOR "\033[?25l"
 #define SHOW_CURSOR "\033[?25h"
 
-struct ncsh_Coordinates {
-    int x;
-    int y;
-};
-
-/* ncsh_terminal_init
-* Put the terminal in the proper modes for ncsh and save the previous state of the terminal in memory.
-* ncsh puts the shell in noncanonical mode, so input can be processed one character at a time.
-* Returns the current size of the terminal.
-*/
-struct ncsh_Coordinates ncsh_terminal_init(void);
-
-/* ncsh_terminal_reset
-* Put the terminal in the previous state of the terminal that is stored in memory.
-* Resets the terminal to the settings it had before ncsh was started.
-*/
-void ncsh_terminal_reset(void);
-
-// void ncsh_terminal_move(int x, int y);
-// void ncsh_terminal_move_absolute(int x);
 void ncsh_terminal_move_up(const int i);
 void ncsh_terminal_move_down(const int i);
 void ncsh_terminal_move_right(const int i);
 void ncsh_terminal_move_left(const int i);
 void ncsh_terminal_move_to_end_of_previous_line();
 void ncsh_terminal_move_to_start_of_next_line();
-
-// void ncsh_terminal_line_insert(char* line);
-// void ncsh_terminal_line_delete(int line);
-// void ncsh_terminal_characters_delete(int i);

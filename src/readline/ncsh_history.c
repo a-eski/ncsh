@@ -2,6 +2,7 @@
 
 #include <assert.h>
 #include <linux/limits.h>
+#include <readline/history.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -10,15 +11,16 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <readline/ncsh_string.h>
+
 #include "../eskilib/eskilib_colors.h"
 #include "../eskilib/eskilib_file.h"
 #include "../eskilib/eskilib_hashtable.h"
 #include "../eskilib/eskilib_result.h"
-#include "../eskilib/eskilib_string.h"
 #include "../ncsh_defines.h"
 #include "ncsh_history.h"
 
-void ncsh_history_file_set(const struct eskilib_String config_file,
+void ncsh_history_file_set(const struct ncsh_String config_file,
 			   struct ncsh_History* const restrict history,
                            struct ncsh_Arena* const arena)
 {
@@ -59,7 +61,7 @@ enum eskilib_Result ncsh_history_alloc(struct ncsh_History* const restrict histo
     }
 
     history->count = 0;
-    history->entries = arena_malloc(arena, NCSH_MAX_HISTORY_IN_MEMORY, struct eskilib_String);
+    history->entries = arena_malloc(arena, NCSH_MAX_HISTORY_IN_MEMORY, struct ncsh_String);
 
     return E_SUCCESS;
 }
@@ -103,6 +105,7 @@ enum eskilib_Result ncsh_history_load(struct ncsh_History* const restrict histor
             history->entries[i].length = (size_t)buffer_length;
             history->entries[i].value = arena_malloc(arena, (uintptr_t)buffer_length, char);
             memcpy(history->entries[i].value, buffer, (size_t)buffer_length);
+            add_history(history->entries[i].value);
     }
 
     fclose(file);
@@ -149,7 +152,7 @@ enum eskilib_Result ncsh_history_reload(struct ncsh_History* const restrict hist
 }
 
 [[nodiscard]]
-enum eskilib_Result ncsh_history_init(const struct eskilib_String config_location,
+enum eskilib_Result ncsh_history_init(const struct ncsh_String config_location,
                                       struct ncsh_History* const restrict history,
                                       struct ncsh_Arena* const arena)
 {
@@ -311,24 +314,25 @@ enum eskilib_Result ncsh_history_add(const char* const line,
     history->entries[history->count].length = length;
     history->entries[history->count].value = arena_malloc(arena, length, char);
     memcpy(history->entries[history->count].value, line, length);
+    add_history(line);
     ++history->count;
     return E_SUCCESS;
 }
 
 [[nodiscard]]
-struct eskilib_String ncsh_history_get(const size_t position,
+struct ncsh_String ncsh_history_get(const size_t position,
 				       struct ncsh_History* const restrict history)
 {
     assert(history);
 
     if (!history || !history->count || !history->entries) {
-        return eskilib_String_Empty;
+        return ncsh_String_Empty;
     }
     else if (position >= history->count) {
-        return eskilib_String_Empty;
+        return ncsh_String_Empty;
     }
     else if (history->count - position - 1 > history->count) {
-	return eskilib_String_Empty;
+	return ncsh_String_Empty;
     }
     else if (position > NCSH_MAX_HISTORY_IN_MEMORY) {
         return history->entries[NCSH_MAX_HISTORY_IN_MEMORY];
@@ -407,7 +411,7 @@ int_fast32_t ncsh_history_command_remove(const char* const value,
     }
 
     for (size_t i = 0; i < history->count; ++i) {
-	if (eskilib_string_compare_const(value, value_len, history->entries[i].value, history->entries[i].length)) {
+	if (ncsh_string_compare_const(value, value_len, history->entries[i].value, history->entries[i].length)) {
 	    history->entries[i].value = NULL;
 	    history->entries[i].length = 0;
 	    ncsh_history_remove_entries_shift(i, history);

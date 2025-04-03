@@ -8,7 +8,7 @@
 #include "lib/ncsh_arena_test_helper.h"
 #include "../src/z/z.h"
 
-static const struct eskilib_String config_location = { .length = 0, .value = NULL };
+static const struct ncsh_String config_location = { .length = 0, .value = NULL };
 
 int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size)
 {

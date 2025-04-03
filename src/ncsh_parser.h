@@ -6,8 +6,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <readline/ncsh_arena.h>
+
 #include "eskilib/eskilib_result.h"
-#include "ncsh_arena.h"
 
 #define NCSH_PARSER_TOKENS 128
 

@@ -50,7 +50,7 @@ bool z_match_exists(const char* const target,
     assert(db && target && target_length > 0);
 
     for (size_t i = 0; i < db->count; ++i) {
-        if (eskilib_string_compare_const((db->dirs + i)->path, (db->dirs + i)->path_length, target, target_length)) {
+        if (ncsh_string_compare_const((db->dirs + i)->path, (db->dirs + i)->path_length, target, target_length)) {
             ++(db->dirs + i)->rank;
             (db->dirs + i)->last_accessed = time(NULL);
             return true;
@@ -81,7 +81,7 @@ struct z_Directory* z_match_find(char* const target,
 #endif
 
     for (size_t i = 0; i < db->count; ++i) {
-        if (!eskilib_string_compare((db->dirs + i)->path, (db->dirs + i)->path_length, (char*)cwd, cwd_length)) {
+        if (!ncsh_string_compare((db->dirs + i)->path, (db->dirs + i)->path_length, (char*)cwd, cwd_length)) {
             int fzf_score = fzf_get_score((db->dirs + i)->path, (db->dirs + i)->path_length - 1, pattern, slab, scratch_arena);
             if (!fzf_score)
                 continue;
@@ -385,7 +385,7 @@ enum z_Result z_database_add(const char* const path,
     return Z_SUCCESS;
 }
 
-enum z_Result z_database_file_set(const struct eskilib_String* const config_file,
+enum z_Result z_database_file_set(const struct ncsh_String* const config_file,
                                   struct z_Database* const restrict db,
                                   struct ncsh_Arena* const arena)
 {
@@ -416,7 +416,7 @@ enum z_Result z_database_file_set(const struct eskilib_String* const config_file
     return Z_SUCCESS;
 }
 
-enum z_Result z_init(const struct eskilib_String* const config_file,
+enum z_Result z_init(const struct ncsh_String* const config_file,
                      struct z_Database* const restrict db,
                      struct ncsh_Arena* const arena)
 {
@@ -436,11 +436,11 @@ enum z_Result z_init(const struct eskilib_String* const config_file,
 [[nodiscard]]
 bool z_is_dir(struct dirent* dir)
 {
-#ifdef _DIRENT_HAVE_D_TYPE
-    if (dir->d_type != DT_UNKNOWN) {
-	return dir->d_type == DT_DIR;
-    }
-#endif /* ifdef _DIRENT_HAVE_D_TYPE */
+#   ifdef _DIRENT_HAVE_D_TYPE
+        if (dir->d_type != DT_UNKNOWN) {
+	    return dir->d_type == DT_DIR;
+    	}
+#   endif /* ifdef _DIRENT_HAVE_D_TYPE */
 
     struct stat sb;
     return !stat(dir->d_name, &sb) && S_ISDIR(sb.st_mode);
@@ -449,7 +449,7 @@ bool z_is_dir(struct dirent* dir)
 enum z_Result z_directory_match_exists(const char* const target,
                                        const size_t target_length,
                                        const char* const cwd,
-                                       struct eskilib_String* const output,
+                                       struct ncsh_String* const output,
                                        struct ncsh_Arena* const scratch_arena)
 {
     assert(target && cwd && target_length > 0);
@@ -467,13 +467,13 @@ enum z_Result z_directory_match_exists(const char* const target,
             continue;
         }
 
-#ifdef	_DIRENT_HAVE_D_RECLEN
-        dir_len = dir->d_reclen + 1;
-#else
-        dir_len = strlen(dir->d_name) + 1;
-#endif /* _DIRENT_HAVE_D_RECLEN */
+#       ifdef _DIRENT_HAVE_D_RECLEN
+            dir_len = dir->d_reclen + 1;
+#       else
+            dir_len = strlen(dir->d_name) + 1;
+#       endif /* _DIRENT_HAVE_D_RECLEN */
 
-        if (z_is_dir(dir) && eskilib_string_compare_const(target, target_length, dir->d_name, dir_len)) {
+        if (z_is_dir(dir) && ncsh_string_compare_const(target, target_length, dir->d_name, dir_len)) {
             output->value = arena_malloc(scratch_arena, dir_len, char);
             output->length = dir_len;
             memcpy(output->value, dir->d_name, dir_len);
@@ -524,7 +524,7 @@ void z(char* target,
         return;
     }
 
-    if (eskilib_string_compare(target, target_length, home, strlen(home) + 1)) {
+    if (ncsh_string_compare(target, target_length, home, strlen(home) + 1)) {
         if (chdir(home) == -1) {
             perror("z: couldn't change directory to home");
         }
@@ -550,7 +550,7 @@ void z(char* target,
     }
 
     size_t cwd_length = strlen(cwd) + 1;
-    struct eskilib_String output = {0};
+    struct ncsh_String output = {0};
     struct z_Directory* match = z_match_find(target, target_length, cwd, cwd_length, db, &scratch_arena);
 
     if (z_directory_match_exists(target, target_length, cwd, &output, &scratch_arena) == Z_SUCCESS) {
@@ -655,7 +655,7 @@ enum z_Result z_remove(const char* const path,
     }
 
     for (size_t i = 0; i < db->count; ++i) {
-        if (eskilib_string_compare((db->dirs + i)->path, (db->dirs + i)->path_length, (char*)path, path_length)) {
+        if (ncsh_string_compare((db->dirs + i)->path, (db->dirs + i)->path_length, (char*)path, path_length)) {
             (db->dirs + i)->path = NULL;
             (db->dirs + i)->path_length = 0;
             (db->dirs + i)->last_accessed = 0;

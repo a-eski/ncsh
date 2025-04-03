@@ -7,7 +7,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "../ncsh_arena.h"
+// #include "../ncsh_arena.h"
+#include <readline/ncsh_arena.h>
 
 typedef struct {
 int16_t* data;

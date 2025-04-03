@@ -7,7 +7,8 @@
 #include <ctype.h>
 #include <stdlib.h>
 
-#include "../ncsh_arena.h"
+// #include "../ncsh_arena.h"
+#include <readline/ncsh_arena.h>
 
 // TODO(conni2461): UNICODE HEADER
 #define UNICODE_MAXASCII 0x7f

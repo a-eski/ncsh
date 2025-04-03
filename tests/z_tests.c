@@ -12,7 +12,7 @@
 
 #define CWD_LENGTH 528
 
-static const struct eskilib_String config_location = { .length = 0, .value = NULL };
+static const struct ncsh_String config_location = { .length = 0, .value = NULL };
 
 double z_score(struct z_Directory* const restrict directory,
                const int fzf_score,
@@ -55,7 +55,7 @@ void z_read_non_empty_database_test(void)
     eskilib_assert(z_init(&config_location, &db, &arena) == Z_SUCCESS);
     eskilib_assert(db.count == 1);
 
-    struct eskilib_String new_value = {.length = 5};
+    struct ncsh_String new_value = {.length = 5};
     new_value.value = malloc(new_value.length);
     strcpy(new_value.value, "ncsh");
 
@@ -89,10 +89,10 @@ void z_add_to_database_empty_database_test(void)
     eskilib_assert(z_init(&config_location, &db, &arena) == Z_SUCCESS);
     eskilib_assert(db.count == 0);
 
-    struct eskilib_String new_value = {.length = 5};
+    struct ncsh_String new_value = {.length = 5};
     new_value.value = malloc(new_value.length);
     strcpy(new_value.value, "ncsh");
-    struct eskilib_String cwd = {.value = "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells", .length = 52};
+    struct ncsh_String cwd = {.value = "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells", .length = 52};
 
     eskilib_assert(z_database_add(new_value.value, new_value.length, cwd.value, cwd.length, &db, &arena) == Z_SUCCESS);
     eskilib_assert(db.count == 1);
@@ -206,7 +206,7 @@ void z_match_find_empty_database_test(void)
     eskilib_assert(z_init(&config_location, &db, &arena) == Z_SUCCESS);
     eskilib_assert(db.count == 0);
 
-    struct eskilib_String target = {.value = "path", .length = 5};
+    struct ncsh_String target = {.value = "path", .length = 5};
     char cwd[CWD_LENGTH];
     if (!getcwd(cwd, CWD_LENGTH)) {
         NCSH_ARENA_TEST_TEARDOWN;
@@ -230,10 +230,10 @@ void z_write_empty_database_test(void)
     eskilib_assert(z_init(&config_location, &db, &arena) == Z_SUCCESS);
     eskilib_assert(db.count == 0);
 
-    struct eskilib_String new_value = {.length = 5};
+    struct ncsh_String new_value = {.length = 5};
     new_value.value = malloc(new_value.length);
     strcpy(new_value.value, "ncsh");
-    struct eskilib_String cwd = {.value = "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells", .length = 52};
+    struct ncsh_String cwd = {.value = "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells", .length = 52};
 
     eskilib_assert(z_database_add(new_value.value, new_value.length, cwd.value, cwd.length, &db, &arena) == Z_SUCCESS);
     eskilib_assert(db.count == 1);
@@ -255,9 +255,9 @@ void z_add_to_database_empty_value_test(void)
     struct z_Database db = {0};
     eskilib_assert(z_init(&config_location, &db, &arena) == Z_SUCCESS);
     eskilib_assert(db.count == 1);
-    struct eskilib_String cwd = {.value = "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells", .length = 52};
+    struct ncsh_String cwd = {.value = "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells", .length = 52};
 
-    eskilib_assert(z_database_add(eskilib_String_Empty.value, eskilib_String_Empty.length, cwd.value, cwd.length,
+    eskilib_assert(z_database_add(ncsh_String_Empty.value, ncsh_String_Empty.length, cwd.value, cwd.length,
                                          &db, &arena) == Z_NULL_REFERENCE);
     eskilib_assert(db.count == 1);
 
@@ -274,10 +274,10 @@ void z_write_nonempty_database_test(void)
     eskilib_assert(db.count == 1);
 
     double start_rank = db.dirs[0].rank;
-    struct eskilib_String new_value = {.length = 9};
+    struct ncsh_String new_value = {.length = 9};
     new_value.value = malloc(new_value.length);
     strcpy(new_value.value, "ttytest2");
-    struct eskilib_String cwd = {.value = "/mnt/c/Users/Alex/source/repos/PersonalRepos", .length = 45};
+    struct ncsh_String cwd = {.value = "/mnt/c/Users/Alex/source/repos/PersonalRepos", .length = 45};
 
     eskilib_assert(z_database_add(new_value.value, new_value.length, cwd.value, cwd.length, &db, &arena) == Z_SUCCESS);
     eskilib_assert(db.count == 2);
@@ -301,7 +301,7 @@ void z_match_find_finds_exact_match_test(void)
     eskilib_assert(z_init(&config_location, &db, &arena) == Z_SUCCESS);
     eskilib_assert(db.count == 2);
 
-    struct eskilib_String target = {.value = "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells/ncsh", .length = 57};
+    struct ncsh_String target = {.value = "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells/ncsh", .length = 57};
     char cwd[CWD_LENGTH];
     if (!getcwd(cwd, CWD_LENGTH)) {
         NCSH_ARENA_TEST_TEARDOWN;
@@ -328,7 +328,7 @@ void z_match_find_finds_match_test(void)
     eskilib_assert(z_init(&config_location, &db, &arena) == Z_SUCCESS);
     eskilib_assert(db.count == 2);
 
-    struct eskilib_String target = {.value = "ncsh", .length = 5};
+    struct ncsh_String target = {.value = "ncsh", .length = 5};
     char cwd[CWD_LENGTH];
     if (!getcwd(cwd, CWD_LENGTH)) {
         NCSH_ARENA_TEST_TEARDOWN;
@@ -355,7 +355,7 @@ void z_match_find_no_match_test(void)
     eskilib_assert(z_init(&config_location, &db, &arena) == Z_SUCCESS);
     eskilib_assert(db.count == 2);
 
-    struct eskilib_String target = {.value = "path", .length = 5};
+    struct ncsh_String target = {.value = "path", .length = 5};
     char cwd[CWD_LENGTH];
     if (!getcwd(cwd, CWD_LENGTH)) {
         NCSH_ARENA_TEST_TEARDOWN;
@@ -380,7 +380,7 @@ void z_match_find_multiple_matches_test(void)
     eskilib_assert(z_init(&config_location, &db, &arena) == Z_SUCCESS);
     eskilib_assert(db.count == 2);
 
-    struct eskilib_String target = {.value = "PersonalRepos", .length = 14};
+    struct ncsh_String target = {.value = "PersonalRepos", .length = 14};
     char cwd[CWD_LENGTH];
     if (!getcwd(cwd, CWD_LENGTH)) {
         NCSH_ARENA_TEST_TEARDOWN;
@@ -412,7 +412,7 @@ void z_change_directory_test(void)
         eskilib_assert(false);
     }
 
-    struct eskilib_String target = {.value = "ncsh", .length = 5};
+    struct ncsh_String target = {.value = "ncsh", .length = 5};
     z(target.value, target.length, buffer, &db, &arena, scratch_arena);
 
     if (!getcwd(buffer_after, CWD_LENGTH)) {
@@ -450,7 +450,7 @@ void z_home_empty_target_change_directory_test(void)
         eskilib_assert(false);
     }
 
-    struct eskilib_String target = eskilib_String_Empty;
+    struct ncsh_String target = ncsh_String_Empty;
     z(target.value, target.length, buffer, &db, &arena, scratch_arena);
 
     if (!getcwd(buffer_after, CWD_LENGTH)) {
@@ -491,7 +491,7 @@ void z_no_match_change_directory_test(void)
         eskilib_assert(false);
     }
 
-    struct eskilib_String target = {.value = "zzz", .length = 4};
+    struct ncsh_String target = {.value = "zzz", .length = 4};
     z(target.value, target.length, buffer, &db, &arena, scratch_arena);
 
     if (!getcwd(buffer_after, CWD_LENGTH)) {
@@ -531,7 +531,7 @@ void z_valid_subdirectory_change_directory_test(void)
         eskilib_assert(false);
     }
 
-    struct eskilib_String target = {.value = "tests", .length = 6};
+    struct ncsh_String target = {.value = "tests", .length = 6};
     z(target.value, target.length, buffer, &db, &arena, scratch_arena);
 
     if (!getcwd(buffer_after, CWD_LENGTH)) {
@@ -572,7 +572,7 @@ void z_dir_slash_dir_change_directory_test(void)
         eskilib_assert(false);
     }
     size_t buffer_length = strlen(buffer) + 1;
-    struct eskilib_String target = {.value = "tests/test_dir", .length = 15};
+    struct ncsh_String target = {.value = "tests/test_dir", .length = 15};
     z_database_add(target.value, target.length, buffer, buffer_length, &db, &arena);
 
     z(target.value, target.length, buffer, &db, &arena, scratch_arena);
@@ -617,7 +617,7 @@ void z_double_dot_change_directory_test(void)
         eskilib_assert(false);
     }
 
-    struct eskilib_String target = {.value = "..", .length = 3};
+    struct ncsh_String target = {.value = "..", .length = 3};
     z(target.value, target.length, buffer, &db, &arena, scratch_arena);
 
     if (!getcwd(buffer_after, CWD_LENGTH)) {
@@ -659,7 +659,7 @@ void z_empty_database_valid_subdirectory_change_directory_test(void)
         eskilib_assert(false);
     }
 
-    struct eskilib_String target = {.value = "tests", .length = 6};
+    struct ncsh_String target = {.value = "tests", .length = 6};
     z(target.value, target.length, buffer, &db, &arena, scratch_arena);
 
     if (!getcwd(buffer_after, CWD_LENGTH)) {
@@ -703,7 +703,7 @@ void z_contains_correct_match_test(void)
         eskilib_assert(false);
     }
 
-    struct eskilib_String target = {.value = "PersonalRepos", .length = 14};
+    struct ncsh_String target = {.value = "PersonalRepos", .length = 14};
     z(target.value, target.length, buffer, &db, &arena, scratch_arena);
     const char* path = "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells";
 

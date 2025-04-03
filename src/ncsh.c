@@ -3,11 +3,11 @@
 #include <assert.h>
 #include <limits.h>
 #include <linux/limits.h>
+#include <readline/ncsh_autocompletions.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <time.h>
@@ -19,7 +19,8 @@
 #include "ncsh_config.h"
 #include "ncsh_defines.h"
 #include "ncsh_parser.h"
-#include "readline/ncsh_readline.h"
+#include "readline/ncsh_history.h"
+#include "readline/ncsh_input.h"
 #include "ncsh_types.h"
 #include "vm/ncsh_vm.h"
 
@@ -28,7 +29,10 @@
  */
 void ncsh_exit(struct ncsh_Shell* const restrict shell)
 {
-    ncsh_readline_exit(&shell->input);
+    if (shell->input.buffer && *shell->input.buffer) {
+        free(shell->input.buffer);
+    }
+    ncsh_history_save(&shell->input.history);
     z_exit(&shell->z_db);
 }
 
@@ -68,7 +72,7 @@ char* ncsh_init(struct ncsh_Shell* const restrict shell)
         return NULL;
     }
 
-    if (ncsh_readline_init(&shell->config, &shell->input, &shell->arena) != EXIT_SUCCESS) {
+    if (ncsh_input_init(&shell->config, &shell->input, &shell->arena) != EXIT_SUCCESS) {
         return NULL;
     }
 
@@ -108,7 +112,7 @@ int_fast32_t ncsh_run(struct ncsh_Shell* shell, struct ncsh_Arena scratch_arena)
  * Has several lifetimes.
  * 1. The lifetime of the shell, managed through the arena. See ncsh_init and ncsh_exit.
  * 2. The lifetime of the main loop of the shell, managed through the scratch arena.
- * 3. ncsh_readline has its own inner lifetime via the scratch arena.
+ * 3. ncsh_input has its own inner lifetime via the scratch arena.
  */
 [[nodiscard]]
 int_fast32_t ncsh(void)
@@ -140,15 +144,15 @@ int_fast32_t ncsh(void)
     int_fast32_t exit_code = EXIT_SUCCESS;
 
     while (1) {
-        int_fast32_t input_result = ncsh_readline(&shell.input, &shell.scratch_arena);
+        int_fast32_t input_result = ncsh_input(&shell.input, shell.scratch_arena);
         switch (input_result) {
         case EXIT_FAILURE: {
             exit_code = EXIT_FAILURE;
             goto exit;
         }
-        case EXIT_SUCCESS: {
+        /*case EXIT_SUCCESS: {
             goto reset;
-        }
+        }*/
         case EXIT_SUCCESS_END: {
             goto exit;
         }
@@ -170,12 +174,14 @@ int_fast32_t ncsh(void)
         }
         }
 
-        ncsh_readline_history_and_autocompletion_add(&shell.input, &shell.arena);
+        ncsh_history_add(shell.input.buffer, shell.input.pos, &shell.input.history, &shell.arena);
+        ncsh_autocompletions_add(shell.input.buffer, shell.input.pos, shell.input.autocompletions_tree, &shell.arena);
 
     reset:
-        memset(shell.input.buffer, '\0', shell.input.max_pos);
+        if (shell.input.buffer && *shell.input.buffer) {
+            free(shell.input.buffer);
+        }
         shell.input.pos = 0;
-        shell.input.max_pos = 0;
         shell.args.count = 0;
         shell.args.values[0] = NULL;
     }

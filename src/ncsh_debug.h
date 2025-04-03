@@ -45,7 +45,7 @@ static inline void ncsh_debug_argsv(int argc, char** argv)
     }
 }
 
-static inline void ncsh_debug_string(struct eskilib_String string, const char* name)
+static inline void ncsh_debug_string(struct ncsh_String string, const char* name)
 {
     printf("%s value: %s\n", name, string.value);
     printf("%s length: %zu\n", name, string.length);

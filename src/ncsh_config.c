@@ -11,13 +11,18 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include <readline/ncsh_arena.h>
+#include <readline/ncsh_string.h>
+
 #include "eskilib/eskilib_colors.h"
 #include "eskilib/eskilib_result.h"
-#include "eskilib/eskilib_string.h"
 #include "eskilib/eskilib_file.h"
-#include "ncsh_arena.h"
 #include "ncsh_config.h"
 #include "ncsh_defines.h"
+
+#define NCSH "ncsh"
+#define DOT_CONFIG ".config"
+#define NCSH_RC ".ncshrc"
 
 [[nodiscard]]
 enum eskilib_Result ncsh_config_home_init(struct ncsh_Config* const restrict config,
@@ -249,8 +254,8 @@ enum eskilib_Result ncsh_config_init(struct ncsh_Config* const restrict config,
 #define CARGO_ALIAS "c"
 
 struct ncsh_Alias {
-    struct eskilib_String alias;
-    struct eskilib_String actual_command;
+    struct ncsh_String alias;
+    struct ncsh_String actual_command;
 };
 
 /* Compile-time aliases
@@ -265,20 +270,20 @@ const struct ncsh_Alias aliases[] = {
 
 /* ncsh_config_alias_check
  * Checks if the input matches to any of the compile-time defined aliased commands.
- * Returns: the actual command as a struct eskilib_String, a char* value and a size_t length.
+ * Returns: the actual command as a struct ncsh_String, a char* value and a size_t length.
  */
-struct eskilib_String ncsh_config_alias_check(const char* const restrict buffer, const size_t buf_len)
+struct ncsh_String ncsh_config_alias_check(const char* const restrict buffer, const size_t buf_len)
 {
     if (!buffer || buf_len < 2) {
-        return eskilib_String_Empty;
+        return ncsh_String_Empty;
     }
 
     constexpr size_t aliases_count = sizeof(aliases) / sizeof(struct ncsh_Alias);
     for (uint_fast32_t i = 0; i < aliases_count; ++i) {
-        if (eskilib_string_compare_const(buffer, buf_len, aliases[i].alias.value, aliases[i].alias.length)) {
+        if (ncsh_string_compare_const(buffer, buf_len, aliases[i].alias.value, aliases[i].alias.length)) {
             return aliases[i].actual_command;
         }
     }
 
-    return eskilib_String_Empty;
+    return ncsh_String_Empty;
 }

@@ -1,6 +1,24 @@
-/* Copyright ncsh by Alex Eski 2025 */
+/* autocompletions.c -- autocompletions for readline */
+
+/* Copyright (C) ncsh by Alex Eski 2024 */
+
+/* Based on eskilib_trie prefix tree implementation */
+
+/* This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <assert.h>
+#include <linux/limits.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -8,9 +26,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../eskilib/eskilib_string.h"
-#include "../ncsh_defines.h"
-#include "ncsh_autocompletions.h"
+#include <readline/ncsh_string.h>
+#include <readline/ncsh_autocompletions.h>
 
 int ncsh_char_to_index(char character);
 char ncsh_index_to_char(int index);
@@ -30,7 +47,7 @@ void ncsh_autocompletions_add(const char* const string,
     assert(string);
     assert(length > 0);
     assert(tree);
-    if (!string || !length || !tree || length > NCSH_MAX_INPUT) {
+    if (!string || !length || !tree || length > MAX_INPUT) {
         return;
     }
 
@@ -55,7 +72,7 @@ void ncsh_autocompletions_add(const char* const string,
     tree->is_end_of_a_word = true;
 }
 
-void ncsh_autocompletions_add_multiple(const struct eskilib_String* const strings,
+void ncsh_autocompletions_add_multiple(struct ncsh_String* const strings,
                                        const int count,
                                        struct ncsh_Autocompletion_Node* restrict tree,
                                        struct ncsh_Arena* const arena)
@@ -93,7 +110,7 @@ struct ncsh_Autocompletion_Node* ncsh_autocompletions_search(const char* const s
     return tree;
 }
 
-struct ncsh_Autocompletion_Node* ncsh_autocompletions_search_string(const struct eskilib_String string,
+struct ncsh_Autocompletion_Node* ncsh_autocompletions_search_string(const struct ncsh_String string,
                                                                     struct ncsh_Autocompletion_Node* restrict tree)
 {
     return ncsh_autocompletions_search(string.value, string.length, tree);
@@ -112,7 +129,7 @@ void ncsh_autocompletions_match(struct ncsh_Autocompletion* const matches,
             }
 
             if (!matches[*matches_position].value) {
-                matches[*matches_position].value = arena_malloc(scratch_arena, NCSH_MAX_INPUT, char);
+                matches[*matches_position].value = arena_malloc(scratch_arena, MAX_INPUT, char);
 
                 if (*string_position > 0 && *matches_position > 0) {
                     memcpy(matches[*matches_position].value, matches[*matches_position - 1].value, *string_position);
@@ -199,7 +216,7 @@ uint_fast8_t ncsh_autocompletions_first(const char* const search,
         }
     }
 
-    memcpy(match, potential_match.value, NCSH_MAX_INPUT);
+    memcpy(match, potential_match.value, MAX_INPUT);
 
     return 1;
 }

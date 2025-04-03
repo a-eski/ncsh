@@ -5,7 +5,6 @@
 #include <string.h>
 
 #include "lib/ncsh_arena_test_helper.h"
-#include "../src/eskilib/eskilib_string.h"
 #include "../src/eskilib/eskilib_test.h"
 #include "../src/readline/ncsh_history.h"
 
@@ -17,7 +16,7 @@ void ncsh_history_load_file_not_exists_test(void)
 
     enum eskilib_Result result;
     struct ncsh_History history = {0};
-    result = ncsh_history_init(eskilib_String_Empty, &history, &arena);
+    result = ncsh_history_init(ncsh_String_Empty, &history, &arena);
     eskilib_assert(result == E_SUCCESS);
 
     FILE* file = fopen(NCSH_HISTORY_FILE, "r");
@@ -34,7 +33,7 @@ void ncsh_history_load_file_exists_test(void)
 
     enum eskilib_Result result;
     struct ncsh_History history = {0};
-    result = ncsh_history_init(eskilib_String_Empty, &history, &arena);
+    result = ncsh_history_init(ncsh_String_Empty, &history, &arena);
     eskilib_assert(result == E_SUCCESS);
 
     FILE* file = fopen(NCSH_HISTORY_FILE, "r");
@@ -51,11 +50,11 @@ void ncsh_history_get_empty_file_test(void)
 
     enum eskilib_Result result;
     struct ncsh_History history = {0};
-    result = ncsh_history_init(eskilib_String_Empty, &history, &arena);
+    result = ncsh_history_init(ncsh_String_Empty, &history, &arena);
     eskilib_assert(result == E_SUCCESS);
     eskilib_assert(history.count == 0);
 
-    struct eskilib_String entry = ncsh_history_get(0, &history);
+    struct ncsh_String entry = ncsh_history_get(0, &history);
     eskilib_assert(entry.length == 0);
 
     ncsh_history_save(&history);
@@ -66,7 +65,7 @@ void ncsh_history_get_null_entries_test(void)
 {
     struct ncsh_History history_null_entries = {0};
     history_null_entries.entries = NULL;
-    struct eskilib_String entry_history_null = ncsh_history_get(0, &history_null_entries);
+    struct ncsh_String entry_history_null = ncsh_history_get(0, &history_null_entries);
     eskilib_assert(entry_history_null.length == 0);
     eskilib_assert(entry_history_null.value == NULL);
 }
@@ -76,14 +75,14 @@ void ncsh_history_get_position_gt_history_count_test(void)
     NCSH_ARENA_TEST_SETUP;
 
     struct ncsh_History history = {0};
-    enum eskilib_Result result = ncsh_history_init(eskilib_String_Empty, &history, &arena);
+    enum eskilib_Result result = ncsh_history_init(ncsh_String_Empty, &history, &arena);
     eskilib_assert(result == E_SUCCESS);
 
     // mark history count as greater than position.
     history.count = 2;
     size_t position = 10;
 
-    struct eskilib_String entry = ncsh_history_get(position, &history);
+    struct ncsh_String entry = ncsh_history_get(position, &history);
     eskilib_assert(entry.length == 0);
     eskilib_assert(entry.value == NULL);
 
@@ -100,14 +99,14 @@ void ncsh_history_get_position_equals_history_count_test(void)
 
     enum eskilib_Result result;
     struct ncsh_History history = {0};
-    result = ncsh_history_init(eskilib_String_Empty, &history, &arena);
+    result = ncsh_history_init(ncsh_String_Empty, &history, &arena);
     eskilib_assert(result == E_SUCCESS);
 
     // mark history count as greater than position.
     history.count = 2;
     size_t position = history.count;
 
-    struct eskilib_String entry = ncsh_history_get(position, &history);
+    struct ncsh_String entry = ncsh_history_get(position, &history);
     eskilib_assert(entry.length == 0);
     eskilib_assert(entry.value == NULL);
 
@@ -124,13 +123,13 @@ void ncsh_history_get_position_gt_max_test(void)
 
     enum eskilib_Result result;
     struct ncsh_History history = {0};
-    result = ncsh_history_init(eskilib_String_Empty, &history, &arena);
+    result = ncsh_history_init(ncsh_String_Empty, &history, &arena);
     eskilib_assert(result == E_SUCCESS);
 
     // mark position history in memory max.
     size_t position = 10000;
 
-    struct eskilib_String entry = ncsh_history_get(position, &history);
+    struct ncsh_String entry = ncsh_history_get(position, &history);
     eskilib_assert(entry.length == 0);
     eskilib_assert(entry.value == NULL);
 
@@ -144,7 +143,7 @@ void ncsh_history_save_adds_to_file(void)
 
     enum eskilib_Result result;
     struct ncsh_History history = {0};
-    result = ncsh_history_init(eskilib_String_Empty, &history, &arena);
+    result = ncsh_history_init(ncsh_String_Empty, &history, &arena);
     eskilib_assert(result == E_SUCCESS);
 
     size_t len = 3;
@@ -172,7 +171,7 @@ void ncsh_history_save_adds_multiple_to_file(void)
 
     enum eskilib_Result result;
     struct ncsh_History history = {0};
-    result = ncsh_history_init(eskilib_String_Empty, &history, &arena);
+    result = ncsh_history_init(ncsh_String_Empty, &history, &arena);
     eskilib_assert(result == E_SUCCESS);
 
     size_t existing_command_len = 3;
@@ -214,13 +213,13 @@ void ncsh_history_get_position_last_entry_test(void)
 
     enum eskilib_Result result;
     struct ncsh_History history = {0};
-    result = ncsh_history_init(eskilib_String_Empty, &history, &arena);
+    result = ncsh_history_init(ncsh_String_Empty, &history, &arena);
     eskilib_assert(result == E_SUCCESS);
 
     // try to get the last histroy entry.
     size_t position = history.count - 1;
 
-    struct eskilib_String entry = ncsh_history_get(position, &history);
+    struct ncsh_String entry = ncsh_history_get(position, &history);
     eskilib_assert(entry.length != 0);
     eskilib_assert(entry.value != NULL);
 
@@ -234,10 +233,10 @@ void ncsh_history_load_and_get_entries_test(void)
 
     enum eskilib_Result result;
     struct ncsh_History history = {0};
-    result = ncsh_history_init(eskilib_String_Empty, &history, &arena);
+    result = ncsh_history_init(ncsh_String_Empty, &history, &arena);
     eskilib_assert(result == E_SUCCESS);
 
-    struct eskilib_String entry = ncsh_history_get(0, &history);
+    struct ncsh_String entry = ncsh_history_get(0, &history);
     eskilib_assert(entry.length == 11);
     eskilib_assert(memcmp(entry.value, "echo hello\0", entry.length) == 0);
 
@@ -259,10 +258,10 @@ void ncsh_history_load_and_get_entries_then_add_entries_test(void)
 
     enum eskilib_Result result;
     struct ncsh_History history = {0};
-    result = ncsh_history_init(eskilib_String_Empty, &history, &arena);
+    result = ncsh_history_init(ncsh_String_Empty, &history, &arena);
     eskilib_assert(result == E_SUCCESS);
 
-    struct eskilib_String entry = ncsh_history_get(0, &history);
+    struct ncsh_String entry = ncsh_history_get(0, &history);
     eskilib_assert(entry.length == 11);
     eskilib_assert(memcmp(entry.value, "echo hello\0", entry.length) == 0);
 

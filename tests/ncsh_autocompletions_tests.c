@@ -3,11 +3,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <readline/ncsh_autocompletions.h>
+#include <readline/ncsh_string.h>
+
 #include "lib/ncsh_arena_test_helper.h"
-#include "../src/eskilib/eskilib_string.h"
 #include "../src/eskilib/eskilib_test.h"
-#include "../src/readline/ncsh_autocompletions.h"
 #include "../src/ncsh_defines.h"
+
 
 void ncsh_autocompletions_add_length_mismatch_test(void)
 {
@@ -16,7 +18,7 @@ void ncsh_autocompletions_add_length_mismatch_test(void)
     struct ncsh_Autocompletion_Node* tree = ncsh_autocompletions_alloc(&arena);
     eskilib_assert(tree != NULL);
 
-    struct eskilib_String string = {.value = "and", .length = 3};
+    struct ncsh_String string = {.value = "and", .length = 3};
     ncsh_autocompletions_add(string.value, string.length, tree, &arena);
 
     // not crashing is a test pass here
@@ -31,7 +33,7 @@ void ncsh_autocompletions_add_test(void)
     struct ncsh_Autocompletion_Node* tree = ncsh_autocompletions_alloc(&arena);
     eskilib_assert(tree != NULL);
 
-    struct eskilib_String string = {.value = "and", .length = 4};
+    struct ncsh_String string = {.value = "and", .length = 4};
     ncsh_autocompletions_add(string.value, string.length, tree, &arena);
 
     // sanity check: unrelated letters are null
@@ -63,7 +65,7 @@ void ncsh_autocompletions_add_duplicate_test(void)
     struct ncsh_Autocompletion_Node* tree = ncsh_autocompletions_alloc(&arena);
     eskilib_assert(tree != NULL);
 
-    struct eskilib_String string = {.value = "and", .length = 4};
+    struct ncsh_String string = {.value = "and", .length = 4};
     ncsh_autocompletions_add(string.value, string.length, tree, &arena);
     ncsh_autocompletions_add(string.value, string.length, tree, &arena);
 
@@ -90,9 +92,9 @@ void ncsh_autocompletions_add_multiple_unrelated_test(void)
     struct ncsh_Autocompletion_Node* tree = ncsh_autocompletions_alloc(&arena);
     eskilib_assert(tree != NULL);
 
-    struct eskilib_String string_one = {.value = "ls", .length = 3};
+    struct ncsh_String string_one = {.value = "ls", .length = 3};
     ncsh_autocompletions_add(string_one.value, string_one.length, tree, &arena);
-    struct eskilib_String string_two = {.value = "echo", .length = 5};
+    struct ncsh_String string_two = {.value = "echo", .length = 5};
     ncsh_autocompletions_add(string_two.value, string_two.length, tree, &arena);
 
     struct ncsh_Autocompletion_Node* ls_first_node = tree->nodes[ncsh_char_to_index('l')];
@@ -128,11 +130,11 @@ void ncsh_autocompletions_add_multiple_related_test(void)
     struct ncsh_Autocompletion_Node* tree = ncsh_autocompletions_alloc(&arena);
     eskilib_assert(tree != NULL);
 
-    struct eskilib_String string_one = {.value = "gene", .length = 5};
+    struct ncsh_String string_one = {.value = "gene", .length = 5};
     ncsh_autocompletions_add(string_one.value, string_one.length, tree, &arena);
-    struct eskilib_String string_two = {.value = "genetic", .length = 8};
+    struct ncsh_String string_two = {.value = "genetic", .length = 8};
     ncsh_autocompletions_add(string_two.value, string_two.length, tree, &arena);
-    struct eskilib_String string_three = {.value = "genius", .length = 7};
+    struct ncsh_String string_three = {.value = "genius", .length = 7};
     ncsh_autocompletions_add(string_three.value, string_three.length, tree, &arena);
 
     // gene
@@ -188,14 +190,14 @@ void ncsh_autocompletions_search_test(void)
     struct ncsh_Autocompletion_Node* tree = ncsh_autocompletions_alloc(&arena);
     eskilib_assert(tree != NULL);
 
-    struct eskilib_String string_one = {.value = "gene", .length = 5};
+    struct ncsh_String string_one = {.value = "gene", .length = 5};
     ncsh_autocompletions_add(string_one.value, string_one.length, tree, &arena);
-    struct eskilib_String string_two = {.value = "genetic", .length = 8};
+    struct ncsh_String string_two = {.value = "genetic", .length = 8};
     ncsh_autocompletions_add(string_two.value, string_two.length, tree, &arena);
-    struct eskilib_String string_three = {.value = "genius", .length = 7};
+    struct ncsh_String string_three = {.value = "genius", .length = 7};
     ncsh_autocompletions_add(string_three.value, string_three.length, tree, &arena);
 
-    struct eskilib_String string_search = {.value = "gen", .length = 4};
+    struct ncsh_String string_search = {.value = "gen", .length = 4};
     struct ncsh_Autocompletion_Node* result =
         ncsh_autocompletions_search(string_search.value, string_search.length, tree);
     eskilib_assert(result != NULL);
@@ -234,7 +236,7 @@ void ncsh_autocompletions_search_commands_test(void)
     eskilib_assert(result->is_end_of_a_word == false);
 
     struct ncsh_Autocompletion_Node* search_result =
-        ncsh_autocompletions_search_string((struct eskilib_String){.value = "ls | ", .length = 6}, tree);
+        ncsh_autocompletions_search_string((struct ncsh_String){.value = "ls | ", .length = 6}, tree);
     eskilib_assert(search_result != NULL);
     eskilib_assert(search_result->is_end_of_a_word == false);
 
@@ -264,14 +266,14 @@ void ncsh_autocompletions_search_no_results_test(void)
     struct ncsh_Autocompletion_Node* tree = ncsh_autocompletions_alloc(&arena);
     eskilib_assert(tree != NULL);
 
-    struct eskilib_String string_one = {.value = "gene", .length = 5};
+    struct ncsh_String string_one = {.value = "gene", .length = 5};
     ncsh_autocompletions_add(string_one.value, string_one.length, tree, &arena);
-    struct eskilib_String string_two = {.value = "genetic", .length = 8};
+    struct ncsh_String string_two = {.value = "genetic", .length = 8};
     ncsh_autocompletions_add(string_two.value, string_two.length, tree, &arena);
-    struct eskilib_String string_three = {.value = "genius", .length = 7};
+    struct ncsh_String string_three = {.value = "genius", .length = 7};
     ncsh_autocompletions_add(string_three.value, string_three.length, tree, &arena);
 
-    struct eskilib_String string_search = {.value = "ls", .length = 3};
+    struct ncsh_String string_search = {.value = "ls", .length = 3};
     struct ncsh_Autocompletion_Node* search_result = ncsh_autocompletions_search_string(string_search, tree);
     eskilib_assert(search_result == NULL);
 
@@ -296,7 +298,7 @@ void ncsh_autocompletions_matches_test(void)
     ncsh_autocompletions_add("ss", 3, tree, &arena);
 
     struct ncsh_Autocompletion_Node* search_result =
-        ncsh_autocompletions_search_string((struct eskilib_String){.value = "ls | ", .length = 6}, tree);
+        ncsh_autocompletions_search_string((struct ncsh_String){.value = "ls | ", .length = 6}, tree);
     eskilib_assert(search_result != NULL);
 
     struct ncsh_Autocompletion autocomplete[NCSH_MAX_AUTOCOMPLETION_MATCHES] = {0};

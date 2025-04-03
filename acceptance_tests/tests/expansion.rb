@@ -22,7 +22,7 @@ end
 def ls_star_expansion_test(row)
   @tty.send_line('ls *.md')
   row += 1
-  @tty.assert_row(row, 'COMPILE.md  NOTES.md  README.md')
+  @tty.assert_row(row, LS_STAR_DOT_MD)
   row += 1
   test_passed('ls star expansion test')
   row
