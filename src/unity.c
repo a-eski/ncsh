@@ -5,6 +5,7 @@
  */
 
 #define _POSIX_C_SOURCE 200809L
+#define _DEFAULT_SOURCE
 
 #include "eskilib/eskilib_file.c"
 #include "eskilib/eskilib_hashtable.c"
