@@ -19,8 +19,9 @@ These are notes of things useful found in readline docs that just didn't belong 
 
 * `void rl_replace_line(const char* text, int clear_undo)` can replace the line while preserving rl_point and marks!
 Make sure to pass in 0 for clear_undo if you want to maintain the undo list for the current line
-`void rl_extend_line_buffer(int len)` can be used to make sure the rl_line_buffer has enough space to hold the replaced line
+* `void rl_extend_line_buffer(int len)` can be used to make sure the rl_line_buffer has enough space to hold the replaced line
 alternative approach in [Modifying Text](https://tiswww.case.edu/php/chet/readline/readline.html#Modifying-Text)
+Not needed if calling rl_replace_line
 
 * `void rl_display_match_list (char **matches, int len, int max)` can be used to display strings like ncsh tab autocomplete currently does.
 

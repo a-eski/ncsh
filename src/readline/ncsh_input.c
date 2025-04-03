@@ -133,7 +133,8 @@ int_fast32_t ncsh_input_init(struct ncsh_Config* const restrict config,
         return EXIT_FAILURE;
     }
 
-    input->current_autocompletion = arena_malloc(arena, NCSH_MAX_INPUT, char);
+    // input->current_autocompletion = arena_malloc(arena, NCSH_MAX_INPUT, char);
+    rl_current_autocompletion = arena_malloc(arena, NCSH_MAX_INPUT, char);
     input->autocompletions_tree = ncsh_autocompletions_alloc(arena);
 
     ncsh_autocompletions_add_multiple(input->history.entries, input->history.count, input->autocompletions_tree, arena);
@@ -153,10 +154,13 @@ int_fast32_t ncsh_input(struct ncsh_Input* const restrict input,
     rl_input.tree = input->autocompletions_tree;
     rl_input.scratch_arena = scratch_arena;
 
-    input->buffer = ncsh_readline(&rl_input);
-    if (!input->buffer) {
+    char* buffer = ncsh_readline(&rl_input);
+    if (!buffer || !*buffer) {
         return EXIT_SUCCESS_END;
     }
+
+    input->buffer = strdup(buffer);
+    free(buffer);
     input->pos = strlen(input->buffer) + 1;
 
     return EXIT_SUCCESS;
