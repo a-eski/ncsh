@@ -1,7 +1,6 @@
 /* Copyright ncsh by Alex Eski 2024 */
 
 #pragma once
-
 #ifndef NCSH_DEFINES_H_
 #define NCSH_DEFINES_H_
 
@@ -16,7 +15,7 @@
 #include "ncsh_debug.h"
 #endif /* ifdef NCSH_DEBUG */
 
-#define NCSH_VERSION "0.0.2.3"
+#define NCSH_VERSION "0.0.2.4"
 
 /* EXIT_* Constants
  * Exit values used by a multitude of functions and areas in the shell.

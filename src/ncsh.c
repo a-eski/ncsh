@@ -1,5 +1,6 @@
 /* Copyright ncsh by Alex Eski 2024 */
 
+#define _POSIX_C_SOURCE 200809L
 #include <assert.h>
 #include <limits.h>
 #include <linux/limits.h>
@@ -12,6 +13,7 @@
 #include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
+#include <setjmp.h>
 
 #include "eskilib/eskilib_colors.h"
 #include "eskilib/eskilib_result.h"
@@ -19,9 +21,13 @@
 #include "ncsh_config.h"
 #include "ncsh_defines.h"
 #include "ncsh_parser.h"
+#include "ncsh_signals.h"
 #include "readline/ncsh_readline.h"
 #include "ncsh_types.h"
 #include "vm/ncsh_vm.h"
+#include "ncsh_global.h"
+
+jmp_buf env;
 
 /* ncsh_exit
  * Called on exit to free memory related to the shells lifetime & the shells main loops lifetime.
@@ -39,7 +45,7 @@ char* ncsh_init_arena(struct ncsh_Shell* const restrict shell)
     constexpr int scratch_arena_capacity = 1<<16;
     constexpr int total_capacity = arena_capacity + scratch_arena_capacity;
 
-    char* memory = malloc(total_capacity);
+    char* memory = calloc(total_capacity, sizeof(char));
     if (!memory) {
         return NULL;
     }
@@ -81,6 +87,11 @@ char* ncsh_init(struct ncsh_Shell* const restrict shell)
 
     enum z_Result z_result = z_init(&shell->config.config_location, &shell->z_db, &shell->arena);
     if (z_result != Z_SUCCESS) {
+        return NULL;
+    }
+
+    if (ncsh_signal_forward(SIGINT)) {
+        perror("ncsh: Error setting up signal handlers");
         return NULL;
     }
 
@@ -131,13 +142,14 @@ int_fast32_t ncsh(void)
         return EXIT_FAILURE;
     }
 
-#ifdef NCSH_START_TIME
-    clock_t end = clock();
-    double elapsed_ms = ((double)(end - start)) / CLOCKS_PER_SEC * 1000;
-    printf("ncsh: startup time: %.2f milliseconds\n", elapsed_ms);
-#endif
-
     int_fast32_t exit_code = EXIT_SUCCESS;
+
+    if (!setjmp(env)) {
+#   ifdef NCSH_START_TIME
+        clock_t end = clock();
+        double elapsed_ms = ((double)(end - start)) / CLOCKS_PER_SEC * 1000;
+        printf("ncsh: startup time: %.2f milliseconds\n", elapsed_ms);
+#   endif
 
     while (1) {
         int_fast32_t input_result = ncsh_readline(&shell.input, &shell.scratch_arena);
@@ -161,7 +173,6 @@ int_fast32_t ncsh(void)
             goto exit;
         }
         case NCSH_COMMAND_EXIT: {
-            puts("exit");
             goto exit;
         }
         case NCSH_COMMAND_SYNTAX_ERROR:
@@ -179,10 +190,14 @@ int_fast32_t ncsh(void)
         shell.args.count = 0;
         shell.args.values[0] = NULL;
     }
+    goto exit;
+    }
+    else {
+    exit:
+        ncsh_exit(&shell);
+        free(memory);
 
-exit:
-    ncsh_exit(&shell);
-    free(memory);
-
+        puts("exit");
+    }
     return exit_code;
 }

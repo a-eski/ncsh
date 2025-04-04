@@ -352,8 +352,13 @@ enum z_Result z_database_add(const char* const path,
                              struct z_Database* const restrict db,
                              struct ncsh_Arena* const arena)
 {
-    if (!path_length) {
+    assert(db && arena);
+    if (!path || !path_length) {
         return Z_NULL_REFERENCE;
+    }
+
+    if (db->count + 1 >= Z_DATABASE_IN_MEMORY_LIMIT) {
+        return Z_HIT_MEMORY_LIMIT;
     }
 
     assert(path && path[path_length - 1] == '\0');
@@ -367,7 +372,7 @@ enum z_Result z_database_add(const char* const path,
     db->dirs[db->count].path = arena_malloc(arena, total_length, char);
 
     memcpy(db->dirs[db->count].path, cwd, cwd_length);
-    memcpy(db->dirs[db->count].path + cwd_length - 1, "/", 2);
+    db->dirs[db->count].path[cwd_length - 1] = '/';
     memcpy(db->dirs[db->count].path + cwd_length, path, path_length);
 
     assert(strlen(db->dirs[db->count].path) + 1 == total_length);
@@ -521,6 +526,10 @@ void z(char* target,
 
     assert(target && target_length && cwd && db && arena && scratch_arena.start);
     if (!cwd || !db || !target || target_length < 2) {
+        return;
+    }
+    assert(!target[target_length - 1]);
+    if (target[target_length - 1]) {
         return;
     }
 

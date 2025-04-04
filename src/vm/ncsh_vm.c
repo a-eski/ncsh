@@ -2,63 +2,22 @@
 
 #define _POSIX_C_SOURCE 200809L
 #include <assert.h>
-#include <bits/types/siginfo_t.h>
 #include <errno.h>
-#include <signal.h>
-#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
 #include "../eskilib/eskilib_colors.h"
 #include "../ncsh_defines.h"
 #include "../ncsh_parser.h"
+#include "../ncsh_global.h"
 #include "ncsh_vm_builtins.h"
 #include "ncsh_vm_types.h"
 #include "ncsh_vm_tokenizer.h"
 #include "ncsh_vm.h"
-
-/* Signal Handling */
-pid_t vm_child_pid = 0;
-
-static void ncsh_vm_signal_handler(int signum, siginfo_t* const info, void* const context)
-{
-    (void)context;
-    const pid_t target = vm_child_pid;
-
-    if (target != 0 && info->si_pid != target) {
-        if (!kill(target, signum)) {
-            if (write(STDOUT_FILENO, "\n", 1) == -1) { // write is async safe, do not use fflush, putchar, prinft
-                perror(RED "ncsh: Error writing to standard output while processing a signal" RESET);
-            }
-        }
-        vm_child_pid = 0;
-    }
-    else {
-        /*if (write(STDOUT_FILENO, "exit\n", 5) == -1) {
-            perror(RED "ncsh: Error writing to standard output while processing a signal" RESET);
-        }*/
-        exit(EXIT_SUCCESS);
-    }
-}
-
-static int ncsh_vm_signal_forward(const int signum)
-{
-    struct sigaction act = {0};
-    sigemptyset(&act.sa_mask);
-    act.sa_sigaction = ncsh_vm_signal_handler;
-    act.sa_flags = SA_SIGINFO | SA_RESTART;
-
-    if (sigaction(signum, &act, NULL)) {
-        return errno;
-    }
-
-    return 0;
-}
 
 /* IO Redirection */
 int ncsh_vm_output_redirection_oflags_get(const bool append)
@@ -505,10 +464,10 @@ int_fast32_t ncsh_vm_run(struct ncsh_Args* const restrict args,
         }
 
         if (vm.command_type == CT_EXTERNAL) {
-            if (ncsh_vm_signal_forward(SIGINT)) {
+            /*if (ncsh_vm_signal_forward(SIGINT)) {
                 perror("ncsh: Error setting up signal handlers");
                 return NCSH_COMMAND_EXIT_FAILURE;
-            }
+            }*/
 
             vm.pid = fork();
 
