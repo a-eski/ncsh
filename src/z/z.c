@@ -581,15 +581,18 @@ void z(char* target,
     }
 
     if (match && match->path) {
-        match->last_accessed = time(NULL);
-        ++match->rank;
-
+        // try to change to the match first, if that doesn't work try target
         if (chdir(match->path) == -1) {
-            perror("z: couldn't change directory (4)");
-	    return;
+            if (chdir(target) == -1) {
+                perror("z: couldn't change directory (4)");
+                return;
+            }
+	    z_database_add(target, target_length, cwd, cwd_length, db, arena);
+            return;
         }
 
-        z_database_add(target, target_length, cwd, cwd_length, db, arena);
+        match->last_accessed = time(NULL);
+        ++match->rank;
         return;
     }
 

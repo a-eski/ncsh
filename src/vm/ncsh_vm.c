@@ -464,11 +464,6 @@ int_fast32_t ncsh_vm_run(struct ncsh_Args* const restrict args,
         }
 
         if (vm.command_type == CT_EXTERNAL) {
-            /*if (ncsh_vm_signal_forward(SIGINT)) {
-                perror("ncsh: Error setting up signal handlers");
-                return NCSH_COMMAND_EXIT_FAILURE;
-            }*/
-
             vm.pid = fork();
 
             if (vm.pid < 0) {
