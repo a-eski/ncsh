@@ -403,7 +403,7 @@ void z_change_directory_test(void)
     eskilib_assert(z_init(&config_location, &db, &arena) == Z_SUCCESS);
     eskilib_assert(db.count == 2);
 
-    char* buffer = calloc(CWD_LENGTH, sizeof(char));
+    char* buffer = arena_malloc(&arena, CWD_LENGTH, char);
     char buffer_after[CWD_LENGTH]; // need to change directory back after test so next tests work
 
     if (!getcwd(buffer, CWD_LENGTH)) {
@@ -421,7 +421,7 @@ void z_change_directory_test(void)
         eskilib_assert(false);
     }
 
-    eskilib_assert(strcmp(buffer, buffer_after) != 0);
+    eskilib_assert(!strcmp(buffer, buffer_after));
 
     if (chdir(buffer) == -1) { // remove when database file location support added
         perror("Couldn't change back to previous directory");
@@ -430,7 +430,6 @@ void z_change_directory_test(void)
 
     NCSH_ARENA_TEST_TEARDOWN;
     NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
-    free(buffer);
 }
 
 void z_home_empty_target_change_directory_test(void)
@@ -442,7 +441,7 @@ void z_home_empty_target_change_directory_test(void)
     eskilib_assert(z_init(&config_location, &db, &arena) == Z_SUCCESS);
     eskilib_assert(db.count == 2);
 
-    char* buffer = calloc(CWD_LENGTH, sizeof(char));
+    char* buffer = arena_malloc(&arena, CWD_LENGTH, char);
     char buffer_after[CWD_LENGTH]; // need to change directory back after test so next tests work
 
     if (!getcwd(buffer, CWD_LENGTH)) {
@@ -472,7 +471,6 @@ void z_home_empty_target_change_directory_test(void)
 
     NCSH_ARENA_TEST_TEARDOWN;
     NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
-    free(buffer);
 }
 
 void z_no_match_change_directory_test(void)
@@ -484,7 +482,7 @@ void z_no_match_change_directory_test(void)
     eskilib_assert(z_init(&config_location, &db, &arena) == Z_SUCCESS);
     eskilib_assert(db.count == 2);
 
-    char* buffer = calloc(CWD_LENGTH, sizeof(char));
+    char* buffer = arena_malloc(&arena, CWD_LENGTH, char);
     char buffer_after[CWD_LENGTH]; // need to change directory back after test so next tests work
 
     if (!getcwd(buffer, CWD_LENGTH)) {
@@ -513,7 +511,6 @@ void z_no_match_change_directory_test(void)
 
     NCSH_ARENA_TEST_TEARDOWN;
     NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
-    free(buffer);
 }
 
 void z_valid_subdirectory_change_directory_test(void)
@@ -525,7 +522,7 @@ void z_valid_subdirectory_change_directory_test(void)
     eskilib_assert(z_init(&config_location, &db, &arena) == Z_SUCCESS);
     eskilib_assert(db.count == 2);
 
-    char* buffer = calloc(CWD_LENGTH, sizeof(char));
+    char* buffer = arena_malloc(&arena, CWD_LENGTH, char);
     char buffer_after[CWD_LENGTH]; // need to change directory back after test so next tests work
 
     if (!getcwd(buffer, CWD_LENGTH)) {
@@ -554,7 +551,6 @@ void z_valid_subdirectory_change_directory_test(void)
 
     NCSH_ARENA_TEST_TEARDOWN;
     NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
-    free(buffer);
 }
 
 // multiple dirs i.e. ncsh -> src/z
@@ -567,7 +563,7 @@ void z_dir_slash_dir_change_directory_test(void)
     eskilib_assert(z_init(&config_location, &db, &arena) == Z_SUCCESS);
     eskilib_assert(db.count == 2);
 
-    char* buffer = calloc(CWD_LENGTH, sizeof(char));
+    char* buffer = arena_malloc(&arena, CWD_LENGTH, char);
     char buffer_after[CWD_LENGTH]; // need to change directory back after test so next tests work
 
     if (!getcwd(buffer, CWD_LENGTH)) {
@@ -600,7 +596,6 @@ void z_dir_slash_dir_change_directory_test(void)
     z_exit(&db);
     NCSH_ARENA_TEST_TEARDOWN;
     NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
-    free(buffer);
 }
 
 // normal things like ..
@@ -613,7 +608,7 @@ void z_double_dot_change_directory_test(void)
     eskilib_assert(z_init(&config_location, &db, &arena) == Z_SUCCESS);
     eskilib_assert(db.count == 3);
 
-    char* buffer = calloc(CWD_LENGTH, sizeof(char));
+    char* buffer = arena_malloc(&arena, CWD_LENGTH, char);
     char buffer_after[CWD_LENGTH]; // need to change directory back after test so next tests work
 
     if (!getcwd(buffer, CWD_LENGTH)) {
@@ -643,7 +638,6 @@ void z_double_dot_change_directory_test(void)
     z_exit(&db);
     NCSH_ARENA_TEST_TEARDOWN;
     NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
-    free(buffer);
 }
 
 void z_empty_database_valid_subdirectory_change_directory_test(void)
@@ -656,7 +650,7 @@ void z_empty_database_valid_subdirectory_change_directory_test(void)
     eskilib_assert(z_init(&config_location, &db, &arena) == Z_SUCCESS);
     eskilib_assert(db.count == 0);
 
-    char* buffer = calloc(CWD_LENGTH, sizeof(char));
+    char* buffer = arena_malloc(&arena, CWD_LENGTH, char);
     char buffer_after[CWD_LENGTH]; // need to change directory back after test so next tests work
 
     if (!getcwd(buffer, CWD_LENGTH)) {
@@ -685,7 +679,6 @@ void z_empty_database_valid_subdirectory_change_directory_test(void)
 
     NCSH_ARENA_TEST_TEARDOWN;
     NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
-    free(buffer);
 }
 
 // checks that when multiple entries are contained in another, it chooses the correct entry.
@@ -701,7 +694,7 @@ void z_contains_correct_match_test(void)
     // "/mnt/c/Users/Alex/source/repos/PersonalRepos"
     // "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells"
 
-    char* buffer = calloc(CWD_LENGTH, sizeof(char));
+    char* buffer = arena_malloc(&arena, CWD_LENGTH, char);
     char buffer_after[CWD_LENGTH]; // need to change directory back after test so next tests work
 
     if (!getcwd(buffer, CWD_LENGTH)) {
@@ -720,8 +713,8 @@ void z_contains_correct_match_test(void)
         eskilib_assert(false);
     }
 
-    eskilib_assert(strcmp(buffer, buffer_after) != 0);
-    eskilib_assert(strcmp(buffer_after, path) == 0);
+    eskilib_assert(!strcmp(buffer, buffer_after));
+    eskilib_assert(!strcmp(buffer_after, path));
 
     if (chdir(buffer) == -1) { // remove when database file location support added
         perror("Couldn't change back to previous directory");
@@ -732,7 +725,6 @@ void z_contains_correct_match_test(void)
 
     NCSH_ARENA_TEST_TEARDOWN;
     NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
-    free(buffer);
 }
 
 void z_crashing_input_test(void)
@@ -744,7 +736,7 @@ void z_crashing_input_test(void)
     eskilib_assert(z_init(&config_location, &db, &arena) == Z_SUCCESS);
     eskilib_assert(db.count == 2);
 
-    char* buffer = calloc(CWD_LENGTH, sizeof(char));
+    char* buffer = arena_malloc(&arena, CWD_LENGTH, char);
     struct eskilib_String target = {.value = "", .length = sizeof("") };
     z(target.value, target.length, buffer, &db, &arena, scratch_arena);
 
@@ -752,7 +744,6 @@ void z_crashing_input_test(void)
 
     NCSH_ARENA_TEST_TEARDOWN;
     NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
-    free(buffer);
 }
 
 int main(void)
