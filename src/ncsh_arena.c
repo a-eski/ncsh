@@ -24,8 +24,7 @@ void* ncsh_arena_malloc_internal(struct ncsh_Arena* arena,
     }
     void* val = arena->start + padding;
     arena->start += padding + count * size;
-    // return memset(val, 0, count * size);
-    return val;
+    return memset(val, 0, count * size);
 }
 
 
@@ -46,7 +45,7 @@ void* ncsh_arena_realloc_internal(struct ncsh_Arena* arena,
     }
     void* val = arena->start + padding;
     arena->start += padding + count * size;
-    // memset(val, 0, count * size);
+    memset(val, 0, count * size);
     assert(old_ptr);
     return memcpy(val, old_ptr, old_count * size);
 }

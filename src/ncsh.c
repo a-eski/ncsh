@@ -80,7 +80,7 @@ char* ncsh_init_arena(struct ncsh_Shell* const restrict shell)
     constexpr int scratch_arena_capacity = 1<<16;
     constexpr int total_capacity = arena_capacity + scratch_arena_capacity;
 
-    char* memory = calloc(total_capacity, sizeof(char));
+    char* memory = malloc(total_capacity);
     if (!memory) {
         return NULL;
     }
