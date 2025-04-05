@@ -1,5 +1,7 @@
 /* Copyright ncsh by Alex Eski 2024 */
 
+#define _POSIX_C_SOURCE 200809L
+
 #include <assert.h>
 #include <limits.h>
 #include <linux/limits.h>
@@ -12,6 +14,8 @@
 #include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
+#include <setjmp.h>
+#include <errno.h>
 
 #include "eskilib/eskilib_colors.h"
 #include "eskilib/eskilib_result.h"
@@ -19,9 +23,46 @@
 #include "ncsh_config.h"
 #include "ncsh_defines.h"
 #include "ncsh_parser.h"
+#include "ncsh_global.h"
 #include "readline/ncsh_readline.h"
 #include "ncsh_types.h"
 #include "vm/ncsh_vm.h"
+#include "ncsh_global.h"
+
+jmp_buf env;
+sig_atomic_t vm_child_pid;
+
+static void ncsh_signal_handler(int signum, siginfo_t* const info, void* const context)
+{
+    (void)context; // to prevent compiler warnings
+    const __pid_t target = vm_child_pid;
+
+    if (target != 0 && info->si_pid != target) { // kill child process with pid vm_child_pid
+        if (!kill(target, signum)) {
+            if (write(STDOUT_FILENO, "\n", 1) == -1) { // write is async/signal safe, do not use fflush, putchar, prinft
+                perror(RED "ncsh: Error writing to standard output while processing a signal" RESET);
+            }
+        }
+        vm_child_pid = 0;
+    }
+    else { // jump to ncsh.c label exit to save history/autocompletions & z
+        longjmp(env, 1);
+    }
+}
+
+static int ncsh_signal_forward(const int signum)
+{
+    struct sigaction act = {0};
+    sigemptyset(&act.sa_mask);
+    act.sa_sigaction = ncsh_signal_handler;
+    act.sa_flags = SA_SIGINFO | SA_RESTART;
+
+    if (sigaction(signum, &act, NULL)) {
+        return errno;
+    }
+
+    return 0;
+}
 
 /* ncsh_exit
  * Called on exit to free memory related to the shells lifetime & the shells main loops lifetime.
@@ -84,6 +125,11 @@ char* ncsh_init(struct ncsh_Shell* const restrict shell)
         return NULL;
     }
 
+    if (ncsh_signal_forward(SIGINT)) {
+        perror("ncsh: Error setting up signal handlers");
+        return NULL;
+    }
+
     return memory;
 }
 
@@ -131,58 +177,62 @@ int_fast32_t ncsh(void)
         return EXIT_FAILURE;
     }
 
-#ifdef NCSH_START_TIME
-    clock_t end = clock();
-    double elapsed_ms = ((double)(end - start)) / CLOCKS_PER_SEC * 1000;
-    printf("ncsh: startup time: %.2f milliseconds\n", elapsed_ms);
-#endif
-
     int_fast32_t exit_code = EXIT_SUCCESS;
 
-    while (1) {
-        int_fast32_t input_result = ncsh_readline(&shell.input, &shell.scratch_arena);
+    if (!setjmp(env)) {
+#ifdef NCSH_START_TIME
+      clock_t end = clock();
+      double elapsed_ms = ((double)(end - start)) / CLOCKS_PER_SEC * 1000;
+      printf("ncsh: startup time: %.2f milliseconds\n", elapsed_ms);
+#endif
+
+      while (1) {
+        int_fast32_t input_result =
+            ncsh_readline(&shell.input, &shell.scratch_arena);
         switch (input_result) {
         case EXIT_FAILURE: {
-            exit_code = EXIT_FAILURE;
-            goto exit;
+          exit_code = EXIT_FAILURE;
+          goto exit;
         }
         case EXIT_SUCCESS: {
-            goto reset;
+          goto reset;
         }
         case EXIT_SUCCESS_END: {
-            goto exit;
+          goto exit;
         }
         }
 
         int_fast32_t command_result = ncsh_run(&shell, shell.scratch_arena);
         switch (command_result) {
         case NCSH_COMMAND_EXIT_FAILURE: {
-            exit_code = EXIT_FAILURE;
-            goto exit;
+          exit_code = EXIT_FAILURE;
+          goto exit;
         }
         case NCSH_COMMAND_EXIT: {
-            puts("exit");
-            goto exit;
+          goto exit;
         }
         case NCSH_COMMAND_SYNTAX_ERROR:
         case NCSH_COMMAND_FAILED_CONTINUE: {
-            goto reset;
+          goto reset;
         }
         }
 
-        ncsh_readline_history_and_autocompletion_add(&shell.input, &shell.arena);
+        ncsh_readline_history_and_autocompletion_add(&shell.input,
+                                                     &shell.arena);
 
-    reset:
+      reset:
         memset(shell.input.buffer, '\0', shell.input.max_pos);
         shell.input.pos = 0;
         shell.input.max_pos = 0;
         shell.args.count = 0;
         shell.args.values[0] = NULL;
+      }
+    } else {
+    exit:
+      ncsh_exit(&shell);
+      free(memory);
+      puts("exit");
     }
-
-exit:
-    ncsh_exit(&shell);
-    free(memory);
 
     return exit_code;
 }

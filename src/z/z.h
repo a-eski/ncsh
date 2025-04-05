@@ -10,7 +10,7 @@
 #include "../ncsh_arena.h"
 
 #define Z_DATABASE_FILE "_z_database.bin"
-#define Z_DATABASE_IN_MEMORY_LIMIT 100
+#define Z_DATABASE_IN_MEMORY_LIMIT 200
 
 #define Z_SECOND 1
 #define Z_MINUTE 60 * Z_SECOND
@@ -39,6 +39,7 @@ struct z_Database {
 };
 
 enum z_Result {
+    Z_HIT_MEMORY_LIMIT = -9,
     Z_BAD_STRING = -8,
     Z_FILE_LENGTH_TOO_LARGE = -7,
     Z_MATCH_NOT_FOUND = -6,

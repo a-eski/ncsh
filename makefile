@@ -162,6 +162,8 @@ tz :
 
 .PHONY: fuzz_z
 fuzz_z:
+	chmod +x ./create_corpus_dirs.sh
+	./create_corpus_dirs.sh
 	clang-19 -std=c2x -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined,fuzzer -O3 -DNDEBUG -DZ_TEST ./src/ncsh_arena.c ./tests/z_fuzzing.c ./src/z/fzf.c ./src/z/z.c -o ./bin/z_fuzz
 	./bin/z_fuzz Z_CORPUS/ -detect_leaks=0 -rss_limit_mb=8192
 .PHONY: fz
@@ -170,6 +172,8 @@ fz:
 
 .PHONY: fuzz_z_add
 fuzz_z_add:
+	chmod +x ./create_corpus_dirs.sh
+	./create_corpus_dirs.sh
 	clang-19 -std=c2x -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined,fuzzer -O3 -DNDEBUG -DZ_TEST ./src/ncsh_arena.c ./tests/z_add_fuzzing.c ./src/z/fzf.c ./src/z/z.c -o ./bin/z_add_fuzz
 	./bin/z_add_fuzz Z_ADD_CORPUS/ -detect_leaks=0 -rss_limit_mb=8192
 .PHONY: fza

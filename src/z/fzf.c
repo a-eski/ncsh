@@ -44,6 +44,7 @@ typedef struct {
 } str_slice_t;
 
 str_slice_t slice_str(const char* input, size_t from, size_t to) {
+  assert(input);
   return (str_slice_t){.data = input + from, .size = to - from};
 }
 
@@ -77,6 +78,10 @@ enum fzf_char_types {
 typedef enum fzf_char_types char_types;
 
 int32_t index_byte(fzf_string_t* string, char b) {
+  if (!string || !string->data) {
+    return -1;
+  }
+
   for (size_t i = 0; i < string->size; i++) {
     if (string->data[i] == b) {
       return (int32_t)i;
@@ -127,7 +132,7 @@ bool has_prefix(const char* str, const char* prefix, size_t prefix_len) {
 
 bool has_suffix(const char* str, size_t len, const char* suffix,
                        size_t suffix_len) {
-  assert(str);
+  assert(str && suffix);
   return len >= suffix_len &&
          !strncmp(slice_str(str, len - suffix_len, len).data, suffix, suffix_len);
 }
@@ -151,7 +156,6 @@ char* str_replace_slashes(char* orig,
 
   constexpr char replace[] = "\\ ";
   constexpr size_t replace_len = sizeof(replace) - 1;
-  assert(replace_len == strlen(replace));
   constexpr char replacement[] = "\t";
   constexpr size_t replacement_len = sizeof(replacement) - 1;
 
@@ -172,6 +176,7 @@ char* str_replace_slashes(char* orig,
   size_t len_front = 0;
   while (count--) {
     ins = strstr(orig, replace);
+    assert(ins);
     len_front = (size_t)(ins - orig);
     tmp = strncpy(tmp, orig, len_front) + len_front;
     tmp = strcpy(tmp, replacement) + replacement_len;
@@ -342,6 +347,7 @@ int16_t bonus_at(fzf_string_t* input, size_t idx) {
 
 int32_t try_skip(fzf_string_t* input, bool case_sensitive, byte b,
                         int32_t from) {
+  assert(input && input->data);
   str_slice_t slice = slice_str(input->data, (size_t)from, input->size);
   fzf_string_t byte_array = {.data = slice.data, .size = slice.size};
   int32_t idx = index_byte(&byte_array, b);
@@ -351,6 +357,7 @@ int32_t try_skip(fzf_string_t* input, bool case_sensitive, byte b,
 
   if (!case_sensitive && b >= 'a' && b <= 'z') {
     if (idx > 0) {
+      assert(byte_array.data);
       str_slice_t tmp = slice_str_right(byte_array.data, (size_t)idx);
       byte_array.data = tmp.data;
       byte_array.size = tmp.size;

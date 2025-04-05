@@ -100,8 +100,8 @@ fzf_slab_t* slab, struct ncsh_Arena* const scratch_arena);
 * Returns: a pointer to the pattern.
 */
 fzf_pattern_t* fzf_parse_pattern(char* const pattern,
-size_t pat_len,
-struct ncsh_Arena* const scratch_arena);
+                                 size_t pat_len,
+                                 struct ncsh_Arena* const scratch_arena);
 
 /* fzf_get_score
 * Get score for specific entry based on fzf_pattern_t.

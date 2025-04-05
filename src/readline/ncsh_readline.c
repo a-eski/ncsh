@@ -868,7 +868,6 @@ int_fast32_t ncsh_readline(struct ncsh_Input* const restrict input,
             ncsh_write_literal(ERASE_CURRENT_LINE);
             putchar('\n');
             fflush(stdout);
-	    puts("exit");
             exit = EXIT_SUCCESS_END;
 	    break;
         }

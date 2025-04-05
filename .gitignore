@@ -16,3 +16,5 @@ _z_database.bin
 development/cash/cash
 development/curses/curses
 development/readline/readline
+Z_CORPUS/*
+Z_ADD_CORPUS/*

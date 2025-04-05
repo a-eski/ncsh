@@ -352,8 +352,13 @@ enum z_Result z_database_add(const char* const path,
                              struct z_Database* const restrict db,
                              struct ncsh_Arena* const arena)
 {
-    if (!path_length) {
+    assert(db && arena);
+    if (!path || !path_length) {
         return Z_NULL_REFERENCE;
+    }
+
+    if (db->count + 1 >= Z_DATABASE_IN_MEMORY_LIMIT) {
+        return Z_HIT_MEMORY_LIMIT;
     }
 
     assert(path && path[path_length - 1] == '\0');
@@ -367,7 +372,7 @@ enum z_Result z_database_add(const char* const path,
     db->dirs[db->count].path = arena_malloc(arena, total_length, char);
 
     memcpy(db->dirs[db->count].path, cwd, cwd_length);
-    memcpy(db->dirs[db->count].path + cwd_length - 1, "/", 2);
+    db->dirs[db->count].path[cwd_length - 1] = '/';
     memcpy(db->dirs[db->count].path + cwd_length, path, path_length);
 
     assert(strlen(db->dirs[db->count].path) + 1 == total_length);
@@ -519,8 +524,12 @@ void z(char* target,
         return;
     }
 
-    assert(target && target_length && cwd && db && arena && scratch_arena.start);
-    if (!cwd || !db || !target || target_length < 2) {
+    assert(target_length && cwd && db && arena && scratch_arena.start);
+    if (!cwd || !db || target_length < 2) {
+        return;
+    }
+    assert(!target[target_length - 1]);
+    if (target[target_length - 1]) {
         return;
     }
 
@@ -558,10 +567,6 @@ void z(char* target,
         printf("dir matches %s\n", output.value);
 #endif /* ifdef Z_DEBUG */
 
-        if (!match && z_database_add(output.value, output.length, cwd, cwd_length, db, arena) != Z_SUCCESS) {
-            return;
-        }
-
         if (chdir(output.value) == -1) {
             if (!match) {
                 perror("z: couldn't change directory (3)");
@@ -569,20 +574,25 @@ void z(char* target,
             }
         }
 
-        return;
+	if (!match) {
+	    z_database_add(output.value, output.length, cwd, cwd_length, db, arena);
+            return;
+        }
     }
 
     if (match && match->path) {
+        // try to change to the match first, if that doesn't work try target
+        if (chdir(match->path) == -1) {
+            if (chdir(target) == -1) {
+                perror("z: couldn't change directory (4)");
+                return;
+            }
+	    z_database_add(target, target_length, cwd, cwd_length, db, arena);
+            return;
+        }
+
         match->last_accessed = time(NULL);
         ++match->rank;
-
-        if (chdir(match->path) == -1) {
-            perror("z: couldn't change directory (4)");
-        }
-        return;
-    }
-
-    if (z_database_add(target, target_length, cwd, cwd_length, db, arena) != Z_SUCCESS) {
         return;
     }
 
@@ -590,6 +600,8 @@ void z(char* target,
         perror("z: couldn't change directory");
         return;
     }
+
+    z_database_add(target, target_length, cwd, cwd_length, db, arena);
 }
 
 #define Z_ENTRY_EXISTS_MESSAGE "Entry already exists in z database.\n"
