@@ -713,7 +713,6 @@ void z_contains_correct_match_test(void)
         eskilib_assert(false);
     }
 
-    printf("%s %s %s\n", buffer, buffer_after, path);
     eskilib_assert(!strcmp(buffer, buffer_after));
     eskilib_assert(!strcmp(buffer_after, path));
 
