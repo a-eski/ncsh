@@ -421,7 +421,7 @@ void z_change_directory_test(void)
         eskilib_assert(false);
     }
 
-    eskilib_assert(!strcmp(buffer, buffer_after));
+    eskilib_assert(strcmp(buffer, buffer_after));
 
     if (chdir(buffer) == -1) { // remove when database file location support added
         perror("Couldn't change back to previous directory");
@@ -713,7 +713,7 @@ void z_contains_correct_match_test(void)
         eskilib_assert(false);
     }
 
-    eskilib_assert(!strcmp(buffer, buffer_after));
+    eskilib_assert(strcmp(buffer, buffer_after));
     eskilib_assert(!strcmp(buffer_after, path));
 
     if (chdir(buffer) == -1) { // remove when database file location support added
