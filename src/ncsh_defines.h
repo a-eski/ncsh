@@ -26,7 +26,7 @@
 #	define EXIT_SUCCESS 0 // Defined in stdlib.h
 #endif /* !EXIT_SUCCESS */
 #ifndef EXIT_FAILURE
-#	define EXIT_FAILURE 0 // Defined in stdlib.h
+#	define EXIT_FAILURE 1 // Defined in stdlib.h
 #endif /* !EXIT_FAILURE */
 #define EXIT_SUCCESS_END 2
 #define EXIT_SUCCESS_EXECUTE 3
