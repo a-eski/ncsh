@@ -2,14 +2,14 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#include "lib/ncsh_arena_test_helper.h"
+#include "lib/arena_test_helper.h"
 #include "../src/eskilib/eskilib_hashtable.h"
 #include "../src/eskilib/eskilib_string.h"
 #include "../src/eskilib/eskilib_test.h"
 
 void eskilib_hashtable_malloc_default_size_test(void)
 {
-    NCSH_SCRATCH_ARENA_TEST_SETUP;
+    SCRATCH_ARENA_TEST_SETUP;
 
     struct eskilib_HashTable ht;
     bool result = eskilib_hashtable_malloc(&scratch_arena, &ht);
@@ -19,12 +19,12 @@ void eskilib_hashtable_malloc_default_size_test(void)
     eskilib_assert(ht.size == 0);
     eskilib_assert(ht.entries != NULL);
 
-    NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
+    SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 void eskilib_hashtable_add_one_test(void)
 {
-    NCSH_SCRATCH_ARENA_TEST_SETUP;
+    SCRATCH_ARENA_TEST_SETUP;
 
     struct eskilib_HashTable ht;
     bool result = eskilib_hashtable_malloc(&scratch_arena, &ht);
@@ -44,12 +44,12 @@ void eskilib_hashtable_add_one_test(void)
     eskilib_assert(result_string.length == string.length);
     eskilib_assert(!memcmp(string.value, result_string.value, string.length));
 
-    NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
+    SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 void eskilib_hashtable_add_multiple_test(void)
 {
-    NCSH_SCRATCH_ARENA_TEST_SETUP;
+    SCRATCH_ARENA_TEST_SETUP;
     struct eskilib_HashTable ht;
     bool result = eskilib_hashtable_malloc(&scratch_arena, &ht);
     eskilib_assert(result);
@@ -82,12 +82,12 @@ void eskilib_hashtable_add_multiple_test(void)
     eskilib_assert(result_two.length = string_two.length)
     eskilib_assert(!memcmp(result_two.value, string_two.value, result_two.length));
 
-    NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
+    SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 void eskilib_hashtable_add_duplicate_test(void)
 {
-    NCSH_SCRATCH_ARENA_TEST_SETUP;
+    SCRATCH_ARENA_TEST_SETUP;
     struct eskilib_HashTable ht;
     bool result = eskilib_hashtable_malloc(&scratch_arena, &ht);
     eskilib_assert(result);
@@ -100,7 +100,7 @@ void eskilib_hashtable_add_duplicate_test(void)
     eskilib_assert(!memcmp((char*)key, (char*)key_value, 6));
     eskilib_assert(ht.size == 1);
 
-    NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
+    SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 void eskilib_hashtable_tests(void) {

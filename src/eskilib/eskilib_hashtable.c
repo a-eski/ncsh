@@ -7,7 +7,7 @@
 
 #include "eskilib_hashtable.h"
 
-bool eskilib_hashtable_malloc(struct ncsh_Arena* const arena, struct eskilib_HashTable* table)
+bool eskilib_hashtable_malloc(struct Arena* const arena, struct eskilib_HashTable* table)
 {
     table->size = 0;
     table->capacity = ESKILIB_HASHTABLE_DEFAULT_CAPACITY;
@@ -104,7 +104,7 @@ const char* eskilib_hashtable_set_entry(struct eskilib_HashTable_Entry* entries,
     return key;
 }
 
-bool eskilib_hashtable_expand(struct ncsh_Arena* const arena, struct eskilib_HashTable* table)
+bool eskilib_hashtable_expand(struct Arena* const arena, struct eskilib_HashTable* table)
 {
     size_t new_capacity = table->capacity * 2;
     if (new_capacity < table->capacity) {
@@ -131,7 +131,7 @@ bool eskilib_hashtable_expand(struct ncsh_Arena* const arena, struct eskilib_Has
 
 const char* eskilib_hashtable_set(const char* key,
                                   struct eskilib_String value,
-                                  struct ncsh_Arena* const arena,
+                                  struct Arena* const arena,
                                   struct eskilib_HashTable* table)
 {
     assert(value.value != NULL && value.length > 0);
