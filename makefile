@@ -114,6 +114,8 @@ th :
 
 .PHONY: fuzz_history
 fuzz_history :
+	chmod +x ./create_corpus_dirs.sh
+	./create_corpus_dirs.sh
 	clang-19 $(STD) $(fuzz_flags) -DNCSH_HISTORY_TEST ./tests/ncsh_history_fuzzing.c ./src/ncsh_arena.c ./src/readline/ncsh_history.c ./src/eskilib/eskilib_file.c ./src/eskilib/eskilib_hashtable.c -o ./bin/history_fuzz
 	./bin/history_fuzz NCSH_HISTORY_CORPUS/ -detect_leaks=0 -rss_limit_mb=4096
 .PHONY: fh
@@ -130,6 +132,8 @@ tac :
 
 .PHONY: fuzz_autocompletions
 fuzz_autocompletions :
+	chmod +x ./create_corpus_dirs.sh
+	./create_corpus_dirs.sh
 	clang-19 $(STD) $(fuzz_flags) ./tests/ncsh_autocompletions_fuzzing.c ./src/ncsh_arena.c ./src/readline/ncsh_autocompletions.c -o ./bin/autocompletions_fuzz
 	./bin/autocompletions_fuzz NCSH_AUTOCOMPLETIONS_CORPUS/ -detect_leaks=0 -rss_limit_mb=8192
 .PHONY: fa
@@ -153,6 +157,8 @@ tp :
 
 .PHONY: fuzz_parser
 fuzz_parser :
+	chmod +x ./create_corpus_dirs.sh
+	./create_corpus_dirs.sh
 	clang-19 $(STD) $(fuzz_flags) ./tests/ncsh_parser_fuzzing.c ./src/ncsh_arena.c ./src/ncsh_parser.c -o ./bin/parser_fuzz
 	./bin/parser_fuzz NCSH_PARSER_CORPUS/ -detect_leaks=0 -rss_limit_mb=4096
 .PHONY: fp
