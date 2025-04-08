@@ -8,7 +8,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <time.h> // remove when done
 
 #include "../eskilib/eskilib_colors.h"
 #include "../eskilib/eskilib_result.h"
@@ -234,14 +233,11 @@ bool ncsh_readline_is_end_of_line(struct ncsh_Input* const restrict input)
 
 int_fast32_t ncsh_readline_resize(struct ncsh_Input* const restrict input)
 {
-    // need to reset saved cursor position as well
+    // need to reset saved cursor position as well on resize
+    // use previous size
+    // struct ncsh_Coordinates prev_size = input->terminal_size;
 
     input->terminal_size = ncsh_terminal_size();
-
-    /*for (size_t i = 0; i < input->pos; ++i) {
-        putchar(input->buffer[i]);
-    }*/
-
     input->lines_y = 0;
     size_t len = input->pos;
     while (len) {
@@ -254,7 +250,6 @@ int_fast32_t ncsh_readline_resize(struct ncsh_Input* const restrict input)
 	len -= (size_t)input->terminal_size.x;
     }
     input->current_y = input->lines_y;
-    // fflush(stdout);
 
     return EXIT_SUCCESS;
 }
@@ -427,6 +422,7 @@ int_fast32_t ncsh_readline_line_reset(struct ncsh_Input* const restrict input)
     if (input->current_autocompletion[0] == '\0') {
 	return EXIT_SUCCESS;
     }
+
     // deletes chars, but doesn't work, prevents line wrap
     // size_t len = strlen(current_autocompletion);
     // ncsh_terminal_characters_delete(len);
@@ -437,19 +433,6 @@ int_fast32_t ncsh_readline_line_reset(struct ncsh_Input* const restrict input)
 
     fflush(stdout);
     ncsh_write_literal(ERASE_CURRENT_LINE);
-
-    /*ncsh_write_literal(HIDE_CURSOR);
-    ncsh_terminal_move_right(input->current_autocompletion_len);
-    fflush(stdout);
-    for (size_t i = input->current_autocompletion_len; i > input->pos; --i) {
-        ncsh_write_literal(BACKSPACE_STRING);
-	fflush(stdout);
-    }
-
-    ncsh_terminal_move_left(input->current_autocompletion_len);
-    ncsh_write_literal(SHOW_CURSOR);
-    fflush(stdout);*/
-
     return EXIT_SUCCESS;
 }
 
@@ -460,19 +443,6 @@ int_fast32_t ncsh_readline_autocomplete(struct ncsh_Input* const restrict input,
     if (!input->buffer[0] || input->buffer[input->pos] != '\0') {
         return EXIT_SUCCESS;
     }
-    /*else if (input->current_autocompletion_len > input->pos &&
-        memcmp(input->buffer, input->current_autocompletion, input->pos)) {
-        return EXIT_SUCCESS;
-    }*/
-    /*else if (input->buffer[0] < 32) { // exclude control characters from autocomplete
-	if (ncsh_readline_line_reset(input) != EXIT_SUCCESS) {
-            return EXIT_FAILURE;
-        }
-        memset(input->buffer, '\0', input->max_pos);
-        input->pos = 0;
-        input->max_pos = 0;
-        return EXIT_SUCCESS;
-    }*/
 
     uint_fast8_t autocompletions_matches_count = ncsh_autocompletions_first(
         input->buffer, input->pos + 1, input->current_autocompletion,
