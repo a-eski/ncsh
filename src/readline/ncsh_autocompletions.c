@@ -12,13 +12,13 @@
 #include "../ncsh_defines.h"
 #include "ncsh_autocompletions.h"
 
-int ncsh_char_to_index(char character);
-char ncsh_index_to_char(int index);
+static inline int ncsh_char_to_index(const char character);
+static inline char ncsh_index_to_char(const int index);
 
 struct ncsh_Autocompletion_Node* ncsh_autocompletions_alloc(struct ncsh_Arena* const arena)
 {
     struct ncsh_Autocompletion_Node* tree = arena_malloc(arena, 1, struct ncsh_Autocompletion_Node);
-    tree->nodes = arena_malloc(arena, NCSH_LETTERS, struct ncsh_Autocompletion_Node*);
+    // tree->nodes = arena_malloc(arena, NCSH_LETTERS, struct ncsh_Autocompletion_Node*);
     tree->is_end_of_a_word = false;
     return tree;
 }
@@ -44,7 +44,7 @@ void ncsh_autocompletions_add(const char* const string,
 
         if (!tree->nodes[index]) {
             tree->nodes[index] = arena_malloc(arena, 1, struct ncsh_Autocompletion_Node);
-            tree->nodes[index]->nodes = arena_malloc(arena, NCSH_LETTERS, struct ncsh_Autocompletion_Node*);
+            // tree->nodes[index]->nodes = arena_malloc(arena, NCSH_LETTERS, struct ncsh_Autocompletion_Node*);
             tree->nodes[index]->is_end_of_a_word = false;
             tree->nodes[index]->weight = 1;
         }

@@ -138,7 +138,7 @@ fa :
 
 .PHONY: bench_autocompletions
 bench_autocompletions :
-	hyperfine --warmup 100 --shell=none './bin/ncsh_autocompletions_tests'
+	hyperfine --warmup 500 --shell=none './bin/ncsh_autocompletions_tests'
 .PHONYE: ba
 ba :
 	make bench_autocompletions
