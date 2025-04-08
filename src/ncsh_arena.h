@@ -2,12 +2,14 @@
 
 #pragma once
 
+#include <setjmp.h>
 #include <stdint.h>
 #include <sys/cdefs.h>
 
 struct ncsh_Arena {
     char* start;
     char* end;
+    jmp_buf* exit;
 };
 
 #define arena_malloc(arena, count, type) \

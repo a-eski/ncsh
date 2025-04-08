@@ -56,7 +56,7 @@ void z_read_non_empty_database_test(void)
     eskilib_assert(db.count == 1);
 
     struct eskilib_String new_value = {.length = 5};
-    new_value.value = malloc(new_value.length);
+    new_value.value = arena_malloc(&arena, new_value.length, char);
     strcpy(new_value.value, "ncsh");
 
     char cwd[CWD_LENGTH];
@@ -73,7 +73,6 @@ void z_read_non_empty_database_test(void)
     eskilib_assert(match->last_accessed > 0);
 
     eskilib_assert(z_exit(&db) == Z_SUCCESS);
-    free(new_value.value);
 
     NCSH_ARENA_TEST_TEARDOWN;
     NCSH_SCRATCH_ARENA_TEST_TEARDOWN;
@@ -90,7 +89,7 @@ void z_add_to_database_empty_database_test(void)
     eskilib_assert(db.count == 0);
 
     struct eskilib_String new_value = {.length = 5};
-    new_value.value = malloc(new_value.length);
+    new_value.value = arena_malloc(&arena, new_value.length, char);
     strcpy(new_value.value, "ncsh");
     struct eskilib_String cwd = {.value = "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells", .length = 52};
 
@@ -100,7 +99,6 @@ void z_add_to_database_empty_database_test(void)
     eskilib_assert(memcmp(db.dirs[0].path, "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells/ncsh", 57) == 0);
     eskilib_assert(db.dirs[0].rank > 0 && db.dirs[0].last_accessed > 0);
 
-    free(new_value.value);
     NCSH_ARENA_TEST_TEARDOWN;
 }
 
@@ -231,7 +229,7 @@ void z_write_empty_database_test(void)
     eskilib_assert(db.count == 0);
 
     struct eskilib_String new_value = {.length = 5};
-    new_value.value = malloc(new_value.length);
+    new_value.value = arena_malloc(&arena, new_value.length, char);
     strcpy(new_value.value, "ncsh");
     struct eskilib_String cwd = {.value = "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells", .length = 52};
 
@@ -243,7 +241,6 @@ void z_write_empty_database_test(void)
 
     eskilib_assert(z_exit(&db) == Z_SUCCESS);
 
-    free(new_value.value);
     NCSH_ARENA_TEST_TEARDOWN;
 }
 
@@ -275,7 +272,7 @@ void z_write_nonempty_database_test(void)
 
     double start_rank = db.dirs[0].rank;
     struct eskilib_String new_value = {.length = 9};
-    new_value.value = malloc(new_value.length);
+    new_value.value = arena_malloc(&arena, new_value.length, char);
     strcpy(new_value.value, "ttytest2");
     struct eskilib_String cwd = {.value = "/mnt/c/Users/Alex/source/repos/PersonalRepos", .length = 45};
 
@@ -287,7 +284,6 @@ void z_write_nonempty_database_test(void)
 
     eskilib_assert(z_exit(&db) == Z_SUCCESS);
 
-    free(new_value.value);
     NCSH_ARENA_TEST_TEARDOWN;
 }
 
@@ -780,6 +776,8 @@ int main(void)
     eskilib_test_run(z_crashing_input_test);
 
     eskilib_test_finish();
+
+    remove(Z_DATABASE_FILE);
 
     return 0;
 }

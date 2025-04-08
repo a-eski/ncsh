@@ -12,8 +12,8 @@
 #include "../ncsh_defines.h"
 #include "ncsh_autocompletions.h"
 
-int ncsh_char_to_index(char character);
-char ncsh_index_to_char(int index);
+static inline int ncsh_char_to_index(const char character);
+static inline char ncsh_index_to_char(const int index);
 
 struct ncsh_Autocompletion_Node* ncsh_autocompletions_alloc(struct ncsh_Arena* const arena)
 {
@@ -30,6 +30,7 @@ void ncsh_autocompletions_add(const char* const string,
     assert(string);
     assert(length > 0);
     assert(tree);
+    assert(tree->nodes);
     if (!string || !length || !tree || length > NCSH_MAX_INPUT) {
         return;
     }

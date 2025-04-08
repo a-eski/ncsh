@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdlib.h>
+
 #define NCSH_ARENA_TEST_SETUP \
   constexpr int arena_capacity = 1<<20; \
   char* memory = malloc(arena_capacity); \

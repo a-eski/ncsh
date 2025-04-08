@@ -27,7 +27,7 @@ int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size)
 
     struct z_Database db = {};
     z_init(&config_location, &db, &arena);
-    uint8_t* data = malloc(Size);
+    uint8_t* data = arena_malloc(&arena, Size, uint8_t);
     memcpy(data, Data, Size);
     z((char*)data, Size, cwd, &db, &arena, scratch_arena);
     z_exit(&db);

@@ -7,7 +7,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/ioctl.h>
-// #if defined(HAVE_TERMIOS_H)
 #include <termios.h>
 #include <unistd.h>
 
@@ -18,27 +17,13 @@
 #define TERMINAL_RETURN 'R'
 #define T_BUFFER_LENGTH 30
 
-/* Static Variables */
-static struct termios original_terminal_settings;
+static struct termios otios;
 
-/* Signal Handling */
-/*static void ncsh_terminal_signal_handler(int signum)
+struct ncsh_Coordinates ncsh_terminal_size(void)
 {
-    if (signum != SIGWINCH)
-        return;
-
+    struct winsize window;
     ioctl(STDOUT_FILENO, TIOCGWINSZ, &window);
-
-    if (write(STDOUT_FILENO, "ncsh window change handled\n", sizeof("ncsh window change handled\n")) == -1)
-        perror("sighandler error");
-}*/
-
-void ncsh_terminal_reset(void)
-{
-    fflush(stdout);
-    if (tcsetattr(STDIN_FILENO, TCSANOW, &original_terminal_settings) != 0) {
-        perror(RED "ncsh: Could not restore terminal settings" RESET);
-    }
+    return (struct ncsh_Coordinates){ .x = window.ws_col, .y = window.ws_row };
 }
 
 struct ncsh_Coordinates ncsh_terminal_init(void)
@@ -48,10 +33,7 @@ struct ncsh_Coordinates ncsh_terminal_init(void)
         exit(EXIT_FAILURE);
     }
 
-    struct winsize window;
-    ioctl(STDOUT_FILENO, TIOCGWINSZ, &window);
-
-    if (tcgetattr(STDIN_FILENO, &original_terminal_settings) != 0) {
+    if (tcgetattr(STDIN_FILENO, &otios) != 0) {
         perror(RED "ncsh: Could not get terminal settings" RESET);
         exit(EXIT_FAILURE);
     }
@@ -59,19 +41,26 @@ struct ncsh_Coordinates ncsh_terminal_init(void)
     // mouse support? investigate
     // printf("\x1b[?1049h\x1b[0m\x1b[2J\x1b[?1003h\x1b[?1015h\x1b[?1006h\x1b[?25l");
 
-    struct termios terminal_settings = original_terminal_settings;
-    terminal_settings.c_lflag &= (tcflag_t) ~(ICANON | ECHO);
-    terminal_settings.c_cc[VMIN] = 1;
-    terminal_settings.c_cc[VTIME] = 0;
+    struct termios tios = otios;
+    tios.c_lflag &= (tcflag_t) ~(ICANON | ECHO);
+    tios.c_cc[VMIN] = 1;
+    tios.c_cc[VTIME] = 0;
 
-    if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &terminal_settings) != 0) {
+    if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &tios) != 0) {
         perror(RED "ncsh: Could not set terminal settings" RESET);
     }
 
     signal(SIGHUP, SIG_DFL); // Stops the process if the terminal is closed
-    // signal(SIGWINCH, ncsh_terminal_signal_handler); // Sets window size when window size changed
 
-    return (struct ncsh_Coordinates){.x = window.ws_col, .y = window.ws_row};
+    return ncsh_terminal_size();
+}
+
+void ncsh_terminal_reset(void)
+{
+    fflush(stdout);
+    if (tcsetattr(STDIN_FILENO, TCSANOW, &otios) != 0) {
+        perror(RED "ncsh: Could not restore terminal settings" RESET);
+    }
 }
 
 /*void ncsh_terminal_move(int x, int y)

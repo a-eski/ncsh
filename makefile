@@ -114,6 +114,8 @@ th :
 
 .PHONY: fuzz_history
 fuzz_history :
+	chmod +x ./create_corpus_dirs.sh
+	./create_corpus_dirs.sh
 	clang-19 $(STD) $(fuzz_flags) -DNCSH_HISTORY_TEST ./tests/ncsh_history_fuzzing.c ./src/ncsh_arena.c ./src/readline/ncsh_history.c ./src/eskilib/eskilib_file.c ./src/eskilib/eskilib_hashtable.c -o ./bin/history_fuzz
 	./bin/history_fuzz NCSH_HISTORY_CORPUS/ -detect_leaks=0 -rss_limit_mb=4096
 .PHONY: fh
@@ -130,11 +132,20 @@ tac :
 
 .PHONY: fuzz_autocompletions
 fuzz_autocompletions :
+	chmod +x ./create_corpus_dirs.sh
+	./create_corpus_dirs.sh
 	clang-19 $(STD) $(fuzz_flags) ./tests/ncsh_autocompletions_fuzzing.c ./src/ncsh_arena.c ./src/readline/ncsh_autocompletions.c -o ./bin/autocompletions_fuzz
 	./bin/autocompletions_fuzz NCSH_AUTOCOMPLETIONS_CORPUS/ -detect_leaks=0 -rss_limit_mb=8192
 .PHONY: fa
 fa :
 	make fuzz_autocompletions
+
+.PHONY: bench_autocompletions
+bench_autocompletions :
+	hyperfine --warmup 500 --shell=none './bin/ncsh_autocompletions_tests'
+.PHONYE: ba
+ba :
+	make bench_autocompletions
 
 .PHONY: test_parser
 test_parser :
@@ -146,11 +157,29 @@ tp :
 
 .PHONY: fuzz_parser
 fuzz_parser :
+	chmod +x ./create_corpus_dirs.sh
+	./create_corpus_dirs.sh
 	clang-19 $(STD) $(fuzz_flags) ./tests/ncsh_parser_fuzzing.c ./src/ncsh_arena.c ./src/ncsh_parser.c -o ./bin/parser_fuzz
 	./bin/parser_fuzz NCSH_PARSER_CORPUS/ -detect_leaks=0 -rss_limit_mb=4096
 .PHONY: fp
 fp :
 	make fuzz_parser
+
+.PHONY: bench_parser_and_vm
+bench_parser_and_vm :
+	hyperfine --warmup --shell /bin/ncsh 'ls' 'ls | sort' 'ls > t.txt' 'ls | sort | wc -c' 'ls | sort | wc -c > t2.txt'
+	rm t.txt t2.txt
+.PHONY: bpv
+bpv :
+	make bench_parser_and_vm
+
+.PHONY: bash_bench_parser_and_vm
+bash_bench_parser_and_vm :
+	hyperfine --warmup --shell /bin/bash 'ls' 'ls | sort' 'ls > t.txt' 'ls | sort | wc -c' 'ls | sort | wc -c > t2.txt'
+	rm t.txt t2.txt
+.PHONY: bbpv
+bbpv :
+	make bash_bench_parser_and_vm
 
 .PHONY: test_z
 test_z :

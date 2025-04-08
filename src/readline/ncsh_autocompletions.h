@@ -11,23 +11,29 @@
 // Forward Declaration: prefix tree for storing autocomplete posibilities
 struct ncsh_Autocompletion_Node;
 
-// Type Declaration: prefix tree for storing autocomplete possibilities
+/*  struct ncsh_Autocompletion_Nodes
+ *  Prefix tree (trie) for storing autocomplete possibilities
+ *  Use stack for nodes, slightly faster than allocating on heap in benchmarks.
+ */
 struct ncsh_Autocompletion_Node {
     bool is_end_of_a_word;
     uint_fast8_t weight;
     struct ncsh_Autocompletion_Node* nodes[NCSH_LETTERS];
 };
 
+/* struct ncsh_Autocompletion
+ * Used for storing results of autocompletion matching
+ */
 struct ncsh_Autocompletion {
     uint_fast8_t weight;
     char* value;
 };
 
-inline int ncsh_char_to_index(const char character)
+static inline int ncsh_char_to_index(const char character)
 {
     return (int)character - ' ';
 }
-inline char ncsh_index_to_char(const int index)
+static inline char ncsh_index_to_char(const int index)
 {
     return (char)index + ' ';
 }
@@ -51,16 +57,22 @@ struct ncsh_Autocompletion_Node* ncsh_autocompletions_search(const char* const s
 struct ncsh_Autocompletion_Node* ncsh_autocompletions_search_string(const struct eskilib_String string,
                                                                     struct ncsh_Autocompletion_Node* restrict tree);
 
-// gets all matches based on traversing the tree.
-// populates matches into variable matches and returns 0 if no matches, number of matches length if any matches.
+/* ncsh_autocompletions_get
+ * Gets all matches based on traversing the trie.
+ * Populates matches into variable matches.
+ * Returns: number of matches (0 if no matches)
+ */
 uint_fast8_t ncsh_autocompletions_get(const char* const search,
                                       const size_t search_length,
                                       struct ncsh_Autocompletion* matches,
                                       struct ncsh_Autocompletion_Node* restrict tree,
                                       struct ncsh_Arena scratch_arena);
 
-// gets highest weighted match based on traversing the tree.
-// populates match into variable match and returns 0 if not matches, 1 if any matches.
+/* ncsh_autocompletions_first
+ * Gets highest weighted match based on traversing the tree.
+ * Populates match into variable match
+ * Returns: 0 if no matches, 1 if any matches
+ */
 uint_fast8_t ncsh_autocompletions_first(const char* const search,
                                         const size_t search_length,
                                         char* match,
