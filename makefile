@@ -136,6 +136,13 @@ fuzz_autocompletions :
 fa :
 	make fuzz_autocompletions
 
+.PHONY: bench_autocompletions
+bench_autocompletions :
+	hyperfine --warmup 100 --shell=none './bin/ncsh_autocompletions_tests'
+.PHONYE: ba
+ba :
+	make bench_autocompletions
+
 .PHONY: test_parser
 test_parser :
 	$(CC) $(STD) $(debug_flags) ./src/eskilib/eskilib_test.c ./src/ncsh_arena.c ./src/ncsh_parser.c ./tests/ncsh_parser_tests.c -o ./bin/ncsh_parser_tests
@@ -151,6 +158,22 @@ fuzz_parser :
 .PHONY: fp
 fp :
 	make fuzz_parser
+
+.PHONY: bench_parser_and_vm
+bench_parser_and_vm :
+	hyperfine --warmup --shell /bin/ncsh 'ls' 'ls | sort' 'ls > t.txt' 'ls | sort | wc -c' 'ls | sort | wc -c > t2.txt'
+	rm t.txt t2.txt
+.PHONY: bpv
+bpv :
+	make bench_parser_and_vm
+
+.PHONY: bash_bench_parser_and_vm
+bash_bench_parser_and_vm :
+	hyperfine --warmup --shell /bin/bash 'ls' 'ls | sort' 'ls > t.txt' 'ls | sort | wc -c' 'ls | sort | wc -c > t2.txt'
+	rm t.txt t2.txt
+.PHONY: bbpv
+bbpv :
+	make bash_bench_parser_and_vm
 
 .PHONY: test_z
 test_z :

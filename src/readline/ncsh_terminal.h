@@ -69,6 +69,8 @@ struct ncsh_Coordinates {
     int y;
 };
 
+struct ncsh_Coordinates ncsh_terminal_size(void);
+
 /* ncsh_terminal_init
 * Put the terminal in the proper modes for ncsh and save the previous state of the terminal in memory.
 * ncsh puts the shell in noncanonical mode, so input can be processed one character at a time.

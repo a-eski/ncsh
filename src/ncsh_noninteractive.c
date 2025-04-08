@@ -46,6 +46,8 @@ int_fast32_t ncsh_noninteractive(const int argc,
 {
     assert(argc > 1); // 1 because first arg is ncsh
     assert(argv);
+    assert(!strcmp("ncsh", argv[0]));
+
     // noninteractive does not support no args
     if (argc <= 1) {
         return EXIT_FAILURE;

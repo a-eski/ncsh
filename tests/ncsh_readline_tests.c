@@ -3,6 +3,8 @@
 #include "../src/eskilib/eskilib_test.h"
 #include "../src/readline/ncsh_readline.h"
 
+volatile int sigwinch_caught;
+
 /* ncsh_readline_prompt_size forward declaration
  * get the prompt size accounting for prompt length, user length, and cwd length
  * Returns: length of the prompt

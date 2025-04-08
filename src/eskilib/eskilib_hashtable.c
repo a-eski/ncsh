@@ -19,19 +19,20 @@ bool eskilib_hashtable_malloc(struct ncsh_Arena* const arena, struct eskilib_Has
     return true;
 }
 
-#define ESKILIB_FNV_OFFSET 14695981039346656037UL
-#define ESKILIB_FNV_PRIME 1099511628211UL
+#define ESKILIB_FNV_OFFSET 2166136261
+#define ESKILIB_FNV_PRIME 16777619
 
 // 64-bit FNV-1a hash
-uint64_t eskilib_hashtable_key(const char* key)
+uint64_t eskilib_hashtable_key(const char* str)
 {
-    uint64_t hash = ESKILIB_FNV_OFFSET;
-    for (const char* p = key; *p; p++) {
-        hash ^= (uint64_t)(unsigned char)(*p);
-        hash *= ESKILIB_FNV_PRIME;
-    }
+  register uint64_t i;
 
-    return hash;
+  for (i = ESKILIB_FNV_OFFSET; *str; str++) {
+    i += (i<<1) + (i<<4) + (i<<7) + (i<<8) + (i<<24);
+    i ^= (uint64_t)*str;
+  }
+
+  return i;
 }
 
 struct eskilib_String eskilib_hashtable_get(const char* key, struct eskilib_HashTable* table)
@@ -40,7 +41,7 @@ struct eskilib_String eskilib_hashtable_get(const char* key, struct eskilib_Hash
     size_t index = (size_t)(hash & (uint64_t)(table->capacity - 1));
 
     while (table->entries[index].key != NULL) {
-        if (strcmp(key, table->entries[index].key) == 0) {
+        if (key[0] == table->entries[index].key[0] && !strcmp(key, table->entries[index].key)) {
             return table->entries[index].value;
         }
 

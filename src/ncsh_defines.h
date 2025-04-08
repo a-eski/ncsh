@@ -15,15 +15,19 @@
 #include "ncsh_debug.h"
 #endif /* ifdef NCSH_DEBUG */
 
-#define NCSH_VERSION "0.0.2.4"
+#define NCSH_VERSION "0.0.2.7"
 
 /* EXIT_* Constants
  * Exit values used by a multitude of functions and areas in the shell.
  * Note: the VM has its own set of exit codes, NCSH_COMMAND_* defined below.
  */
 #define EXIT_IO_FAILURE -1
-// #define EXIT_SUCCESS 0 // Defined in stdlib.h
-// #define EXIT_FAILURE 1 // Defined in stdlib.h
+#ifndef EXIT_SUCCESS
+#	define EXIT_SUCCESS 0 // Defined in stdlib.h
+#endif /* !EXIT_SUCCESS */
+#ifndef EXIT_FAILURE
+#	define EXIT_FAILURE 0 // Defined in stdlib.h
+#endif /* !EXIT_FAILURE */
 #define EXIT_SUCCESS_END 2
 #define EXIT_SUCCESS_EXECUTE 3
 #define EXIT_CONTINUE 4

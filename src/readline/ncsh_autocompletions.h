@@ -15,7 +15,7 @@ struct ncsh_Autocompletion_Node;
 struct ncsh_Autocompletion_Node {
     bool is_end_of_a_word;
     uint_fast8_t weight;
-    struct ncsh_Autocompletion_Node* nodes[NCSH_LETTERS];
+    struct ncsh_Autocompletion_Node** nodes;
 };
 
 struct ncsh_Autocompletion {

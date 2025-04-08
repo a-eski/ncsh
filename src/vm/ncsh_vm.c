@@ -13,11 +13,13 @@
 #include "../eskilib/eskilib_colors.h"
 #include "../ncsh_defines.h"
 #include "../ncsh_parser.h"
-#include "../ncsh_global.h"
 #include "ncsh_vm_builtins.h"
 #include "ncsh_vm_types.h"
 #include "ncsh_vm_tokenizer.h"
 #include "ncsh_vm.h"
+
+extern jmp_buf env;
+extern sig_atomic_t vm_child_pid;
 
 /* IO Redirection */
 int ncsh_vm_output_redirection_oflags_get(const bool append)

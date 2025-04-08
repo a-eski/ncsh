@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <setjmp.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -9,18 +10,30 @@
 #include "eskilib/eskilib_colors.h"
 #include "ncsh_arena.h"
 
+void ncsh_arena_abort_internal(struct ncsh_Arena* arena) {
+    puts(RED "ncsh: ran out of allocated memory." RESET);
+    assert(arena->exit);
+    // TODO: implement different OOM stragety other than jumping to exit or aborting.
+    if (arena->exit) {
+        longjmp(*arena->exit, 1);
+    }
+    else {
+        abort();
+    }
+}
+
 __attribute_malloc__
 void* ncsh_arena_malloc_internal(struct ncsh_Arena* arena,
                      uintptr_t count,
                      uintptr_t size,
                      uintptr_t alignment)
 {
+    assert(arena && count && size && alignment);
     uintptr_t padding = -(uintptr_t)arena->start & (alignment - 1);
     uintptr_t available = (uintptr_t)arena->end - (uintptr_t)arena->start - padding;
     assert(count < available / size);
     if (available == 0 || count > available / size) {
-        puts(RED "ncsh: ran out of allocated memory." RESET);
-        abort();
+        ncsh_arena_abort_internal(arena);
     }
     void* val = arena->start + padding;
     arena->start += padding + count * size;
@@ -36,12 +49,12 @@ void* ncsh_arena_realloc_internal(struct ncsh_Arena* arena,
                      void* old_ptr,
                      uintptr_t old_count)
 {
+    assert(arena && count && size && alignment && old_ptr && old_count);
     uintptr_t padding = -(uintptr_t)arena->start & (alignment - 1);
     uintptr_t available = (uintptr_t)arena->end - (uintptr_t)arena->start - padding;
     assert(count < available / size);
     if (available == 0 || count > available / size) {
-        puts(RED "ncsh: ran out of allocated memory." RESET);
-        abort();
+        ncsh_arena_abort_internal(arena);
     }
     void* val = arena->start + padding;
     arena->start += padding + count * size;

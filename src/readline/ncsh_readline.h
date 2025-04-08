@@ -60,12 +60,6 @@ int_fast32_t ncsh_readline_init(struct ncsh_Config* const restrict config,
 int_fast32_t ncsh_readline(struct ncsh_Input* const restrict input,
                            struct ncsh_Arena* const scratch_arena);
 
-/* ncsh_readline_history_and_autocompletion_add
- * Add user input that was able to be processed and executed by the VM to readline's history and autocompletion data stores via the arena.
- */
-void ncsh_readline_history_and_autocompletion_add(struct ncsh_Input* const restrict input,
-                                                  struct ncsh_Arena* const arena);
-
 /* ncsh_readline_exit
  * Saves history changes and restores the terminal settings from before the shell was started.
  */
