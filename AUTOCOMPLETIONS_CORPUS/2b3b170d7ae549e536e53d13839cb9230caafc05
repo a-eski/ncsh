@@ -1,4 +1,0 @@
-# Ignore everything inis directory
-*
-# Except this file
-!.gitignore
