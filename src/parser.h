@@ -6,10 +6,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "eskilib/eskilib_result.h"
 #include "arena.h"
+#include "eskilib/eskilib_result.h"
 
-#define PARSER_TOKENS 128
+#define PARSER_TOKENS_LIMIT 128
 
 /* enum Ops
  * Represents the bytecodes which get sent to the VM.
@@ -43,7 +43,8 @@ enum Ops : uint_fast8_t {
     OP_MATH_EXPRESSION_END = 21,   // )
 };
 
-// TODO: Investigate if having struct Command would be better, where length, op code, value, and any state in one struct to improve cache locality.
+// TODO: Investigate if having struct Command would be better, where length, op code, value, and any state in one struct
+// to improve cache locality.
 /*
 struct Command
 {
@@ -70,15 +71,10 @@ struct Args {
     char** values;       // Constant values needed to be referenced by the VM
 };
 
-enum eskilib_Result parser_args_alloc(struct Args* const restrict args,
-                                            struct Arena* const arena);
+enum eskilib_Result parser_args_alloc(struct Args* const restrict args, struct Arena* const arena);
 
-void parser_parse(const char* const restrict line,
-                       const size_t length,
-                       struct Args* const restrict args,
-                       struct Arena* const scratch_arena);
+void parser_parse(const char* const restrict line, const size_t length, struct Args* const restrict args,
+                  struct Arena* const scratch_arena);
 
-void parser_parse_noninteractive(const char** const restrict inputs,
-                                      const size_t inputs_count,
-                                      struct Args* const restrict args,
-                                      struct Arena* const scratch_arena);
+void parser_parse_noninteractive(const char** const restrict inputs, const size_t inputs_count,
+                                 struct Args* const restrict args, struct Arena* const scratch_arena);

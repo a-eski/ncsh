@@ -3,11 +3,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "lib/arena_test_helper.h"
+#include "../src/defines.h"
 #include "../src/eskilib/eskilib_string.h"
 #include "../src/eskilib/eskilib_test.h"
 #include "../src/readline/autocompletions.h"
-#include "../src/defines.h"
+#include "lib/arena_test_helper.h"
 
 void autocompletions_add_length_mismatch_test(void)
 {
@@ -196,8 +196,7 @@ void autocompletions_search_test(void)
     autocompletions_add(string_three.value, string_three.length, tree, &arena);
 
     struct eskilib_String string_search = {.value = "gen", .length = 4};
-    struct Autocompletion_Node* result =
-        autocompletions_search(string_search.value, string_search.length, tree);
+    struct Autocompletion_Node* result = autocompletions_search(string_search.value, string_search.length, tree);
     eskilib_assert(result != NULL);
     struct Autocompletion_Node* result_e = result->nodes[char_to_index('e')];
     eskilib_assert(result_e != NULL);

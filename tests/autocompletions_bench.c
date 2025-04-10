@@ -1,11 +1,11 @@
-#include <stdlib.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdlib.h>
 
-#include "lib/arena_test_helper.h"
+#include "../src/defines.h"
 #include "../src/eskilib/eskilib_test.h"
 #include "../src/readline/autocompletions.h"
-#include "../src/defines.h"
+#include "lib/arena_test_helper.h"
 
 void autocompletions_bench(void)
 {
@@ -40,13 +40,17 @@ void autocompletions_bench(void)
     autocompletions_add("git diff", sizeof("git diff"), tree, &arena);
     autocompletions_add("git restore", sizeof("git restore"), tree, &arena);
     autocompletions_add("git restore src/ncsh_readline.c", sizeof("git restore src/ncsh_readline.c"), tree, &arena);
-    autocompletions_add("git restore src/readline/ncsh_readline.c", sizeof("git restore src/readline/ncsh_readline.c"), tree, &arena);
+    autocompletions_add("git restore src/readline/ncsh_readline.c", sizeof("git restore src/readline/ncsh_readline.c"),
+                        tree, &arena);
     autocompletions_add("nvim src/ncsh_arena.c", sizeof("nvim src/ncsh_arena.c"), tree, &arena);
     autocompletions_add("z print", sizeof("z print"), tree, &arena);
     autocompletions_add("z rm /home/alex/readline", sizeof("z rm /home/alex/readline"), tree, &arena);
-    autocompletions_add("z rm /home/alex/readline/usr/local", sizeof("z rm /home/alex/readline/usr/local"), tree, &arena);
-    autocompletions_add("z rm /home/alex/ncsh/development/cash", sizeof("z rm /home/alex/ncsh/development/cash"), tree, &arena);
-    autocompletions_add("z rm /home/alex/ncsh/development/curses", sizeof("z rm /home/alex/ncsh/development/curses"), tree, &arena);
+    autocompletions_add("z rm /home/alex/readline/usr/local", sizeof("z rm /home/alex/readline/usr/local"), tree,
+                        &arena);
+    autocompletions_add("z rm /home/alex/ncsh/development/cash", sizeof("z rm /home/alex/ncsh/development/cash"), tree,
+                        &arena);
+    autocompletions_add("z rm /home/alex/ncsh/development/curses", sizeof("z rm /home/alex/ncsh/development/curses"),
+                        tree, &arena);
     autocompletions_add("z rm /home/alex/../", sizeof("z rm /home/alex/../"), tree, &arena);
     autocompletions_add("z readline", sizeof("z readline"), tree, &arena);
     autocompletions_add("pwd", sizeof("pwd"), tree, &arena);
@@ -79,9 +83,11 @@ void autocompletions_bench(void)
     autocompletions_add("git rm Z_CORPUS", sizeof("git rm Z_CORPUS"), tree, &arena);
     autocompletions_add("git rm -r Z_CORPUS", sizeof("git rm -r Z_CORPUS"), tree, &arena);
     autocompletions_add("git rm -r Z_ADD_CORPUS", sizeof("git rm -r Z_ADD_CORPUS"), tree, &arena);
-    autocompletions_add("git push -u origin fuzz-testing-and-longjmp", sizeof("git push -u origin fuzz-testing-and-longjmp"), tree, &arena);
+    autocompletions_add("git push -u origin fuzz-testing-and-longjmp",
+                        sizeof("git push -u origin fuzz-testing-and-longjmp"), tree, &arena);
     autocompletions_add("cd ..", sizeof("cd .."), tree, &arena);
-    autocompletions_add("git clone https://github.com/a-eski/ncsh.git ./ncsh3", sizeof("git clone https://github.com/a-eski/ncsh.git ./ncsh3"), tree, &arena);
+    autocompletions_add("git clone https://github.com/a-eski/ncsh.git ./ncsh3",
+                        sizeof("git clone https://github.com/a-eski/ncsh.git ./ncsh3"), tree, &arena);
     autocompletions_add("cd ncsh3", sizeof("cd ncsh3"), tree, &arena);
     autocompletions_add("z ncsh3", sizeof("z ncsh3"), tree, &arena);
     autocompletions_add("z '.config'", sizeof("z '.config'"), tree, &arena);
@@ -103,7 +109,8 @@ void autocompletions_bench(void)
     autocompletions_add("nvim src/readline", sizeof("nvim src/readline"), tree, &arena);
     autocompletions_add("nvim src/readline/ncsh_terminal.c", sizeof("nvim src/readline/ncsh_terminal.c"), tree, &arena);
     autocompletions_add(":w", sizeof(":w"), tree, &arena);
-    autocompletions_add("git restore src/readline/ncsh_terminal.c", sizeof("git restore src/readline/ncsh_terminal.c"), tree, &arena);
+    autocompletions_add("git restore src/readline/ncsh_terminal.c", sizeof("git restore src/readline/ncsh_terminal.c"),
+                        tree, &arena);
     autocompletions_add("clear", sizeof("clear"), tree, &arena);
     autocompletions_add("make l", sizeof("make l"), tree, &arena);
     autocompletions_add("nvim src", sizeof("nvim src"), tree, &arena);
@@ -116,33 +123,42 @@ void autocompletions_bench(void)
     autocompletions_add("make fuzz_history", sizeof("make fuzz_history"), tree, &arena);
     autocompletions_add("/bin/bash", sizeof("/bin/bash"), tree, &arena);
     autocompletions_add("git push -u origin sigwinch", sizeof("git push -u origin sigwinch"), tree, &arena);
-    autocompletions_add("nvim src/readline/ncsh_autocompletions.c", sizeof("nvim src/readline/ncsh_autocompletions.c"), tree, &arena);
+    autocompletions_add("nvim src/readline/ncsh_autocompletions.c", sizeof("nvim src/readline/ncsh_autocompletions.c"),
+                        tree, &arena);
     autocompletions_add("m ba", sizeof("m ba"), tree, &arena);
     autocompletions_add("make tac", sizeof("make tac"), tree, &arena);
     autocompletions_add("make ba", sizeof("make ba"), tree, &arena);
-    autocompletions_add("git commit -m 'trie optimizations: switch back impl'", sizeof("git commit -m 'trie optimizations: switch back impl'"), tree, &arena);
+    autocompletions_add("git commit -m 'trie optimizations: switch back impl'",
+                        sizeof("git commit -m 'trie optimizations: switch back impl'"), tree, &arena);
     autocompletions_add("git push", sizeof("git push"), tree, &arena);
     autocompletions_add("git rm Z_CORPUS/.gitignore", sizeof("git rm Z_CORPUS/.gitignore"), tree, &arena);
     autocompletions_add("git rm Z_ADD_CORPUS", sizeof("git rm Z_ADD_CORPUS"), tree, &arena);
     autocompletions_add("git rm Z_ADD_CORPUS/.gitignore", sizeof("git rm Z_ADD_CORPUS/.gitignore"), tree, &arena);
-    autocompletions_add("git rm NCSH_AUTOCOMPLETIONS_CORPUS/.gitignore", sizeof("git rm NCSH_AUTOCOMPLETIONS_CORPUS/.gitignore"), tree, &arena);
-    autocompletions_add("git rm NCSH_AUTOCOMPLETIONS_CORPUS", sizeof("git rm NCSH_AUTOCOMPLETIONS_CORPUS"), tree, &arena);
-    autocompletions_add("git rm NCSH_HISTORY_CORPUS/.gitignore", sizeof("git rm NCSH_HISTORY_CORPUS/.gitignore"), tree, &arena);
-    autocompletions_add("git rm NCSH_PARSER_CORPUS/.gitignore", sizeof("git rm NCSH_PARSER_CORPUS/.gitignore"), tree, &arena);
+    autocompletions_add("git rm NCSH_AUTOCOMPLETIONS_CORPUS/.gitignore",
+                        sizeof("git rm NCSH_AUTOCOMPLETIONS_CORPUS/.gitignore"), tree, &arena);
+    autocompletions_add("git rm NCSH_AUTOCOMPLETIONS_CORPUS", sizeof("git rm NCSH_AUTOCOMPLETIONS_CORPUS"), tree,
+                        &arena);
+    autocompletions_add("git rm NCSH_HISTORY_CORPUS/.gitignore", sizeof("git rm NCSH_HISTORY_CORPUS/.gitignore"), tree,
+                        &arena);
+    autocompletions_add("git rm NCSH_PARSER_CORPUS/.gitignore", sizeof("git rm NCSH_PARSER_CORPUS/.gitignore"), tree,
+                        &arena);
     autocompletions_add("nvim", sizeof("nvim"), tree, &arena);
     autocompletions_add("nvim src/ncsh_noninteractive.c", sizeof("nvim src/ncsh_noninteractive.c"), tree, &arena);
     autocompletions_add("make bpv", sizeof("make bpv"), tree, &arena);
     autocompletions_add("make thta", sizeof("make thta"), tree, &arena);
     autocompletions_add("git restore *", sizeof("git restore *"), tree, &arena);
-    autocompletions_add("git restore tests/ncsh_autocompletions_tests.c", sizeof("git restore tests/ncsh_autocompletions_tests.c"), tree, &arena);
-    autocompletions_add("git restore src/readline/ncsh_history.h", sizeof("git restore src/readline/ncsh_history.h"), tree, &arena);
+    autocompletions_add("git restore tests/ncsh_autocompletions_tests.c",
+                        sizeof("git restore tests/ncsh_autocompletions_tests.c"), tree, &arena);
+    autocompletions_add("git restore src/readline/ncsh_history.h", sizeof("git restore src/readline/ncsh_history.h"),
+                        tree, &arena);
     autocompletions_add("nvim src/vm/vm.c", sizeof("nvim src/vm/vm.c"), tree, &arena);
     autocompletions_add("nvim src/readline/ncreadlin.c", sizeof("nvim src/readline/ncreadlin.c"), tree, &arena);
     autocompletions_add("nvim src/readline/ncreadline.c", sizeof("nvim src/readline/ncreadline.c"), tree, &arena);
     autocompletions_add("nvim tests", sizeof("nvim tests"), tree, &arena);
     autocompletions_add("make at", sizeof("make at"), tree, &arena);
     autocompletions_add("nvim acceptance_tests/tests", sizeof("nvim acceptance_tests/tests"), tree, &arena);
-    autocompletions_add("nvim acceptance_tests/tests/common.rb", sizeof("nvim acceptance_tests/tests/common.rb"), tree, &arena);
+    autocompletions_add("nvim acceptance_tests/tests/common.rb", sizeof("nvim acceptance_tests/tests/common.rb"), tree,
+                        &arena);
     autocompletions_add("ls", sizeof("ls"), tree, &arena);
     autocompletions_add("ls", sizeof("ls"), tree, &arena);
     autocompletions_add("ls -a", sizeof("ls -a"), tree, &arena);

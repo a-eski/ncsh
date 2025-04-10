@@ -28,5 +28,4 @@ struct Tokens {
     bool is_background_job;
 };
 
-int_fast32_t vm_tokenizer_tokenize(const struct Args* const restrict args,
-                                        struct Tokens* const restrict tokens);
+int_fast32_t vm_tokenizer_tokenize(const struct Args* const restrict args, struct Tokens* const restrict tokens);

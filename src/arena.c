@@ -7,10 +7,11 @@
 #include <string.h>
 #include <sys/cdefs.h>
 
-#include "eskilib/eskilib_colors.h"
 #include "arena.h"
+#include "eskilib/eskilib_colors.h"
 
-void arena_abort_internal(struct Arena* arena) {
+void arena_abort_internal(struct Arena* arena)
+{
     puts(RED "ncsh: ran out of allocated memory." RESET);
     assert(arena->exit);
     // TODO: implement different OOM stragety other than jumping to exit or aborting.
@@ -22,11 +23,8 @@ void arena_abort_internal(struct Arena* arena) {
     }
 }
 
-__attribute_malloc__
-void* arena_malloc_internal(struct Arena* arena,
-                     uintptr_t count,
-                     uintptr_t size,
-                     uintptr_t alignment)
+__attribute_malloc__ void* arena_malloc_internal(struct Arena* arena, uintptr_t count, uintptr_t size,
+                                                 uintptr_t alignment)
 {
     assert(arena && count && size && alignment);
     uintptr_t padding = -(uintptr_t)arena->start & (alignment - 1);
@@ -40,14 +38,8 @@ void* arena_malloc_internal(struct Arena* arena,
     return memset(val, 0, count * size);
 }
 
-
-__attribute_malloc__
-void* arena_realloc_internal(struct Arena* arena,
-                     uintptr_t count,
-                     uintptr_t size,
-                     uintptr_t alignment,
-                     void* old_ptr,
-                     uintptr_t old_count)
+__attribute_malloc__ void* arena_realloc_internal(struct Arena* arena, uintptr_t count, uintptr_t size,
+                                                  uintptr_t alignment, void* old_ptr, uintptr_t old_count)
 {
     assert(arena && count && size && alignment && old_ptr && old_count);
     uintptr_t padding = -(uintptr_t)arena->start & (alignment - 1);

@@ -4,9 +4,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "lib/arena_test_helper.h"
 #include "../src/eskilib/eskilib_test.h"
 #include "../src/parser.h"
+#include "lib/arena_test_helper.h"
 
 void parser_parse_ls_test(void)
 {

@@ -149,8 +149,7 @@ int_fast32_t vm_args_syntax_check(const struct Args* const restrict args)
 }
 
 [[nodiscard]]
-int_fast32_t vm_tokenizer_tokenize(const struct Args* const restrict args,
-                                        struct Tokens* const restrict tokens)
+int_fast32_t vm_tokenizer_tokenize(const struct Args* const restrict args, struct Tokens* const restrict tokens)
 {
     assert(args);
     assert(tokens);

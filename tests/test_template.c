@@ -15,11 +15,9 @@ void template_tests(void)
     eskilib_test_finish();
 }
 
-#ifndef TEST_ALL
 int main(void)
 {
     template_tests();
 
     return EXIT_SUCCESS;
 }
-#endif /* ifndef TEST_ALL */

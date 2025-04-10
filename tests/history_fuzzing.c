@@ -4,8 +4,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include "lib/arena_test_helper.h"
 #include "../src/readline/history.h"
+#include "lib/arena_test_helper.h"
 
 int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size)
 {

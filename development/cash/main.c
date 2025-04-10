@@ -23,20 +23,18 @@
     printw(fmt, str);                                                                                                  \
     attroff(COLOR_PAIR(color_pair))
 
-#define addstr_color(str, color_pair)                                                                             \
+#define addstr_color(str, color_pair)                                                                                  \
     attron(COLOR_PAIR(color_pair));                                                                                    \
-    addstr(str);                                                                                                  \
+    addstr(str);                                                                                                       \
     attroff(COLOR_PAIR(color_pair))
 
-
-struct ncsh_Directory
-{
+struct ncsh_Directory {
     bool reprint_prompt;
-    char *user;
+    char* user;
     char path[PATH_MAX];
 };
 
-void cash_perror(const char *msg)
+void cash_perror(const char* msg)
 {
     char err_msg[256];
 
@@ -80,16 +78,14 @@ void cash_clear_perror()
     move(y, x);
 }
 
-void ncsh_prompt_directory(char *cwd, char *output)
+void ncsh_prompt_directory(char* cwd, char* output)
 {
     uint_fast32_t i = 1;
     uint_fast32_t last_slash_pos = 0;
     uint_fast32_t second_to_last_slash = 0;
 
-    while (cwd[i] != '\n' && cwd[i] != '\0')
-    {
-        if (cwd[i] == '/')
-        {
+    while (cwd[i] != '\n' && cwd[i] != '\0') {
+        if (cwd[i] == '/') {
             second_to_last_slash = last_slash_pos;
             last_slash_pos = i + 1;
         }
@@ -100,11 +96,10 @@ void ncsh_prompt_directory(char *cwd, char *output)
 }
 
 [[nodiscard]]
-int_fast32_t prompt(struct ncsh_Directory *prompt_info)
+int_fast32_t prompt(struct ncsh_Directory* prompt_info)
 {
-    char *wd_result = getcwd(prompt_info->path, sizeof(prompt_info->path));
-    if (wd_result == NULL)
-    {
+    char* wd_result = getcwd(prompt_info->path, sizeof(prompt_info->path));
+    if (wd_result == NULL) {
         cash_perror("cash: Could not get current working directory");
         return EXIT_FAILURE;
     }
@@ -152,7 +147,7 @@ void cash_exit(void)
 // printw (works like printf)
 // addstr (works like print)
 
-void handle_input(char *buffer, struct ncsh_Directory *prompt_info)
+void handle_input(char* buffer, struct ncsh_Directory* prompt_info)
 {
     size_t pos = 0;
     int character;
@@ -161,58 +156,44 @@ void handle_input(char *buffer, struct ncsh_Directory *prompt_info)
     // cash_perror("cash: Perror test");
     refresh();
 
-    while (1)
-    {
-        if (prompt(prompt_info) != EXIT_SUCCESS)
-        {
+    while (1) {
+        if (prompt(prompt_info) != EXIT_SUCCESS) {
             break;
         }
 
-        while ((character = getch()) != '\004')
-        {
-            if (character == KEY_BACKSPACE)
-            { // Handle backspace
-                if (pos > 0)
-                {
+        while ((character = getch()) != '\004') {
+            if (character == KEY_BACKSPACE) { // Handle backspace
+                if (pos > 0) {
                     pos--;
                     move(getcury(stdscr), getcurx(stdscr) - 1);
                     delch();
                     buffer[pos] = '\0';
                 }
             }
-            else if (character == KEY_LEFT)
-            { // Handle left arrow
-                if (pos > 0)
-                {
+            else if (character == KEY_LEFT) { // Handle left arrow
+                if (pos > 0) {
                     pos--;
                     move(getcury(stdscr), getcurx(stdscr) - 1);
                 }
             }
-            else if (character == KEY_RIGHT)
-            { // Handle right arrow
-                if (pos < strlen(buffer))
-                {
+            else if (character == KEY_RIGHT) { // Handle right arrow
+                if (pos < strlen(buffer)) {
                     pos++;
                     move(getcury(stdscr), getcurx(stdscr) + 1);
                 }
             }
-            else if (character == KEY_DC)
-            { // Handle delete
-                if (pos < strlen(buffer))
-                {
+            else if (character == KEY_DC) { // Handle delete
+                if (pos < strlen(buffer)) {
                     delch();
                     memmove(&buffer[pos], &buffer[pos + 1], strlen(buffer) - pos);
                 }
             }
-            else if (character == '\n' || character == '\r')
-            {
+            else if (character == '\n' || character == '\r') {
                 move(getcury(stdscr), getcurx(stdscr) + 1);
                 break;
             }
-            else
-            { // Handle other characters
-                if (pos < CASH_MAX_INPUT - 1)
-                {
+            else { // Handle other characters
+                if (pos < CASH_MAX_INPUT - 1) {
                     insch(character);
                     move(getcury(stdscr), getcurx(stdscr) + 1);
                     buffer[pos++] = character;
@@ -221,19 +202,18 @@ void handle_input(char *buffer, struct ncsh_Directory *prompt_info)
             refresh();
         }
 
-        if (strcmp(buffer, "exit") == 0)
-        {
+        if (strcmp(buffer, "exit") == 0) {
             break;
         }
 
         if (buffer[0]) {
-	    addch('\n');
-	    addstr(buffer);
-	    addch('\n');
+            addch('\n');
+            addstr(buffer);
+            addch('\n');
             refresh();
         }
         else {
-	    addch('\n');
+            addch('\n');
             refresh();
         }
 
@@ -247,7 +227,7 @@ int main(void)
 {
     struct ncsh_Directory prompt_info = {0};
     prompt_info.user = getenv("USER");
-    char *buffer = calloc(sizeof(char), CASH_MAX_INPUT);
+    char* buffer = calloc(sizeof(char), CASH_MAX_INPUT);
     cash_init();
 
     handle_input(buffer, &prompt_info);

@@ -13,19 +13,17 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#include "../eskilib/eskilib_string.h"
-#include "../eskilib/eskilib_colors.h"
 #include "../defines.h"
-#include "../readline/history.h"
+#include "../eskilib/eskilib_colors.h"
+#include "../eskilib/eskilib_string.h"
 #include "../parser.h"
-#include "vm_builtins.h"
+#include "../readline/history.h"
 #include "../z/z.h"
+#include "vm_builtins.h"
 
 [[nodiscard]]
-int_fast32_t builtins_z(struct z_Database* const restrict z_db,
-                             const struct Args* const restrict args,
-                             struct Arena* const arena,
-                             struct Arena* const scratch_arena)
+int_fast32_t builtins_z(struct z_Database* const restrict z_db, const struct Args* const restrict args,
+                        struct Arena* const arena, struct Arena* const scratch_arena)
 {
     assert(z_db);
     assert(args->count > 0);
@@ -44,7 +42,7 @@ int_fast32_t builtins_z(struct z_Database* const restrict z_db,
             return NCSH_COMMAND_SUCCESS_CONTINUE;
         }
 
-	// z
+        // z
         char cwd[PATH_MAX] = {0};
         if (!getcwd(cwd, PATH_MAX)) {
             perror(RED "ncsh z: Could not load cwd information" RESET);
@@ -58,7 +56,7 @@ int_fast32_t builtins_z(struct z_Database* const restrict z_db,
     if (args->count > 2) {
         assert(args->values[1] && args->values[2]);
 
-	// z add
+        // z add
         if (eskilib_string_compare(args->values[1], args->lengths[1], Z_ADD, sizeof(Z_ADD))) {
             if (z_add(args->values[2], args->lengths[2], z_db, arena) != Z_SUCCESS) {
                 return NCSH_COMMAND_FAILED_CONTINUE;
@@ -66,9 +64,9 @@ int_fast32_t builtins_z(struct z_Database* const restrict z_db,
 
             return NCSH_COMMAND_SUCCESS_CONTINUE;
         }
-	// z rm/remove
+        // z rm/remove
         else if (eskilib_string_compare(args->values[1], args->lengths[1], Z_RM, sizeof(Z_RM)) ||
-                eskilib_string_compare(args->values[1], args->lengths[1], Z_REMOVE, sizeof(Z_REMOVE))) {
+                 eskilib_string_compare(args->values[1], args->lengths[1], Z_REMOVE, sizeof(Z_REMOVE))) {
             if (z_remove(args->values[2], args->lengths[2], z_db) != Z_SUCCESS) {
                 return NCSH_COMMAND_FAILED_CONTINUE;
             }
@@ -82,10 +80,8 @@ int_fast32_t builtins_z(struct z_Database* const restrict z_db,
 }
 
 [[nodiscard]]
-int_fast32_t builtins_history(struct History* const restrict history,
-                                   const struct Args* const restrict args,
-                                   struct Arena* const arena,
-                                   struct Arena* const scratch_arena)
+int_fast32_t builtins_history(struct History* const restrict history, const struct Args* const restrict args,
+                              struct Arena* const arena, struct Arena* const scratch_arena)
 {
     if (args->count == 1) {
         return history_command_display(history);
@@ -94,8 +90,7 @@ int_fast32_t builtins_history(struct History* const restrict history,
     if (args->count == 2) {
         assert(args->values[1]);
 
-        if (eskilib_string_compare(args->values[1], args->lengths[1], NCSH_HISTORY_COUNT,
-                                   sizeof(NCSH_HISTORY_COUNT))) {
+        if (eskilib_string_compare(args->values[1], args->lengths[1], NCSH_HISTORY_COUNT, sizeof(NCSH_HISTORY_COUNT))) {
             return history_command_count(history);
         }
         else if (eskilib_string_compare(args->values[1], args->lengths[1], NCSH_HISTORY_CLEAN,
@@ -107,17 +102,18 @@ int_fast32_t builtins_history(struct History* const restrict history,
     if (args->count == 3) {
         assert(args->values[1] && args->values[2]);
 
-            // z add
+        // z add
         if (eskilib_string_compare(args->values[1], args->lengths[1], NCSH_HISTORY_ADD, sizeof(NCSH_HISTORY_ADD))) {
-                if (history_command_add(args->values[2], args->lengths[2], history, arena) != Z_SUCCESS) {
-                    return NCSH_COMMAND_FAILED_CONTINUE;
-                }
+            if (history_command_add(args->values[2], args->lengths[2], history, arena) != Z_SUCCESS) {
+                return NCSH_COMMAND_FAILED_CONTINUE;
+            }
 
             return NCSH_COMMAND_SUCCESS_CONTINUE;
         }
-	// z rm/remove
+        // z rm/remove
         else if (eskilib_string_compare(args->values[1], args->lengths[1], NCSH_HISTORY_RM, sizeof(NCSH_HISTORY_RM)) ||
-                eskilib_string_compare(args->values[1], args->lengths[1], NCSH_HISTORY_REMOVE, sizeof(NCSH_HISTORY_REMOVE))) {
+                 eskilib_string_compare(args->values[1], args->lengths[1], NCSH_HISTORY_REMOVE,
+                                        sizeof(NCSH_HISTORY_REMOVE))) {
             if (history_command_remove(args->values[2], args->lengths[2], history, arena, scratch_arena) != Z_SUCCESS) {
                 return NCSH_COMMAND_FAILED_CONTINUE;
             }
@@ -161,19 +157,28 @@ int_fast32_t builtins_echo(const struct Args* const restrict args)
 
 #define HELP_MESSAGE "ncsh help\n\n"
 #define HELP_FORMAT "Builtin Commands: {command} {args}\n\n"
-#define HELP_QUIT "q:		          To exit, type q, exit, or quit and press enter. You can also use Ctrl+D to exit.\n\n"
+#define HELP_QUIT                                                                                                      \
+    "q:		          To exit, type q, exit, or quit and press enter. You can also use Ctrl+D to exit.\n\n"
 #define HELP_CHANGEDIR "cd/z:		          You can change directory with cd or z.\n\n"
-#define HELP_Z "z {directory}:            A builtin autojump/z command. An enhanced cd command that keeps track of history and fuzzy matches against previously visited directories.\n\n"
+#define HELP_Z                                                                                                         \
+    "z {directory}:            A builtin autojump/z command. An enhanced cd command that keeps track of history and "  \
+    "fuzzy matches against previously visited directories.\n\n"
 #define HELP_Z_ADD "z add {directory}:        Manually add a directory to your z database.\n\n"
-#define HELP_Z_RM "z rm {directory}:         Manually remove a directory from your z database. Can also call using 'z remove {directory}'.\n\n"
+#define HELP_Z_RM                                                                                                      \
+    "z rm {directory}:         Manually remove a directory from your z database. Can also call using 'z remove "       \
+    "{directory}'.\n\n"
 #define HELP_Z_PRINT "z print:                  Print out information about the entries in your z database.\n\n"
 #define HELP_ECHO "echo:		          You can write things to the screen using echo.\n\n"
 #define HELP_HISTORY "history:	          You can see your command history using the history command.\n\n"
-#define HELP_HISTORY_COUNT                                                                                        \
+#define HELP_HISTORY_COUNT                                                                                             \
     "history count:            You can see the number of entries in your history with history count command.\n\n"
-#define HELP_HISTORY_CLEAN "history clean:            Removes all duplicates from the history file and reloads deduplicated history into memory.\n\n"
+#define HELP_HISTORY_CLEAN                                                                                             \
+    "history clean:            Removes all duplicates from the history file and reloads deduplicated history into "    \
+    "memory.\n\n"
 #define HELP_HISTORY_ADD "history add {command}:    Add a command to your history without executing the command.\n\n"
-#define HELP_HISTORY_RM "history rm {command}:     Remove a command from your history. Please note, the history is cleaned first to dededuplicate. Can also call using 'history remove {command}.\n\n"
+#define HELP_HISTORY_RM                                                                                                \
+    "history rm {command}:     Remove a command from your history. Please note, the history is cleaned first to "      \
+    "dededuplicate. Can also call using 'history remove {command}.\n\n"
 #define HELP_PWD "pwd:         	          Prints the current working directory.\n\n"
 #define HELP_KILL "kill {processId}:         Terminates the process with associated processId.\n"
 

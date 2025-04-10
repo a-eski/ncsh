@@ -6,31 +6,22 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "lib/arena_test_helper.h"
 #include "../src/eskilib/eskilib_test.h"
 #include "../src/z/z.h"
+#include "lib/arena_test_helper.h"
 
 #define CWD_LENGTH 528
 
-static const struct eskilib_String config_location = { .length = 0, .value = NULL };
+static const struct eskilib_String config_location = {.length = 0, .value = NULL};
 
-double z_score(struct z_Directory* const restrict directory,
-               const int fzf_score,
-               const time_t now);
+double z_score(struct z_Directory* const restrict directory, const int fzf_score, const time_t now);
 
-struct z_Directory* z_match_find(char* const target,
-                                 const size_t target_length,
-                                 const char* const cwd,
-                                 const size_t cwd_length,
-                                 struct z_Database* const restrict db,
+struct z_Directory* z_match_find(char* const target, const size_t target_length, const char* const cwd,
+                                 const size_t cwd_length, struct z_Database* const restrict db,
                                  struct Arena* const scratch_arena);
 
-enum z_Result z_database_add(const char* const path,
-                             const size_t path_length,
-                             const char* const cwd,
-                             const size_t cwd_length,
-                             struct z_Database* const restrict db,
-                             struct Arena* const arena);
+enum z_Result z_database_add(const char* const path, const size_t path_length, const char* const cwd,
+                             const size_t cwd_length, struct z_Database* const restrict db, struct Arena* const arena);
 
 // read from empty database file
 void z_read_empty_database_file_test(void)
@@ -65,7 +56,8 @@ void z_read_non_empty_database_test(void)
         eskilib_assert(false);
     }
 
-    struct z_Directory* match = z_match_find(new_value.value, new_value.length, cwd, strlen(cwd) + 1, &db, &scratch_arena);
+    struct z_Directory* match =
+        z_match_find(new_value.value, new_value.length, cwd, strlen(cwd) + 1, &db, &scratch_arena);
     eskilib_assert(match != NULL);
     eskilib_assert(db.count == 1);
     eskilib_assert(match->path_length == 57);
@@ -254,8 +246,8 @@ void z_add_to_database_empty_value_test(void)
     eskilib_assert(db.count == 1);
     struct eskilib_String cwd = {.value = "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells", .length = 52};
 
-    eskilib_assert(z_database_add(eskilib_String_Empty.value, eskilib_String_Empty.length, cwd.value, cwd.length,
-                                         &db, &arena) == Z_NULL_REFERENCE);
+    eskilib_assert(z_database_add(eskilib_String_Empty.value, eskilib_String_Empty.length, cwd.value, cwd.length, &db,
+                                  &arena) == Z_NULL_REFERENCE);
     eskilib_assert(db.count == 1);
 
     ARENA_TEST_TEARDOWN;
@@ -733,7 +725,7 @@ void z_crashing_input_test(void)
     eskilib_assert(db.count == 2);
 
     char* buffer = arena_malloc(&arena, CWD_LENGTH, char);
-    struct eskilib_String target = {.value = "", .length = sizeof("") };
+    struct eskilib_String target = {.value = "", .length = sizeof("")};
     z(target.value, target.length, buffer, &db, &arena, scratch_arena);
 
     // not crashing is a test passed

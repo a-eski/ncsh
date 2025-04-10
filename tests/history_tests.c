@@ -4,10 +4,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "lib/arena_test_helper.h"
 #include "../src/eskilib/eskilib_string.h"
 #include "../src/eskilib/eskilib_test.h"
 #include "../src/readline/history.h"
+#include "lib/arena_test_helper.h"
 
 void history_load_file_not_exists_test(void)
 {

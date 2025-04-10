@@ -11,17 +11,16 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "eskilib/eskilib_colors.h"
-#include "eskilib/eskilib_result.h"
-#include "eskilib/eskilib_string.h"
-#include "eskilib/eskilib_file.h"
 #include "arena.h"
 #include "config.h"
 #include "defines.h"
+#include "eskilib/eskilib_colors.h"
+#include "eskilib/eskilib_file.h"
+#include "eskilib/eskilib_result.h"
+#include "eskilib/eskilib_string.h"
 
 [[nodiscard]]
-enum eskilib_Result config_home_init(struct Config* const restrict config,
-                                     struct Arena* const arena)
+enum eskilib_Result config_home_init(struct Config* const restrict config, struct Arena* const arena)
 {
     if (!config) {
         return E_FAILURE_NULL_REFERENCE;
@@ -46,14 +45,13 @@ enum eskilib_Result config_home_init(struct Config* const restrict config,
 }
 
 [[nodiscard]]
-enum eskilib_Result config_location_init(struct Config* const restrict config,
-                                struct Arena* const arena)
+enum eskilib_Result config_location_init(struct Config* const restrict config, struct Arena* const arena)
 {
     if (!config) {
         return E_FAILURE_NULL_REFERENCE;
     }
 
-    config->config_location.value = arena_malloc(arena, MAX_INPUT, char);
+    config->config_location.value = arena_malloc(arena, NCSH_MAX_INPUT, char);
 
     const char* const config_original_ptr = config->config_location.value;
     config->config_location.length = config->home_location.length;
@@ -61,7 +59,7 @@ enum eskilib_Result config_location_init(struct Config* const restrict config,
     constexpr size_t config_location_len = sizeof(DOT_CONFIG) + sizeof(NCSH);
     /* first +1 is "/", second is terminating null */
     constexpr size_t config_location_folder_len = 1 + config_location_len + 1;
-    if (config->home_location.length + config_location_folder_len > MAX_INPUT) {
+    if (config->home_location.length + config_location_folder_len > NCSH_MAX_INPUT) {
         config->config_location.value[0] = '\0';
         return E_FAILURE_OVERFLOW_PROTECTION;
     }
@@ -89,27 +87,28 @@ enum eskilib_Result config_location_init(struct Config* const restrict config,
 }
 
 [[nodiscard]]
-enum eskilib_Result config_file_set(struct Config* const restrict config,
-                                         struct Arena* const arena)
+enum eskilib_Result config_file_set(struct Config* const restrict config, struct Arena* const arena)
 {
+    constexpr size_t rc_len = sizeof(RC_FILE);
+    constexpr size_t rc_len_nt = rc_len - 1;
     if (!config->config_location.value || !config->config_location.length) {
-        config->config_file.value = arena_malloc(arena, sizeof(RC), char);
-        memcpy(config->config_file.value, RC, sizeof(RC) - 1);
-        config->config_file.value[sizeof(RC) - 1] = '\0';
-        config->config_file.length = sizeof(RC);
+        config->config_file.value = arena_malloc(arena, rc_len, char);
+        memcpy(config->config_file.value, RC_FILE, rc_len_nt);
+        config->config_file.value[rc_len_nt] = '\0';
+        config->config_file.length = rc_len;
 
         return E_SUCCESS;
     }
 
-    if (config->config_location.length + sizeof(RC) > MAX_INPUT) {
+    if (config->config_location.length + rc_len > NCSH_MAX_INPUT) {
         config->config_file.value = NULL;
         return E_FAILURE_OVERFLOW_PROTECTION;
     }
 
-    config->config_file.value = arena_malloc(arena, config->config_location.length + sizeof(RC), char);
+    config->config_file.value = arena_malloc(arena, config->config_location.length + rc_len, char);
     memcpy(config->config_file.value, config->config_location.value, config->config_location.length - 1);
-    memcpy(config->config_file.value + config->config_location.length - 1, "/" RC, sizeof(RC));
-    config->config_file.length = config->config_location.length + sizeof(RC);
+    memcpy(config->config_file.value + config->config_location.length - 1, "/" RC_FILE, rc_len);
+    config->config_file.length = config->config_location.length + rc_len;
     config->config_file.value[config->config_file.length - 1] = '\0';
 
 #ifdef NCSH_DEBUG
@@ -124,9 +123,7 @@ enum eskilib_Result config_file_set(struct Config* const restrict config,
  */
 #define PATH "PATH"
 #define PATH_ADD "PATH+="
-void config_path_add(const char* const value,
-                          const int len,
-                          struct Arena* const scratch_arena)
+void config_path_add(const char* const value, const int len, struct Arena* const scratch_arena)
 {
     assert(len > 0);
     if (len < 0) {
@@ -148,11 +145,10 @@ void config_path_add(const char* const value,
 /* config_process
  * Iterate through the .ncshrc config file and perform any actions needed.
  */
-void config_process(FILE* const restrict file,
-                         struct Arena* const scratch_arena)
+void config_process(FILE* const restrict file, struct Arena* const scratch_arena)
 {
     int buffer_length;
-    char buffer[MAX_INPUT] = {0};
+    char buffer[NCSH_MAX_INPUT] = {0};
     while ((buffer_length = eskilib_fgets(buffer, sizeof(buffer), file)) != EOF) {
         if (buffer_length > 6 && !strncmp(buffer, PATH_ADD, sizeof(PATH_ADD) - 1)) {
             config_path_add(buffer + 6, buffer_length - 6, scratch_arena);
@@ -167,31 +163,30 @@ void config_process(FILE* const restrict file,
  * Returns: enum eskilib_Result, E_SUCCESS if config file loaded or user doesn't want one.
  */
 [[nodiscard]]
-enum eskilib_Result config_file_load(const struct Config* const restrict config,
-                                          struct Arena* const scratch_arena)
+enum eskilib_Result config_file_load(const struct Config* const restrict config, struct Arena* const scratch_arena)
 {
 
     FILE* file = fopen(config->config_file.value, "r");
     if (!file || ferror(file)) {
-	printf("ncsh: would you like to create a config file '%s'? [Y/n]: ", config->config_file.value);
+        printf("ncsh: would you like to create a config file '%s'? [Y/n]: ", config->config_file.value);
         fflush(stdout);
 
-	char character;
-	if (!read(STDIN_FILENO, &character, 1)) {
+        char character;
+        if (!read(STDIN_FILENO, &character, 1)) {
             perror(RED NCSH_ERROR_STDIN RESET);
             return E_FAILURE;
-    	}
+        }
 
-	if (character != 'y' && character != 'Y') {
-	    return E_SUCCESS;
-	}
+        if (character != 'y' && character != 'Y') {
+            return E_SUCCESS;
+        }
 
         file = fopen(config->config_file.value, "w");
         if (!file) {
             perror(RED "ncsh: Could not load or create config file" RESET);
             return E_FAILURE_FILE_OP;
         }
-        puts("\nCreated " RC " config file.");
+        puts("\nCreated " RC_FILE " config file.");
         return E_SUCCESS;
     }
 
@@ -207,9 +202,8 @@ enum eskilib_Result config_file_load(const struct Config* const restrict config,
  * Returns: enum eskilib_Result, E_SUCCESS is successful
  */
 [[nodiscard]]
-enum eskilib_Result config_init(struct Config* const restrict config,
-                                     struct Arena* const arena,
-                                     struct Arena scratch_arena)
+enum eskilib_Result config_init(struct Config* const restrict config, struct Arena* const arena,
+                                struct Arena scratch_arena)
 {
     assert(arena);
 
@@ -256,11 +250,15 @@ struct Alias {
 /* Compile-time aliases
  */
 const struct Alias aliases[] = {
-    { .alias = { .length = sizeof(GIT_ALIAS), .value = GIT_ALIAS }, .actual_command = { .length = sizeof(GIT), .value = GIT }},
-    { .alias = { .length = sizeof(NEOVIM_ALIAS), .value = NEOVIM_ALIAS }, .actual_command = { .length = sizeof(NEOVIM), .value = NEOVIM }},
-    { .alias = { .length = sizeof(MAKE_ALIAS), .value = MAKE_ALIAS }, .actual_command = { .length = sizeof(MAKE), .value = MAKE }},
-    { .alias = { .length = sizeof(FD_ALIAS), .value = FD_ALIAS }, .actual_command = {. length = sizeof(FD), .value = FD }},
-    { .alias = { .length = sizeof(CARGO_ALIAS ), .value = CARGO_ALIAS }, .actual_command = { .length = sizeof(CARGO), .value = CARGO }},
+    {.alias = {.length = sizeof(GIT_ALIAS), .value = GIT_ALIAS},
+     .actual_command = {.length = sizeof(GIT), .value = GIT}},
+    {.alias = {.length = sizeof(NEOVIM_ALIAS), .value = NEOVIM_ALIAS},
+     .actual_command = {.length = sizeof(NEOVIM), .value = NEOVIM}},
+    {.alias = {.length = sizeof(MAKE_ALIAS), .value = MAKE_ALIAS},
+     .actual_command = {.length = sizeof(MAKE), .value = MAKE}},
+    {.alias = {.length = sizeof(FD_ALIAS), .value = FD_ALIAS}, .actual_command = {.length = sizeof(FD), .value = FD}},
+    {.alias = {.length = sizeof(CARGO_ALIAS), .value = CARGO_ALIAS},
+     .actual_command = {.length = sizeof(CARGO), .value = CARGO}},
 };
 
 /* config_alias_check

@@ -10,8 +10,8 @@
 #include <termios.h>
 #include <unistd.h>
 
-#include "../eskilib/eskilib_colors.h"
 #include "../defines.h"
+#include "../eskilib/eskilib_colors.h"
 #include "terminal.h"
 
 #define TERMINAL_RETURN 'R'
@@ -23,7 +23,7 @@ struct Coordinates terminal_size(void)
 {
     struct winsize window;
     ioctl(STDOUT_FILENO, TIOCGWINSZ, &window);
-    return (struct Coordinates){ .x = window.ws_col, .y = window.ws_row };
+    return (struct Coordinates){.x = window.ws_col, .y = window.ws_row};
 }
 
 struct Coordinates terminal_init(void)
@@ -114,6 +114,7 @@ void terminal_line_delete(int i) {
     printf("\033[%dM", i);
 }*/
 
-void terminal_characters_delete(int i) {
+void terminal_characters_delete(int i)
+{
     printf("\033[%dP", i);
 }

@@ -1,7 +1,7 @@
 #include <stdlib.h>
 
-#include "../src/eskilib/eskilib_test.h"
 #include "../src/config.h"
+#include "../src/eskilib/eskilib_test.h"
 
 void config_alias_check_no_alias_test(void)
 {

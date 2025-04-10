@@ -9,8 +9,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "eskilib/eskilib_result.h"
 #include "defines.h"
+#include "eskilib/eskilib_result.h"
 #include "parser.h"
 
 // supported quotes
@@ -58,8 +58,7 @@
  * Returns: enum eskilib_Result, E_SUCCESS is successful, E_FAILURE_NULL_REFERENCE if *args is null
  */
 [[nodiscard]]
-enum eskilib_Result parser_args_alloc(struct Args* const restrict args,
-                                            struct Arena* const arena)
+enum eskilib_Result parser_args_alloc(struct Args* const restrict args, struct Arena* const arena)
 {
     if (!args) {
         return E_FAILURE_NULL_REFERENCE;
@@ -67,9 +66,9 @@ enum eskilib_Result parser_args_alloc(struct Args* const restrict args,
 
     args->count = 0;
 
-    args->values = arena_malloc(arena, PARSER_TOKENS, char*);
-    args->ops = arena_malloc(arena, PARSER_TOKENS, uint_fast8_t);
-    args->lengths = arena_malloc(arena, PARSER_TOKENS, size_t);
+    args->values = arena_malloc(arena, PARSER_TOKENS_LIMIT, char*);
+    args->ops = arena_malloc(arena, PARSER_TOKENS_LIMIT, uint_fast8_t);
+    args->lengths = arena_malloc(arena, PARSER_TOKENS_LIMIT, size_t);
 
     return E_SUCCESS;
 }
@@ -115,11 +114,11 @@ const char* const restrict ops_2char_str[] = {
 constexpr size_t ops_2char_len = sizeof(ops_2char_str) / sizeof(char*);
 
 const enum Ops ops_2char[] = {OP_STDOUT_REDIRECTION_APPEND,
-                             OP_STDERR_REDIRECTION,
-                             OP_STDOUT_AND_STDERR_REDIRECTION,
-                             OP_AND,
-                             OP_OR,
-                             OP_EXPONENTIATION};
+                              OP_STDERR_REDIRECTION,
+                              OP_STDOUT_AND_STDERR_REDIRECTION,
+                              OP_AND,
+                              OP_OR,
+                              OP_EXPONENTIATION};
 
 /* ops_3char_str
  * A constant array that contain all shell operations that are 3 characters long, like "&>>".
@@ -137,8 +136,7 @@ const enum Ops ops_3char[] = {OP_STDERR_REDIRECTION_APPEND, OP_STDOUT_AND_STDERR
  * Returns: a value from enum Ops, the bytecode relevant to the input
  */
 [[nodiscard]]
-enum Ops parser_op_get(const char* const restrict line,
-                                 const size_t length)
+enum Ops parser_op_get(const char* const restrict line, const size_t length)
 {
     switch (length) {
     case 0: {
@@ -224,10 +222,8 @@ enum Parser_State {
  * Handles expansions like *, ?, and ~
  * Results are stored in struct Args
  */
-void parser_parse(const char* const restrict line,
-                       const size_t length,
-                       struct Args* const restrict args,
-                       struct Arena* scratch_arena)
+void parser_parse(const char* const restrict line, const size_t length, struct Args* const restrict args,
+                  struct Arena* scratch_arena)
 {
     assert(args);
     assert(line);
@@ -249,12 +245,12 @@ void parser_parse(const char* const restrict line,
     int state = 0;
 
     for (uint_fast32_t line_position = 0; line_position < length + 1; ++line_position) {
-        if (args->count == PARSER_TOKENS - 1 && line_position < length) { // can't parse all of the args
+        if (args->count == PARSER_TOKENS_LIMIT - 1 && line_position < length) { // can't parse all of the args
             args->count = 0;
             break;
         }
         else if (line_position == length || line_position >= NCSH_MAX_INPUT - 1 || buf_pos >= NCSH_MAX_INPUT - 1 ||
-                 args->count == PARSER_TOKENS - 1) {
+                 args->count == PARSER_TOKENS_LIMIT - 1) {
             args->values[args->count] = NULL; // set the last value as null to use as a sentinel in the VM
             break;
         }
@@ -277,7 +273,7 @@ void parser_parse(const char* const restrict line,
                     args->ops[args->count] = OP_CONSTANT;
                     args->lengths[args->count] = buf_pos;
                     ++args->count;
-                    if (args->count >= PARSER_TOKENS - 1) {
+                    if (args->count >= PARSER_TOKENS_LIMIT - 1) {
                         break;
                     }
                 }
@@ -382,10 +378,8 @@ void parser_parse(const char* const restrict line,
  * Parse the command line input into commands, command lengths, and op codes stored in struct Args.
  * Allocates memory that is freed by parser_free_values at the end of each main loop of the shell.
  */
-void parser_parse_noninteractive(const char** const restrict inputs,
-                                      const size_t inputs_count,
-                                      struct Args* const restrict args,
-                                      struct Arena* scratch_arena)
+void parser_parse_noninteractive(const char** const restrict inputs, const size_t inputs_count,
+                                 struct Args* const restrict args, struct Arena* scratch_arena)
 {
     assert(args);
     assert(inputs);

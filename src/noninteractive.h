@@ -4,5 +4,4 @@
 
 #include <stdint.h>
 
-int_fast32_t noninteractive(const int argc,
-                                 const char** const restrict argv);
+int_fast32_t noninteractive(const int argc, const char** const restrict argv);

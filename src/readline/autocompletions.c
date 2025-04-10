@@ -8,8 +8,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../eskilib/eskilib_string.h"
 #include "../defines.h"
+#include "../eskilib/eskilib_string.h"
 #include "autocompletions.h"
 
 static inline int char_to_index(const char character);
@@ -22,10 +22,8 @@ struct Autocompletion_Node* autocompletions_alloc(struct Arena* const arena)
     return tree;
 }
 
-void autocompletions_add(const char* const string,
-                              const size_t length,
-                              struct Autocompletion_Node* restrict tree,
-                              struct Arena* const arena)
+void autocompletions_add(const char* const string, const size_t length, struct Autocompletion_Node* restrict tree,
+                         struct Arena* const arena)
 {
     assert(string);
     assert(length > 0);
@@ -56,10 +54,8 @@ void autocompletions_add(const char* const string,
     tree->is_end_of_a_word = true;
 }
 
-void autocompletions_add_multiple(const struct eskilib_String* const strings,
-                                       const int count,
-                                       struct Autocompletion_Node* restrict tree,
-                                       struct Arena* const arena)
+void autocompletions_add_multiple(const struct eskilib_String* const strings, const int count,
+                                  struct Autocompletion_Node* restrict tree, struct Arena* const arena)
 {
     if (!strings || count <= 0 || !tree) {
         return;
@@ -70,9 +66,8 @@ void autocompletions_add_multiple(const struct eskilib_String* const strings,
     }
 }
 
-struct Autocompletion_Node* autocompletions_search(const char* const string,
-                                                             const size_t length,
-                                                             struct Autocompletion_Node* restrict tree)
+struct Autocompletion_Node* autocompletions_search(const char* const string, const size_t length,
+                                                   struct Autocompletion_Node* restrict tree)
 {
     assert(string);
     assert(length > 0);
@@ -95,16 +90,14 @@ struct Autocompletion_Node* autocompletions_search(const char* const string,
 }
 
 struct Autocompletion_Node* autocompletions_search_string(const struct eskilib_String string,
-                                                                    struct Autocompletion_Node* restrict tree)
+                                                          struct Autocompletion_Node* restrict tree)
 {
     return autocompletions_search(string.value, string.length, tree);
 }
 
-void autocompletions_match(struct Autocompletion* const matches,
-                                uint_fast32_t* const string_position,
-                                uint_fast8_t* const matches_position,
-                                struct Autocompletion_Node* restrict tree,
-                                struct Arena* const scratch_arena)
+void autocompletions_match(struct Autocompletion* const matches, uint_fast32_t* const string_position,
+                           uint_fast8_t* const matches_position, struct Autocompletion_Node* restrict tree,
+                           struct Arena* const scratch_arena)
 {
     for (int i = 0; i < NCSH_LETTERS; ++i) {
         if (tree->nodes[i]) {
@@ -145,9 +138,8 @@ void autocompletions_match(struct Autocompletion* const matches,
     }
 }
 
-uint_fast8_t autocompletions_matches(struct Autocompletion* const matches,
-                                          struct Autocompletion_Node* restrict tree,
-                                          struct Arena* const scratch_arena)
+uint_fast8_t autocompletions_matches(struct Autocompletion* const matches, struct Autocompletion_Node* restrict tree,
+                                     struct Arena* const scratch_arena)
 {
     uint_fast32_t string_position = 0;
     uint_fast8_t matches_position = 0;
@@ -157,11 +149,8 @@ uint_fast8_t autocompletions_matches(struct Autocompletion* const matches,
     return matches_position;
 }
 
-uint_fast8_t autocompletions_get(const char* const search,
-                                      const size_t search_length,
-                                      struct Autocompletion* matches,
-                                      struct Autocompletion_Node* restrict tree,
-                                      struct Arena scratch_arena)
+uint_fast8_t autocompletions_get(const char* const search, const size_t search_length, struct Autocompletion* matches,
+                                 struct Autocompletion_Node* restrict tree, struct Arena scratch_arena)
 {
     struct Autocompletion_Node* const search_result = autocompletions_search(search, search_length, tree);
     if (!search_result) {
@@ -176,11 +165,8 @@ uint_fast8_t autocompletions_get(const char* const search,
     return match_count;
 }
 
-uint_fast8_t autocompletions_first(const char* const search,
-                                        const size_t search_length,
-                                        char* match,
-                                        struct Autocompletion_Node* restrict tree,
-                                        struct Arena scratch_arena)
+uint_fast8_t autocompletions_first(const char* const search, const size_t search_length, char* match,
+                                   struct Autocompletion_Node* restrict tree, struct Arena scratch_arena)
 {
     struct Autocompletion_Node* search_result = autocompletions_search(search, search_length, tree);
     if (!search_result) {

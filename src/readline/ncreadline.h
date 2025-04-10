@@ -5,8 +5,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "../eskilib/eskilib_result.h"
 #include "../config.h"
+#include "../eskilib/eskilib_result.h"
 #include "history.h"
 #include "terminal.h"
 
@@ -45,20 +45,18 @@ struct Input {
 };
 
 /* readline_init
- * Allocates memory using the arena that lives for the lifetime of the shell and is used by readline to process user input.
- * Returns: exit status, EXIT_SUCCESS, EXIT_FAILURE, or value in defines.h (EXIT_...)
+ * Allocates memory using the arena that lives for the lifetime of the shell and is used by readline to process user
+ * input. Returns: exit status, EXIT_SUCCESS, EXIT_FAILURE, or value in defines.h (EXIT_...)
  */
-int_fast32_t ncreadline_init(struct Config* const restrict config,
-                                struct Input* const restrict input,
-                                struct Arena* const arena);
+int_fast32_t ncreadline_init(struct Config* const restrict config, struct Input* const restrict input,
+                             struct Arena* const arena);
 
 /* readline
- * Read user input while supporting different operations like backspace, delete, history, autocompletions, home/end, and other inputs.
- * Accepts a pointer to the scratch arena, but it passes a copy (by value) to autocompletion logic when it is needed to be used.
- * Returns: exit status, EXIT_SUCCESS, EXIT_FAILURE, or value in defines.h (EXIT_...)
+ * Read user input while supporting different operations like backspace, delete, history, autocompletions, home/end, and
+ * other inputs. Accepts a pointer to the scratch arena, but it passes a copy (by value) to autocompletion logic when it
+ * is needed to be used. Returns: exit status, EXIT_SUCCESS, EXIT_FAILURE, or value in defines.h (EXIT_...)
  */
-int_fast32_t ncreadline(struct Input* const restrict input,
-                           struct Arena* const scratch_arena);
+int_fast32_t ncreadline(struct Input* const restrict input, struct Arena* const scratch_arena);
 
 /* readline_exit
  * Saves history changes and restores the terminal settings from before the shell was started.

@@ -10,13 +10,13 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#include "../eskilib/eskilib_colors.h"
 #include "../defines.h"
+#include "../eskilib/eskilib_colors.h"
 #include "../parser.h"
-#include "vm_builtins.h"
-#include "vm_types.h"
-#include "vm_tokenizer.h"
 #include "vm.h"
+#include "vm_builtins.h"
+#include "vm_tokenizer.h"
+#include "vm_types.h"
 
 extern jmp_buf env;
 extern sig_atomic_t vm_child_pid;
@@ -27,8 +27,7 @@ int vm_output_redirection_oflags_get(const bool append)
     return append ? O_WRONLY | O_CREAT | O_APPEND : O_WRONLY | O_CREAT | O_TRUNC;
 }
 
-void vm_stdout_redirection_start(const char* const restrict file,
-                                 const bool append,
+void vm_stdout_redirection_start(const char* const restrict file, const bool append,
                                  struct Output_Redirect_IO* const restrict io)
 {
     assert(file);
@@ -50,8 +49,7 @@ void vm_stdout_redirection_stop(const int original_stdout)
     dup2(original_stdout, STDOUT_FILENO);
 }
 
-void vm_stdin_redirection_start(const char* const restrict file,
-                                struct Input_Redirect_IO* const restrict io)
+void vm_stdin_redirection_start(const char* const restrict file, struct Input_Redirect_IO* const restrict io)
 {
     assert(file);
     assert(io);
@@ -72,8 +70,7 @@ void vm_stdin_redirection_stop(const int original_stdin)
     dup2(original_stdin, STDIN_FILENO);
 }
 
-void vm_stderr_redirection_start(const char* const restrict file,
-                                 const bool append,
+void vm_stderr_redirection_start(const char* const restrict file, const bool append,
                                  struct Output_Redirect_IO* const restrict io)
 {
     assert(file);
@@ -95,8 +92,7 @@ void vm_stderr_redirection_stop(const int original_stderr)
     dup2(original_stderr, STDERR_FILENO);
 }
 
-void vm_stdout_and_stderr_redirection_start(const char* const restrict file,
-                                            const bool append,
+void vm_stdout_and_stderr_redirection_start(const char* const restrict file, const bool append,
                                             struct Output_Redirect_IO* const restrict io)
 {
     assert(file);
@@ -167,7 +163,7 @@ int_fast32_t vm_redirection_start_if_needed(struct Args* const restrict args,
     if (tokens->stdout_and_stderr_redirect_index && tokens->stdout_and_stderr_file) {
         args->values[tokens->stdout_and_stderr_redirect_index] = NULL;
         vm_stdout_and_stderr_redirection_start(tokens->stdout_and_stderr_file, tokens->output_append,
-                                                 &vm->output_redirect_io);
+                                               &vm->output_redirect_io);
         if (vm->output_redirect_io.fd_stdout == -1) {
             printf("ncsh: Invalid file handle '%s': could not open file for output & error redirection, does the file "
                    "exist?\n",
@@ -179,8 +175,7 @@ int_fast32_t vm_redirection_start_if_needed(struct Args* const restrict args,
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
-void vm_redirection_stop_if_needed(const struct Tokens* const restrict tokens,
-                         	   struct Vm_Data* const restrict vm)
+void vm_redirection_stop_if_needed(const struct Tokens* const restrict tokens, struct Vm_Data* const restrict vm)
 {
     assert(tokens);
     assert(vm);
@@ -204,8 +199,7 @@ void vm_redirection_stop_if_needed(const struct Tokens* const restrict tokens,
 
 /* Pipes */
 [[nodiscard]]
-int_fast32_t vm_pipe_start(const uint_fast32_t command_position,
-                           struct Pipe_IO* const restrict pipes)
+int_fast32_t vm_pipe_start(const uint_fast32_t command_position, struct Pipe_IO* const restrict pipes)
 {
     assert(pipes);
 
@@ -227,8 +221,7 @@ int_fast32_t vm_pipe_start(const uint_fast32_t command_position,
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
-void vm_pipe_connect(const uint_fast32_t command_position,
-                     const uint_fast32_t number_of_commands,
+void vm_pipe_connect(const uint_fast32_t command_position, const uint_fast32_t number_of_commands,
                      const struct Pipe_IO* const restrict pipes)
 {
     assert(pipes);
@@ -256,8 +249,7 @@ void vm_pipe_connect(const uint_fast32_t command_position,
     }
 }
 
-void vm_pipe_stop(const uint_fast32_t command_position,
-                  const uint_fast32_t number_of_commands,
+void vm_pipe_stop(const uint_fast32_t command_position, const uint_fast32_t number_of_commands,
                   const struct Pipe_IO* const restrict pipes)
 {
     assert(pipes);
@@ -287,8 +279,7 @@ void vm_pipe_stop(const uint_fast32_t command_position,
 
 /* Failure Handling */
 [[nodiscard]]
-int_fast32_t vm_fork_failure(const uint_fast32_t command_position,
-                             const uint_fast32_t number_of_commands,
+int_fast32_t vm_fork_failure(const uint_fast32_t command_position, const uint_fast32_t number_of_commands,
                              const struct Pipe_IO* const restrict pipes)
 {
     assert(pipes);
@@ -310,9 +301,8 @@ int_fast32_t vm_fork_failure(const uint_fast32_t command_position,
 /* Background Jobs */
 // Implementation not finished, still experimenting...
 [[nodiscard]]
-int_fast32_t vm_run_background_job(struct Args* const restrict args,
-                                        struct Processes* const restrict processes,
-                                        struct Tokens* const restrict tokens)
+int_fast32_t vm_run_background_job(struct Args* const restrict args, struct Processes* const restrict processes,
+                                   struct Tokens* const restrict tokens)
 {
     (void)tokens;
 
@@ -320,10 +310,11 @@ int_fast32_t vm_run_background_job(struct Args* const restrict args,
     pid_t pid = fork();
 
     if (pid < 0) {
-       perror(RED "ncsh: Error when forking process" RESET);
-       fflush(stdout);
-       return NCSH_COMMAND_EXIT_FAILURE;
-    } else if (pid == 0) {
+        perror(RED "ncsh: Error when forking process" RESET);
+        fflush(stdout);
+        return NCSH_COMMAND_EXIT_FAILURE;
+    }
+    else if (pid == 0) {
         setsid();
         signal(SIGCHLD, SIG_DFL); // Restore default handler in child
 
@@ -340,7 +331,8 @@ int_fast32_t vm_run_background_job(struct Args* const restrict args,
             kill(getpid(), SIGTERM);
             return NCSH_COMMAND_EXIT_FAILURE;
         }
-    } else {
+    }
+    else {
         signal(SIGCHLD, SIG_IGN); // Prevent zombie processes
         uint32_t job_number = !processes ? 0 : ++processes->job_number;
         printf("job [%u] pid [%d]\n", job_number, pid); // Job number and PID
@@ -373,8 +365,7 @@ void vm_debug_status(struct Vm_Data* const restrict vm)
 }
 #endif /* ifdef NCSH_DEBUG */
 
-void vm_buffer_set_command_next(struct Args* const restrict args,
-                                struct Vm_Data* const restrict vm)
+void vm_buffer_set_command_next(struct Args* const restrict args, struct Vm_Data* const restrict vm)
 {
     vm->buffer_position = 0;
 
@@ -428,8 +419,7 @@ void vm_waitpid(struct Vm_Data* vm)
 }
 
 [[nodiscard]]
-int_fast32_t vm_run(struct Args* const restrict args,
-                    struct Tokens* const restrict tokens)
+int_fast32_t vm_run(struct Args* const restrict args, struct Tokens* const restrict tokens)
 {
     int_fast32_t result;
     struct Vm_Data vm = {0};
@@ -541,8 +531,7 @@ int_fast32_t vm_run(struct Args* const restrict args,
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
-void vm_alias(struct Args* const restrict args,
-                   struct Arena* const arena)
+void vm_alias(struct Args* const restrict args, struct Arena* const arena)
 {
     struct eskilib_String alias = config_alias_check(args->values[0], args->lengths[0]);
     if (alias.length) {
@@ -553,8 +542,7 @@ void vm_alias(struct Args* const restrict args,
 }
 
 [[nodiscard]]
-int_fast32_t vm_execute(struct Shell* const restrict shell,
-                             struct Arena* const scratch_arena)
+int_fast32_t vm_execute(struct Shell* const restrict shell, struct Arena* const scratch_arena)
 {
     assert(shell);
     assert(&shell->args);
@@ -582,15 +570,14 @@ int_fast32_t vm_execute(struct Shell* const restrict shell,
     }
 
     if (tokens.is_background_job == true) {
-	return vm_run_background_job(&shell->args, &shell->processes, &tokens);
+        return vm_run_background_job(&shell->args, &shell->processes, &tokens);
     }
 
     return vm_run(&shell->args, &tokens);
 }
 
 [[nodiscard]]
-int_fast32_t vm_execute_noninteractive(struct Args* const restrict args,
-                                            struct Arena* const arena)
+int_fast32_t vm_execute_noninteractive(struct Args* const restrict args, struct Arena* const arena)
 {
     assert(args);
     if (!args->count) {

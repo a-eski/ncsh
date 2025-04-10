@@ -1,9 +1,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "lib/arena_test_helper.h"
-#include "../src/eskilib/eskilib_test.h"
 #include "../src/arena.h"
+#include "../src/eskilib/eskilib_test.h"
+#include "lib/arena_test_helper.h"
 
 void arena_malloc_test(void)
 {
@@ -58,7 +58,7 @@ void arena_realloc_test(void)
 }
 
 struct Test {
-   size_t test;
+    size_t test;
 };
 
 void arena_realloc_non_char_test(void)
@@ -67,9 +67,9 @@ void arena_realloc_non_char_test(void)
 
     const size_t initial_size = 5;
     struct Test* test_values = arena_malloc(&arena, initial_size, struct Test);
-    test_values[0] = (struct Test){ .test = 100 };
-    test_values[1] = (struct Test){ .test = 200 };
-    test_values[2] = (struct Test){ .test = 300 };
+    test_values[0] = (struct Test){.test = 100};
+    test_values[1] = (struct Test){.test = 200};
+    test_values[2] = (struct Test){.test = 300};
 
     const size_t new_size = 10;
     struct Test* realloced_value = arena_realloc(&arena, new_size, struct Test, test_values, initial_size);

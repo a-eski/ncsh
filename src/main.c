@@ -3,8 +3,10 @@
 #define _POSIX_C_SOURCE 200809L
 
 #include <assert.h>
+#include <errno.h>
 #include <limits.h>
 #include <linux/limits.h>
+#include <setjmp.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -14,18 +16,16 @@
 #include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
-#include <setjmp.h>
-#include <errno.h>
 
-#include "eskilib/eskilib_colors.h"
-#include "eskilib/eskilib_result.h"
 #include "config.h"
 #include "defines.h"
-#include "parser.h"
-#include "readline/ncreadline.h"
-#include "readline/autocompletions.h"
-#include "vm/vm.h"
+#include "eskilib/eskilib_colors.h"
+#include "eskilib/eskilib_result.h"
 #include "noninteractive.h"
+#include "parser.h"
+#include "readline/autocompletions.h"
+#include "readline/ncreadline.h"
+#include "vm/vm.h"
 
 jmp_buf env;
 sig_atomic_t vm_child_pid;
@@ -73,8 +73,8 @@ static int signal_forward(const int signum)
 [[nodiscard]]
 char* init_arena(struct Shell* const restrict shell)
 {
-    constexpr int arena_capacity = 1<<24;
-    constexpr int scratch_arena_capacity = 1<<16;
+    constexpr int arena_capacity = 1 << 24;
+    constexpr int scratch_arena_capacity = 1 << 16;
     constexpr int total_capacity = arena_capacity + scratch_arena_capacity;
 
     char* memory = malloc(total_capacity);
@@ -82,17 +82,10 @@ char* init_arena(struct Shell* const restrict shell)
         return NULL;
     }
 
-    shell->arena = (struct Arena){
-        .start = memory,
-        .end = memory + (arena_capacity),
-        .exit = &env
-    };
+    shell->arena = (struct Arena){.start = memory, .end = memory + (arena_capacity), .exit = &env};
     char* scratch_memory_start = memory + (arena_capacity + 1);
     shell->scratch_arena = (struct Arena){
-        .start = scratch_memory_start,
-        .end = scratch_memory_start + (scratch_arena_capacity),
-        .exit = &env
-    };
+        .start = scratch_memory_start, .end = scratch_memory_start + (scratch_arena_capacity), .exit = &env};
 
     return memory;
 }
@@ -189,61 +182,59 @@ int main(int argc, char** argv)
 
     if (!setjmp(env)) {
 #ifdef NCSH_START_TIME
-      clock_t end = clock();
-      double elapsed_ms = ((double)(end - start)) / CLOCKS_PER_SEC * 1000;
-      printf("ncsh: startup time: %.2f milliseconds\n", elapsed_ms);
+        clock_t end = clock();
+        double elapsed_ms = ((double)(end - start)) / CLOCKS_PER_SEC * 1000;
+        printf("ncsh: startup time: %.2f milliseconds\n", elapsed_ms);
 #endif
 
-      while (1) {
-        int_fast32_t input_result =
-            ncreadline(&shell.input, &shell.scratch_arena);
-        switch (input_result) {
-        case EXIT_FAILURE: {
-          exit_code = EXIT_FAILURE;
-          goto exit;
-        }
-        case EXIT_SUCCESS: {
-          goto reset;
-        }
-        case EXIT_SUCCESS_END: {
-          goto exit;
-        }
-        }
+        while (1) {
+            int_fast32_t input_result = ncreadline(&shell.input, &shell.scratch_arena);
+            switch (input_result) {
+            case EXIT_FAILURE: {
+                exit_code = EXIT_FAILURE;
+                goto exit;
+            }
+            case EXIT_SUCCESS: {
+                goto reset;
+            }
+            case EXIT_SUCCESS_END: {
+                goto exit;
+            }
+            }
 
-        int_fast32_t command_result = run(&shell, shell.scratch_arena);
-        switch (command_result) {
-        case NCSH_COMMAND_EXIT_FAILURE: {
-          exit_code = EXIT_FAILURE;
-          goto exit;
-        }
-        case NCSH_COMMAND_EXIT: {
-          goto exit;
-        }
-        case NCSH_COMMAND_SYNTAX_ERROR:
-        case NCSH_COMMAND_FAILED_CONTINUE: {
-          goto reset;
-        }
-        }
+            int_fast32_t command_result = run(&shell, shell.scratch_arena);
+            switch (command_result) {
+            case NCSH_COMMAND_EXIT_FAILURE: {
+                exit_code = EXIT_FAILURE;
+                goto exit;
+            }
+            case NCSH_COMMAND_EXIT: {
+                goto exit;
+            }
+            case NCSH_COMMAND_SYNTAX_ERROR:
+            case NCSH_COMMAND_FAILED_CONTINUE: {
+                goto reset;
+            }
+            }
 
-        history_add(shell.input.buffer, shell.input.pos, &shell.input.history, &shell.arena);
-        autocompletions_add(shell.input.buffer,
-                                 shell.input.pos,
-                                 shell.input.autocompletions_tree,
-                                 &shell.arena);
+            history_add(shell.input.buffer, shell.input.pos, &shell.input.history, &shell.arena);
+            autocompletions_add(shell.input.buffer, shell.input.pos, shell.input.autocompletions_tree, &shell.arena);
 
-      reset:
-        memset(shell.input.buffer, '\0', shell.input.max_pos);
-        shell.input.pos = 0;
-        shell.input.max_pos = 0;
-        shell.args.count = 0;
-        shell.args.values[0] = NULL;
-      }
-    } else {
+        reset:
+            memset(shell.input.buffer, '\0', shell.input.max_pos);
+            shell.input.pos = 0;
+            shell.input.max_pos = 0;
+            shell.args.count = 0;
+            shell.args.values[0] = NULL;
+        }
+    }
+    else {
     exit:
-      ncreadline_exit(&shell.input);
-      z_exit(&shell.z_db);;
-      free(memory);
-      puts("exit");
+        ncreadline_exit(&shell.input);
+        z_exit(&shell.z_db);
+        ;
+        free(memory);
+        puts("exit");
     }
 
     return (int)exit_code;
