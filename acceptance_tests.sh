@@ -7,6 +7,8 @@ echo 'starting ncsh acceptance tests'
 rm t.txt t2.txt t3.txt t4.txt
 make clean
 rm _z_database.bin .ncsh_history .ncsh_history_test
+chmod +x create_corpus_dirs.sh
+create_corpus_dirs.sh
 set -e
 
 # definitions from ncsh_configurables.h

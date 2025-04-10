@@ -8,6 +8,6 @@ create_dir_if_not_exists() {
 
 create_dir_if_not_exists "Z_CORPUS"
 create_dir_if_not_exists "Z_ADD_CORPUS"
-create_dir_if_not_exists "NCSH_AUTOCOMPLETIONS_CORPUS"
-create_dir_if_not_exists "NCSH_HISTORY_CORPUS"
-create_dir_if_not_exists "NCSH_PARSER_CORPUS"
+create_dir_if_not_exists "AUTOCOMPLETIONS_CORPUS"
+create_dir_if_not_exists "PARSER_CORPUS"
+create_dir_if_not_exists "HISTORY_CORPUS"

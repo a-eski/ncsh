@@ -7,7 +7,7 @@
 
 #include "eskilib_hashtable.h"
 
-bool eskilib_hashtable_malloc(struct ncsh_Arena* const arena, struct eskilib_HashTable* table)
+bool eskilib_hashtable_malloc(struct Arena* const arena, struct eskilib_HashTable* table)
 {
     table->size = 0;
     table->capacity = ESKILIB_HASHTABLE_DEFAULT_CAPACITY;
@@ -25,14 +25,14 @@ bool eskilib_hashtable_malloc(struct ncsh_Arena* const arena, struct eskilib_Has
 // 64-bit FNV-1a hash
 uint64_t eskilib_hashtable_key(const char* str)
 {
-  register uint64_t i;
+    register uint64_t i;
 
-  for (i = ESKILIB_FNV_OFFSET; *str; str++) {
-    i += (i<<1) + (i<<4) + (i<<7) + (i<<8) + (i<<24);
-    i ^= (uint64_t)*str;
-  }
+    for (i = ESKILIB_FNV_OFFSET; *str; str++) {
+        i += (i << 1) + (i << 4) + (i << 7) + (i << 8) + (i << 24);
+        i ^= (uint64_t)*str;
+    }
 
-  return i;
+    return i;
 }
 
 struct eskilib_String eskilib_hashtable_get(const char* key, struct eskilib_HashTable* table)
@@ -104,7 +104,7 @@ const char* eskilib_hashtable_set_entry(struct eskilib_HashTable_Entry* entries,
     return key;
 }
 
-bool eskilib_hashtable_expand(struct ncsh_Arena* const arena, struct eskilib_HashTable* table)
+bool eskilib_hashtable_expand(struct Arena* const arena, struct eskilib_HashTable* table)
 {
     size_t new_capacity = table->capacity * 2;
     if (new_capacity < table->capacity) {
@@ -129,9 +129,7 @@ bool eskilib_hashtable_expand(struct ncsh_Arena* const arena, struct eskilib_Has
     return true;
 }
 
-const char* eskilib_hashtable_set(const char* key,
-                                  struct eskilib_String value,
-                                  struct ncsh_Arena* const arena,
+const char* eskilib_hashtable_set(const char* key, struct eskilib_String value, struct Arena* const arena,
                                   struct eskilib_HashTable* table)
 {
     assert(value.value != NULL && value.length > 0);

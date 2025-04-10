@@ -6,8 +6,8 @@
 #include <stdint.h>
 #include <time.h>
 
+#include "../arena.h"
 #include "../eskilib/eskilib_string.h"
-#include "../ncsh_arena.h"
 
 #define Z_DATABASE_FILE "_z_database.bin"
 #define Z_DATABASE_IN_MEMORY_LIMIT 200
@@ -52,25 +52,16 @@ enum z_Result {
     Z_SUCCESS = 1
 };
 
-enum z_Result z_init(const struct eskilib_String* const config_location,
-                     struct z_Database* const restrict database,
-                     struct ncsh_Arena* const arena);
+enum z_Result z_init(const struct eskilib_String* const config_location, struct z_Database* const restrict database,
+                     struct Arena* const arena);
 
-void z(char* target,
-       const size_t target_length,
-       const char* const cwd,
-       struct z_Database* const restrict db,
-       struct ncsh_Arena* const arena,
-       struct ncsh_Arena scratch_arena);
+void z(char* target, const size_t target_length, const char* const cwd, struct z_Database* const restrict db,
+       struct Arena* const arena, struct Arena scratch_arena);
 
-enum z_Result z_add(const char* const path,
-                    const size_t path_length,
-                    struct z_Database* const restrict db,
-                    struct ncsh_Arena* const arena);
+enum z_Result z_add(const char* const path, const size_t path_length, struct z_Database* const restrict db,
+                    struct Arena* const arena);
 
-enum z_Result z_remove(const char* const path,
-                       const size_t path_length,
-                       struct z_Database* const restrict db);
+enum z_Result z_remove(const char* const path, const size_t path_length, struct z_Database* const restrict db);
 
 enum z_Result z_exit(struct z_Database* const restrict db);
 
