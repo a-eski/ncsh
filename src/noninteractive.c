@@ -53,9 +53,9 @@ int_fast32_t noninteractive(const int argc,
         return EXIT_FAILURE;
     }
 
-#ifdef DEBUG
+#ifdef NCSH_DEBUG
     printf("ncsh running in noninteractive mode.\n");
-#endif /* ifdef DEBUG */
+#endif /* ifdef NCSH_DEBUG */
     constexpr int arena_capacity = 1<<16;
     constexpr int scratch_arena_capacity = 1<<16;
     constexpr int total_capacity = arena_capacity + scratch_arena_capacity;
@@ -83,9 +83,9 @@ int_fast32_t noninteractive(const int argc,
         return EXIT_FAILURE;
     }
 
-#ifdef DEBUG
+#ifdef NCSH_DEBUG
     debug_argsv(argc, argv);
-#endif /* ifdef DEBUG */
+#endif /* ifdef NCSH_DEBUG */
 
     int_fast32_t command_result = noninteractive_run(argv + 1, (size_t)argc - 1, &args, &arena, scratch_arena);
 

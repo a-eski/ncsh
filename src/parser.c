@@ -239,9 +239,9 @@ void parser_parse(const char* const restrict line,
 
     assert(length >= 2);
 
-#ifdef DEBUG
+#ifdef NCSH_DEBUG
     debug_parser_input(line, length);
-#endif /* ifdef DEBUG */
+#endif /* ifdef NCSH_DEBUG */
 
     char buffer[NCSH_MAX_INPUT];
     size_t buf_pos = 0;
@@ -373,9 +373,9 @@ void parser_parse(const char* const restrict line,
         }
     }
 
-#ifdef DEBUG
+#ifdef NCSH_DEBUG
     debug_args(args);
-#endif /* ifdef DEBUG */
+#endif /* ifdef NCSH_DEBUG */
 }
 
 /* parser_parse_noninteractive
@@ -400,7 +400,7 @@ void parser_parse_noninteractive(const char** const restrict inputs,
         parser_parse(inputs[i], strlen(inputs[i]) + 1, args, scratch_arena);
     }
 
-#ifdef DEBUG
+#ifdef NCSH_DEBUG
     debug_args(args);
-#endif /* ifdef DEBUG */
+#endif /* ifdef NCSH_DEBUG */
 }

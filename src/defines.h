@@ -12,7 +12,7 @@
 #include "configurables.h"
 
 #ifdef NCSH_DEBUG
-#include "ncsh_debug.h"
+#include "debug.h"
 #endif /* ifdef NCSH_DEBUG */
 
 #define NCSH_VERSION "0.0.2.8"

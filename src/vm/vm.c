@@ -350,7 +350,7 @@ int_fast32_t vm_run_background_job(struct Args* const restrict args,
 }
 
 /* VM */
-#ifdef DEBUG
+#ifdef NCSH_DEBUG
 #define VM_NCSH_COMMAND_DIED_MESSAGE "ncsh: Command child process died, cause unknown.\n"
 void vm_debug_status(struct Vm_Data* const restrict vm)
 {
@@ -371,7 +371,7 @@ void vm_debug_status(struct Vm_Data* const restrict vm)
         }
     }
 }
-#endif /* ifdef DEBUG */
+#endif /* ifdef NCSH_DEBUG */
 
 void vm_buffer_set_command_next(struct Args* const restrict args,
                                      struct Vm_Data* const restrict vm)
@@ -419,9 +419,9 @@ void vm_waitpid(struct Vm_Data* vm)
 
         // check if child process has exited
         if (waitpid_result == vm->pid) {
-#ifdef DEBUG
+#ifdef NCSH_DEBUG
             vm_debug_status(&vm);
-#endif /* ifdef DEBUG */
+#endif /* ifdef NCSH_DEBUG */
             break;
         }
     }
@@ -514,9 +514,9 @@ int_fast32_t vm_run(struct Args* const restrict args,
 
                 // check if child process has exited
                 if (waitpid_result == vm.pid) {
-#ifdef DEBUG
+#ifdef NCSH_DEBUG
                     vm_debug_status(&vm);
-#endif /* ifdef DEBUG */
+#endif /* ifdef NCSH_DEBUG */
                     break;
                 }
             }

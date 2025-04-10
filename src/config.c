@@ -38,9 +38,9 @@ enum eskilib_Result config_home_init(struct Config* const restrict config,
     config->home_location.length = strlen(home);
     config->home_location.value = arena_malloc(arena, config->home_location.length + 1, char);
     memcpy(config->home_location.value, home, config->home_location.length + 1);
-#ifdef DEBUG
+#ifdef NCSH_DEBUG
     printf("config->home_location.value: %s\n", config->home_location.value);
-#endif /* ifdef DEBUG */
+#endif /* ifdef NCSH_DEBUG */
 
     return E_SUCCESS;
 }
@@ -78,9 +78,9 @@ enum eskilib_Result config_location_init(struct Config* const restrict config,
 
     config->config_location.value = (char*)config_original_ptr;
 
-#ifdef DEBUG
+#ifdef NCSH_DEBUG
     printf("config->config_location.value: %s\n", config->config_location.value);
-#endif /* ifdef DEBUG */
+#endif /* ifdef NCSH_DEBUG */
 
     assert(strlen(config->config_location.value) + 1 == config->config_location.length);
     mkdir(config->config_location.value, 0755);
@@ -112,9 +112,9 @@ enum eskilib_Result config_file_set(struct Config* const restrict config,
     config->config_file.length = config->config_location.length + sizeof(RC);
     config->config_file.value[config->config_file.length - 1] = '\0';
 
-#ifdef DEBUG
+#ifdef NCSH_DEBUG
     printf("config_file %s\n", config->config_file.value);
-#endif /* ifdef DEBUG */
+#endif /* ifdef NCSH_DEBUG */
 
     return E_SUCCESS;
 }
@@ -139,9 +139,9 @@ void config_path_add(const char* const value,
     memcpy(new_path, path, path_len - 1);
     new_path[path_len - 2] = ':';
     memcpy(new_path + path_len - 1, value, (size_t)len);
-#ifdef DEBUG
+#ifdef NCSH_DEBUG
     printf("Got new path to set %s\n", new_path);
-#endif /* ifdef DEBUG */
+#endif /* ifdef NCSH_DEBUG */
     setenv(PATH, new_path, true);
 }
 
