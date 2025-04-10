@@ -27,7 +27,7 @@ static inline void debug_parser_input(const char* buffer, size_t buf_position)
     fflush(stdout);
 }
 
-static inline void debug_args(struct ncsh_Args* args)
+static inline void debug_args(struct Args* args)
 {
     printf("args.count: %lu\n", args->count);
 
@@ -38,7 +38,7 @@ static inline void debug_args(struct ncsh_Args* args)
     }
 }
 
-static inline void debug_argsv(int argc, char** argv)
+static inline void debug_argsv(int argc, const char** argv)
 {
     for (int i = 0; i < argc; ++i) {
         printf("argv[%d]: %s", i, argv[i]);

@@ -28,8 +28,8 @@ int vm_output_redirection_oflags_get(const bool append)
 }
 
 void vm_stdout_redirection_start(const char* const restrict file,
-                                      const bool append,
-                                      struct Output_Redirect_IO* const restrict io)
+                                 const bool append,
+                                 struct Output_Redirect_IO* const restrict io)
 {
     assert(file);
     assert(io);
@@ -51,7 +51,7 @@ void vm_stdout_redirection_stop(const int original_stdout)
 }
 
 void vm_stdin_redirection_start(const char* const restrict file,
-                                     struct Input_Redirect_IO* const restrict io)
+                                struct Input_Redirect_IO* const restrict io)
 {
     assert(file);
     assert(io);
@@ -73,8 +73,8 @@ void vm_stdin_redirection_stop(const int original_stdin)
 }
 
 void vm_stderr_redirection_start(const char* const restrict file,
-                                      const bool append,
-                                      struct Output_Redirect_IO* const restrict io)
+                                 const bool append,
+                                 struct Output_Redirect_IO* const restrict io)
 {
     assert(file);
     assert(io);
@@ -96,8 +96,8 @@ void vm_stderr_redirection_stop(const int original_stderr)
 }
 
 void vm_stdout_and_stderr_redirection_start(const char* const restrict file,
-                                                 const bool append,
-                                                 struct Output_Redirect_IO* const restrict io)
+                                            const bool append,
+                                            struct Output_Redirect_IO* const restrict io)
 {
     assert(file);
     assert(io);
@@ -126,8 +126,8 @@ void vm_stdout_and_stderr_redirection_stop(struct Output_Redirect_IO* const rest
 
 [[nodiscard]]
 int_fast32_t vm_redirection_start_if_needed(struct Args* const restrict args,
-                                                 const struct Tokens* const restrict tokens,
-                                                 struct Vm_Data* const restrict vm)
+                                            const struct Tokens* const restrict tokens,
+                                            struct Vm_Data* const restrict vm)
 {
     assert(args);
     assert(tokens);
@@ -180,7 +180,7 @@ int_fast32_t vm_redirection_start_if_needed(struct Args* const restrict args,
 }
 
 void vm_redirection_stop_if_needed(const struct Tokens* const restrict tokens,
-                                        struct Vm_Data* const restrict vm)
+                         	   struct Vm_Data* const restrict vm)
 {
     assert(tokens);
     assert(vm);
@@ -205,7 +205,7 @@ void vm_redirection_stop_if_needed(const struct Tokens* const restrict tokens,
 /* Pipes */
 [[nodiscard]]
 int_fast32_t vm_pipe_start(const uint_fast32_t command_position,
-                                struct Pipe_IO* const restrict pipes)
+                           struct Pipe_IO* const restrict pipes)
 {
     assert(pipes);
 
@@ -228,8 +228,8 @@ int_fast32_t vm_pipe_start(const uint_fast32_t command_position,
 }
 
 void vm_pipe_connect(const uint_fast32_t command_position,
-                          const uint_fast32_t number_of_commands,
-                          const struct Pipe_IO* const restrict pipes)
+                     const uint_fast32_t number_of_commands,
+                     const struct Pipe_IO* const restrict pipes)
 {
     assert(pipes);
 
@@ -257,8 +257,8 @@ void vm_pipe_connect(const uint_fast32_t command_position,
 }
 
 void vm_pipe_stop(const uint_fast32_t command_position,
-                       const uint_fast32_t number_of_commands,
-                       const struct Pipe_IO* const restrict pipes)
+                  const uint_fast32_t number_of_commands,
+                  const struct Pipe_IO* const restrict pipes)
 {
     assert(pipes);
 
@@ -288,8 +288,8 @@ void vm_pipe_stop(const uint_fast32_t command_position,
 /* Failure Handling */
 [[nodiscard]]
 int_fast32_t vm_fork_failure(const uint_fast32_t command_position,
-                                  const uint_fast32_t number_of_commands,
-                                  const struct Pipe_IO* const restrict pipes)
+                             const uint_fast32_t number_of_commands,
+                             const struct Pipe_IO* const restrict pipes)
 {
     assert(pipes);
 
@@ -351,7 +351,7 @@ int_fast32_t vm_run_background_job(struct Args* const restrict args,
 
 /* VM */
 #ifdef NCSH_DEBUG
-#define VM_NCSH_COMMAND_DIED_MESSAGE "ncsh: Command child process died, cause unknown.\n"
+#define VM_COMMAND_DIED_MESSAGE "ncsh: Command child process died, cause unknown.\n"
 void vm_debug_status(struct Vm_Data* const restrict vm)
 {
     if (WIFEXITED(vm->status)) {
@@ -366,7 +366,7 @@ void vm_debug_status(struct Vm_Data* const restrict vm)
         fprintf(stderr, "ncsh: Command child process died from signal #%d\n", WTERMSIG(vm->status));
     }
     else {
-        if (write(STDERR_FILENO, VM_NCSH_COMMAND_DIED_MESSAGE, sizeof(VM_COMMAND_DIED_MESSAGE) - 1) == -1) {
+        if (write(STDERR_FILENO, VM_COMMAND_DIED_MESSAGE, sizeof(VM_COMMAND_DIED_MESSAGE) - 1) == -1) {
             perror("ncsh: Error writing to stderr");
         }
     }
@@ -374,7 +374,7 @@ void vm_debug_status(struct Vm_Data* const restrict vm)
 #endif /* ifdef NCSH_DEBUG */
 
 void vm_buffer_set_command_next(struct Args* const restrict args,
-                                     struct Vm_Data* const restrict vm)
+                                struct Vm_Data* const restrict vm)
 {
     vm->buffer_position = 0;
 
@@ -420,7 +420,7 @@ void vm_waitpid(struct Vm_Data* vm)
         // check if child process has exited
         if (waitpid_result == vm->pid) {
 #ifdef NCSH_DEBUG
-            vm_debug_status(&vm);
+            vm_debug_status(vm);
 #endif /* ifdef NCSH_DEBUG */
             break;
         }
@@ -429,7 +429,7 @@ void vm_waitpid(struct Vm_Data* vm)
 
 [[nodiscard]]
 int_fast32_t vm_run(struct Args* const restrict args,
-                         struct Tokens* const restrict tokens)
+                    struct Tokens* const restrict tokens)
 {
     int_fast32_t result;
     struct Vm_Data vm = {0};

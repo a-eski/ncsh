@@ -2,7 +2,7 @@ STD = -std=c2x
 CC ?= gcc
 DESTDIR ?= /bin
 RELEASE ?= 1
-debug_flags = -Wall -Wextra -Werror -Wpedantic -pedantic-errors -Wsign-conversion -Wformat=2 -Wshadow -Wvla -fstack-protector-all -fsanitize=address,undefined,leak -g
+debug_flags = -Wall -Wextra -Werror -Wpedantic -pedantic-errors -Wsign-conversion -Wformat=2 -Wshadow -Wvla -fstack-protector-all -fsanitize=address,undefined,leak -g -DNCSH_DEBUG
 release_flags = -Wall -Wextra -Werror -pedantic-errors -Wsign-conversion -Wformat=2 -Wshadow -Wvla -O3 -DNDEBUG
 fuzz_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,leak,fuzzer -DNDEBUG -g
 objects = obj/main.o obj/arena.o obj/noninteractive.o obj/ncreadline.o obj/vm.o obj/vm_tokenizer.o obj/terminal.o obj/eskilib_file.o obj/eskilib_hashtable.o obj/parser.o obj/vm_builtins.o obj/history.o obj/autocompletions.o obj/config.o obj/fzf.o obj/z.o
