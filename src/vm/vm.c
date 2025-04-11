@@ -6,14 +6,13 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
 #include "../defines.h"
-#include "../eskilib/eskilib_colors.h"
+#include "../eskilib/ecolors.h"
 #include "../parser.h"
-#include "vm.h"
+#include "../types.h"
 #include "vm_builtins.h"
 #include "vm_tokenizer.h"
 #include "vm_types.h"
@@ -444,7 +443,7 @@ int_fast32_t vm_run(struct Args* const restrict args, struct Tokens* const restr
         }
 
         for (uint_fast32_t i = 0; i < builtins_count; ++i) {
-            if (eskilib_string_compare(vm.buffer[0], vm.buffer_len[0], builtins[i].value, builtins[i].length)) {
+            if (estrcmp_c(vm.buffer[0], vm.buffer_len[0], builtins[i].value, builtins[i].length)) {
                 vm.command_type = CT_BUILTIN;
                 vm.command_result = (*builtins[i].func)(args);
 
@@ -533,7 +532,7 @@ int_fast32_t vm_run(struct Args* const restrict args, struct Tokens* const restr
 
 void vm_alias(struct Args* const restrict args, struct Arena* const arena)
 {
-    struct eskilib_String alias = config_alias_check(args->values[0], args->lengths[0]);
+    struct estr alias = config_alias_check(args->values[0], args->lengths[0]);
     if (alias.length) {
         args->values[0] = arena_realloc(arena, alias.length, char, args->values[0], args->lengths[0]);
         memcpy(args->values[0], alias.value, alias.length);
@@ -553,11 +552,11 @@ int_fast32_t vm_execute(struct Shell* const restrict shell, struct Arena* const 
 
     // check if any jobs finished running
 
-    if (eskilib_string_compare(shell->args.values[0], shell->args.lengths[0], Z, sizeof(Z))) {
+    if (estrcmp_c(shell->args.values[0], shell->args.lengths[0], Z, sizeof(Z))) {
         return builtins_z(&shell->z_db, &shell->args, &shell->arena, scratch_arena);
     }
 
-    if (eskilib_string_compare(shell->args.values[0], shell->args.lengths[0], NCSH_HISTORY, sizeof(NCSH_HISTORY))) {
+    if (estrcmp_c(shell->args.values[0], shell->args.lengths[0], NCSH_HISTORY, sizeof(NCSH_HISTORY))) {
         return builtins_history(&shell->input.history, &shell->args, &shell->arena, scratch_arena);
     }
 

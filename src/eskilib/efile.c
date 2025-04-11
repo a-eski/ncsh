@@ -1,15 +1,16 @@
 /* Copyright eskilib by Alex Eski 2024 */
 
-#include "eskilib_file.h"
-#include "eskilib_defines.h"
+#include "efile.h"
+#include "edefines.h"
 
 // simple fgets implementation that returns the number of characters read
-eskilib_nodiscard int eskilib_fgets(char* const input, const size_t input_len, FILE* const restrict file)
+enodiscard
+int efgets(char* const input, const size_t len, FILE* const restrict file)
 {
     register int character;
     register char* buffer = input;
     int characters_read = 0;
-    size_t characters_left_to_read = input_len;
+    size_t characters_left_to_read = len;
 
     while (--characters_left_to_read > 0 && (character = getc(file)) != EOF) {
         ++characters_read;
@@ -24,13 +25,14 @@ eskilib_nodiscard int eskilib_fgets(char* const input, const size_t input_len, F
     return characters_read > 0 ? characters_read : EOF;
 }
 
-eskilib_nodiscard int eskilib_fgets_delimited(char* const input, const size_t input_len, FILE* const restrict file,
+enodiscard
+int efgets_delim(char* const input, const size_t len, FILE* const restrict file,
                                               const char delimiter)
 {
     register int character;
     register char* buffer = input;
     int characters_read = 0;
-    size_t characters_left_to_read = input_len;
+    size_t characters_left_to_read = len;
 
     while (--characters_left_to_read > 0 && (character = getc(file)) != EOF) {
         ++characters_read;

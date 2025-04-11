@@ -7,7 +7,7 @@
 #include <stdint.h>
 
 #include "arena.h"
-#include "eskilib/eskilib_result.h"
+#include "eskilib/eresult.h"
 
 #define PARSER_TOKENS_LIMIT 128
 
@@ -71,7 +71,7 @@ struct Args {
     char** values;       // Constant values needed to be referenced by the VM
 };
 
-enum eskilib_Result parser_args_alloc(struct Args* const restrict args, struct Arena* const arena);
+enum eresult parser_args_alloc(struct Args* const restrict args, struct Arena* const arena);
 
 void parser_parse(const char* const restrict line, const size_t length, struct Args* const restrict args,
                   struct Arena* const scratch_arena);

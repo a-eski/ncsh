@@ -2,7 +2,9 @@
 
 An interactive unix shell focused on speed and building everything from scratch.
 
-## features
+The goal is to build a shell with modern features and experience and as close to POSIX compliance as possible.
+
+## Features
 
 * Autocompletions as you type: autocompletions based on history and weight.
 * Tab autocompletions: view available options by pressing tab and cycle through with up/down keys and select with enter.
@@ -114,7 +116,7 @@ This means, in addition to z being able to help you navigate better, you can als
 | `!^music` | inverse-prefix-exact-match | Items that do not start with `music` |
 | `!.mp3$`  | inverse-suffix-exact-match | Items that do not end with `.mp3`    |
 
-## dependencies
+## Dependencies
 
 Using 256 color terminal is recommended.
 
@@ -122,7 +124,7 @@ For code compilation and installation you don't need to install anything, ncsh o
 
 Developed on Debian, so hopefully there are not issues with GLIBC, but please submit any linking issues found.
 
-## to build from source
+## Building from source
 
 For more details on compilation, see COMPILE.md
 
@@ -136,7 +138,7 @@ make CC=clang
 make CC=clang-19
 ```
 
-## installing
+## Installation
 
 ``` sh
 # install after building
@@ -146,33 +148,28 @@ sudo make install
 sudo usermod -s /bin/ncsh <username>
 ```
 
-## installation notes
+### Installation Notes
 
 * sudo make install ONLY calls the install command to add the ELF executable to /usr/local.
 * Install directory is by default /usr/local.
 * Pass in DESTDIR if you want to install it somewhere else.
-* History file .ncsh_history tries to use XDG_CONFIG_HOME if available, or else HOME.
+* History file .ncsh_history, .ncshrc, and z database files try to use XDG_CONFIG_HOME if available, or else use environment variable HOME.
 
-## running tests
+## Running tests
 
 Please see COMPILE.md.
 
-## reading code
+## Goals
 
-There are some high-level comments in the header files, with more detailed cod documentation in the source files.
-
-## goals
-
-* rc file configurations
-* more compile-time configurations
-* frecency-based autocomplete
-* move built-in commands like export, setting environment variables, etc.
-* aliasing for user-defined commands
-* custom prompt colors, backgrounds
-* support scripts through a non-iteractive mode
-* build for and test on mac (I don't have one)?
-* background jobs support
-* math
-* better posix support
-* add to path (works but has some issues when running ncsh as main shell)
-* variables
+* More rc file configurations
+* More compile-time configurations
+* Frecency-based autocomplete
+* More built-in commands like export, setting environment variables, etc.
+* Aliasing for user-defined commands
+* Custom prompt colors, backgrounds
+* Support scripts through a non-iteractive mode
+* Background jobs support
+* Math
+* Better posix support
+* Variables
+* Usable with GDB (currently doesn't work)

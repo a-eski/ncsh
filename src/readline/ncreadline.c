@@ -8,13 +8,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <linux/limits.h>
 
 #include "../config.h"
 #include "../configurables.h"
 #include "../defines.h"
-#include "../eskilib/eskilib_colors.h"
-#include "../eskilib/eskilib_result.h"
-#include "../eskilib/eskilib_string.h"
+#include "../eskilib/ecolors.h"
+#include "../eskilib/eresult.h"
+#include "../eskilib/estr.h"
 #include "autocompletions.h"
 #include "ncreadline.h"
 #include "terminal.h"
@@ -775,7 +776,7 @@ int_fast32_t ncreadline_init(struct Config* const restrict config, struct Input*
     input->user.length = strlen(input->user.value) + 1;
     input->buffer = arena_malloc(arena, NCSH_MAX_INPUT, char);
 
-    enum eskilib_Result result;
+    enum eresult result;
     if ((result = history_init(config->config_location, &input->history, arena)) != E_SUCCESS) {
         perror(RED "ncsh: Error when allocating data for and setting up history" RESET);
         fflush(stderr);

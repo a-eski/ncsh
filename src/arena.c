@@ -8,7 +8,7 @@
 #include <sys/cdefs.h>
 
 #include "arena.h"
-#include "eskilib/eskilib_colors.h"
+#include "eskilib/ecolors.h"
 
 void arena_abort_internal(struct Arena* arena)
 {

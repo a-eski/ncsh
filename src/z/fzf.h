@@ -1,5 +1,8 @@
+/* fzf.h: altered version of telescope-fzf-native.nvim for ncsh */
+/* original : https://github.com/nvim-telescope/telescope-fzf-native.nvim */
 /* For license see fzf_LICENSE. */
 
+#pragma once
 #ifndef FZF_H_
 #define FZF_H_
 

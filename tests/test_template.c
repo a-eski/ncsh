@@ -1,6 +1,6 @@
 #include <stdlib.h>
 
-#include "../src/eskilib/eskilib_test.h"
+#include "../src/eskilib/etest.h"
 
 void template_example_test(void)
 {
@@ -8,11 +8,11 @@ void template_example_test(void)
 
 void template_tests(void)
 {
-    eskilib_test_start();
+    etest_start();
 
-    eskilib_test_run(template_example_test);
+    etest_run(template_example_test);
 
-    eskilib_test_finish();
+    etest_finish();
 }
 
 int main(void)

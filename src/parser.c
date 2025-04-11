@@ -10,7 +10,7 @@
 #include <string.h>
 
 #include "defines.h"
-#include "eskilib/eskilib_result.h"
+#include "eskilib/eresult.h"
 #include "parser.h"
 
 // supported quotes
@@ -55,10 +55,10 @@
  * Allocate memory for the parser that lives for the lifetime of the shell.
  * Allocates the memory for string values, bytecodes, and lengths of the string values.
  * This same memory is reused for the lifetime of the shell.
- * Returns: enum eskilib_Result, E_SUCCESS is successful, E_FAILURE_NULL_REFERENCE if *args is null
+ * Returns: enum eresult, E_SUCCESS is successful, E_FAILURE_NULL_REFERENCE if *args is null
  */
 [[nodiscard]]
-enum eskilib_Result parser_args_alloc(struct Args* const restrict args, struct Arena* const arena)
+enum eresult parser_args_alloc(struct Args* const restrict args, struct Arena* const arena)
 {
     if (!args) {
         return E_FAILURE_NULL_REFERENCE;

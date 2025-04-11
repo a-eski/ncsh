@@ -11,14 +11,14 @@
 #include <unistd.h>
 
 #include "../defines.h"
-#include "../eskilib/eskilib_colors.h"
-#include "../eskilib/eskilib_file.h"
-#include "../eskilib/eskilib_hashtable.h"
-#include "../eskilib/eskilib_result.h"
-#include "../eskilib/eskilib_string.h"
+#include "../eskilib/ecolors.h"
+#include "../eskilib/efile.h"
+#include "../eskilib/emap.h"
+#include "../eskilib/eresult.h"
+#include "../eskilib/estr.h"
 #include "history.h"
 
-void history_file_set(const struct eskilib_String config_file, struct History* const restrict history,
+void history_file_set(const struct estr config_file, struct History* const restrict history,
                       struct Arena* const arena)
 {
 
@@ -49,7 +49,7 @@ void history_file_set(const struct eskilib_String config_file, struct History* c
 }
 
 [[nodiscard]]
-enum eskilib_Result history_alloc(struct History* const restrict history, struct Arena* const arena)
+enum eresult history_alloc(struct History* const restrict history, struct Arena* const arena)
 {
     assert(history);
     if (!history) {
@@ -57,13 +57,13 @@ enum eskilib_Result history_alloc(struct History* const restrict history, struct
     }
 
     history->count = 0;
-    history->entries = arena_malloc(arena, NCSH_MAX_HISTORY_IN_MEMORY, struct eskilib_String);
+    history->entries = arena_malloc(arena, NCSH_MAX_HISTORY_IN_MEMORY, struct estr);
 
     return E_SUCCESS;
 }
 
 [[nodiscard]]
-enum eskilib_Result history_load(struct History* const restrict history, struct Arena* const arena)
+enum eresult history_load(struct History* const restrict history, struct Arena* const arena)
 {
     assert(history);
     assert(history->file);
@@ -94,7 +94,7 @@ enum eskilib_Result history_load(struct History* const restrict history, struct 
     int buffer_length = 0;
 
     for (size_t i = 0;
-         (buffer_length = eskilib_fgets(buffer, sizeof(buffer), file)) != EOF && i < NCSH_MAX_HISTORY_FILE; ++i) {
+         (buffer_length = efgets(buffer, sizeof(buffer), file)) != EOF && i < NCSH_MAX_HISTORY_FILE; ++i) {
         ++history->count;
         history->entries[i].length = (size_t)buffer_length;
         history->entries[i].value = arena_malloc(arena, (uintptr_t)buffer_length, char);
@@ -107,7 +107,7 @@ enum eskilib_Result history_load(struct History* const restrict history, struct 
 }
 
 [[nodiscard]]
-enum eskilib_Result history_reload(struct History* const restrict history, struct Arena* const arena)
+enum eresult history_reload(struct History* const restrict history, struct Arena* const arena)
 {
     assert(history);
     assert(history->file);
@@ -127,7 +127,7 @@ enum eskilib_Result history_reload(struct History* const restrict history, struc
     int buffer_length = 0;
 
     for (size_t i = 0;
-         (buffer_length = eskilib_fgets(buffer, sizeof(buffer), file)) != EOF && i < NCSH_MAX_HISTORY_FILE; ++i) {
+         (buffer_length = efgets(buffer, sizeof(buffer), file)) != EOF && i < NCSH_MAX_HISTORY_FILE; ++i) {
         if (buffer_length > 0) {
             ++history->count;
             if ((size_t)buffer_length > history->entries[i].length) {
@@ -145,12 +145,12 @@ enum eskilib_Result history_reload(struct History* const restrict history, struc
 }
 
 [[nodiscard]]
-enum eskilib_Result history_init(const struct eskilib_String config_location, struct History* const restrict history,
+enum eresult history_init(const struct estr config_location, struct History* const restrict history,
                                  struct Arena* const arena)
 {
     assert(arena);
 
-    enum eskilib_Result result;
+    enum eresult result;
     if ((result = history_alloc(history, arena)) != E_SUCCESS) {
         perror(RED "ncsh: Error when allocating memory for history" RESET);
         fflush(stderr);
@@ -172,7 +172,7 @@ enum eskilib_Result history_init(const struct eskilib_String config_location, st
 }
 
 [[nodiscard]]
-enum eskilib_Result history_clean(struct History* const restrict history, struct Arena* const arena,
+enum eresult history_clean(struct History* const restrict history, struct Arena* const arena,
                                   struct Arena scratch_arena)
 {
     assert(history);
@@ -182,10 +182,10 @@ enum eskilib_Result history_clean(struct History* const restrict history, struct
 
     printf("ncsh history: starting to clean history with %zu entries.\n", history->count);
 
-    struct eskilib_HashTable ht = {0};
+    struct emap ht = {0};
 
     // doesn't use arena for now, could use the scratch arena
-    bool ht_malloc_result = eskilib_hashtable_malloc(&scratch_arena, &ht);
+    bool ht_malloc_result = emap_malloc(&scratch_arena, &ht);
     if (!ht_malloc_result) {
         return E_FAILURE_MALLOC;
     }
@@ -201,8 +201,8 @@ enum eskilib_Result history_clean(struct History* const restrict history, struct
             continue;
         }
 
-        if (!eskilib_hashtable_exists(history->entries[i].value, &ht)) {
-            eskilib_hashtable_set(history->entries[i].value, history->entries[i], &scratch_arena, &ht);
+        if (!emap_exists(history->entries[i].value, &ht)) {
+            emap_set(history->entries[i].value, history->entries[i], &scratch_arena, &ht);
 
             if (!fputs(history->entries[i].value, file)) {
                 perror(RED "ncsh history: Error writing to file" RESET);
@@ -219,7 +219,7 @@ enum eskilib_Result history_clean(struct History* const restrict history, struct
 
     fclose(file);
 
-    enum eskilib_Result result;
+    enum eresult result;
     if ((result = history_reload(history, arena)) != E_SUCCESS) {
         perror(RED "ncsh history: Error when reloading data from history file" RESET);
         fflush(stderr);
@@ -231,7 +231,7 @@ enum eskilib_Result history_clean(struct History* const restrict history, struct
     return E_SUCCESS;
 }
 
-enum eskilib_Result history_save(struct History* const restrict history)
+enum eresult history_save(struct History* const restrict history)
 {
     if (!history || !history->count || !history->entries || !history->entries[0].value) {
         return E_FAILURE_NULL_REFERENCE;
@@ -275,7 +275,7 @@ enum eskilib_Result history_save(struct History* const restrict history)
     return E_SUCCESS;
 }
 
-enum eskilib_Result history_add(const char* const line, const size_t length, struct History* const restrict history,
+enum eresult history_add(const char* const line, const size_t length, struct History* const restrict history,
                                 struct Arena* const arena)
 {
     assert(history);
@@ -307,18 +307,18 @@ enum eskilib_Result history_add(const char* const line, const size_t length, str
 }
 
 [[nodiscard]]
-struct eskilib_String history_get(const size_t position, struct History* const restrict history)
+struct estr history_get(const size_t position, struct History* const restrict history)
 {
     assert(history);
 
     if (!history || !history->count || !history->entries) {
-        return eskilib_String_Empty;
+        return estr_Empty;
     }
     else if (position >= history->count) {
-        return eskilib_String_Empty;
+        return estr_Empty;
     }
     else if (history->count - position - 1 > history->count) {
-        return eskilib_String_Empty;
+        return estr_Empty;
     }
     else if (position > NCSH_MAX_HISTORY_IN_MEMORY) {
         return history->entries[NCSH_MAX_HISTORY_IN_MEMORY];
@@ -391,7 +391,7 @@ int_fast32_t history_command_remove(const char* const value, const size_t value_
     }
 
     for (size_t i = 0; i < history->count; ++i) {
-        if (eskilib_string_compare_const(value, value_len, history->entries[i].value, history->entries[i].length)) {
+        if (estrcmp_c(history->entries[i].value, history->entries[i].length, value, value_len)) {
             history->entries[i].value = NULL;
             history->entries[i].length = 0;
             history_remove_entries_shift(i, history);

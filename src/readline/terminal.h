@@ -2,12 +2,7 @@
 
 #pragma once
 
-#include <linux/limits.h>
-#include <stdbool.h>
 #include <stdint.h>
-
-#include "../eskilib/eskilib_result.h"
-#include "../eskilib/eskilib_string.h"
 
 // input definitions
 #define ESCAPE_CHARACTER 27 // "\033" or "^["
