@@ -4,6 +4,7 @@
 
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #define eskilib_assert(condition)                                                                                      \
     if (!(condition)) {                                                                                                \

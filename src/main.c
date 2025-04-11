@@ -218,7 +218,7 @@ int main(int argc, char** argv)
             }
 
             history_add(shell.input.buffer, shell.input.pos, &shell.input.history, &shell.arena);
-            autocompletions_add(shell.input.buffer, shell.input.pos, shell.input.autocompletions_tree, &shell.arena);
+            ac_add(shell.input.buffer, shell.input.pos, shell.input.autocompletions_tree, &shell.arena);
 
         reset:
             memset(shell.input.buffer, '\0', shell.input.max_pos);
