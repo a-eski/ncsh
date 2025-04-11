@@ -6,8 +6,8 @@
 
 #include "../arena.h"
 #include "../configurables.h"
-#include "../eskilib/eskilib_result.h"
-#include "../eskilib/eskilib_string.h"
+#include "../eskilib/eresult.h"
+#include "../eskilib/estr.h"
 #include "../parser.h"
 
 #ifdef NCSH_HISTORY_TEST
@@ -22,19 +22,19 @@
 struct History {
     size_t count;
     char* file;
-    struct eskilib_String* entries;
+    struct estr* entries;
 };
 
 /* History Setup and Manipulation */
-enum eskilib_Result history_init(const struct eskilib_String config_location, struct History* const restrict history,
+enum eresult history_init(const struct estr config_location, struct History* const restrict history,
                                  struct Arena* const arena);
 
-enum eskilib_Result history_save(struct History* const restrict history);
+enum eresult history_save(struct History* const restrict history);
 
-enum eskilib_Result history_add(const char* const line, const size_t length, struct History* const restrict history,
+enum eresult history_add(const char* const line, const size_t length, struct History* const restrict history,
                                 struct Arena* const arena);
 
-struct eskilib_String history_get(const size_t position, struct History* const restrict history);
+struct estr history_get(const size_t position, struct History* const restrict history);
 
 /* history_command_...
  * History Commands called from builtins when user enters commands like 'history',

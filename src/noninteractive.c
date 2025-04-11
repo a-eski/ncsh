@@ -13,8 +13,8 @@
 #include "config.h"
 #include "debug.h"
 #include "defines.h"
-#include "eskilib/eskilib_colors.h"
-#include "eskilib/eskilib_result.h"
+#include "eskilib/ecolors.h"
+#include "eskilib/eresult.h"
 #include "noninteractive.h"
 #include "parser.h"
 #include "vm/vm.h"
@@ -73,7 +73,7 @@ int_fast32_t noninteractive(const int argc, const char** const restrict argv)
     }
 
     struct Args args = {0};
-    enum eskilib_Result result;
+    enum eresult result;
     if ((result = parser_args_alloc(&args, &arena)) != E_SUCCESS) {
         perror(RED "ncsh: Error when allocating memory for parser" RESET);
         fflush(stderr);

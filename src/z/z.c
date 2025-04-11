@@ -16,7 +16,7 @@
 #include <unistd.h>
 
 #include "../defines.h"
-#include "../eskilib/eskilib_colors.h"
+#include "../eskilib/ecolors.h"
 #include "fzf.h"
 #include "z.h"
 
@@ -46,7 +46,7 @@ bool z_match_exists(const char* const target, const size_t target_length, struct
     assert(db && target && target_length > 0);
 
     for (size_t i = 0; i < db->count; ++i) {
-        if (eskilib_string_compare_const((db->dirs + i)->path, (db->dirs + i)->path_length, target, target_length)) {
+        if (estrcmp_c((db->dirs + i)->path, (db->dirs + i)->path_length, target, target_length)) {
             ++(db->dirs + i)->rank;
             (db->dirs + i)->last_accessed = time(NULL);
             return true;
@@ -74,7 +74,7 @@ struct z_Directory* z_match_find(char* const target, const size_t target_length,
 #endif
 
     for (size_t i = 0; i < db->count; ++i) {
-        if (!eskilib_string_compare((db->dirs + i)->path, (db->dirs + i)->path_length, (char*)cwd, cwd_length)) {
+        if (!estrcmp_c((db->dirs + i)->path, (db->dirs + i)->path_length, (char*)cwd, cwd_length)) {
             int fzf_score =
                 fzf_get_score((db->dirs + i)->path, (db->dirs + i)->path_length - 1, pattern, slab, scratch_arena);
             if (!fzf_score)
@@ -375,7 +375,7 @@ enum z_Result z_database_add(const char* const path, const size_t path_length, c
     return Z_SUCCESS;
 }
 
-enum z_Result z_database_file_set(const struct eskilib_String* const config_file, struct z_Database* const restrict db,
+enum z_Result z_database_file_set(const struct estr* const config_file, struct z_Database* const restrict db,
                                   struct Arena* const arena)
 {
     constexpr size_t z_db_file_len = sizeof(Z_DATABASE_FILE);
@@ -405,7 +405,7 @@ enum z_Result z_database_file_set(const struct eskilib_String* const config_file
     return Z_SUCCESS;
 }
 
-enum z_Result z_init(const struct eskilib_String* const config_file, struct z_Database* const restrict db,
+enum z_Result z_init(const struct estr* const config_file, struct z_Database* const restrict db,
                      struct Arena* const arena)
 {
     assert(db);
@@ -435,7 +435,7 @@ bool z_is_dir(struct dirent* dir)
 }
 
 enum z_Result z_directory_match_exists(const char* const target, const size_t target_length, const char* const cwd,
-                                       struct eskilib_String* const output, struct Arena* const scratch_arena)
+                                       struct estr* const output, struct Arena* const scratch_arena)
 {
     assert(target && cwd && target_length > 0);
 
@@ -458,7 +458,7 @@ enum z_Result z_directory_match_exists(const char* const target, const size_t ta
         dir_len = strlen(dir->d_name) + 1;
 #endif /* _DIRENT_HAVE_D_RECLEN */
 
-        if (z_is_dir(dir) && eskilib_string_compare_const(target, target_length, dir->d_name, dir_len)) {
+        if (z_is_dir(dir) && estrcmp_c(dir->d_name, dir_len, target, target_length)) {
             output->value = arena_malloc(scratch_arena, dir_len, char);
             output->length = dir_len;
             memcpy(output->value, dir->d_name, dir_len);
@@ -487,7 +487,7 @@ void z(char* target, const size_t target_length, const char* const cwd, struct z
     printf("z: %s\n", target);
 #endif /* ifdef Z_DEBUG */
 
-    char* home = getenv("HOME");
+    const char* const home = getenv("HOME");
     if (!home) {
         perror("z: couldn't get HOME from environment");
     }
@@ -509,7 +509,7 @@ void z(char* target, const size_t target_length, const char* const cwd, struct z
         return;
     }
 
-    if (eskilib_string_compare(target, target_length, home, strlen(home) + 1)) {
+    if (estrcmp_cc(target, target_length, home, strlen(home) + 1)) {
         if (chdir(home) == -1) {
             perror("z: couldn't change directory to home");
         }
@@ -535,7 +535,7 @@ void z(char* target, const size_t target_length, const char* const cwd, struct z
     }
 
     size_t cwd_length = strlen(cwd) + 1;
-    struct eskilib_String output = {0};
+    struct estr output = {0};
     struct z_Directory* match = z_match_find(target, target_length, cwd, cwd_length, db, &scratch_arena);
 
     if (z_directory_match_exists(target, target_length, cwd, &output, &scratch_arena) == Z_SUCCESS) {
@@ -638,7 +638,7 @@ enum z_Result z_remove(const char* const path, const size_t path_length, struct 
     }
 
     for (size_t i = 0; i < db->count; ++i) {
-        if (eskilib_string_compare((db->dirs + i)->path, (db->dirs + i)->path_length, (char*)path, path_length)) {
+        if (estrcmp_c((db->dirs + i)->path, (db->dirs + i)->path_length, (char*)path, path_length)) {
             (db->dirs + i)->path = NULL;
             (db->dirs + i)->path_length = 0;
             (db->dirs + i)->last_accessed = 0;

@@ -9,7 +9,7 @@
 #include <string.h>
 
 #include "../defines.h"
-#include "../eskilib/eskilib_string.h"
+#include "../eskilib/estr.h"
 #include "autocompletions.h"
 
 static inline int char_to_index(const char character);
@@ -51,7 +51,7 @@ void ac_add(const char* const string, const size_t length, struct Autocompletion
     tree->is_end_of_a_word = true;
 }
 
-void ac_add_multiple(const struct eskilib_String* const strings, const int count,
+void ac_add_multiple(const struct estr* const strings, const int count,
                                   struct Autocompletion_Node* restrict tree, struct Arena* const arena)
 {
     assert(strings && tree && arena);
@@ -88,6 +88,10 @@ void ac_match(struct Autocompletion* const matches, struct Autocompletion_Node* 
             continue;
         }
 
+        if (matches_position + 1 >= NCSH_MAX_AUTOCOMPLETION_MATCHES) {
+            return;
+        }
+
         if (!matches[matches_position].value) {
              matches[matches_position].value = arena_malloc(scratch_arena, NCSH_MAX_INPUT, char);
 
@@ -102,10 +106,6 @@ void ac_match(struct Autocompletion* const matches, struct Autocompletion_Node* 
         if (tree->nodes[i]->is_end_of_a_word) {
             matches[matches_position].weight = tree->nodes[i]->weight;
             ++matches_position;
-        }
-
-        if (matches_position + 1 >= NCSH_MAX_AUTOCOMPLETION_MATCHES) {
-            return;
         }
 
         ac_match(matches, tree->nodes[i], scratch_arena);

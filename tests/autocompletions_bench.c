@@ -2,7 +2,7 @@
 #include <stdint.h>
 
 #include "../src/defines.h"
-#include "../src/eskilib/eskilib_test.h"
+#include "../src/eskilib/etest.h"
 #include "../src/readline/autocompletions.h"
 #include "lib/arena_test_helper.h"
 
@@ -12,7 +12,7 @@ void ac_bench(void)
     SCRATCH_ARENA_TEST_SETUP;
 
     struct Autocompletion_Node* tree = ac_alloc(&arena);
-    eskilib_assert(tree != NULL);
+    eassert(tree != NULL);
 
     ac_add("ls", sizeof("ls"), tree, &arena);
     ac_add("ls | wc -c", sizeof("ls | wc -c"), tree, &arena);
@@ -204,7 +204,7 @@ void ac_bench(void)
     match_count = ac_get("git di", autocomplete, tree, scratch_arena);
     match_count = ac_get("git dif", autocomplete, tree, scratch_arena);
     match_count = ac_get("git diff", autocomplete, tree, scratch_arena);
-    eskilib_assert(match_count);
+    eassert(match_count);
 
     ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;

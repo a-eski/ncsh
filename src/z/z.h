@@ -1,4 +1,6 @@
 /* Copyright z by Alex Eski 2024 */
+/* z: a better cd command */
+/* idea credited to autojump/z/z-oxide and many others */
 
 #ifndef Z_H_
 #define Z_H_
@@ -7,7 +9,7 @@
 #include <time.h>
 
 #include "../arena.h"
-#include "../eskilib/eskilib_string.h"
+#include "../eskilib/estr.h"
 
 #define Z_DATABASE_FILE "_z_database.bin"
 #define Z_DATABASE_IN_MEMORY_LIMIT 200
@@ -52,7 +54,7 @@ enum z_Result {
     Z_SUCCESS = 1
 };
 
-enum z_Result z_init(const struct eskilib_String* const config_location, struct z_Database* const restrict database,
+enum z_Result z_init(const struct estr* const config_location, struct z_Database* const restrict database,
                      struct Arena* const arena);
 
 void z(char* target, const size_t target_length, const char* const cwd, struct z_Database* const restrict db,

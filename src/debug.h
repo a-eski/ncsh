@@ -9,7 +9,7 @@
 
 #include <stdio.h>
 
-#include "eskilib/eskilib_string.h"
+#include "eskilib/estr.h"
 #include "parser.h"
 
 static inline void debug_line(char* buffer, size_t buf_position, size_t max_buf_position)
@@ -45,7 +45,7 @@ static inline void debug_argsv(int argc, const char** argv)
     }
 }
 
-static inline void debug_string(struct eskilib_String string, const char* name)
+static inline void debug_string(struct estr string, const char* name)
 {
     printf("%s value: %s\n", name, string.value);
     printf("%s length: %zu\n", name, string.length);

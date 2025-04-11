@@ -6,7 +6,7 @@
 #include <stdint.h>
 
 #include "../config.h"
-#include "../eskilib/eskilib_result.h"
+#include "../eskilib/eresult.h"
 #include "history.h"
 #include "terminal.h"
 
@@ -19,7 +19,7 @@ struct Input {
     // values related to prompt
     bool reprint_prompt;
     size_t prompt_len;
-    struct eskilib_String user;
+    struct estr user;
 
     // values related to the line buffer
     size_t start_pos;
@@ -35,7 +35,7 @@ struct Input {
 
     // history
     size_t history_position;
-    struct eskilib_String history_entry;
+    struct estr history_entry;
     struct History history;
 
     // autocompletions

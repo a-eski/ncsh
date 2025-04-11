@@ -2,7 +2,7 @@
 
 #pragma once
 
-enum eskilib_Result {
+enum eresult {
     E_FAILURE_BAD_STRING = -8,
     E_FAILURE_NOT_FOUND = -7,
     E_FAILURE_ZERO_LENGTH = -6,

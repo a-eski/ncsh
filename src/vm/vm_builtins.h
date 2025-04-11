@@ -5,7 +5,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "../eskilib/eskilib_string.h"
 #include "../parser.h"
 #include "../readline/history.h"
 #include "../z/z.h"

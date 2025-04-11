@@ -5,14 +5,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "eskilib_hashtable.h"
+#include "emap.h"
 
-bool eskilib_hashtable_malloc(struct Arena* const arena, struct eskilib_HashTable* table)
+bool emap_malloc(struct Arena* const arena, struct emap* table)
 {
     table->size = 0;
-    table->capacity = ESKILIB_HASHTABLE_DEFAULT_CAPACITY;
+    table->capacity = ESKILIB_EMAP_DEFAULT_CAPACITY;
 
-    table->entries = arena_malloc(arena, table->capacity, struct eskilib_HashTable_Entry);
+    table->entries = arena_malloc(arena, table->capacity, struct emap_Entry);
     if (table->entries == NULL) {
         return false;
     }
@@ -23,7 +23,7 @@ bool eskilib_hashtable_malloc(struct Arena* const arena, struct eskilib_HashTabl
 #define ESKILIB_FNV_PRIME 16777619
 
 // 64-bit FNV-1a hash
-uint64_t eskilib_hashtable_key(const char* str)
+uint64_t emap_key(const char* str)
 {
     register uint64_t i;
 
@@ -35,9 +35,9 @@ uint64_t eskilib_hashtable_key(const char* str)
     return i;
 }
 
-struct eskilib_String eskilib_hashtable_get(const char* key, struct eskilib_HashTable* table)
+struct estr emap_get(const char* key, struct emap* table)
 {
-    uint64_t hash = eskilib_hashtable_key(key);
+    uint64_t hash = emap_key(key);
     size_t index = (size_t)(hash & (uint64_t)(table->capacity - 1));
 
     while (table->entries[index].key != NULL) {
@@ -51,12 +51,12 @@ struct eskilib_String eskilib_hashtable_get(const char* key, struct eskilib_Hash
         }
     }
 
-    return eskilib_String_Empty;
+    return estr_Empty;
 }
 
-bool eskilib_hashtable_exists(const char* key, struct eskilib_HashTable* table)
+bool emap_exists(const char* key, struct emap* table)
 {
-    uint64_t hash = eskilib_hashtable_key(key);
+    uint64_t hash = emap_key(key);
     size_t index = (size_t)(hash & (uint64_t)(table->capacity - 1));
 
     while (table->entries[index].key != NULL) {
@@ -73,10 +73,10 @@ bool eskilib_hashtable_exists(const char* key, struct eskilib_HashTable* table)
     return false;
 }
 
-const char* eskilib_hashtable_set_entry(struct eskilib_HashTable_Entry* entries, size_t capacity, const char* key,
-                                        struct eskilib_String value, size_t* plength)
+const char* emap_set_entry(struct emap_Entry* entries, size_t capacity, const char* key,
+                                        struct estr value, size_t* plength)
 {
-    uint64_t hash = eskilib_hashtable_key(key);
+    uint64_t hash = emap_key(key);
     size_t index = (size_t)(hash & (uint64_t)(capacity - 1));
 
     while (entries[index].key != NULL) {
@@ -104,23 +104,23 @@ const char* eskilib_hashtable_set_entry(struct eskilib_HashTable_Entry* entries,
     return key;
 }
 
-bool eskilib_hashtable_expand(struct Arena* const arena, struct eskilib_HashTable* table)
+bool emap_expand(struct Arena* const arena, struct emap* table)
 {
     size_t new_capacity = table->capacity * 2;
     if (new_capacity < table->capacity) {
         return false;
     }
 
-    struct eskilib_HashTable_Entry* new_entries = arena_malloc(arena, new_capacity, struct eskilib_HashTable_Entry);
+    struct emap_Entry* new_entries = arena_malloc(arena, new_capacity, struct emap_Entry);
     if (new_entries == NULL) {
         return false;
     }
 
     // Iterate entries, move all non-empty ones to new table's entries.
     for (size_t i = 0; i < table->capacity; i++) {
-        struct eskilib_HashTable_Entry entry = table->entries[i];
+        struct emap_Entry entry = table->entries[i];
         if (entry.key != NULL) {
-            eskilib_hashtable_set_entry(new_entries, new_capacity, entry.key, entry.value, NULL);
+            emap_set_entry(new_entries, new_capacity, entry.key, entry.value, NULL);
         }
     }
 
@@ -129,8 +129,8 @@ bool eskilib_hashtable_expand(struct Arena* const arena, struct eskilib_HashTabl
     return true;
 }
 
-const char* eskilib_hashtable_set(const char* key, struct eskilib_String value, struct Arena* const arena,
-                                  struct eskilib_HashTable* table)
+const char* emap_set(const char* key, struct estr value, struct Arena* const arena,
+                                  struct emap* table)
 {
     assert(value.value != NULL && value.length > 0);
     if (value.value == NULL || value.length == 0) {
@@ -138,10 +138,10 @@ const char* eskilib_hashtable_set(const char* key, struct eskilib_String value, 
     }
 
     if (table->size >= table->capacity / 2) {
-        if (!eskilib_hashtable_expand(arena, table)) {
+        if (!emap_expand(arena, table)) {
             return NULL;
         }
     }
 
-    return eskilib_hashtable_set_entry(table->entries, table->capacity, key, value, &table->size);
+    return emap_set_entry(table->entries, table->capacity, key, value, &table->size);
 }

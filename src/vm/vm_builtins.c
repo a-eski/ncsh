@@ -14,8 +14,8 @@
 #include <unistd.h>
 
 #include "../defines.h"
-#include "../eskilib/eskilib_colors.h"
-#include "../eskilib/eskilib_string.h"
+#include "../eskilib/ecolors.h"
+#include "../eskilib/estr.h"
 #include "../parser.h"
 #include "../readline/history.h"
 #include "../z/z.h"
@@ -37,7 +37,7 @@ int_fast32_t builtins_z(struct z_Database* const restrict z_db, const struct Arg
         assert(args->values[1]);
 
         // z print
-        if (eskilib_string_compare(args->values[1], args->lengths[1], Z_PRINT, sizeof(Z_PRINT))) {
+        if (estrcmp_c(args->values[1], args->lengths[1], Z_PRINT, sizeof(Z_PRINT))) {
             z_print(z_db);
             return NCSH_COMMAND_SUCCESS_CONTINUE;
         }
@@ -57,7 +57,7 @@ int_fast32_t builtins_z(struct z_Database* const restrict z_db, const struct Arg
         assert(args->values[1] && args->values[2]);
 
         // z add
-        if (eskilib_string_compare(args->values[1], args->lengths[1], Z_ADD, sizeof(Z_ADD))) {
+        if (estrcmp_c(args->values[1], args->lengths[1], Z_ADD, sizeof(Z_ADD))) {
             if (z_add(args->values[2], args->lengths[2], z_db, arena) != Z_SUCCESS) {
                 return NCSH_COMMAND_FAILED_CONTINUE;
             }
@@ -65,8 +65,8 @@ int_fast32_t builtins_z(struct z_Database* const restrict z_db, const struct Arg
             return NCSH_COMMAND_SUCCESS_CONTINUE;
         }
         // z rm/remove
-        else if (eskilib_string_compare(args->values[1], args->lengths[1], Z_RM, sizeof(Z_RM)) ||
-                 eskilib_string_compare(args->values[1], args->lengths[1], Z_REMOVE, sizeof(Z_REMOVE))) {
+        else if (estrcmp_c(args->values[1], args->lengths[1], Z_RM, sizeof(Z_RM)) ||
+                 estrcmp_c(args->values[1], args->lengths[1], Z_REMOVE, sizeof(Z_REMOVE))) {
             if (z_remove(args->values[2], args->lengths[2], z_db) != Z_SUCCESS) {
                 return NCSH_COMMAND_FAILED_CONTINUE;
             }
@@ -90,10 +90,10 @@ int_fast32_t builtins_history(struct History* const restrict history, const stru
     if (args->count == 2) {
         assert(args->values[1]);
 
-        if (eskilib_string_compare(args->values[1], args->lengths[1], NCSH_HISTORY_COUNT, sizeof(NCSH_HISTORY_COUNT))) {
+        if (estrcmp_c(args->values[1], args->lengths[1], NCSH_HISTORY_COUNT, sizeof(NCSH_HISTORY_COUNT))) {
             return history_command_count(history);
         }
-        else if (eskilib_string_compare(args->values[1], args->lengths[1], NCSH_HISTORY_CLEAN,
+        else if (estrcmp_c(args->values[1], args->lengths[1], NCSH_HISTORY_CLEAN,
                                         sizeof(NCSH_HISTORY_CLEAN))) {
             return history_command_clean(history, arena, scratch_arena);
         }
@@ -103,7 +103,7 @@ int_fast32_t builtins_history(struct History* const restrict history, const stru
         assert(args->values[1] && args->values[2]);
 
         // z add
-        if (eskilib_string_compare(args->values[1], args->lengths[1], NCSH_HISTORY_ADD, sizeof(NCSH_HISTORY_ADD))) {
+        if (estrcmp_c(args->values[1], args->lengths[1], NCSH_HISTORY_ADD, sizeof(NCSH_HISTORY_ADD))) {
             if (history_command_add(args->values[2], args->lengths[2], history, arena) != Z_SUCCESS) {
                 return NCSH_COMMAND_FAILED_CONTINUE;
             }
@@ -111,8 +111,8 @@ int_fast32_t builtins_history(struct History* const restrict history, const stru
             return NCSH_COMMAND_SUCCESS_CONTINUE;
         }
         // z rm/remove
-        else if (eskilib_string_compare(args->values[1], args->lengths[1], NCSH_HISTORY_RM, sizeof(NCSH_HISTORY_RM)) ||
-                 eskilib_string_compare(args->values[1], args->lengths[1], NCSH_HISTORY_REMOVE,
+        else if (estrcmp_c(args->values[1], args->lengths[1], NCSH_HISTORY_RM, sizeof(NCSH_HISTORY_RM)) ||
+                 estrcmp_c(args->values[1], args->lengths[1], NCSH_HISTORY_REMOVE,
                                         sizeof(NCSH_HISTORY_REMOVE))) {
             if (history_command_remove(args->values[2], args->lengths[2], history, arena, scratch_arena) != Z_SUCCESS) {
                 return NCSH_COMMAND_FAILED_CONTINUE;

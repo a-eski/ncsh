@@ -1,8 +1,6 @@
 /* Copyright ncsh by Alex Eski 2024 */
 
 #include <assert.h>
-#include <limits.h>
-#include <linux/limits.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,7 +9,7 @@
 #include <unistd.h>
 
 #include "../defines.h"
-#include "../eskilib/eskilib_colors.h"
+#include "../eskilib/ecolors.h"
 #include "terminal.h"
 
 #define TERMINAL_RETURN 'R'

@@ -14,13 +14,13 @@
 #include "arena.h"
 #include "config.h"
 #include "defines.h"
-#include "eskilib/eskilib_colors.h"
-#include "eskilib/eskilib_file.h"
-#include "eskilib/eskilib_result.h"
-#include "eskilib/eskilib_string.h"
+#include "eskilib/ecolors.h"
+#include "eskilib/efile.h"
+#include "eskilib/eresult.h"
+#include "eskilib/estr.h"
 
 [[nodiscard]]
-enum eskilib_Result config_home_init(struct Config* const restrict config, struct Arena* const arena)
+enum eresult config_home_init(struct Config* const restrict config, struct Arena* const arena)
 {
     if (!config) {
         return E_FAILURE_NULL_REFERENCE;
@@ -45,7 +45,7 @@ enum eskilib_Result config_home_init(struct Config* const restrict config, struc
 }
 
 [[nodiscard]]
-enum eskilib_Result config_location_init(struct Config* const restrict config, struct Arena* const arena)
+enum eresult config_location_init(struct Config* const restrict config, struct Arena* const arena)
 {
     if (!config) {
         return E_FAILURE_NULL_REFERENCE;
@@ -87,7 +87,7 @@ enum eskilib_Result config_location_init(struct Config* const restrict config, s
 }
 
 [[nodiscard]]
-enum eskilib_Result config_file_set(struct Config* const restrict config, struct Arena* const arena)
+enum eresult config_file_set(struct Config* const restrict config, struct Arena* const arena)
 {
     constexpr size_t rc_len = sizeof(RC_FILE);
     constexpr size_t rc_len_nt = rc_len - 1;
@@ -149,7 +149,7 @@ void config_process(FILE* const restrict file, struct Arena* const scratch_arena
 {
     int buffer_length;
     char buffer[NCSH_MAX_INPUT] = {0};
-    while ((buffer_length = eskilib_fgets(buffer, sizeof(buffer), file)) != EOF) {
+    while ((buffer_length = efgets(buffer, sizeof(buffer), file)) != EOF) {
         if (buffer_length > 6 && !strncmp(buffer, PATH_ADD, sizeof(PATH_ADD) - 1)) {
             config_path_add(buffer + 6, buffer_length - 6, scratch_arena);
         }
@@ -160,10 +160,10 @@ void config_process(FILE* const restrict file, struct Arena* const scratch_arena
 
 /* config_file_load
  * Loads the .ncshrc file and processes it by calling config_process if file could be loaded.
- * Returns: enum eskilib_Result, E_SUCCESS if config file loaded or user doesn't want one.
+ * Returns: enum eresult, E_SUCCESS if config file loaded or user doesn't want one.
  */
 [[nodiscard]]
-enum eskilib_Result config_file_load(const struct Config* const restrict config, struct Arena* const scratch_arena)
+enum eresult config_file_load(const struct Config* const restrict config, struct Arena* const scratch_arena)
 {
 
     FILE* file = fopen(config->config_file.value, "r");
@@ -199,15 +199,15 @@ enum eskilib_Result config_file_load(const struct Config* const restrict config,
 /* config_init
  * Allocate memory via the arena bump allocator to store information related to configuration/rc file.
  * Lives for lifetime of the shell.
- * Returns: enum eskilib_Result, E_SUCCESS is successful
+ * Returns: enum eresult, E_SUCCESS is successful
  */
 [[nodiscard]]
-enum eskilib_Result config_init(struct Config* const restrict config, struct Arena* const arena,
+enum eresult config_init(struct Config* const restrict config, struct Arena* const arena,
                                 struct Arena scratch_arena)
 {
     assert(arena);
 
-    enum eskilib_Result result;
+    enum eresult result;
     if ((result = config_home_init(config, arena)) != E_SUCCESS) {
         return result;
     }
@@ -243,8 +243,8 @@ enum eskilib_Result config_init(struct Config* const restrict config, struct Are
 #define CARGO_ALIAS "c"
 
 struct Alias {
-    struct eskilib_String alias;
-    struct eskilib_String actual_command;
+    struct estr alias;
+    struct estr actual_command;
 };
 
 /* Compile-time aliases
@@ -263,20 +263,20 @@ const struct Alias aliases[] = {
 
 /* config_alias_check
  * Checks if the input matches to any of the compile-time defined aliased commands.
- * Returns: the actual command as a struct eskilib_String, a char* value and a size_t length.
+ * Returns: the actual command as a struct estr, a char* value and a size_t length.
  */
-struct eskilib_String config_alias_check(const char* const restrict buffer, const size_t buf_len)
+struct estr config_alias_check(const char* const restrict buffer, const size_t buf_len)
 {
     if (!buffer || buf_len < 2) {
-        return eskilib_String_Empty;
+        return estr_Empty;
     }
 
     constexpr size_t aliases_count = sizeof(aliases) / sizeof(struct Alias);
     for (uint_fast32_t i = 0; i < aliases_count; ++i) {
-        if (eskilib_string_compare_const(buffer, buf_len, aliases[i].alias.value, aliases[i].alias.length)) {
+        if (estrcmp_cc(buffer, buf_len, aliases[i].alias.value, aliases[i].alias.length)) {
             return aliases[i].actual_command;
         }
     }
 
-    return eskilib_String_Empty;
+    return estr_Empty;
 }

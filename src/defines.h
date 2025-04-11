@@ -9,7 +9,7 @@
  */
 
 #include "configurables.h"
-#include "eskilib/eskilib_colors.h"
+#include "eskilib/ecolors.h"
 
 #ifdef NCSH_DEBUG
 #include "debug.h"

@@ -4,7 +4,6 @@
 
 #include <fcntl.h>
 #include <linux/limits.h>
-#include <stddef.h>
 #include <stdint.h>
 
 #include "../parser.h"
