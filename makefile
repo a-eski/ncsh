@@ -2,8 +2,11 @@ STD = -std=c2x
 CC ?= gcc
 DESTDIR ?= /bin
 RELEASE ?= 1
+# debug_flags = -Wall -Wextra -Werror -Wpedantic -pedantic-errors -Wsign-conversion -Wformat=2 -Wshadow -Wvla -Wwrite-strings -fstack-protector-all -fsanitize=address,undefined,leak -g
 debug_flags = -Wall -Wextra -Werror -Wpedantic -pedantic-errors -Wsign-conversion -Wformat=2 -Wshadow -Wvla -fstack-protector-all -fsanitize=address,undefined,leak -g
+# release_flags = -Wall -Wextra -Werror -pedantic-errors -Wsign-conversion -Wformat=2 -Wshadow -Wvla -Wwrite-strings -O3 -DNDEBUG
 release_flags = -Wall -Wextra -Werror -pedantic-errors -Wsign-conversion -Wformat=2 -Wshadow -Wvla -O3 -DNDEBUG
+# fuzz_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -Wwrite-strings -fsanitize=address,leak,fuzzer -DNDEBUG -g
 fuzz_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,leak,fuzzer -DNDEBUG -g
 objects = obj/main.o obj/arena.o obj/noninteractive.o obj/ncreadline.o obj/vm.o obj/vm_tokenizer.o obj/terminal.o obj/eskilib_file.o obj/eskilib_hashtable.o obj/parser.o obj/vm_builtins.o obj/history.o obj/autocompletions.o obj/config.o obj/fzf.o obj/z.o
 target = ./bin/ncsh
@@ -142,10 +145,19 @@ fa :
 
 .PHONY: bench_autocompletions
 bench_autocompletions :
-	hyperfine --warmup 500 --shell=none './bin/autocompletions_tests'
+	$(CC) $(STD) $(debug_flags) -DNDEBUG ./src/eskilib/eskilib_test.c ./src/arena.c ./src/readline/autocompletions.c ./tests/autocompletions_bench.c -o ./bin/autocompletions_bench
+	hyperfine --warmup 1000 --shell=none './bin/autocompletions_bench'
 .PHONYE: ba
 ba :
 	make bench_autocompletions
+
+.PHONY: bench_autocompletions_tests
+bench_autocompletions_tests :
+	$(CC) $(STD) $(debug_flags) -DNDEBUG ./src/eskilib/eskilib_test.c ./src/arena.c ./src/readline/autocompletions.c ./tests/autocompletions_tests.c -o ./bin/autocompletions_tests
+	hyperfine --warmup 1000 --shell=none './bin/autocompletions_tests'
+.PHONYE: bat
+bat :
+	make bench_autocompletions_tests
 
 .PHONY: test_parser
 test_parser :

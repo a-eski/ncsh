@@ -54,8 +54,8 @@ int_fast32_t builtins_version(const struct Args* const restrict args);
 int_fast32_t builtins_set(const struct Args* const restrict args);
 
 struct Builtin {
-    size_t length;
-    char* value;
+    const size_t length;
+    char* const value;
     int_fast32_t (*func)(const struct Args* const restrict);
 };
 

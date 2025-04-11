@@ -447,10 +447,10 @@ int_fast32_t ncreadline_autocomplete(struct Input* const restrict input, struct 
         return EXIT_SUCCESS;
     }
 
-    uint_fast8_t autocompletions_matches_count = autocompletions_first(
-        input->buffer, input->pos + 1, input->current_autocompletion, input->autocompletions_tree, *scratch_arena);
+    uint_fast8_t ac_matches_count = ac_first(input->buffer, input->current_autocompletion,
+                                                                       input->autocompletions_tree, *scratch_arena);
 
-    if (!autocompletions_matches_count) {
+    if (!ac_matches_count) {
         if (input->current_autocompletion[0] == '\0') {
             return EXIT_SUCCESS;
         }
@@ -692,25 +692,25 @@ int_fast32_t ncreadline_tab_autocomplete(struct Input* const restrict input, str
     ncsh_write_literal(ERASE_CURRENT_LINE "\n");
 
     struct Autocompletion autocompletion_matches[NCSH_MAX_AUTOCOMPLETION_MATCHES] = {0};
-    int autocompletions_matches_count = autocompletions_get(input->buffer, input->pos + 1, autocompletion_matches,
-                                                            input->autocompletions_tree, *scratch_arena);
+    int ac_matches_count =
+        ac_get(input->buffer, autocompletion_matches, input->autocompletions_tree, *scratch_arena);
 
-    if (!autocompletions_matches_count) {
+    if (!ac_matches_count) {
         return EXIT_SUCCESS;
     }
 
     if (input->buffer) {
-        for (int i = 0; i < autocompletions_matches_count; ++i) {
+        for (int i = 0; i < ac_matches_count; ++i) {
             printf("%s%s\n", input->buffer, autocompletion_matches[i].value);
         }
     }
     else {
-        for (int i = 0; i < autocompletions_matches_count; ++i) {
+        for (int i = 0; i < ac_matches_count; ++i) {
             printf("%s\n", autocompletion_matches[i].value);
         }
     }
 
-    terminal_move_up(autocompletions_matches_count);
+    terminal_move_up(ac_matches_count);
     fflush(stdout);
 
     int position = 0;
@@ -732,7 +732,7 @@ int_fast32_t ncreadline_tab_autocomplete(struct Input* const restrict input, str
             break;
         }
         case DOWN_ARROW: {
-            if (position == autocompletions_matches_count - 1) {
+            if (position == ac_matches_count - 1) {
                 break;
             }
             ncsh_write_literal(MOVE_CURSOR_DOWN);
@@ -755,7 +755,7 @@ int_fast32_t ncreadline_tab_autocomplete(struct Input* const restrict input, str
         }
     }
 
-    terminal_move_down(autocompletions_matches_count + 1 - position);
+    terminal_move_down(ac_matches_count + 1 - position);
     if (input->buffer && exit == EXIT_SUCCESS_EXECUTE) {
         printf(YELLOW "%s\n" RESET, input->buffer);
     }
@@ -783,9 +783,9 @@ int_fast32_t ncreadline_init(struct Config* const restrict config, struct Input*
     }
 
     input->current_autocompletion = arena_malloc(arena, NCSH_MAX_INPUT, char);
-    input->autocompletions_tree = autocompletions_alloc(arena);
+    input->autocompletions_tree = ac_alloc(arena);
 
-    autocompletions_add_multiple(input->history.entries, input->history.count, input->autocompletions_tree, arena);
+    ac_add_multiple(input->history.entries, input->history.count, input->autocompletions_tree, arena);
 
     return EXIT_SUCCESS;
 }
@@ -1098,7 +1098,7 @@ exit:
 void ncreadline_history_and_autocompletion_add(struct Input* const restrict input, struct Arena* const arena)
 {
     history_add(input->buffer, input->pos, &input->history, arena);
-    autocompletions_add(input->buffer, input->pos, input->autocompletions_tree, arena);
+    ac_add(input->buffer, input->pos, input->autocompletions_tree, arena);
 }
 
 /* ncreadline_exit
