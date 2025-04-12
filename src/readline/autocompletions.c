@@ -77,8 +77,8 @@ struct Autocompletion_Node* ac_find(const char* prefix, struct Autocompletion_No
     return ac_find(prefix + 1, tree->nodes[char_to_index(*prefix)]);
 }
 
-uint_fast32_t string_position;
-uint_fast8_t matches_position;
+static uint_fast32_t string_position;
+static uint_fast8_t matches_position;
 
 void ac_match(struct Autocompletion* const matches, struct Autocompletion_Node* restrict tree,
               struct Arena* const restrict scratch_arena)

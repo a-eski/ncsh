@@ -21,11 +21,11 @@ struct emap {
     struct emap_Entry* entries;
 };
 
-bool emap_malloc(struct Arena* const arena, struct emap* table);
+void emap_malloc(struct Arena* const arena, struct emap* hmap);
 
-struct estr emap_get(const char* key, struct emap* table);
+struct estr emap_get(char* key, struct emap* hmap);
 
-bool emap_exists(const char* key, struct emap* table);
+bool emap_exists(char* key, struct emap* hmap);
 
-const char* emap_set(const char* key, struct estr value, struct Arena* const arena,
-                                  struct emap* table);
+const char* emap_set(struct estr val, struct Arena* const arena,
+                     struct emap* hmap);

@@ -60,6 +60,7 @@
 [[nodiscard]]
 enum eresult parser_args_alloc(struct Args* const restrict args, struct Arena* const arena)
 {
+    assert(args && arena);
     if (!args) {
         return E_FAILURE_NULL_REFERENCE;
     }
@@ -143,6 +144,7 @@ enum Ops parser_op_get(const char* const restrict line, const size_t length)
         return OP_NONE;
     }
     case 1: {
+        assert(line);
         switch (line[0]) {
         case PIPE: {
             return OP_PIPE;
@@ -183,6 +185,7 @@ enum Ops parser_op_get(const char* const restrict line, const size_t length)
         }
     }
     case 2: {
+        assert(line);
         for (uint_fast32_t i = 0; i < ops_2char_len; ++i) {
             if (!memcmp(line, ops_2char_str[i], 2)) {
                 return ops_2char[i];
@@ -192,6 +195,7 @@ enum Ops parser_op_get(const char* const restrict line, const size_t length)
         return OP_CONSTANT;
     }
     case 3: {
+        assert(line);
         for (uint_fast32_t i = 0; i < ops_3char_len; ++i) {
             if (!memcmp(line, ops_3char_str[i], 3)) {
                 return ops_3char[i];
@@ -210,12 +214,15 @@ enum Ops parser_op_get(const char* const restrict line, const size_t length)
  * Flags used by the parser to keep track of state, like whether the current character
  * being processed is inside quotes or a mathematical expression.
  */
+// clang-format off
 enum Parser_State {
-    IN_SINGLE_QUOTES = 0x01,
-    IN_DOUBLE_QUOTES = 0x02,
-    IN_BACKTICK_QUOTES = 0x04,
-    IN_MATHEMATICAL_EXPRESSION = 0x08
+    IN_SINGLE_QUOTES =           0x01,
+    IN_DOUBLE_QUOTES =           0x02,
+    IN_BACKTICK_QUOTES =         0x04,
+    IN_MATHEMATICAL_EXPRESSION = 0x08,
+    IN_VARIABLE =                0x16,
 };
+// clang-format on
 
 /* parser_parse
  * Turns the inputted line into values, lengths, and bytecodes that the VM can work with.
@@ -225,8 +232,7 @@ enum Parser_State {
 void parser_parse(const char* const restrict line, const size_t length, struct Args* const restrict args,
                   struct Arena* scratch_arena)
 {
-    assert(args);
-    assert(line);
+    assert(line && args && scratch_arena);
 
     if (!line || length < 2 || length > NCSH_MAX_INPUT) {
         args->count = 0;
@@ -235,9 +241,7 @@ void parser_parse(const char* const restrict line, const size_t length, struct A
 
     assert(length >= 2);
 
-#ifdef NCSH_DEBUG
     debug_parser_input(line, length);
-#endif /* ifdef NCSH_DEBUG */
 
     char buffer[NCSH_MAX_INPUT];
     size_t buf_pos = 0;
@@ -369,9 +373,7 @@ void parser_parse(const char* const restrict line, const size_t length, struct A
         }
     }
 
-#ifdef NCSH_DEBUG
     debug_args(args);
-#endif /* ifdef NCSH_DEBUG */
 }
 
 /* parser_parse_noninteractive
@@ -394,7 +396,5 @@ void parser_parse_noninteractive(const char** const restrict inputs, const size_
         parser_parse(inputs[i], strlen(inputs[i]) + 1, args, scratch_arena);
     }
 
-#ifdef NCSH_DEBUG
     debug_args(args);
-#endif /* ifdef NCSH_DEBUG */
 }

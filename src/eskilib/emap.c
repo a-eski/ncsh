@@ -7,16 +7,12 @@
 
 #include "emap.h"
 
-bool emap_malloc(struct Arena* const arena, struct emap* table)
+void emap_malloc(struct Arena* const arena, struct emap* hmap)
 {
-    table->size = 0;
-    table->capacity = ESKILIB_EMAP_DEFAULT_CAPACITY;
+    hmap->size = 0;
+    hmap->capacity = ESKILIB_EMAP_DEFAULT_CAPACITY;
 
-    table->entries = arena_malloc(arena, table->capacity, struct emap_Entry);
-    if (table->entries == NULL) {
-        return false;
-    }
-    return true;
+    hmap->entries = arena_malloc(arena, hmap->capacity, struct emap_Entry);
 }
 
 #define ESKILIB_FNV_OFFSET 2166136261
@@ -35,18 +31,18 @@ uint64_t emap_key(const char* str)
     return i;
 }
 
-struct estr emap_get(const char* key, struct emap* table)
+struct estr emap_get(char* key, struct emap* hmap)
 {
     uint64_t hash = emap_key(key);
-    size_t index = (size_t)(hash & (uint64_t)(table->capacity - 1));
+    size_t index = (size_t)(hash & (uint64_t)(hmap->capacity - 1));
 
-    while (table->entries[index].key != NULL) {
-        if (key[0] == table->entries[index].key[0] && !strcmp(key, table->entries[index].key)) {
-            return table->entries[index].value;
+    while (hmap->entries[index].key) {
+        if (key[0] == hmap->entries[index].key[0] && !strcmp(key, hmap->entries[index].key)) {
+            return hmap->entries[index].value;
         }
 
-        index++; // linear probing
-        if (index >= table->capacity) {
+        ++index; // linear probing
+        if (index >= hmap->capacity) {
             index = 0; // at end of ht, wrap around
         }
     }
@@ -54,18 +50,18 @@ struct estr emap_get(const char* key, struct emap* table)
     return estr_Empty;
 }
 
-bool emap_exists(const char* key, struct emap* table)
+bool emap_exists(char* key, struct emap* hmap)
 {
     uint64_t hash = emap_key(key);
-    size_t index = (size_t)(hash & (uint64_t)(table->capacity - 1));
+    size_t index = (size_t)(hash & (uint64_t)(hmap->capacity - 1));
 
-    while (table->entries[index].key != NULL) {
-        if (strcmp(key, table->entries[index].key) == 0) {
+    while (hmap->entries[index].key) {
+        if (key[0] == hmap->entries[index].key[0] && !strcmp(key, hmap->entries[index].key)) {
             return true;
         }
 
-        index++; // linear probing
-        if (index >= table->capacity) {
+        ++index; // linear probing
+        if (index >= hmap->capacity) {
             index = 0; // at end of ht, wrap around
         }
     }
@@ -73,75 +69,68 @@ bool emap_exists(const char* key, struct emap* table)
     return false;
 }
 
-const char* emap_set_entry(struct emap_Entry* entries, size_t capacity, const char* key,
-                                        struct estr value, size_t* plength)
+const char* emap_set_entry(struct emap_Entry* entries, size_t capacity,
+                           struct estr val, size_t* plength)
 {
-    uint64_t hash = emap_key(key);
+    uint64_t hash = emap_key(val.value);
     size_t index = (size_t)(hash & (uint64_t)(capacity - 1));
 
-    while (entries[index].key != NULL) {
-        if (strcmp(key, entries[index].key) == 0) {
-            entries[index].value = value;
+    while (entries[index].key) {
+        if (!strcmp(val.value, entries[index].key)) {
+            entries[index].value = val;
             return entries[index].key;
         }
 
-        index++; // linear probing
+        ++index; // linear probing
         if (index >= capacity) {
             index = 0; // at end of ht, wrap around
         }
     }
 
-    if (plength != NULL) {
-        /*key = strdup(key);
-        if (key == NULL) {
-            return NULL;
-        }*/
+    if (plength) {
         (*plength)++;
     }
 
-    entries[index].key = (char*)key;
-    entries[index].value = value;
-    return key;
+    entries[index].key = val.value;
+    entries[index].value = val;
+    return val.value;
 }
 
-bool emap_expand(struct Arena* const arena, struct emap* table)
+bool emap_expand(struct Arena* const arena, struct emap* hmap)
 {
-    size_t new_capacity = table->capacity * 2;
-    if (new_capacity < table->capacity) {
+    size_t new_capacity = hmap->capacity * 2;
+    if (new_capacity < hmap->capacity) {
         return false;
     }
 
     struct emap_Entry* new_entries = arena_malloc(arena, new_capacity, struct emap_Entry);
-    if (new_entries == NULL) {
-        return false;
-    }
 
     // Iterate entries, move all non-empty ones to new table's entries.
-    for (size_t i = 0; i < table->capacity; i++) {
-        struct emap_Entry entry = table->entries[i];
+    for (size_t i = 0; i < hmap->capacity; i++) {
+        struct emap_Entry entry = hmap->entries[i];
         if (entry.key != NULL) {
-            emap_set_entry(new_entries, new_capacity, entry.key, entry.value, NULL);
+            emap_set_entry(new_entries, new_capacity, entry.value, NULL);
         }
     }
 
-    table->entries = new_entries;
-    table->capacity = new_capacity;
+    hmap->entries = new_entries;
+    hmap->capacity = new_capacity;
     return true;
 }
 
-const char* emap_set(const char* key, struct estr value, struct Arena* const arena,
-                                  struct emap* table)
+const char* emap_set(struct estr val, struct Arena* const arena,
+                     struct emap* hmap)
 {
-    assert(value.value != NULL && value.length > 0);
-    if (value.value == NULL || value.length == 0) {
+    assert(val.value && val.length);
+    if (!val.value || !val.length) {
         return NULL;
     }
 
-    if (table->size >= table->capacity / 2) {
-        if (!emap_expand(arena, table)) {
+    if (hmap->size >= hmap->capacity / 2) {
+        if (!emap_expand(arena, hmap)) {
             return NULL;
         }
     }
 
-    return emap_set_entry(table->entries, table->capacity, key, value, &table->size);
+    return emap_set_entry(hmap->entries, hmap->capacity, val, &hmap->size);
 }

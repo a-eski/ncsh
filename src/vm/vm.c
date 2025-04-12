@@ -540,6 +540,11 @@ void vm_alias(struct Args* const restrict args, struct Arena* const arena)
     }
 }
 
+void vm_init(struct Shell *const restrict shell, struct Arena *const arena)
+{
+    emap_malloc(arena, &shell->variables);
+}
+
 [[nodiscard]]
 int_fast32_t vm_execute(struct Shell* const restrict shell, struct Arena* const scratch_arena)
 {

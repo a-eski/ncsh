@@ -16,9 +16,11 @@ void arena_abort_internal(struct Arena* arena)
     assert(arena->exit);
     // TODO: implement different OOM stragety other than jumping to exit or aborting.
     if (arena->exit) {
+        fprintf(stderr, "\n" RED "ncsh: out of memory, jumping to exit." RESET);
         longjmp(*arena->exit, 1);
     }
     else {
+        fprintf(stderr, "\n" RED "ncsh: out of memory, aborting." RESET);
         abort();
     }
 }

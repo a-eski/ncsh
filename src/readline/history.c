@@ -43,9 +43,7 @@ void history_file_set(const struct estr config_file, struct History* const restr
     memcpy(history->file, config_file.value, config_file.length);
     memcpy(history->file + config_file.length - 1, NCSH_HISTORY_FILE, history_file_len);
 
-#ifdef NCSH_DEBUG
-    printf("history->file: %s\n", history->file);
-#endif /* ifdef NCSH_DEBUG */
+    debugf("history->file: %s\n", history->file);
 }
 
 [[nodiscard]]
@@ -65,8 +63,7 @@ enum eresult history_alloc(struct History* const restrict history, struct Arena*
 [[nodiscard]]
 enum eresult history_load(struct History* const restrict history, struct Arena* const arena)
 {
-    assert(history);
-    assert(history->file);
+    assert(history && history->file && arena);
 
     FILE* file = fopen(history->file, "r");
     if (!file || feof(file) || ferror(file)) {
@@ -100,7 +97,6 @@ enum eresult history_load(struct History* const restrict history, struct Arena* 
         history->entries[i].value = arena_malloc(arena, (uintptr_t)buffer_length, char);
         memcpy(history->entries[i].value, buffer, (size_t)buffer_length);
     }
-
     fclose(file);
 
     return E_SUCCESS;
@@ -109,8 +105,8 @@ enum eresult history_load(struct History* const restrict history, struct Arena* 
 [[nodiscard]]
 enum eresult history_reload(struct History* const restrict history, struct Arena* const arena)
 {
-    assert(history);
-    assert(history->file);
+    assert(history && history->file && arena);
+
     history->count = 0;
 
     FILE* file = fopen(history->file, "r");
@@ -138,7 +134,6 @@ enum eresult history_reload(struct History* const restrict history, struct Arena
             history->entries[i].length = (size_t)buffer_length;
         }
     }
-
     fclose(file);
 
     return E_SUCCESS;
@@ -148,7 +143,7 @@ enum eresult history_reload(struct History* const restrict history, struct Arena
 enum eresult history_init(const struct estr config_location, struct History* const restrict history,
                                  struct Arena* const arena)
 {
-    assert(arena);
+    assert(history && arena);
 
     enum eresult result;
     if ((result = history_alloc(history, arena)) != E_SUCCESS) {
@@ -175,20 +170,15 @@ enum eresult history_init(const struct estr config_location, struct History* con
 enum eresult history_clean(struct History* const restrict history, struct Arena* const arena,
                                   struct Arena scratch_arena)
 {
-    assert(history);
+    assert(history && arena && scratch_arena.start);
     if (!history->count || !history->entries[0].value) {
         return E_FAILURE_NULL_REFERENCE;
     }
 
     printf("ncsh history: starting to clean history with %zu entries.\n", history->count);
 
-    struct emap ht = {0};
-
-    // doesn't use arena for now, could use the scratch arena
-    bool ht_malloc_result = emap_malloc(&scratch_arena, &ht);
-    if (!ht_malloc_result) {
-        return E_FAILURE_MALLOC;
-    }
+    struct emap hmap = {0};
+    emap_malloc(&scratch_arena, &hmap);
 
     FILE* file = fopen(history->file, "w");
     if (!file) {
@@ -201,8 +191,8 @@ enum eresult history_clean(struct History* const restrict history, struct Arena*
             continue;
         }
 
-        if (!emap_exists(history->entries[i].value, &ht)) {
-            emap_set(history->entries[i].value, history->entries[i], &scratch_arena, &ht);
+        if (!emap_exists(history->entries[i].value, &hmap)) {
+            emap_set(history->entries[i], &scratch_arena, &hmap);
 
             if (!fputs(history->entries[i].value, file)) {
                 perror(RED "ncsh history: Error writing to file" RESET);
@@ -239,10 +229,8 @@ enum eresult history_save(struct History* const restrict history)
 
     size_t pos = history->count > NCSH_MAX_HISTORY_FILE ? history->count - NCSH_MAX_HISTORY_FILE : 0;
     assert(pos == 0 || history->count < pos);
-#ifdef NCSH_DEBUG
-    printf("history->count %d\n", history->count);
-    printf("pos %d\n", pos);
-#endif /* ifdef NCSH_DEBUG */
+    debugf("history->count %d\n", history->count);
+    debugf("history pos %d\n", pos);
 
     // history file is full.. ask user if they would like to remove duplicates before saving to condense size of history
     // file removing duplicates saves entries for future autocompletions, but decreases size of overall history file
@@ -344,6 +332,7 @@ int_fast32_t history_command_display(const struct History* const restrict histor
 [[nodiscard]]
 int_fast32_t history_command_count(const struct History* history)
 {
+    assert(history);
     printf("history count: %zu\n", history->count);
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }

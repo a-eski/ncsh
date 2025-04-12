@@ -4,6 +4,7 @@
 
 #include <stdint.h>
 
+#include "eskilib/emap.h"
 #include "arena.h"
 #include "config.h"
 #include "parser.h"
@@ -34,6 +35,7 @@ struct Shell {
 
     struct Input input;
     struct Args args;
+    struct emap variables;
     struct Processes processes;
 
     struct z_Database z_db;
