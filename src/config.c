@@ -37,9 +37,7 @@ enum eresult config_home_init(struct Config* const restrict config, struct Arena
     config->home_location.length = strlen(home);
     config->home_location.value = arena_malloc(arena, config->home_location.length + 1, char);
     memcpy(config->home_location.value, home, config->home_location.length + 1);
-#ifdef NCSH_DEBUG
-    printf("config->home_location.value: %s\n", config->home_location.value);
-#endif /* ifdef NCSH_DEBUG */
+    debugf("config->home_location.value: %s\n", config->home_location.value);
 
     return E_SUCCESS;
 }
@@ -73,13 +71,9 @@ enum eresult config_location_init(struct Config* const restrict config, struct A
     config->config_location.value += config_location_len;
     *config->config_location.value = '\0';
     config->config_location.length += config_location_len;
-
     config->config_location.value = (char*)config_original_ptr;
 
-#ifdef NCSH_DEBUG
-    printf("config->config_location.value: %s\n", config->config_location.value);
-#endif /* ifdef NCSH_DEBUG */
-
+    debugf("config->config_location.value: %s\n", config->config_location.value);
     assert(strlen(config->config_location.value) + 1 == config->config_location.length);
     mkdir(config->config_location.value, 0755);
 
@@ -110,10 +104,7 @@ enum eresult config_file_set(struct Config* const restrict config, struct Arena*
     memcpy(config->config_file.value + config->config_location.length - 1, "/" RC_FILE, rc_len);
     config->config_file.length = config->config_location.length + rc_len;
     config->config_file.value[config->config_file.length - 1] = '\0';
-
-#ifdef NCSH_DEBUG
-    printf("config_file %s\n", config->config_file.value);
-#endif /* ifdef NCSH_DEBUG */
+    debugf("config_file %s\n", config->config_file.value);
 
     return E_SUCCESS;
 }
@@ -136,9 +127,7 @@ void config_path_add(const char* const value, const int len, struct Arena* const
     memcpy(new_path, path, path_len - 1);
     new_path[path_len - 2] = ':';
     memcpy(new_path + path_len - 1, value, (size_t)len);
-#ifdef NCSH_DEBUG
-    printf("Got new path to set %s\n", new_path);
-#endif /* ifdef NCSH_DEBUG */
+    debugf("Got new path to set %s\n", new_path);
     setenv(PATH, new_path, true);
 }
 

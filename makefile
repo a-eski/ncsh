@@ -83,8 +83,8 @@ check :
 	make test_config
 	make test_readline
 	make test_arena
-	make test_hashtable
-	make test_string
+	make test_emap
+	make test_estr
 .PHONY: c
 c :
 	make check
@@ -253,21 +253,15 @@ test_arena :
 ta :
 	make test_arena
 
-.PHONY: test_hashtable
-test_hashtable :
+.PHONY: test_emap
+test_emap :
 	$(CC) $(STD) $(debug_flags) ./src/arena.c ./src/eskilib/emap.c ./src/eskilib/etest.c ./tests/emap_tests.c -o ./bin/emap_tests
 	./bin/emap_tests
-.PHONY: tht
-tht :
-	make test_hashtable
 
-.PHONY: test_string
-test_string :
+.PHONY: test_estr
+test_estr :
 	$(CC) $(STD) $(debug_flags) ./src/arena.c ./src/eskilib/etest.c ./tests/estr_tests.c -o ./bin/estr_tests
 	./bin/estr_tests
-.PHONY: ts
-ts :
-	make test_string
 
 .PHONY: clang_format
 clang_format :

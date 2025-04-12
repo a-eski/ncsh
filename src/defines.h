@@ -1,8 +1,6 @@
 /* Copyright ncsh by Alex Eski 2024 */
 
 #pragma once
-#ifndef NCSH_DEFINES_H_
-#define NCSH_DEFINES_H_
 
 /* This file contains defines used in multiple places.
  * Mainly includes Macro constants, but contains some Macro functions as well
@@ -11,11 +9,11 @@
 #include "configurables.h"
 #include "eskilib/ecolors.h"
 
-#ifdef NCSH_DEBUG
-#include "debug.h"
-#endif /* ifdef NCSH_DEBUG */
+// clang-format off
 
-#define NCSH_VERSION "0.0.2.9"
+#include "debug.h"
+
+#define NCSH_VERSION "0.0.2.10"
 
 /* EXIT_* Constants
  * Exit values used by a multitude of functions and areas in the shell.
@@ -23,10 +21,10 @@
  */
 #define EXIT_IO_FAILURE -1
 #ifndef EXIT_SUCCESS
-#define EXIT_SUCCESS 0 // Defined in stdlib.h
+#    define EXIT_SUCCESS 0 // Defined in stdlib.h
 #endif                 /* !EXIT_SUCCESS */
 #ifndef EXIT_FAILURE
-#define EXIT_FAILURE 1 // Defined in stdlib.h
+#    define EXIT_FAILURE 1 // Defined in stdlib.h
 #endif                 /* !EXIT_FAILURE */
 #define EXIT_SUCCESS_END 2
 #define EXIT_SUCCESS_EXECUTE 3
@@ -85,4 +83,4 @@
  */
 #define NCSH_MAX_INPUT 1024
 
-#endif // !NCSH_DEFINES_H_
+// clang-format on
