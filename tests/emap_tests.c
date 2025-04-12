@@ -37,10 +37,10 @@ void emap_add_one_test(void)
     eassert(hmap.capacity);
     eassert(hmap.size == 1);
 
-    struct estr result_string = emap_get(val, &hmap);
-    eassert(result_string.value);
-    eassert(result_string.length == val.length);
-    eassert(!memcmp(val.value, result_string.value, val.length));
+    struct estr res_str = emap_get(val.value, &hmap);
+    eassert(res_str.value);
+    eassert(res_str.length == val.length);
+    eassert(!memcmp(val.value, res_str.value, val.length));
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -68,12 +68,12 @@ void emap_add_multiple_test(void)
     eassert(res2);
     eassert(!memcmp((char*)res2, (char*)key2, 5));
 
-    struct estr get_res1 = emap_get(val1, &ht);
+    struct estr get_res1 = emap_get(val1.value, &ht);
     eassert(*get_res1.value);
     eassert(get_res1.length == val1.length);
     eassert(!memcmp(get_res1.value, val1.value, get_res1.length));
 
-    struct estr get_res2 = emap_get(val2, &ht);
+    struct estr get_res2 = emap_get(val2.value, &ht);
     eassert(get_res2.value);
     eassert(get_res2.length = val2.length)
     eassert(!memcmp(get_res2.value, val2.value, get_res2.length));

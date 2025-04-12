@@ -191,7 +191,7 @@ enum eresult history_clean(struct History* const restrict history, struct Arena*
             continue;
         }
 
-        if (!emap_exists(history->entries[i], &hmap)) {
+        if (!emap_exists(history->entries[i].value, &hmap)) {
             emap_set(history->entries[i], &scratch_arena, &hmap);
 
             if (!fputs(history->entries[i].value, file)) {

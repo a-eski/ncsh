@@ -31,13 +31,13 @@ uint64_t emap_key(const char* str)
     return i;
 }
 
-struct estr emap_get(struct estr val, struct emap* hmap)
+struct estr emap_get(char* key, struct emap* hmap)
 {
-    uint64_t hash = emap_key(val.value);
+    uint64_t hash = emap_key(key);
     size_t index = (size_t)(hash & (uint64_t)(hmap->capacity - 1));
 
     while (hmap->entries[index].key) {
-        if (val.value[0] == hmap->entries[index].key[0] && !strcmp(val.value, hmap->entries[index].key)) {
+        if (key[0] == hmap->entries[index].key[0] && !strcmp(key, hmap->entries[index].key)) {
             return hmap->entries[index].value;
         }
 
@@ -50,13 +50,13 @@ struct estr emap_get(struct estr val, struct emap* hmap)
     return estr_Empty;
 }
 
-bool emap_exists(struct estr val, struct emap* hmap)
+bool emap_exists(char* key, struct emap* hmap)
 {
-    uint64_t hash = emap_key(val.value);
+    uint64_t hash = emap_key(key);
     size_t index = (size_t)(hash & (uint64_t)(hmap->capacity - 1));
 
     while (hmap->entries[index].key) {
-        if (!strcmp(val.value, hmap->entries[index].key)) {
+        if (key[0] == hmap->entries[index].key[0] && !strcmp(key, hmap->entries[index].key)) {
             return true;
         }
 

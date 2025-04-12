@@ -23,9 +23,9 @@ struct emap {
 
 void emap_malloc(struct Arena* const arena, struct emap* hmap);
 
-struct estr emap_get(struct estr val, struct emap* hmap);
+struct estr emap_get(char* key, struct emap* hmap);
 
-bool emap_exists(struct estr val, struct emap* hmap);
+bool emap_exists(char* key, struct emap* hmap);
 
 const char* emap_set(struct estr val, struct Arena* const arena,
                      struct emap* hmap);
