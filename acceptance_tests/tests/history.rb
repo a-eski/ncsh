@@ -69,4 +69,5 @@ def history_tests(row)
   history_clear_test(row)
   # row = history_add_test(row)
   # row = history_remove_test(row)
+  # row = history_clean_test(row)
 end
