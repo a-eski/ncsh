@@ -182,7 +182,7 @@ fp :
 
 .PHONY: bench_parser_and_vm
 bench_parser_and_vm :
-	hyperfine --warmup --shell /bin/ncsh 'ls' 'ls | sort' 'ls > t.txt' 'ls | sort | wc -c' 'ls | sort | wc -c > t2.txt'
+	hyperfine --warmup 100 --shell /bin/ncsh 'ls' 'ls | sort' 'ls > t.txt' 'ls | sort | wc -c' 'ls | sort | wc -c > t2.txt'
 	rm t.txt t2.txt
 .PHONY: bpv
 bpv :
@@ -190,7 +190,7 @@ bpv :
 
 .PHONY: bash_bench_parser_and_vm
 bash_bench_parser_and_vm :
-	hyperfine --warmup --shell /bin/bash 'ls' 'ls | sort' 'ls > t.txt' 'ls | sort | wc -c' 'ls | sort | wc -c > t2.txt'
+	hyperfine --warmup 100 --shell /bin/bash 'ls' 'ls | sort' 'ls > t.txt' 'ls | sort | wc -c' 'ls | sort | wc -c > t2.txt'
 	rm t.txt t2.txt
 .PHONY: bbpv
 bbpv :

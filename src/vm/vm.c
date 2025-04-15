@@ -556,12 +556,12 @@ int_fast32_t vm_vars_replace(struct Args* const restrict args, struct Arena* scr
                 printf("ncsh: variable with name '%s' did not have a value associated with it.\n", args->values[i]);
                 return NCSH_COMMAND_FAILED_CONTINUE;
             }
-	    // replace the variable name with the value of the variable
+            // replace the variable name with the value of the variable
             args->values[i] = arena_realloc(scratch_arena, val->length, char, args->values[i], args->lengths[i]);
             memcpy(args->values[i], val->value, val->length);
             args->lengths[i] = val->length;
-	    args->ops[i] = OP_CONSTANT; // replace OP_VARIABLE to OP_CONSTANT so VM sees it as a regular constant value
-	    debugf("replaced variable with value %s %zu\n", args->values[i], args->lengths[i]);
+            args->ops[i] = OP_CONSTANT; // replace OP_VARIABLE to OP_CONSTANT so VM sees it as a regular constant value
+            debugf("replaced variable with value %s %zu\n", args->values[i], args->lengths[i]);
         }
     }
     return NCSH_COMMAND_SUCCESS_CONTINUE;
@@ -580,7 +580,8 @@ int_fast32_t vm_execute(struct Shell* const restrict shell, struct Arena* const 
     // check if any jobs finished running
 
     // check for builtins that run outside of the main VM execute function (z, history)
-    /* TODO:: these don't work with aliases, variables, pipes and other operators as a result, need to incorporate into the VM execute function. */
+    /* TODO:: these don't work with aliases, variables, pipes and other operators as a result, need to incorporate into
+     * the VM execute function. */
     if (estrcmp_c(shell->args.values[0], shell->args.lengths[0], Z, sizeof(Z))) {
         return builtins_z(&shell->z_db, &shell->args, &shell->arena, scratch_arena);
     }

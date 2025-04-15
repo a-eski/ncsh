@@ -9,7 +9,6 @@
 struct Arena {
     char* start;
     char* end;
-    jmp_buf* exit;
 };
 
 #define arena_malloc(arena, count, type) (type*)arena_malloc_internal(arena, count, sizeof(type), _Alignof(type))

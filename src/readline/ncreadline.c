@@ -1106,6 +1106,8 @@ void ncreadline_history_and_autocompletion_add(struct Input* const restrict inpu
  */
 void ncreadline_exit(struct Input* const restrict input)
 {
-    history_save(&input->history);
+    if (input->history.file && input->history.entries) {
+        history_save(&input->history);
+    }
     terminal_reset();
 }
