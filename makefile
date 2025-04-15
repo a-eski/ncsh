@@ -72,6 +72,7 @@ ud :
 
 .PHONY: install
 install : $(target)
+	strip $(target)
 	install -C $(target) $(DESTDIR)
 
 .PHONY: check
