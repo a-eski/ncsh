@@ -168,8 +168,7 @@ Please see COMPILE.md.
 * Aliasing for user-defined commands
 * Custom prompt colors, backgrounds
 * Support scripts through a non-iteractive mode
-* Background jobs support
-* Math
+* Background jobs support Math
 * Better posix support
 * Variables
 * Usable with GDB (currently doesn't work)

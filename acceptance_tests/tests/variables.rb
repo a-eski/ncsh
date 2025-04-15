@@ -55,12 +55,14 @@ end
 def multiple_variables_test(row)
   assert_check_new_row(row)
   @tty.send_line('STR3=`hi,`')
+  row += 1
   @tty.send_line('STR4=`you!`')
-  row += 2
+  row += 1
   assert_check_new_row(row)
   @tty.send_line('echo $STR3 $STR4')
   row += 1
   @tty.assert_row(row, 'hi, you!')
+  row += 1
   test_passed('multiple variables test')
   row
 end

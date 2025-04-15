@@ -54,6 +54,8 @@
 #define GLOB_QUESTION '?'
 #define TILDE '~'
 
+#define COMMENT '#'
+
 // currently unsupported
 // #define BANG '!'
 
@@ -67,9 +69,8 @@
 enum eresult parser_init(struct Args* const restrict args, struct Arena* const arena)
 {
     assert(args && arena);
-    if (!args) {
+    if (!args)
         return E_FAILURE_NULL_REFERENCE;
-    }
 
     args->count = 0;
 
@@ -227,7 +228,8 @@ enum Parser_State {
     IN_BACKTICK_QUOTES =         1 << 2,
     IN_MATHEMATICAL_EXPRESSION = 1 << 3,
     IN_ASSIGNMENT =              1 << 4,
-    // IN_VARIABLE =                1 << 5,
+    IN_GLOB_EXPANSION =          1 << 5,
+    IN_COMMENT =		 1 << 7
 };
 // clang-format on
 
@@ -251,7 +253,6 @@ void parser_parse(const char* const restrict line, const size_t length, struct A
 
     char* buffer = arena_malloc(scratch_arena, NCSH_MAX_INPUT, char);
     size_t buf_pos = 0;
-    bool glob_found = false;
     size_t assignment_pos = 0;
     char* var_name = arena_malloc(scratch_arena, NCSH_MAX_INPUT, char);
     int state = 0;
@@ -269,44 +270,36 @@ void parser_parse(const char* const restrict line, const size_t length, struct A
 
         switch (line[line_position]) {
         case DOUBLE_QUOTE_KEY: {
-            if (!(state & IN_DOUBLE_QUOTES)) {
+            if (!(state & IN_DOUBLE_QUOTES))
                 state |= IN_DOUBLE_QUOTES;
-            }
-            else {
+            else
                 state &= ~IN_DOUBLE_QUOTES;
-            }
             continue;
         }
         case SINGLE_QUOTE_KEY: {
-            if (!(state & IN_SINGLE_QUOTES)) {
+            if (!(state & IN_SINGLE_QUOTES))
                 state |= IN_SINGLE_QUOTES;
-            }
-            else {
+            else
                 state &= ~IN_SINGLE_QUOTES;
-            }
             continue;
         }
         case BACKTICK_QUOTE_KEY: {
-            if (!(state & IN_BACKTICK_QUOTES)) {
+            if (!(state & IN_BACKTICK_QUOTES))
                 state |= IN_BACKTICK_QUOTES;
-            }
-            else {
+            else
                 state &= ~IN_BACKTICK_QUOTES;
-            }
             continue;
         }
         case OPENING_PARAN: {
-            if (!(state & IN_MATHEMATICAL_EXPRESSION)) {
+            if (!(state & IN_MATHEMATICAL_EXPRESSION))
                 state |= IN_MATHEMATICAL_EXPRESSION;
-            }
 
             buffer[buf_pos++] = line[line_position];
             continue;
         }
         case CLOSING_PARAN: {
-            if (state & IN_MATHEMATICAL_EXPRESSION) {
+            if (state & IN_MATHEMATICAL_EXPRESSION)
                 state &= ~IN_MATHEMATICAL_EXPRESSION;
-            }
 
             buffer[buf_pos++] = line[line_position];
             continue;
@@ -326,15 +319,16 @@ void parser_parse(const char* const restrict line, const size_t length, struct A
             continue;
         }
         case GLOB_STAR: {
-            if (!(state & IN_MATHEMATICAL_EXPRESSION)) {
-                // TODO: use state to keep track of glob found
-                glob_found = true;
-            }
+            if (!(state & IN_MATHEMATICAL_EXPRESSION) && !(state & IN_GLOB_EXPANSION))
+                state |= IN_GLOB_EXPANSION;
+
             buffer[buf_pos++] = line[line_position];
             continue;
         }
         case GLOB_QUESTION: {
-            glob_found = true;
+            if (!(state & IN_GLOB_EXPANSION))
+                state |= IN_GLOB_EXPANSION;
+
             buffer[buf_pos++] = line[line_position];
             continue;
         }
@@ -347,14 +341,20 @@ void parser_parse(const char* const restrict line, const size_t length, struct A
             }
             continue;
         }
+        case COMMENT: {
+            if (!(state & IN_COMMENT))
+                state |= IN_COMMENT;
+
+            continue;
+        }
         default: {
+            if (state & IN_COMMENT && line[line_position] != '\n')
+                continue;
+
             // break to code below when delimiter found and no state or certain states found
-            if (parser_is_delimiter(line[line_position]) &&
-                (!state || (state & IN_MATHEMATICAL_EXPRESSION) || (state & IN_ASSIGNMENT))) {
+            if (parser_is_delimiter(line[line_position]) && (!state || (state & IN_MATHEMATICAL_EXPRESSION) ||
+                                                             (state & IN_ASSIGNMENT) || (state & IN_GLOB_EXPANSION))) {
                 break;
-                /*(state & IN_ASSIGNMENT && !(state & IN_BACKTICK_QUOTES) &&
-                    !(state & IN_DOUBLE_QUOTES) &&
-                    !(state & IN_SINGLE_QUOTES))*/
             }
             buffer[buf_pos++] = line[line_position];
             continue;
@@ -364,29 +364,28 @@ void parser_parse(const char* const restrict line, const size_t length, struct A
         buffer[buf_pos] = '\0';
 
         debugf("Current parser state: %d\n", state);
-        if (glob_found) {
+        if ((state & IN_GLOB_EXPANSION)) {
             glob_t glob_buf = {0};
             size_t glob_len;
             glob(buffer, GLOB_DOOFFS, NULL, &glob_buf);
 
             for (size_t i = 0; i < glob_buf.gl_pathc; ++i) {
                 glob_len = strlen(glob_buf.gl_pathv[i]) + 1;
-                if (!glob_len || glob_len >= NCSH_MAX_INPUT) {
+                if (!glob_len || glob_len >= NCSH_MAX_INPUT)
                     break;
-                }
+
                 buf_pos = glob_len;
                 args->values[args->count] = arena_malloc(scratch_arena, buf_pos, char);
                 memcpy(args->values[args->count], glob_buf.gl_pathv[i], glob_len);
                 args->ops[args->count] = OP_CONSTANT;
                 args->lengths[args->count] = buf_pos;
                 ++args->count;
-                if (args->count >= PARSER_TOKENS_LIMIT - 1) {
+                if (args->count >= PARSER_TOKENS_LIMIT - 1)
                     break;
-                }
             }
 
             globfree(&glob_buf);
-            glob_found = false;
+            state &= ~IN_GLOB_EXPANSION;
         }
         else if ((state & IN_ASSIGNMENT)) {
             // variable values are stored in vars hashmap.

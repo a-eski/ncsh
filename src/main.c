@@ -243,11 +243,10 @@ int main(int argc, char** argv)
         shell.input.pos = 0;
         shell.input.max_pos = 0;
         shell.args.count = 0;
-        shell.args.values[0] = NULL;
     }
 exit:
     cleanup(memory, &shell);
-    ncsh_write_literal("exit");
+    ncsh_write_literal("exit\n");
 
     return (int)exit_code;
 }

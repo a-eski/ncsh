@@ -412,6 +412,21 @@ def delete_word_tests(row)
   row
 end
 
+def comment_test(row)
+  assert_check_new_row(row)
+  @tty.send_line('echo hello # this is a comment')
+  row += 1
+  @tty.assert_row(row, 'hello')
+  row += 1
+  test_passed('Comment test')
+  row
+end
+
+def parser_tests(row)
+  starting_tests('parser tests')
+  comment_test(row)
+end
+
 def run_acceptance_tests(prompt_directory_option, prompt_user_option, is_custom_prompt)
   setup_tests(prompt_directory_option, prompt_user_option, is_custom_prompt)
 
@@ -439,6 +454,7 @@ def run_acceptance_tests(prompt_directory_option, prompt_user_option, is_custom_
   row = syntax_tests(row)
   row = expansion_tests(row)
   row = variables_tests(row)
+  row = parser_tests(row)
   # row = paste_tests(row)
   # row = multiline_tests(row)
 end
