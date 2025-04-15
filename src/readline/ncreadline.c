@@ -2,13 +2,13 @@
 
 #include <assert.h>
 #include <limits.h>
+#include <linux/limits.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <linux/limits.h>
 
 #include "../config.h"
 #include "../configurables.h"
@@ -448,8 +448,8 @@ int_fast32_t ncreadline_autocomplete(struct Input* const restrict input, struct 
         return EXIT_SUCCESS;
     }
 
-    uint_fast8_t ac_matches_count = ac_first(input->buffer, input->current_autocompletion,
-                                                                       input->autocompletions_tree, *scratch_arena);
+    uint_fast8_t ac_matches_count =
+        ac_first(input->buffer, input->current_autocompletion, input->autocompletions_tree, *scratch_arena);
 
     if (!ac_matches_count) {
         if (input->current_autocompletion[0] == '\0') {
@@ -693,8 +693,7 @@ int_fast32_t ncreadline_tab_autocomplete(struct Input* const restrict input, str
     ncsh_write_literal(ERASE_CURRENT_LINE "\n");
 
     struct Autocompletion autocompletion_matches[NCSH_MAX_AUTOCOMPLETION_MATCHES] = {0};
-    int ac_matches_count =
-        ac_get(input->buffer, autocompletion_matches, input->autocompletions_tree, *scratch_arena);
+    int ac_matches_count = ac_get(input->buffer, autocompletion_matches, input->autocompletions_tree, *scratch_arena);
 
     if (!ac_matches_count) {
         return EXIT_SUCCESS;

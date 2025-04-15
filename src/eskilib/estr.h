@@ -21,9 +21,7 @@ struct estr {
 };
 
 // A simple wrapper for memcmp that checks if lengths match before calling memcmp.
-enodiscard
-static inline bool estrcmp(char* str, const size_t str_len, char* str_two,
-                                                            const size_t str_two_len)
+enodiscard static inline bool estrcmp(char* str, const size_t str_len, char* str_two, const size_t str_two_len)
 {
     if (str_len != str_two_len || !str_len) {
         return false;
@@ -32,9 +30,8 @@ static inline bool estrcmp(char* str, const size_t str_len, char* str_two,
     return !str || !memcmp(str, str_two, str_len);
 }
 
-enodiscard
-static inline bool estrcmp_c(char* str, const size_t str_len,
-                                                                  const char* const str_two, const size_t str_two_len)
+enodiscard static inline bool estrcmp_c(char* str, const size_t str_len, const char* const str_two,
+                                        const size_t str_two_len)
 {
     if (str_len != str_two_len || !str_len) {
         return false;
@@ -43,9 +40,8 @@ static inline bool estrcmp_c(char* str, const size_t str_len,
     return !str || !memcmp(str, str_two, str_len);
 }
 
-enodiscard
-static inline bool estrcmp_cc(const char* const str, const size_t str_len,
-                                                                  const char* const str_two, const size_t str_two_len)
+enodiscard static inline bool estrcmp_cc(const char* const str, const size_t str_len, const char* const str_two,
+                                         const size_t str_two_len)
 {
     if (str_len != str_two_len || !str_len) {
         return false;

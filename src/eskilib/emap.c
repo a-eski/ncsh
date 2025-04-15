@@ -1,4 +1,5 @@
 /* Copyright eskilib by Alex Eski 2024 */
+/* emap: Optimized for keys having the same value as values */
 
 #include <assert.h>
 #include <stdint.h>
@@ -69,8 +70,7 @@ bool emap_exists(char* key, struct emap* hmap)
     return false;
 }
 
-const char* emap_set_entry(struct emap_Entry* entries, size_t capacity,
-                           struct estr val, size_t* plength)
+const char* emap_set_entry(struct emap_Entry* entries, size_t capacity, struct estr val, size_t* plength)
 {
     uint64_t hash = emap_key(val.value);
     size_t index = (size_t)(hash & (uint64_t)(capacity - 1));
@@ -118,8 +118,7 @@ bool emap_expand(struct Arena* const arena, struct emap* hmap)
     return true;
 }
 
-const char* emap_set(struct estr val, struct Arena* const arena,
-                     struct emap* hmap)
+const char* emap_set(struct estr val, struct Arena* const arena, struct emap* hmap)
 {
     assert(val.value && val.length);
     if (!val.value || !val.length) {

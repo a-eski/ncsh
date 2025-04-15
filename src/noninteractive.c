@@ -25,7 +25,7 @@
 int_fast32_t noninteractive_run(const char** const restrict argv, const size_t argc, struct Args* args,
                                 struct Arena* const arena, struct Arena scratch_arena)
 {
-    parser_parse_noninteractive(argv, argc, args, &scratch_arena);
+    parser_parse_noninteractive(argv, argc, args, arena, &scratch_arena);
 
     return vm_execute_noninteractive(args, arena);
 }
@@ -72,7 +72,7 @@ int_fast32_t noninteractive(const int argc, const char** const restrict argv)
 
     struct Args args = {0};
     enum eresult result;
-    if ((result = parser_args_alloc(&args, &arena)) != E_SUCCESS) {
+    if ((result = parser_init(&args, &arena)) != E_SUCCESS) {
         perror(RED "ncsh: Error when allocating memory for parser" RESET);
         fflush(stderr);
         return EXIT_FAILURE;

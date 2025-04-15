@@ -190,8 +190,7 @@ enum eresult config_file_load(const struct Config* const restrict config, struct
  * Returns: enum eresult, E_SUCCESS is successful
  */
 [[nodiscard]]
-enum eresult config_init(struct Config* const restrict config, struct Arena* const arena,
-                                struct Arena scratch_arena)
+enum eresult config_init(struct Config* const restrict config, struct Arena* const arena, struct Arena scratch_arena)
 {
     assert(arena);
 

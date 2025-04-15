@@ -2,6 +2,7 @@
 
 require 'ttytest'
 require './acceptance_tests/tests/common'
+require './acceptance_tests/tests/variables'
 
 # single command like ls
 def single_command_test(row)
@@ -280,4 +281,5 @@ def run_noninteractive_acceptance_tests
   row = stdout_redirection_tests(row)
   row = stdin_redirection_tests(row)
   row = expansion_tests(row)
+  # variables_tests(row) # ?
 end

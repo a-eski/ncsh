@@ -27,12 +27,12 @@ struct History {
 
 /* History Setup and Manipulation */
 enum eresult history_init(const struct estr config_location, struct History* const restrict history,
-                                 struct Arena* const arena);
+                          struct Arena* const arena);
 
 enum eresult history_save(struct History* const restrict history);
 
 enum eresult history_add(const char* const line, const size_t length, struct History* const restrict history,
-                                struct Arena* const arena);
+                         struct Arena* const arena);
 
 struct estr history_get(const size_t position, struct History* const restrict history);
 

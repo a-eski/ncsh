@@ -530,19 +530,41 @@ int_fast32_t vm_run(struct Args* const restrict args, struct Tokens* const restr
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
-void vm_alias(struct Args* const restrict args, struct Arena* const arena)
+/* vm_alias_replace
+ * Replaces aliases with their aliased commands before calling main execute function on VM.
+ */
+void vm_alias_replace(struct Args* const restrict args, struct Arena* const scratch_arena)
 {
     struct estr alias = config_alias_check(args->values[0], args->lengths[0]);
     if (alias.length) {
-        args->values[0] = arena_realloc(arena, alias.length, char, args->values[0], args->lengths[0]);
+        args->values[0] = arena_realloc(scratch_arena, alias.length, char, args->values[0], args->lengths[0]);
         memcpy(args->values[0], alias.value, alias.length);
         args->lengths[0] = alias.length;
     }
 }
 
-void vm_init(struct Shell *const restrict shell, struct Arena *const arena)
+/* vm_vars_replace
+ * Replaces variables with their values before calling main execute function on VM.
+ */
+int_fast32_t vm_vars_replace(struct Args* const restrict args, struct Arena* scratch_arena)
 {
-    emap_malloc(arena, &shell->variables);
+    for (size_t i = 0; i < args->count; ++i) {
+        if (args->ops[i] == OP_VARIABLE) {
+            debugf("trying to get variable %s\n", args->values[i]);
+            struct estr* val = var_get(args->values[i] + 1, &args->vars);
+            if (!val) {
+                printf("ncsh: variable with name '%s' did not have a value associated with it.\n", args->values[i]);
+                return NCSH_COMMAND_FAILED_CONTINUE;
+            }
+	    // replace the variable name with the value of the variable
+            args->values[i] = arena_realloc(scratch_arena, val->length, char, args->values[i], args->lengths[i]);
+            memcpy(args->values[i], val->value, val->length);
+            args->lengths[i] = val->length;
+	    args->ops[i] = OP_CONSTANT; // replace OP_VARIABLE to OP_CONSTANT so VM sees it as a regular constant value
+	    debugf("replaced variable with value %s %zu\n", args->values[i], args->lengths[i]);
+        }
+    }
+    return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
 [[nodiscard]]
@@ -557,6 +579,8 @@ int_fast32_t vm_execute(struct Shell* const restrict shell, struct Arena* const 
 
     // check if any jobs finished running
 
+    // check for builtins that run outside of the main VM execute function (z, history)
+    /* TODO:: these don't work with aliases, variables, pipes and other operators as a result, need to incorporate into the VM execute function. */
     if (estrcmp_c(shell->args.values[0], shell->args.lengths[0], Z, sizeof(Z))) {
         return builtins_z(&shell->z_db, &shell->args, &shell->arena, scratch_arena);
     }
@@ -565,10 +589,14 @@ int_fast32_t vm_execute(struct Shell* const restrict shell, struct Arena* const 
         return builtins_history(&shell->input.history, &shell->args, &shell->arena, scratch_arena);
     }
 
-    vm_alias(&shell->args, &shell->arena);
+    vm_alias_replace(&shell->args, &shell->scratch_arena);
+    int_fast32_t result = vm_vars_replace(&shell->args, &shell->scratch_arena);
+    if (result != NCSH_COMMAND_SUCCESS_CONTINUE) {
+        return result;
+    }
 
     struct Tokens tokens = {0};
-    int_fast32_t result = vm_tokenizer_tokenize(&shell->args, &tokens);
+    result = vm_tokenizer_tokenize(&shell->args, &tokens);
     if (result != NCSH_COMMAND_SUCCESS_CONTINUE) {
         return result;
     }
@@ -588,7 +616,7 @@ int_fast32_t vm_execute_noninteractive(struct Args* const restrict args, struct 
         return NCSH_COMMAND_SUCCESS_CONTINUE;
     }
 
-    vm_alias(args, arena);
+    vm_alias_replace(args, arena);
 
     struct Tokens tokens = {0};
     int_fast32_t result = vm_tokenizer_tokenize(args, &tokens);

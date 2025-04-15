@@ -93,8 +93,7 @@ int_fast32_t builtins_history(struct History* const restrict history, const stru
         if (estrcmp_c(args->values[1], args->lengths[1], NCSH_HISTORY_COUNT, sizeof(NCSH_HISTORY_COUNT))) {
             return history_command_count(history);
         }
-        else if (estrcmp_c(args->values[1], args->lengths[1], NCSH_HISTORY_CLEAN,
-                                        sizeof(NCSH_HISTORY_CLEAN))) {
+        else if (estrcmp_c(args->values[1], args->lengths[1], NCSH_HISTORY_CLEAN, sizeof(NCSH_HISTORY_CLEAN))) {
             return history_command_clean(history, arena, scratch_arena);
         }
     }
@@ -112,8 +111,7 @@ int_fast32_t builtins_history(struct History* const restrict history, const stru
         }
         // z rm/remove
         else if (estrcmp_c(args->values[1], args->lengths[1], NCSH_HISTORY_RM, sizeof(NCSH_HISTORY_RM)) ||
-                 estrcmp_c(args->values[1], args->lengths[1], NCSH_HISTORY_REMOVE,
-                                        sizeof(NCSH_HISTORY_REMOVE))) {
+                 estrcmp_c(args->values[1], args->lengths[1], NCSH_HISTORY_REMOVE, sizeof(NCSH_HISTORY_REMOVE))) {
             if (history_command_remove(args->values[2], args->lengths[2], history, arena, scratch_arena) != Z_SUCCESS) {
                 return NCSH_COMMAND_FAILED_CONTINUE;
             }

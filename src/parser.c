@@ -9,9 +9,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "arena.h"
+#include "debug.h"
 #include "defines.h"
 #include "eskilib/eresult.h"
 #include "parser.h"
+#include "var.h"
 
 // supported quotes
 #define SINGLE_QUOTE_KEY '\''
@@ -42,6 +45,9 @@
 #define DIVIDE '/'
 #define MODULO '%'
 #define EXPONENTIATION "**"
+// ops: variables
+#define ASSIGNMENT '='
+#define VARIABLE '$'
 
 // expansions
 #define GLOB_STAR '*'
@@ -51,14 +57,14 @@
 // currently unsupported
 // #define BANG '!'
 
-/* parser_args_alloc
+/* parser_init
  * Allocate memory for the parser that lives for the lifetime of the shell.
  * Allocates the memory for string values, bytecodes, and lengths of the string values.
  * This same memory is reused for the lifetime of the shell.
  * Returns: enum eresult, E_SUCCESS is successful, E_FAILURE_NULL_REFERENCE if *args is null
  */
 [[nodiscard]]
-enum eresult parser_args_alloc(struct Args* const restrict args, struct Arena* const arena)
+enum eresult parser_init(struct Args* const restrict args, struct Arena* const arena)
 {
     assert(args && arena);
     if (!args) {
@@ -70,6 +76,8 @@ enum eresult parser_args_alloc(struct Args* const restrict args, struct Arena* c
     args->values = arena_malloc(arena, PARSER_TOKENS_LIMIT, char*);
     args->ops = arena_malloc(arena, PARSER_TOKENS_LIMIT, uint_fast8_t);
     args->lengths = arena_malloc(arena, PARSER_TOKENS_LIMIT, size_t);
+    args->vars = (struct var){0};
+    var_malloc(arena, &args->vars);
 
     return E_SUCCESS;
 }
@@ -83,18 +91,12 @@ enum eresult parser_args_alloc(struct Args* const restrict args, struct Arena* c
 bool parser_is_delimiter(const char ch)
 {
     switch (ch) {
-    case ' ': {
-        return true;
-    }
-    // case '\t': { return true; }
-    case '\r': {
-        return true;
-    }
-    case '\n': {
-        return true;
-    }
-    // case '\a': { return true; }
-    // case EOF:  { return true; }
+    case ' ':
+    // case '\t':
+    case '\r':
+    case '\n':
+    // case '\a':
+    // case EOF:
     case '\0': {
         return true;
     }
@@ -205,6 +207,9 @@ enum Ops parser_op_get(const char* const restrict line, const size_t length)
         return OP_CONSTANT;
     }
     default: {
+        if (line[0] == VARIABLE) {
+            return OP_VARIABLE;
+        }
         return OP_CONSTANT;
     }
     }
@@ -216,24 +221,25 @@ enum Ops parser_op_get(const char* const restrict line, const size_t length)
  */
 // clang-format off
 enum Parser_State {
-    IN_SINGLE_QUOTES =           0x01,
-    IN_DOUBLE_QUOTES =           0x02,
-    IN_BACKTICK_QUOTES =         0x04,
-    IN_MATHEMATICAL_EXPRESSION = 0x08,
-    IN_VARIABLE =                0x16,
+    IN_NONE =			 0,
+    IN_SINGLE_QUOTES =           1 << 0,
+    IN_DOUBLE_QUOTES =           1 << 1,
+    IN_BACKTICK_QUOTES =         1 << 2,
+    IN_MATHEMATICAL_EXPRESSION = 1 << 3,
+    IN_ASSIGNMENT =              1 << 4,
+    // IN_VARIABLE =                1 << 5,
 };
 // clang-format on
 
 /* parser_parse
  * Turns the inputted line into values, lengths, and bytecodes that the VM can work with.
  * Handles expansions like *, ?, and ~
- * Results are stored in struct Args
+ * Results are stored in struct Args, variables values are stored in struct Args.vars.
  */
 void parser_parse(const char* const restrict line, const size_t length, struct Args* const restrict args,
-                  struct Arena* scratch_arena)
+                  struct Arena* arena, struct Arena* scratch_arena)
 {
-    assert(line && args && scratch_arena);
-
+    assert(line && args && scratch_arena && arena);
     if (!line || length < 2 || length > NCSH_MAX_INPUT) {
         args->count = 0;
         return;
@@ -243,9 +249,11 @@ void parser_parse(const char* const restrict line, const size_t length, struct A
 
     debug_parser_input(line, length);
 
-    char buffer[NCSH_MAX_INPUT];
+    char* buffer = arena_malloc(scratch_arena, NCSH_MAX_INPUT, char);
     size_t buf_pos = 0;
     bool glob_found = false;
+    size_t assignment_pos = 0;
+    char* var_name = arena_malloc(scratch_arena, NCSH_MAX_INPUT, char);
     int state = 0;
 
     for (uint_fast32_t line_position = 0; line_position < length + 1; ++line_position) {
@@ -258,119 +266,154 @@ void parser_parse(const char* const restrict line, const size_t length, struct A
             args->values[args->count] = NULL; // set the last value as null to use as a sentinel in the VM
             break;
         }
-        else if (parser_is_delimiter(line[line_position]) && (!state || (state & IN_MATHEMATICAL_EXPRESSION))) {
-            buffer[buf_pos] = '\0';
 
-            if (glob_found) {
-                glob_t glob_buf = {0};
-                size_t glob_len;
-                glob(buffer, GLOB_DOOFFS, NULL, &glob_buf);
-
-                for (size_t i = 0; i < glob_buf.gl_pathc; ++i) {
-                    glob_len = strlen(glob_buf.gl_pathv[i]) + 1;
-                    if (!glob_len || glob_len >= NCSH_MAX_INPUT) {
-                        break;
-                    }
-                    buf_pos = glob_len;
-                    args->values[args->count] = arena_malloc(scratch_arena, buf_pos, char);
-                    memcpy(args->values[args->count], glob_buf.gl_pathv[i], glob_len);
-                    args->ops[args->count] = OP_CONSTANT;
-                    args->lengths[args->count] = buf_pos;
-                    ++args->count;
-                    if (args->count >= PARSER_TOKENS_LIMIT - 1) {
-                        break;
-                    }
-                }
-
-                globfree(&glob_buf);
-                glob_found = false;
+        switch (line[line_position]) {
+        case DOUBLE_QUOTE_KEY: {
+            if (!(state & IN_DOUBLE_QUOTES)) {
+                state |= IN_DOUBLE_QUOTES;
             }
             else {
-                args->values[args->count] = arena_malloc(scratch_arena, buf_pos + 1, char);
-                memcpy(args->values[args->count], buffer, buf_pos + 1);
-                args->ops[args->count] = parser_op_get(buffer, buf_pos);
-                args->lengths[args->count] = buf_pos + 1; // + 1 for null terminator
-                ++args->count;
+                state &= ~IN_DOUBLE_QUOTES;
+            }
+            continue;
+        }
+        case SINGLE_QUOTE_KEY: {
+            if (!(state & IN_SINGLE_QUOTES)) {
+                state |= IN_SINGLE_QUOTES;
+            }
+            else {
+                state &= ~IN_SINGLE_QUOTES;
+            }
+            continue;
+        }
+        case BACKTICK_QUOTE_KEY: {
+            if (!(state & IN_BACKTICK_QUOTES)) {
+                state |= IN_BACKTICK_QUOTES;
+            }
+            else {
+                state &= ~IN_BACKTICK_QUOTES;
+            }
+            continue;
+        }
+        case OPENING_PARAN: {
+            if (!(state & IN_MATHEMATICAL_EXPRESSION)) {
+                state |= IN_MATHEMATICAL_EXPRESSION;
             }
 
-            buffer[0] = '\0';
-            buf_pos = 0;
+            buffer[buf_pos++] = line[line_position];
+            continue;
+        }
+        case CLOSING_PARAN: {
+            if (state & IN_MATHEMATICAL_EXPRESSION) {
+                state &= ~IN_MATHEMATICAL_EXPRESSION;
+            }
+
+            buffer[buf_pos++] = line[line_position];
+            continue;
+        }
+        case TILDE: {
+            // TODO: look at performance of tilde expansion
+            // TODO: see if it can be moved outside of case statement
+            char* home = getenv("HOME");
+            size_t home_length = strlen(home);
+            if (buf_pos + home_length > NCSH_MAX_INPUT) {
+                // protect from overflow
+                args->count = 0;
+                return;
+            }
+            memcpy(buffer + buf_pos, home, home_length);
+            buf_pos += home_length;
+            continue;
+        }
+        case GLOB_STAR: {
+            if (!(state & IN_MATHEMATICAL_EXPRESSION)) {
+                // TODO: use state to keep track of glob found
+                glob_found = true;
+            }
+            buffer[buf_pos++] = line[line_position];
+            continue;
+        }
+        case GLOB_QUESTION: {
+            glob_found = true;
+            buffer[buf_pos++] = line[line_position];
+            continue;
+        }
+        case ASSIGNMENT: {
+            if (!(state & IN_ASSIGNMENT)) {
+                state |= IN_ASSIGNMENT;
+                assignment_pos = buf_pos + 1;
+                memcpy(var_name, buffer, buf_pos);
+                var_name[buf_pos] = '\0';
+            }
+            continue;
+        }
+        default: {
+            // break to code below when delimiter found and no state or certain states found
+            if (parser_is_delimiter(line[line_position]) &&
+                (!state || (state & IN_MATHEMATICAL_EXPRESSION) || (state & IN_ASSIGNMENT))) {
+                break;
+                /*(state & IN_ASSIGNMENT && !(state & IN_BACKTICK_QUOTES) &&
+                    !(state & IN_DOUBLE_QUOTES) &&
+                    !(state & IN_SINGLE_QUOTES))*/
+            }
+            buffer[buf_pos++] = line[line_position];
+            continue;
+        }
+        }
+
+        buffer[buf_pos] = '\0';
+
+        debugf("Current parser state: %d\n", state);
+        if (glob_found) {
+            glob_t glob_buf = {0};
+            size_t glob_len;
+            glob(buffer, GLOB_DOOFFS, NULL, &glob_buf);
+
+            for (size_t i = 0; i < glob_buf.gl_pathc; ++i) {
+                glob_len = strlen(glob_buf.gl_pathv[i]) + 1;
+                if (!glob_len || glob_len >= NCSH_MAX_INPUT) {
+                    break;
+                }
+                buf_pos = glob_len;
+                args->values[args->count] = arena_malloc(scratch_arena, buf_pos, char);
+                memcpy(args->values[args->count], glob_buf.gl_pathv[i], glob_len);
+                args->ops[args->count] = OP_CONSTANT;
+                args->lengths[args->count] = buf_pos;
+                ++args->count;
+                if (args->count >= PARSER_TOKENS_LIMIT - 1) {
+                    break;
+                }
+            }
+
+            globfree(&glob_buf);
+            glob_found = false;
+        }
+        else if ((state & IN_ASSIGNMENT)) {
+            // variable values are stored in vars hashmap.
+            // the key is the previous value, which is tagged with OP_VARIABLE.
+            // when VM comes in contact with OP_VARIABLE, it looks up value in vars.
+            debugf("saving var_name %s\n", var_name);
+            struct estr* val = arena_malloc(arena, 1, struct estr);
+            val->length = buf_pos - assignment_pos + 2;
+            val->value = arena_malloc(arena, val->length, char);
+            memcpy(val->value, buffer + assignment_pos - 1, val->length);
+            debugf("%s : %s (%zu)\n", var_name, val->value, val->length);
+            char* key = arena_malloc(arena, assignment_pos, char);
+            memcpy(key, var_name, assignment_pos);
+            debugf("key value %s\n", key);
+            var_set(key, val, arena, &args->vars);
+            state &= ~IN_ASSIGNMENT;
         }
         else {
-            switch (line[line_position]) {
-            case DOUBLE_QUOTE_KEY: {
-                if (!(state & IN_DOUBLE_QUOTES)) {
-                    state |= IN_DOUBLE_QUOTES;
-                }
-                else {
-                    state &= ~IN_DOUBLE_QUOTES;
-                }
-                break;
-            }
-            case SINGLE_QUOTE_KEY: {
-                if (!(state & IN_SINGLE_QUOTES)) {
-                    state |= IN_SINGLE_QUOTES;
-                }
-                else {
-                    state &= ~IN_SINGLE_QUOTES;
-                }
-                break;
-            }
-            case BACKTICK_QUOTE_KEY: {
-                if (!(state & IN_BACKTICK_QUOTES)) {
-                    state |= IN_BACKTICK_QUOTES;
-                }
-                else {
-                    state &= ~IN_BACKTICK_QUOTES;
-                }
-                break;
-            }
-            case OPENING_PARAN: {
-                if (!(state & IN_MATHEMATICAL_EXPRESSION)) {
-                    state |= IN_MATHEMATICAL_EXPRESSION;
-                }
-
-                buffer[buf_pos++] = line[line_position];
-                break;
-            }
-            case CLOSING_PARAN: {
-                if (state & IN_MATHEMATICAL_EXPRESSION) {
-                    state &= ~IN_MATHEMATICAL_EXPRESSION;
-                }
-
-                buffer[buf_pos++] = line[line_position];
-                break;
-            }
-            case TILDE: {
-                char* home = getenv("HOME");
-                size_t home_length = strlen(home);
-                if (buf_pos + home_length > NCSH_MAX_INPUT) {
-                    // protect from overflow
-                    args->count = 0;
-                    return;
-                }
-                memcpy(buffer + buf_pos, home, home_length);
-                buf_pos += home_length;
-                break;
-            }
-            case GLOB_STAR: {
-                if (!(state & IN_MATHEMATICAL_EXPRESSION)) {
-                    glob_found = true;
-                }
-                buffer[buf_pos++] = line[line_position];
-                break;
-            }
-            case GLOB_QUESTION: {
-                glob_found = true;
-                buffer[buf_pos++] = line[line_position];
-                break;
-            }
-            default: {
-                buffer[buf_pos++] = line[line_position];
-                break;
-            }
-            }
+            args->values[args->count] = arena_malloc(scratch_arena, buf_pos + 1, char);
+            memcpy(args->values[args->count], buffer, buf_pos + 1);
+            args->ops[args->count] = parser_op_get(buffer, buf_pos);
+            args->lengths[args->count] = buf_pos + 1; // + 1 for null terminator
+            ++args->count;
         }
+
+        buffer[0] = '\0';
+        buf_pos = 0;
     }
 
     debug_args(args);
@@ -379,21 +422,21 @@ void parser_parse(const char* const restrict line, const size_t length, struct A
 /* parser_parse_noninteractive
  * Parse the command line input into commands, command lengths, and op codes stored in struct Args.
  * Allocates memory that is freed by parser_free_values at the end of each main loop of the shell.
+ * Used for noninteractive mode.
  */
 void parser_parse_noninteractive(const char** const restrict inputs, const size_t inputs_count,
-                                 struct Args* const restrict args, struct Arena* scratch_arena)
+                                 struct Args* const restrict args, struct Arena* arena, struct Arena* scratch_arena)
 {
-    assert(args);
-    assert(inputs);
-    assert(inputs_count > 0);
+    assert(inputs && inputs_count && args && arena && scratch_arena);
 
     if (!inputs || inputs_count == 0) {
         args->count = 0;
         return;
     }
 
+    // parse the split input one parameter at a time.
     for (size_t i = 0; i < inputs_count; ++i) {
-        parser_parse(inputs[i], strlen(inputs[i]) + 1, args, scratch_arena);
+        parser_parse(inputs[i], strlen(inputs[i]) + 1, args, arena, scratch_arena);
     }
 
     debug_args(args);

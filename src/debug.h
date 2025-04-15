@@ -15,8 +15,8 @@
 #define debug_argsv(argsc, argsv)
 #define debug_string(str, name)
 #else /* !NCSH_DEBUG */
-#include <stdio.h>
 #include <stdarg.h>
+#include <stdio.h>
 
 #include "eskilib/estr.h"
 #include "parser.h"
@@ -29,8 +29,7 @@
 #define debug_argsv(argsc, argsv) debug_argsv_internal(argsc, argsv)
 #define debug_string(str, name) debug_string_internal(str, name)
 
-static inline void debugf_internal(const char* file, int line, const char* func,
-                                   const char* fmt, ...)
+static inline void debugf_internal(const char* file, int line, const char* func, const char* fmt, ...)
 {
     va_list args;
     va_start(args, format);

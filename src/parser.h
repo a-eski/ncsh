@@ -8,6 +8,7 @@
 
 #include "arena.h"
 #include "eskilib/eresult.h"
+#include "var.h"
 
 #define PARSER_TOKENS_LIMIT 128
 
@@ -41,6 +42,9 @@ enum Ops : uint_fast8_t {
     OP_EXPONENTIATION = 19,        // **
     OP_MATH_EXPRESSION_START = 20, // (
     OP_MATH_EXPRESSION_END = 21,   // )
+    // Variables
+    OP_VARIABLE = 22,
+    OP_ASSIGNMENT = 23,
 };
 
 // TODO: Investigate if having struct Command would be better, where length, op code, value, and any state in one struct
@@ -69,12 +73,28 @@ struct Args {
     size_t* lengths;     // Length of the constants stored in values
     uint_fast8_t* ops;   // Ops: The bytecode
     char** values;       // Constant values needed to be referenced by the VM
+    struct var vars;     // Variables: values of variables that can be looked up by key
 };
 
-enum eresult parser_args_alloc(struct Args* const restrict args, struct Arena* const arena);
+/*struct Parser_Output {
+    struct Args args;
+};*/
 
+/* parser_init
+ * Allocate memory for the parser that lives for the lifetime of the shell.
+ * Returns: enum eresult, E_SUCCESS is successful, E_FAILURE_NULL_REFERENCE if *args is null
+ */
+enum eresult parser_init(struct Args* const restrict args, struct Arena* const arena);
+
+/* parser_parse
+ * Turns the inputted line into values, lengths, and bytecodes that the VM can work with.
+ */
 void parser_parse(const char* const restrict line, const size_t length, struct Args* const restrict args,
-                  struct Arena* const scratch_arena);
+                  struct Arena* arena, struct Arena* scratch_arena);
 
+/* parser_parse_noninteractive
+ * Turns the inputted line into values, lengths, and bytecodes that the VM can work with.
+ * Used for noninteractive mode.
+ */
 void parser_parse_noninteractive(const char** const restrict inputs, const size_t inputs_count,
-                                 struct Args* const restrict args, struct Arena* const scratch_arena);
+                                 struct Args* const restrict args, struct Arena* arena, struct Arena* scratch_arena);

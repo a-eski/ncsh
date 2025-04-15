@@ -4,11 +4,12 @@
 
 #include <stdint.h>
 
-#include "eskilib/emap.h"
 #include "arena.h"
 #include "config.h"
+#include "eskilib/emap.h"
 #include "parser.h"
 #include "readline/ncreadline.h"
+#include "var.h"
 #include "z/z.h"
 
 #define NCSH_MAX_PROCESSES 100
@@ -35,7 +36,6 @@ struct Shell {
 
     struct Input input;
     struct Args args;
-    struct emap variables;
     struct Processes processes;
 
     struct z_Database z_db;
