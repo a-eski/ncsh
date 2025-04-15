@@ -44,10 +44,10 @@ static inline char index_to_char(const int index)
 struct Autocompletion_Node* ac_alloc(struct Arena* const arena);
 
 void ac_add(const char* const string, const size_t length, struct Autocompletion_Node* restrict tree,
-                         struct Arena* const arena);
+            struct Arena* const arena);
 
-void ac_add_multiple(const struct estr* const strings, const int count,
-                                  struct Autocompletion_Node* restrict tree, struct Arena* const arena);
+void ac_add_multiple(const struct estr* const strings, const int count, struct Autocompletion_Node* restrict tree,
+                     struct Arena* const arena);
 
 struct Autocompletion_Node* ac_find(const char* str, struct Autocompletion_Node* restrict tree);
 
@@ -56,8 +56,8 @@ struct Autocompletion_Node* ac_find(const char* str, struct Autocompletion_Node*
  * Populates matches into variable matches.
  * Returns: number of matches (0 if no matches)
  */
-uint_fast8_t ac_get(const char* const search, struct Autocompletion* matches,
-                                 struct Autocompletion_Node* restrict tree, struct Arena scratch_arena);
+uint_fast8_t ac_get(const char* const search, struct Autocompletion* matches, struct Autocompletion_Node* restrict tree,
+                    struct Arena scratch_arena);
 
 /* ac_first
  * Gets highest weighted match based on traversing the tree.
@@ -65,4 +65,4 @@ uint_fast8_t ac_get(const char* const search, struct Autocompletion* matches,
  * Returns: 0 if no matches, 1 if any matches
  */
 uint_fast8_t ac_first(const char* const search, char* match, struct Autocompletion_Node* restrict tree,
-                                   struct Arena scratch_arena);
+                      struct Arena scratch_arena);

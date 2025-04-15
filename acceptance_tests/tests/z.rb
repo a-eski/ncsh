@@ -50,7 +50,7 @@ def z_remove_tests(row)
 end
 
 def z_tests(row)
-  starting_tests('z_add')
+  starting_tests('z')
   row = z_remove_tests(row)
   z_add_tests(row)
   # z_print_tests(row)

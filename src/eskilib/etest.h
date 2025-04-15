@@ -6,10 +6,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define eassert(condition)                                                                                      \
+#define eassert(condition)                                                                                             \
     if (!(condition)) {                                                                                                \
         printf("%s condition (%s) failed on line %d\n", __func__, #condition, __LINE__);                               \
-        etest_failed_internal();                                                                                \
+        etest_failed_internal();                                                                                       \
         return;                                                                                                        \
     }
 

@@ -18,8 +18,7 @@
 #include "../eskilib/estr.h"
 #include "history.h"
 
-void history_file_set(const struct estr config_file, struct History* const restrict history,
-                      struct Arena* const arena)
+void history_file_set(const struct estr config_file, struct History* const restrict history, struct Arena* const arena)
 {
 
     constexpr size_t history_file_len = sizeof(NCSH_HISTORY_FILE);
@@ -90,8 +89,8 @@ enum eresult history_load(struct History* const restrict history, struct Arena* 
     char buffer[NCSH_MAX_INPUT];
     int buffer_length = 0;
 
-    for (size_t i = 0;
-         (buffer_length = efgets(buffer, sizeof(buffer), file)) != EOF && i < NCSH_MAX_HISTORY_FILE; ++i) {
+    for (size_t i = 0; (buffer_length = efgets(buffer, sizeof(buffer), file)) != EOF && i < NCSH_MAX_HISTORY_FILE;
+         ++i) {
         ++history->count;
         history->entries[i].length = (size_t)buffer_length;
         history->entries[i].value = arena_malloc(arena, (uintptr_t)buffer_length, char);
@@ -122,8 +121,8 @@ enum eresult history_reload(struct History* const restrict history, struct Arena
     char buffer[NCSH_MAX_INPUT];
     int buffer_length = 0;
 
-    for (size_t i = 0;
-         (buffer_length = efgets(buffer, sizeof(buffer), file)) != EOF && i < NCSH_MAX_HISTORY_FILE; ++i) {
+    for (size_t i = 0; (buffer_length = efgets(buffer, sizeof(buffer), file)) != EOF && i < NCSH_MAX_HISTORY_FILE;
+         ++i) {
         if (buffer_length > 0) {
             ++history->count;
             if ((size_t)buffer_length > history->entries[i].length) {
@@ -141,7 +140,7 @@ enum eresult history_reload(struct History* const restrict history, struct Arena
 
 [[nodiscard]]
 enum eresult history_init(const struct estr config_location, struct History* const restrict history,
-                                 struct Arena* const arena)
+                          struct Arena* const arena)
 {
     assert(history && arena);
 
@@ -168,7 +167,7 @@ enum eresult history_init(const struct estr config_location, struct History* con
 
 [[nodiscard]]
 enum eresult history_clean(struct History* const restrict history, struct Arena* const arena,
-                                  struct Arena scratch_arena)
+                           struct Arena scratch_arena)
 {
     assert(history && arena && scratch_arena.start);
     if (!history->count || !history->entries[0].value) {
@@ -264,7 +263,7 @@ enum eresult history_save(struct History* const restrict history)
 }
 
 enum eresult history_add(const char* const line, const size_t length, struct History* const restrict history,
-                                struct Arena* const arena)
+                         struct Arena* const arena)
 {
     assert(history);
     assert(line);

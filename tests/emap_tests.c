@@ -29,7 +29,7 @@ void emap_add_one_test(void)
     emap_malloc(&scratch_arena, &hmap);
 
     char* key = "world";
-    struct estr val = { .value = key, .length = strlen(key) + 1 };
+    struct estr val = {.value = key, .length = strlen(key) + 1};
     const char* res = emap_set(val, &scratch_arena, &hmap);
 
     eassert(res);
@@ -52,9 +52,9 @@ void emap_add_multiple_test(void)
     emap_malloc(&scratch_arena, &ht);
 
     char* key1 = "hello";
-    struct estr val1 = { .value = key1, .length = strlen(key1) + 1 };
+    struct estr val1 = {.value = key1, .length = strlen(key1) + 1};
     char* key2 = "test";
-    struct estr val2 = { .value = key2, .length = strlen(key2) + 1 };
+    struct estr val2 = {.value = key2, .length = strlen(key2) + 1};
 
     const char* res1 = emap_set(val1, &scratch_arena, &ht);
     const char* res2 = emap_set(val2, &scratch_arena, &ht);
@@ -75,8 +75,7 @@ void emap_add_multiple_test(void)
 
     struct estr get_res2 = emap_get(val2.value, &ht);
     eassert(get_res2.value);
-    eassert(get_res2.length = val2.length)
-    eassert(!memcmp(get_res2.value, val2.value, get_res2.length));
+    eassert(get_res2.length = val2.length) eassert(!memcmp(get_res2.value, val2.value, get_res2.length));
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -88,7 +87,7 @@ void emap_add_duplicate_test(void)
     emap_malloc(&scratch_arena, &ht);
 
     char* key = "hello";
-    struct estr val = { .value = key, .length = strlen(key) + 1 };
+    struct estr val = {.value = key, .length = strlen(key) + 1};
     const char* res = emap_set(val, &scratch_arena, &ht);
     emap_set(val, &scratch_arena, &ht);
 

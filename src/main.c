@@ -112,7 +112,7 @@ char* init(struct Shell* const restrict shell)
     }
 
     enum eresult result;
-    if ((result = parser_args_alloc(&shell->args, &shell->arena)) != E_SUCCESS) {
+    if ((result = parser_init(&shell->args, &shell->arena)) != E_SUCCESS) {
         perror(RED "ncsh: Error when allocating memory for parser" RESET);
         fflush(stderr);
         return NULL;
@@ -139,7 +139,7 @@ char* init(struct Shell* const restrict shell)
  */
 int_fast32_t run(struct Shell* shell, struct Arena scratch_arena)
 {
-    parser_parse(shell->input.buffer, shell->input.pos, &shell->args, &scratch_arena);
+    parser_parse(shell->input.buffer, shell->input.pos, &shell->args, &shell->arena, &scratch_arena);
 
     return vm_execute(shell, &scratch_arena);
 }

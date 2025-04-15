@@ -1,4 +1,5 @@
 /* Copyright eskilib by Alex Eski 2024 */
+/* emap: Optimized for keys having the same value as values */
 
 #pragma once
 
@@ -27,5 +28,4 @@ struct estr emap_get(char* key, struct emap* hmap);
 
 bool emap_exists(char* key, struct emap* hmap);
 
-const char* emap_set(struct estr val, struct Arena* const arena,
-                     struct emap* hmap);
+const char* emap_set(struct estr val, struct Arena* const arena, struct emap* hmap);

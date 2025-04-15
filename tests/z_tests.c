@@ -246,8 +246,8 @@ void z_add_to_database_empty_value_test(void)
     eassert(db.count == 1);
     struct estr cwd = {.value = "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells", .length = 52};
 
-    eassert(z_database_add(estr_Empty.value, estr_Empty.length, cwd.value, cwd.length, &db,
-                                  &arena) == Z_NULL_REFERENCE);
+    eassert(z_database_add(estr_Empty.value, estr_Empty.length, cwd.value, cwd.length, &db, &arena) ==
+            Z_NULL_REFERENCE);
     eassert(db.count == 1);
 
     ARENA_TEST_TEARDOWN;
