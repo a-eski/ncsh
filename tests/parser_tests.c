@@ -374,6 +374,28 @@ void parser_parse_variable_test(void)
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
+void parser_parse_variable_and_test(void)
+{
+    ARENA_TEST_SETUP;
+    SCRATCH_ARENA_TEST_SETUP;
+
+    char* line = "STR=hello && $STR";
+    size_t length = strlen(line) + 1;
+
+    struct Args args;
+    bool result = parser_init(&args, &arena);
+    eassert(result);
+    parser_parse(line, length, &args, &arena, &scratch_arena);
+
+    eassert(args.values);
+    eassert(args.count == 1);
+    eassert(args.ops[0] == OP_VARIABLE);
+    eassert(!memcmp(args.values[0], "$STR", args.lengths[0]));
+
+    ARENA_TEST_TEARDOWN;
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
 void parser_parse_variable_command_test(void)
 {
     ARENA_TEST_SETUP;
@@ -672,8 +694,8 @@ void parser_parse_bad_input_shouldnt_crash(void);
 #ifdef NDEBUG
 void parser_release_tests(void)
 {
-    etest_run("parser_parse_home_test", parser_parse_home_test);
-    etest_run("parser_parse_home_at_start_test", parser_parse_home_at_start_test);
+    etest_run(parser_parse_home_test);
+    etest_run(parser_parse_home_at_start_test);
 }
 #endif /* ifdef NDEBUG */
 
@@ -696,6 +718,7 @@ void parser_parse_tests(void)
     etest_run(parser_parse_stdout_and_stderr_redirection_append_test);
     etest_run(parser_parse_assignment_test);
     etest_run(parser_parse_variable_test);
+    etest_run(parser_parse_variable_and_test);
     etest_run(parser_parse_variable_command_test);
     etest_run(parser_parse_git_commit_test);
 

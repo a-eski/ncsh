@@ -73,14 +73,12 @@
 #define NCSH_COMMAND_SUCCESS_CONTINUE 1
 #define NCSH_COMMAND_FAILED_CONTINUE 2
 
-/* NCSH_MAX_AUTOCOMPLETION_MATCHES Macro constant
- * Max number of matches a single autocompletion request can return. Used in tab autocomplete use case.
- */
-#define NCSH_MAX_AUTOCOMPLETION_MATCHES 32
 
-/* NCSH_MAX_INPUT Macro constant
- * The max input for reading in a line. Relevant to ncsh_readline when processing user input.
+/* CMP_* Macro functions
+ * compare first few characters of a string, 1, 2, or 3
  */
-#define NCSH_MAX_INPUT 1024
+#define CMP_1(str1, str2) (str1[0] == str2[0])
+#define CMP_2(str1, str2) (str1[0] == str2[0] && str1[1] == str2[1])
+#define CMP_3(str1, str2) (str1[0] == str2[0] && str1[1] == str2[1] && str1[2] == str2[2])
 
 // clang-format on

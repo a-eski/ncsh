@@ -52,6 +52,16 @@ def combined_variables_test(row)
   row
 end
 
+def and_variables_test(row)
+  assert_check_new_row(row)
+  @tty.send_line('STR=hello && echo $STR')
+  row += 1
+  @tty.assert_row(row, 'hello')
+  row += 1
+  test_passed('and (&&) variables test')
+  row
+end
+
 def multiple_variables_test(row)
   assert_check_new_row(row)
   @tty.send_line('STR3=`hi,`')
@@ -79,5 +89,6 @@ def variables_tests(row)
   row = quoted_variables_test(row)
   row = command_variables_test(row)
   # row = combined_variables_test(row)
+  row = and_variables_test(row)
   multiple_variables_test(row)
 end

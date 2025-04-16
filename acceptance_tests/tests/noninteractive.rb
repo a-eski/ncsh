@@ -212,8 +212,6 @@ def stdin_redirection_tests(row)
   # multiple_piped_stdin_redirection_test(row)
 end
 
-# builtins
-
 # syntax
 
 # expansion

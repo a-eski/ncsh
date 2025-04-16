@@ -180,6 +180,22 @@ fuzz_parser :
 fp :
 	make fuzz_parser
 
+.PHONY: bench_parser
+bench_parser :
+	$(CC) $(STD) $(debug_flags) -DNDEBUG ./src/eskilib/etest.c ./src/arena.c ./src/var.c ./src/parser.c ./tests/parser_bench.c -o ./bin/parser_bench
+	hyperfine --warmup 1000 --shell=none './bin/parser_bench'
+.PHONY: bp
+bp :
+	make bench_parser
+
+.PHONY: bench_parser_tests
+bench_parser_tests :
+	$(CC) $(STD) $(debug_flags) -DNDEBUG ./src/eskilib/etest.c ./src/arena.c ./src/var.c ./src/parser.c ./tests/parser_tests.c -o ./bin/parser_tests
+	hyperfine --warmup 1000 --shell=none './bin/parser_tests'
+.PHONY: bpt
+bpt :
+	make bench_parser_tests
+
 .PHONY: bench_parser_and_vm
 bench_parser_and_vm :
 	hyperfine --warmup 100 --shell /bin/ncsh 'ls' 'ls | sort' 'ls > t.txt' 'ls | sort | wc -c' 'ls | sort | wc -c > t2.txt'
