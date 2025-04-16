@@ -7,10 +7,11 @@ The goal is to build a shell with modern features and experience and as close to
 ## Features
 
 * Autocompletions as you type: autocompletions based on history and weight.
-* Tab autocompletions: view available options by pressing tab and cycle through with up/down keys and select with enter.
+* Tab shows all autocompletions: view available options by pressing tab and cycle through with up/down keys and select with enter.
 * History: command history tracked and can be cycled through using up/down keys.
 * Manipulate input: home, end, CTRL+W to delete word, CTRL+U to delete line, etc.
 * z: a native autojump/z-oxide/z command builtin.
+* Working towards POSIX compliance.
 
 ### History
 
@@ -145,6 +146,9 @@ make CC=clang-19
 sudo make install
 
 # set as your shell
+# note: not fully posix compliant so you will likely have issues
+#   for example, gdb does not work with ncsh as main shell
+#   you can set as your startup program instead
 sudo usermod -s /bin/ncsh <username>
 ```
 
@@ -161,14 +165,20 @@ Please see COMPILE.md.
 
 ## Goals
 
+* Incorporate traditional tab autocompletions
+* Adjust current implementation of tab 'show all' autocompletions
 * More rc file configurations
 * More compile-time configurations
 * Frecency-based autocomplete
 * More built-in commands like export, setting environment variables, etc.
 * Aliasing for user-defined commands
 * Custom prompt colors, backgrounds
-* Support scripts through a non-iteractive mode
-* Background jobs support Math
-* Better posix support
-* Variables
+* Support scripts
+* Improve noninteractive mode
+* Add command-line flags for noninteractive mode
+* Background jobs implementation
+* Math/Arithmetic implementation
+* Better POSIX compliance
+* Variable expansion (variables don't work with 'STR="ls | sort"\n $STR')
 * Usable with GDB (currently doesn't work)
+* Incorporate autocompletions into GNU readline fork or implement some vim-like editing commands
