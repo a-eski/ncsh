@@ -35,8 +35,10 @@ void parser_parse_bench(void)
     parser_parse("echo 'hello'", 13, &args, &arena, &scratch_arena);
     parser_parse("echo \"hello\"", 13, &args, &arena, &scratch_arena);
     parser_parse("echo `hello`", 13, &args, &arena, &scratch_arena);
-    parser_parse("git commit -m \"this is a commit message\"", strlen("git commit -m \"this is a commit message\"") + 1, &args, &arena, &scratch_arena);
-    parser_parse("( 1 + 1 - 1 * 1 / 1 % 1 ** 1 )", strlen("( 1 + 1 - 1 * 1 / 1 % 1 ** 1 )") + 1, &args, &arena, &scratch_arena);
+    parser_parse("git commit -m \"this is a commit message\"", strlen("git commit -m \"this is a commit message\"") + 1,
+                 &args, &arena, &scratch_arena);
+    parser_parse("( 1 + 1 - 1 * 1 / 1 % 1 ** 1 )", strlen("( 1 + 1 - 1 * 1 / 1 % 1 ** 1 )") + 1, &args, &arena,
+                 &scratch_arena);
 
     ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;

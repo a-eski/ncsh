@@ -79,7 +79,7 @@ int_fast32_t builtins_z(struct z_Database* const restrict z_db, struct Args* con
     }
 
     if (write(STDOUT_FILENO, Z_COMMAND_NOT_FOUND_MESSAGE, sizeof(Z_COMMAND_NOT_FOUND_MESSAGE)) == -1) {
-	return NCSH_COMMAND_EXIT_FAILURE;
+        return NCSH_COMMAND_EXIT_FAILURE;
     }
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
@@ -127,7 +127,7 @@ int_fast32_t builtins_history(struct History* const restrict history, struct Arg
     }
 
     if (write(STDOUT_FILENO, HISTORY_COMMAND_NOT_FOUND_MESSAGE, sizeof(HISTORY_COMMAND_NOT_FOUND_MESSAGE)) == -1) {
-	return NCSH_COMMAND_EXIT_FAILURE;
+        return NCSH_COMMAND_EXIT_FAILURE;
     }
     return NCSH_COMMAND_FAILED_CONTINUE;
 }
@@ -143,21 +143,21 @@ int_fast32_t builtins_exit(struct Args* const restrict args)
 int_fast32_t builtins_echo(struct Args* const restrict args)
 {
     if (args->count <= 1) {
-	return NCSH_COMMAND_SUCCESS_CONTINUE;
+        return NCSH_COMMAND_SUCCESS_CONTINUE;
     }
 
     bool echo_add_newline = true;
     size_t i = 1;
 
     for (size_t j = 1; j < args->count; ++j) {
-	if (args->lengths[j] != 3) {
-	    break;
-	}
+        if (args->lengths[j] != 3) {
+            break;
+        }
 
-	if (CMP_2(args->values[j], "-n")) {
-	    echo_add_newline = false;
-	    i = 2;
-	}
+        if (CMP_2(args->values[j], "-n")) {
+            echo_add_newline = false;
+            i = 2;
+        }
     }
 
     for (; i < args->count - 1; ++i) {
@@ -328,7 +328,7 @@ int_fast32_t builtins_version(struct Args* const restrict args)
     (void)args;
 
     if (write(STDOUT_FILENO, NCSH_TITLE, sizeof(NCSH_TITLE)) == -1) {
-	return NCSH_COMMAND_EXIT_FAILURE;
+        return NCSH_COMMAND_EXIT_FAILURE;
     }
 
     return NCSH_COMMAND_SUCCESS_CONTINUE;
@@ -337,24 +337,24 @@ int_fast32_t builtins_version(struct Args* const restrict args)
 void builtins_print()
 {
     for (size_t i = 0; i < builtins_count; ++i) {
-	printf("%s\n", builtins[i].value);
+        printf("%s\n", builtins[i].value);
     }
 }
 
 void builtins_print_enabled()
 {
     if (!builtins_disabled_state) {
-    	for (size_t i = 0; i < builtins_count; ++i) {
+        for (size_t i = 0; i < builtins_count; ++i) {
             printf("%s: enabled\n", builtins[i].value);
-	}
+        }
     }
     else {
-	for (size_t i = 0; i < builtins_count; ++i) {
-	    if ((builtins_disabled_state & builtins[i].flag))
-            	printf("%s: disabled\n", builtins[i].value);
-	    else
-            	printf("%s: enabled\n", builtins[i].value);
-	}
+        for (size_t i = 0; i < builtins_count; ++i) {
+            if ((builtins_disabled_state & builtins[i].flag))
+                printf("%s: disabled\n", builtins[i].value);
+            else
+                printf("%s: enabled\n", builtins[i].value);
+        }
     }
 }
 
@@ -364,14 +364,14 @@ int_fast32_t builtins_disable(struct Args* const restrict args)
     size_t i = args->values[0][0] == 'e' ? 2 : 1;
 
     for (; i < args->count; ++i) {
-	for (size_t j = 0; j < builtins_count; ++j) {
+        for (size_t j = 0; j < builtins_count; ++j) {
             if (estrcmp_c(args->values[i], args->lengths[i], builtins[j].value, builtins[j].length)) {
                 if (!(builtins_disabled_state & builtins[j].flag)) {
                     builtins_disabled_state |= builtins[j].flag;
-		    printf("ncsh disable: disabled builtin %s.\n", builtins[j].value);
-	        }
-	    }
-	}
+                    printf("ncsh disable: disabled builtin %s.\n", builtins[j].value);
+                }
+            }
+        }
     }
 
     return NCSH_COMMAND_SUCCESS_CONTINUE;
@@ -381,23 +381,23 @@ int_fast32_t builtins_disable(struct Args* const restrict args)
 int_fast32_t builtins_enable(struct Args* const restrict args)
 {
     if (!args->values[1]) {
-	builtins_print();
-	return NCSH_COMMAND_SUCCESS_CONTINUE;
+        builtins_print();
+        return NCSH_COMMAND_SUCCESS_CONTINUE;
     }
 
     if (args->lengths[1] == 3) {
-	if (CMP_2(args->values[1], "-a")) {
-	    builtins_print_enabled();
+        if (CMP_2(args->values[1], "-a")) {
+            builtins_print_enabled();
             return NCSH_COMMAND_SUCCESS_CONTINUE;
-	}
-	else if (CMP_2(args->values[1], "-n")) {
-	    builtins_disable(args);
-	    return NCSH_COMMAND_SUCCESS_CONTINUE;
-	}
+        }
+        else if (CMP_2(args->values[1], "-n")) {
+            builtins_disable(args);
+            return NCSH_COMMAND_SUCCESS_CONTINUE;
+        }
     }
 
     if (write(STDOUT_FILENO, ENABLE_OPTION_NOT_SUPPORTED_MESSAGE, sizeof(ENABLE_OPTION_NOT_SUPPORTED_MESSAGE)) == -1) {
-	return NCSH_COMMAND_EXIT_FAILURE;
+        return NCSH_COMMAND_EXIT_FAILURE;
     }
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
