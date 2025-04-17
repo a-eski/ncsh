@@ -47,23 +47,6 @@ enum Ops : uint_fast8_t {
     OP_ASSIGNMENT = 23,
 };
 
-// TODO: Investigate if having struct Command would be better, where length, op code, value, and any state in one struct
-// to improve cache locality.
-/*
-struct Command
-{
-    size_t length;
-    uint_fast8_t op;
-    char* value;
-}
-
-struct Args
-{
-    uint_fast32_t count;
-    struct Command* commands;
-}
-*/
-
 /* struct Args
  * The output of the parser.
  * Contains bytecodes, strings, and the string's lengths as well as a count
@@ -75,10 +58,6 @@ struct Args {
     char** values;       // Constant values needed to be referenced by the VM
     struct var vars;     // Variables: values of variables that can be looked up by key
 };
-
-/*struct Parser_Output {
-    struct Args args;
-};*/
 
 /* parser_init
  * Allocate memory for the parser that lives for the lifetime of the shell.

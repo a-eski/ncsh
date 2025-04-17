@@ -71,7 +71,7 @@ static int signal_forward(const int signum)
 }
 
 [[nodiscard]]
-char* init_arena(struct Shell* const restrict shell)
+char* arena_init(struct Shell* const restrict shell)
 {
     constexpr int arena_capacity = 1 << 24;
     constexpr int scratch_arena_capacity = 1 << 16;
@@ -82,10 +82,10 @@ char* init_arena(struct Shell* const restrict shell)
         return NULL;
     }
 
-    shell->arena = (struct Arena){.start = memory, .end = memory + (arena_capacity), .exit = &env};
+    shell->arena = (struct Arena){.start = memory, .end = memory + (arena_capacity)};
     char* scratch_memory_start = memory + (arena_capacity + 1);
-    shell->scratch_arena = (struct Arena){
-        .start = scratch_memory_start, .end = scratch_memory_start + (scratch_arena_capacity), .exit = &env};
+    shell->scratch_arena =
+        (struct Arena){.start = scratch_memory_start, .end = scratch_memory_start + (scratch_arena_capacity)};
 
     return memory;
 }
@@ -97,7 +97,7 @@ char* init_arena(struct Shell* const restrict shell)
 [[nodiscard]]
 char* init(struct Shell* const restrict shell)
 {
-    char* memory = init_arena(shell);
+    char* memory = arena_init(shell);
     if (!memory) {
         puts(RED "ncsh: could not start up, not enough memory available." RESET);
         return NULL;
@@ -129,6 +129,21 @@ char* init(struct Shell* const restrict shell)
     }
 
     return memory;
+}
+
+void cleanup(char* shell_memory, struct Shell* shell)
+{
+    // don't bother cleaning up if no shell memory allocated
+    if (!shell_memory) {
+        return;
+    }
+    if (shell->input.buffer) {
+        ncreadline_exit(&shell->input);
+    }
+    if (shell->z_db.database_file) {
+        z_exit(&shell->z_db);
+    }
+    free(shell_memory);
 }
 
 /* run
@@ -180,62 +195,58 @@ int main(int argc, char** argv)
 
     int_fast32_t exit_code = EXIT_SUCCESS;
 
-    if (!setjmp(env)) {
+    if (setjmp(env)) {
+        goto exit;
+    }
+
 #ifdef NCSH_START_TIME
-        clock_t end = clock();
-        double elapsed_ms = ((double)(end - start)) / CLOCKS_PER_SEC * 1000;
-        printf("ncsh: startup time: %.2f milliseconds\n", elapsed_ms);
+    clock_t end = clock();
+    double elapsed_ms = ((double)(end - start)) / CLOCKS_PER_SEC * 1000;
+    printf("ncsh: startup time: %.2f milliseconds\n", elapsed_ms);
 #endif
 
-        while (1) {
-            int_fast32_t input_result = ncreadline(&shell.input, &shell.scratch_arena);
-            switch (input_result) {
-            case EXIT_FAILURE: {
-                exit_code = EXIT_FAILURE;
-                goto exit;
-            }
-            case EXIT_SUCCESS: {
-                goto reset;
-            }
-            case EXIT_SUCCESS_END: {
-                goto exit;
-            }
-            }
-
-            int_fast32_t command_result = run(&shell, shell.scratch_arena);
-            switch (command_result) {
-            case NCSH_COMMAND_EXIT_FAILURE: {
-                exit_code = EXIT_FAILURE;
-                goto exit;
-            }
-            case NCSH_COMMAND_EXIT: {
-                goto exit;
-            }
-            case NCSH_COMMAND_SYNTAX_ERROR:
-            case NCSH_COMMAND_FAILED_CONTINUE: {
-                goto reset;
-            }
-            }
-
-            history_add(shell.input.buffer, shell.input.pos, &shell.input.history, &shell.arena);
-            ac_add(shell.input.buffer, shell.input.pos, shell.input.autocompletions_tree, &shell.arena);
-
-        reset:
-            memset(shell.input.buffer, '\0', shell.input.max_pos);
-            shell.input.pos = 0;
-            shell.input.max_pos = 0;
-            shell.args.count = 0;
-            shell.args.values[0] = NULL;
+    while (1) {
+        int_fast32_t input_result = ncreadline(&shell.input, &shell.scratch_arena);
+        switch (input_result) {
+        case EXIT_FAILURE: {
+            exit_code = EXIT_FAILURE;
+            goto exit;
         }
+        case EXIT_SUCCESS: {
+            goto reset;
+        }
+        case EXIT_SUCCESS_END: {
+            goto exit;
+        }
+        }
+
+        int_fast32_t command_result = run(&shell, shell.scratch_arena);
+        switch (command_result) {
+        case NCSH_COMMAND_EXIT_FAILURE: {
+            exit_code = EXIT_FAILURE;
+            goto exit;
+        }
+        case NCSH_COMMAND_EXIT: {
+            goto exit;
+        }
+        case NCSH_COMMAND_SYNTAX_ERROR:
+        case NCSH_COMMAND_FAILED_CONTINUE: {
+            goto reset;
+        }
+        }
+
+        history_add(shell.input.buffer, shell.input.pos, &shell.input.history, &shell.arena);
+        ac_add(shell.input.buffer, shell.input.pos, shell.input.autocompletions_tree, &shell.arena);
+
+    reset:
+        memset(shell.input.buffer, '\0', shell.input.max_pos);
+        shell.input.pos = 0;
+        shell.input.max_pos = 0;
+        shell.args.count = 0;
     }
-    else {
-    exit:
-        ncreadline_exit(&shell.input);
-        z_exit(&shell.z_db);
-        ;
-        free(memory);
-        puts("exit");
-    }
+exit:
+    cleanup(memory, &shell);
+    ncsh_write_literal("exit\n");
 
     return (int)exit_code;
 }

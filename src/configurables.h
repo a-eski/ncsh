@@ -71,4 +71,18 @@
 #    define NCSH_MAX_HISTORY_IN_MEMORY 2400
 #endif // !NCSH_MAX_HISTORY_IN_MEMORY
 
+
+
+/* NCSH_MAX_AUTOCOMPLETION_MATCHES Macro constant
+ * Max number of matches a single autocompletion request can return. Used in tab autocomplete use case.
+ */
+#define NCSH_MAX_AUTOCOMPLETION_MATCHES 32
+
+
+
+/* NCSH_MAX_INPUT Macro constant
+ * The max input for reading in a line. Relevant to ncsh_readline when processing user input.
+ */
+#define NCSH_MAX_INPUT 1024
+
 // clang-format on

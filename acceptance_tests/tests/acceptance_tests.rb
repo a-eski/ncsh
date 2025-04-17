@@ -3,6 +3,7 @@
 # acceptance_tests.rb: the main acceptance tests for ncsh.
 
 require './acceptance_tests/tests/common'
+require './acceptance_tests/tests/builtins'
 require './acceptance_tests/tests/expansion'
 require './acceptance_tests/tests/autocompletion'
 require './acceptance_tests/tests/history'
@@ -320,72 +321,6 @@ def stdin_redirection_tests(row)
   multiple_piped_stdin_redirection_test(row)
 end
 
-def help_test(row)
-  assert_check_new_row(row)
-  @tty.send_line('help')
-  row += 1
-  @tty.assert_contents_at row, row + 13, <<~TERM
-    ncsh Copyright (C) 2025 Alex Eski
-    This program comes with ABSOLUTELY NO WARRANTY.
-    This is free software, and you are welcome to redistribute it under certain conditions.
-
-    ncsh help:
-    Builtin Commands: {command} {args}
-    q:                    To exit, type q, exit, or quit and press enter. You can also use Ctrl+D to exit.
-    cd/z:                 You can change directory with cd or z.
-    echo:                 You can write things to the screen using echo.
-    history:              You can see your command history using the history command.
-    history count:        You can see the number of entries in your history with history count command.
-    pwd:                  Prints the current working directory.
-    alex /shells/ncsh ❱
-  TERM
-  row += 12
-  test_passed('Help test')
-  row
-end
-
-def basic_echo_test(row)
-  assert_check_new_row(row)
-  @tty.send_keys_one_at_a_time(%(echo hello))
-  @tty.assert_cursor_position(@start_column + 10, row)
-  @tty.send_newline
-  @tty.assert_row_ends_with(row, 'echo hello')
-  row += 1
-  @tty.assert_row(row, 'hello')
-  row += 1
-  test_passed('basic echo test')
-  row
-end
-
-def quote_echo_test(row)
-  assert_check_new_row(row)
-  @tty.send_line("echo 'hello'")
-  row += 1
-  @tty.assert_row(row, 'hello')
-  row += 1
-
-  @tty.send_line('echo "hello"')
-  row += 1
-  @tty.assert_row(row, 'hello')
-  row += 1
-
-  @tty.send_line('echo `hello`')
-  row += 1
-  @tty.assert_row(row, 'hello')
-  row += 1
-
-  test_passed('quote echo test')
-  row
-end
-
-def builtin_tests(row)
-  starting_tests('builtin')
-
-  # row = help_test(row)
-  row = basic_echo_test(row)
-  quote_echo_test(row)
-end
-
 def delete_line_tests(row)
   starting_tests('delete line')
   assert_check_new_row(row)
@@ -412,6 +347,21 @@ def delete_word_tests(row)
   row
 end
 
+def comment_test(row)
+  assert_check_new_row(row)
+  @tty.send_line('echo hello # this is a comment')
+  row += 1
+  @tty.assert_row(row, 'hello')
+  row += 1
+  test_passed('Comment test')
+  row
+end
+
+def parser_tests(row)
+  starting_tests('parser tests')
+  comment_test(row)
+end
+
 def run_acceptance_tests(prompt_directory_option, prompt_user_option, is_custom_prompt)
   setup_tests(prompt_directory_option, prompt_user_option, is_custom_prompt)
 
@@ -427,7 +377,7 @@ def run_acceptance_tests(prompt_directory_option, prompt_user_option, is_custom_
   row = stdout_redirection_tests(row)
   row = z_tests(row)
   row = stdin_redirection_tests(row)
-  row = builtin_tests(row)
+  row = builtins_tests(row)
   row = delete_line_tests(row)
   delete_word_tests(row)
   @tty.send_line(%(exit))
@@ -439,6 +389,7 @@ def run_acceptance_tests(prompt_directory_option, prompt_user_option, is_custom_
   row = syntax_tests(row)
   row = expansion_tests(row)
   row = variables_tests(row)
+  row = parser_tests(row)
   # row = paste_tests(row)
   # row = multiline_tests(row)
 end

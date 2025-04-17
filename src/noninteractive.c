@@ -41,7 +41,7 @@ int_fast32_t noninteractive(const int argc, const char** const restrict argv)
 {
     assert(argc > 1); // 1 because first arg is ncsh
     assert(argv);
-    assert(!strcmp("ncsh", argv[0]));
+    assert(!strcmp("ncsh", argv[0]) || !strcmp("./bin/ncsh", argv[0]));
 
     // noninteractive does not support no args
     if (argc <= 1) {
