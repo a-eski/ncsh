@@ -289,6 +289,7 @@ enum eresult history_add(const char* const line, const size_t length, struct His
     history->entries[history->count].length = length;
     history->entries[history->count].value = arena_malloc(arena, length, char);
     memcpy(history->entries[history->count].value, line, length);
+    history->entries[history->count].value[length - 1] = '\0';
     ++history->count;
     return E_SUCCESS;
 }
