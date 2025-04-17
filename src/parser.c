@@ -83,30 +83,6 @@ enum eresult parser_init(struct Args* const restrict args, struct Arena* const a
     return E_SUCCESS;
 }
 
-/* parser_is_delimiter
- * Internal function used to determine where to split values being parsed.
- * For example, "ls -a" gets split into ["ls", "-a"], and this function determines
- * where that split happens.
- */
-[[nodiscard]]
-bool parser_is_delimiter(const char ch)
-{
-    switch (ch) {
-    case ' ':
-    // case '\t':
-    case '\r':
-    case '\n':
-    // case '\a':
-    // case EOF:
-    case '\0': {
-        return true;
-    }
-    default: {
-        return false;
-    }
-    }
-}
-
 /* ops_2char_str
  * A constant array that contains all shell operations that are 2 characters long, like ">>", "||", "&&".
  * Size of the array is stored as constant expression in ops_2char_len
@@ -233,6 +209,9 @@ enum Parser_State {
 };
 // clang-format on
 
+/* variables used in parser_parse, not accessed anywhere else within the shell
+ * put here because they increased speed of the parser.
+ */
 char* parser_buffer;
 char* var_name;
 int parser_state;
@@ -353,16 +332,24 @@ void parser_parse(const char* const restrict line, const size_t length, struct A
 
             continue;
         }
-        default: {
-            if (parser_state & IN_COMMENT && line[line_position] != '\n')
+	// delimiter case // NOTE: should \t, \a, or EOF be included?
+	case ' ':
+    	case '\r':
+    	case '\n':
+    	case '\0': {
+	    if (parser_state & IN_COMMENT && line[line_position] != '\n')
                 continue;
 
             // break to code below when delimiter found and no state or certain states found
-            if (parser_is_delimiter(line[line_position]) &&
-                (!parser_state || (parser_state & IN_MATHEMATICAL_EXPRESSION) || (parser_state & IN_ASSIGNMENT) ||
-                 (parser_state & IN_GLOB_EXPANSION))) {
+            if ((!parser_state || (parser_state & IN_MATHEMATICAL_EXPRESSION) ||
+	        (parser_state & IN_ASSIGNMENT) || (parser_state & IN_GLOB_EXPANSION))) {
                 break;
             }
+
+	    parser_buffer[parser_buf_pos++] = line[line_position];
+            continue;
+	}
+        default: {
             parser_buffer[parser_buf_pos++] = line[line_position];
             continue;
         }

@@ -55,3 +55,13 @@ Range (min … max):     3.5 ms …   5.3 ms    684 runs
 Time (mean ± σ):       3.9 ms ±   0.2 ms    [User: 1.9 ms, System: 0.5 ms]
 Range (min … max):     3.6 ms …   6.7 ms    573 runs
 
+Time (mean ± σ):       3.9 ms ±   0.3 ms    [User: 1.9 ms, System: 0.5 ms]
+Range (min … max):     3.5 ms …   6.2 ms    613 runs
+
+### bench: after adjusting switch statement
+
+Time (mean ± σ):       3.8 ms ±   0.2 ms    [User: 1.9 ms, System: 0.5 ms]
+Range (min … max):     3.4 ms …   5.5 ms    707 runs
+
+Time (mean ± σ):       3.8 ms ±   0.2 ms    [User: 1.9 ms, System: 0.5 ms]
+Range (min … max):     3.4 ms …   6.6 ms    751 runs
