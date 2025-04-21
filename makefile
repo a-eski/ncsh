@@ -76,6 +76,7 @@ check c:
 	make test_emap
 	make test_estr
 	make test_var
+	make test_vm
 
 .PHONY: acceptance_tests, at
 acceptance_tests at:
@@ -160,9 +161,6 @@ bench_parser_and_vm vpb:
 bash_bench_parser_and_vm bbpv:
 	hyperfine --warmup 100 --shell /bin/bash 'ls' 'ls | sort' 'ls > t.txt' 'ls | sort | wc -c' 'ls | sort | wc -c > t2.txt'
 	rm t.txt t2.txt
-.PHONY: bbpv
-bbpv :
-	make bash_bench_parser_and_vm
 
 .PHONY: test_z, tz
 test_z tz:

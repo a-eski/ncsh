@@ -61,7 +61,7 @@ def basic_autocompletion_test(row)
   assert_check_new_row(row)
   @tty.send_keys_one_at_a_time(%(l))
   @tty.send_right_arrow
-  @tty.assert_row_ends_with(row, %(ls | sort | wc -c))
+  @tty.assert_row_ends_with(row, %(ls > t.txt))
   @tty.send_keys_exact(TTYtest::CTRLU)
 
   test_passed('Basic autocompletion test')
