@@ -1,6 +1,5 @@
 /* Copyright (c) z by Alex Eski 2024 */
 
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

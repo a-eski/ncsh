@@ -1,8 +1,6 @@
-/* Copyright ncsh by Alex Eski 2025 */
+/* Copyright ncsh (C) by Alex Eski 2025 */
 
 #pragma once
-
-#include <stdint.h>
 
 #include "arena.h"
 #include "config.h"
@@ -18,8 +16,8 @@
  * Maintains details about background jobs that have been started by the user.
  */
 struct Processes {
-    uint32_t job_number;
-    uint32_t process_ids[NCSH_MAX_PROCESSES];
+    size_t job_number;
+    size_t process_ids[NCSH_MAX_PROCESSES];
 };
 
 /* struct Shell

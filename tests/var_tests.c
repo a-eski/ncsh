@@ -2,7 +2,6 @@
 #include "../src/eskilib/etest.h"
 #include "../src/var.h"
 #include "lib/arena_test_helper.h"
-#include <stdbool.h>
 #include <stddef.h>
 #include <stdlib.h> // used by macros
 

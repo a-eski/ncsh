@@ -2,9 +2,7 @@
 
 #include <assert.h>
 #include <glob.h>
-#include <stdbool.h>
 #include <stddef.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -75,7 +73,7 @@ enum eresult parser_init(struct Args* const restrict args, struct Arena* const a
     args->count = 0;
 
     args->values = arena_malloc(arena, PARSER_TOKENS_LIMIT, char*);
-    args->ops = arena_malloc(arena, PARSER_TOKENS_LIMIT, uint_fast8_t);
+    args->ops = arena_malloc(arena, PARSER_TOKENS_LIMIT, uint8_t);
     args->lengths = arena_malloc(arena, PARSER_TOKENS_LIMIT, size_t);
     args->vars = (struct var){0};
     var_malloc(arena, &args->vars);
@@ -165,7 +163,7 @@ enum Ops parser_op_get(const char* const restrict line, const size_t length)
     }
     case 2: {
         assert(line);
-        for (uint_fast32_t i = 0; i < ops_2char_len; ++i) {
+        for (size_t i = 0; i < ops_2char_len; ++i) {
             if (CMP_2(line, ops_2char_str[i])) {
                 return ops_2char[i];
             }
@@ -175,7 +173,7 @@ enum Ops parser_op_get(const char* const restrict line, const size_t length)
     }
     case 3: {
         assert(line);
-        for (uint_fast32_t i = 0; i < ops_3char_len; ++i) {
+        for (size_t i = 0; i < ops_3char_len; ++i) {
             if (CMP_3(line, ops_3char_str[i])) {
                 return ops_3char[i];
             }

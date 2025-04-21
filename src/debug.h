@@ -66,7 +66,7 @@ static inline void debug_args_internal(const char* file, int line, const char* f
     fprintf(stderr, "%s %s:%d ", file, func, line);
     fprintf(stderr, "args.count: %lu\n", args->count);
 
-    for (uint_fast32_t i = 0; i < args->count; ++i) {
+    for (size_t i = 0; i < args->count; ++i) {
         fprintf(stderr, "%s %s:%d ", file, func, line);
         fprintf(stderr, "args.values[%lu] %s\n", i, args->values[i]);
         fprintf(stderr, "%s %s:%d ", file, func, line);

@@ -1,9 +1,8 @@
 /* Copyright ncsh (C) by Alex Eski 2024 */
-/* variables.c: a regular hashmap */
+/* variables.c: a basic hashmap using liner probing */
 
 #pragma once
 
-#include <stdbool.h>
 #include <stddef.h>
 
 #include "arena.h"
@@ -22,10 +21,10 @@ struct var {
     struct var_Entry* entries;
 };
 
-void var_malloc(struct Arena* const arena, struct var* hmap);
+void var_malloc(struct Arena* const arena, struct var* restrict vars);
 
-struct estr* var_get(char* key, struct var* hmap);
+struct estr* var_get(char* key, struct var* restrict vars);
 
-bool var_exists(char* key, struct var* hmap);
+bool var_exists(char* key, struct var* restrict vars);
 
-const char* var_set(char* key, struct estr* val, struct Arena* const arena, struct var* hmap);
+const char* var_set(char* key, struct estr* val, struct Arena* const arena, struct var* restrict vars);

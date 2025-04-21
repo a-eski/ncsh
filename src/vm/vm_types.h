@@ -1,10 +1,9 @@
-/* Copyright ncsh by Alex Eski 2025 */
+/* Copyright ncsh (C) by Alex Eski 2025 */
 
 #pragma once
 
 #include <fcntl.h>
 #include <linux/limits.h>
-#include <stdint.h>
 
 #include "../parser.h"
 
@@ -58,8 +57,8 @@ struct Vm_Data {
     pid_t pid;
     char* buffer[MAX_INPUT];
     size_t buffer_len[MAX_INPUT];
-    uint_fast32_t command_position;
-    uint_fast32_t args_position;
+    uint8_t command_position;
+    uint8_t args_position;
     bool args_end;
     enum Ops op_current;
     enum Command_Type command_type;

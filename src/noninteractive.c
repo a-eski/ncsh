@@ -1,10 +1,8 @@
-/* Copyright ncsh by Alex Eski 2024 */
+/* Copyright ncsh (C) by Alex Eski 2024 */
 
 #include <assert.h>
 #include <limits.h>
-#include <stdbool.h>
 #include <stddef.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -22,7 +20,7 @@
  * Parses and sends output of parser to VM. Parser data stored in scratch arena, which is then used by VM.
  * Scratch arena reset after scope ends due to passing by value.
  */
-int_fast32_t noninteractive_run(const char** const restrict argv, const size_t argc, struct Args* args,
+int noninteractive_run(const char** const restrict argv, const size_t argc, struct Args* args,
                                 struct Arena* const arena, struct Arena scratch_arena)
 {
     parser_parse_noninteractive(argv, argc, args, arena, &scratch_arena);
@@ -37,7 +35,7 @@ int_fast32_t noninteractive_run(const char** const restrict argv, const size_t a
  * Returns: exit status, see defines.h (EXIT_...)
  */
 [[nodiscard]]
-int_fast32_t noninteractive(const int argc, const char** const restrict argv)
+int noninteractive(const int argc, const char** const restrict argv)
 {
     assert(argc > 1); // 1 because first arg is ncsh
     assert(argv);
@@ -80,9 +78,9 @@ int_fast32_t noninteractive(const int argc, const char** const restrict argv)
 
     debug_argsv(argc, argv);
 
-    int_fast32_t command_result = noninteractive_run(argv + 1, (size_t)argc - 1, &args, &arena, scratch_arena);
+    int command_result = noninteractive_run(argv + 1, (size_t)argc - 1, &args, &arena, scratch_arena);
 
-    int_fast32_t exit_code = command_result == NCSH_COMMAND_EXIT_FAILURE ? EXIT_FAILURE : EXIT_SUCCESS;
+    int exit_code = command_result == NCSH_COMMAND_EXIT_FAILURE ? EXIT_FAILURE : EXIT_SUCCESS;
 
     free(memory);
 

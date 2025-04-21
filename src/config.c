@@ -1,10 +1,8 @@
-/* Copyright ncsh by Alex Eski 2025 */
+/* Copyright ncsh (C) by Alex Eski 2025 */
 
 #define _POSIX_C_SOURCE 200809L
 #include <assert.h>
 #include <linux/limits.h>
-#include <stdbool.h>
-#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -259,7 +257,7 @@ struct estr config_alias_check(const char* const restrict buffer, const size_t b
     }
 
     constexpr size_t aliases_count = sizeof(aliases) / sizeof(struct Alias);
-    for (uint_fast32_t i = 0; i < aliases_count; ++i) {
+    for (size_t i = 0; i < aliases_count; ++i) {
         if (estrcmp_cc(buffer, buf_len, aliases[i].alias.value, aliases[i].alias.length)) {
             return aliases[i].actual_command;
         }

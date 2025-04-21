@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include <stdint.h>
 #include <stdio.h>
 
 int efgets(char* const buffer, const size_t len, FILE* const restrict file);

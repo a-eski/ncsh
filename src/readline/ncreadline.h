@@ -3,7 +3,6 @@
 #pragma once
 
 #include <stddef.h>
-#include <stdint.h>
 
 #include "../config.h"
 #include "../eskilib/eresult.h"
@@ -48,7 +47,7 @@ struct Input {
  * Allocates memory using the arena that lives for the lifetime of the shell and is used by readline to process user
  * input. Returns: exit status, EXIT_SUCCESS, EXIT_FAILURE, or value in defines.h (EXIT_...)
  */
-int_fast32_t ncreadline_init(struct Config* const restrict config, struct Input* const restrict input,
+int ncreadline_init(struct Config* const restrict config, struct Input* const restrict input,
                              struct Arena* const arena);
 
 /* readline
@@ -56,7 +55,7 @@ int_fast32_t ncreadline_init(struct Config* const restrict config, struct Input*
  * other inputs. Accepts a pointer to the scratch arena, but it passes a copy (by value) to autocompletion logic when it
  * is needed to be used. Returns: exit status, EXIT_SUCCESS, EXIT_FAILURE, or value in defines.h (EXIT_...)
  */
-int_fast32_t ncreadline(struct Input* const restrict input, struct Arena* const scratch_arena);
+int ncreadline(struct Input* const restrict input, struct Arena* const scratch_arena);
 
 /* readline_exit
  * Saves history changes and restores the terminal settings from before the shell was started.
