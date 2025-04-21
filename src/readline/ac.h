@@ -65,5 +65,4 @@ uint_fast8_t ac_get(const char* search, struct Autocompletion* matches, struct A
  * Populates match into variable match
  * Returns: 0 if no matches, 1 if any matches
  */
-uint_fast8_t ac_first(const char* search, char* match, struct Autocompletion_Node* restrict tree,
-                      struct Arena scratch);
+uint_fast8_t ac_first(const char* search, char* match, struct Autocompletion_Node* restrict tree, struct Arena scratch);

@@ -13,10 +13,10 @@
 #include "../eskilib/ecolors.h"
 #include "../parser.h"
 #include "../types.h"
+#include "vm.h"
 #include "vm_builtins.h"
 #include "vm_tokenizer.h"
 #include "vm_types.h"
-#include "vm.h"
 
 extern jmp_buf env;
 extern sig_atomic_t vm_child_pid;
@@ -388,7 +388,6 @@ void vm_buffer_set_command_next(struct Args* const restrict args, struct Vm_Data
         vm->op_current = args->ops[vm->args_position];
     }
     ++vm->args_position;
-
 
     vm->buffer[vm_buf_pos] = NULL;
 }

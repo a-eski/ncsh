@@ -70,11 +70,11 @@ void ac_add_multiple(const struct estr* const strings, const int count, struct A
 struct Autocompletion_Node* ac_find(const char* p, struct Autocompletion_Node* restrict t)
 {
     while (p && *p) {
-	if (!t)
-	    return NULL;
+        if (!t)
+            return NULL;
 
-	t = t->nodes[char_to_index(*p)];
-	++p;
+        t = t->nodes[char_to_index(*p)];
+        ++p;
     }
 
     return t;
@@ -92,15 +92,15 @@ void ac_match(struct Autocompletion* const matches, struct Autocompletion_Node* 
               struct Arena* const restrict scratch)
 {
     if (!tree || ac_match_pos + 1 >= NCSH_MAX_AUTOCOMPLETION_MATCHES) {
-	return;
+        return;
     }
 
     if (tree->is_end_of_a_word && *ac_buffer) {
-	matches[ac_match_pos].value = arena_malloc(scratch, ac_buffer_len + 1, char);
-	memcpy(matches[ac_match_pos].value, ac_buffer, ac_buffer_len);
-	matches[ac_match_pos].value[ac_buffer_len] = '\0';
-	matches[ac_match_pos].weight = tree->weight;
-	++ac_match_pos;
+        matches[ac_match_pos].value = arena_malloc(scratch, ac_buffer_len + 1, char);
+        memcpy(matches[ac_match_pos].value, ac_buffer, ac_buffer_len);
+        matches[ac_match_pos].value[ac_buffer_len] = '\0';
+        matches[ac_match_pos].weight = tree->weight;
+        ++ac_match_pos;
     }
 
     for (size_t i = 0; i < NCSH_LETTERS; ++i) {
@@ -113,7 +113,7 @@ void ac_match(struct Autocompletion* const matches, struct Autocompletion_Node* 
 
         ac_match(matches, tree->nodes[i], scratch);
 
-	if (ac_match_pos + 1 >= NCSH_MAX_AUTOCOMPLETION_MATCHES) {
+        if (ac_match_pos + 1 >= NCSH_MAX_AUTOCOMPLETION_MATCHES) {
             return;
         }
 
@@ -126,7 +126,7 @@ void ac_match(struct Autocompletion* const matches, struct Autocompletion_Node* 
 }
 
 uint_fast8_t ac_matches(struct Autocompletion* const matches, struct Autocompletion_Node* prefix,
-			struct Arena* const restrict scratch)
+                        struct Arena* const restrict scratch)
 {
     ac_str_pos = 0;
     ac_match_pos = 0;
@@ -154,8 +154,7 @@ uint_fast8_t ac_get(const char* search, struct Autocompletion* matches, struct A
     return match_count;
 }
 
-uint_fast8_t ac_first(const char* search, char* match, struct Autocompletion_Node* restrict tree,
-                      struct Arena scratch)
+uint_fast8_t ac_first(const char* search, char* match, struct Autocompletion_Node* restrict tree, struct Arena scratch)
 {
     assert(search);
 

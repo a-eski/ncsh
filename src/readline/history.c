@@ -95,7 +95,7 @@ enum eresult history_load(struct History* const restrict history, struct Arena* 
         history->entries[i].length = (size_t)buffer_length;
         history->entries[i].value = arena_malloc(arena, (uintptr_t)buffer_length, char);
         memcpy(history->entries[i].value, buffer, (size_t)buffer_length);
-	history->entries[i].value[buffer_length - 1] = '\0';
+        history->entries[i].value[buffer_length - 1] = '\0';
     }
     fclose(file);
 
@@ -131,7 +131,7 @@ enum eresult history_reload(struct History* const restrict history, struct Arena
                                                           history->entries[i].value, history->entries[i].length);
             }
             memcpy(history->entries[i].value, buffer, (size_t)buffer_length);
-	    history->entries[i].value[buffer_length - 1] = '\0';
+            history->entries[i].value[buffer_length - 1] = '\0';
             history->entries[i].length = (size_t)buffer_length;
         }
     }

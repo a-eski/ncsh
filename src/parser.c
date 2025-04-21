@@ -247,8 +247,8 @@ void parser_parse(const char* const restrict line, const size_t length, struct A
             args->count = 0;
             break;
         }
-        else if (line_pos == length || line_pos >= NCSH_MAX_INPUT - 1 ||
-                 parser_buf_pos >= NCSH_MAX_INPUT - 1 || args->count == PARSER_TOKENS_LIMIT - 1) {
+        else if (line_pos == length || line_pos >= NCSH_MAX_INPUT - 1 || parser_buf_pos >= NCSH_MAX_INPUT - 1 ||
+                 args->count == PARSER_TOKENS_LIMIT - 1) {
             args->values[args->count] = NULL; // set the last value as null to use as a sentinel in the VM
             break;
         }
@@ -332,23 +332,23 @@ void parser_parse(const char* const restrict line, const size_t length, struct A
 
             continue;
         }
-	// delimiter case // NOTE: should \t, \a, or EOF be included?
-	case ' ':
-    	case '\r':
-    	case '\n':
-    	case '\0': {
-	    if (parser_state & IN_COMMENT && line[line_pos] != '\n')
+        // delimiter case // NOTE: should \t, \a, or EOF be included?
+        case ' ':
+        case '\r':
+        case '\n':
+        case '\0': {
+            if (parser_state & IN_COMMENT && line[line_pos] != '\n')
                 continue;
 
             // break to code below when delimiter found and no state or certain states found
-            if ((!parser_state || (parser_state & IN_MATHEMATICAL_EXPRESSION) ||
-	        (parser_state & IN_ASSIGNMENT) || (parser_state & IN_GLOB_EXPANSION))) {
+            if ((!parser_state || (parser_state & IN_MATHEMATICAL_EXPRESSION) || (parser_state & IN_ASSIGNMENT) ||
+                 (parser_state & IN_GLOB_EXPANSION))) {
                 break;
             }
 
-	    parser_buffer[parser_buf_pos++] = line[line_pos];
+            parser_buffer[parser_buf_pos++] = line[line_pos];
             continue;
-	}
+        }
         default: {
             parser_buffer[parser_buf_pos++] = line[line_pos];
             continue;
