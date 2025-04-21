@@ -56,12 +56,8 @@ struct Pipe_IO {
  */
 struct Vm_Data {
     pid_t pid;
-    int status;
-    int execvp_result;
-    int command_result;
     char* buffer[MAX_INPUT];
     size_t buffer_len[MAX_INPUT];
-    uint_fast32_t buffer_position;
     uint_fast32_t command_position;
     uint_fast32_t args_position;
     bool args_end;

@@ -16,7 +16,7 @@
 #include "../eskilib/ecolors.h"
 #include "../eskilib/eresult.h"
 #include "../eskilib/estr.h"
-#include "autocompletions.h"
+#include "ac.h"
 #include "ncreadline.h"
 #include "terminal.h"
 
@@ -1091,22 +1091,12 @@ exit:
     return exit;
 }
 
-/* ncreadline_history_and_autocompletion_add
- * Add user input that was able to be processed and executed by the VM to ncreadline's history and autocompletion data
- * stores.
- */
-void ncreadline_history_and_autocompletion_add(struct Input* const restrict input, struct Arena* const arena)
-{
-    history_add(input->buffer, input->pos, &input->history, arena);
-    ac_add(input->buffer, input->pos, input->autocompletions_tree, arena);
-}
-
 /* ncreadline_exit
  * Saves history changes and restores the terminal settings from before the shell was started.
  */
 void ncreadline_exit(struct Input* const restrict input)
 {
-    if (input->history.file && input->history.entries) {
+    if (input && input->history.file && input->history.entries) {
         history_save(&input->history);
     }
     terminal_reset();

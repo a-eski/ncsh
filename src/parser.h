@@ -52,7 +52,7 @@ enum Ops : uint_fast8_t {
  * Contains bytecodes, strings, and the string's lengths as well as a count
  * Gets sent to the VM as input to the VM. */
 struct Args {
-    uint_fast32_t count; // Number of lengths/values/ops
+    size_t count; // Number of lengths/values/ops
     size_t* lengths;     // Length of the constants stored in values
     uint_fast8_t* ops;   // Ops: The bytecode
     char** values;       // Constant values needed to be referenced by the VM
