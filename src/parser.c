@@ -357,7 +357,7 @@ void parser_parse(const char* const restrict line, const size_t length, struct A
 
         parser_buffer[parser_buf_pos] = '\0';
 
-        debugf("Current parser state: %d\n", state);
+        debugf("Current parser state: %d\n", parser_state);
         if ((parser_state & IN_GLOB_EXPANSION)) {
             glob_t glob_buf = {0};
             size_t glob_len;
@@ -402,6 +402,7 @@ void parser_parse(const char* const restrict line, const size_t length, struct A
             memcpy(args->values[args->count], parser_buffer, parser_buf_pos + 1);
             args->ops[args->count] = parser_op_get(parser_buffer, parser_buf_pos);
             args->lengths[args->count] = parser_buf_pos + 1; // + 1 for null terminator
+            assert(!args->values[args->count][args->lengths[args->count] - 1]);
             ++args->count;
         }
 

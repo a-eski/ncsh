@@ -370,6 +370,7 @@ void vm_buffer_set_command_next(struct Args* const restrict args, struct Vm_Data
     size_t vm_buf_pos = 0;
 
     while (args->ops[vm->args_position] == OP_CONSTANT) {
+        assert(args->values[vm->args_position][args->lengths[vm->args_position] - 1] == '\0');
         vm->buffer[vm_buf_pos] = args->values[vm->args_position];
         vm->buffer_len[vm_buf_pos] = args->lengths[vm->args_position];
         ++vm->args_position;
