@@ -197,7 +197,7 @@ enum Ops parser_op_get(const char* const restrict line, const size_t length)
  * being processed is inside quotes or a mathematical expression.
  */
 // clang-format off
-enum Parser_State {
+enum Parser_State: size_t {
     IN_NONE =			 0,
     IN_SINGLE_QUOTES =           1 << 0,
     IN_DOUBLE_QUOTES =           1 << 1,
@@ -214,7 +214,7 @@ enum Parser_State {
  */
 char* parser_buffer;
 char* var_name;
-int parser_state;
+size_t parser_state;
 size_t parser_buf_pos = 0;
 size_t parser_assignment_pos = 0;
 
@@ -242,18 +242,18 @@ void parser_parse(const char* const restrict line, const size_t length, struct A
     var_name = arena_malloc(scratch_arena, NCSH_MAX_INPUT, char);
     parser_state = 0;
 
-    for (uint_fast32_t line_position = 0; line_position < length + 1; ++line_position) {
-        if (args->count == PARSER_TOKENS_LIMIT - 1 && line_position < length) { // can't parse all of the args
+    for (register size_t line_pos = 0; line_pos < length + 1; ++line_pos) {
+        if (args->count == PARSER_TOKENS_LIMIT - 1 && line_pos < length) { // can't parse all of the args
             args->count = 0;
             break;
         }
-        else if (line_position == length || line_position >= NCSH_MAX_INPUT - 1 ||
+        else if (line_pos == length || line_pos >= NCSH_MAX_INPUT - 1 ||
                  parser_buf_pos >= NCSH_MAX_INPUT - 1 || args->count == PARSER_TOKENS_LIMIT - 1) {
             args->values[args->count] = NULL; // set the last value as null to use as a sentinel in the VM
             break;
         }
 
-        switch (line[line_position]) {
+        switch (line[line_pos]) {
         case DOUBLE_QUOTE_KEY: {
             if (!(parser_state & IN_DOUBLE_QUOTES))
                 parser_state |= IN_DOUBLE_QUOTES;
@@ -279,14 +279,14 @@ void parser_parse(const char* const restrict line, const size_t length, struct A
             if (!(parser_state & IN_MATHEMATICAL_EXPRESSION))
                 parser_state |= IN_MATHEMATICAL_EXPRESSION;
 
-            parser_buffer[parser_buf_pos++] = line[line_position];
+            parser_buffer[parser_buf_pos++] = line[line_pos];
             continue;
         }
         case CLOSING_PARAN: {
             if (parser_state & IN_MATHEMATICAL_EXPRESSION)
                 parser_state &= ~IN_MATHEMATICAL_EXPRESSION;
 
-            parser_buffer[parser_buf_pos++] = line[line_position];
+            parser_buffer[parser_buf_pos++] = line[line_pos];
             continue;
         }
         case TILDE: {
@@ -307,14 +307,14 @@ void parser_parse(const char* const restrict line, const size_t length, struct A
             if (!(parser_state & IN_MATHEMATICAL_EXPRESSION) && !(parser_state & IN_GLOB_EXPANSION))
                 parser_state |= IN_GLOB_EXPANSION;
 
-            parser_buffer[parser_buf_pos++] = line[line_position];
+            parser_buffer[parser_buf_pos++] = line[line_pos];
             continue;
         }
         case GLOB_QUESTION: {
             if (!(parser_state & IN_GLOB_EXPANSION))
                 parser_state |= IN_GLOB_EXPANSION;
 
-            parser_buffer[parser_buf_pos++] = line[line_position];
+            parser_buffer[parser_buf_pos++] = line[line_pos];
             continue;
         }
         case ASSIGNMENT: {
@@ -337,7 +337,7 @@ void parser_parse(const char* const restrict line, const size_t length, struct A
     	case '\r':
     	case '\n':
     	case '\0': {
-	    if (parser_state & IN_COMMENT && line[line_position] != '\n')
+	    if (parser_state & IN_COMMENT && line[line_pos] != '\n')
                 continue;
 
             // break to code below when delimiter found and no state or certain states found
@@ -346,18 +346,18 @@ void parser_parse(const char* const restrict line, const size_t length, struct A
                 break;
             }
 
-	    parser_buffer[parser_buf_pos++] = line[line_position];
+	    parser_buffer[parser_buf_pos++] = line[line_pos];
             continue;
 	}
         default: {
-            parser_buffer[parser_buf_pos++] = line[line_position];
+            parser_buffer[parser_buf_pos++] = line[line_pos];
             continue;
         }
         }
 
         parser_buffer[parser_buf_pos] = '\0';
 
-        debugf("Current parser state: %d\n", state);
+        debugf("Current parser state: %d\n", parser_state);
         if ((parser_state & IN_GLOB_EXPANSION)) {
             glob_t glob_buf = {0};
             size_t glob_len;
@@ -402,6 +402,7 @@ void parser_parse(const char* const restrict line, const size_t length, struct A
             memcpy(args->values[args->count], parser_buffer, parser_buf_pos + 1);
             args->ops[args->count] = parser_op_get(parser_buffer, parser_buf_pos);
             args->lengths[args->count] = parser_buf_pos + 1; // + 1 for null terminator
+            assert(!args->values[args->count][args->lengths[args->count] - 1]);
             ++args->count;
         }
 

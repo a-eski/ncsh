@@ -23,7 +23,7 @@
 #include "eskilib/eresult.h"
 #include "noninteractive.h"
 #include "parser.h"
-#include "readline/autocompletions.h"
+#include "readline/ac.h"
 #include "readline/ncreadline.h"
 #include "vm/vm.h"
 

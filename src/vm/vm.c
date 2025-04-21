@@ -16,15 +16,13 @@
 #include "vm_builtins.h"
 #include "vm_tokenizer.h"
 #include "vm_types.h"
+#include "vm.h"
 
 extern jmp_buf env;
 extern sig_atomic_t vm_child_pid;
 
 /* IO Redirection */
-int vm_output_redirection_oflags_get(const bool append)
-{
-    return append ? O_WRONLY | O_CREAT | O_APPEND : O_WRONLY | O_CREAT | O_TRUNC;
-}
+extern inline int vm_output_redirection_oflags_get(const bool append);
 
 void vm_stdout_redirection_start(const char* const restrict file, const bool append,
                                  struct Output_Redirect_IO* const restrict io)
@@ -298,7 +296,7 @@ int_fast32_t vm_fork_failure(const uint_fast32_t command_position, const uint_fa
 }
 
 /* Background Jobs */
-// Implementation not finished, still experimenting...
+// Implementation not working, still experimenting...
 [[nodiscard]]
 int_fast32_t vm_run_background_job(struct Args* const restrict args, struct Processes* const restrict processes,
                                    struct Tokens* const restrict tokens)
@@ -341,97 +339,77 @@ int_fast32_t vm_run_background_job(struct Args* const restrict args, struct Proc
 }
 
 /* VM */
-#ifdef NCSH_DEBUG
+int vm_status;
 #define VM_COMMAND_DIED_MESSAGE "ncsh: Command child process died, cause unknown.\n"
-void vm_debug_status(struct Vm_Data* const restrict vm)
+void vm_status_check()
 {
-    if (WIFEXITED(vm->status)) {
-        if (WEXITSTATUS(vm->status)) {
-            fprintf(stderr, "ncsh: Command child process failed with status %d\n", WEXITSTATUS(vm->status));
+    if (WIFEXITED(vm_status)) {
+        if (WEXITSTATUS(vm_status)) {
+            fprintf(stderr, "ncsh: Command child process failed with status %d\n", WEXITSTATUS(vm_status));
         }
+#ifdef NCSH_DEBUG
         else {
             fprintf(stderr, "ncsh: Command child process exited successfully.\n");
         }
+#endif /* NCSH_DEBUG */
     }
-    else if (WIFSIGNALED(vm->status)) {
-        fprintf(stderr, "ncsh: Command child process died from signal #%d\n", WTERMSIG(vm->status));
+#ifdef NCSH_DEBUG
+    else if (WIFSIGNALED(vm_status)) {
+        fprintf(stderr, "ncsh: Command child process died from signal %d\n", WTERMSIG(vm_status));
     }
     else {
         if (write(STDERR_FILENO, VM_COMMAND_DIED_MESSAGE, sizeof(VM_COMMAND_DIED_MESSAGE) - 1) == -1) {
             perror("ncsh: Error writing to stderr");
         }
     }
+#endif /* NCSH_DEBUG */
 }
-#endif /* ifdef NCSH_DEBUG */
 
 void vm_buffer_set_command_next(struct Args* const restrict args, struct Vm_Data* const restrict vm)
 {
-    vm->buffer_position = 0;
+    size_t vm_buf_pos = 0;
 
     while (args->ops[vm->args_position] == OP_CONSTANT) {
-        vm->buffer[vm->buffer_position] = args->values[vm->args_position];
-        vm->buffer_len[vm->buffer_position] = args->lengths[vm->args_position];
+        assert(args->values[vm->args_position][args->lengths[vm->args_position] - 1] == '\0');
+        vm->buffer[vm_buf_pos] = args->values[vm->args_position];
+        vm->buffer_len[vm_buf_pos] = args->lengths[vm->args_position];
         ++vm->args_position;
 
         if (!args->values[vm->args_position]) {
             vm->args_end = true;
-            ++vm->buffer_position;
+            ++vm_buf_pos;
             break;
         }
 
-        ++vm->buffer_position;
+        ++vm_buf_pos;
     }
 
     if (!vm->args_end) {
         vm->op_current = args->ops[vm->args_position];
     }
     ++vm->args_position;
+
+
+    vm->buffer[vm_buf_pos] = NULL;
 }
 
-void vm_waitpid(struct Vm_Data* vm)
-{
-    pid_t waitpid_result;
-    while (1) {
-        vm->status = 0;
-        waitpid_result = waitpid(vm->pid, &vm->status, WUNTRACED);
-
-        // check for errors
-        if (waitpid_result == -1) {
-            /* ignore EINTR, occurs when SA_RESTART is not specified in sigaction flags */
-            if (errno == EINTR) {
-                continue;
-            }
-
-            perror(RED "ncsh: Error waiting for child process to exit" RESET);
-            vm->status = EXIT_FAILURE;
-            break;
-        }
-
-        // check if child process has exited
-        if (waitpid_result == vm->pid) {
-#ifdef NCSH_DEBUG
-            vm_debug_status(vm);
-#endif /* ifdef NCSH_DEBUG */
-            break;
-        }
-    }
-}
+int vm_command_result;
+int vm_execvp_result;
+int_fast32_t vm_result;
 
 [[nodiscard]]
 int_fast32_t vm_run(struct Args* const restrict args, struct Tokens* const restrict tokens)
 {
-    int_fast32_t result;
     struct Vm_Data vm = {0};
-    vm.command_result = NCSH_COMMAND_NONE;
+    vm_command_result = NCSH_COMMAND_NONE;
 
-    if ((result = vm_redirection_start_if_needed(args, tokens, &vm)) != NCSH_COMMAND_SUCCESS_CONTINUE) {
-        return result;
+    if ((vm_result = vm_redirection_start_if_needed(args, tokens, &vm)) != NCSH_COMMAND_SUCCESS_CONTINUE) {
+        return vm_result;
     }
 
-    while (args->values[vm.args_position] && vm.args_end != true) {
+    while (args->values[vm.args_position] && !vm.args_end) {
         vm_buffer_set_command_next(args, &vm);
 
-        vm.buffer[vm.buffer_position] = NULL;
         if (!vm.buffer[0]) {
             return NCSH_COMMAND_FAILED_CONTINUE;
         }
@@ -445,7 +423,7 @@ int_fast32_t vm_run(struct Args* const restrict args, struct Tokens* const restr
         for (uint_fast32_t i = 0; i < builtins_count; ++i) {
             if (estrcmp_c(vm.buffer[0], vm.buffer_len[0], builtins[i].value, builtins[i].length)) {
                 vm.command_type = CT_BUILTIN;
-                vm.command_result = (*builtins[i].func)(args);
+                vm_command_result = (*builtins[i].func)(args);
 
                 if (vm.op_current == OP_PIPE) {
                     vm_pipe_stop(vm.command_position, tokens->number_of_pipe_commands, &vm.pipes_io);
@@ -466,7 +444,7 @@ int_fast32_t vm_run(struct Args* const restrict args, struct Tokens* const restr
                     vm_pipe_connect(vm.command_position, tokens->number_of_pipe_commands, &vm.pipes_io);
                 }
 
-                if ((vm.execvp_result = execvp(vm.buffer[0], vm.buffer)) == EXECVP_FAILED) {
+                if ((vm_execvp_result = execvp(vm.buffer[0], vm.buffer)) == EXECVP_FAILED) {
                     vm.args_end = true;
                     perror(RED "ncsh: Could not run command" RESET);
                     fflush(stdout);
@@ -478,7 +456,7 @@ int_fast32_t vm_run(struct Args* const restrict args, struct Tokens* const restr
                 vm_pipe_stop(vm.command_position, tokens->number_of_pipe_commands, &vm.pipes_io);
             }
 
-            if (vm.execvp_result == EXECVP_FAILED) {
+            if (vm_execvp_result == EXECVP_FAILED) {
                 break;
             }
 
@@ -486,8 +464,8 @@ int_fast32_t vm_run(struct Args* const restrict args, struct Tokens* const restr
 
             pid_t waitpid_result;
             while (1) {
-                vm.status = 0;
-                waitpid_result = waitpid(vm.pid, &vm.status, WUNTRACED);
+                vm_status = 0;
+                waitpid_result = waitpid(vm.pid, &vm_status, WUNTRACED);
 
                 // check for errors
                 if (waitpid_result == -1) {
@@ -497,15 +475,13 @@ int_fast32_t vm_run(struct Args* const restrict args, struct Tokens* const restr
                     }
 
                     perror(RED "ncsh: Error waiting for child process to exit" RESET);
-                    vm.status = EXIT_FAILURE;
+                    vm_status = EXIT_FAILURE;
                     break;
                 }
 
                 // check if child process has exited
                 if (waitpid_result == vm.pid) {
-#ifdef NCSH_DEBUG
-                    vm_debug_status(&vm);
-#endif /* ifdef NCSH_DEBUG */
+                    vm_status_check();
                     break;
                 }
             }
@@ -517,14 +493,14 @@ int_fast32_t vm_run(struct Args* const restrict args, struct Tokens* const restr
 
     vm_redirection_stop_if_needed(tokens, &vm);
 
-    if (vm.execvp_result == EXECVP_FAILED) {
+    if (vm_execvp_result == EXECVP_FAILED) {
         return NCSH_COMMAND_EXIT_FAILURE;
     }
-    if (vm.status == EXIT_FAILURE) {
+    if (vm_status == EXIT_FAILURE) {
         return NCSH_COMMAND_EXIT_FAILURE;
     }
-    if (vm.command_result != NCSH_COMMAND_NONE) {
-        return vm.command_result;
+    if (vm_command_result != NCSH_COMMAND_NONE) {
+        return vm_command_result;
     }
 
     return NCSH_COMMAND_SUCCESS_CONTINUE;
@@ -591,15 +567,15 @@ int_fast32_t vm_execute(struct Shell* const restrict shell, struct Arena* const 
     }
 
     vm_alias_replace(&shell->args, &shell->scratch_arena);
-    int_fast32_t result = vm_vars_replace(&shell->args, &shell->scratch_arena);
-    if (result != NCSH_COMMAND_SUCCESS_CONTINUE) {
-        return result;
+    vm_result = vm_vars_replace(&shell->args, &shell->scratch_arena);
+    if (vm_result != NCSH_COMMAND_SUCCESS_CONTINUE) {
+        return vm_result;
     }
 
     struct Tokens tokens = {0};
-    result = vm_tokenizer_tokenize(&shell->args, &tokens);
-    if (result != NCSH_COMMAND_SUCCESS_CONTINUE) {
-        return result;
+    vm_result = vm_tokenizer_tokenize(&shell->args, &tokens);
+    if (vm_result != NCSH_COMMAND_SUCCESS_CONTINUE) {
+        return vm_result;
     }
 
     if (tokens.is_background_job == true) {
@@ -620,9 +596,9 @@ int_fast32_t vm_execute_noninteractive(struct Args* const restrict args, struct 
     vm_alias_replace(args, arena);
 
     struct Tokens tokens = {0};
-    int_fast32_t result = vm_tokenizer_tokenize(args, &tokens);
-    if (result != NCSH_COMMAND_SUCCESS_CONTINUE) {
-        return result;
+    vm_result = vm_tokenizer_tokenize(args, &tokens);
+    if (vm_result != NCSH_COMMAND_SUCCESS_CONTINUE) {
+        return vm_result;
     }
 
     return vm_run(args, &tokens);

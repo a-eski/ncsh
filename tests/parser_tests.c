@@ -17,8 +17,8 @@ void parser_parse_ls_test(void)
     size_t length = 3;
 
     struct Args args;
-    bool result = parser_init(&args, &arena);
-    eassert(result);
+    enum eresult init_res = parser_init(&args, &arena);
+    eassert(init_res == E_SUCCESS);
     parser_parse(line, length, &args, &arena, &scratch_arena);
 
     eassert(args.values);
@@ -41,8 +41,8 @@ void parser_parse_ls_dash_l_test(void)
     size_t length = 6;
 
     struct Args args;
-    bool result = parser_init(&args, &arena);
-    eassert(result);
+    enum eresult init_res = parser_init(&args, &arena);
+    eassert(init_res == E_SUCCESS);
     parser_parse(line, length, &args, &arena, &scratch_arena);
 
     eassert(args.values);
@@ -69,8 +69,8 @@ void parser_parse_pipe_test(void)
     size_t length = 10;
 
     struct Args args;
-    bool result = parser_init(&args, &arena);
-    eassert(result);
+    enum eresult init_res = parser_init(&args, &arena);
+    eassert(init_res == E_SUCCESS);
     parser_parse(line, length, &args, &arena, &scratch_arena);
 
     eassert(args.values);
@@ -101,8 +101,8 @@ void parser_parse_multiple_pipe_test(void)
     size_t length = 18;
 
     struct Args args;
-    bool result = parser_init(&args, &arena);
-    eassert(result);
+    enum eresult init_res = parser_init(&args, &arena);
+    eassert(init_res == E_SUCCESS);
     parser_parse(line, length, &args, &arena, &scratch_arena);
 
     eassert(args.values);
@@ -141,8 +141,8 @@ void parser_parse_background_job_test(void)
     size_t length = 21;
 
     struct Args args;
-    bool result = parser_init(&args, &arena);
-    eassert(result);
+    enum eresult init_res = parser_init(&args, &arena);
+    eassert(init_res == E_SUCCESS);
     parser_parse(line, length, &args, &arena, &scratch_arena);
 
     eassert(args.values);
@@ -169,8 +169,8 @@ void parser_parse_output_redirection_test(void)
     size_t length = 14;
 
     struct Args args;
-    bool result = parser_init(&args, &arena);
-    eassert(result);
+    enum eresult init_res = parser_init(&args, &arena);
+    eassert(init_res == E_SUCCESS);
     parser_parse(line, length, &args, &arena, &scratch_arena);
 
     eassert(args.values);
@@ -201,8 +201,8 @@ void parser_parse_output_redirection_append_test(void)
     size_t length = 15;
 
     struct Args args;
-    bool result = parser_init(&args, &arena);
-    eassert(result);
+    enum eresult init_res = parser_init(&args, &arena);
+    eassert(init_res == E_SUCCESS);
     parser_parse(line, length, &args, &arena, &scratch_arena);
 
     eassert(args.values);
@@ -233,8 +233,8 @@ void parser_parse_input_redirection_test(void)
     size_t length = strlen(line) + 1;
 
     struct Args args;
-    bool result = parser_init(&args, &arena);
-    eassert(result);
+    enum eresult init_res = parser_init(&args, &arena);
+    eassert(init_res == E_SUCCESS);
     parser_parse(line, length, &args, &arena, &scratch_arena);
 
     eassert(args.values);
@@ -265,8 +265,8 @@ void parser_parse_stdout_and_stderr_redirection_test(void)
     size_t length = 15;
 
     struct Args args;
-    bool result = parser_init(&args, &arena);
-    eassert(result);
+    enum eresult init_res = parser_init(&args, &arena);
+    eassert(init_res == E_SUCCESS);
     parser_parse(line, length, &args, &arena, &scratch_arena);
 
     eassert(args.values);
@@ -297,8 +297,8 @@ void parser_parse_stdout_and_stderr_redirection_append_test(void)
     size_t length = strlen(line) + 1;
 
     struct Args args;
-    bool result = parser_init(&args, &arena);
-    eassert(result);
+    enum eresult init_res = parser_init(&args, &arena);
+    eassert(init_res == E_SUCCESS);
     parser_parse(line, length, &args, &arena, &scratch_arena);
 
     eassert(args.values);
@@ -329,8 +329,8 @@ void parser_parse_assignment_test(void)
     size_t length = strlen(line) + 1;
 
     struct Args args;
-    bool result = parser_init(&args, &arena);
-    eassert(result);
+    enum eresult init_res = parser_init(&args, &arena);
+    eassert(init_res == E_SUCCESS);
     parser_parse(line, length, &args, &arena, &scratch_arena);
 
     eassert(args.values);
@@ -354,8 +354,8 @@ void parser_parse_variable_test(void)
     size_t length = strlen(line) + 1;
 
     struct Args args;
-    bool result = parser_init(&args, &arena);
-    eassert(result);
+    enum eresult init_res = parser_init(&args, &arena);
+    eassert(init_res == E_SUCCESS);
     parser_parse(line, length, &args, &arena, &scratch_arena);
 
     eassert(args.values);
@@ -383,8 +383,8 @@ void parser_parse_variable_and_test(void)
     size_t length = strlen(line) + 1;
 
     struct Args args;
-    bool result = parser_init(&args, &arena);
-    eassert(result);
+    enum eresult init_res = parser_init(&args, &arena);
+    eassert(init_res == E_SUCCESS);
     parser_parse(line, length, &args, &arena, &scratch_arena);
 
     eassert(args.values);
@@ -405,8 +405,8 @@ void parser_parse_variable_command_test(void)
     size_t length = strlen(line) + 1;
 
     struct Args args;
-    bool result = parser_init(&args, &arena);
-    eassert(result);
+    enum eresult init_res = parser_init(&args, &arena);
+    eassert(init_res == E_SUCCESS);
     parser_parse(line, length, &args, &arena, &scratch_arena);
 
     eassert(args.values);
@@ -434,8 +434,8 @@ void parser_parse_double_quotes_test(void)
     size_t length = 13;
 
     struct Args args;
-    bool result = parser_init(&args, &arena);
-    eassert(result);
+    enum eresult init_res = parser_init(&args, &arena);
+    eassert(init_res == E_SUCCESS);
     parser_parse(line, length, &args, &arena, &scratch_arena);
 
     eassert(args.values);
@@ -460,8 +460,8 @@ void parser_parse_single_quotes_test(void)
     size_t length = 13;
 
     struct Args args;
-    bool result = parser_init(&args, &arena);
-    eassert(result);
+    enum eresult init_res = parser_init(&args, &arena);
+    eassert(init_res == E_SUCCESS);
     parser_parse(line, length, &args, &arena, &scratch_arena);
 
     eassert(args.values);
@@ -486,8 +486,8 @@ void parser_parse_backtick_quotes_test(void)
     size_t length = 13;
 
     struct Args args;
-    bool result = parser_init(&args, &arena);
-    eassert(result);
+    enum eresult init_res = parser_init(&args, &arena);
+    eassert(init_res == E_SUCCESS);
     parser_parse(line, length, &args, &arena, &scratch_arena);
 
     eassert(args.values);
@@ -512,8 +512,8 @@ void parser_parse_git_commit_test(void)
     size_t length = strlen(line) + 1;
 
     struct Args args;
-    bool result = parser_init(&args, &arena);
-    eassert(result);
+    enum eresult init_res = parser_init(&args, &arena);
+    eassert(init_res == E_SUCCESS);
     parser_parse(line, length, &args, &arena, &scratch_arena);
 
     eassert(args.values);
@@ -548,8 +548,8 @@ void parser_parse_home_test(void)
     size_t length = 5;
 
     struct Args args;
-    bool result = parser_init(&args, &arena);
-    eassert(result);
+    enum eresult init_res = parser_init(&args, &arena);
+    eassert(init_res == E_SUCCESS);
     parser_parse(line, length, &args, &arena, &scratch_arena);
 
     eassert(args.values);
@@ -574,8 +574,8 @@ void parser_parse_home_at_start_test(void)
     size_t length = 10;
 
     struct Args args;
-    bool result = parser_init(&args, &arena);
-    eassert(result);
+    enum eresult init_res = parser_init(&args, &arena);
+    eassert(init_res == E_SUCCESS);
     parser_parse(line, length, &args, &arena, &scratch_arena);
 
     eassert(args.values);
@@ -599,8 +599,8 @@ void parser_parse_math_operators(void)
     char* line = "( 1 + 1 - 1 * 1 / 1 % 1 ** 1 )";
     size_t length = strlen(line) + 1;
     struct Args args;
-    bool result = parser_init(&args, &arena);
-    eassert(result);
+    enum eresult init_res = parser_init(&args, &arena);
+    eassert(init_res == E_SUCCESS);
     parser_parse(line, length, &args, &arena, &scratch_arena);
 
     eassert(args.ops[0] == OP_MATH_EXPRESSION_START);
@@ -636,8 +636,8 @@ void parser_parse_glob_star_shouldnt_crash(void)
     size_t length = strlen(line) + 1;
 
     struct Args args;
-    bool result = parser_init(&args, &arena);
-    eassert(result);
+    enum eresult init_res = parser_init(&args, &arena);
+    eassert(init_res == E_SUCCESS);
     parser_parse(line, length, &args, &arena, &scratch_arena);
 
     eassert(args.count == 0);
@@ -657,8 +657,8 @@ void parser_parse_tilde_home_shouldnt_crash(void)
     size_t length = strlen(line) + 1;
 
     struct Args args;
-    bool result = parser_init(&args, &arena);
-    eassert(result);
+    enum eresult init_res = parser_init(&args, &arena);
+    eassert(init_res == E_SUCCESS);
     parser_parse(line, length, &args, &arena, &scratch_arena);
 
     eassert(args.count == 0);
@@ -678,8 +678,8 @@ void parser_parse_glob_question_and_tilde_home_shouldnt_crash(void)
     size_t length = strlen(line) + 1;
 
     struct Args args;
-    bool result = parser_init(&args, &arena);
-    eassert(result);
+    enum eresult init_res = parser_init(&args, &arena);
+    eassert(init_res == E_SUCCESS);
     parser_parse(line, length, &args, &arena, &scratch_arena);
 
     eassert(args.count == 0);
@@ -755,8 +755,8 @@ void parser_parse_bad_input_shouldnt_crash(void)
     size_t length = strlen(line) + 1;
 
     struct Args args;
-    bool result = parser_init(&args, &arena);
-    eassert(result);
+    enum eresult init_res = parser_init(&args, &arena);
+    eassert(init_res == E_SUCCESS);
     parser_parse(line, length, &args, &arena, &scratch_arena);
 
     // no crash is passing test here

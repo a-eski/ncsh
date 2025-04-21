@@ -3,10 +3,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../src/defines.h"
+#include "../src/defines.h" // used for macro NCSH_MAX_AUTOCOMPLETION_MATCHES
 #include "../src/eskilib/estr.h"
 #include "../src/eskilib/etest.h"
-#include "../src/readline/autocompletions.h"
+#include "../src/readline/ac.h"
 #include "lib/arena_test_helper.h"
 
 void ac_add_length_mismatch_test(void)
@@ -52,6 +52,50 @@ void ac_add_test(void)
     eassert(third_node != NULL);
     eassert(third_node->is_end_of_a_word == true);
     eassert(third_node->nodes[char_to_index('b')] == NULL); // sanity check
+
+    ARENA_TEST_TEARDOWN;
+}
+
+void ac_add_spaces_test(void)
+{
+    ARENA_TEST_SETUP;
+
+    struct Autocompletion_Node* tree = ac_alloc(&arena);
+    eassert(tree != NULL);
+
+    struct estr string = {.value = "ls | wc -c", .length = 11};
+    ac_add(string.value, string.length, tree, &arena);
+
+    struct Autocompletion_Node* first_node = tree->nodes[char_to_index('l')];
+    eassert(first_node != NULL);
+    eassert(first_node->is_end_of_a_word == false);
+    struct Autocompletion_Node* second_node = first_node->nodes[char_to_index('s')];
+    eassert(second_node != NULL);
+    eassert(second_node->is_end_of_a_word == false);
+    struct Autocompletion_Node* third_node = second_node->nodes[char_to_index(' ')];
+    eassert(third_node != NULL);
+    eassert(third_node->is_end_of_a_word == false);
+    struct Autocompletion_Node* fourth_node = third_node->nodes[char_to_index('|')];
+    eassert(fourth_node != NULL);
+    eassert(fourth_node->is_end_of_a_word == false);
+    struct Autocompletion_Node* fifth_node = fourth_node->nodes[char_to_index(' ')];
+    eassert(fifth_node != NULL);
+    eassert(fifth_node->is_end_of_a_word == false);
+    struct Autocompletion_Node* sixth_node = fifth_node->nodes[char_to_index('w')];
+    eassert(sixth_node != NULL);
+    eassert(sixth_node->is_end_of_a_word == false);
+    struct Autocompletion_Node* seventh_node = sixth_node->nodes[char_to_index('c')];
+    eassert(seventh_node != NULL);
+    eassert(seventh_node->is_end_of_a_word == false);
+    struct Autocompletion_Node* eighth_node = seventh_node->nodes[char_to_index(' ')];
+    eassert(eighth_node != NULL);
+    eassert(eighth_node->is_end_of_a_word == false);
+    struct Autocompletion_Node* ninth_node = eighth_node->nodes[char_to_index('-')];
+    eassert(ninth_node != NULL);
+    eassert(ninth_node->is_end_of_a_word == false);
+    struct Autocompletion_Node* tenth_node = ninth_node->nodes[char_to_index('c')];
+    eassert(tenth_node != NULL);
+    eassert(tenth_node->is_end_of_a_word == true);
 
     ARENA_TEST_TEARDOWN;
 }
@@ -307,6 +351,39 @@ void ac_get_test(void)
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
+void ac_get_spaces_test(void)
+{
+    ARENA_TEST_SETUP;
+    SCRATCH_ARENA_TEST_SETUP;
+
+    struct Autocompletion_Node* tree = ac_alloc(&arena);
+    eassert(tree != NULL);
+
+    ac_add("ls", 3, tree, &arena);
+    ac_add("ls | wc -c", 11, tree, &arena);
+    ac_add("ls | sort", 10, tree, &arena);
+    ac_add("ls | sort | wc -c", 18, tree, &arena);
+    ac_add("ls > t.txt", 11, tree, &arena);
+    ac_add("cat t.txt", 10, tree, &arena);
+    ac_add("rm t.txt", 9, tree, &arena);
+    ac_add("ss", 3, tree, &arena);
+
+    struct Autocompletion_Node* search_res = ac_find("ls", tree);
+    eassert(search_res != NULL);
+
+    struct Autocompletion autocomplete[NCSH_MAX_AUTOCOMPLETION_MATCHES] = {0};
+    uint_fast32_t match_count = ac_get("ls", autocomplete, tree, scratch_arena);
+
+    eassert(match_count == 4);
+    eassert(!memcmp(autocomplete[0].value, " > t.txt", 9));
+    eassert(!memcmp(autocomplete[1].value, " | sort", sizeof(" | sort")));
+    eassert(!memcmp(autocomplete[2].value, " | sort | wc -c", sizeof(" | sort | wc -c")));
+    eassert(!memcmp(autocomplete[3].value, " | wc -c", sizeof(" | wc -c")));
+
+    ARENA_TEST_TEARDOWN;
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
 void ac_get_no_results_test(void)
 {
     ARENA_TEST_SETUP;
@@ -421,6 +498,7 @@ void ac_tests(void)
 
     etest_run(ac_add_length_mismatch_test);
     etest_run(ac_add_test);
+    etest_run(ac_add_spaces_test);
     etest_run(ac_add_duplicate_test);
     etest_run(ac_add_multiple_unrelated_test);
     etest_run(ac_add_multiple_related_test);
@@ -428,6 +506,7 @@ void ac_tests(void)
     etest_run(ac_find_no_results_test);
     etest_run(ac_find_commands_test);
     etest_run(ac_get_test);
+    etest_run(ac_get_spaces_test);
     etest_run(ac_get_no_results_test);
     etest_run(ac_get_multiple_test);
     etest_run(ac_get_multiple_simulation_test);

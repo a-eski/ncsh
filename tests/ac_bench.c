@@ -1,9 +1,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "../src/defines.h"
+#include "../src/defines.h" // used for macro NCSH_MAX_AUTOCOMPLETION_MATCHES
 #include "../src/eskilib/etest.h"
-#include "../src/readline/autocompletions.h"
+#include "../src/readline/ac.h"
 #include "lib/arena_test_helper.h"
 
 void ac_bench(void)

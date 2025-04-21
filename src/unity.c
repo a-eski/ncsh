@@ -18,7 +18,7 @@
 #include "main.c"
 #include "noninteractive.c"
 #include "parser.c"
-#include "readline/autocompletions.c"
+#include "readline/ac.c"
 #include "readline/history.c"
 #include "readline/ncreadline.c"
 #include "readline/terminal.c"

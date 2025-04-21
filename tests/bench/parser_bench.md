@@ -25,6 +25,11 @@ Range (min … max):     6.6 ms …   9.3 ms    404 runs
 Time (mean ± σ):       7.2 ms ±   0.3 ms    [User: 2.8 ms, System: 2.5 ms]
 Range (min … max):     6.8 ms …   9.5 ms    408 runs
 
+### After adjusting switch statement
+
+Time (mean ± σ):       7.1 ms ±   0.3 ms    [User: 2.7 ms, System: 2.4 ms]
+Range (min … max):     6.6 ms …   9.8 ms    437 runs
+
 ## parser bench
 
 ### bench: Before
@@ -63,5 +68,5 @@ Range (min … max):     3.5 ms …   6.2 ms    613 runs
 Time (mean ± σ):       3.8 ms ±   0.2 ms    [User: 1.9 ms, System: 0.5 ms]
 Range (min … max):     3.4 ms …   5.5 ms    707 runs
 
-Time (mean ± σ):       3.8 ms ±   0.2 ms    [User: 1.9 ms, System: 0.5 ms]
-Range (min … max):     3.4 ms …   6.6 ms    751 runs
+Time (mean ± σ):       3.8 ms ±   0.3 ms    [User: 1.9 ms, System: 0.5 ms]
+Range (min … max):     3.4 ms …   5.2 ms    796 runs

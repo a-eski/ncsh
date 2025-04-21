@@ -3,6 +3,7 @@
 #include "vm_tokenizer.h"
 
 #include <assert.h>
+#include <stdint.h>
 #include <unistd.h>
 
 #include "../defines.h"
@@ -84,7 +85,7 @@ int_fast32_t vm_tokenizer_syntax_error(const char* const message, const size_t m
 #define INVALID_SYNTAX(message) vm_tokenizer_syntax_error(message, sizeof(message) - 1)
 
 [[nodiscard]]
-int_fast32_t vm_args_syntax_check(const struct Args* const restrict args)
+int_fast32_t vm_tokenizer_syntax_check(const struct Args* const restrict args)
 {
     assert(args);
 
@@ -148,16 +149,10 @@ int_fast32_t vm_args_syntax_check(const struct Args* const restrict args)
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
-[[nodiscard]]
-int_fast32_t vm_tokenizer_tokenize(const struct Args* const restrict args, struct Tokens* const restrict tokens)
+int_fast32_t vm_tokenizer_ops_process(const struct Args* const restrict args, struct Tokens* const restrict tokens)
 {
     assert(args);
     assert(tokens);
-
-    int_fast32_t syntax_check;
-    if ((syntax_check = vm_args_syntax_check(args)) != NCSH_COMMAND_SUCCESS_CONTINUE) {
-        return syntax_check;
-    }
 
     tokens->is_background_job = false;
     for (uint_fast32_t i = 0; i < args->count; ++i) {
@@ -213,6 +208,24 @@ int_fast32_t vm_tokenizer_tokenize(const struct Args* const restrict args, struc
         }
     }
     ++tokens->number_of_pipe_commands;
+
+    return NCSH_COMMAND_SUCCESS_CONTINUE;
+}
+
+[[nodiscard]]
+int_fast32_t vm_tokenizer_tokenize(const struct Args* const restrict args, struct Tokens* const restrict tokens)
+{
+    assert(args);
+    assert(tokens);
+
+    int_fast32_t result;
+    if ((result = vm_tokenizer_syntax_check(args)) != NCSH_COMMAND_SUCCESS_CONTINUE) {
+        return result;
+    }
+
+    if ((result = vm_tokenizer_ops_process(args, tokens)) != NCSH_COMMAND_SUCCESS_CONTINUE) {
+        return result;
+    }
 
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }

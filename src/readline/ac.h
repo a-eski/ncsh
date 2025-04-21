@@ -1,12 +1,13 @@
-/* Copyright ncsh by Alex Eski 2024 */
-/* ncsh autocompletions.c: interact with prefix trie to manage autocompletions */
+/* Copyright ncsh (C) by Alex Eski 2024 */
+/* ac.h: interact with prefix trie to manage autocompletions */
 /* Based on eskilib etrie prefix trie implementation */
-/* Referenced trie as 'tree' in functions just because its easier to type */
+/* References the trie as 'tree' just because its easier to type... haha.. */
 
 #pragma once
 
 #include "../arena.h"
 #include "../eskilib/estr.h"
+#include <stdint.h>
 
 #define NCSH_LETTERS 96 // ascii printable characters 32-127
 
@@ -56,13 +57,13 @@ struct Autocompletion_Node* ac_find(const char* str, struct Autocompletion_Node*
  * Populates matches into variable matches.
  * Returns: number of matches (0 if no matches)
  */
-uint_fast8_t ac_get(const char* const search, struct Autocompletion* matches, struct Autocompletion_Node* restrict tree,
-                    struct Arena scratch_arena);
+uint_fast8_t ac_get(const char* search, struct Autocompletion* matches, struct Autocompletion_Node* restrict tree,
+                    struct Arena scratch);
 
 /* ac_first
  * Gets highest weighted match based on traversing the tree.
  * Populates match into variable match
  * Returns: 0 if no matches, 1 if any matches
  */
-uint_fast8_t ac_first(const char* const search, char* match, struct Autocompletion_Node* restrict tree,
-                      struct Arena scratch_arena);
+uint_fast8_t ac_first(const char* search, char* match, struct Autocompletion_Node* restrict tree,
+                      struct Arena scratch);

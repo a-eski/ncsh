@@ -12,8 +12,8 @@ int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size)
     SCRATCH_ARENA_TEST_SETUP;
 
     struct Args args = {};
-    parser_args_alloc(&args, &arena);
-    parser_parse((char*)Data, Size, &args, &scratch_arena);
+    parser_init(&args, &arena);
+    parser_parse((char*)Data, Size, &args, &arena, &scratch_arena);
 
     ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;

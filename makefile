@@ -9,7 +9,7 @@ debug_flags = -Wall -Wextra -Werror -Wpedantic -pedantic-errors -Wsign-conversio
 release_flags = -Wall -Wextra -Werror -pedantic-errors -Wsign-conversion -Wformat=2 -Wshadow -Wvla -O3 -DNDEBUG
 # fuzz_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -Wwrite-strings -fsanitize=address,leak,fuzzer -DNDEBUG -g
 fuzz_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,leak,fuzzer -DNDEBUG -g
-objects = obj/main.o obj/arena.o obj/noninteractive.o obj/ncreadline.o obj/vm.o obj/vm_tokenizer.o obj/terminal.o obj/efile.o obj/emap.o obj/var.o obj/parser.o obj/vm_builtins.o obj/history.o obj/autocompletions.o obj/config.o obj/fzf.o obj/z.o
+objects = obj/main.o obj/arena.o obj/noninteractive.o obj/ncreadline.o obj/vm.o obj/vm_tokenizer.o obj/terminal.o obj/efile.o obj/emap.o obj/var.o obj/parser.o obj/vm_builtins.o obj/history.o obj/ac.o obj/config.o obj/fzf.o obj/z.o
 target = ./bin/ncsh
 
 ifeq ($(CC), gcc)
@@ -79,7 +79,7 @@ install : $(target)
 check :
 	set -e
 	make test_fzf
-	make test_autocompletions
+	make test_ac
 	make test_history
 	make test_parser
 	make test_config
@@ -128,39 +128,33 @@ fuzz_history :
 fh :
 	make fuzz_history
 
-.PHONY: test_autocompletions
-test_autocompletions :
-	 $(CC) $(STD) $(debug_flags) ./src/eskilib/etest.c ./src/arena.c ./src/readline/autocompletions.c ./tests/autocompletions_tests.c -o ./bin/autocompletions_tests
-	 ./bin/autocompletions_tests
-.PHONY: tac
-tac :
-	make test_autocompletions
+.PHONY: test_ac
+test_ac :
+	 # $(CC) $(STD) $(debug_flags) -DAC_DEBUG ./src/eskilib/etest.c ./src/arena.c ./src/readline/ac.c ./tests/ac_tests.c -o ./bin/ac_tests
+	 $(CC) $(STD) $(debug_flags) ./src/eskilib/etest.c ./src/arena.c ./src/readline/ac.c ./tests/ac_tests.c -o ./bin/ac_tests
+	 ./bin/ac_tests
 
-.PHONY: fuzz_autocompletions
-fuzz_autocompletions :
+.PHONY: fuzz_ac
+fuzz_ac :
 	chmod +x ./create_corpus_dirs.sh
 	./create_corpus_dirs.sh
-	clang-19 $(STD) $(fuzz_flags) ./tests/autocompletions_fuzzing.c ./src/arena.c ./src/readline/autocompletions.c -o ./bin/autocompletions_fuzz
-	./bin/autocompletions_fuzz AUTOCOMPLETIONS_CORPUS/ -detect_leaks=0 -rss_limit_mb=8192
-.PHONY: fa
-fa :
-	make fuzz_autocompletions
+	clang-19 $(STD) $(fuzz_flags) ./tests/ac_fuzzing.c ./src/arena.c ./src/readline/ac.c -o ./bin/ac_fuzz
+	./bin/ac_fuzz AUTOCOMPLETIONS_CORPUS/ -detect_leaks=0 -rss_limit_mb=8192
 
-.PHONY: bench_autocompletions
-bench_autocompletions :
-	$(CC) $(STD) $(debug_flags) -DNDEBUG ./src/eskilib/etest.c ./src/arena.c ./src/readline/autocompletions.c ./tests/autocompletions_bench.c -o ./bin/autocompletions_bench
-	hyperfine --warmup 1000 --shell=none './bin/autocompletions_bench'
-.PHONYE: ba
-ba :
-	make bench_autocompletions
+.PHONY: bench_ac
+bench_ac :
+	$(CC) $(STD) $(debug_flags) -DNDEBUG ./src/eskilib/etest.c ./src/arena.c ./src/readline/ac.c ./tests/ac_bench.c -o ./bin/ac_bench
+	hyperfine --warmup 1000 --shell=none './bin/ac_bench'
 
-.PHONY: bench_autocompletions_tests
-bench_autocompletions_tests :
-	$(CC) $(STD) $(debug_flags) -DNDEBUG ./src/eskilib/etest.c ./src/arena.c ./src/readline/autocompletions.c ./tests/autocompletions_tests.c -o ./bin/autocompletions_tests
-	hyperfine --warmup 1000 --shell=none './bin/autocompletions_tests'
-.PHONYE: bat
-bat :
-	make bench_autocompletions_tests
+.PHONY: bench_acr
+bench_acr :
+	$(CC) $(STD) $(release_flags) -DNDEBUG ./src/eskilib/etest.c ./src/arena.c ./src/readline/ac.c ./tests/ac_bench.c -o ./bin/ac_bench
+	hyperfine --warmup 1000 --shell=none './bin/ac_bench'
+
+.PHONY: bench_ac_tests
+bench_ac_tests :
+	$(CC) $(STD) $(debug_flags) -DNDEBUG ./src/eskilib/etest.c ./src/arena.c ./src/readline/ac.c ./tests/ac_tests.c -o ./bin/ac_tests
+	hyperfine --warmup 1000 --shell=none './bin/ac_tests'
 
 .PHONY: test_parser
 test_parser :
@@ -174,7 +168,7 @@ tp :
 fuzz_parser :
 	chmod +x ./create_corpus_dirs.sh
 	./create_corpus_dirs.sh
-	clang-19 $(STD) $(fuzz_flags) ./tests/parser_fuzzing.c ./src/arena.c ./src/parser.c -o ./bin/parser_fuzz
+	clang-19 $(STD) $(fuzz_flags) ./tests/parser_fuzzing.c ./src/arena.c ./src/var.c ./src/parser.c -o ./bin/parser_fuzz
 	./bin/parser_fuzz PARSER_CORPUS/ -detect_leaks=0 -rss_limit_mb=4096
 .PHONY: fp
 fp :
@@ -258,7 +252,7 @@ tc :
 
 .PHONY: test_readline
 test_readline :
-	$(CC) $(STD) $(debug_flags) -DNCSH_HISTORY_TEST ./src/arena.c ./src/eskilib/etest.c ./src/eskilib/efile.c ./src/eskilib/emap.c ./src/readline/terminal.c ./src/readline/autocompletions.c ./src/readline/history.c ./src/readline/ncreadline.c ./tests/ncreadline_tests.c -o ./bin/ncreadline_tests
+	$(CC) $(STD) $(debug_flags) -DNCSH_HISTORY_TEST ./src/arena.c ./src/eskilib/etest.c ./src/eskilib/efile.c ./src/eskilib/emap.c ./src/readline/terminal.c ./src/readline/ac.c ./src/readline/history.c ./src/readline/ncreadline.c ./tests/ncreadline_tests.c -o ./bin/ncreadline_tests
 	./bin/ncreadline_tests
 .PHONY: tr
 tr :
