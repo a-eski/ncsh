@@ -1,9 +1,6 @@
-/* Copyright ncsh by Alex Eski 2024 */
+/* Copyright ncsh (C) by Alex Eski 2024 */
 
 #pragma once
-
-#include <stdbool.h>
-#include <stdint.h>
 
 #include "../parser.h"
 #include "../readline/history.h"
@@ -14,7 +11,7 @@
 #define Z_RM "rm"
 #define Z_REMOVE "remove" // alias for rm
 #define Z_PRINT "print"
-int_fast32_t builtins_z(struct z_Database* const restrict z_db, struct Args* const restrict args,
+int builtins_z(struct z_Database* const restrict z_db, struct Args* const restrict args,
                         struct Arena* const arena, struct Arena* const scratch_arena);
 
 #define NCSH_HISTORY "history" // the base command, displays history
@@ -23,43 +20,43 @@ int_fast32_t builtins_z(struct z_Database* const restrict z_db, struct Args* con
 #define NCSH_HISTORY_ADD "add"
 #define NCSH_HISTORY_RM "rm" // alias for rm
 #define NCSH_HISTORY_REMOVE "remove"
-int_fast32_t builtins_history(struct History* const restrict history, struct Args* const restrict args,
+int builtins_history(struct History* const restrict history, struct Args* const restrict args,
                               struct Arena* const arena, struct Arena* const scratch_arena);
 
 #define NCSH_EXIT "exit" // the base command
 #define NCSH_QUIT "quit" // alias for exit
 #define NCSH_Q "q"       // alias for exit
-int_fast32_t builtins_exit(struct Args* const restrict args);
+int builtins_exit(struct Args* const restrict args);
 
 #define NCSH_ECHO "echo"
-int_fast32_t builtins_echo(struct Args* const restrict args);
+int builtins_echo(struct Args* const restrict args);
 
 #define NCSH_HELP "help"
-int_fast32_t builtins_help(struct Args* const restrict args);
+int builtins_help(struct Args* const restrict args);
 
 #define NCSH_CD "cd"
-int_fast32_t builtins_cd(struct Args* const restrict args);
+int builtins_cd(struct Args* const restrict args);
 
 #define NCSH_PWD "pwd"
-int_fast32_t builtins_pwd(struct Args* const restrict args);
+int builtins_pwd(struct Args* const restrict args);
 
 #define NCSH_KILL "kill"
-int_fast32_t builtins_kill(struct Args* const restrict args);
+int builtins_kill(struct Args* const restrict args);
 
 #define NCSH_VERSION_CMD "version"
-int_fast32_t builtins_version(struct Args* const restrict args);
+int builtins_version(struct Args* const restrict args);
 
 #define NCSH_ENABLE "enable"
-int_fast32_t builtins_enable(struct Args* const restrict args);
+int builtins_enable(struct Args* const restrict args);
 
 #define NCSH_DISABLE "disable"
-int_fast32_t builtins_disable(struct Args* const restrict args);
+int builtins_disable(struct Args* const restrict args);
 
 #define NCSH_SET "set" // not implemented
-int_fast32_t builtins_set(struct Args* const restrict args);
+int builtins_set(struct Args* const restrict args);
 
 #define NCSH_UNSET "unset" // not implemented
-int_fast32_t builtins_unset(struct Args* const restrict args);
+int builtins_unset(struct Args* const restrict args);
 
 // clang-format off
 enum Builtins_Disabled : long {
@@ -82,7 +79,7 @@ struct Builtin {
     enum Builtins_Disabled flag;
     const size_t length;
     const char* const value;
-    int_fast32_t (*func)(struct Args* const restrict);
+    int (*func)(struct Args* const restrict);
 };
 
 static const struct Builtin builtins[] = {

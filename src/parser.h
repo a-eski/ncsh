@@ -1,10 +1,8 @@
-/* Copyright ncsh by Alex Eski 2024 */
+/* Copyright ncsh (C) by Alex Eski 2024 */
 
 #pragma once
 
-#include <stdbool.h>
 #include <stddef.h>
-#include <stdint.h>
 
 #include "arena.h"
 #include "eskilib/eresult.h"
@@ -15,7 +13,7 @@
 /* enum Ops
  * Represents the bytecodes which get sent to the VM.
  */
-enum Ops : uint_fast8_t {
+enum Ops : uint8_t {
     // Default value, indicative of an issue parsing when found during execution
     OP_NONE = 0,
     // Constant value, need to check constants array for what it is
@@ -54,7 +52,7 @@ enum Ops : uint_fast8_t {
 struct Args {
     size_t count;      // Number of lengths/values/ops
     size_t* lengths;   // Length of the constants stored in values
-    uint_fast8_t* ops; // Ops: The bytecode
+    uint8_t* ops; // Ops: The bytecode
     char** values;     // Constant values needed to be referenced by the VM
     struct var vars;   // Variables: values of variables that can be looked up by key
 };

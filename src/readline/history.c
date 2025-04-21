@@ -2,9 +2,7 @@
 
 #include <assert.h>
 #include <linux/limits.h>
-#include <stdbool.h>
 #include <stddef.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -318,7 +316,7 @@ struct estr history_get(const size_t position, struct History* const restrict hi
 }
 
 [[nodiscard]]
-int_fast32_t history_command_display(const struct History* const restrict history)
+int history_command_display(const struct History* const restrict history)
 {
     assert(history);
     if (!history || !history->count) {
@@ -332,7 +330,7 @@ int_fast32_t history_command_display(const struct History* const restrict histor
 }
 
 [[nodiscard]]
-int_fast32_t history_command_count(const struct History* history)
+int history_command_count(const struct History* history)
 {
     assert(history);
     printf("history count: %zu\n", history->count);
@@ -340,7 +338,7 @@ int_fast32_t history_command_count(const struct History* history)
 }
 
 [[nodiscard]]
-int_fast32_t history_command_clean(struct History* const restrict history, struct Arena* const arena,
+int history_command_clean(struct History* const restrict history, struct Arena* const arena,
                                    struct Arena* const scratch_arena)
 {
     if (history_clean(history, arena, *scratch_arena) != E_SUCCESS) {
@@ -351,7 +349,7 @@ int_fast32_t history_command_clean(struct History* const restrict history, struc
 }
 
 [[nodiscard]]
-int_fast32_t history_command_add(const char* const value, const size_t value_len,
+int history_command_add(const char* const value, const size_t value_len,
                                  struct History* const restrict history, struct Arena* const arena)
 {
     return history_add(value, value_len, history, arena);
@@ -369,7 +367,7 @@ void history_remove_entries_shift(const size_t offset, struct History* const res
 }
 
 [[nodiscard]]
-int_fast32_t history_command_remove(const char* const value, const size_t value_len,
+int history_command_remove(const char* const value, const size_t value_len,
                                     struct History* const restrict history, struct Arena* const arena,
                                     struct Arena* const scratch_arena)
 {

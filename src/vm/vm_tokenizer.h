@@ -1,8 +1,6 @@
-/* Copyright ncsh by Alex Eski 2025 */
+/* Copyright ncsh (C) by Alex Eski 2025 */
 
 #pragma once
-
-#include <stdint.h>
 
 #include "../parser.h"
 
@@ -12,12 +10,12 @@
  * Output append directs output redirections to append to the file instead of writing over it.
  */
 struct Tokens {
-    uint_fast32_t stdout_redirect_index;
-    uint_fast32_t stdin_redirect_index;
-    uint_fast32_t stderr_redirect_index;
-    uint_fast32_t stdout_and_stderr_redirect_index;
+    uint8_t stdout_redirect_index;
+    uint8_t stdin_redirect_index;
+    uint8_t stderr_redirect_index;
+    uint8_t stdout_and_stderr_redirect_index;
 
-    uint_fast32_t number_of_pipe_commands;
+    uint8_t number_of_pipe_commands;
 
     char* stdout_file;
     char* stdin_file;
@@ -28,4 +26,4 @@ struct Tokens {
     bool is_background_job;
 };
 
-int_fast32_t vm_tokenizer_tokenize(const struct Args* const restrict args, struct Tokens* const restrict tokens);
+int vm_tokenizer_tokenize(const struct Args* const restrict args, struct Tokens* const restrict tokens);

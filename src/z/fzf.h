@@ -6,9 +6,7 @@
 #ifndef FZF_H_
 #define FZF_H_
 
-#include <stdbool.h>
 #include <stddef.h>
-#include <stdint.h>
 
 #include "../arena.h"
 

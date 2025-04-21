@@ -5,7 +5,6 @@
 #ifndef Z_H_
 #define Z_H_
 
-#include <stdint.h>
 #include <time.h>
 
 #include "../arena.h"

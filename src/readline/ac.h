@@ -7,7 +7,6 @@
 
 #include "../arena.h"
 #include "../eskilib/estr.h"
-#include <stdint.h>
 
 #define NCSH_LETTERS 96 // ascii printable characters 32-127
 
@@ -17,7 +16,7 @@
  */
 struct Autocompletion_Node {
     bool is_end_of_a_word;
-    uint_fast8_t weight;
+    uint8_t weight;
     struct Autocompletion_Node* nodes[NCSH_LETTERS];
 };
 
@@ -25,7 +24,7 @@ struct Autocompletion_Node {
  * Used for storing results of autocompletion matching
  */
 struct Autocompletion {
-    uint_fast8_t weight;
+    uint8_t weight;
     char* value;
 };
 
@@ -57,7 +56,7 @@ struct Autocompletion_Node* ac_find(const char* str, struct Autocompletion_Node*
  * Populates matches into variable matches.
  * Returns: number of matches (0 if no matches)
  */
-uint_fast8_t ac_get(const char* search, struct Autocompletion* matches, struct Autocompletion_Node* restrict tree,
+uint8_t ac_get(const char* search, struct Autocompletion* matches, struct Autocompletion_Node* restrict tree,
                     struct Arena scratch);
 
 /* ac_first
@@ -65,4 +64,4 @@ uint_fast8_t ac_get(const char* search, struct Autocompletion* matches, struct A
  * Populates match into variable match
  * Returns: 0 if no matches, 1 if any matches
  */
-uint_fast8_t ac_first(const char* search, char* match, struct Autocompletion_Node* restrict tree, struct Arena scratch);
+uint8_t ac_first(const char* search, char* match, struct Autocompletion_Node* restrict tree, struct Arena scratch);

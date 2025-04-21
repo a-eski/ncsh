@@ -1,9 +1,8 @@
-/* Copyright eskilib by Alex Eski 2024 */
+/* Copyright eskilib (C) by Alex Eski 2024 */
 
 #pragma once
 
 #include <stddef.h>
-#include <stdint.h>
 #include <string.h>
 
 #include "edefines.h"

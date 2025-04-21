@@ -1,9 +1,9 @@
-/* Copyright ncsh by Alex Eski 2025 */
+/* Copyright ncsh (C) by Alex Eski 2025 */
+/* ac.h: manage autocompletions via a prefix trie for ncsh */
 
 #include <assert.h>
-#include <stdbool.h>
 #include <stddef.h>
-#include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -43,10 +43,11 @@ void ac_add(const char* const string, const size_t length, struct Autocompletion
             continue;
         }
 
-        ++tree->nodes[index]->weight;
+        // ++tree->nodes[index]->weight;
         tree = tree->nodes[index];
     }
 
+    ++tree->weight;
     tree->is_end_of_a_word = true;
 }
 
@@ -81,8 +82,8 @@ struct Autocompletion_Node* ac_find(const char* p, struct Autocompletion_Node* r
 }
 
 // static slightly improved performance in benchmarks
-static uint_fast32_t ac_str_pos;
-static uint_fast8_t ac_match_pos;
+static size_t ac_str_pos;
+static uint8_t ac_match_pos;
 
 // not using static slightly improved performance in benchmarks
 char ac_buffer[NCSH_MAX_INPUT];
@@ -125,7 +126,7 @@ void ac_match(struct Autocompletion* const matches, struct Autocompletion_Node* 
     }
 }
 
-uint_fast8_t ac_matches(struct Autocompletion* const matches, struct Autocompletion_Node* prefix,
+uint8_t ac_matches(struct Autocompletion* const matches, struct Autocompletion_Node* prefix,
                         struct Arena* const restrict scratch)
 {
     ac_str_pos = 0;
@@ -138,7 +139,7 @@ uint_fast8_t ac_matches(struct Autocompletion* const matches, struct Autocomplet
     return ac_match_pos;
 }
 
-uint_fast8_t ac_get(const char* search, struct Autocompletion* matches, struct Autocompletion_Node* restrict tree,
+uint8_t ac_get(const char* search, struct Autocompletion* matches, struct Autocompletion_Node* restrict tree,
                     struct Arena scratch)
 {
     assert(search);
@@ -147,14 +148,14 @@ uint_fast8_t ac_get(const char* search, struct Autocompletion* matches, struct A
     if (!prefix)
         return 0;
 
-    uint_fast8_t match_count = ac_matches(matches, prefix, &scratch);
+    uint8_t match_count = ac_matches(matches, prefix, &scratch);
     if (!match_count)
         return 0;
 
     return match_count;
 }
 
-uint_fast8_t ac_first(const char* search, char* match, struct Autocompletion_Node* restrict tree, struct Arena scratch)
+uint8_t ac_first(const char* search, char* match, struct Autocompletion_Node* restrict tree, struct Arena scratch)
 {
     assert(search);
 
@@ -163,12 +164,12 @@ uint_fast8_t ac_first(const char* search, char* match, struct Autocompletion_Nod
         return 0;
 
     struct Autocompletion matches[NCSH_MAX_AUTOCOMPLETION_MATCHES] = {0};
-    uint_fast8_t match_count = ac_matches(matches, prefix, &scratch);
+    uint8_t match_count = ac_matches(matches, prefix, &scratch);
     if (!match_count)
         return 0;
 
     struct Autocompletion potential_match = matches[0];
-    for (uint_fast8_t i = 1; i < match_count; ++i) {
+    for (uint8_t i = 1; i < match_count; ++i) {
         if (matches[i].weight > potential_match.weight) {
             potential_match = matches[i];
         }

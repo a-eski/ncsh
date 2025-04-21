@@ -1,6 +1,3 @@
-#include <stdbool.h>
-#include <stdint.h>
-
 #include "../src/defines.h" // used for macro NCSH_MAX_AUTOCOMPLETION_MATCHES
 #include "../src/eskilib/etest.h"
 #include "../src/readline/ac.h"
@@ -174,7 +171,7 @@ void ac_bench(void)
 
     struct Autocompletion autocomplete[NCSH_MAX_AUTOCOMPLETION_MATCHES] = {0};
 
-    uint_fast32_t match_count = ac_get("l", autocomplete, tree, scratch_arena);
+    uint8_t match_count = ac_get("l", autocomplete, tree, scratch_arena);
     match_count = ac_get("ls", autocomplete, tree, scratch_arena);
     match_count = ac_get("n", autocomplete, tree, scratch_arena);
     match_count = ac_get("nv", autocomplete, tree, scratch_arena);
@@ -204,25 +201,3 @@ int main(void)
 {
     ac_bench();
 }
-/* Before change
-    uint_fast32_t match_count = ac_get("l", sizeof("l"), autocomplete, tree, scratch_arena);
-    match_count = ac_get("ls", sizeof("ls"), autocomplete, tree, scratch_arena);
-    match_count = ac_get("n", sizeof("n"), autocomplete, tree, scratch_arena);
-    match_count = ac_get("nv", sizeof("nv"), autocomplete, tree, scratch_arena);
-    match_count = ac_get("nvi", sizeof("nvi"), autocomplete, tree, scratch_arena);
-    match_count = ac_get("nvim", sizeof("nvim"), autocomplete, tree, scratch_arena);
-    match_count = ac_get("v", sizeof("v"), autocomplete, tree, scratch_arena);
-    match_count = ac_get("ve", sizeof("ve"), autocomplete, tree, scratch_arena);
-    match_count = ac_get("m", sizeof("m"), autocomplete, tree, scratch_arena);
-    match_count = ac_get("ma", sizeof("ma"), autocomplete, tree, scratch_arena);
-    match_count = ac_get("mak", sizeof("mak"), autocomplete, tree, scratch_arena);
-    match_count = ac_get("make", sizeof("make"), autocomplete, tree, scratch_arena);
-    match_count = ac_get("g", sizeof("g"), autocomplete, tree, scratch_arena);
-    match_count = ac_get("gi", sizeof("gi"), autocomplete, tree, scratch_arena);
-    match_count = ac_get("git", sizeof("git"), autocomplete, tree, scratch_arena);
-    match_count = ac_get("git ", sizeof("git "), autocomplete, tree, scratch_arena);
-    match_count = ac_get("git d", sizeof("git d"), autocomplete, tree, scratch_arena);
-    match_count = ac_get("git di", sizeof("git di"), autocomplete, tree, scratch_arena);
-    match_count = ac_get("git dif", sizeof("git dif"), autocomplete, tree, scratch_arena);
-    match_count = ac_get("git diff", sizeof("git diff"), autocomplete, tree, scratch_arena);
-*/

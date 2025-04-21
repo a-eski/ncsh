@@ -1,8 +1,6 @@
 // Copyright (c) z by Alex Eski 2024
 
 #include <linux/limits.h>
-#include <stdbool.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

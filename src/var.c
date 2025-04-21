@@ -3,14 +3,13 @@
 /* currently very simple implementation using FNV-1a hash and linear probing */
 
 #include <assert.h>
-#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "arena.h"
 #include "var.h"
 
-void var_malloc(struct Arena* const arena, struct var* vars)
+void var_malloc(struct Arena* const arena, struct var* restrict vars)
 {
     vars->size = 0;
     vars->capacity = VAR_DEFAULT_CAPACITY;
@@ -33,7 +32,7 @@ uint64_t var_key(const char* str)
     return i;
 }
 
-struct estr* var_get(char* key, struct var* vars)
+struct estr* var_get(char* key, struct var* restrict vars)
 {
     uint64_t hash = var_key(key);
     size_t index = (size_t)(hash & (uint64_t)(vars->capacity - 1));
@@ -52,7 +51,7 @@ struct estr* var_get(char* key, struct var* vars)
     return NULL;
 }
 
-bool var_exists(char* key, struct var* vars)
+bool var_exists(char* key, struct var* restrict vars)
 {
     uint64_t hash = var_key(key);
     size_t index = (size_t)(hash & (uint64_t)(vars->capacity - 1));
@@ -97,7 +96,7 @@ const char* var_set_entry(struct var_Entry* entries, size_t capacity, char* key,
     return key;
 }
 
-bool var_expand(char* key, struct Arena* const arena, struct var* vars)
+bool var_expand(char* key, struct Arena* const arena, struct var* restrict vars)
 {
     size_t new_capacity = vars->capacity * 2;
     if (new_capacity < vars->capacity) {
@@ -119,7 +118,7 @@ bool var_expand(char* key, struct Arena* const arena, struct var* vars)
     return true;
 }
 
-const char* var_set(char* key, struct estr* val, struct Arena* const arena, struct var* vars)
+const char* var_set(char* key, struct estr* val, struct Arena* const arena, struct var* restrict vars)
 {
     assert(val->value && val->length);
     if (!val->value || !val->length) {

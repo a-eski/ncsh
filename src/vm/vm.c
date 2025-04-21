@@ -1,9 +1,10 @@
-/* Copyright ncsh by Alex Eski 2024 */
+/* Copyright ncsh (C) by Alex Eski 2024 */
+/* vm.c: the VM for ncsh. Accepts op bytecodes and constant values and their lengths,
+ * and processes those into commands. */
 
 #define _POSIX_C_SOURCE 200809L
 #include <assert.h>
 #include <errno.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/wait.h>
@@ -17,6 +18,30 @@
 #include "vm_builtins.h"
 #include "vm_tokenizer.h"
 #include "vm_types.h"
+
+// clang-format off
+#ifdef NCSH_VM_TEST
+    int execvp_mock(char* arg, char** args, int res) {
+        (void)arg;
+        (void)args;
+        return res;
+    }
+
+    int waitpid_mock(pid_t pid, int* status, int w) {
+        (void)status;
+        (void)w;
+        return pid;
+    }
+
+#   define fork() (pid_t)1
+#   ifdef NCSH_VM_TEST_EXEC_FAILURE
+#       define execvp(arg, args) execvp_mock(arg, args, -1)
+#   else
+#       define execvp(arg, args) execvp_mock(arg, args, 0)
+#   endif /* NCSH_VM_TEST_EXEC_FAILURE */
+#   define waitpid(pid, status, w) waitpid_mock(pid, status, w)
+#endif /* NCSH_VM_TEST */
+// clang-format on
 
 extern jmp_buf env;
 extern sig_atomic_t vm_child_pid;
@@ -118,7 +143,7 @@ void vm_stdout_and_stderr_redirection_stop(struct Output_Redirect_IO* const rest
 }
 
 [[nodiscard]]
-int_fast32_t vm_redirection_start_if_needed(struct Args* const restrict args,
+int vm_redirection_start_if_needed(struct Args* const restrict args,
                                             const struct Tokens* const restrict tokens,
                                             struct Vm_Data* const restrict vm)
 {
@@ -196,7 +221,7 @@ void vm_redirection_stop_if_needed(const struct Tokens* const restrict tokens, s
 
 /* Pipes */
 [[nodiscard]]
-int_fast32_t vm_pipe_start(const uint_fast32_t command_position, struct Pipe_IO* const restrict pipes)
+int vm_pipe_start(const size_t command_position, struct Pipe_IO* const restrict pipes)
 {
     assert(pipes);
 
@@ -218,7 +243,7 @@ int_fast32_t vm_pipe_start(const uint_fast32_t command_position, struct Pipe_IO*
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
-void vm_pipe_connect(const uint_fast32_t command_position, const uint_fast32_t number_of_commands,
+void vm_pipe_connect(const size_t command_position, const size_t number_of_commands,
                      const struct Pipe_IO* const restrict pipes)
 {
     assert(pipes);
@@ -246,7 +271,7 @@ void vm_pipe_connect(const uint_fast32_t command_position, const uint_fast32_t n
     }
 }
 
-void vm_pipe_stop(const uint_fast32_t command_position, const uint_fast32_t number_of_commands,
+void vm_pipe_stop(const size_t command_position, const size_t number_of_commands,
                   const struct Pipe_IO* const restrict pipes)
 {
     assert(pipes);
@@ -276,7 +301,7 @@ void vm_pipe_stop(const uint_fast32_t command_position, const uint_fast32_t numb
 
 /* Failure Handling */
 [[nodiscard]]
-int_fast32_t vm_fork_failure(const uint_fast32_t command_position, const uint_fast32_t number_of_commands,
+int vm_fork_failure(const size_t command_position, const size_t number_of_commands,
                              const struct Pipe_IO* const restrict pipes)
 {
     assert(pipes);
@@ -298,7 +323,7 @@ int_fast32_t vm_fork_failure(const uint_fast32_t command_position, const uint_fa
 /* Background Jobs */
 // Implementation not working, still experimenting...
 [[nodiscard]]
-int_fast32_t vm_run_background_job(struct Args* const restrict args, struct Processes* const restrict processes,
+int vm_run_background_job(struct Args* const restrict args, struct Processes* const restrict processes,
                                    struct Tokens* const restrict tokens)
 {
     (void)tokens;
@@ -331,8 +356,8 @@ int_fast32_t vm_run_background_job(struct Args* const restrict args, struct Proc
     }
     else {
         signal(SIGCHLD, SIG_IGN); // Prevent zombie processes
-        uint32_t job_number = !processes ? 0 : ++processes->job_number;
-        printf("job [%u] pid [%d]\n", job_number, pid); // Job number and PID
+        size_t job_number = !processes ? 0 : ++processes->job_number;
+        printf("job [%zu] pid [%d]\n", job_number, pid); // Job number and PID
     }
 
     return NCSH_COMMAND_SUCCESS_CONTINUE;
@@ -394,10 +419,10 @@ void vm_buffer_set_command_next(struct Args* const restrict args, struct Vm_Data
 
 int vm_command_result;
 int vm_execvp_result;
-int_fast32_t vm_result;
+int vm_result;
 
 [[nodiscard]]
-int_fast32_t vm_run(struct Args* const restrict args, struct Tokens* const restrict tokens)
+int vm_run(struct Args* const restrict args, struct Tokens* const restrict tokens)
 {
     struct Vm_Data vm = {0};
     vm_command_result = NCSH_COMMAND_NONE;
@@ -419,7 +444,7 @@ int_fast32_t vm_run(struct Args* const restrict args, struct Tokens* const restr
             }
         }
 
-        for (uint_fast32_t i = 0; i < builtins_count; ++i) {
+        for (size_t i = 0; i < builtins_count; ++i) {
             if (estrcmp_c(vm.buffer[0], vm.buffer_len[0], builtins[i].value, builtins[i].length)) {
                 vm.command_type = CT_BUILTIN;
                 vm_command_result = (*builtins[i].func)(args);
@@ -521,7 +546,7 @@ void vm_alias_replace(struct Args* const restrict args, struct Arena* const scra
 /* vm_vars_replace
  * Replaces variables with their values before calling main execute function on VM.
  */
-int_fast32_t vm_vars_replace(struct Args* const restrict args, struct Arena* scratch_arena)
+int vm_vars_replace(struct Args* const restrict args, struct Arena* scratch_arena)
 {
     for (size_t i = 0; i < args->count; ++i) {
         if (args->ops[i] == OP_VARIABLE) {
@@ -543,7 +568,7 @@ int_fast32_t vm_vars_replace(struct Args* const restrict args, struct Arena* scr
 }
 
 [[nodiscard]]
-int_fast32_t vm_execute(struct Shell* const restrict shell, struct Arena* const scratch_arena)
+int vm_execute(struct Shell* const restrict shell, struct Arena* const scratch_arena)
 {
     assert(shell);
     assert(&shell->args);
@@ -585,7 +610,7 @@ int_fast32_t vm_execute(struct Shell* const restrict shell, struct Arena* const 
 }
 
 [[nodiscard]]
-int_fast32_t vm_execute_noninteractive(struct Args* const restrict args, struct Arena* const arena)
+int vm_execute_noninteractive(struct Args* const restrict args, struct Arena* const arena)
 {
     assert(args);
     if (!args->count) {

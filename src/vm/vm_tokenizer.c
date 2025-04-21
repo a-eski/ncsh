@@ -1,16 +1,15 @@
-/* Copyright ncsh by Alex Eski 2025 */
+/* Copyright ncsh (C) by Alex Eski 2025 */
 
 #include "vm_tokenizer.h"
 
 #include <assert.h>
-#include <stdint.h>
 #include <unistd.h>
 
 #include "../defines.h"
 #include "../parser.h"
 
 [[nodiscard]]
-int_fast32_t vm_tokenizer_syntax_error(const char* const message, const size_t message_length)
+int vm_tokenizer_syntax_error(const char* const message, const size_t message_length)
 {
     if (write(STDIN_FILENO, message, message_length) == -1) {
         return NCSH_COMMAND_EXIT_FAILURE;
@@ -85,7 +84,7 @@ int_fast32_t vm_tokenizer_syntax_error(const char* const message, const size_t m
 #define INVALID_SYNTAX(message) vm_tokenizer_syntax_error(message, sizeof(message) - 1)
 
 [[nodiscard]]
-int_fast32_t vm_tokenizer_syntax_check(const struct Args* const restrict args)
+int vm_tokenizer_syntax_check(const struct Args* const restrict args)
 {
     assert(args);
 
@@ -149,13 +148,13 @@ int_fast32_t vm_tokenizer_syntax_check(const struct Args* const restrict args)
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
-int_fast32_t vm_tokenizer_ops_process(const struct Args* const restrict args, struct Tokens* const restrict tokens)
+int vm_tokenizer_ops_process(const struct Args* const restrict args, struct Tokens* const restrict tokens)
 {
     assert(args);
     assert(tokens);
 
     tokens->is_background_job = false;
-    for (uint_fast32_t i = 0; i < args->count; ++i) {
+    for (uint8_t i = 0; i < args->count; ++i) {
         switch (args->ops[i]) {
         case OP_STDOUT_REDIRECTION: {
             tokens->stdout_file = args->values[i + 1];
@@ -213,12 +212,12 @@ int_fast32_t vm_tokenizer_ops_process(const struct Args* const restrict args, st
 }
 
 [[nodiscard]]
-int_fast32_t vm_tokenizer_tokenize(const struct Args* const restrict args, struct Tokens* const restrict tokens)
+int vm_tokenizer_tokenize(const struct Args* const restrict args, struct Tokens* const restrict tokens)
 {
     assert(args);
     assert(tokens);
 
-    int_fast32_t result;
+    int result;
     if ((result = vm_tokenizer_syntax_check(args)) != NCSH_COMMAND_SUCCESS_CONTINUE) {
         return result;
     }

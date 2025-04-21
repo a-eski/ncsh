@@ -1,12 +1,10 @@
-/* Copyright ncsh by Alex Eski 2024 */
+/* Copyright ncsh (C) by Alex Eski 2024 */
 
 #define _POSIX_C_SOURCE 200809L
 #include <assert.h>
 #include <fcntl.h>
 #include <linux/limits.h>
-#include <stdbool.h>
 #include <stddef.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -25,7 +23,7 @@ int builtins_disabled_state = 0;
 
 #define Z_COMMAND_NOT_FOUND_MESSAGE "ncsh z: command not found, options not supported.\n"
 [[nodiscard]]
-int_fast32_t builtins_z(struct z_Database* const restrict z_db, struct Args* const restrict args,
+int builtins_z(struct z_Database* const restrict z_db, struct Args* const restrict args,
                         struct Arena* const arena, struct Arena* const scratch_arena)
 {
     assert(z_db);
@@ -86,7 +84,7 @@ int_fast32_t builtins_z(struct z_Database* const restrict z_db, struct Args* con
 
 #define HISTORY_COMMAND_NOT_FOUND_MESSAGE "ncsh history: command not found.\n"
 [[nodiscard]]
-int_fast32_t builtins_history(struct History* const restrict history, struct Args* const restrict args,
+int builtins_history(struct History* const restrict history, struct Args* const restrict args,
                               struct Arena* const arena, struct Arena* const scratch_arena)
 {
     if (args->count == 1) {
@@ -133,14 +131,14 @@ int_fast32_t builtins_history(struct History* const restrict history, struct Arg
 }
 
 [[nodiscard]]
-int_fast32_t builtins_exit(struct Args* const restrict args)
+int builtins_exit(struct Args* const restrict args)
 {
     (void)args;
     return NCSH_COMMAND_EXIT;
 }
 
 [[nodiscard]]
-int_fast32_t builtins_echo(struct Args* const restrict args)
+int builtins_echo(struct Args* const restrict args)
 {
     if (args->count <= 1) {
         return NCSH_COMMAND_SUCCESS_CONTINUE;
@@ -215,7 +213,7 @@ int_fast32_t builtins_echo(struct Args* const restrict args)
     }
 
 [[nodiscard]]
-int_fast32_t builtins_help(struct Args* const restrict args)
+int builtins_help(struct Args* const restrict args)
 {
     (void)args;
 
@@ -257,7 +255,7 @@ int_fast32_t builtins_help(struct Args* const restrict args)
 }
 
 [[nodiscard]]
-int_fast32_t builtins_cd(struct Args* const restrict args)
+int builtins_cd(struct Args* const restrict args)
 {
     if (!args->values[1]) {
         char* home = getenv("HOME");
@@ -279,7 +277,7 @@ int_fast32_t builtins_cd(struct Args* const restrict args)
 }
 
 [[nodiscard]]
-int_fast32_t builtins_pwd(struct Args* const restrict args)
+int builtins_pwd(struct Args* const restrict args)
 {
     (void)args;
 
@@ -297,7 +295,7 @@ int_fast32_t builtins_pwd(struct Args* const restrict args)
 #define KILL_NOTHING_TO_KILL_MESSAGE "ncsh kill: nothing to kill, please pass in a process ID (PID).\n"
 #define KILL_COULDNT_PARSE_PID_MESSAGE "ncsh kill: could not parse process ID (PID) from arguments.\n"
 [[nodiscard]]
-int_fast32_t builtins_kill(struct Args* const restrict args)
+int builtins_kill(struct Args* const restrict args)
 {
     if (!args->values[1]) {
         if (write(STDOUT_FILENO, KILL_NOTHING_TO_KILL_MESSAGE, sizeof(KILL_NOTHING_TO_KILL_MESSAGE) - 1) == -1) {
@@ -323,7 +321,7 @@ int_fast32_t builtins_kill(struct Args* const restrict args)
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
-int_fast32_t builtins_version(struct Args* const restrict args)
+int builtins_version(struct Args* const restrict args)
 {
     (void)args;
 
@@ -358,7 +356,7 @@ void builtins_print_enabled()
     }
 }
 
-int_fast32_t builtins_disable(struct Args* const restrict args)
+int builtins_disable(struct Args* const restrict args)
 {
     // check if called by enabled or disabled
     size_t i = args->values[0][0] == 'e' ? 2 : 1;
@@ -378,7 +376,7 @@ int_fast32_t builtins_disable(struct Args* const restrict args)
 }
 
 #define ENABLE_OPTION_NOT_SUPPORTED_MESSAGE "ncsh enable: command not found, option not supported.\n"
-int_fast32_t builtins_enable(struct Args* const restrict args)
+int builtins_enable(struct Args* const restrict args)
 {
     if (!args->values[1]) {
         builtins_print();
@@ -404,7 +402,7 @@ int_fast32_t builtins_enable(struct Args* const restrict args)
 
 // NOTE: set is not implemented.
 [[nodiscard]]
-int_fast32_t builtins_set_e()
+int builtins_set_e()
 {
     puts("set e detected");
     return NCSH_COMMAND_SUCCESS_CONTINUE;
@@ -413,7 +411,7 @@ int_fast32_t builtins_set_e()
 #define SET_NOTHING_TO_SET_MESSAGE "ncsh set: nothing to set, please pass in a value to set (i.e. '-e', '-c')\n"
 #define SET_VALID_OPERATIONS_MESSAGE "ncsh set: valid set operations are in the form '-e', '-c', etc.\n"
 [[nodiscard]]
-int_fast32_t builtins_set(struct Args* const restrict args)
+int builtins_set(struct Args* const restrict args)
 {
     if (!args->values[1]) {
         if (write(STDOUT_FILENO, SET_NOTHING_TO_SET_MESSAGE, sizeof(SET_NOTHING_TO_SET_MESSAGE) - 1) == -1) {
@@ -446,7 +444,7 @@ int_fast32_t builtins_set(struct Args* const restrict args)
 // not implemented
 #define UNSET_NOTHING_TO_UNSET_MESSAGE "ncsh unset: nothing to unset, please pass in a value to unset.\n"
 [[nodiscard]]
-int_fast32_t builtins_unset(struct Args* const restrict args)
+int builtins_unset(struct Args* const restrict args)
 {
     if (!args->values[1]) {
         if (write(STDOUT_FILENO, UNSET_NOTHING_TO_UNSET_MESSAGE, sizeof(UNSET_NOTHING_TO_UNSET_MESSAGE) - 1) == -1) {

@@ -2,8 +2,6 @@
 
 #pragma once
 
-#include <stdint.h>
-
 // input definitions
 #define ESCAPE_CHARACTER 27 // "\033" or "^["
 #define DOUBLE_QUOTE_KEY '\"'
@@ -13,9 +11,10 @@
 #define CTRL_W 23
 #define BACKSPACE_KEY 127
 #define TAB_KEY '\t'
+// #define CTRL_CHARACTER '^'
 
-// input definitions for multiple character inputs
-// only includes the final character.
+//  input definitions for multiple character inputs
+//  only includes the final character.
 #define UP_ARROW 'A'         // "\033[[A" or "^[[A"
 #define DOWN_ARROW 'B'       // "\033[[B" or "^[[B"
 #define RIGHT_ARROW 'C'      // "\033[[C" or "^[[C"

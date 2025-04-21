@@ -1,5 +1,3 @@
-#include <stdbool.h>
-#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -122,7 +120,7 @@ void ac_add_duplicate_test(void)
     struct Autocompletion_Node* third_node = second_node->nodes[char_to_index('d')];
     eassert(third_node != NULL);
     eassert(third_node->is_end_of_a_word == true);
-    eassert(third_node->weight == 2);
+    eassert(third_node->weight == 3); // starts at 1, each add adds 1
 
     ARENA_TEST_TEARDOWN;
 }
@@ -340,7 +338,7 @@ void ac_get_test(void)
     eassert(search_res != NULL);
 
     struct Autocompletion autocomplete[NCSH_MAX_AUTOCOMPLETION_MATCHES] = {0};
-    uint_fast32_t match_count = ac_get("ls | ", autocomplete, tree, scratch_arena);
+    uint8_t match_count = ac_get("ls | ", autocomplete, tree, scratch_arena);
 
     eassert(match_count == 3);
     eassert(memcmp(autocomplete[0].value, "sort", 5) == 0);
@@ -372,7 +370,7 @@ void ac_get_spaces_test(void)
     eassert(search_res != NULL);
 
     struct Autocompletion autocomplete[NCSH_MAX_AUTOCOMPLETION_MATCHES] = {0};
-    uint_fast32_t match_count = ac_get("ls", autocomplete, tree, scratch_arena);
+    uint8_t match_count = ac_get("ls", autocomplete, tree, scratch_arena);
 
     eassert(match_count == 4);
     eassert(!memcmp(autocomplete[0].value, " > t.txt", 9));
@@ -402,7 +400,7 @@ void ac_get_no_results_test(void)
     ac_add("ss", 3, tree, &arena);
 
     struct Autocompletion autocomplete[NCSH_MAX_AUTOCOMPLETION_MATCHES] = {0};
-    uint_fast32_t match_count = ac_get("n", autocomplete, tree, scratch_arena);
+    uint8_t match_count = ac_get("n", autocomplete, tree, scratch_arena);
 
     eassert(match_count == 0);
     eassert(autocomplete[0].value == NULL);
@@ -429,7 +427,7 @@ void ac_get_multiple_test(void)
     ac_add("ss", 3, tree, &arena);
 
     struct Autocompletion autocomplete[NCSH_MAX_AUTOCOMPLETION_MATCHES] = {0};
-    uint_fast32_t match_count = ac_get("ls | ", autocomplete, tree, scratch_arena);
+    uint8_t match_count = ac_get("ls | ", autocomplete, tree, scratch_arena);
 
     eassert(match_count == 3);
     eassert(memcmp(autocomplete[0].value, "sort", 5) == 0);
@@ -470,7 +468,7 @@ void ac_get_multiple_simulation_test(void)
     ac_add("nvim .", 7, tree, &arena);
 
     struct Autocompletion autocomplete[NCSH_MAX_AUTOCOMPLETION_MATCHES] = {0};
-    uint_fast32_t match_count = ac_get("l", autocomplete, tree, scratch_arena);
+    uint8_t match_count = ac_get("l", autocomplete, tree, scratch_arena);
 
     eassert(match_count == 5);
     eassert(memcmp(autocomplete[0].value, "s", 2) == 0);
@@ -492,6 +490,35 @@ void ac_get_multiple_simulation_test(void)
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
+void ac_first_test(void)
+{
+    ARENA_TEST_SETUP;
+    SCRATCH_ARENA_TEST_SETUP;
+
+    struct Autocompletion_Node* tree = ac_alloc(&arena);
+    eassert(tree != NULL);
+
+    ac_add("ls", 3, tree, &arena);
+    ac_add("ls | wc -c", 11, tree, &arena);
+    ac_add("ls | sort", 10, tree, &arena);
+    ac_add("ls | sort | wc -c", 18, tree, &arena);
+    ac_add("ls | sort | wc -c", 18, tree, &arena);
+    ac_add("ls | sort | wc -c", 18, tree, &arena);
+    ac_add("ls > t.txt", 11, tree, &arena);
+
+    struct Autocompletion_Node* search_res = ac_find("ls | ", tree);
+    eassert(search_res != NULL);
+
+    char match[NCSH_MAX_INPUT] = {0};
+    uint8_t match_count = ac_first("ls | ", match, tree, scratch_arena);
+
+    eassert(match_count == 1);
+    eassert(!memcmp(match, "sort | wc -c", 13));
+
+    ARENA_TEST_TEARDOWN;
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
 void ac_tests(void)
 {
     etest_start();
@@ -500,16 +527,21 @@ void ac_tests(void)
     etest_run(ac_add_test);
     etest_run(ac_add_spaces_test);
     etest_run(ac_add_duplicate_test);
+
     etest_run(ac_add_multiple_unrelated_test);
     etest_run(ac_add_multiple_related_test);
+
     etest_run(ac_find_test);
     etest_run(ac_find_no_results_test);
     etest_run(ac_find_commands_test);
+
     etest_run(ac_get_test);
     etest_run(ac_get_spaces_test);
     etest_run(ac_get_no_results_test);
     etest_run(ac_get_multiple_test);
     etest_run(ac_get_multiple_simulation_test);
+
+    etest_run(ac_first_test);
 
     etest_finish();
 }

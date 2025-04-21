@@ -7,8 +7,6 @@
 #include <assert.h>
 #include <dirent.h>
 #include <linux/limits.h>
-#include <stdbool.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

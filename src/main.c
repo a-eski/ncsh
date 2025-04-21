@@ -7,8 +7,6 @@
 #include <limits.h>
 #include <linux/limits.h>
 #include <setjmp.h>
-#include <stdbool.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -152,7 +150,7 @@ void cleanup(char* shell_memory, struct Shell* shell)
  * The scratch arena needs to be valid for scope of vm_execute, since values are stored in the scratch arena.
  * Do not change scratch arena to struct Arena* (pointer).
  */
-int_fast32_t run(struct Shell* shell, struct Arena scratch_arena)
+int run(struct Shell* shell, struct Arena scratch_arena)
 {
     parser_parse(shell->input.buffer, shell->input.pos, &shell->args, &shell->arena, &scratch_arena);
 
@@ -193,7 +191,7 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
 
-    int_fast32_t exit_code = EXIT_SUCCESS;
+    int exit_code = EXIT_SUCCESS;
 
     if (setjmp(env)) {
         goto exit;
@@ -206,7 +204,7 @@ int main(int argc, char** argv)
 #endif
 
     while (1) {
-        int_fast32_t input_result = ncreadline(&shell.input, &shell.scratch_arena);
+        int input_result = ncreadline(&shell.input, &shell.scratch_arena);
         switch (input_result) {
         case EXIT_FAILURE: {
             exit_code = EXIT_FAILURE;
@@ -220,7 +218,7 @@ int main(int argc, char** argv)
         }
         }
 
-        int_fast32_t command_result = run(&shell, shell.scratch_arena);
+        int command_result = run(&shell, shell.scratch_arena);
         switch (command_result) {
         case NCSH_COMMAND_EXIT_FAILURE: {
             exit_code = EXIT_FAILURE;
@@ -228,10 +226,6 @@ int main(int argc, char** argv)
         }
         case NCSH_COMMAND_EXIT: {
             goto exit;
-        }
-        case NCSH_COMMAND_SYNTAX_ERROR:
-        case NCSH_COMMAND_FAILED_CONTINUE: {
-            goto reset;
         }
         }
 

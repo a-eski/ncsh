@@ -1,6 +1,4 @@
-#include <stdbool.h>
 #include <stddef.h>
-#include <stdlib.h> // used by macros
 
 #include "../src/eskilib/emap.h"
 #include "../src/eskilib/estr.h"
