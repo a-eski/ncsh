@@ -2,8 +2,8 @@
 
 #pragma once
 
-#include <stdint.h>
 #include <fcntl.h>
+#include <stdint.h>
 
 #include "../parser.h"
 #include "../types.h"

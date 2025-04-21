@@ -39,7 +39,8 @@ static inline void debugf_internal(const char* file, int line, const char* func,
     fflush(stderr);
 }
 
-static inline void debug_line_internal(const char* file, int line, const char* func, char* buffer, size_t buf_position, size_t max_buf_position)
+static inline void debug_line_internal(const char* file, int line, const char* func, char* buffer, size_t buf_position,
+                                       size_t max_buf_position)
 {
     fprintf(stderr, "%s %s:%d ", file, func, line);
     fprintf(stderr, "buffer: %s\n", buffer);
@@ -48,10 +49,10 @@ static inline void debug_line_internal(const char* file, int line, const char* f
     fprintf(stderr, "%s %s:%d ", file, func, line);
     fprintf(stderr, "max_buf_position %zu\n", max_buf_position);
     fflush(stderr);
-
 }
 
-static inline void debug_parser_input_internal(const char* file, int line, const char* func, const char* buffer, size_t buf_position)
+static inline void debug_parser_input_internal(const char* file, int line, const char* func, const char* buffer,
+                                               size_t buf_position)
 {
     fprintf(stderr, "%s %s:%d ", file, func, line);
     fprintf(stderr, "buffer: %s\n", buffer);
@@ -85,7 +86,8 @@ static inline void debug_argsv_internal(const char* file, int line, const char* 
     fflush(stderr);
 }
 
-static inline void debug_string_internal(const char* file, int line, const char* func, struct estr string, const char* name)
+static inline void debug_string_internal(const char* file, int line, const char* func, struct estr string,
+                                         const char* name)
 {
     fprintf(stderr, "%s %s:%d ", file, func, line);
     fprintf(stderr, "%s value: %s\n", name, string.value);
