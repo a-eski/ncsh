@@ -26,6 +26,8 @@ void parser_parse_ls_test()
     eassert(args.ops[0] == OP_CONSTANT);
     eassert(args.lengths[0] == length);
 
+    eassert(!args.values[1]);
+
     ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -53,6 +55,8 @@ void parser_parse_ls_dash_l_test()
     eassert(!memcmp(args.values[1], "-l", 3));
     eassert(args.ops[1] == OP_CONSTANT);
     eassert(args.lengths[1] == 3);
+
+    eassert(!args.values[2]);
 
     ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
@@ -85,6 +89,8 @@ void parser_parse_pipe_test()
     eassert(memcmp(args.values[2], "sort", 5) == 0);
     eassert(args.ops[2] == OP_CONSTANT);
     eassert(args.lengths[2] == 5);
+
+    eassert(!args.values[3]);
 
     ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
@@ -126,6 +132,8 @@ void parser_parse_multiple_pipe_test()
     eassert(args.ops[4] == OP_CONSTANT);
     eassert(args.lengths[4] == 6);
 
+    eassert(!args.values[5]);
+
     ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -153,6 +161,8 @@ void parser_parse_background_job_test()
     eassert(memcmp(args.values[1], "&", 2) == 0);
     eassert(args.ops[1] == OP_BACKGROUND_JOB);
     eassert(args.lengths[1] == 2);
+
+    eassert(!args.values[2]);
 
     ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
@@ -186,6 +196,8 @@ void parser_parse_output_redirection_test()
     eassert(args.ops[2] == OP_CONSTANT);
     eassert(args.lengths[2] == 9);
 
+    eassert(!args.values[3]);
+
     ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -217,6 +229,8 @@ void parser_parse_output_redirection_append_test()
     eassert(memcmp(args.values[2], "text.txt", 9) == 0);
     eassert(args.ops[2] == OP_CONSTANT);
     eassert(args.lengths[2] == 9);
+
+    eassert(!args.values[3]);
 
     ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
@@ -250,6 +264,8 @@ void parser_parse_input_redirection_test()
     eassert(args.ops[2] == OP_CONSTANT);
     eassert(args.lengths[2] == 5);
 
+    eassert(!args.values[3]);
+
     ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -281,6 +297,8 @@ void parser_parse_stdout_and_stderr_redirection_test()
     eassert(memcmp(args.values[2], "text.txt", 9) == 0);
     eassert(args.ops[2] == OP_CONSTANT);
     eassert(args.lengths[2] == 9);
+
+    eassert(!args.values[3]);
 
     ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
@@ -314,6 +332,8 @@ void parser_parse_stdout_and_stderr_redirection_append_test()
     eassert(args.ops[2] == OP_CONSTANT);
     eassert(args.lengths[2] == 9);
 
+    eassert(!args.values[3]);
+
     ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -333,6 +353,7 @@ void parser_parse_assignment_test()
 
     eassert(args.values);
     eassert(args.count == 0);
+    eassert(!args.values[0]);
 
     char* var = "STR";
     struct estr* val = var_get(var, &args.vars);
@@ -368,6 +389,8 @@ void parser_parse_variable_test()
     eassert(args.ops[0] == OP_VARIABLE);
     eassert(!memcmp(args.values[0], var, args.lengths[0]));
 
+    eassert(!args.values[1]);
+
     ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -390,6 +413,8 @@ void parser_parse_variable_and_test()
     eassert(args.ops[0] == OP_VARIABLE);
     eassert(!memcmp(args.values[0], "$STR", args.lengths[0]));
 
+    eassert(!args.values[1]);
+
     ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -409,6 +434,7 @@ void parser_parse_variable_command_test()
 
     eassert(args.values);
     eassert(args.count == 0);
+    eassert(!args.values[0]);
 
     char* var = "$COMMAND";
     size_t var_len = strlen(var);
@@ -418,6 +444,8 @@ void parser_parse_variable_command_test()
     eassert(args.count == 1);
     eassert(args.ops[0] == OP_VARIABLE);
     eassert(!memcmp(args.values[0], var, args.lengths[0]));
+
+    eassert(!args.values[1]);
 
     ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
@@ -445,6 +473,8 @@ void parser_parse_double_quotes_test()
     eassert(memcmp(args.values[1], "hello", 6) == 0);
     eassert(args.lengths[1] == 6);
 
+    eassert(!args.values[2]);
+
     ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -471,6 +501,8 @@ void parser_parse_single_quotes_test()
     eassert(memcmp(args.values[1], "hello", 6) == 0);
     eassert(args.lengths[1] == 6);
 
+    eassert(!args.values[2]);
+
     ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -496,6 +528,8 @@ void parser_parse_backtick_quotes_test()
 
     eassert(memcmp(args.values[1], "hello", 6) == 0);
     eassert(args.lengths[1] == 6);
+
+    eassert(!args.values[2]);
 
     ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
@@ -533,6 +567,8 @@ void parser_parse_git_commit_test()
     eassert(args.lengths[3] == 25);
     eassert(args.ops[3] == OP_CONSTANT);
 
+    eassert(!args.values[4]);
+
     ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -559,6 +595,8 @@ void parser_parse_home_test()
     eassert(memcmp(args.values[1], "/home/alex", 11) == 0);
     eassert(args.lengths[1] == 11);
 
+    eassert(!args.values[2]);
+
     ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -584,6 +622,8 @@ void parser_parse_home_at_start_test()
 
     eassert(memcmp(args.values[1], "/home/alex/snap", 16) == 0);
     eassert(args.lengths[1] == 16);
+
+    eassert(!args.values[2]);
 
     ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
@@ -619,6 +659,8 @@ void parser_parse_math_operators()
     eassert(args.ops[12] == OP_EXPONENTIATION);
 
     eassert(args.ops[14] == OP_MATH_EXPRESSION_END);
+
+    eassert(!args.values[15]);
 
     ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
@@ -721,6 +763,8 @@ void parser_parse_bool_test()
     eassert(memcmp(args.values[4], "false", 6) == 0);
     eassert(args.lengths[4] == 6);
     eassert(args.ops[4] == OP_FALSE);
+
+    eassert(!args.values[5]);
 
     ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
