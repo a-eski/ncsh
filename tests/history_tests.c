@@ -8,7 +8,7 @@
 #include "../src/readline/history.h"
 #include "lib/arena_test_helper.h"
 
-void history_load_file_not_exists_test(void)
+void history_load_file_not_exists_test()
 {
     remove(NCSH_HISTORY_FILE);
 
@@ -27,7 +27,7 @@ void history_load_file_not_exists_test(void)
     ARENA_TEST_TEARDOWN;
 }
 
-void history_load_file_exists_test(void)
+void history_load_file_exists_test()
 {
     ARENA_TEST_SETUP;
 
@@ -44,7 +44,7 @@ void history_load_file_exists_test(void)
     ARENA_TEST_TEARDOWN;
 }
 
-void history_get_empty_file_test(void)
+void history_get_empty_file_test()
 {
     ARENA_TEST_SETUP;
 
@@ -61,7 +61,7 @@ void history_get_empty_file_test(void)
     ARENA_TEST_TEARDOWN;
 }
 
-void history_get_null_entries_test(void)
+void history_get_null_entries_test()
 {
     struct History history_null_entries = {0};
     history_null_entries.entries = NULL;
@@ -70,7 +70,7 @@ void history_get_null_entries_test(void)
     eassert(entry_history_null.value == NULL);
 }
 
-void history_get_position_gt_history_count_test(void)
+void history_get_position_gt_history_count_test()
 {
     ARENA_TEST_SETUP;
 
@@ -93,7 +93,7 @@ void history_get_position_gt_history_count_test(void)
     ARENA_TEST_TEARDOWN;
 }
 
-void history_get_position_equals_history_count_test(void)
+void history_get_position_equals_history_count_test()
 {
     ARENA_TEST_SETUP;
 
@@ -117,7 +117,7 @@ void history_get_position_equals_history_count_test(void)
     ARENA_TEST_TEARDOWN;
 }
 
-void history_get_position_gt_max_test(void)
+void history_get_position_gt_max_test()
 {
     ARENA_TEST_SETUP;
 
@@ -137,7 +137,7 @@ void history_get_position_gt_max_test(void)
     ARENA_TEST_TEARDOWN;
 }
 
-void history_save_adds_to_file(void)
+void history_save_adds_to_file()
 {
     ARENA_TEST_SETUP;
 
@@ -165,7 +165,7 @@ void history_save_adds_to_file(void)
     ARENA_TEST_TEARDOWN;
 }
 
-void history_save_adds_multiple_to_file(void)
+void history_save_adds_multiple_to_file()
 {
     ARENA_TEST_SETUP;
 
@@ -207,7 +207,7 @@ void history_save_adds_multiple_to_file(void)
     ARENA_TEST_TEARDOWN;
 }
 
-void history_get_position_last_entry_test(void)
+void history_get_position_last_entry_test()
 {
     ARENA_TEST_SETUP;
 
@@ -227,7 +227,7 @@ void history_get_position_last_entry_test(void)
     ARENA_TEST_TEARDOWN;
 }
 
-void history_load_and_get_entries_test(void)
+void history_load_and_get_entries_test()
 {
     ARENA_TEST_SETUP;
 
@@ -252,7 +252,7 @@ void history_load_and_get_entries_test(void)
     ARENA_TEST_TEARDOWN;
 }
 
-void history_load_and_get_entries_then_add_entries_test(void)
+void history_load_and_get_entries_then_add_entries_test()
 {
     ARENA_TEST_SETUP;
 
@@ -288,7 +288,7 @@ void history_load_and_get_entries_then_add_entries_test(void)
     ARENA_TEST_TEARDOWN;
 }
 
-void history_tests(void)
+int main()
 {
     etest_start();
 
@@ -306,11 +306,6 @@ void history_tests(void)
     etest_run(history_load_and_get_entries_then_add_entries_test);
 
     etest_finish();
-}
-
-int main(void)
-{
-    history_tests();
 
     return EXIT_SUCCESS;
 }

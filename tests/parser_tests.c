@@ -6,7 +6,7 @@
 #include "../src/parser.h"
 #include "lib/arena_test_helper.h"
 
-void parser_parse_ls_test(void)
+void parser_parse_ls_test()
 {
     ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
@@ -26,11 +26,13 @@ void parser_parse_ls_test(void)
     eassert(args.ops[0] == OP_CONSTANT);
     eassert(args.lengths[0] == length);
 
+    eassert(!args.values[1]);
+
     ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-void parser_parse_ls_dash_l_test(void)
+void parser_parse_ls_dash_l_test()
 {
     ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
@@ -54,11 +56,13 @@ void parser_parse_ls_dash_l_test(void)
     eassert(args.ops[1] == OP_CONSTANT);
     eassert(args.lengths[1] == 3);
 
+    eassert(!args.values[2]);
+
     ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-void parser_parse_pipe_test(void)
+void parser_parse_pipe_test()
 {
     ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
@@ -86,11 +90,13 @@ void parser_parse_pipe_test(void)
     eassert(args.ops[2] == OP_CONSTANT);
     eassert(args.lengths[2] == 5);
 
+    eassert(!args.values[3]);
+
     ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-void parser_parse_multiple_pipe_test(void)
+void parser_parse_multiple_pipe_test()
 {
     ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
@@ -126,11 +132,13 @@ void parser_parse_multiple_pipe_test(void)
     eassert(args.ops[4] == OP_CONSTANT);
     eassert(args.lengths[4] == 6);
 
+    eassert(!args.values[5]);
+
     ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-void parser_parse_background_job_test(void)
+void parser_parse_background_job_test()
 {
     ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
@@ -154,11 +162,13 @@ void parser_parse_background_job_test(void)
     eassert(args.ops[1] == OP_BACKGROUND_JOB);
     eassert(args.lengths[1] == 2);
 
+    eassert(!args.values[2]);
+
     ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-void parser_parse_output_redirection_test(void)
+void parser_parse_output_redirection_test()
 {
     ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
@@ -186,11 +196,13 @@ void parser_parse_output_redirection_test(void)
     eassert(args.ops[2] == OP_CONSTANT);
     eassert(args.lengths[2] == 9);
 
+    eassert(!args.values[3]);
+
     ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-void parser_parse_output_redirection_append_test(void)
+void parser_parse_output_redirection_append_test()
 {
     ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
@@ -218,11 +230,13 @@ void parser_parse_output_redirection_append_test(void)
     eassert(args.ops[2] == OP_CONSTANT);
     eassert(args.lengths[2] == 9);
 
+    eassert(!args.values[3]);
+
     ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-void parser_parse_input_redirection_test(void)
+void parser_parse_input_redirection_test()
 {
     ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
@@ -250,11 +264,13 @@ void parser_parse_input_redirection_test(void)
     eassert(args.ops[2] == OP_CONSTANT);
     eassert(args.lengths[2] == 5);
 
+    eassert(!args.values[3]);
+
     ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-void parser_parse_stdout_and_stderr_redirection_test(void)
+void parser_parse_stdout_and_stderr_redirection_test()
 {
     ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
@@ -282,11 +298,13 @@ void parser_parse_stdout_and_stderr_redirection_test(void)
     eassert(args.ops[2] == OP_CONSTANT);
     eassert(args.lengths[2] == 9);
 
+    eassert(!args.values[3]);
+
     ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-void parser_parse_stdout_and_stderr_redirection_append_test(void)
+void parser_parse_stdout_and_stderr_redirection_append_test()
 {
     ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
@@ -314,11 +332,13 @@ void parser_parse_stdout_and_stderr_redirection_append_test(void)
     eassert(args.ops[2] == OP_CONSTANT);
     eassert(args.lengths[2] == 9);
 
+    eassert(!args.values[3]);
+
     ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-void parser_parse_assignment_test(void)
+void parser_parse_assignment_test()
 {
     ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
@@ -333,6 +353,7 @@ void parser_parse_assignment_test(void)
 
     eassert(args.values);
     eassert(args.count == 0);
+    eassert(!args.values[0]);
 
     char* var = "STR";
     struct estr* val = var_get(var, &args.vars);
@@ -343,7 +364,7 @@ void parser_parse_assignment_test(void)
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-void parser_parse_variable_test(void)
+void parser_parse_variable_test()
 {
     ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
@@ -368,11 +389,13 @@ void parser_parse_variable_test(void)
     eassert(args.ops[0] == OP_VARIABLE);
     eassert(!memcmp(args.values[0], var, args.lengths[0]));
 
+    eassert(!args.values[1]);
+
     ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-void parser_parse_variable_and_test(void)
+void parser_parse_variable_and_test()
 {
     ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
@@ -390,11 +413,13 @@ void parser_parse_variable_and_test(void)
     eassert(args.ops[0] == OP_VARIABLE);
     eassert(!memcmp(args.values[0], "$STR", args.lengths[0]));
 
+    eassert(!args.values[1]);
+
     ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-void parser_parse_variable_command_test(void)
+void parser_parse_variable_command_test()
 {
     ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
@@ -409,6 +434,7 @@ void parser_parse_variable_command_test(void)
 
     eassert(args.values);
     eassert(args.count == 0);
+    eassert(!args.values[0]);
 
     char* var = "$COMMAND";
     size_t var_len = strlen(var);
@@ -419,11 +445,13 @@ void parser_parse_variable_command_test(void)
     eassert(args.ops[0] == OP_VARIABLE);
     eassert(!memcmp(args.values[0], var, args.lengths[0]));
 
+    eassert(!args.values[1]);
+
     ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-void parser_parse_double_quotes_test(void)
+void parser_parse_double_quotes_test()
 {
     ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
@@ -445,11 +473,13 @@ void parser_parse_double_quotes_test(void)
     eassert(memcmp(args.values[1], "hello", 6) == 0);
     eassert(args.lengths[1] == 6);
 
+    eassert(!args.values[2]);
+
     ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-void parser_parse_single_quotes_test(void)
+void parser_parse_single_quotes_test()
 {
     ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
@@ -471,11 +501,13 @@ void parser_parse_single_quotes_test(void)
     eassert(memcmp(args.values[1], "hello", 6) == 0);
     eassert(args.lengths[1] == 6);
 
+    eassert(!args.values[2]);
+
     ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-void parser_parse_backtick_quotes_test(void)
+void parser_parse_backtick_quotes_test()
 {
     ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
@@ -497,11 +529,13 @@ void parser_parse_backtick_quotes_test(void)
     eassert(memcmp(args.values[1], "hello", 6) == 0);
     eassert(args.lengths[1] == 6);
 
+    eassert(!args.values[2]);
+
     ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-void parser_parse_git_commit_test(void)
+void parser_parse_git_commit_test()
 {
     ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
@@ -533,11 +567,13 @@ void parser_parse_git_commit_test(void)
     eassert(args.lengths[3] == 25);
     eassert(args.ops[3] == OP_CONSTANT);
 
+    eassert(!args.values[4]);
+
     ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-void parser_parse_home_test(void)
+void parser_parse_home_test()
 {
     ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
@@ -559,11 +595,13 @@ void parser_parse_home_test(void)
     eassert(memcmp(args.values[1], "/home/alex", 11) == 0);
     eassert(args.lengths[1] == 11);
 
+    eassert(!args.values[2]);
+
     ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-void parser_parse_home_at_start_test(void)
+void parser_parse_home_at_start_test()
 {
     ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
@@ -585,11 +623,13 @@ void parser_parse_home_at_start_test(void)
     eassert(memcmp(args.values[1], "/home/alex/snap", 16) == 0);
     eassert(args.lengths[1] == 16);
 
+    eassert(!args.values[2]);
+
     ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-void parser_parse_math_operators(void)
+void parser_parse_math_operators()
 {
     ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
@@ -620,11 +660,13 @@ void parser_parse_math_operators(void)
 
     eassert(args.ops[14] == OP_MATH_EXPRESSION_END);
 
+    eassert(!args.values[15]);
+
     ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-void parser_parse_glob_star_shouldnt_crash(void)
+void parser_parse_glob_star_shouldnt_crash()
 {
     ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
@@ -644,7 +686,7 @@ void parser_parse_glob_star_shouldnt_crash(void)
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-void parser_parse_tilde_home_shouldnt_crash(void)
+void parser_parse_tilde_home_shouldnt_crash()
 {
     ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
@@ -665,7 +707,7 @@ void parser_parse_tilde_home_shouldnt_crash(void)
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-void parser_parse_glob_question_and_tilde_home_shouldnt_crash(void)
+void parser_parse_glob_question_and_tilde_home_shouldnt_crash()
 {
     ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
@@ -686,18 +728,52 @@ void parser_parse_glob_question_and_tilde_home_shouldnt_crash(void)
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-// forward declaration: implementation put at the end because it messes with clangd lsp
-void parser_parse_bad_input_shouldnt_crash(void);
-
-#ifdef NDEBUG
-void parser_release_tests(void)
+void parser_parse_bool_test()
 {
-    etest_run(parser_parse_home_test);
-    etest_run(parser_parse_home_at_start_test);
-}
-#endif /* ifdef NDEBUG */
+    ARENA_TEST_SETUP;
+    SCRATCH_ARENA_TEST_SETUP;
 
-void parser_parse_tests(void)
+    char* line = "false && true || false";
+    size_t length = strlen(line) + 1;
+
+    struct Args args;
+    enum eresult init_res = parser_init(&args, &arena);
+    eassert(init_res == E_SUCCESS);
+    parser_parse(line, length, &args, &arena, &scratch_arena);
+
+    eassert(args.values);
+    eassert(args.count == 5);
+
+    eassert(memcmp(args.values[0], "false", 6) == 0);
+    eassert(args.lengths[0] == 6);
+    eassert(args.ops[0] == OP_FALSE);
+
+    eassert(memcmp(args.values[1], "&&", 3) == 0);
+    eassert(args.lengths[1] == 3);
+    eassert(args.ops[1] == OP_AND);
+
+    eassert(memcmp(args.values[2], "true", 5) == 0);
+    eassert(args.lengths[2] == 5);
+    eassert(args.ops[2] == OP_TRUE);
+
+    eassert(memcmp(args.values[3], "||", 3) == 0);
+    eassert(args.lengths[3] == 3);
+    eassert(args.ops[3] == OP_OR);
+
+    eassert(memcmp(args.values[4], "false", 6) == 0);
+    eassert(args.lengths[4] == 6);
+    eassert(args.ops[4] == OP_FALSE);
+
+    eassert(!args.values[5]);
+
+    ARENA_TEST_TEARDOWN;
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
+// forward declaration: implementation put at the end because it messes with clangd lsp
+void parser_parse_bad_input_shouldnt_crash();
+
+int main()
 {
     etest_start();
 
@@ -731,19 +807,15 @@ void parser_parse_tests(void)
     etest_run(parser_parse_tilde_home_shouldnt_crash);
     etest_run(parser_parse_glob_question_and_tilde_home_shouldnt_crash);
     etest_run(parser_parse_bad_input_shouldnt_crash);
+    etest_run(parser_parse_bool_test);
 
     etest_finish();
-}
-
-int main(void)
-{
-    parser_parse_tests();
 
     return EXIT_SUCCESS;
 }
 
 // put at the end because it messes with clangd lsp
-void parser_parse_bad_input_shouldnt_crash(void)
+void parser_parse_bad_input_shouldnt_crash()
 {
     ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;

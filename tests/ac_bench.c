@@ -3,7 +3,7 @@
 #include "../src/readline/ac.h"
 #include "lib/arena_test_helper.h"
 
-void ac_bench(void)
+void ac_bench()
 {
     ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
@@ -197,7 +197,7 @@ void ac_bench(void)
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-int main(void)
+int main()
 {
     ac_bench();
 }

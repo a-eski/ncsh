@@ -88,7 +88,7 @@ check_local l:
 	set -e
 	make check
 	make test_z
-	make acceptance_tests
+	make at
 
 .PHONY: test_history, th
 test_history th:

@@ -2,7 +2,7 @@
 #include "../src/parser.h"
 #include "lib/arena_test_helper.h"
 
-void parser_parse_bench(void)
+void parser_parse_bench()
 {
     ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
@@ -44,7 +44,7 @@ void parser_parse_bench(void)
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-int main(void)
+int main()
 {
     parser_parse_bench();
 

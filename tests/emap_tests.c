@@ -5,7 +5,7 @@
 #include "../src/eskilib/etest.h"
 #include "lib/arena_test_helper.h"
 
-void emap_malloc_default_size_test(void)
+void emap_malloc_default_size_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
@@ -19,7 +19,7 @@ void emap_malloc_default_size_test(void)
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-void emap_add_one_test(void)
+void emap_add_one_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
@@ -43,7 +43,7 @@ void emap_add_one_test(void)
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-void emap_add_multiple_test(void)
+void emap_add_multiple_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
     struct emap ht;
@@ -78,7 +78,7 @@ void emap_add_multiple_test(void)
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-void emap_add_duplicate_test(void)
+void emap_add_duplicate_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
     struct emap ht;
@@ -95,7 +95,7 @@ void emap_add_duplicate_test(void)
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-void emap_tests(void)
+int main()
 {
     etest_start();
 
@@ -105,11 +105,6 @@ void emap_tests(void)
     etest_run(emap_add_duplicate_test);
 
     etest_finish();
-}
-
-int main(void)
-{
-    emap_tests();
 
     return EXIT_SUCCESS;
 }

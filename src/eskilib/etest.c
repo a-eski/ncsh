@@ -19,11 +19,11 @@ void etest_run_internal(const char* function_name, void (*function)(void))
 
     if (test_failed) {
         ++tests_failed;
-        printf(RED "%s failed.\n" RESET, function_name);
+        printf(RED "%s FAILED.\n" RESET, function_name);
     }
     else {
         ++tests_passed;
-        printf(GREEN "%s passed.\n" RESET, function_name);
+        printf(GREEN "%s PASSED.\n" RESET, function_name);
     }
 }
 

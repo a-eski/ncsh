@@ -7,6 +7,7 @@ require './acceptance_tests/tests/builtins'
 require './acceptance_tests/tests/expansion'
 require './acceptance_tests/tests/autocompletion'
 require './acceptance_tests/tests/history'
+require './acceptance_tests/tests/logic'
 require './acceptance_tests/tests/startup'
 require './acceptance_tests/tests/syntax'
 require './acceptance_tests/tests/variables'
@@ -390,6 +391,7 @@ def run_acceptance_tests(prompt_directory_option, prompt_user_option, is_custom_
   row = expansion_tests(row)
   row = variables_tests(row)
   row = parser_tests(row)
+  row = logic_tests(row)
   # row = paste_tests(row)
   # row = multiline_tests(row)
 end
