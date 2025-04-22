@@ -46,6 +46,10 @@
 // ops: variables
 #define ASSIGNMENT '='
 #define VARIABLE '$'
+// ops: boolean
+// prefixed with BOOL to avoid any possible conflicts in the future
+#define BOOL_TRUE "true"
+#define BOOL_FALSE "false"
 
 // expansions
 #define GLOB_STAR '*'
@@ -181,13 +185,25 @@ enum Ops parser_op_get(const char* const restrict line, const size_t length)
 
         return OP_CONSTANT;
     }
-    default: {
-        if (line[0] == VARIABLE) {
-            return OP_VARIABLE;
+    case 4: {
+        if (line[0] == 't' && !memcmp(line, BOOL_TRUE, 4)) {
+            return OP_TRUE;
         }
-        return OP_CONSTANT;
+        break;
+    }
+    case 5: {
+        if (line[0] == 'f' && !memcmp(line, BOOL_FALSE, 5)) {
+            return OP_FALSE;
+        }
+        break;
     }
     }
+
+    if (line[0] == VARIABLE) {
+        return OP_VARIABLE;
+    }
+
+    return OP_CONSTANT;
 }
 
 /* enum Parser_State

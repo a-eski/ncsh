@@ -649,7 +649,7 @@ int ncreadline_move_cursor_end(struct Input* const restrict input)
 }
 
 [[nodiscard]]
-char ncreadline_read(void)
+char ncreadline_read()
 {
     char character = 0;
     if (!read(STDIN_FILENO, &character, 1)) {

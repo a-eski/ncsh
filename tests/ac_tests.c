@@ -7,7 +7,7 @@
 #include "../src/readline/ac.h"
 #include "lib/arena_test_helper.h"
 
-void ac_add_length_mismatch_test(void)
+void ac_add_length_mismatch_test()
 {
     ARENA_TEST_SETUP;
 
@@ -22,7 +22,7 @@ void ac_add_length_mismatch_test(void)
     ARENA_TEST_TEARDOWN;
 }
 
-void ac_add_test(void)
+void ac_add_test()
 {
     ARENA_TEST_SETUP;
 
@@ -54,7 +54,7 @@ void ac_add_test(void)
     ARENA_TEST_TEARDOWN;
 }
 
-void ac_add_spaces_test(void)
+void ac_add_spaces_test()
 {
     ARENA_TEST_SETUP;
 
@@ -98,7 +98,7 @@ void ac_add_spaces_test(void)
     ARENA_TEST_TEARDOWN;
 }
 
-void ac_add_duplicate_test(void)
+void ac_add_duplicate_test()
 {
     ARENA_TEST_SETUP;
 
@@ -125,7 +125,7 @@ void ac_add_duplicate_test(void)
     ARENA_TEST_TEARDOWN;
 }
 
-void ac_add_multiple_unrelated_test(void)
+void ac_add_multiple_unrelated_test()
 {
     ARENA_TEST_SETUP;
 
@@ -163,7 +163,7 @@ void ac_add_multiple_unrelated_test(void)
     ARENA_TEST_TEARDOWN;
 }
 
-void ac_add_multiple_related_test(void)
+void ac_add_multiple_related_test()
 {
     ARENA_TEST_SETUP;
 
@@ -223,7 +223,7 @@ void ac_add_multiple_related_test(void)
     ARENA_TEST_TEARDOWN;
 }
 
-void ac_find_test(void)
+void ac_find_test()
 {
     ARENA_TEST_SETUP;
 
@@ -247,7 +247,7 @@ void ac_find_test(void)
     ARENA_TEST_TEARDOWN;
 }
 
-void ac_find_commands_test(void)
+void ac_find_commands_test()
 {
     ARENA_TEST_SETUP;
 
@@ -297,7 +297,7 @@ void ac_find_commands_test(void)
     ARENA_TEST_TEARDOWN;
 }
 
-void ac_find_no_results_test(void)
+void ac_find_no_results_test()
 {
     ARENA_TEST_SETUP;
 
@@ -317,7 +317,7 @@ void ac_find_no_results_test(void)
     ARENA_TEST_TEARDOWN;
 }
 
-void ac_get_test(void)
+void ac_get_test()
 {
     ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
@@ -349,7 +349,7 @@ void ac_get_test(void)
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-void ac_get_spaces_test(void)
+void ac_get_spaces_test()
 {
     ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
@@ -382,7 +382,7 @@ void ac_get_spaces_test(void)
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-void ac_get_no_results_test(void)
+void ac_get_no_results_test()
 {
     ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
@@ -409,7 +409,7 @@ void ac_get_no_results_test(void)
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-void ac_get_multiple_test(void)
+void ac_get_multiple_test()
 {
     ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
@@ -448,7 +448,7 @@ void ac_get_multiple_test(void)
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-void ac_get_multiple_simulation_test(void)
+void ac_get_multiple_simulation_test()
 {
     ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
@@ -490,7 +490,7 @@ void ac_get_multiple_simulation_test(void)
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-void ac_first_test(void)
+void ac_first_test()
 {
     ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
@@ -519,7 +519,30 @@ void ac_first_test(void)
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-void ac_tests(void)
+void ac_first_no_matches_test()
+{
+    ARENA_TEST_SETUP;
+    SCRATCH_ARENA_TEST_SETUP;
+
+    struct Autocompletion_Node* tree = ac_alloc(&arena);
+    eassert(tree != NULL);
+
+    ac_add("cat t.txt", 10, tree, &arena);
+    ac_add("rm t.txt", 9, tree, &arena);
+    ac_add("ss", 3, tree, &arena);
+    ac_add("nvim", 5, tree, &arena);
+    ac_add("nvim .", 7, tree, &arena);
+
+    char match[NCSH_MAX_INPUT] = {0};
+    uint8_t match_count = ac_first("ls", match, tree, scratch_arena);
+
+    eassert(!match_count);
+
+    ARENA_TEST_TEARDOWN;
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
+int main()
 {
     etest_start();
 
@@ -542,13 +565,9 @@ void ac_tests(void)
     etest_run(ac_get_multiple_simulation_test);
 
     etest_run(ac_first_test);
+    etest_run(ac_first_no_matches_test);
 
     etest_finish();
-}
-
-int main(void)
-{
-    ac_tests();
 
     return EXIT_SUCCESS;
 }

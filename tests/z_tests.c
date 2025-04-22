@@ -23,7 +23,7 @@ enum z_Result z_database_add(const char* const path, const size_t path_length, c
                              const size_t cwd_length, struct z_Database* const restrict db, struct Arena* const arena);
 
 // read from empty database file
-void z_read_empty_database_file_test(void)
+void z_read_empty_database_file_test()
 {
     remove(Z_DATABASE_FILE);
     ARENA_TEST_SETUP;
@@ -36,7 +36,7 @@ void z_read_empty_database_file_test(void)
 }
 
 // read from non-empty database
-void z_read_non_empty_database_test(void)
+void z_read_non_empty_database_test()
 {
     ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
@@ -70,7 +70,7 @@ void z_read_non_empty_database_test(void)
 }
 
 // add to empty database
-void z_add_to_database_empty_database_test(void)
+void z_add_to_database_empty_database_test()
 {
     ARENA_TEST_SETUP;
     remove(Z_DATABASE_FILE);
@@ -94,7 +94,7 @@ void z_add_to_database_empty_database_test(void)
 }
 
 // z add new entry
-void z_add_new_entry_test(void)
+void z_add_new_entry_test()
 {
     ARENA_TEST_SETUP;
     remove(Z_DATABASE_FILE);
@@ -113,7 +113,7 @@ void z_add_new_entry_test(void)
 }
 
 // z add existing entry
-void z_add_existing_in_database_new_entry(void)
+void z_add_existing_in_database_new_entry()
 {
     ARENA_TEST_SETUP;
 
@@ -133,7 +133,7 @@ void z_add_existing_in_database_new_entry(void)
 }
 
 // z add null parameters
-void z_add_null_parameters(void)
+void z_add_null_parameters()
 {
     ARENA_TEST_SETUP;
 
@@ -150,7 +150,7 @@ void z_add_null_parameters(void)
 }
 
 // z add bad parameters
-void z_add_bad_parameters(void)
+void z_add_bad_parameters()
 {
     ARENA_TEST_SETUP;
 
@@ -167,7 +167,7 @@ void z_add_bad_parameters(void)
     ARENA_TEST_TEARDOWN;
 }
 
-void z_add_new_entry_contained_in_another_entry_but_different_test(void)
+void z_add_new_entry_contained_in_another_entry_but_different_test()
 {
     ARENA_TEST_SETUP;
 
@@ -185,7 +185,7 @@ void z_add_new_entry_contained_in_another_entry_but_different_test(void)
 }
 
 // find empty database
-void z_match_find_empty_database_test(void)
+void z_match_find_empty_database_test()
 {
     remove(Z_DATABASE_FILE);
     ARENA_TEST_SETUP;
@@ -210,7 +210,7 @@ void z_match_find_empty_database_test(void)
 }
 
 // write to empty database
-void z_write_empty_database_test(void)
+void z_write_empty_database_test()
 {
     remove(Z_DATABASE_FILE);
     ARENA_TEST_SETUP;
@@ -236,7 +236,7 @@ void z_write_empty_database_test(void)
 }
 
 // try add bad/empty value to database
-void z_add_to_database_empty_value_test(void)
+void z_add_to_database_empty_value_test()
 {
     ARENA_TEST_SETUP;
 
@@ -253,7 +253,7 @@ void z_add_to_database_empty_value_test(void)
 }
 
 // adds new value to non-empty database
-void z_write_nonempty_database_test(void)
+void z_write_nonempty_database_test()
 {
     ARENA_TEST_SETUP;
 
@@ -279,7 +279,7 @@ void z_write_nonempty_database_test(void)
 }
 
 // find from non-empty database, exact match
-void z_match_find_finds_exact_match_test(void)
+void z_match_find_finds_exact_match_test()
 {
     ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
@@ -306,7 +306,7 @@ void z_match_find_finds_exact_match_test(void)
 }
 
 // find from non-empty database, match
-void z_match_find_finds_match_test(void)
+void z_match_find_finds_match_test()
 {
     ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
@@ -333,7 +333,7 @@ void z_match_find_finds_match_test(void)
 }
 
 // find from non-empty database, no match
-void z_match_find_no_match_test(void)
+void z_match_find_no_match_test()
 {
     ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
@@ -358,7 +358,7 @@ void z_match_find_no_match_test(void)
 }
 
 // find from non-empty database, multiple matches, takes highest score
-void z_match_find_multiple_matches_test(void)
+void z_match_find_multiple_matches_test()
 {
     ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
@@ -381,7 +381,7 @@ void z_match_find_multiple_matches_test(void)
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-void z_change_directory_test(void)
+void z_change_directory_test()
 {
     ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
@@ -419,7 +419,7 @@ void z_change_directory_test(void)
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-void z_home_empty_target_change_directory_test(void)
+void z_home_empty_target_change_directory_test()
 {
     ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
@@ -460,7 +460,7 @@ void z_home_empty_target_change_directory_test(void)
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-void z_no_match_change_directory_test(void)
+void z_no_match_change_directory_test()
 {
     ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
@@ -500,7 +500,7 @@ void z_no_match_change_directory_test(void)
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-void z_valid_subdirectory_change_directory_test(void)
+void z_valid_subdirectory_change_directory_test()
 {
     ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
@@ -541,7 +541,7 @@ void z_valid_subdirectory_change_directory_test(void)
 }
 
 // multiple dirs i.e. ncsh -> src/z
-void z_dir_slash_dir_change_directory_test(void)
+void z_dir_slash_dir_change_directory_test()
 {
     ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
@@ -586,7 +586,7 @@ void z_dir_slash_dir_change_directory_test(void)
 }
 
 // normal things like ..
-void z_double_dot_change_directory_test(void)
+void z_double_dot_change_directory_test()
 {
     ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
@@ -627,7 +627,7 @@ void z_double_dot_change_directory_test(void)
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-void z_empty_database_valid_subdirectory_change_directory_test(void)
+void z_empty_database_valid_subdirectory_change_directory_test()
 {
     remove(Z_DATABASE_FILE);
     ARENA_TEST_SETUP;
@@ -669,7 +669,7 @@ void z_empty_database_valid_subdirectory_change_directory_test(void)
 }
 
 // checks that when multiple entries are contained in another, it chooses the correct entry.
-void z_contains_correct_match_test(void)
+void z_contains_correct_match_test()
 {
     ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
@@ -714,7 +714,7 @@ void z_contains_correct_match_test(void)
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-void z_crashing_input_test(void)
+void z_crashing_input_test()
 {
     ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
@@ -733,7 +733,7 @@ void z_crashing_input_test(void)
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-int main(void)
+int main()
 {
     etest_start();
 

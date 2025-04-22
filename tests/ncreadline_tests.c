@@ -32,13 +32,13 @@ void ncreadline_prompt_size_only_prompt_and_dir_test()
     eassert(result == NCSH_PROMPT_ENDING_STRING_LENGTH + sizeof(dir) - 1);
 }
 
-void ncreadline_prompt_size_all_test(void)
+void ncreadline_prompt_size_all_test()
 {
     size_t result = ncreadline_prompt_size(sizeof(user), sizeof(dir));
     eassert(result == NCSH_PROMPT_ENDING_STRING_LENGTH + sizeof(user) - 1 + sizeof(dir));
 }
 
-void ncreadline_tests(void)
+int main()
 {
     etest_start();
 
@@ -48,11 +48,6 @@ void ncreadline_tests(void)
     etest_run(ncreadline_prompt_size_all_test);
 
     etest_finish();
-}
-
-int main(void)
-{
-    ncreadline_tests();
 
     return EXIT_SUCCESS;
 }

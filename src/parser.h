@@ -43,6 +43,9 @@ enum Ops : uint8_t {
     // Variables
     OP_VARIABLE = 22,
     OP_ASSIGNMENT = 23,
+    // Boolean
+    OP_TRUE = 24,
+    OP_FALSE = 25
 };
 
 /* struct Args

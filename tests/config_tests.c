@@ -3,7 +3,7 @@
 #include "../src/config.h"
 #include "../src/eskilib/etest.h"
 
-void config_alias_check_no_alias_test(void)
+void config_alias_check_no_alias_test()
 {
     char buffer[] = "echo hello";
     struct estr result = config_alias_check(buffer, sizeof(buffer));
@@ -12,7 +12,7 @@ void config_alias_check_no_alias_test(void)
     eassert(!result.value);
 }
 
-void config_alias_check_alias_found_test(void)
+void config_alias_check_alias_found_test()
 {
     char buffer[] = "n"; // alias for nvim
     struct estr result = config_alias_check(buffer, sizeof(buffer));
@@ -22,7 +22,7 @@ void config_alias_check_alias_found_test(void)
     eassert(!memcmp(result.value, expected_result, sizeof(expected_result)));
 }
 
-void config_alias_check_alias_found_multiple_chars_test(void)
+void config_alias_check_alias_found_multiple_chars_test()
 {
     char buffer[] = "fd"; // alias for fdfind
     struct estr result = config_alias_check(buffer, sizeof(buffer));
@@ -32,7 +32,7 @@ void config_alias_check_alias_found_multiple_chars_test(void)
     eassert(!memcmp(result.value, expected_result, sizeof(expected_result)));
 }
 
-void config_tests(void)
+int main()
 {
     etest_start();
 
@@ -41,11 +41,6 @@ void config_tests(void)
     etest_run(config_alias_check_alias_found_multiple_chars_test);
 
     etest_finish();
-}
-
-int main(void)
-{
-    config_tests();
 
     return EXIT_SUCCESS;
 }

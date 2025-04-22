@@ -5,7 +5,7 @@
 #include <stddef.h>
 #include <stdlib.h> // used by macros
 
-void var_malloc_default_size_test(void)
+void var_malloc_default_size_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
@@ -18,7 +18,7 @@ void var_malloc_default_size_test(void)
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-void var_add_one_test(void)
+void var_add_one_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
@@ -42,7 +42,7 @@ void var_add_one_test(void)
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-void var_add_multiple_test(void)
+void var_add_multiple_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
     struct var vars = {0};
@@ -78,7 +78,7 @@ void var_add_multiple_test(void)
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-void var_add_duplicate_test(void)
+void var_add_duplicate_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
     struct var vars = {0};
@@ -96,18 +96,16 @@ void var_add_duplicate_test(void)
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-void var_tests(void)
+int main()
 {
     etest_start();
+
     etest_run(var_malloc_default_size_test);
     etest_run(var_add_one_test);
     etest_run(var_add_multiple_test);
     etest_run(var_add_duplicate_test);
-    etest_finish();
-}
 
-int main(void)
-{
-    var_tests();
+    etest_finish();
+
     return EXIT_SUCCESS;
 }

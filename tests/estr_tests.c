@@ -4,7 +4,7 @@
 #include "../src/eskilib/estr.h"
 #include "../src/eskilib/etest.h"
 
-void estr_compare_no_length_test(void)
+void estr_compare_no_length_test()
 {
     char* val = "";
     constexpr size_t len = 0;
@@ -12,7 +12,7 @@ void estr_compare_no_length_test(void)
     eassert(!result);
 }
 
-void estr_compare_null_test(void)
+void estr_compare_null_test()
 {
     char* val = NULL;
     constexpr size_t len = 0;
@@ -20,14 +20,14 @@ void estr_compare_null_test(void)
     eassert(!result);
 }
 
-void estr_compare_empty_string_test(void)
+void estr_compare_empty_string_test()
 {
     struct estr str = estr_Empty;
     bool result = estrcmp(str.value, str.length, str.value, str.length);
     eassert(!result);
 }
 
-void estr_compare_true_test(void)
+void estr_compare_true_test()
 {
     char* val = "hello";
     constexpr size_t len = sizeof("hello") - 1;
@@ -35,7 +35,7 @@ void estr_compare_true_test(void)
     eassert(result);
 }
 
-void estr_compare_false_test(void)
+void estr_compare_false_test()
 {
     const struct estr s1 = estr_New_Literal("hello hello");
     const struct estr s2 = estr_New_Literal("hello there");
@@ -45,7 +45,7 @@ void estr_compare_false_test(void)
     eassert(!result);
 }
 
-void estr_compare_mismatched_lengths_false_test(void)
+void estr_compare_mismatched_lengths_false_test()
 {
     char* val = "hello";
     constexpr size_t len = sizeof("hello");
@@ -57,7 +57,7 @@ void estr_compare_mismatched_lengths_false_test(void)
     eassert(!result);
 }
 
-void estr_compare_partial_comparison_true_test(void)
+void estr_compare_partial_comparison_true_test()
 {
     char* val = "hello";
     // only compare the first three characters, 'hel'
@@ -66,7 +66,7 @@ void estr_compare_partial_comparison_true_test(void)
     eassert(result);
 }
 
-void estr_compare_partial_comparison_false_test(void)
+void estr_compare_partial_comparison_false_test()
 {
     const struct estr s1 = estr_New("hello hello", sizeof("hello hello") - 2);
     const struct estr s2 = estr_New("hello there", sizeof("hello there") - 2);
@@ -76,7 +76,7 @@ void estr_compare_partial_comparison_false_test(void)
     eassert(!result);
 }
 
-void estr_compare_const_no_length_test(void)
+void estr_compare_const_no_length_test()
 {
     const char* val = "";
     constexpr size_t len = 0;
@@ -84,7 +84,7 @@ void estr_compare_const_no_length_test(void)
     eassert(!result);
 }
 
-void estr_compare_const_null_test(void)
+void estr_compare_const_null_test()
 {
     const char* val = NULL;
     constexpr size_t len = 0;
@@ -92,14 +92,14 @@ void estr_compare_const_null_test(void)
     eassert(!result);
 }
 
-void estr_compare_const_empty_string_test(void)
+void estr_compare_const_empty_string_test()
 {
     const struct estr str = estr_Empty;
     bool result = estrcmp_cc(str.value, str.length, str.value, str.length);
     eassert(!result);
 }
 
-void estr_compare_const_true_test(void)
+void estr_compare_const_true_test()
 {
     char* val = "hello";
     constexpr size_t len = sizeof("hello") - 1;
@@ -107,7 +107,7 @@ void estr_compare_const_true_test(void)
     eassert(result);
 }
 
-void estr_compare_const_false_test(void)
+void estr_compare_const_false_test()
 {
     char* val = "hello hello";
     constexpr size_t len = sizeof("hello hello");
@@ -119,7 +119,7 @@ void estr_compare_const_false_test(void)
     eassert(!result);
 }
 
-void estr_compare_const_mismatched_lengths_false_test(void)
+void estr_compare_const_mismatched_lengths_false_test()
 {
     char* val = "hello";
     constexpr size_t len = sizeof("hello");
@@ -131,7 +131,7 @@ void estr_compare_const_mismatched_lengths_false_test(void)
     eassert(!result);
 }
 
-void estr_compare_const_partial_comparison_true_test(void)
+void estr_compare_const_partial_comparison_true_test()
 {
     char* val = "hello";
     // only compare the first three characters, 'hel'
@@ -140,7 +140,7 @@ void estr_compare_const_partial_comparison_true_test(void)
     eassert(result);
 }
 
-void estr_compare_const_partial_comparison_false_test(void)
+void estr_compare_const_partial_comparison_false_test()
 {
     char* val = "hello hello";
     constexpr size_t len = sizeof("hello hello") - 1 - 2;
@@ -152,7 +152,7 @@ void estr_compare_const_partial_comparison_false_test(void)
     eassert(!result);
 }
 
-void estr_tests(void)
+int main()
 {
     etest_start();
 
@@ -174,11 +174,6 @@ void estr_tests(void)
     etest_run(estr_compare_const_partial_comparison_false_test);
 
     etest_finish();
-}
-
-int main(void)
-{
-    estr_tests();
 
     return EXIT_SUCCESS;
 }

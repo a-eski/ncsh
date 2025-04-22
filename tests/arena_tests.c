@@ -5,7 +5,7 @@
 #include "../src/eskilib/etest.h"
 #include "lib/arena_test_helper.h"
 
-void arena_malloc_test(void)
+void arena_malloc_test()
 {
     ARENA_TEST_SETUP;
 
@@ -18,7 +18,7 @@ void arena_malloc_test(void)
     ARENA_TEST_TEARDOWN;
 }
 
-void arena_malloc_multiple_test(void)
+void arena_malloc_multiple_test()
 {
     ARENA_TEST_SETUP;
 
@@ -37,7 +37,7 @@ void arena_malloc_multiple_test(void)
     ARENA_TEST_TEARDOWN;
 }
 
-void arena_realloc_test(void)
+void arena_realloc_test()
 {
     ARENA_TEST_SETUP;
 
@@ -61,7 +61,7 @@ struct Test {
     size_t test;
 };
 
-void arena_realloc_non_char_test(void)
+void arena_realloc_non_char_test()
 {
     ARENA_TEST_SETUP;
 
@@ -85,7 +85,7 @@ void arena_realloc_non_char_test(void)
     ARENA_TEST_TEARDOWN;
 }
 
-void arena_tests(void)
+int main()
 {
     etest_start();
 
@@ -95,11 +95,6 @@ void arena_tests(void)
     etest_run(arena_realloc_non_char_test);
 
     etest_finish();
-}
-
-int main(void)
-{
-    arena_tests();
 
     return EXIT_SUCCESS;
 }
