@@ -20,6 +20,8 @@ def operators_invalid_syntax_first_position_test(row)
   row = assert_check_syntax_error(row, '&>') # output and error redirection
   row = assert_check_syntax_error(row, '&>>') # output and error redirection append
   row = assert_check_syntax_error(row, '&') # background job
+  row = assert_check_syntax_error(row, '&&') # and
+  row = assert_check_syntax_error(row, '||') # or
   test_passed('Invalid syntax in first position test')
   row
 end
@@ -33,6 +35,8 @@ def operators_invalid_syntax_last_position_test(row)
   row = assert_check_syntax_error(row, 'ls 2>>') # error redirection append
   row = assert_check_syntax_error(row, 'ls &>') # output and error redirection
   row = assert_check_syntax_error(row, 'ls &>>') # output and error redirection append
+  row = assert_check_syntax_error(row, 'ls &&') # and
+  row = assert_check_syntax_error(row, 'ls ||') # or
   test_passed('Invalid syntax in last position test')
   row
 end

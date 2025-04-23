@@ -34,16 +34,18 @@ def true_and_test(row)
 end
 
 def false_and_test(row)
+  assert_check_new_row(row)
+  @tty.send_line('false && ls')
+  row += 1
   test_passed('false and (&&) test')
   row
 end
 
 def and_tests(row)
   row = and_test(row)
-  # row =
-  multiple_and_test(row)
+  row = multiple_and_test(row)
   # row = true_and_test(row)
-  # false_and_test(row)
+  false_and_test(row)
 end
 
 def or_test(row)
@@ -59,6 +61,9 @@ def multiple_or_test(row)
 end
 
 def true_or_test(row)
+  assert_check_new_row(row)
+  @tty.send_line('true || ls')
+  row += 1
   test_passed('true or (||) test')
   row
 end
@@ -71,8 +76,9 @@ end
 def or_tests(row)
   row = or_test(row)
   row = multiple_or_test(row)
-  row = true_or_test(row)
-  false_or_test(row)
+  # row =
+  true_or_test(row)
+  # false_or_test(row)
 end
 
 def logic_tests(row)

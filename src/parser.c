@@ -411,7 +411,8 @@ void parser_parse(const char* const restrict line, const size_t length, struct A
             var_set(key, val, arena, &args->vars);
             parser_state &= ~IN_ASSIGNMENT;
         }
-        else if (!(args->count == 0 && CMP_2(parser_buffer, AND))) {
+        // TODO: fix this, this check is a hack to make sure && gets invalid syntax and STR=hello && $STR works as well.
+        else if (!(args->count == 0 && CMP_2(parser_buffer, AND) && parser_assignment_pos)) {
             args->values[args->count] = arena_malloc(scratch_arena, parser_buf_pos + 1, char);
             memcpy(args->values[args->count], parser_buffer, parser_buf_pos + 1);
             args->ops[args->count] = parser_op_get(parser_buffer, parser_buf_pos);

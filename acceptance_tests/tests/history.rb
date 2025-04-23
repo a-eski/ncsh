@@ -55,8 +55,19 @@ def history_clear_test(row)
   assert_check_new_row(row)
   assert_history_up_result(row, 'ls | head -1')
   @tty.send_down_arrow
-  assert_check_new_row(row)
   test_passed('History clear test')
+  row
+end
+
+def history_add_test(row)
+  assert_check_new_row(row)
+  @tty.send_line('history add "nvim ."')
+  row += 1
+  @tty.send_up_arrow
+  @tty.assert_row_ends_with(row, 'history add "nvim ."')
+  @tty.send_backspaces(20)
+  assert_check_new_row(row)
+  test_passed('History add test')
   row
 end
 
@@ -66,8 +77,9 @@ def history_tests(row)
   row = basic_history_test(row)
   row = history_delete_test(row)
   row = history_backspace_test(row)
-  history_clear_test(row)
-  # row = history_add_test(row)
+  row = history_clear_test(row)
+  # row =
+  history_add_test(row)
   # row = history_remove_test(row)
   # row = history_clean_test(row)
 end

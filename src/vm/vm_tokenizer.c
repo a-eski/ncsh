@@ -81,6 +81,20 @@ int vm_tokenizer_syntax_error(const char* const message, const size_t message_le
     "ncsh: Invalid syntax: found background job operator ('&') in position other than last argument. Correct usage "   \
     "of background job operator is 'program &'.\n"
 
+#define INVALID_SYNTAX_AND_IN_LAST_POSITION                                                                            \
+    "ncsh: Invalid syntax: found and operator ('&&') as last argument. Correct usage of and operator is "              \
+    "'true && true'\n"
+#define INVALID_SYNTAX_AND_IN_FIRST_POSITION                                                                           \
+    "ncsh: Invalid syntax: found and operator ('&&') as first argument. Correct usage of and operator is "             \
+    "'true && true'\n"
+
+#define INVALID_SYNTAX_OR_IN_LAST_POSITION                                                                             \
+    "ncsh: Invalid syntax: found or operator ('||') as last argument. Correct usage of or operator is "                \
+    "'false || true'\n"
+#define INVALID_SYNTAX_OR_IN_FIRST_POSITION                                                                            \
+    "ncsh: Invalid syntax: found or operator ('||') as first argument. Correct usage of or operator is "               \
+    "'false || true'\n"
+
 #define INVALID_SYNTAX(message) vm_tokenizer_syntax_error(message, sizeof(message) - 1)
 
 [[nodiscard]]
@@ -116,6 +130,12 @@ int vm_tokenizer_syntax_check(const struct Args* const restrict args)
     case OP_BACKGROUND_JOB: {
         return INVALID_SYNTAX(INVALID_SYNTAX_BACKGROUND_JOB_FIRST_ARG);
     }
+    case OP_AND: {
+        return INVALID_SYNTAX(INVALID_SYNTAX_AND_IN_FIRST_POSITION);
+    }
+    case OP_OR: {
+        return INVALID_SYNTAX(INVALID_SYNTAX_OR_IN_FIRST_POSITION);
+    }
     }
 
     switch (args->ops[args->count - 1]) {
@@ -142,6 +162,12 @@ int vm_tokenizer_syntax_check(const struct Args* const restrict args)
     }
     case OP_STDOUT_AND_STDERR_REDIRECTION_APPEND: {
         return INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_AND_STDERR_REDIR_APPEND_LAST_ARG);
+    }
+    case OP_AND: {
+        return INVALID_SYNTAX(INVALID_SYNTAX_AND_IN_LAST_POSITION);
+    }
+    case OP_OR: {
+        return INVALID_SYNTAX(INVALID_SYNTAX_OR_IN_LAST_POSITION);
     }
     }
 
@@ -203,6 +229,7 @@ int vm_tokenizer_ops_process(const struct Args* const restrict args, struct Toke
                 return INVALID_SYNTAX(INVALID_SYNTAX_BACKGROUND_JOB_NOT_LAST_ARG);
             }
             tokens->is_background_job = true;
+            break;
         }
         }
     }

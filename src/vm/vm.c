@@ -43,7 +43,6 @@
 #endif /* NCSH_VM_TEST */
 // clang-format on
 
-extern jmp_buf env;
 extern sig_atomic_t vm_child_pid;
 
 /* IO Redirection */
@@ -323,9 +322,10 @@ int vm_fork_failure(const size_t command_position, const size_t number_of_comman
 /* Background Jobs */
 // Implementation not working, still experimenting...
 [[nodiscard]]
-int vm_run_background_job(struct Args* const restrict args, struct Processes* const restrict processes,
+int vm_background_job_run(struct Args* const restrict args, struct Processes* const restrict processes,
                                    struct Tokens* const restrict tokens)
 {
+    assert(processes);
     (void)tokens;
 
     int execvp_result = NCSH_COMMAND_NONE;
@@ -336,7 +336,7 @@ int vm_run_background_job(struct Args* const restrict args, struct Processes* co
         fflush(stdout);
         return NCSH_COMMAND_EXIT_FAILURE;
     }
-    else if (pid == 0) {
+    else if (pid == 0) { // runs in the child process
         setsid();
         signal(SIGCHLD, SIG_DFL); // Restore default handler in child
 
@@ -356,11 +356,48 @@ int vm_run_background_job(struct Args* const restrict args, struct Processes* co
     }
     else {
         signal(SIGCHLD, SIG_IGN); // Prevent zombie processes
-        size_t job_number = !processes ? 0 : ++processes->job_number;
-        printf("job [%zu] pid [%d]\n", job_number, pid); // Job number and PID
+        size_t job_number = ++processes->job_number;
+        printf("job [%zu] pid [%d]\n", job_number, pid);
+        processes->pids[job_number - 1] = pid;
     }
 
     return NCSH_COMMAND_SUCCESS_CONTINUE;
+}
+
+void vm_background_jobs_check(struct Processes* const restrict processes)
+{
+    assert(processes);
+    (void)processes;
+
+    for (size_t i = 0; i < processes->job_number; ++i) {
+        pid_t waitpid_result;
+        while (1) {
+            int status = 0;
+            waitpid_result = waitpid(processes->pids[0], &status, WUNTRACED);
+
+            // check for errors
+            if (waitpid_result == -1) {
+                /* ignore EINTR, occurs when SA_RESTART is not specified in sigaction flags */
+                if (errno == EINTR) {
+                    continue;
+                }
+
+                perror(RED "ncsh: Error waiting for job child process to exit" RESET);
+                break;
+
+            }
+            if (WIFEXITED(status)) {
+                if (WEXITSTATUS(status)) {
+                fprintf(stderr, "ncsh: Command child process failed with status %d\n", WEXITSTATUS(status));
+            }
+#ifdef NCSH_DEBUG
+            else {
+                fprintf(stderr, "ncsh: Command child process exited successfully.\n");
+            }
+#endif /* NCSH_DEBUG */
+            }
+        }
+    }
 }
 
 /* VM */
@@ -377,6 +414,7 @@ void vm_status_check()
             fprintf(stderr, "ncsh: Command child process exited successfully.\n");
         }
 #endif /* NCSH_DEBUG */
+        // return EXIT_SUCCESS;
     }
 #ifdef NCSH_DEBUG
     else if (WIFSIGNALED(vm_status)) {
@@ -418,6 +456,7 @@ void vm_buffer_set_command_next(struct Args* const restrict args, struct Vm_Data
 }
 
 int vm_command_result;
+enum Command_Type vm_command_type;
 int vm_execvp_result;
 int vm_result;
 
@@ -446,7 +485,7 @@ int vm_run(struct Args* const restrict args, struct Tokens* const restrict token
 
         for (size_t i = 0; i < builtins_count; ++i) {
             if (estrcmp_c(vm.buffer[0], vm.buffer_len[0], builtins[i].value, builtins[i].length)) {
-                vm.command_type = CT_BUILTIN;
+                vm_command_type = CT_BUILTIN;
                 vm_command_result = (*builtins[i].func)(args);
 
                 if (vm.op_current == OP_PIPE) {
@@ -456,7 +495,26 @@ int vm_run(struct Args* const restrict args, struct Tokens* const restrict token
             }
         }
 
-        if (vm.command_type == CT_EXTERNAL) {
+        if (vm_command_type == CT_EXTERNAL) {
+            if (vm.args_position < args->count - 1) {
+                if (args->ops[vm.args_position] == OP_FALSE) {
+                    if (args->ops[vm.args_position + 1] == OP_AND) {
+                        break;
+                    }
+                    vm_command_type = CT_EXTERNAL;
+                    ++vm.command_position;
+                    continue;
+                }
+                else if (args->ops[vm.args_position] == OP_TRUE) {
+                    if (args->ops[vm.args_position + 1] == OP_OR) {
+                        break;
+                    }
+                    vm_command_type = CT_EXTERNAL;
+                    ++vm.command_position;
+                    continue;
+                }
+            }
+
             vm.pid = fork();
 
             if (vm.pid < 0) {
@@ -511,7 +569,7 @@ int vm_run(struct Args* const restrict args, struct Tokens* const restrict token
             }
         }
 
-        vm.command_type = CT_EXTERNAL;
+        vm_command_type = CT_EXTERNAL;
         ++vm.command_position;
     }
 
@@ -603,7 +661,11 @@ int vm_execute(struct Shell* const restrict shell, struct Arena* const scratch_a
     }
 
     if (tokens.is_background_job == true) {
-        return vm_run_background_job(&shell->args, &shell->processes, &tokens);
+        return vm_background_job_run(&shell->args, &shell->processes, &tokens);
+    }
+
+    if (shell->processes.job_number > 0) {
+        vm_background_jobs_check(&shell->processes);
     }
 
     return vm_run(&shell->args, &tokens);
