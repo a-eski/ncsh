@@ -48,7 +48,7 @@ struct Input {
  * input. Returns: exit status, EXIT_SUCCESS, EXIT_FAILURE, or value in defines.h (EXIT_...)
  */
 int ncreadline_init(struct Config* const restrict config, struct Input* const restrict input,
-                             struct Arena* const arena);
+                    struct Arena* const arena);
 
 /* readline
  * Read user input while supporting different operations like backspace, delete, history, autocompletions, home/end, and

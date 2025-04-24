@@ -142,9 +142,8 @@ void vm_stdout_and_stderr_redirection_stop(struct Output_Redirect_IO* const rest
 }
 
 [[nodiscard]]
-int vm_redirection_start_if_needed(struct Args* const restrict args,
-                                            const struct Tokens* const restrict tokens,
-                                            struct Vm_Data* const restrict vm)
+int vm_redirection_start_if_needed(struct Args* const restrict args, const struct Tokens* const restrict tokens,
+                                   struct Vm_Data* const restrict vm)
 {
     assert(args);
     assert(tokens);
@@ -301,7 +300,7 @@ void vm_pipe_stop(const size_t command_position, const size_t number_of_commands
 /* Failure Handling */
 [[nodiscard]]
 int vm_fork_failure(const size_t command_position, const size_t number_of_commands,
-                             const struct Pipe_IO* const restrict pipes)
+                    const struct Pipe_IO* const restrict pipes)
 {
     assert(pipes);
 
@@ -323,7 +322,7 @@ int vm_fork_failure(const size_t command_position, const size_t number_of_comman
 // Implementation not working, still experimenting...
 [[nodiscard]]
 int vm_background_job_run(struct Args* const restrict args, struct Processes* const restrict processes,
-                                   struct Tokens* const restrict tokens)
+                          struct Tokens* const restrict tokens)
 {
     assert(processes);
     (void)tokens;
@@ -384,16 +383,15 @@ void vm_background_jobs_check(struct Processes* const restrict processes)
 
                 perror(RED "ncsh: Error waiting for job child process to exit" RESET);
                 break;
-
             }
             if (WIFEXITED(status)) {
                 if (WEXITSTATUS(status)) {
-                fprintf(stderr, "ncsh: Command child process failed with status %d\n", WEXITSTATUS(status));
-            }
+                    fprintf(stderr, "ncsh: Command child process failed with status %d\n", WEXITSTATUS(status));
+                }
 #ifdef NCSH_DEBUG
-            else {
-                fprintf(stderr, "ncsh: Command child process exited successfully.\n");
-            }
+                else {
+                    fprintf(stderr, "ncsh: Command child process exited successfully.\n");
+                }
 #endif /* NCSH_DEBUG */
             }
         }

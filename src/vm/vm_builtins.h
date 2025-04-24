@@ -11,8 +11,8 @@
 #define Z_RM "rm"
 #define Z_REMOVE "remove" // alias for rm
 #define Z_PRINT "print"
-int builtins_z(struct z_Database* const restrict z_db, struct Args* const restrict args,
-                        struct Arena* const arena, struct Arena* const scratch_arena);
+int builtins_z(struct z_Database* const restrict z_db, struct Args* const restrict args, struct Arena* const arena,
+               struct Arena* const scratch_arena);
 
 #define NCSH_HISTORY "history" // the base command, displays history
 #define NCSH_HISTORY_COUNT "count"
@@ -21,7 +21,7 @@ int builtins_z(struct z_Database* const restrict z_db, struct Args* const restri
 #define NCSH_HISTORY_RM "rm" // alias for rm
 #define NCSH_HISTORY_REMOVE "remove"
 int builtins_history(struct History* const restrict history, struct Args* const restrict args,
-                              struct Arena* const arena, struct Arena* const scratch_arena);
+                     struct Arena* const arena, struct Arena* const scratch_arena);
 
 #define NCSH_EXIT "exit" // the base command
 #define NCSH_QUIT "quit" // alias for exit

@@ -42,11 +42,10 @@ int history_command_display(const struct History* const restrict history);
 int history_command_count(const struct History* const restrict history);
 
 int history_command_clean(struct History* const restrict history, struct Arena* const arena,
-                                   struct Arena* const scratch_arena);
+                          struct Arena* const scratch_arena);
 
-int history_command_add(const char* const value, const size_t value_len,
-                                 struct History* const restrict history, struct Arena* const arena);
+int history_command_add(const char* const value, const size_t value_len, struct History* const restrict history,
+                        struct Arena* const arena);
 
-int history_command_remove(const char* const value, const size_t value_len,
-                                    struct History* const restrict history, struct Arena* const arena,
-                                    struct Arena* const scratch_arena);
+int history_command_remove(const char* const value, const size_t value_len, struct History* const restrict history,
+                           struct Arena* const arena, struct Arena* const scratch_arena);
