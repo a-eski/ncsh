@@ -127,7 +127,7 @@ void ac_match(struct Autocompletion* const matches, struct Autocompletion_Node* 
 }
 
 uint8_t ac_matches(struct Autocompletion* const matches, struct Autocompletion_Node* prefix,
-                        struct Arena* const restrict scratch)
+                   struct Arena* const restrict scratch)
 {
     ac_str_pos = 0;
     ac_match_pos = 0;
@@ -140,7 +140,7 @@ uint8_t ac_matches(struct Autocompletion* const matches, struct Autocompletion_N
 }
 
 uint8_t ac_get(const char* search, struct Autocompletion* matches, struct Autocompletion_Node* restrict tree,
-                    struct Arena scratch)
+               struct Arena scratch)
 {
     assert(search);
 

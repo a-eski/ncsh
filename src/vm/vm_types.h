@@ -61,7 +61,6 @@ struct Vm_Data {
     uint8_t args_position;
     bool args_end;
     enum Ops op_current;
-    enum Command_Type command_type;
     struct Output_Redirect_IO output_redirect_io;
     struct Input_Redirect_IO input_redirect_io;
     struct Pipe_IO pipes_io;

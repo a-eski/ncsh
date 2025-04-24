@@ -17,7 +17,7 @@
  */
 struct Processes {
     size_t job_number;
-    size_t process_ids[NCSH_MAX_PROCESSES];
+    __pid_t pids[NCSH_MAX_PROCESSES];
 };
 
 /* struct Shell

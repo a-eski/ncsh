@@ -53,11 +53,11 @@ enum Ops : uint8_t {
  * Contains bytecodes, strings, and the string's lengths as well as a count
  * Gets sent to the VM as input to the VM. */
 struct Args {
-    size_t count;      // Number of lengths/values/ops
-    size_t* lengths;   // Length of the constants stored in values
-    uint8_t* ops; // Ops: The bytecode
-    char** values;     // Constant values needed to be referenced by the VM
-    struct var vars;   // Variables: values of variables that can be looked up by key
+    size_t count;    // Number of lengths/values/ops
+    size_t* lengths; // Length of the constants stored in values
+    uint8_t* ops;    // Ops: The bytecode
+    char** values;   // Constant values needed to be referenced by the VM
+    struct var vars; // Variables: values of variables that can be looked up by key
 };
 
 /* parser_init

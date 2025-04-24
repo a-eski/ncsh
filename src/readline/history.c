@@ -339,7 +339,7 @@ int history_command_count(const struct History* history)
 
 [[nodiscard]]
 int history_command_clean(struct History* const restrict history, struct Arena* const arena,
-                                   struct Arena* const scratch_arena)
+                          struct Arena* const scratch_arena)
 {
     if (history_clean(history, arena, *scratch_arena) != E_SUCCESS) {
         return NCSH_COMMAND_FAILED_CONTINUE;
@@ -349,8 +349,8 @@ int history_command_clean(struct History* const restrict history, struct Arena* 
 }
 
 [[nodiscard]]
-int history_command_add(const char* const value, const size_t value_len,
-                                 struct History* const restrict history, struct Arena* const arena)
+int history_command_add(const char* const value, const size_t value_len, struct History* const restrict history,
+                        struct Arena* const arena)
 {
     return history_add(value, value_len, history, arena);
 }
@@ -367,9 +367,8 @@ void history_remove_entries_shift(const size_t offset, struct History* const res
 }
 
 [[nodiscard]]
-int history_command_remove(const char* const value, const size_t value_len,
-                                    struct History* const restrict history, struct Arena* const arena,
-                                    struct Arena* const scratch_arena)
+int history_command_remove(const char* const value, const size_t value_len, struct History* const restrict history,
+                           struct Arena* const arena, struct Arena* const scratch_arena)
 {
     assert(value);
     assert(value_len > 0);

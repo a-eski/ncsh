@@ -21,7 +21,7 @@
  * Scratch arena reset after scope ends due to passing by value.
  */
 int noninteractive_run(const char** const restrict argv, const size_t argc, struct Args* args,
-                                struct Arena* const arena, struct Arena scratch_arena)
+                       struct Arena* const arena, struct Arena scratch_arena)
 {
     parser_parse_noninteractive(argv, argc, args, arena, &scratch_arena);
 

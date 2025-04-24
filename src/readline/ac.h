@@ -57,7 +57,7 @@ struct Autocompletion_Node* ac_find(const char* str, struct Autocompletion_Node*
  * Returns: number of matches (0 if no matches)
  */
 uint8_t ac_get(const char* search, struct Autocompletion* matches, struct Autocompletion_Node* restrict tree,
-                    struct Arena scratch);
+               struct Arena scratch);
 
 /* ac_first
  * Gets highest weighted match based on traversing the tree.

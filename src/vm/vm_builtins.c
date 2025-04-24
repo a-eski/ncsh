@@ -23,8 +23,8 @@ int builtins_disabled_state = 0;
 
 #define Z_COMMAND_NOT_FOUND_MESSAGE "ncsh z: command not found, options not supported.\n"
 [[nodiscard]]
-int builtins_z(struct z_Database* const restrict z_db, struct Args* const restrict args,
-                        struct Arena* const arena, struct Arena* const scratch_arena)
+int builtins_z(struct z_Database* const restrict z_db, struct Args* const restrict args, struct Arena* const arena,
+               struct Arena* const scratch_arena)
 {
     assert(z_db);
     assert(args->count > 0);
@@ -85,7 +85,7 @@ int builtins_z(struct z_Database* const restrict z_db, struct Args* const restri
 #define HISTORY_COMMAND_NOT_FOUND_MESSAGE "ncsh history: command not found.\n"
 [[nodiscard]]
 int builtins_history(struct History* const restrict history, struct Args* const restrict args,
-                              struct Arena* const arena, struct Arena* const scratch_arena)
+                     struct Arena* const arena, struct Arena* const scratch_arena)
 {
     if (args->count == 1) {
         return history_command_display(history);

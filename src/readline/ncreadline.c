@@ -33,9 +33,8 @@ size_t ncreadline_prompt_size(const size_t user_len, const size_t dir_len)
     // {user} {directory} {symbol} {buffer}
     // user, directory include null termination, use as space for len
     //     {user}{space (\0)}      {directory}{space (\0) excluded by -1}     {>}  {space}     {buffer}
-    return user_len == 0 && dir_len == 0
-        ? NCSH_PROMPT_ENDING_STRING_LENGTH
-        : user_len + dir_len - 1 + NCSH_PROMPT_ENDING_STRING_LENGTH;
+    return user_len == 0 && dir_len == 0 ? NCSH_PROMPT_ENDING_STRING_LENGTH
+                                         : user_len + dir_len - 1 + NCSH_PROMPT_ENDING_STRING_LENGTH;
 }
 
 /* This section is included at compile time if the prompt directory setting is set to use shortened directory. */
@@ -652,20 +651,20 @@ int ncreadline_move_cursor_end(struct Input* const restrict input)
 char ncreadline_read()
 {
     char character = 0;
-    if (!read(STDIN_FILENO, &character, 1)) {
+    if (read(STDIN_FILENO, &character, 1) < 0) {
         perror(RED NCSH_ERROR_STDIN RESET);
         return EXIT_IO_FAILURE;
     }
 
     switch (character) {
     case ESCAPE_CHARACTER: {
-        if (read(STDIN_FILENO, &character, 1) == -1) {
+        if (read(STDIN_FILENO, &character, 1) < 0) {
             perror(RED NCSH_ERROR_STDIN RESET);
             return EXIT_IO_FAILURE;
         }
 
         if (character == '[') {
-            if (read(STDIN_FILENO, &character, 1) == -1) {
+            if (read(STDIN_FILENO, &character, 1) < 0) {
                 perror(RED NCSH_ERROR_STDIN RESET);
                 return EXIT_IO_FAILURE;
             }
@@ -765,8 +764,7 @@ int ncreadline_tab_autocomplete(struct Input* const restrict input, struct Arena
  * Allocates memory that lives for the lifetime of the shell and is used by ncreadline to process user input.
  * Returns: exit status, EXIT_SUCCESS, EXIT_FAILURE, or value in defines.h (EXIT_...)
  */
-int ncreadline_init(struct Config* const restrict config, struct Input* const restrict input,
-                             struct Arena* const arena)
+int ncreadline_init(struct Config* const restrict config, struct Input* const restrict input, struct Arena* const arena)
 {
     input->user.value = getenv("USER");
     input->user.length = strlen(input->user.value) + 1;
@@ -846,6 +844,191 @@ int ncreadline_putchar(char character, struct Input* const restrict input)
     return EXIT_SUCCESS;
 }
 
+int ncreadline_escape_char_process(struct Input* const restrict input)
+{
+    char character;
+    if (read(STDIN_FILENO, &character, 1) < 0) {
+        perror(RED NCSH_ERROR_STDIN RESET);
+        fflush(stderr);
+        return EXIT_FAILURE;
+    }
+
+    if (character != '[') {
+        return EXIT_SUCCESS;
+    }
+
+    if (read(STDIN_FILENO, &character, 1) < 0) {
+        perror(RED NCSH_ERROR_STDIN RESET);
+        fflush(stderr);
+        return EXIT_FAILURE;
+    }
+
+    switch (character) {
+    case RIGHT_ARROW: {
+        if (!input->pos && !input->max_pos) {
+            return EXIT_CONTINUE;
+        }
+
+        if (ncreadline_right_arrow_process(input) != EXIT_SUCCESS) {
+            return EXIT_FAILURE;
+        }
+
+        return EXIT_SUCCESS;
+    }
+    case LEFT_ARROW: {
+        if (!input->pos || (!input->buffer[input->pos] && !input->buffer[input->pos - 1])) {
+            return EXIT_CONTINUE;
+        }
+
+        if (ncreadline_move_cursor_left(input) != EXIT_SUCCESS) {
+            return EXIT_FAILURE;
+        }
+
+        return EXIT_SUCCESS;
+    }
+    case UP_ARROW: {
+        if (ncreadline_history_up(input) != EXIT_SUCCESS) {
+            return EXIT_FAILURE;
+        }
+
+        return EXIT_CONTINUE;
+    }
+    case DOWN_ARROW: {
+        if (!input->history_position) {
+            return EXIT_CONTINUE;
+        }
+
+        if (ncreadline_history_down(input) != EXIT_SUCCESS) {
+            return EXIT_FAILURE;
+        }
+
+        return EXIT_CONTINUE;
+    }
+    case DELETE_PREFIX_KEY: {
+        if (read(STDIN_FILENO, &character, 1) < 0) {
+            perror(RED NCSH_ERROR_STDIN RESET);
+            fflush(stderr);
+            return EXIT_FAILURE;
+        }
+
+        if (character != DELETE_KEY) {
+            return EXIT_CONTINUE;
+        }
+
+        if (ncreadline_delete(input) == EXIT_FAILURE) {
+            return EXIT_FAILURE;
+        }
+
+        return EXIT_SUCCESS;
+    }
+    case HOME_KEY: {
+        if (!input->pos) {
+            return EXIT_CONTINUE;
+        }
+
+        if (ncreadline_move_cursor_home(input) != EXIT_SUCCESS) {
+            return EXIT_FAILURE;
+        }
+
+        return EXIT_SUCCESS;
+    }
+    case END_KEY: {
+        if (input->pos == input->max_pos) {
+            return EXIT_CONTINUE;
+        }
+
+        if (ncreadline_move_cursor_end(input) != EXIT_SUCCESS) {
+            return EXIT_FAILURE;
+        }
+
+        return EXIT_SUCCESS;
+    }
+    }
+    return EXIT_SUCCESS;
+}
+
+int ncreadline_char_process(char character, struct Input* const restrict input, struct Arena* const scratch_arena)
+{
+    int exit;
+    switch (character) {
+    case CTRL_D: { // exit
+        ncsh_write_literal(ERASE_CURRENT_LINE);
+        putchar('\n');
+        fflush(stdout);
+        return EXIT_SUCCESS_END;
+    }
+    case CTRL_W: { // delete last word
+        if (ncreadline_word_delete(input) != EXIT_SUCCESS) {
+            return EXIT_FAILURE;
+        }
+        return EXIT_CONTINUE;
+    }
+    case CTRL_U: { // delete entire line
+        if (ncreadline_line_delete(input) != EXIT_SUCCESS) {
+            return EXIT_FAILURE;
+        }
+        return EXIT_CONTINUE;
+    }
+    case TAB_KEY: {
+        if ((exit = ncreadline_tab_autocomplete(input, scratch_arena)) != EXIT_SUCCESS) {
+            return exit;
+        }
+
+        input->reprint_prompt = true;
+        input->buffer[0] = '\0';
+        input->pos = 0;
+        input->max_pos = 0;
+
+        return EXIT_CONTINUE;
+    }
+    case BACKSPACE_KEY: {
+        if (ncreadline_backspace(input) == EXIT_FAILURE) {
+            return EXIT_FAILURE;
+        }
+        return EXIT_SUCCESS;
+    }
+    case ESCAPE_CHARACTER: {
+        return ncreadline_escape_char_process(input);
+    }
+    case '\r':
+    case '\n': {
+        if (!input->pos && !input->buffer[input->pos]) {
+            input->reprint_prompt = true;
+            putchar('\n');
+            fflush(stdout);
+            return EXIT_CONTINUE;
+        }
+
+        while (input->pos < input->max_pos && input->buffer[input->pos]) {
+            ++input->pos;
+            ncsh_write_literal(MOVE_CURSOR_RIGHT);
+        }
+
+        while (input->pos > 1 && input->buffer[input->pos - 1] == ' ') {
+            --input->pos;
+        }
+        ++input->pos;
+
+        ncsh_write_literal(ERASE_CURRENT_LINE "\n");
+        fflush(stdout);
+        return EXIT_SUCCESS_EXECUTE;
+    }
+    default: {
+        if (input->pos == NCSH_MAX_INPUT - 1) {
+            fputs(RED "\nncsh: Hit max input.\n" RESET, stderr);
+            input->buffer[0] = '\0';
+            input->pos = 0;
+            input->max_pos = 0;
+            return EXIT_CONTINUE;
+        }
+
+        return ncreadline_putchar(character, input);
+    }
+    }
+
+    return EXIT_SUCCESS;
+}
+
 /* ncreadline
  * Read user input while supporting different operations like backspace, delete, history, autocompletions, home/end, and
  * other inputs. Returns: exit status, EXIT_SUCCESS, EXIT_FAILURE, or value in defines.h (EXIT_...)
@@ -865,208 +1048,26 @@ int ncreadline(struct Input* const restrict input, struct Arena* const scratch_a
             break;
         }
 
-        if (read(STDIN_FILENO, &character, 1) == -1) {
+        if (read(STDIN_FILENO, &character, 1) < 0) {
             perror(RED NCSH_ERROR_STDIN RESET);
             fflush(stderr);
             exit = EXIT_FAILURE;
             break;
         }
 
-        switch (character) {
-        case CTRL_D: { // exit
-            ncsh_write_literal(ERASE_CURRENT_LINE);
-            putchar('\n');
-            fflush(stdout);
-            exit = EXIT_SUCCESS_END;
+        exit = ncreadline_char_process(character, input, scratch_arena);
+        switch (exit) {
+        case EXIT_SUCCESS: {
+            break;
+        }
+        case EXIT_SUCCESS_EXECUTE: {
             goto exit;
         }
-        case CTRL_W: { // delete last word
-            if (ncreadline_word_delete(input) != EXIT_SUCCESS) {
-                exit = EXIT_FAILURE;
-                goto exit;
-            }
-            break;
-        }
-        case CTRL_U: { // delete entire line
-            if (ncreadline_line_delete(input) != EXIT_SUCCESS) {
-                exit = EXIT_FAILURE;
-                goto exit;
-            }
-            break;
-        }
-        case TAB_KEY: {
-            if ((exit = ncreadline_tab_autocomplete(input, scratch_arena)) != EXIT_SUCCESS) {
-                goto exit;
-            }
-
-            input->reprint_prompt = true;
-            input->buffer[0] = '\0';
-            input->pos = 0;
-            input->max_pos = 0;
-
+        case EXIT_CONTINUE: {
             continue;
         }
-        case BACKSPACE_KEY: {
-            if (ncreadline_backspace(input) == EXIT_FAILURE) {
-                exit = EXIT_FAILURE;
-                goto exit;
-            }
-            break;
-        }
-        case ESCAPE_CHARACTER: {
-            if (read(STDIN_FILENO, &character, 1) == -1) {
-                perror(RED NCSH_ERROR_STDIN RESET);
-                fflush(stderr);
-                exit = EXIT_FAILURE;
-                goto exit;
-            }
-
-
-            if (character != '[') {
-                break;
-            }
-
-            if (read(STDIN_FILENO, &character, 1) == -1) {
-                perror(RED NCSH_ERROR_STDIN RESET);
-                fflush(stderr);
-                exit = EXIT_FAILURE;
-                goto exit;
-            }
-
-            switch (character) {
-            case RIGHT_ARROW: {
-                if (!input->pos && !input->max_pos) {
-                    continue;
-                }
-
-                if (ncreadline_right_arrow_process(input) != EXIT_SUCCESS) {
-                    exit = EXIT_FAILURE;
-                    goto exit;
-                }
-
-                break;
-            }
-            case LEFT_ARROW: {
-                if (!input->pos || (!input->buffer[input->pos] && !input->buffer[input->pos - 1])) {
-                    continue;
-                }
-
-                if (ncreadline_move_cursor_left(input) != EXIT_SUCCESS) {
-                    exit = EXIT_FAILURE;
-                    goto exit;
-                }
-
-                break;
-            }
-            case UP_ARROW: {
-                if (ncreadline_history_up(input) != EXIT_SUCCESS) {
-                    exit = EXIT_FAILURE;
-                    goto exit;
-                }
-
-                continue;
-            }
-            case DOWN_ARROW: {
-                if (!input->history_position) {
-                    continue;
-                }
-
-                if (ncreadline_history_down(input) != EXIT_SUCCESS) {
-                    exit = EXIT_FAILURE;
-                    goto exit;
-                }
-
-                continue;
-            }
-            case DELETE_PREFIX_KEY: {
-                if (read(STDIN_FILENO, &character, 1) == -1) {
-                    perror(RED NCSH_ERROR_STDIN RESET);
-                    fflush(stderr);
-                    exit = EXIT_FAILURE;
-                    goto exit;
-                }
-
-                if (character != DELETE_KEY) {
-                    continue;
-                }
-
-                if (ncreadline_delete(input) == EXIT_FAILURE) {
-                    exit = EXIT_FAILURE;
-                    goto exit;
-                }
-
-                break;
-            }
-            case HOME_KEY: {
-                if (!input->pos) {
-                    continue;
-                }
-
-                if (ncreadline_move_cursor_home(input) != EXIT_SUCCESS) {
-                    exit = EXIT_FAILURE;
-                    goto exit;
-                }
-
-                break;
-            }
-            case END_KEY: {
-                if (input->pos == input->max_pos) {
-                    continue;
-                }
-
-                if (ncreadline_move_cursor_end(input) != EXIT_SUCCESS) {
-                    exit = EXIT_FAILURE;
-                    goto exit;
-                }
-
-                break;
-            }
-            }
-            break;
-        }
-        case '\r':
-        case '\n': {
-            if (!input->pos && !input->buffer[input->pos]) {
-                input->reprint_prompt = true;
-                putchar('\n');
-                fflush(stdout);
-                continue;
-            }
-
-            while (input->pos < input->max_pos && input->buffer[input->pos]) {
-                ++input->pos;
-                ncsh_write_literal(MOVE_CURSOR_RIGHT);
-            }
-
-            while (input->pos > 1 && input->buffer[input->pos - 1] == ' ') {
-                --input->pos;
-            }
-            ++input->pos;
-
-            ncsh_write_literal(ERASE_CURRENT_LINE "\n");
-            fflush(stdout);
-            exit = EXIT_SUCCESS_EXECUTE;
-            goto exit;
-        }
         default: {
-            if (input->pos == NCSH_MAX_INPUT - 1) {
-                fputs(RED "\nncsh: Hit max input.\n" RESET, stderr);
-                input->buffer[0] = '\0';
-                input->pos = 0;
-                input->max_pos = 0;
-                continue;
-            }
-
-            exit = ncreadline_putchar(character, input);
-            switch (exit) {
-            case EXIT_CONTINUE: {
-                continue;
-            }
-            case EXIT_FAILURE: {
-                exit = EXIT_FAILURE;
-                goto exit;
-            }
-            }
+            goto exit;
         }
         }
 
