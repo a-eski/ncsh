@@ -1,4 +1,5 @@
-/* Copyright ncsh by Alex Eski 2025 */
+/* Copyright ncsh (C) by Alex Eski 2025 */
+/* ncreadline.h: read input, handle prompts, history, and autocompletions */
 
 #pragma once
 
@@ -43,21 +44,21 @@ struct Input {
     struct Autocompletion_Node* autocompletions_tree;
 };
 
-/* readline_init
+/* ncreadline_init
  * Allocates memory using the arena that lives for the lifetime of the shell and is used by readline to process user
  * input. Returns: exit status, EXIT_SUCCESS, EXIT_FAILURE, or value in defines.h (EXIT_...)
  */
 int ncreadline_init(struct Config* const restrict config, struct Input* const restrict input,
                     struct Arena* const arena);
 
-/* readline
+/* ncreadline
  * Read user input while supporting different operations like backspace, delete, history, autocompletions, home/end, and
  * other inputs. Accepts a pointer to the scratch arena, but it passes a copy (by value) to autocompletion logic when it
  * is needed to be used. Returns: exit status, EXIT_SUCCESS, EXIT_FAILURE, or value in defines.h (EXIT_...)
  */
 int ncreadline(struct Input* const restrict input, struct Arena* const scratch_arena);
 
-/* readline_exit
+/* ncreadline_exit
  * Saves history changes and restores the terminal settings from before the shell was started.
  */
 void ncreadline_exit(struct Input* const restrict input);

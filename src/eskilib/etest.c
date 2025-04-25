@@ -5,15 +5,15 @@
 #include "ecolors.h"
 #include "etest.h"
 
-static bool test_failed;
+bool test_failed;
 
-static int tests_failed;
-static int tests_passed;
+int tests_failed;
+int tests_passed;
 
 void etest_run_internal(const char* function_name, void (*function)(void))
 {
     test_failed = false;
-    printf("%s started.\n", function_name);
+    printf("%s STARTED.\n", function_name);
 
     function();
 

@@ -6,351 +6,60 @@
 #include "lib/arena_test_helper.h"
 
 sig_atomic_t vm_child_pid;
+extern bool test_failed;
+extern int tests_passed;
+extern int tests_failed;
 
-void vm_execute_test()
-{
-    SCRATCH_ARENA_TEST_SETUP;
-
-    struct Args args = {0};
-    parser_init(&args, &scratch_arena);
-    args.count = 1;
-    args.values[0] = "ls";
-    args.lengths[0] = sizeof("ls");
-    args.ops[0] = OP_CONSTANT;
-    struct Shell shell = {.args = args};
-
-    int res = vm_execute(&shell, &scratch_arena);
-
-    eassert(res == NCSH_COMMAND_SUCCESS_CONTINUE);
-
+// use a macro so line numbers are preserved
+#define vm_tester(input)                                                            \
+    SCRATCH_ARENA_TEST_SETUP;                                                       \
+                                                                                    \
+    struct Args args = {0};                                                         \
+    parser_init(&args, &scratch_arena);                                             \
+    parser_parse(input, strlen(input) + 1, &args, NULL, &scratch_arena);            \
+    struct Shell shell = {.args = args};                                            \
+                                                                                    \
+    eassert(vm_execute(&shell, &scratch_arena) == NCSH_COMMAND_SUCCESS_CONTINUE);   \
+                                                                                    \
     SCRATCH_ARENA_TEST_TEARDOWN;
-}
 
-void vm_execute_pipe_test()
+void vm_tests()
 {
-    SCRATCH_ARENA_TEST_SETUP;
-
-    struct Args args = {0};
-    parser_init(&args, &scratch_arena);
-    args.count = 1;
-    args.values[0] = "ls | sort";
-    args.lengths[0] = sizeof("ls | sort");
-    args.ops[0] = OP_CONSTANT;
-    struct Shell shell = {.args = args};
-
-    int res = vm_execute(&shell, &scratch_arena);
-
-    eassert(res == NCSH_COMMAND_SUCCESS_CONTINUE);
-
-    SCRATCH_ARENA_TEST_TEARDOWN;
-}
-
-void vm_execute_pipe_multiple_test()
-{
-    SCRATCH_ARENA_TEST_SETUP;
-
-    struct Args args = {0};
-    parser_init(&args, &scratch_arena);
-    args.count = 1;
-    args.values[0] = "ls | sort | wc -c";
-    args.lengths[0] = sizeof("ls | sort | wc -c");
-    args.ops[0] = OP_CONSTANT;
-    struct Shell shell = {.args = args};
-
-    int res = vm_execute(&shell, &scratch_arena);
-
-    eassert(res == NCSH_COMMAND_SUCCESS_CONTINUE);
-
-    SCRATCH_ARENA_TEST_TEARDOWN;
-}
-
-void vm_execute_out_redirect_test()
-{
-    SCRATCH_ARENA_TEST_SETUP;
-
-    struct Args args = {0};
-    parser_init(&args, &scratch_arena);
-    args.count = 1;
-    args.values[0] = "ls > t.txt";
-    args.lengths[0] = sizeof("ls > t.txt");
-    args.ops[0] = OP_CONSTANT;
-    struct Shell shell = {.args = args};
-
-    int res = vm_execute(&shell, &scratch_arena);
-
-    eassert(res == NCSH_COMMAND_SUCCESS_CONTINUE);
-
-    SCRATCH_ARENA_TEST_TEARDOWN;
-}
-
-void vm_execute_out_redirect_pipe_test()
-{
-    SCRATCH_ARENA_TEST_SETUP;
-
-    struct Args args = {0};
-    parser_init(&args, &scratch_arena);
-    args.count = 1;
-    args.values[0] = "ls | sort > t.txt";
-    args.lengths[0] = sizeof("ls | sort > t.txt");
-    args.ops[0] = OP_CONSTANT;
-    struct Shell shell = {.args = args};
-
-    int res = vm_execute(&shell, &scratch_arena);
-
-    eassert(res == NCSH_COMMAND_SUCCESS_CONTINUE);
-
-    SCRATCH_ARENA_TEST_TEARDOWN;
-}
-
-void vm_execute_out_append_redirect_test()
-{
-    SCRATCH_ARENA_TEST_SETUP;
-
-    struct Args args = {0};
-    parser_init(&args, &scratch_arena);
-    args.count = 1;
-    args.values[0] = "ls >> t.txt";
-    args.lengths[0] = sizeof("ls >> t.txt");
-    args.ops[0] = OP_CONSTANT;
-    struct Shell shell = {.args = args};
-
-    int res = vm_execute(&shell, &scratch_arena);
-
-    eassert(res == NCSH_COMMAND_SUCCESS_CONTINUE);
-
-    SCRATCH_ARENA_TEST_TEARDOWN;
-}
-
-void vm_execute_out_append_redirect_pipe_test()
-{
-    SCRATCH_ARENA_TEST_SETUP;
-
-    struct Args args = {0};
-    parser_init(&args, &scratch_arena);
-    args.count = 1;
-    args.values[0] = "ls | sort >> t.txt";
-    args.lengths[0] = sizeof("ls | sort >> t.txt");
-    args.ops[0] = OP_CONSTANT;
-    struct Shell shell = {.args = args};
-
-    int res = vm_execute(&shell, &scratch_arena);
-
-    eassert(res == NCSH_COMMAND_SUCCESS_CONTINUE);
-
-    SCRATCH_ARENA_TEST_TEARDOWN;
-}
-
-void vm_execute_err_redirect_test()
-{
-    SCRATCH_ARENA_TEST_SETUP;
-
-    struct Args args = {0};
-    parser_init(&args, &scratch_arena);
-    args.count = 1;
-    args.values[0] = "ls &> t.txt";
-    args.lengths[0] = sizeof("ls &> t.txt");
-    args.ops[0] = OP_CONSTANT;
-    struct Shell shell = {.args = args};
-
-    int res = vm_execute(&shell, &scratch_arena);
-
-    eassert(res == NCSH_COMMAND_SUCCESS_CONTINUE);
-
-    SCRATCH_ARENA_TEST_TEARDOWN;
-}
-
-void vm_execute_err_redirect_pipe_test()
-{
-    SCRATCH_ARENA_TEST_SETUP;
-
-    struct Args args = {0};
-    parser_init(&args, &scratch_arena);
-    args.count = 1;
-    args.values[0] = "ls | sort &> t.txt";
-    args.lengths[0] = sizeof("ls | sort &> t.txt");
-    args.ops[0] = OP_CONSTANT;
-    struct Shell shell = {.args = args};
-
-    int res = vm_execute(&shell, &scratch_arena);
-
-    eassert(res == NCSH_COMMAND_SUCCESS_CONTINUE);
-
-    SCRATCH_ARENA_TEST_TEARDOWN;
-}
-
-void vm_execute_err_append_redirect_test()
-{
-    SCRATCH_ARENA_TEST_SETUP;
-
-    struct Args args = {0};
-    parser_init(&args, &scratch_arena);
-    args.count = 1;
-    args.values[0] = "ls &>> t.txt";
-    args.lengths[0] = sizeof("ls &>> t.txt");
-    args.ops[0] = OP_CONSTANT;
-    struct Shell shell = {.args = args};
-
-    int res = vm_execute(&shell, &scratch_arena);
-
-    eassert(res == NCSH_COMMAND_SUCCESS_CONTINUE);
-
-    SCRATCH_ARENA_TEST_TEARDOWN;
-}
-
-void vm_execute_err_append_redirect_pipe_test()
-{
-    SCRATCH_ARENA_TEST_SETUP;
-
-    struct Args args = {0};
-    parser_init(&args, &scratch_arena);
-    args.count = 1;
-    args.values[0] = "ls | sort &>> t.txt";
-    args.lengths[0] = sizeof("ls | sort &>> t.txt");
-    args.ops[0] = OP_CONSTANT;
-    struct Shell shell = {.args = args};
-
-    int res = vm_execute(&shell, &scratch_arena);
-
-    eassert(res == NCSH_COMMAND_SUCCESS_CONTINUE);
-
-    SCRATCH_ARENA_TEST_TEARDOWN;
-}
-
-void vm_execute_out_and_err_redirect_test()
-{
-    SCRATCH_ARENA_TEST_SETUP;
-
-    struct Args args = {0};
-    parser_init(&args, &scratch_arena);
-    args.count = 1;
-    args.values[0] = "ls 2> t.txt";
-    args.lengths[0] = sizeof("ls 2> t.txt");
-    args.ops[0] = OP_CONSTANT;
-    struct Shell shell = {.args = args};
-
-    int res = vm_execute(&shell, &scratch_arena);
-
-    eassert(res == NCSH_COMMAND_SUCCESS_CONTINUE);
-
-    SCRATCH_ARENA_TEST_TEARDOWN;
-}
-
-void vm_execute_out_and_err_redirect_pipe_test()
-{
-    SCRATCH_ARENA_TEST_SETUP;
-
-    struct Args args = {0};
-    parser_init(&args, &scratch_arena);
-    args.count = 1;
-    args.values[0] = "ls | sort 2> t.txt";
-    args.lengths[0] = sizeof("ls | sort 2> t.txt");
-    args.ops[0] = OP_CONSTANT;
-    struct Shell shell = {.args = args};
-
-    int res = vm_execute(&shell, &scratch_arena);
-
-    eassert(res == NCSH_COMMAND_SUCCESS_CONTINUE);
-
-    SCRATCH_ARENA_TEST_TEARDOWN;
-}
-
-void vm_execute_out_and_err_append_redirect_test()
-{
-    SCRATCH_ARENA_TEST_SETUP;
-
-    struct Args args = {0};
-    parser_init(&args, &scratch_arena);
-    args.count = 1;
-    args.values[0] = "ls 2>> t.txt";
-    args.lengths[0] = sizeof("ls 2>> t.txt");
-    args.ops[0] = OP_CONSTANT;
-    struct Shell shell = {.args = args};
-
-    int res = vm_execute(&shell, &scratch_arena);
-
-    eassert(res == NCSH_COMMAND_SUCCESS_CONTINUE);
-
-    SCRATCH_ARENA_TEST_TEARDOWN;
-}
-
-void vm_execute_out_and_err_append_redirect_pipe_test()
-{
-    SCRATCH_ARENA_TEST_SETUP;
-
-    struct Args args = {0};
-    parser_init(&args, &scratch_arena);
-    args.count = 1;
-    args.values[0] = "ls | sort 2>> t.txt";
-    args.lengths[0] = sizeof("ls | sort 2>> t.txt");
-    args.ops[0] = OP_CONSTANT;
-    struct Shell shell = {.args = args};
-
-    int res = vm_execute(&shell, &scratch_arena);
-
-    eassert(res == NCSH_COMMAND_SUCCESS_CONTINUE);
-
-    SCRATCH_ARENA_TEST_TEARDOWN;
-}
-
-void vm_execute_and_test()
-{
-    SCRATCH_ARENA_TEST_SETUP;
-
-    struct Args args = {0};
-    parser_init(&args, &scratch_arena);
-    args.count = 1;
-    args.values[0] = "ls && ls";
-    args.lengths[0] = sizeof("ls && ls");
-    args.ops[0] = OP_CONSTANT;
-    struct Shell shell = {.args = args};
-
-    int res = vm_execute(&shell, &scratch_arena);
-
-    eassert(res == NCSH_COMMAND_SUCCESS_CONTINUE);
-
-    SCRATCH_ARENA_TEST_TEARDOWN;
-}
-
-void vm_execute_or_test()
-{
-    SCRATCH_ARENA_TEST_SETUP;
-
-    struct Args args = {0};
-    parser_init(&args, &scratch_arena);
-    args.count = 1;
-    args.values[0] = "ls || ls";
-    args.lengths[0] = sizeof("ls || ls");
-    args.ops[0] = OP_CONSTANT;
-    struct Shell shell = {.args = args};
-
-    int res = vm_execute(&shell, &scratch_arena);
-
-    eassert(res == NCSH_COMMAND_SUCCESS_CONTINUE);
-
-    SCRATCH_ARENA_TEST_TEARDOWN;
+    etest_start();
+
+    etest_run_tester("simple_test", vm_tester("ls"));
+    etest_run_tester("pipe_test", vm_tester("ls | sort"));
+    etest_run_tester("pipe_multiple_test", vm_tester("ls | sort | wc -c"));
+    etest_run_tester("in_redirect_test", vm_tester("sort < t.txt"));
+    etest_run_tester("in_redirect_pipe_test", vm_tester("sort | wc -c < t.txt"));
+    etest_run_tester("in_redirect_pipe_test", vm_tester("wc -c < t.txt | sort"));
+    etest_run_tester("out_redirect_test", vm_tester("ls > t.txt"));
+    etest_run_tester("out_redirect_pipe_test", vm_tester("ls | sort > t.txt"));
+    etest_run_tester("out_append_redirect_test", vm_tester("ls >> t.txt"));
+    etest_run_tester("out_append_redirect_pipe_test", vm_tester("ls | sort >> t.txt"));
+    etest_run_tester("err_redirect_test", vm_tester("ls &> t.txt"));
+    etest_run_tester("err_redirect_pipe_test", vm_tester("ls | sort &> t.txt"));
+    etest_run_tester("err_append_redirect_test", vm_tester("ls &>> t.txt"));
+    etest_run_tester("err_append_redirect_pipe_test", vm_tester("ls | sort &>> t.txt"));
+    etest_run_tester("out_and_err_redirect_test", vm_tester("ls 2> t.txt"));
+    etest_run_tester("out_and_err_redirect_pipe_test", vm_tester("ls | sort 2> t.txt"));
+    etest_run_tester("out_and_err_append_redirect_test", vm_tester("ls 2>> t.txt"))
+    etest_run_tester("out_and_err_append_redirect_pipe_test", vm_tester("ls | sort 2>> t.txt"));
+    etest_run_tester("and_test", vm_tester("ls && ls"));
+    etest_run_tester("or_test", vm_tester("ls || ls"));
+    etest_run_tester("echo_test", vm_tester("echo hello"));
+    etest_run_tester("echo_single_quote_test", vm_tester("echo 'hello one'"));
+    etest_run_tester("echo_double_quote_test", vm_tester("echo \"hello two\""));
+    etest_run_tester("echo_backtick_quote_test", vm_tester("echo `hello three`"));
+    etest_run_tester("echo_out_redirect_test", vm_tester("echo hello > t.txt"));
+    etest_run_tester("echo_out_append_redirect_test", vm_tester("echo hello >> t.txt"));
+
+    etest_finish();
 }
 
 int main()
 {
-    etest_start();
+    vm_tests();
 
-    etest_run(vm_execute_test);
-    etest_run(vm_execute_pipe_test);
-    etest_run(vm_execute_pipe_multiple_test);
-    etest_run(vm_execute_out_redirect_test);
-    etest_run(vm_execute_out_redirect_pipe_test);
-    etest_run(vm_execute_out_append_redirect_test);
-    etest_run(vm_execute_out_append_redirect_pipe_test);
-    etest_run(vm_execute_err_redirect_test);
-    etest_run(vm_execute_err_redirect_pipe_test);
-    etest_run(vm_execute_err_append_redirect_test);
-    etest_run(vm_execute_err_append_redirect_pipe_test);
-    etest_run(vm_execute_out_and_err_redirect_test);
-    etest_run(vm_execute_out_and_err_redirect_pipe_test);
-    etest_run(vm_execute_out_and_err_append_redirect_test);
-    etest_run(vm_execute_out_and_err_append_redirect_pipe_test);
-    etest_run(vm_execute_and_test);
-    etest_run(vm_execute_or_test);
-
-    etest_finish();
+    remove("t.txt");
 }

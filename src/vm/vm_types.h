@@ -54,7 +54,6 @@ struct Pipe_IO {
  * Used in conjunction with struct Args and then struct Tokens.
  */
 struct Vm_Data {
-    pid_t pid;
     char* buffer[MAX_INPUT];
     size_t buffer_len[MAX_INPUT];
     uint8_t command_position;

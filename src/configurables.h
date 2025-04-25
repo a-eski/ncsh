@@ -1,4 +1,4 @@
-/* Copyright ncsh by Alex Eski 2025 */
+/* Copyright ncsh (C) by Alex Eski 2025 */
 
 #pragma once
 
@@ -9,6 +9,8 @@
 #ifndef NCSH_DEBUG
 // #    define     NCSH_DEBUG
 #endif // !NCSH_DEBUG
+
+
 
 /* Prompt Settings */
 /* NCSH_PROMPT_DIRECTORY section: do you want to show the entire cwd in the prompt line? no directory?
@@ -47,6 +49,8 @@
 #    define NCSH_PROMPT_SHOW_USER NCSH_SHOW_USER_NORMAL
 #endif // !NCSH_PROMPT_SHOW_USER
 
+
+
 /* Startup Settings */
 /* NCSH_CLEAR_SCREEN_ON_STARTUP: clear screen on startup (defined) or don't clear screen on startup (not defined).
  * Useful for when you are doing debugging/dev and don't want to clear the screen on startup. */
@@ -58,6 +62,8 @@
 #ifndef NCSH_START_TIME
 #define NCSH_START_TIME
 #endif // !NCSH_START_TIME
+
+
 
 /* History Settings */
 /* NCSH_MAX_HISTORY_FILE: the maximum number of history entries to save to the history file */
