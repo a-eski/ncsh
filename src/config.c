@@ -245,6 +245,7 @@ const struct Alias aliases[] = {
     {.alias = {.length = sizeof(CARGO_ALIAS), .value = CARGO_ALIAS},
      .actual_command = {.length = sizeof(CARGO), .value = CARGO}},
 };
+constexpr size_t aliases_count = sizeof(aliases) / sizeof(struct Alias);
 
 /* config_alias_check
  * Checks if the input matches to any of the compile-time defined aliased commands.
@@ -256,7 +257,6 @@ struct estr config_alias_check(const char* const restrict buffer, const size_t b
         return estr_Empty;
     }
 
-    constexpr size_t aliases_count = sizeof(aliases) / sizeof(struct Alias);
     for (size_t i = 0; i < aliases_count; ++i) {
         if (estrcmp_cc(buffer, buf_len, aliases[i].alias.value, aliases[i].alias.length)) {
             return aliases[i].actual_command;

@@ -19,29 +19,9 @@
 #include "vm_tokenizer.h"
 #include "vm_types.h"
 
-// clang-format off
 #ifdef NCSH_VM_TEST
-    int execvp_mock(char* arg, char** args, int res) {
-        (void)arg;
-        (void)args;
-        return res;
-    }
-
-    int waitpid_mock(pid_t pid, int* status, int w) {
-        (void)status;
-        (void)w;
-        return pid;
-    }
-
-#   define fork() (pid_t)1
-#   ifdef NCSH_VM_TEST_EXEC_FAILURE
-#       define execvp(arg, args) execvp_mock(arg, args, -1)
-#   else
-#       define execvp(arg, args) execvp_mock(arg, args, 0)
-#   endif /* NCSH_VM_TEST_EXEC_FAILURE */
-#   define waitpid(pid, status, w) waitpid_mock(pid, status, w)
+#include "vm_mocks.h"
 #endif /* NCSH_VM_TEST */
-// clang-format on
 
 extern sig_atomic_t vm_child_pid;
 
@@ -457,6 +437,7 @@ int vm_command_result;
 enum Command_Type vm_command_type;
 int vm_execvp_result;
 int vm_result;
+int vm_pid;
 
 [[nodiscard]]
 int vm_run(struct Args* const restrict args, struct Tokens* const restrict tokens)
@@ -513,13 +494,13 @@ int vm_run(struct Args* const restrict args, struct Tokens* const restrict token
                 }
             }
 
-            vm.pid = fork();
+            vm_pid = fork();
 
-            if (vm.pid < 0) {
+            if (vm_pid < 0) {
                 return vm_fork_failure(vm.command_position, tokens->number_of_pipe_commands, &vm.pipes_io);
             }
 
-            if (vm.pid == 0) { // runs in the child process
+            if (vm_pid == 0) { // runs in the child process
                 if (vm.op_current == OP_PIPE) {
                     vm_pipe_connect(vm.command_position, tokens->number_of_pipe_commands, &vm.pipes_io);
                 }
@@ -540,12 +521,12 @@ int vm_run(struct Args* const restrict args, struct Tokens* const restrict token
                 break;
             }
 
-            vm_child_pid = vm.pid;
+            vm_child_pid = vm_pid;
 
             pid_t waitpid_result;
             while (1) {
                 vm_status = 0;
-                waitpid_result = waitpid(vm.pid, &vm_status, WUNTRACED);
+                waitpid_result = waitpid(vm_pid, &vm_status, WUNTRACED);
 
                 // check for errors
                 if (waitpid_result == -1) {
@@ -560,7 +541,7 @@ int vm_run(struct Args* const restrict args, struct Tokens* const restrict token
                 }
 
                 // check if child process has exited
-                if (waitpid_result == vm.pid) {
+                if (waitpid_result == vm_pid) {
                     vm_status_check();
                     break;
                 }

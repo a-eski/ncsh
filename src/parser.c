@@ -240,7 +240,7 @@ size_t parser_assignment_pos = 0;
 void parser_parse(const char* const restrict line, const size_t length, struct Args* const restrict args,
                   struct Arena* arena, struct Arena* scratch_arena)
 {
-    assert(line && args && scratch_arena && arena);
+    assert(line && args && scratch_arena);
     if (length < 2 || length > NCSH_MAX_INPUT) {
         args->count = 0;
         return;
@@ -396,6 +396,7 @@ void parser_parse(const char* const restrict line, const size_t length, struct A
             parser_state &= ~IN_GLOB_EXPANSION;
         }
         else if ((parser_state & IN_ASSIGNMENT)) {
+            assert(arena);
             // variable values are stored in vars hashmap.
             // the key is the previous value, which is tagged with OP_VARIABLE.
             // when VM comes in contact with OP_VARIABLE, it looks up value in vars.

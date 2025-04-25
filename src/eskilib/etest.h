@@ -15,6 +15,25 @@
 
 #define etest_run(function) etest_run_internal(#function, function);
 
+#define etest_run_tester(function_name, code)                       \
+{                                                                   \
+    test_failed = false;                                            \
+    printf("%s STARTED.\n", function_name);                         \
+                                                                    \
+    {                                                               \
+        code                                                        \
+    }                                                               \
+                                                                    \
+    if (test_failed) {                                              \
+        ++tests_failed;                                             \
+        printf(RED "%s FAILED.\n" RESET, function_name);            \
+    }                                                               \
+    else {                                                          \
+        ++tests_passed;                                             \
+        printf(GREEN "%s PASSED.\n" RESET, function_name);          \
+    }                                                               \
+}
+
 extern void etest_run_internal(const char* function_name, void (*function)(void));
 
 // private API: do not need to use this manually, used with eassert to mark test failed when assertion does not
