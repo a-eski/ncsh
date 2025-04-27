@@ -7,9 +7,10 @@
 
 #include "../defines.h"
 #include "../parser.h"
+#include "../types.h"
 
 [[nodiscard]]
-int vm_tokenizer_syntax_error(const char* const message, const size_t message_length)
+int vm_tokenizer_syntax_error(const char* const restrict message, const size_t message_length)
 {
     if (write(STDIN_FILENO, message, message_length) == -1) {
         return NCSH_COMMAND_EXIT_FAILURE;
@@ -174,48 +175,50 @@ int vm_tokenizer_syntax_check(const struct Args* const restrict args)
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
-int vm_tokenizer_ops_process(const struct Args* const restrict args, struct Tokens* const restrict tokens)
+int vm_tokenizer_ops_process(struct Shell* const restrict shell, struct Tokens* const restrict tokens,
+                           struct Arena* const restrict scratch_arena)
 {
-    assert(args);
+    assert(shell);
+    struct Args args = shell->args;
     assert(tokens);
 
     tokens->is_background_job = false;
-    for (uint8_t i = 0; i < args->count; ++i) {
-        switch (args->ops[i]) {
+    for (uint8_t i = 0; i < args.count; ++i) {
+        switch (args.ops[i]) {
         case OP_STDOUT_REDIRECTION: {
-            tokens->stdout_file = args->values[i + 1];
+            tokens->stdout_file = args.values[i + 1];
             tokens->stdout_redirect_index = i;
             break;
         }
         case OP_STDOUT_REDIRECTION_APPEND: {
-            tokens->stdout_file = args->values[i + 1];
+            tokens->stdout_file = args.values[i + 1];
             tokens->stdout_redirect_index = i;
             tokens->output_append = true;
             break;
         }
         case OP_STDIN_REDIRECTION: {
-            tokens->stdin_file = args->values[i + 1];
+            tokens->stdin_file = args.values[i + 1];
             tokens->stdin_redirect_index = i;
             break;
         }
         case OP_STDERR_REDIRECTION: {
-            tokens->stderr_file = args->values[i + 1];
+            tokens->stderr_file = args.values[i + 1];
             tokens->stderr_redirect_index = i;
             break;
         }
         case OP_STDERR_REDIRECTION_APPEND: {
-            tokens->stderr_file = args->values[i + 1];
+            tokens->stderr_file = args.values[i + 1];
             tokens->stderr_redirect_index = i;
             tokens->output_append = true;
             break;
         }
         case OP_STDOUT_AND_STDERR_REDIRECTION: {
-            tokens->stdout_and_stderr_file = args->values[i + 1];
+            tokens->stdout_and_stderr_file = args.values[i + 1];
             tokens->stdout_and_stderr_redirect_index = i;
             break;
         }
         case OP_STDOUT_AND_STDERR_REDIRECTION_APPEND: {
-            tokens->stdout_and_stderr_file = args->values[i + 1];
+            tokens->stdout_and_stderr_file = args.values[i + 1];
             tokens->stdout_and_stderr_redirect_index = i;
             tokens->output_append = true;
             break;
@@ -225,12 +228,32 @@ int vm_tokenizer_ops_process(const struct Args* const restrict args, struct Toke
             break;
         }
         case OP_BACKGROUND_JOB: {
-            if (i != args->count - 1) {
+            if (i != args.count - 1) {
                 return INVALID_SYNTAX(INVALID_SYNTAX_BACKGROUND_JOB_NOT_LAST_ARG);
             }
             tokens->is_background_job = true;
             break;
         }
+        case OP_HOME_EXPANSION: {
+            size_t len = shell->config.home_location.length;
+            args.values[i] = arena_malloc(scratch_arena, len, char);
+            memcpy(args.values[i], shell->config.home_location.value, len);
+        }
+        /*case OP_ASSIGNMENT: {
+            // variable values are stored in vars hashmap.
+            // the key is the previous value, which is tagged with OP_VARIABLE.
+            // when VM comes in contact with OP_VARIABLE, it looks up value in vars.
+            debugf("saving var_name %s\n", var_name);
+            struct estr* val = arena_malloc(&shell->arena, 1, struct estr);
+            val->length = args.lengths[i];
+            val->value = arena_malloc(&shell->arena, val->length, char);
+            memcpy(val->value, parser_buffer + parser_assignment_pos - 1, val->length);
+            debugf("%s : %s (%zu)\n", var_name, val->value, val->length);
+            char* key = arena_malloc(arena, parser_assignment_pos, char);
+            memcpy(key, var_name, parser_assignment_pos);
+            debugf("key value %s\n", key);
+            var_set(key, val, arena, &args->vars);
+        }*/
         }
     }
     ++tokens->number_of_pipe_commands;
@@ -239,17 +262,19 @@ int vm_tokenizer_ops_process(const struct Args* const restrict args, struct Toke
 }
 
 [[nodiscard]]
-int vm_tokenizer_tokenize(const struct Args* const restrict args, struct Tokens* const restrict tokens)
+int vm_tokenizer_tokenize(struct Shell* const restrict shell, struct Tokens* const restrict tokens,
+                          struct Arena* const restrict scratch_arena)
 {
-    assert(args);
+    assert(shell);
     assert(tokens);
+    assert(scratch_arena);
 
     int result;
-    if ((result = vm_tokenizer_syntax_check(args)) != NCSH_COMMAND_SUCCESS_CONTINUE) {
+    if ((result = vm_tokenizer_syntax_check(&shell->args)) != NCSH_COMMAND_SUCCESS_CONTINUE) {
         return result;
     }
 
-    if ((result = vm_tokenizer_ops_process(args, tokens)) != NCSH_COMMAND_SUCCESS_CONTINUE) {
+    if ((result = vm_tokenizer_ops_process(shell, tokens, scratch_arena)) != NCSH_COMMAND_SUCCESS_CONTINUE) {
         return result;
     }
 

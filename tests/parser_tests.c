@@ -592,8 +592,10 @@ void parser_parse_home_test()
     eassert(memcmp(args.values[0], "ls", 3) == 0);
     eassert(args.lengths[0] == 3);
 
-    eassert(memcmp(args.values[1], "/home/alex", 11) == 0);
-    eassert(args.lengths[1] == 11);
+    eassert(memcmp(args.values[1], "~", 2) == 0);
+    eassert(args.lengths[1] == 2);
+    // eassert(memcmp(args.values[1], "/home/alex", 11) == 0);
+    // eassert(args.lengths[1] == 11);
 
     eassert(!args.values[2]);
 
@@ -620,8 +622,10 @@ void parser_parse_home_at_start_test()
     eassert(memcmp(args.values[0], "ls", 3) == 0);
     eassert(args.lengths[0] == 3);
 
-    eassert(memcmp(args.values[1], "/home/alex/snap", 16) == 0);
-    eassert(args.lengths[1] == 16);
+    eassert(memcmp(args.values[1], "~", 2) == 0);
+    eassert(args.lengths[1] == 2);
+    // eassert(memcmp(args.values[1], "/home/alex/snap", 16) == 0);
+    // eassert(args.lengths[1] == 16);
 
     eassert(!args.values[2]);
 
@@ -634,7 +638,7 @@ void parser_parse_math_operators()
     ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
 
-    char* line = "( 1 + 1 - 1 * 1 / 1 % 1 ** 1 )";
+    char* line = "$( 1 + 1 - 1 * 1 / 1 % 1 ** 1 )";
     size_t length = strlen(line) + 1;
     struct Args args;
     enum eresult init_res = parser_init(&args, &arena);

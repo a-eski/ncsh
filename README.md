@@ -173,7 +173,6 @@ Please see COMPILE.md.
 * More built-in commands like export, setting environment variables, etc.
 * Aliasing for user-defined commands
 * Custom prompt colors, backgrounds
-* Support scripts
 * Improve noninteractive mode
 * Add command-line flags for noninteractive mode
 * Background jobs implementation
@@ -181,4 +180,4 @@ Please see COMPILE.md.
 * Better POSIX compliance
 * Variable expansion (variables don't work with 'STR="ls | sort" && $STR')
 * Usable with GDB (currently doesn't work)
-* Incorporate autocompletions into GNU readline fork or implement some vim-like editing commands
+* Incorporate autocompletions into GNU readline fork or implement some vim-like editing commands?

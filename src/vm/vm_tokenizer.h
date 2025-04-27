@@ -3,6 +3,7 @@
 #pragma once
 
 #include "../parser.h"
+#include "../types.h"
 
 /* struct Tokens
  * Stores information related to tokens from struct Args,
@@ -26,4 +27,5 @@ struct Tokens {
     bool is_background_job;
 };
 
-int vm_tokenizer_tokenize(const struct Args* const restrict args, struct Tokens* const restrict tokens);
+int vm_tokenizer_tokenize(struct Shell* const restrict shell, struct Tokens* const restrict tokens,
+                          struct Arena* const restrict scratch_arena);
