@@ -36,6 +36,12 @@
 #define AND "&&"
 #define OR "||"
 
+// ops: multiple
+#define DOLLAR_SIGN '$'
+#define VARIABLE '$'
+#define MATH_EXPRESSION_START "$("
+#define MATH_EXPRESSION_END ')'
+
 // ops: numeric
 #define ADD '+'
 #define SUBTRACT '-'
@@ -45,7 +51,6 @@
 #define EXPONENTIATION "**"
 // ops: variables
 #define ASSIGNMENT '='
-#define VARIABLE '$'
 // ops: boolean
 // prefixed with BOOL to avoid any possible conflicts in the future
 #define BOOL_TRUE "true"
@@ -91,7 +96,7 @@ enum eresult parser_init(struct Args* const restrict args, struct Arena* const a
  * Bytecodes (opcodes) equivalents are stored in the array of enum Ops, ops_2char
  */
 const char* const restrict ops_2char_str[] = {
-    STDOUT_REDIRECTION_APPEND, STDERR_REDIRECTION, STDOUT_AND_STDERR_REDIRECTION, AND, OR, EXPONENTIATION};
+    STDOUT_REDIRECTION_APPEND, STDERR_REDIRECTION, STDOUT_AND_STDERR_REDIRECTION, AND, OR, EXPONENTIATION, MATH_EXPRESSION_START};
 
 constexpr size_t ops_2char_len = sizeof(ops_2char_str) / sizeof(char*);
 
@@ -100,7 +105,8 @@ const enum Ops ops_2char[] = {OP_STDOUT_REDIRECTION_APPEND,
                               OP_STDOUT_AND_STDERR_REDIRECTION,
                               OP_AND,
                               OP_OR,
-                              OP_EXPONENTIATION};
+                              OP_EXPONENTIATION,
+                              OP_MATH_EXPRESSION_START};
 
 /* ops_3char_str
  * A constant array that contain all shell operations that are 3 characters long, like "&>>".
@@ -154,11 +160,11 @@ enum Ops parser_op_get(const char* const restrict line, const size_t length)
         case MODULO: {
             return OP_MODULO;
         }
-        case OPENING_PARAN: {
-            return OP_MATH_EXPRESSION_START;
-        }
         case CLOSING_PARAN: {
             return OP_MATH_EXPRESSION_END;
+        }
+        case TILDE: {
+            return OP_HOME_EXPANSION;
         }
         default: {
             return OP_CONSTANT;
@@ -212,19 +218,20 @@ enum Ops parser_op_get(const char* const restrict line, const size_t length)
  */
 // clang-format off
 enum Parser_State: size_t {
-    IN_NONE =			 0,
+    IN_NONE =                    0,
     IN_SINGLE_QUOTES =           1 << 0,
     IN_DOUBLE_QUOTES =           1 << 1,
     IN_BACKTICK_QUOTES =         1 << 2,
     IN_MATHEMATICAL_EXPRESSION = 1 << 3,
     IN_ASSIGNMENT =              1 << 4,
     IN_GLOB_EXPANSION =          1 << 5,
-    IN_COMMENT =		 1 << 7
+    IN_COMMENT =                 1 << 7,
+    IN_DOLLAR_SIGN =             1 << 8
 };
 // clang-format on
 
-/* variables used in parser_parse, not accessed anywhere else within the shell
- * put here because they increased speed of the parser.
+/* these variables used in parser_parse, not accessed anywhere else within the shell.
+ * put here because they increased speed of the parser in benchmarks
  */
 char* parser_buffer;
 char* var_name;
@@ -290,8 +297,11 @@ void parser_parse(const char* const restrict line, const size_t length, struct A
             continue;
         }
         case OPENING_PARAN: {
-            if (!(parser_state & IN_MATHEMATICAL_EXPRESSION))
+            if ((parser_state & IN_DOLLAR_SIGN) &&
+                    !(parser_state & IN_MATHEMATICAL_EXPRESSION)) {
                 parser_state |= IN_MATHEMATICAL_EXPRESSION;
+                parser_state &= ~IN_DOLLAR_SIGN;
+            }
 
             parser_buffer[parser_buf_pos++] = line[line_pos];
             continue;
@@ -301,20 +311,6 @@ void parser_parse(const char* const restrict line, const size_t length, struct A
                 parser_state &= ~IN_MATHEMATICAL_EXPRESSION;
 
             parser_buffer[parser_buf_pos++] = line[line_pos];
-            continue;
-        }
-        case TILDE: {
-            // TODO: look at performance of tilde expansion
-            // TODO: see if it can be moved outside of case statement
-            char* home = getenv("HOME");
-            size_t home_length = strlen(home);
-            if (parser_buf_pos + home_length > NCSH_MAX_INPUT) {
-                // protect from overflow
-                args->count = 0;
-                return;
-            }
-            memcpy(parser_buffer + parser_buf_pos, home, home_length);
-            parser_buf_pos += home_length;
             continue;
         }
         case GLOB_STAR: {
@@ -346,6 +342,14 @@ void parser_parse(const char* const restrict line, const size_t length, struct A
 
             continue;
         }
+        case DOLLAR_SIGN: {
+            // exclude variables from this one
+            if (!(parser_state & IN_DOLLAR_SIGN) && line_pos < length && line[line_pos + 1] == '(')
+                parser_state |= IN_DOLLAR_SIGN;
+
+            parser_buffer[parser_buf_pos++] = line[line_pos];
+            continue;
+        }
         // delimiter case // NOTE: should \t, \a, or EOF be included?
         case ' ':
         case '\r':
@@ -372,7 +376,10 @@ void parser_parse(const char* const restrict line, const size_t length, struct A
         parser_buffer[parser_buf_pos] = '\0';
 
         debugf("Current parser state: %d\n", parser_state);
+
         if ((parser_state & IN_GLOB_EXPANSION)) {
+            // tilde expansion happens outside of parser
+            // consider moving other expansions outside of parser
             glob_t glob_buf = {0};
             size_t glob_len;
             glob(parser_buffer, GLOB_DOOFFS, NULL, &glob_buf);
@@ -396,6 +403,7 @@ void parser_parse(const char* const restrict line, const size_t length, struct A
             parser_state &= ~IN_GLOB_EXPANSION;
         }
         else if ((parser_state & IN_ASSIGNMENT)) {
+            // consider moving assignment/vars outside of parser
             assert(arena);
             // variable values are stored in vars hashmap.
             // the key is the previous value, which is tagged with OP_VARIABLE.

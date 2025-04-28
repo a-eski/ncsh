@@ -45,7 +45,8 @@ enum Ops : uint8_t {
     OP_ASSIGNMENT = 23,
     // Boolean
     OP_TRUE = 24,
-    OP_FALSE = 25
+    OP_FALSE = 25,
+    OP_HOME_EXPANSION = 26
 };
 
 /* struct Args

@@ -366,7 +366,7 @@ void vm_background_jobs_check(struct Processes* const restrict processes)
             }
             if (WIFEXITED(status)) {
                 if (WEXITSTATUS(status)) {
-                    fprintf(stderr, "ncsh: Command child process failed with status %d\n", WEXITSTATUS(status));
+                    fprintf(stderr, "ncsh: Command child process returned with status %d\n", WEXITSTATUS(status));
                 }
 #ifdef NCSH_DEBUG
                 else {
@@ -570,7 +570,7 @@ int vm_run(struct Args* const restrict args, struct Tokens* const restrict token
 /* vm_alias_replace
  * Replaces aliases with their aliased commands before calling main execute function on VM.
  */
-void vm_alias_replace(struct Args* const restrict args, struct Arena* const scratch_arena)
+void vm_alias_replace(struct Args* const restrict args, struct Arena* const restrict scratch_arena)
 {
     struct estr alias = config_alias_check(args->values[0], args->lengths[0]);
     if (alias.length) {
@@ -583,7 +583,7 @@ void vm_alias_replace(struct Args* const restrict args, struct Arena* const scra
 /* vm_vars_replace
  * Replaces variables with their values before calling main execute function on VM.
  */
-int vm_vars_replace(struct Args* const restrict args, struct Arena* scratch_arena)
+int vm_vars_replace(struct Args* const restrict args, struct Arena* const restrict scratch_arena)
 {
     for (size_t i = 0; i < args->count; ++i) {
         if (args->ops[i] == OP_VARIABLE) {
@@ -605,7 +605,7 @@ int vm_vars_replace(struct Args* const restrict args, struct Arena* scratch_aren
 }
 
 [[nodiscard]]
-int vm_execute(struct Shell* const restrict shell, struct Arena* const scratch_arena)
+int vm_execute(struct Shell* const restrict shell, struct Arena* const restrict scratch_arena)
 {
     assert(shell);
     assert(&shell->args);
@@ -634,7 +634,7 @@ int vm_execute(struct Shell* const restrict shell, struct Arena* const scratch_a
     }
 
     struct Tokens tokens = {0};
-    vm_result = vm_tokenizer_tokenize(&shell->args, &tokens);
+    vm_result = vm_tokenizer_tokenize(shell, &tokens, scratch_arena);
     if (vm_result != NCSH_COMMAND_SUCCESS_CONTINUE) {
         return vm_result;
     }
@@ -651,20 +651,20 @@ int vm_execute(struct Shell* const restrict shell, struct Arena* const scratch_a
 }
 
 [[nodiscard]]
-int vm_execute_noninteractive(struct Args* const restrict args, struct Arena* const arena)
+int vm_execute_noninteractive(struct Shell* const restrict shell, struct Arena* const restrict arena)
 {
-    assert(args);
-    if (!args->count) {
+    assert(shell);
+    if (!shell->args.count) {
         return NCSH_COMMAND_SUCCESS_CONTINUE;
     }
 
-    vm_alias_replace(args, arena);
+    vm_alias_replace(&shell->args, arena);
 
     struct Tokens tokens = {0};
-    vm_result = vm_tokenizer_tokenize(args, &tokens);
+    vm_result = vm_tokenizer_tokenize(shell, &tokens, arena);
     if (vm_result != NCSH_COMMAND_SUCCESS_CONTINUE) {
         return vm_result;
     }
 
-    return vm_run(args, &tokens);
+    return vm_run(&shell->args, &tokens);
 }

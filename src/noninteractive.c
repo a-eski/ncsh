@@ -20,12 +20,12 @@
  * Parses and sends output of parser to VM. Parser data stored in scratch arena, which is then used by VM.
  * Scratch arena reset after scope ends due to passing by value.
  */
-int noninteractive_run(const char** const restrict argv, const size_t argc, struct Args* args,
-                       struct Arena* const arena, struct Arena scratch_arena)
+int noninteractive_run(const char** const restrict argv, const size_t argc, struct Shell* shell,
+                       struct Arena scratch_arena)
 {
-    parser_parse_noninteractive(argv, argc, args, arena, &scratch_arena);
+    parser_parse_noninteractive(argv, argc, &shell->args, &shell->arena, &scratch_arena);
 
-    return vm_execute_noninteractive(args, arena);
+    return vm_execute_noninteractive(shell, &scratch_arena);
 }
 
 /* noninteractive
@@ -58,19 +58,18 @@ int noninteractive(const int argc, const char** const restrict argv)
         return EXIT_FAILURE;
     }
 
-    struct Arena arena = {.start = memory, .end = memory + (arena_capacity)};
+    struct Shell shell = {0};
+    shell.arena = (struct Arena){.start = memory, .end = memory + (arena_capacity)};
     char* scratch_memory_start = memory + (arena_capacity + 1);
     struct Arena scratch_arena = {.start = scratch_memory_start,
                                   .end = scratch_memory_start + (scratch_arena_capacity)};
 
-    struct Config config;
-    if (config_init(&config, &arena, scratch_arena) != E_SUCCESS) {
+    if (config_init(&shell.config, &shell.arena, shell.arena) != E_SUCCESS) {
         return EXIT_FAILURE;
     }
 
-    struct Args args = {0};
     enum eresult result;
-    if ((result = parser_init(&args, &arena)) != E_SUCCESS) {
+    if ((result = parser_init(&shell.args, &shell.arena)) != E_SUCCESS) {
         perror(RED "ncsh: Error when allocating memory for parser" RESET);
         fflush(stderr);
         return EXIT_FAILURE;
@@ -78,7 +77,7 @@ int noninteractive(const int argc, const char** const restrict argv)
 
     debug_argsv(argc, argv);
 
-    int command_result = noninteractive_run(argv + 1, (size_t)argc - 1, &args, &arena, scratch_arena);
+    int command_result = noninteractive_run(argv + 1, (size_t)argc - 1, &shell, scratch_arena);
 
     int exit_code = command_result == NCSH_COMMAND_EXIT_FAILURE ? EXIT_FAILURE : EXIT_SUCCESS;
 
