@@ -3,6 +3,7 @@
 #include "vm_tokenizer.h"
 
 #include <assert.h>
+#include <stdint.h>
 #include <unistd.h>
 
 #include "../defines.h"
@@ -98,81 +99,121 @@ int vm_tokenizer_syntax_error(const char* const restrict message, const size_t m
 
 #define INVALID_SYNTAX(message) vm_tokenizer_syntax_error(message, sizeof(message) - 1)
 
+int vmtok_invalid_syntax_check_res;
+
+/* vm_tokenizer_syntax_check_first_arg
+ * Simple check to see if something is in first position that shouldn't be
+ */
+void vm_tokenizer_syntax_check_first_arg(uint8_t op)
+{
+    switch (op) {
+    case OP_PIPE: {
+        vmtok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_PIPE_FIRST_ARG);
+        break;
+    }
+    case OP_STDOUT_REDIRECTION: {
+        vmtok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_REDIR_FIRST_ARG);
+        break;
+    }
+    case OP_STDOUT_REDIRECTION_APPEND: {
+        vmtok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_REDIR_APPEND_FIRST_ARG);
+        break;
+    }
+    case OP_STDIN_REDIRECTION: {
+        vmtok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDIN_REDIR_FIRST_ARG);
+        break;
+    }
+    case OP_STDERR_REDIRECTION: {
+        vmtok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDERR_REDIR_FIRST_ARG);
+        break;
+    }
+    case OP_STDERR_REDIRECTION_APPEND: {
+        vmtok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDERR_REDIR_APPEND_FIRST_ARG);
+        break;
+    }
+    case OP_STDOUT_AND_STDERR_REDIRECTION: {
+        vmtok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_AND_STDERR_REDIR_FIRST_ARG);
+        break;
+    }
+    case OP_STDOUT_AND_STDERR_REDIRECTION_APPEND: {
+        vmtok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_AND_STDERR_REDIR_APPEND_FIRST_ARG);
+        break;
+    }
+    case OP_BACKGROUND_JOB: {
+        vmtok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_BACKGROUND_JOB_FIRST_ARG);
+        break;
+    }
+    case OP_AND: {
+        vmtok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_AND_IN_FIRST_POSITION);
+        break;
+    }
+    case OP_OR: {
+        vmtok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_OR_IN_FIRST_POSITION);
+        break;
+    }
+    }
+}
+
+/* vm_tokenizer_syntax_check_last_arg
+ * Simple check to see if something is in last position that shouldn't be
+ */
+void vm_tokenizer_syntax_check_last_arg(uint8_t op)
+{
+    switch (op) {
+    case OP_PIPE: {
+        vmtok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_PIPE_LAST_ARG);
+        break;
+    }
+    case OP_STDOUT_REDIRECTION: {
+        vmtok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_REDIR_LAST_ARG);
+        break;
+    }
+    case OP_STDOUT_REDIRECTION_APPEND: {
+        vmtok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_REDIR_APPEND_LAST_ARG);
+        break;
+    }
+    case OP_STDIN_REDIRECTION: {
+        vmtok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDIN_REDIR_LAST_ARG);
+        break;
+    }
+    case OP_STDERR_REDIRECTION: {
+        vmtok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDERR_REDIR_LAST_ARG);
+        break;
+    }
+    case OP_STDERR_REDIRECTION_APPEND: {
+        vmtok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDERR_REDIR_APPEND_LAST_ARG);
+        break;
+    }
+    case OP_STDOUT_AND_STDERR_REDIRECTION: {
+        vmtok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_AND_STDERR_REDIR_LAST_ARG);
+        break;
+    }
+    case OP_STDOUT_AND_STDERR_REDIRECTION_APPEND: {
+        vmtok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_AND_STDERR_REDIR_APPEND_LAST_ARG);
+        break;
+    }
+    case OP_AND: {
+        vmtok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_AND_IN_LAST_POSITION);
+        break;
+    }
+    case OP_OR: {
+        vmtok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_OR_IN_LAST_POSITION);
+        break;
+    }
+    }
+}
+
 [[nodiscard]]
 int vm_tokenizer_syntax_check(const struct Args* const restrict args)
 {
     assert(args);
 
-    switch (args->ops[0]) {
-    case OP_PIPE: {
-        return INVALID_SYNTAX(INVALID_SYNTAX_PIPE_FIRST_ARG);
-    }
-    case OP_STDOUT_REDIRECTION: {
-        return INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_REDIR_FIRST_ARG);
-    }
-    case OP_STDOUT_REDIRECTION_APPEND: {
-        return INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_REDIR_APPEND_FIRST_ARG);
-    }
-    case OP_STDIN_REDIRECTION: {
-        return INVALID_SYNTAX(INVALID_SYNTAX_STDIN_REDIR_FIRST_ARG);
-    }
-    case OP_STDERR_REDIRECTION: {
-        return INVALID_SYNTAX(INVALID_SYNTAX_STDERR_REDIR_FIRST_ARG);
-    }
-    case OP_STDERR_REDIRECTION_APPEND: {
-        return INVALID_SYNTAX(INVALID_SYNTAX_STDERR_REDIR_APPEND_FIRST_ARG);
-    }
-    case OP_STDOUT_AND_STDERR_REDIRECTION: {
-        return INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_AND_STDERR_REDIR_FIRST_ARG);
-    }
-    case OP_STDOUT_AND_STDERR_REDIRECTION_APPEND: {
-        return INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_AND_STDERR_REDIR_APPEND_FIRST_ARG);
-    }
-    case OP_BACKGROUND_JOB: {
-        return INVALID_SYNTAX(INVALID_SYNTAX_BACKGROUND_JOB_FIRST_ARG);
-    }
-    case OP_AND: {
-        return INVALID_SYNTAX(INVALID_SYNTAX_AND_IN_FIRST_POSITION);
-    }
-    case OP_OR: {
-        return INVALID_SYNTAX(INVALID_SYNTAX_OR_IN_FIRST_POSITION);
-    }
-    }
-
-    switch (args->ops[args->count - 1]) {
-    case OP_PIPE: {
-        return INVALID_SYNTAX(INVALID_SYNTAX_PIPE_LAST_ARG);
-    }
-    case OP_STDOUT_REDIRECTION: {
-        return INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_REDIR_LAST_ARG);
-    }
-    case OP_STDOUT_REDIRECTION_APPEND: {
-        return INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_REDIR_APPEND_LAST_ARG);
-    }
-    case OP_STDIN_REDIRECTION: {
-        return INVALID_SYNTAX(INVALID_SYNTAX_STDIN_REDIR_LAST_ARG);
-    }
-    case OP_STDERR_REDIRECTION: {
-        return INVALID_SYNTAX(INVALID_SYNTAX_STDERR_REDIR_LAST_ARG);
-    }
-    case OP_STDERR_REDIRECTION_APPEND: {
-        return INVALID_SYNTAX(INVALID_SYNTAX_STDERR_REDIR_APPEND_LAST_ARG);
-    }
-    case OP_STDOUT_AND_STDERR_REDIRECTION: {
-        return INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_AND_STDERR_REDIR_LAST_ARG);
-    }
-    case OP_STDOUT_AND_STDERR_REDIRECTION_APPEND: {
-        return INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_AND_STDERR_REDIR_APPEND_LAST_ARG);
-    }
-    case OP_AND: {
-        return INVALID_SYNTAX(INVALID_SYNTAX_AND_IN_LAST_POSITION);
-    }
-    case OP_OR: {
-        return INVALID_SYNTAX(INVALID_SYNTAX_OR_IN_LAST_POSITION);
-    }
-    }
-
-    return NCSH_COMMAND_SUCCESS_CONTINUE;
+    vmtok_invalid_syntax_check_res = NCSH_COMMAND_SUCCESS_CONTINUE;
+    vm_tokenizer_syntax_check_first_arg(args->ops[0]);
+    if (vmtok_invalid_syntax_check_res != NCSH_COMMAND_SUCCESS_CONTINUE)
+        return vmtok_invalid_syntax_check_res;
+    vm_tokenizer_syntax_check_last_arg(args->ops[args->count - 1]);
+    return vmtok_invalid_syntax_check_res;
 }
 
 int vm_tokenizer_ops_process(struct Shell* const restrict shell, struct Tokens* const restrict tokens,
@@ -181,10 +222,11 @@ int vm_tokenizer_ops_process(struct Shell* const restrict shell, struct Tokens* 
     assert(shell);
     struct Args args = shell->args;
     assert(tokens);
+    assert(scratch_arena);
 
     tokens->is_background_job = false;
     for (uint8_t i = 0; i < args.count; ++i) {
-        switch (args.ops[i]) {
+        switch (args.ops[i]){
         case OP_STDOUT_REDIRECTION: {
             tokens->stdout_file = args.values[i + 1];
             tokens->stdout_redirect_index = i;
@@ -239,21 +281,6 @@ int vm_tokenizer_ops_process(struct Shell* const restrict shell, struct Tokens* 
             args.values[i] = arena_malloc(scratch_arena, len, char);
             memcpy(args.values[i], shell->config.home_location.value, len);
         }
-        /*case OP_ASSIGNMENT: {
-            // variable values are stored in vars hashmap.
-            // the key is the previous value, which is tagged with OP_VARIABLE.
-            // when VM comes in contact with OP_VARIABLE, it looks up value in vars.
-            debugf("saving var_name %s\n", var_name);
-            struct estr* val = arena_malloc(&shell->arena, 1, struct estr);
-            val->length = args.lengths[i];
-            val->value = arena_malloc(&shell->arena, val->length, char);
-            memcpy(val->value, parser_buffer + parser_assignment_pos - 1, val->length);
-            debugf("%s : %s (%zu)\n", var_name, val->value, val->length);
-            char* key = arena_malloc(arena, parser_assignment_pos, char);
-            memcpy(key, var_name, parser_assignment_pos);
-            debugf("key value %s\n", key);
-            var_set(key, val, arena, &args->vars);
-        }*/
         }
     }
     ++tokens->number_of_pipe_commands;

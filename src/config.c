@@ -11,13 +11,14 @@
 #include "arena.h"
 #include "config.h"
 #include "defines.h"
+#include "debug.h"
 #include "eskilib/ecolors.h"
 #include "eskilib/efile.h"
 #include "eskilib/eresult.h"
 #include "eskilib/estr.h"
 
 [[nodiscard]]
-enum eresult config_home_init(struct Config* const restrict config, struct Arena* const arena)
+enum eresult config_home_init(struct Config* const restrict config, struct Arena* const restrict arena)
 {
     if (!config) {
         return E_FAILURE_NULL_REFERENCE;
@@ -40,7 +41,7 @@ enum eresult config_home_init(struct Config* const restrict config, struct Arena
 }
 
 [[nodiscard]]
-enum eresult config_location_init(struct Config* const restrict config, struct Arena* const arena)
+enum eresult config_location_init(struct Config* const restrict config, struct Arena* const restrict arena)
 {
     if (!config) {
         return E_FAILURE_NULL_REFERENCE;
@@ -78,7 +79,7 @@ enum eresult config_location_init(struct Config* const restrict config, struct A
 }
 
 [[nodiscard]]
-enum eresult config_file_set(struct Config* const restrict config, struct Arena* const arena)
+enum eresult config_file_set(struct Config* const restrict config, struct Arena* const restrict arena)
 {
     constexpr size_t rc_len = sizeof(RC_FILE);
     constexpr size_t rc_len_nt = rc_len - 1;
@@ -111,10 +112,11 @@ enum eresult config_file_set(struct Config* const restrict config, struct Arena*
  */
 #define PATH "PATH"
 #define PATH_ADD "PATH+="
-void config_path_add(const char* const value, const int len, struct Arena* const scratch_arena)
+void config_path_add(const char* const val, const int len, struct Arena* const restrict scratch_arena)
 {
+    assert(val);
     assert(len > 0);
-    if (len < 0) {
+    if (len <= 0) {
         return;
     }
 
@@ -123,25 +125,93 @@ void config_path_add(const char* const value, const int len, struct Arena* const
     char* new_path = arena_malloc(scratch_arena, path_len + (size_t)len, char);
     memcpy(new_path, path, path_len - 1);
     new_path[path_len - 2] = ':';
-    memcpy(new_path + path_len - 1, value, (size_t)len);
+    memcpy(new_path + path_len - 1, val, (size_t)len);
     debugf("Got new path to set %s\n", new_path);
     setenv(PATH, new_path, true);
+}
+
+struct User_Alias {
+    struct estr* alias;
+    struct estr* actual_command;
+};
+
+#define NCSH_MAX_ALIASES 100
+size_t user_aliases_count;
+size_t user_aliases_cap;
+struct User_Alias* user_aliases;
+
+#define ALIAS_ADD "ALIAS "
+void config_alias_add(const char* const restrict val, const size_t len, struct Arena* const restrict arena)
+{
+    assert(val);
+    assert(len > 0);
+    if (!len) {
+        return;
+    }
+
+    debugf("trying to add alias: %s\n", val);
+
+    size_t i;
+    for (i = 0; i < len; ++i) {
+        if (val[i] == '=')
+            break;
+    }
+
+    if (!i || i == len - 1) {
+        fprintf(stderr, "ncsh: Could not process alias while reading rc file: %s\n", val);
+        return;
+    }
+
+    if (!user_aliases) {
+        user_aliases = arena_malloc(arena, 10, struct User_Alias);
+    }
+
+    user_aliases[user_aliases_count].alias = arena_malloc(arena, 1, struct estr);
+    user_aliases[user_aliases_count].alias->length = i + 1;
+    user_aliases[user_aliases_count].alias->value = arena_malloc(arena, i + 1, char);
+    memcpy(user_aliases[user_aliases_count].alias->value, val, i);
+    user_aliases[user_aliases_count].alias->value[i] = '\0';
+
+    size_t ac_len = len - i;
+    if (ac_len == 0) {
+        return;
+    }
+
+    user_aliases[user_aliases_count].actual_command = arena_malloc(arena, 1, struct estr);
+    user_aliases[user_aliases_count].actual_command->length = ac_len;
+    user_aliases[user_aliases_count].actual_command->value = arena_malloc(arena, ac_len, char);
+    memcpy(user_aliases[user_aliases_count].actual_command->value, val + i + 1, ac_len - 1);
+    user_aliases[user_aliases_count].actual_command->value[ac_len] = '\0';
+
+    debugf("added alias %s with actual command %s\n", user_aliases[user_aliases_count].alias->value, user_aliases[user_aliases_count].actual_command->value);
+    ++user_aliases_count;
 }
 
 /* config_process
  * Iterate through the .ncshrc config file and perform any actions needed.
  */
-void config_process(FILE* const restrict file, struct Arena* const scratch_arena)
+void config_process(FILE* const restrict file, struct Arena* const restrict arena, struct Arena* const restrict scratch_arena)
 {
+    user_aliases_count = 0;
+
     int buffer_length;
     char buffer[NCSH_MAX_INPUT] = {0};
     while ((buffer_length = efgets(buffer, sizeof(buffer), file)) != EOF) {
-        if (buffer_length > 6 && !strncmp(buffer, PATH_ADD, sizeof(PATH_ADD) - 1)) {
+        // Add to path (6 because PATH+=)
+        if (buffer_length > 6 && !memcmp(buffer, PATH_ADD, sizeof(PATH_ADD) - 1)) {
+            assert(buffer + 6);
             config_path_add(buffer + 6, buffer_length - 6, scratch_arena);
+        }
+        // Aliasing
+        else if (buffer_length > 6 && !memcmp(buffer, ALIAS_ADD, sizeof(ALIAS_ADD) - 1)) {
+            assert(buffer + 6);
+            config_alias_add(buffer + 6, (size_t)(buffer_length - 6), arena);
         }
 
         memset(buffer, '\0', (size_t)buffer_length);
     }
+
+    debugf("user aliases count: %zu\n", user_aliases_count);
 }
 
 /* config_file_load
@@ -149,7 +219,8 @@ void config_process(FILE* const restrict file, struct Arena* const scratch_arena
  * Returns: enum eresult, E_SUCCESS if config file loaded or user doesn't want one.
  */
 [[nodiscard]]
-enum eresult config_file_load(const struct Config* const restrict config, struct Arena* const scratch_arena)
+enum eresult config_file_load(const struct Config* const restrict config, struct Arena* const restrict arena,
+                              struct Arena* const restrict scratch_arena)
 {
 
     FILE* file = fopen(config->config_file.value, "r");
@@ -176,7 +247,7 @@ enum eresult config_file_load(const struct Config* const restrict config, struct
         return E_SUCCESS;
     }
 
-    config_process(file, scratch_arena);
+    config_process(file, arena, scratch_arena);
 
     fclose(file);
     return E_SUCCESS;
@@ -188,7 +259,7 @@ enum eresult config_file_load(const struct Config* const restrict config, struct
  * Returns: enum eresult, E_SUCCESS is successful
  */
 [[nodiscard]]
-enum eresult config_init(struct Config* const restrict config, struct Arena* const arena, struct Arena scratch_arena)
+enum eresult config_init(struct Config* const restrict config, struct Arena* const restrict arena, struct Arena scratch_arena)
 {
     assert(arena);
 
@@ -205,7 +276,7 @@ enum eresult config_init(struct Config* const restrict config, struct Arena* con
         return result;
     }
 
-    if ((result = config_file_load(config, &scratch_arena)) != E_SUCCESS) {
+    if ((result = config_file_load(config, arena, &scratch_arena)) != E_SUCCESS) {
         return result;
     }
 
@@ -227,13 +298,13 @@ enum eresult config_init(struct Config* const restrict config, struct Arena* con
 #define CARGO "cargo"
 #define CARGO_ALIAS "c"
 
+/* Compile-time aliases
+ */
 struct Alias {
     struct estr alias;
     struct estr actual_command;
 };
 
-/* Compile-time aliases
- */
 const struct Alias aliases[] = {
     {.alias = {.length = sizeof(GIT_ALIAS), .value = GIT_ALIAS},
      .actual_command = {.length = sizeof(GIT), .value = GIT}},
@@ -255,6 +326,14 @@ struct estr config_alias_check(const char* const restrict buffer, const size_t b
 {
     if (!buffer || buf_len < 2) {
         return estr_Empty;
+    }
+
+    if (user_aliases_count) {
+        for (size_t i = 0; i < user_aliases_count; ++i) {
+            if (estrcmp_cc(buffer, buf_len, user_aliases[i].alias->value, user_aliases[i].alias->length)) {
+                return *user_aliases[i].actual_command;
+            }
+        }
     }
 
     for (size_t i = 0; i < aliases_count; ++i) {
