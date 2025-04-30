@@ -23,7 +23,7 @@
 #include "parser.h"
 #include "readline/ac.h"
 #include "readline/ncreadline.h"
-#include "var.h"
+#include "vars.h"
 #include "vm/vm.h"
 
 /* Global Variables
@@ -125,7 +125,7 @@ char* init(struct Shell* const restrict shell)
         return NULL;
     }
 
-    var_malloc(&shell->arena, &shell->vars);
+    vars_malloc(&shell->arena, &shell->vars);
 
     if (signal_forward(SIGINT) || signal_forward(SIGWINCH)) {
         perror("ncsh: Error setting up signal handlers");

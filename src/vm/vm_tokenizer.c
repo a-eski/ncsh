@@ -10,7 +10,7 @@
 
 #include "../args.h"
 #include "../defines.h"
-#include "../var.h"
+#include "../vars.h"
 
 [[nodiscard]]
 int vm_tokenizer_syntax_error(const char* const restrict message, const size_t message_length)
@@ -263,7 +263,7 @@ void vm_tokenizer_glob_process(struct Arg* restrict arg, size_t* args_count, str
     globfree(&glob_buf);
 }
 
-void vm_tokenizer_assignment_process(struct Arg* restrict arg, struct var* vars, struct Arena* const restrict arena)
+void vm_tokenizer_assignment_process(struct Arg* restrict arg, struct Vars* vars, struct Arena* const restrict arena)
 {
     assert(arena);
     // variable values are stored in vars hashmap.
@@ -287,14 +287,14 @@ void vm_tokenizer_assignment_process(struct Arg* restrict arg, struct var* vars,
     char* key = arena_malloc(arena, key_len, char);
     memcpy(key, var_name, key_len);
     debugf("key: %s (%zu)\n", key, key_len);
-    var_set(key, val, arena, vars);
+    vars_set(key, val, arena, vars);
 }
 
-void vm_tokenizer_variable_process(struct Arg* const restrict arg, struct var* const restrict vars, struct Arena* const restrict scratch_arena)
+void vm_tokenizer_variable_process(struct Arg* const restrict arg, struct Vars* const restrict vars, struct Arena* const restrict scratch_arena)
 {
     char* key = arg->val + 1; // skip first value in arg->val (the $)
     debugf("trying to get variable %s\n", key);
-    struct estr* val = var_get(key, vars);
+    struct estr* val = vars_get(key, vars);
     if (!val) {
         printf("ncsh: variable with name '%s' did not have a value associated with it.\n", key);
         return;

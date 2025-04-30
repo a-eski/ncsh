@@ -1,6 +1,10 @@
-#include "arena.h"
+/* Copyright ncsh (C) by Alex Eski 2025 */
+/* args.c: a linked list for storing tokens outputted by the parser */
+
 #include <assert.h>
 #include <string.h>
+
+#include "arena.h"
 #include "args.h"
 
 struct Args* args_alloc(struct Arena* const restrict arena)

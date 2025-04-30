@@ -92,7 +92,7 @@ enum Parser_State: size_t {
  */
 char* parser_buffer;
 size_t parser_state;
-size_t parser_buf_pos = 0;
+size_t parser_buf_pos;
 
 /* ops_2char_str
  * A constant array that contains all shell operations that are 2 characters long, like ">>", "||", "&&".

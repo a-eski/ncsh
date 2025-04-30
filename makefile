@@ -9,7 +9,7 @@ debug_flags = -Wall -Wextra -Werror -Wpedantic -pedantic-errors -Wsign-conversio
 release_flags = -Wall -Wextra -Werror -pedantic-errors -Wsign-conversion -Wformat=2 -Wshadow -Wvla -O3 -DNDEBUG
 # fuzz_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -Wwrite-strings -fsanitize=address,leak,fuzzer -DNDEBUG -g
 fuzz_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,leak,fuzzer -DNDEBUG -g
-objects = obj/main.o obj/arena.o obj/noninteractive.o obj/ncreadline.o obj/vm.o obj/vm_tokenizer.o obj/terminal.o obj/efile.o obj/emap.o obj/var.o obj/args.o obj/parser.o obj/vm_builtins.o obj/history.o obj/ac.o obj/config.o obj/fzf.o obj/z.o
+objects = obj/main.o obj/arena.o obj/noninteractive.o obj/ncreadline.o obj/vm.o obj/vm_tokenizer.o obj/terminal.o obj/efile.o obj/emap.o obj/vars.o obj/args.o obj/parser.o obj/vm_builtins.o obj/history.o obj/ac.o obj/config.o obj/fzf.o obj/z.o
 target = ./bin/ncsh
 
 ifeq ($(CC), gcc)
@@ -75,7 +75,7 @@ check c:
 	make test_arena
 	make test_emap
 	make test_estr
-	make test_var
+	make test_vars
 	make test_vm
 
 .PHONY: acceptance_tests, at
@@ -139,17 +139,17 @@ test_parser tp:
 fuzz_parser fp:
 	chmod +x ./create_corpus_dirs.sh
 	./create_corpus_dirs.sh
-	clang-19 $(STD) $(fuzz_flags) ./tests/parser_fuzzing.c ./src/arena.c ./src/var.c ./src/parser.c -o ./bin/parser_fuzz
+	clang-19 $(STD) $(fuzz_flags) ./tests/parser_fuzzing.c ./src/arena.c ./src/vars.c ./src/parser.c -o ./bin/parser_fuzz
 	./bin/parser_fuzz PARSER_CORPUS/ -detect_leaks=0 -rss_limit_mb=4096
 
 .PHONY: bench_parser, bp
 bench_parser bp:
-	$(CC) $(STD) $(debug_flags) -DNDEBUG ./src/eskilib/etest.c ./src/arena.c ./src/var.c ./src/parser.c ./tests/parser_bench.c -o ./bin/parser_bench
+	$(CC) $(STD) $(debug_flags) -DNDEBUG ./src/eskilib/etest.c ./src/arena.c ./src/vars.c ./src/parser.c ./tests/parser_bench.c -o ./bin/parser_bench
 	hyperfine --warmup 1000 --shell=none './bin/parser_bench'
 
 .PHONY: bench_parser_tests, bpt
 bench_parser_tests bpt:
-	$(CC) $(STD) $(debug_flags) -DNDEBUG ./src/eskilib/etest.c ./src/arena.c ./src/var.c ./src/parser.c ./tests/parser_tests.c -o ./bin/parser_tests
+	$(CC) $(STD) $(debug_flags) -DNDEBUG ./src/eskilib/etest.c ./src/arena.c ./src/vars.c ./src/parser.c ./tests/parser_tests.c -o ./bin/parser_tests
 	hyperfine --warmup 1000 --shell=none './bin/parser_tests'
 
 .PHONY: bench_parser_and_vm, bpv
@@ -211,14 +211,14 @@ test_estr ts:
 	$(CC) $(STD) $(debug_flags) ./src/arena.c ./src/eskilib/etest.c ./tests/estr_tests.c -o ./bin/estr_tests
 	./bin/estr_tests
 
-.PHONY: test_var, tv
-test_var tv:
-	$(CC) $(STD) $(debug_flags) ./src/arena.c ./src/var.c ./src/eskilib/etest.c ./tests/var_tests.c -o ./bin/var_tests
-	./bin/var_tests
+.PHONY: test_vars, tv
+test_vars tv:
+	$(CC) $(STD) $(debug_flags) ./src/arena.c ./src/vars.c ./src/eskilib/etest.c ./tests/vars_tests.c -o ./bin/vars_tests
+	./bin/vars_tests
 
 .PHONY: test_vm, tvm
 test_vm tvm:
-	$(CC) $(STD) $(debug_flags) -DNCSH_VM_TEST ./src/arena.c ./src/args.c ./src/parser.c ./src/eskilib/efile.c ./src/eskilib/emap.c ./src/var.c ./src/readline/history.c ./src/z/fzf.c ./src/z/z.c ./src/config.c ./src/vm/vm.c ./src/vm/vm_tokenizer.c ./src/vm/vm_builtins.c ./src/eskilib/etest.c ./tests/vm_tests.c -o ./bin/vm_tests
+	$(CC) $(STD) $(debug_flags) -DNCSH_VM_TEST ./src/arena.c ./src/args.c ./src/parser.c ./src/eskilib/efile.c ./src/eskilib/emap.c ./src/vars.c ./src/readline/history.c ./src/z/fzf.c ./src/z/z.c ./src/config.c ./src/vm/vm.c ./src/vm/vm_tokenizer.c ./src/vm/vm_builtins.c ./src/eskilib/etest.c ./tests/vm_tests.c -o ./bin/vm_tests
 	./bin/vm_tests
 
 .PHONY: clang_format, cf

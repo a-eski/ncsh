@@ -7,7 +7,6 @@
 #include "arena.h"
 #include "args.h"
 #include "eskilib/eresult.h"
-// #include "var.h"
 
 #define PARSER_TOKENS_LIMIT 128
 

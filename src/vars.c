@@ -7,24 +7,24 @@
 #include <string.h>
 
 #include "arena.h"
-#include "var.h"
+#include "vars.h"
 
-void var_malloc(struct Arena* const arena, struct var* restrict vars)
+void vars_malloc(struct Arena* const arena, struct Vars* restrict vars)
 {
     vars->size = 0;
-    vars->capacity = VAR_DEFAULT_CAPACITY;
+    vars->capacity = VARS_DEFAULT_CAPACITY;
 
-    vars->entries = arena_malloc(arena, vars->capacity, struct var_Entry);
+    vars->entries = arena_malloc(arena, vars->capacity, struct Vars_Entry);
 }
 
-#define VAR_FNV_OFFSET 2166136261
+#define VARS_FNV_OFFSET 2166136261
 
 // 64-bit FNV-1a hash
-uint64_t var_key(const char* str)
+uint64_t vars_key(const char* str)
 {
     register uint64_t i;
 
-    for (i = VAR_FNV_OFFSET; *str; str++) {
+    for (i = VARS_FNV_OFFSET; *str; str++) {
         i += (i << 1) + (i << 4) + (i << 7) + (i << 8) + (i << 24);
         i ^= (uint64_t)*str;
     }
@@ -32,9 +32,9 @@ uint64_t var_key(const char* str)
     return i;
 }
 
-struct estr* var_get(char* key, struct var* restrict vars)
+struct estr* vars_get(char* key, struct Vars* restrict vars)
 {
-    uint64_t hash = var_key(key);
+    uint64_t hash = vars_key(key);
     size_t index = (size_t)(hash & (uint64_t)(vars->capacity - 1));
 
     while (vars->entries[index].key) {
@@ -51,9 +51,9 @@ struct estr* var_get(char* key, struct var* restrict vars)
     return NULL;
 }
 
-bool var_exists(char* key, struct var* restrict vars)
+bool vars_exists(char* key, struct Vars* restrict vars)
 {
-    uint64_t hash = var_key(key);
+    uint64_t hash = vars_key(key);
     size_t index = (size_t)(hash & (uint64_t)(vars->capacity - 1));
 
     while (vars->entries[index].key) {
@@ -70,9 +70,9 @@ bool var_exists(char* key, struct var* restrict vars)
     return false;
 }
 
-const char* var_set_entry(struct var_Entry* entries, size_t capacity, char* key, struct estr* val, size_t* plength)
+const char* vars_set_entry(struct Vars_Entry* entries, size_t capacity, char* key, struct estr* val, size_t* plength)
 {
-    uint64_t hash = var_key(key);
+    uint64_t hash = vars_key(key);
     size_t index = (size_t)(hash & (uint64_t)(capacity - 1));
 
     while (entries[index].key) {
@@ -96,20 +96,20 @@ const char* var_set_entry(struct var_Entry* entries, size_t capacity, char* key,
     return key;
 }
 
-bool var_expand(char* key, struct Arena* const arena, struct var* restrict vars)
+bool vars_expand(char* key, struct Arena* const arena, struct Vars* restrict vars)
 {
     size_t new_capacity = vars->capacity * 2;
     if (new_capacity < vars->capacity) {
         return false;
     }
 
-    struct var_Entry* new_entries = arena_malloc(arena, new_capacity, struct var_Entry);
+    struct Vars_Entry* new_entries = arena_malloc(arena, new_capacity, struct Vars_Entry);
 
     // Iterate entries, move all non-empty ones to new table's entries.
     for (size_t i = 0; i < vars->capacity; i++) {
-        struct var_Entry entry = vars->entries[i];
+        struct Vars_Entry entry = vars->entries[i];
         if (entry.key != NULL) {
-            var_set_entry(new_entries, new_capacity, key, &entry.value, NULL);
+            vars_set_entry(new_entries, new_capacity, key, &entry.value, NULL);
         }
     }
 
@@ -118,7 +118,7 @@ bool var_expand(char* key, struct Arena* const arena, struct var* restrict vars)
     return true;
 }
 
-const char* var_set(char* key, struct estr* val, struct Arena* const arena, struct var* restrict vars)
+const char* vars_set(char* key, struct estr* val, struct Arena* const arena, struct Vars* restrict vars)
 {
     assert(val->value && val->length);
     if (!val->value || !val->length) {
@@ -126,10 +126,10 @@ const char* var_set(char* key, struct estr* val, struct Arena* const arena, stru
     }
 
     if (vars->size >= vars->capacity / 2) {
-        if (!var_expand(key, arena, vars)) {
+        if (!vars_expand(key, arena, vars)) {
             return NULL;
         }
     }
 
-    return var_set_entry(vars->entries, vars->capacity, key, val, &vars->size);
+    return vars_set_entry(vars->entries, vars->capacity, key, val, &vars->size);
 }

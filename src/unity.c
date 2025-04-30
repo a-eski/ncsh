@@ -23,7 +23,7 @@
 #include "readline/history.c"
 #include "readline/ncreadline.c"
 #include "readline/terminal.c"
-#include "var.c"
+#include "vars.c"
 #include "vm/vm.c"
 #include "vm/vm_builtins.c"
 #include "vm/vm_tokenizer.c"

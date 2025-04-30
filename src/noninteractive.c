@@ -14,6 +14,7 @@
 #include "eskilib/eresult.h"
 #include "noninteractive.h"
 #include "parser.h"
+#include "vars.h"
 #include "vm/vm.h"
 
 /* noninteractive_run
@@ -48,9 +49,6 @@ int noninteractive(const int argc, const char** const restrict argv)
     debug("ncsh running in noninteractive mode.");
 
     constexpr int arena_capacity = 1 << 16;
-    // constexpr int scratch_arena_capacity = 1 << 16;
-    // constexpr int total_capacity = arena_capacity + scratch_arena_capacity;
-
     char* memory = malloc(arena_capacity);
     if (!memory) {
         puts(RED "ncsh: could not start up, not enough memory available." RESET);
@@ -59,13 +57,12 @@ int noninteractive(const int argc, const char** const restrict argv)
 
     struct Shell shell = {0};
     shell.arena = (struct Arena){.start = memory, .end = memory + (arena_capacity)};
-    /*char* scratch_memory_start = memory + (arena_capacity + 1);
-    struct Arena scratch_arena = {.start = scratch_memory_start,
-                                  .end = scratch_memory_start + (scratch_arena_capacity)};*/
 
     if (config_init(&shell.config, &shell.arena, shell.arena) != E_SUCCESS) {
         return EXIT_FAILURE;
     }
+
+    vars_malloc(&shell.arena, &shell.vars);
 
     debug_argsv(argc, argv);
 

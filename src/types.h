@@ -7,7 +7,7 @@
 #include "eskilib/emap.h"
 #include "parser.h"
 #include "readline/ncreadline.h"
-#include "var.h"
+#include "vars.h"
 #include "z/z.h"
 
 #define NCSH_MAX_PROCESSES 100
@@ -37,5 +37,5 @@ struct Shell {
 
     struct z_Database z_db;
 
-    struct var vars;
+    struct Vars vars;
 };
