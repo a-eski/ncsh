@@ -14,8 +14,9 @@
 #include "../defines.h"
 #include "../eskilib/ecolors.h"
 #include "../eskilib/estr.h"
-#include "../parser.h"
+#include "../args.h"
 #include "../readline/history.h"
+// #include "../var.h"
 #include "../z/z.h"
 #include "vm_builtins.h"
 
@@ -26,6 +27,7 @@ int builtins_disabled_state = 0;
 int builtins_z(struct z_Database* const restrict z_db, struct Args* const restrict args, struct Arena* const arena,
                struct Arena* const restrict scratch_arena)
 {
+    assert(args);
     assert(z_db);
     assert(args->count > 0);
 
@@ -34,11 +36,15 @@ int builtins_z(struct z_Database* const restrict z_db, struct Args* const restri
         return NCSH_COMMAND_SUCCESS_CONTINUE;
     }
 
+    assert(args->head && args->head->next && args->head->next->next);
+
+    // skip the head (no op) and first arg since we know it is 'z'
+    struct Arg* arg = args->head->next->next;
     if (args->count == 2) {
-        assert(args->values[1]);
+        assert(arg->val);
 
         // z print
-        if (estrcmp_c(args->values[1], args->lengths[1], Z_PRINT, sizeof(Z_PRINT))) {
+        if (estrcmp_c(arg->val, arg->len, Z_PRINT, sizeof(Z_PRINT))) {
             z_print(z_db);
             return NCSH_COMMAND_SUCCESS_CONTINUE;
         }
@@ -50,25 +56,27 @@ int builtins_z(struct z_Database* const restrict z_db, struct Args* const restri
             return NCSH_COMMAND_EXIT_FAILURE;
         }
 
-        z(args->values[1], args->lengths[1], cwd, z_db, arena, *scratch_arena);
+        z(arg->val, arg->len, cwd, z_db, arena, *scratch_arena);
         return NCSH_COMMAND_SUCCESS_CONTINUE;
     }
 
     if (args->count > 2) {
-        assert(args->values[1] && args->values[2]);
+        assert(arg->val && arg->next->val);
 
         // z add
-        if (estrcmp_c(args->values[1], args->lengths[1], Z_ADD, sizeof(Z_ADD))) {
-            if (z_add(args->values[2], args->lengths[2], z_db, arena) != Z_SUCCESS) {
+        if (estrcmp_c(arg->val, arg->len, Z_ADD, sizeof(Z_ADD))) {
+            arg = arg->next;
+            if (z_add(arg->val, arg->len, z_db, arena) != Z_SUCCESS) {
                 return NCSH_COMMAND_FAILED_CONTINUE;
             }
 
             return NCSH_COMMAND_SUCCESS_CONTINUE;
         }
         // z rm/remove
-        else if (estrcmp_c(args->values[1], args->lengths[1], Z_RM, sizeof(Z_RM)) ||
-                 estrcmp_c(args->values[1], args->lengths[1], Z_REMOVE, sizeof(Z_REMOVE))) {
-            if (z_remove(args->values[2], args->lengths[2], z_db) != Z_SUCCESS) {
+        else if (estrcmp_c(arg->val, arg->len, Z_RM, sizeof(Z_RM)) ||
+                 estrcmp_c(arg->val, arg->len, Z_REMOVE, sizeof(Z_REMOVE))) {
+            arg = arg->next;
+            if (z_remove(arg->val, arg->len, z_db) != Z_SUCCESS) {
                 return NCSH_COMMAND_FAILED_CONTINUE;
             }
 
@@ -87,36 +95,43 @@ int builtins_z(struct z_Database* const restrict z_db, struct Args* const restri
 int builtins_history(struct History* const restrict history, struct Args* const restrict args,
                      struct Arena* const restrict arena, struct Arena* const restrict scratch_arena)
 {
+    assert(args);
     if (args->count == 1) {
         return history_command_display(history);
     }
 
-    if (args->count == 2) {
-        assert(args->values[1]);
+    assert(args->head && args->head->next && args->head->next->next);
 
-        if (estrcmp_c(args->values[1], args->lengths[1], NCSH_HISTORY_COUNT, sizeof(NCSH_HISTORY_COUNT))) {
+    // skip the head (no op) and first arg since we know it is 'history'
+    struct Arg* arg = args->head->next->next;
+    if (args->count == 2) {
+        assert(arg->val);
+
+        if (estrcmp_c(arg->val, arg->len, NCSH_HISTORY_COUNT, sizeof(NCSH_HISTORY_COUNT))) {
             return history_command_count(history);
         }
-        else if (estrcmp_c(args->values[1], args->lengths[1], NCSH_HISTORY_CLEAN, sizeof(NCSH_HISTORY_CLEAN))) {
+        else if (estrcmp_c(arg->val, arg->len, NCSH_HISTORY_CLEAN, sizeof(NCSH_HISTORY_CLEAN))) {
             return history_command_clean(history, arena, scratch_arena);
         }
     }
 
     if (args->count == 3) {
-        assert(args->values[1] && args->values[2]);
+        assert(arg->val && arg->next->val);
 
         // z add
-        if (estrcmp_c(args->values[1], args->lengths[1], NCSH_HISTORY_ADD, sizeof(NCSH_HISTORY_ADD))) {
-            if (history_command_add(args->values[2], args->lengths[2], history, arena) != Z_SUCCESS) {
+        if (estrcmp_c(arg->val, arg->len, NCSH_HISTORY_ADD, sizeof(NCSH_HISTORY_ADD))) {
+            arg = arg->next;
+            if (history_command_add(arg->val, arg->len, history, arena) != Z_SUCCESS) {
                 return NCSH_COMMAND_FAILED_CONTINUE;
             }
 
             return NCSH_COMMAND_SUCCESS_CONTINUE;
         }
         // z rm/remove
-        else if (estrcmp_c(args->values[1], args->lengths[1], NCSH_HISTORY_RM, sizeof(NCSH_HISTORY_RM)) ||
-                 estrcmp_c(args->values[1], args->lengths[1], NCSH_HISTORY_REMOVE, sizeof(NCSH_HISTORY_REMOVE))) {
-            if (history_command_remove(args->values[2], args->lengths[2], history, arena, scratch_arena) != Z_SUCCESS) {
+        else if (estrcmp_c(arg->val, arg->len, NCSH_HISTORY_RM, sizeof(NCSH_HISTORY_RM)) ||
+                 estrcmp_c(arg->val, arg->len, NCSH_HISTORY_REMOVE, sizeof(NCSH_HISTORY_REMOVE))) {
+            arg = arg->next;
+            if (history_command_remove(arg->val, arg->len, history, arena, scratch_arena) != Z_SUCCESS) {
                 return NCSH_COMMAND_FAILED_CONTINUE;
             }
 
@@ -140,28 +155,41 @@ int builtins_exit(struct Args* const restrict args)
 [[nodiscard]]
 int builtins_echo(struct Args* const restrict args)
 {
+    assert(args);
     if (args->count <= 1) {
         return NCSH_COMMAND_SUCCESS_CONTINUE;
     }
 
-    bool echo_add_newline = true;
-    size_t i = 1;
+    assert(args->head && args->head->next && args->head->next->next);
 
-    for (size_t j = 1; j < args->count; ++j) {
-        if (args->lengths[j] != 3) {
+    bool echo_add_newline = true;
+
+    assert(args && args->head && args->head->next && args->head->next->next);
+    // skip the head (no op) and first arg since we know it is 'echo'
+    struct Arg* arg = args->head->next->next;
+    struct Arg* echo_arg = NULL;
+    // process options for echo
+    while (arg->next) {
+        if (arg->len != 3) {
             break;
         }
 
-        if (CMP_2(args->values[j], "-n")) {
+        if (CMP_2(arg->val, "-n")) {
             echo_add_newline = false;
-            i = 2;
+            echo_arg = arg->next;
+            break;
         }
+
+        arg = arg->next;
     }
 
-    for (; i < args->count - 1; ++i) {
-        printf("%s ", args->values[i]);
+    // send output for echo
+    arg = echo_arg ? echo_arg : args->head->next->next;
+    while (arg->next) {
+        printf("%s ", arg->val);
+        arg = arg->next;
     }
-    printf("%s", args->values[i]);
+    printf("%s", arg->val);
 
     if (echo_add_newline) {
         putchar('\n');
@@ -257,7 +285,11 @@ int builtins_help(struct Args* const restrict args)
 [[nodiscard]]
 int builtins_cd(struct Args* const restrict args)
 {
-    if (!args->values[1]) {
+    assert(args && args->head && args->head->next && args->head->next->next);
+
+    // skip the head (no op) and first arg since we know it is 'cd'
+    struct Arg* arg = args->head->next->next;
+    if (!arg->val) {
         char* home = getenv("HOME");
         if (!home) {
             fputs("ncsh: could not change directory.\n", stderr);
@@ -269,7 +301,7 @@ int builtins_cd(struct Args* const restrict args)
         return NCSH_COMMAND_SUCCESS_CONTINUE;
     }
 
-    if (chdir(args->values[1]) != 0) {
+    if (chdir(arg->val)) {
         fputs("ncsh: could not change directory.\n", stderr);
     }
 
@@ -297,7 +329,11 @@ int builtins_pwd(struct Args* const restrict args)
 [[nodiscard]]
 int builtins_kill(struct Args* const restrict args)
 {
-    if (!args->values[1]) {
+    assert(args && args->head && args->head->next && args->head->next->next);
+
+    // skip the head (no op) and first arg since we know it is 'kill'
+    struct Arg* arg = args->head->next->next;
+    if (!arg->val) {
         if (write(STDOUT_FILENO, KILL_NOTHING_TO_KILL_MESSAGE, sizeof(KILL_NOTHING_TO_KILL_MESSAGE) - 1) == -1) {
             return NCSH_COMMAND_EXIT_FAILURE;
         }
@@ -305,7 +341,7 @@ int builtins_kill(struct Args* const restrict args)
         return NCSH_COMMAND_SUCCESS_CONTINUE;
     }
 
-    pid_t pid = atoi(args->values[1]);
+    pid_t pid = atoi(arg->val);
     if (!pid) {
         if (write(STDOUT_FILENO, KILL_COULDNT_PARSE_PID_MESSAGE, sizeof(KILL_COULDNT_PARSE_PID_MESSAGE) - 1) == -1) {
             return NCSH_COMMAND_EXIT_FAILURE;
@@ -358,17 +394,25 @@ void builtins_print_enabled()
 
 int builtins_disable(struct Args* const restrict args)
 {
+    assert(args && args->head && args->head->next && args->head->next->next);
+
+    // skip the head (no op) and first arg since we know it is 'enable' or 'disable'
+    struct Arg* arg = args->head->next->next;
+
     // check if called by enabled or disabled
-    size_t i = args->values[0][0] == 'e' ? 2 : 1;
+    // (enabled has extra option to specify disable, so start at 2 instead of 1 in that case,
+    // because 'disable' is 1 arg, but 'enable -n' is 2)
+    size_t i = arg->val[0] == 'e' ? 2 : 1;
 
     for (; i < args->count; ++i) {
         for (size_t j = 0; j < builtins_count; ++j) {
-            if (estrcmp_c(args->values[i], args->lengths[i], builtins[j].value, builtins[j].length)) {
+            if (estrcmp_c(arg->val, arg->len, builtins[j].value, builtins[j].length)) {
                 if (!(builtins_disabled_state & builtins[j].flag)) {
                     builtins_disabled_state |= builtins[j].flag;
                     printf("ncsh disable: disabled builtin %s.\n", builtins[j].value);
                 }
             }
+            arg = arg->next;
         }
     }
 
@@ -378,17 +422,21 @@ int builtins_disable(struct Args* const restrict args)
 #define ENABLE_OPTION_NOT_SUPPORTED_MESSAGE "ncsh enable: command not found, option not supported.\n"
 int builtins_enable(struct Args* const restrict args)
 {
-    if (!args->values[1]) {
+    assert(args && args->head && args->head->next && args->head->next->next);
+
+    // skip the head (no op) and first arg since we know it is 'enable'
+    struct Arg* arg = args->head->next->next;
+    if (!arg->val) {
         builtins_print();
         return NCSH_COMMAND_SUCCESS_CONTINUE;
     }
 
-    if (args->lengths[1] == 3) {
-        if (CMP_2(args->values[1], "-a")) {
+    if (arg->len == 3) {
+        if (CMP_2(arg->val, "-a")) {
             builtins_print_enabled();
             return NCSH_COMMAND_SUCCESS_CONTINUE;
         }
-        else if (CMP_2(args->values[1], "-n")) {
+        else if (CMP_2(arg->val, "-n")) {
             builtins_disable(args);
             return NCSH_COMMAND_SUCCESS_CONTINUE;
         }
@@ -413,7 +461,11 @@ int builtins_set_e()
 [[nodiscard]]
 int builtins_set(struct Args* const restrict args)
 {
-    if (!args->values[1]) {
+    assert(args && args->head && args->head->next && args->head->next->next);
+
+    // skip the head (no op) and first arg since we know it is 'set'
+    struct Arg* arg = args->head->next->next;
+    if (!arg->val) {
         if (write(STDOUT_FILENO, SET_NOTHING_TO_SET_MESSAGE, sizeof(SET_NOTHING_TO_SET_MESSAGE) - 1) == -1) {
             return NCSH_COMMAND_EXIT_FAILURE;
         }
@@ -421,7 +473,7 @@ int builtins_set(struct Args* const restrict args)
         return NCSH_COMMAND_SUCCESS_CONTINUE;
     }
 
-    if (args->lengths[1] > 3 || args->values[1][0] != '-') {
+    if (arg->len > 3 || arg->val[0] != '-') {
         if (write(STDOUT_FILENO, SET_VALID_OPERATIONS_MESSAGE, sizeof(SET_VALID_OPERATIONS_MESSAGE) - 1) == -1) {
             return NCSH_COMMAND_EXIT_FAILURE;
         }
@@ -429,7 +481,7 @@ int builtins_set(struct Args* const restrict args)
         return NCSH_COMMAND_SUCCESS_CONTINUE;
     }
 
-    switch (args->values[1][1]) {
+    switch (arg->val[1]) {
     case 'e': {
         return builtins_set_e();
     }
@@ -446,7 +498,11 @@ int builtins_set(struct Args* const restrict args)
 [[nodiscard]]
 int builtins_unset(struct Args* const restrict args)
 {
-    if (!args->values[1]) {
+    assert(args && args->head && args->head->next && args->head->next->next);
+
+    // skip the head (no op) and first arg since we know it is 'unset'
+    struct Arg* arg = args->head->next->next;
+    if (!arg->val) {
         if (write(STDOUT_FILENO, UNSET_NOTHING_TO_UNSET_MESSAGE, sizeof(UNSET_NOTHING_TO_UNSET_MESSAGE) - 1) == -1) {
             return NCSH_COMMAND_EXIT_FAILURE;
         }
@@ -454,11 +510,11 @@ int builtins_unset(struct Args* const restrict args)
         return NCSH_COMMAND_SUCCESS_CONTINUE;
     }
 
-    bool is_set = var_exists(args->values[1], &args->vars);
+    /*bool is_set = var_exists(arg->val, &args->vars);
     if (!is_set) {
         printf("ncsh unset: no value found for '%s' to unset.\n", args->values[1]);
         return NCSH_COMMAND_SUCCESS_CONTINUE;
-    }
+    }*/
     // TODO: need a way to unset, var_set doesn't work
     // var_set(args->values[1], NULL, arena, &args->vars)
     return NCSH_COMMAND_SUCCESS_CONTINUE;

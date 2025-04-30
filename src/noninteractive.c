@@ -20,12 +20,11 @@
  * Parses and sends output of parser to VM. Parser data stored in scratch arena, which is then used by VM.
  * Scratch arena reset after scope ends due to passing by value.
  */
-int noninteractive_run(const char** const restrict argv, const size_t argc, struct Shell* shell,
-                       struct Arena scratch_arena)
+int noninteractive_run(const char** const restrict argv, const size_t argc, struct Shell* shell)
 {
-    parser_parse_noninteractive(argv, argc, &shell->args, &shell->arena, &scratch_arena);
+    struct Args* args = parser_parse_noninteractive(argv, argc, &shell->arena);
 
-    return vm_execute_noninteractive(shell, &scratch_arena);
+    return vm_execute_noninteractive(args, shell);
 }
 
 /* noninteractive
@@ -49,10 +48,10 @@ int noninteractive(const int argc, const char** const restrict argv)
     debug("ncsh running in noninteractive mode.");
 
     constexpr int arena_capacity = 1 << 16;
-    constexpr int scratch_arena_capacity = 1 << 16;
-    constexpr int total_capacity = arena_capacity + scratch_arena_capacity;
+    // constexpr int scratch_arena_capacity = 1 << 16;
+    // constexpr int total_capacity = arena_capacity + scratch_arena_capacity;
 
-    char* memory = malloc(total_capacity);
+    char* memory = malloc(arena_capacity);
     if (!memory) {
         puts(RED "ncsh: could not start up, not enough memory available." RESET);
         return EXIT_FAILURE;
@@ -60,24 +59,17 @@ int noninteractive(const int argc, const char** const restrict argv)
 
     struct Shell shell = {0};
     shell.arena = (struct Arena){.start = memory, .end = memory + (arena_capacity)};
-    char* scratch_memory_start = memory + (arena_capacity + 1);
+    /*char* scratch_memory_start = memory + (arena_capacity + 1);
     struct Arena scratch_arena = {.start = scratch_memory_start,
-                                  .end = scratch_memory_start + (scratch_arena_capacity)};
+                                  .end = scratch_memory_start + (scratch_arena_capacity)};*/
 
     if (config_init(&shell.config, &shell.arena, shell.arena) != E_SUCCESS) {
         return EXIT_FAILURE;
     }
 
-    enum eresult result;
-    if ((result = parser_init(&shell.args, &shell.arena)) != E_SUCCESS) {
-        perror(RED "ncsh: Error when allocating memory for parser" RESET);
-        fflush(stderr);
-        return EXIT_FAILURE;
-    }
-
     debug_argsv(argc, argv);
 
-    int command_result = noninteractive_run(argv + 1, (size_t)argc - 1, &shell, scratch_arena);
+    int command_result = noninteractive_run(argv + 1, (size_t)argc - 1, &shell);
 
     int exit_code = command_result == NCSH_COMMAND_EXIT_FAILURE ? EXIT_FAILURE : EXIT_SUCCESS;
 

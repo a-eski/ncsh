@@ -33,8 +33,9 @@ struct Shell {
     struct Config config;
 
     struct Input input;
-    struct Args args;
     struct Processes processes;
 
     struct z_Database z_db;
+
+    struct var vars;
 };

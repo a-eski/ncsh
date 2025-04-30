@@ -23,12 +23,18 @@
 #include "parser.h"
 #include "readline/ac.h"
 #include "readline/ncreadline.h"
+#include "var.h"
 #include "vm/vm.h"
 
+/* Global Variables
+ * Globals should be minimized as much as possible.
+ * These are here to simplify signal handling and failure cases.
+ */
 jmp_buf env;
 sig_atomic_t vm_child_pid;
 volatile int sigwinch_caught;
 
+/* Signal Handling */
 static void signal_handler(int sig, siginfo_t* const info, void* const context)
 {
     (void)context;
@@ -68,6 +74,11 @@ static int signal_forward(const int signum)
     return 0;
 }
 
+/* arena_init
+ * Initialize arenas used for the lifteim of the shell.
+ * A permanent arena and a scratch arena are allocated.
+ * Returns: pointer to start of the memory block allocated.
+ */
 [[nodiscard]]
 char* arena_init(struct Shell* const restrict shell)
 {
@@ -109,17 +120,12 @@ char* init(struct Shell* const restrict shell)
         return NULL;
     }
 
-    enum eresult result;
-    if ((result = parser_init(&shell->args, &shell->arena)) != E_SUCCESS) {
-        perror(RED "ncsh: Error when allocating memory for parser" RESET);
-        fflush(stderr);
-        return NULL;
-    }
-
     enum z_Result z_result = z_init(&shell->config.config_location, &shell->z_db, &shell->arena);
     if (z_result != Z_SUCCESS) {
         return NULL;
     }
+
+    var_malloc(&shell->arena, &shell->vars);
 
     if (signal_forward(SIGINT) || signal_forward(SIGWINCH)) {
         perror("ncsh: Error setting up signal handlers");
@@ -152,9 +158,9 @@ void cleanup(char* shell_memory, struct Shell* shell)
  */
 int run(struct Shell* shell, struct Arena scratch_arena)
 {
-    parser_parse(shell->input.buffer, shell->input.pos, &shell->args, &shell->arena, &scratch_arena);
+    struct Args* args = parser_parse(shell->input.buffer, shell->input.pos, &scratch_arena);
 
-    return vm_execute(shell, &scratch_arena);
+    return vm_execute(args, shell, &scratch_arena);
 }
 
 /* main
@@ -236,7 +242,6 @@ int main(int argc, char** argv)
         memset(shell.input.buffer, '\0', shell.input.max_pos);
         shell.input.pos = 0;
         shell.input.max_pos = 0;
-        shell.args.count = 0;
     }
 exit:
     cleanup(memory, &shell);

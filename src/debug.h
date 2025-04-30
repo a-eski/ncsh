@@ -21,13 +21,20 @@
 #include "eskilib/estr.h"
 #include "parser.h"
 
-#define debug(buf) puts(buf)
+#define debug(buf) debug_internal(__FILE__, __LINE__, __func__, buf)
 #define debugf(fmt, ...) debugf_internal(__FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__)
 #define debug_line(buf, len, max_len) debug_line_internal(__FILE__, __LINE__, __func__, buf, len, max_len)
 #define debug_parser_input(buf, len) debug_parser_input_internal(__FILE__, __LINE__, __func__, buf, len)
 #define debug_args(args) debug_args_internal(__FILE__, __LINE__, __func__, args)
 #define debug_argsv(argsc, argsv) debug_argsv_internal(__FILE__, __LINE__, __func__, argsc, argsv)
 #define debug_string(str, name) debug_string_internal(__FILE__, __LINE__, __func__, str, name)
+
+static inline void debug_internal(const char* file, int line, const char* func, const char* buffer)
+{
+    fprintf(stderr, "%s %s:%d ", file, func, line);
+    fprintf(stderr, "%s\n", buffer);
+    fflush(stderr);
+}
 
 static inline void debugf_internal(const char* file, int line, const char* func, const char* fmt, ...)
 {
@@ -66,13 +73,15 @@ static inline void debug_args_internal(const char* file, int line, const char* f
     fprintf(stderr, "%s %s:%d ", file, func, line);
     fprintf(stderr, "args.count: %lu\n", args->count);
 
+    struct Arg* arg = args->head->next;
     for (size_t i = 0; i < args->count; ++i) {
         fprintf(stderr, "%s %s:%d ", file, func, line);
-        fprintf(stderr, "args.values[%lu] %s\n", i, args->values[i]);
+        fprintf(stderr, "args.values[%lu] %s\n", i, arg->val);
         fprintf(stderr, "%s %s:%d ", file, func, line);
-        fprintf(stderr, "args.ops[%lu] %d\n", i, args->ops[i]);
+        fprintf(stderr, "args.ops[%lu] %d\n", i, arg->op);
         fprintf(stderr, "%s %s:%d ", file, func, line);
-        fprintf(stderr, "args.lengths[%lu] %zu\n", i, args->lengths[i]);
+        fprintf(stderr, "args.lengths[%lu] %zu\n", i, arg->len);
+        arg = arg->next;
     }
     fflush(stderr);
 }

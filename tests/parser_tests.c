@@ -8,769 +8,823 @@
 
 void parser_parse_ls_test()
 {
-    ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
 
     char* line = "ls\0";
-    size_t length = 3;
+    size_t len = 3;
 
-    struct Args args;
-    enum eresult init_res = parser_init(&args, &arena);
-    eassert(init_res == E_SUCCESS);
-    parser_parse(line, length, &args, &arena, &scratch_arena);
+    struct Args* args = parser_parse(line, len, &scratch_arena);
 
-    eassert(args.values);
-    eassert(args.count == 1);
+    eassert(args);
+    eassert(args->head);
+    eassert(args->count == 1);
 
-    eassert(!memcmp(args.values[0], line, length));
-    eassert(args.ops[0] == OP_CONSTANT);
-    eassert(args.lengths[0] == length);
+    struct Arg* arg = args->head->next;
+    eassert(arg);
+    eassert(!memcmp(arg->val, line, len));
+    eassert(arg->op == OP_CONSTANT);
+    eassert(arg->len == len);
 
-    eassert(!args.values[1]);
+    eassert(!arg->next);
 
-    ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 void parser_parse_ls_dash_l_test()
 {
-    ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
 
     char* line = "ls -l\0";
-    size_t length = 6;
+    size_t len = 6;
 
-    struct Args args;
-    enum eresult init_res = parser_init(&args, &arena);
-    eassert(init_res == E_SUCCESS);
-    parser_parse(line, length, &args, &arena, &scratch_arena);
+    struct Args* args = parser_parse(line, len, &scratch_arena);
 
-    eassert(args.values);
-    eassert(args.count == 2);
+    eassert(args);
+    eassert(args->head);
+    eassert(args->count == 2);
 
-    eassert(!memcmp(args.values[0], "ls", 3));
-    eassert(args.ops[0] == OP_CONSTANT);
-    eassert(args.lengths[0] == 3);
+    struct Arg* arg = args->head->next;
+    eassert(!memcmp(arg->val, "ls", 3));
+    eassert(arg->op == OP_CONSTANT);
+    eassert(arg->len == 3);
+    arg = arg->next;
 
-    eassert(!memcmp(args.values[1], "-l", 3));
-    eassert(args.ops[1] == OP_CONSTANT);
-    eassert(args.lengths[1] == 3);
+    eassert(!memcmp(arg->val, "-l", 3));
+    eassert(arg->op == OP_CONSTANT);
+    eassert(arg->len == 3);
 
-    eassert(!args.values[2]);
+    eassert(!arg->next);
 
-    ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 void parser_parse_pipe_test()
 {
-    ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
 
     char* line = "ls | sort\0";
-    size_t length = 10;
+    size_t len = 10;
 
-    struct Args args;
-    enum eresult init_res = parser_init(&args, &arena);
-    eassert(init_res == E_SUCCESS);
-    parser_parse(line, length, &args, &arena, &scratch_arena);
+    struct Args* args = parser_parse(line, len, &scratch_arena);
 
-    eassert(args.values);
-    eassert(args.count == 3);
+    eassert(args);
+    eassert(args->head);
+    eassert(args->count == 3);
 
-    eassert(memcmp(args.values[0], "ls", 3) == 0);
-    eassert(args.ops[0] == OP_CONSTANT);
-    eassert(args.lengths[0] == 3);
+    struct Arg* arg = args->head->next;
+    eassert(memcmp(arg->val, "ls", 3) == 0);
+    eassert(arg->op == OP_CONSTANT);
+    eassert(arg->len == 3);
+    arg = arg->next;
 
-    eassert(memcmp(args.values[1], "|", 2) == 0);
-    eassert(args.ops[1] == OP_PIPE);
-    eassert(args.lengths[1] == 2);
+    eassert(memcmp(arg->val, "|", 2) == 0);
+    eassert(arg->op == OP_PIPE);
+    eassert(arg->len == 2);
+    arg = arg->next;
 
-    eassert(memcmp(args.values[2], "sort", 5) == 0);
-    eassert(args.ops[2] == OP_CONSTANT);
-    eassert(args.lengths[2] == 5);
+    eassert(memcmp(arg->val, "sort", 5) == 0);
+    eassert(arg->op == OP_CONSTANT);
+    eassert(arg->len == 5);
 
-    eassert(!args.values[3]);
+    eassert(!arg->next);
 
-    ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 void parser_parse_multiple_pipe_test()
 {
-    ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
 
     char* line = "ls | sort | table";
-    size_t length = 18;
+    size_t len = 18;
 
-    struct Args args;
-    enum eresult init_res = parser_init(&args, &arena);
-    eassert(init_res == E_SUCCESS);
-    parser_parse(line, length, &args, &arena, &scratch_arena);
+    struct Args* args = parser_parse(line, len, &scratch_arena);
 
-    eassert(args.values);
-    eassert(args.count == 5);
+    eassert(args);
+    eassert(args->head);
+    eassert(args->count == 5);
 
-    eassert(memcmp(args.values[0], "ls", 3) == 0);
-    eassert(args.ops[0] == OP_CONSTANT);
-    eassert(args.lengths[0] == 3);
+    struct Arg* arg = args->head->next;
+    eassert(!memcmp(arg->val, "ls", 3));
+    eassert(arg->op == OP_CONSTANT);
+    eassert(arg->len == 3);
+    arg = arg->next;
 
-    eassert(memcmp(args.values[1], "|", 2) == 0);
-    eassert(args.ops[1] == OP_PIPE);
-    eassert(args.lengths[1] == 2);
+    eassert(!memcmp(arg->val, "|", 2));
+    eassert(arg->op == OP_PIPE);
+    eassert(arg->len == 2);
+    arg = arg->next;
 
-    eassert(memcmp(args.values[2], "sort", 5) == 0);
-    eassert(args.ops[2] == OP_CONSTANT);
-    eassert(args.lengths[2] == 5);
+    eassert(!memcmp(arg->val, "sort", 5));
+    eassert(arg->op == OP_CONSTANT);
+    eassert(arg->len == 5);
+    arg = arg->next;
 
-    eassert(memcmp(args.values[3], "|", 2) == 0);
-    eassert(args.ops[3] == OP_PIPE);
-    eassert(args.lengths[3] == 2);
+    eassert(!memcmp(arg->val, "|", 2));
+    eassert(arg->op == OP_PIPE);
+    eassert(arg->len == 2);
+    arg = arg->next;
 
-    eassert(memcmp(args.values[4], "table", 6) == 0);
-    eassert(args.ops[4] == OP_CONSTANT);
-    eassert(args.lengths[4] == 6);
+    eassert(!memcmp(arg->val, "table", 6));
+    eassert(arg->op == OP_CONSTANT);
+    eassert(arg->len == 6);
 
-    eassert(!args.values[5]);
+    eassert(!arg->next);
 
-    ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 void parser_parse_background_job_test()
 {
-    ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
 
     char* line = "longrunningprogram &\0";
-    size_t length = 21;
+    size_t len = 21;
 
-    struct Args args;
-    enum eresult init_res = parser_init(&args, &arena);
-    eassert(init_res == E_SUCCESS);
-    parser_parse(line, length, &args, &arena, &scratch_arena);
+    struct Args* args = parser_parse(line, len, &scratch_arena);
 
-    eassert(args.values);
-    eassert(args.count == 2);
+    eassert(args);
+    eassert(args->head);
+    eassert(args->count == 2);
 
-    eassert(memcmp(args.values[0], "longrunningprogram", 19) == 0);
-    eassert(args.ops[0] == OP_CONSTANT);
-    eassert(args.lengths[0] == 19);
+    struct Arg* arg = args->head->next;
+    eassert(!memcmp(arg->val, "longrunningprogram", 19));
+    eassert(arg->op == OP_CONSTANT);
+    eassert(arg->len == 19);
+    arg = arg->next;
 
-    eassert(memcmp(args.values[1], "&", 2) == 0);
-    eassert(args.ops[1] == OP_BACKGROUND_JOB);
-    eassert(args.lengths[1] == 2);
+    eassert(!memcmp(arg->val, "&", 2));
+    eassert(arg->op == OP_BACKGROUND_JOB);
+    eassert(arg->len == 2);
 
-    eassert(!args.values[2]);
+    eassert(!arg->next);
 
-    ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 void parser_parse_output_redirection_test()
 {
-    ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
 
     char* line = "ls > text.txt\0";
-    size_t length = 14;
+    size_t len = 14;
 
-    struct Args args;
-    enum eresult init_res = parser_init(&args, &arena);
-    eassert(init_res == E_SUCCESS);
-    parser_parse(line, length, &args, &arena, &scratch_arena);
+    struct Args* args = parser_parse(line, len, &scratch_arena);
 
-    eassert(args.values);
-    eassert(args.count == 3);
+    eassert(args->head);
+    eassert(args->count == 3);
 
-    eassert(memcmp(args.values[0], "ls", 3) == 0);
-    eassert(args.ops[0] == OP_CONSTANT);
-    eassert(args.lengths[0] == 3);
+    struct Arg* arg = args->head->next;
+    eassert(!memcmp(arg->val, "ls", 3));
+    eassert(arg->op == OP_CONSTANT);
+    eassert(arg->len == 3);
+    arg = arg->next;
 
-    eassert(memcmp(args.values[1], ">", 2) == 0);
-    eassert(args.ops[1] == OP_STDOUT_REDIRECTION);
-    eassert(args.lengths[1] == 2);
+    eassert(!memcmp(arg->val, ">", 2));
+    eassert(arg->op == OP_STDOUT_REDIRECTION);
+    eassert(arg->len == 2);
+    arg = arg->next;
 
-    eassert(memcmp(args.values[2], "text.txt", 9) == 0);
-    eassert(args.ops[2] == OP_CONSTANT);
-    eassert(args.lengths[2] == 9);
+    eassert(!memcmp(arg->val, "text.txt", 9));
+    eassert(arg->op == OP_CONSTANT);
+    eassert(arg->len == 9);
 
-    eassert(!args.values[3]);
+    eassert(!arg->next);
 
-    ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 void parser_parse_output_redirection_append_test()
 {
-    ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
 
     char* line = "ls >> text.txt\0";
-    size_t length = 15;
+    size_t len = 15;
 
-    struct Args args;
-    enum eresult init_res = parser_init(&args, &arena);
-    eassert(init_res == E_SUCCESS);
-    parser_parse(line, length, &args, &arena, &scratch_arena);
+    struct Args* args = parser_parse(line, len, &scratch_arena);
 
-    eassert(args.values);
-    eassert(args.count == 3);
+    eassert(args->head);
+    eassert(args->count == 3);
 
-    eassert(memcmp(args.values[0], "ls", 3) == 0);
-    eassert(args.ops[0] == OP_CONSTANT);
-    eassert(args.lengths[0] == 3);
+    struct Arg* arg = args->head->next;
+    eassert(!memcmp(arg->val, "ls", 3));
+    eassert(arg->op == OP_CONSTANT);
+    eassert(arg->len == 3);
+    arg = arg->next;
 
-    eassert(memcmp(args.values[1], ">>", 3) == 0);
-    eassert(args.ops[1] == OP_STDOUT_REDIRECTION_APPEND);
-    eassert(args.lengths[1] == 3);
+    eassert(!memcmp(arg->val, ">>", 3));
+    eassert(arg->op == OP_STDOUT_REDIRECTION_APPEND);
+    eassert(arg->len == 3);
+    arg = arg->next;
 
-    eassert(memcmp(args.values[2], "text.txt", 9) == 0);
-    eassert(args.ops[2] == OP_CONSTANT);
-    eassert(args.lengths[2] == 9);
+    eassert(!memcmp(arg->val, "text.txt", 9));
+    eassert(arg->op == OP_CONSTANT);
+    eassert(arg->len == 9);
 
-    eassert(!args.values[3]);
+    eassert(!arg->next);
 
-    ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 void parser_parse_input_redirection_test()
 {
-    ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
 
     char* line = "t.txt < sort";
-    size_t length = strlen(line) + 1;
+    size_t len = strlen(line) + 1;
 
-    struct Args args;
-    enum eresult init_res = parser_init(&args, &arena);
-    eassert(init_res == E_SUCCESS);
-    parser_parse(line, length, &args, &arena, &scratch_arena);
+    struct Args* args = parser_parse(line, len, &scratch_arena);
 
-    eassert(args.values);
-    eassert(args.count == 3);
+    eassert(args->head);
+    eassert(args->count == 3);
 
-    eassert(memcmp(args.values[0], "t.txt", 6) == 0);
-    eassert(args.ops[0] == OP_CONSTANT);
-    eassert(args.lengths[0] == 6);
+    struct Arg* arg = args->head->next;
+    eassert(!memcmp(arg->val, "t.txt", 6));
+    eassert(arg->op == OP_CONSTANT);
+    eassert(arg->len == 6);
+    arg = arg->next;
 
-    eassert(memcmp(args.values[1], "<", 2) == 0);
-    eassert(args.ops[1] == OP_STDIN_REDIRECTION);
-    eassert(args.lengths[1] == 2);
+    eassert(!memcmp(arg->val, "<", 2));
+    eassert(arg->op == OP_STDIN_REDIRECTION);
+    eassert(arg->len == 2);
+    arg = arg->next;
 
-    eassert(memcmp(args.values[2], "sort", 5) == 0);
-    eassert(args.ops[2] == OP_CONSTANT);
-    eassert(args.lengths[2] == 5);
+    eassert(!memcmp(arg->val, "sort", 5));
+    eassert(arg->op == OP_CONSTANT);
+    eassert(arg->len == 5);
 
-    eassert(!args.values[3]);
+    eassert(!arg->next);
 
-    ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 void parser_parse_stdout_and_stderr_redirection_test()
 {
-    ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
 
     char* line = "ls &> text.txt\0";
-    size_t length = 15;
+    size_t len = 15;
 
-    struct Args args;
-    enum eresult init_res = parser_init(&args, &arena);
-    eassert(init_res == E_SUCCESS);
-    parser_parse(line, length, &args, &arena, &scratch_arena);
+    struct Args* args = parser_parse(line, len, &scratch_arena);
 
-    eassert(args.values);
-    eassert(args.count == 3);
+    eassert(args->head);
+    eassert(args->count == 3);
 
-    eassert(memcmp(args.values[0], "ls", 3) == 0);
-    eassert(args.ops[0] == OP_CONSTANT);
-    eassert(args.lengths[0] == 3);
+    struct Arg* arg = args->head->next;
+    eassert(!memcmp(arg->val, "ls", 3));
+    eassert(arg->op == OP_CONSTANT);
+    eassert(arg->len == 3);
+    arg = arg->next;
 
-    eassert(memcmp(args.values[1], "&>", 3) == 0);
-    eassert(args.ops[1] == OP_STDOUT_AND_STDERR_REDIRECTION);
-    eassert(args.lengths[1] == 3);
+    eassert(!memcmp(arg->val, "&>", 3));
+    eassert(arg->op == OP_STDOUT_AND_STDERR_REDIRECTION);
+    eassert(arg->len == 3);
+    arg = arg->next;
 
-    eassert(memcmp(args.values[2], "text.txt", 9) == 0);
-    eassert(args.ops[2] == OP_CONSTANT);
-    eassert(args.lengths[2] == 9);
+    eassert(!memcmp(arg->val, "text.txt", 9));
+    eassert(arg->op == OP_CONSTANT);
+    eassert(arg->len == 9);
 
-    eassert(!args.values[3]);
+    eassert(!arg->next);
 
-    ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 void parser_parse_stdout_and_stderr_redirection_append_test()
 {
-    ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
 
     char* line = "ls &>> text.txt";
-    size_t length = strlen(line) + 1;
+    size_t len = strlen(line) + 1;
 
-    struct Args args;
-    enum eresult init_res = parser_init(&args, &arena);
-    eassert(init_res == E_SUCCESS);
-    parser_parse(line, length, &args, &arena, &scratch_arena);
+    struct Args* args = parser_parse(line, len, &scratch_arena);
 
-    eassert(args.values);
-    eassert(args.count == 3);
+    eassert(args->head);
+    eassert(args->count == 3);
 
-    eassert(memcmp(args.values[0], "ls", 3) == 0);
-    eassert(args.ops[0] == OP_CONSTANT);
-    eassert(args.lengths[0] == 3);
+    struct Arg* arg = args->head->next;
+    eassert(!memcmp(arg->val, "ls", 3));
+    eassert(arg->op == OP_CONSTANT);
+    eassert(arg->len == 3);
+    arg = arg->next;
 
-    eassert(memcmp(args.values[1], "&>>", 4) == 0);
-    eassert(args.ops[1] == OP_STDOUT_AND_STDERR_REDIRECTION_APPEND);
-    eassert(args.lengths[1] == 4);
+    eassert(!memcmp(arg->val, "&>>", 4));
+    eassert(arg->op == OP_STDOUT_AND_STDERR_REDIRECTION_APPEND);
+    eassert(arg->len == 4);
+    arg = arg->next;
 
-    eassert(memcmp(args.values[2], "text.txt", 9) == 0);
-    eassert(args.ops[2] == OP_CONSTANT);
-    eassert(args.lengths[2] == 9);
+    eassert(!memcmp(arg->val, "text.txt", 9));
+    eassert(arg->op == OP_CONSTANT);
+    eassert(arg->len == 9);
 
-    eassert(!args.values[3]);
+    eassert(!arg->next);
 
-    ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 void parser_parse_assignment_test()
 {
-    ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
 
     char* line = "STR=\"Hello\"";
-    size_t length = strlen(line) + 1;
+    size_t len = strlen(line) + 1;
 
-    struct Args args;
-    enum eresult init_res = parser_init(&args, &arena);
-    eassert(init_res == E_SUCCESS);
-    parser_parse(line, length, &args, &arena, &scratch_arena);
+    struct Args* args = parser_parse(line, len, &scratch_arena);
 
-    eassert(args.values);
-    eassert(args.count == 0);
-    eassert(!args.values[0]);
+    eassert(args->head);
+    eassert(args->count == 1);
 
-    char* var = "STR";
-    struct estr* val = var_get(var, &args.vars);
-    eassert(val->value);
-    eassert(!memcmp(val->value, "Hello", sizeof("Hello")));
+    struct Arg* arg = args->head->next;
+    printf("%s\n", arg->val);
+    // quotes stripped by the parser
+    eassert(!memcmp(arg->val, "STR=Hello", sizeof("STR=Hello")));
+    eassert(arg->op == OP_ASSIGNMENT);
+    eassert(arg->len == sizeof("STR=Hello"));
 
-    ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 void parser_parse_variable_test()
 {
-    ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
 
-    char* line = "STR=\"Hello\"";
-    size_t length = strlen(line) + 1;
+    char* line = "echo $STR";
+    size_t len = strlen(line) + 1;
 
-    struct Args args;
-    enum eresult init_res = parser_init(&args, &arena);
-    eassert(init_res == E_SUCCESS);
-    parser_parse(line, length, &args, &arena, &scratch_arena);
+    struct Args* args = parser_parse(line, len, &scratch_arena);
 
-    eassert(args.values);
-    eassert(args.count == 0);
+    eassert(args->head);
+    eassert(args->count == 2);
 
-    char* var = "$STR";
-    size_t var_len = strlen(var);
-    parser_parse(var, var_len + 1, &args, &arena, &scratch_arena);
+    struct Arg* arg = args->head->next;
+    eassert(!memcmp(arg->val, "echo", 5));
+    eassert(arg->op == OP_CONSTANT);
+    eassert(arg->len = 5);
+    arg = arg->next;
 
-    eassert(args.values);
-    eassert(args.count == 1);
-    eassert(args.ops[0] == OP_VARIABLE);
-    eassert(!memcmp(args.values[0], var, args.lengths[0]));
+    eassert(!memcmp(arg->val, "$STR", 5));
+    eassert(arg->op == OP_VARIABLE);
+    eassert(arg->len = 5);
 
-    eassert(!args.values[1]);
+    eassert(!arg->next);
 
-    ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 void parser_parse_variable_and_test()
 {
-    ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
 
-    char* line = "STR=hello && $STR";
-    size_t length = strlen(line) + 1;
+    char* line = "STR=hello && echo $STR";
+    size_t len = strlen(line) + 1;
 
-    struct Args args;
-    enum eresult init_res = parser_init(&args, &arena);
-    eassert(init_res == E_SUCCESS);
-    parser_parse(line, length, &args, &arena, &scratch_arena);
+    struct Args* args = parser_parse(line, len, &scratch_arena);
 
-    eassert(args.values);
-    eassert(args.count == 1);
-    eassert(args.ops[0] == OP_VARIABLE);
-    eassert(!memcmp(args.values[0], "$STR", args.lengths[0]));
+    eassert(args->head);
+    eassert(args->count == 4);
 
-    eassert(!args.values[1]);
+    struct Arg* arg = args->head->next;
+    eassert(!memcmp(arg->val, "STR=hello", sizeof("STR=hello")));
+    eassert(arg->op == OP_ASSIGNMENT);
+    eassert(arg->len == sizeof("STR=hello"));
+    arg = arg->next;
 
-    ARENA_TEST_TEARDOWN;
+    eassert(!memcmp(arg->val, "&&", 3));
+    eassert(arg->op == OP_AND);
+    eassert(arg->len == 3);
+    arg = arg->next;
+
+    eassert(!memcmp(arg->val, "echo", 5));
+    eassert(arg->op == OP_CONSTANT);
+    eassert(arg->len = 5);
+    arg = arg->next;
+
+    eassert(!memcmp(arg->val, "$STR", 5));
+    eassert(arg->op == OP_VARIABLE);
+    eassert(arg->len = 5);
+
+    eassert(!arg->next);
+
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 void parser_parse_variable_command_test()
 {
-    ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
 
-    char* line = "COMMAND=ls";
-    size_t length = strlen(line) + 1;
+    char* line = "COMMAND=ls && $COMMAND";
+    size_t len = strlen(line) + 1;
 
-    struct Args args;
-    enum eresult init_res = parser_init(&args, &arena);
-    eassert(init_res == E_SUCCESS);
-    parser_parse(line, length, &args, &arena, &scratch_arena);
 
-    eassert(args.values);
-    eassert(args.count == 0);
-    eassert(!args.values[0]);
+    struct Args* args = parser_parse(line, len, &scratch_arena);
 
-    char* var = "$COMMAND";
-    size_t var_len = strlen(var);
-    parser_parse(var, var_len + 1, &args, &arena, &scratch_arena);
+    eassert(args->head);
+    eassert(args->count == 3);
 
-    eassert(args.values);
-    eassert(args.count == 1);
-    eassert(args.ops[0] == OP_VARIABLE);
-    eassert(!memcmp(args.values[0], var, args.lengths[0]));
+    struct Arg* arg = args->head->next;
+    eassert(!memcmp(arg->val, "COMMAND=ls", sizeof("COMMAND=ls")));
+    eassert(arg->op == OP_ASSIGNMENT);
+    eassert(arg->len == sizeof("COMMAND=ls"));
+    arg = arg->next;
 
-    eassert(!args.values[1]);
+    eassert(!memcmp(arg->val, "&&", 3));
+    eassert(arg->op == OP_AND);
+    eassert(arg->len == 3);
+    arg = arg->next;
 
-    ARENA_TEST_TEARDOWN;
+    eassert(!memcmp(arg->val, "$COMMAND", 8));
+    eassert(arg->op == OP_VARIABLE);
+    eassert(arg->len = 8);
+
+    eassert(!arg->next);
+
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 void parser_parse_double_quotes_test()
 {
-    ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
 
     char* line = "echo \"hello\"\0";
-    size_t length = 13;
+    size_t len = 13;
 
-    struct Args args;
-    enum eresult init_res = parser_init(&args, &arena);
-    eassert(init_res == E_SUCCESS);
-    parser_parse(line, length, &args, &arena, &scratch_arena);
+    struct Args* args = parser_parse(line, len, &scratch_arena);
 
-    eassert(args.values);
-    eassert(args.count == 2);
+    eassert(args->head);
+    eassert(args->count == 2);
 
-    eassert(memcmp(args.values[0], "echo", 5) == 0);
-    eassert(args.lengths[0] == 5);
+    struct Arg* arg = args->head->next;
+    eassert(!memcmp(arg->val, "echo", 5));
+    eassert(arg->op == OP_CONSTANT);
+    eassert(arg->len == 5);
+    arg = arg->next;
 
-    eassert(memcmp(args.values[1], "hello", 6) == 0);
-    eassert(args.lengths[1] == 6);
+    eassert(!memcmp(arg->val, "hello", 6));
+    eassert(arg->op == OP_CONSTANT);
+    eassert(arg->len == 6);
 
-    eassert(!args.values[2]);
+    eassert(!arg->next);
 
-    ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 void parser_parse_single_quotes_test()
 {
-    ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
 
     char* line = "echo \'hello\'\0";
-    size_t length = 13;
+    size_t len = 13;
 
-    struct Args args;
-    enum eresult init_res = parser_init(&args, &arena);
-    eassert(init_res == E_SUCCESS);
-    parser_parse(line, length, &args, &arena, &scratch_arena);
+    struct Args* args = parser_parse(line, len, &scratch_arena);
 
-    eassert(args.values);
-    eassert(args.count == 2);
+    eassert(args->head);
+    eassert(args->count == 2);
 
-    eassert(memcmp(args.values[0], "echo", 5) == 0);
-    eassert(args.lengths[0] == 5);
+    struct Arg* arg = args->head->next;
+    eassert(!memcmp(arg->val, "echo", 5));
+    eassert(arg->op == OP_CONSTANT);
+    eassert(arg->len == 5);
+    arg = arg->next;
 
-    eassert(memcmp(args.values[1], "hello", 6) == 0);
-    eassert(args.lengths[1] == 6);
+    eassert(!memcmp(arg->val, "hello", 6));
+    eassert(arg->op == OP_CONSTANT);
+    eassert(arg->len == 6);
 
-    eassert(!args.values[2]);
+    eassert(!arg->next);
 
-    ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 void parser_parse_backtick_quotes_test()
 {
-    ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
 
     char* line = "echo `hello`\0";
-    size_t length = 13;
+    size_t len = 13;
 
-    struct Args args;
-    enum eresult init_res = parser_init(&args, &arena);
-    eassert(init_res == E_SUCCESS);
-    parser_parse(line, length, &args, &arena, &scratch_arena);
+    struct Args* args = parser_parse(line, len, &scratch_arena);
 
-    eassert(args.values);
-    eassert(args.count == 2);
+    eassert(args->head);
+    eassert(args->count == 2);
 
-    eassert(memcmp(args.values[0], "echo", 5) == 0);
-    eassert(args.lengths[0] == 5);
+    struct Arg* arg = args->head->next;
+    eassert(!memcmp(arg->val, "echo", 5));
+    eassert(arg->op == OP_CONSTANT);
+    eassert(arg->len == 5);
+    arg = arg->next;
 
-    eassert(memcmp(args.values[1], "hello", 6) == 0);
-    eassert(args.lengths[1] == 6);
+    eassert(!memcmp(arg->val, "hello", 6));
+    eassert(arg->op == OP_CONSTANT);
+    eassert(arg->len == 6);
 
-    eassert(!args.values[2]);
+    eassert(!arg->next);
 
-    ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 void parser_parse_git_commit_test()
 {
-    ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
 
     char* line = "git commit -m \"this is a commit message\"\0";
-    size_t length = strlen(line) + 1;
+    size_t len = strlen(line) + 1;
 
-    struct Args args;
-    enum eresult init_res = parser_init(&args, &arena);
-    eassert(init_res == E_SUCCESS);
-    parser_parse(line, length, &args, &arena, &scratch_arena);
+    struct Args* args = parser_parse(line, len, &scratch_arena);
 
-    eassert(args.values);
-    eassert(args.count == 4);
+    eassert(args->head);
+    eassert(args->count == 4);
 
-    eassert(memcmp(args.values[0], "git", 4) == 0);
-    eassert(args.lengths[0] == 4);
-    eassert(args.ops[0] == OP_CONSTANT);
+    struct Arg* arg = args->head->next;
+    eassert(!memcmp(arg->val, "git", 4));
+    eassert(arg->op == OP_CONSTANT);
+    eassert(arg->len == 4);
+    arg = arg->next;
 
-    eassert(memcmp(args.values[1], "commit", 7) == 0);
-    eassert(args.lengths[1] == 7);
-    eassert(args.ops[1] == OP_CONSTANT);
+    eassert(!memcmp(arg->val, "commit", 7));
+    eassert(arg->op == OP_CONSTANT);
+    eassert(arg->len == 7);
+    arg = arg->next;
 
-    eassert(memcmp(args.values[2], "-m", 3) == 0);
-    eassert(args.lengths[2] == 3);
-    eassert(args.ops[2] == OP_CONSTANT);
+    eassert(!memcmp(arg->val, "-m", 3));
+    eassert(arg->op == OP_CONSTANT);
+    eassert(arg->len == 3);
+    arg = arg->next;
 
-    eassert(memcmp(args.values[3], "this is a commit message", 25) == 0);
-    eassert(args.lengths[3] == 25);
-    eassert(args.ops[3] == OP_CONSTANT);
+    eassert(!memcmp(arg->val, "this is a commit message", 25));
+    eassert(arg->op == OP_CONSTANT);
+    eassert(arg->len == 25);
 
-    eassert(!args.values[4]);
+    eassert(!arg->next);
 
-    ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 void parser_parse_home_test()
 {
-    ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
 
     char* line = "ls ~\0";
-    size_t length = 5;
+    size_t len = 5;
 
-    struct Args args;
-    enum eresult init_res = parser_init(&args, &arena);
-    eassert(init_res == E_SUCCESS);
-    parser_parse(line, length, &args, &arena, &scratch_arena);
+    struct Args* args = parser_parse(line, len, &scratch_arena);
 
-    eassert(args.values);
-    eassert(args.count == 2);
+    eassert(args->head);
+    eassert(args->count == 2);
 
-    eassert(memcmp(args.values[0], "ls", 3) == 0);
-    eassert(args.lengths[0] == 3);
+    struct Arg* arg = args->head->next;
+    eassert(!memcmp(arg->val, "ls", 3));
+    eassert(arg->op == OP_CONSTANT);
+    eassert(arg->len == 3);
+    arg = arg->next;
 
-    eassert(memcmp(args.values[1], "~", 2) == 0);
-    eassert(args.lengths[1] == 2);
-    // eassert(memcmp(args.values[1], "/home/alex", 11) == 0);
-    // eassert(args.lengths[1] == 11);
+    eassert(!memcmp(arg->val, "~", 2));
+    eassert(arg->op == OP_HOME_EXPANSION);
+    eassert(arg->len == 2);
 
-    eassert(!args.values[2]);
+    eassert(!arg->next);
 
-    ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 void parser_parse_home_at_start_test()
 {
-    ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
 
-    char* line = "ls ~/snap\0";
-    size_t length = 10;
+    char* line = "ls ~/snap";
+    size_t len = 10;
 
-    struct Args args;
-    enum eresult init_res = parser_init(&args, &arena);
-    eassert(init_res == E_SUCCESS);
-    parser_parse(line, length, &args, &arena, &scratch_arena);
+    struct Args* args = parser_parse(line, len, &scratch_arena);
 
-    eassert(args.values);
-    eassert(args.count == 2);
+    eassert(args->head);
+    eassert(args->count == 2);
 
-    eassert(memcmp(args.values[0], "ls", 3) == 0);
-    eassert(args.lengths[0] == 3);
+    struct Arg* arg = args->head->next;
+    eassert(!memcmp(arg->val, "ls", 3));
+    eassert(arg->op == OP_CONSTANT);
+    eassert(arg->len == 3);
+    arg = arg->next;
 
-    eassert(memcmp(args.values[1], "~", 2) == 0);
-    eassert(args.lengths[1] == 2);
-    // eassert(memcmp(args.values[1], "/home/alex/snap", 16) == 0);
-    // eassert(args.lengths[1] == 16);
+    eassert(!memcmp(arg->val, "~/snap", sizeof("~/snap") - 1));
+    eassert(arg->op == OP_HOME_EXPANSION);
+    eassert(arg->len == sizeof("~/snap"));
 
-    eassert(!args.values[2]);
+    eassert(!arg->next);
 
-    ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-void parser_parse_math_operators()
+void parser_parse_math_operators_test()
 {
-    ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
 
     char* line = "$( 1 + 1 - 1 * 1 / 1 % 1 ** 1 )";
-    size_t length = strlen(line) + 1;
-    struct Args args;
-    enum eresult init_res = parser_init(&args, &arena);
-    eassert(init_res == E_SUCCESS);
-    parser_parse(line, length, &args, &arena, &scratch_arena);
+    size_t len = strlen(line) + 1;
+    struct Args* args = parser_parse(line, len, &scratch_arena);
 
-    eassert(args.ops[0] == OP_MATH_EXPRESSION_START);
+    struct Arg* arg = args->head->next;
+    eassert(arg->op == OP_MATH_EXPRESSION_START);
+    arg = arg->next;
 
-    eassert(args.ops[1] == OP_CONSTANT);
-    eassert(args.ops[3] == OP_CONSTANT);
-    eassert(args.ops[5] == OP_CONSTANT);
-    eassert(args.ops[7] == OP_CONSTANT);
-    eassert(args.ops[9] == OP_CONSTANT);
-    eassert(args.ops[11] == OP_CONSTANT);
-    eassert(args.ops[13] == OP_CONSTANT);
+    eassert(!memcmp(arg->val, "1", 1));
+    eassert(arg->op == OP_CONSTANT);
+    arg = arg->next;
 
-    eassert(args.ops[2] == OP_ADD);
-    eassert(args.ops[4] == OP_SUBTRACT);
-    eassert(args.ops[6] == OP_MULTIPLY);
-    eassert(args.ops[8] == OP_DIVIDE);
-    eassert(args.ops[10] == OP_MODULO);
-    eassert(args.ops[12] == OP_EXPONENTIATION);
+    eassert(arg->op == OP_ADD);
+    arg = arg->next;
 
-    eassert(args.ops[14] == OP_MATH_EXPRESSION_END);
+    eassert(!memcmp(arg->val, "1", 1));
+    eassert(arg->op == OP_CONSTANT);
+    arg = arg->next;
 
-    eassert(!args.values[15]);
+    eassert(arg->op == OP_SUBTRACT);
+    arg = arg->next;
 
-    ARENA_TEST_TEARDOWN;
+    eassert(!memcmp(arg->val, "1", 1));
+    eassert(arg->op == OP_CONSTANT);
+    arg = arg->next;
+
+    eassert(arg->op == OP_MULTIPLY);
+    arg = arg->next;
+
+    eassert(!memcmp(arg->val, "1", 1));
+    eassert(arg->op == OP_CONSTANT);
+    arg = arg->next;
+
+    eassert(arg->op == OP_DIVIDE);
+    arg = arg->next;
+
+    eassert(!memcmp(arg->val, "1", 1));
+    eassert(arg->op == OP_CONSTANT);
+    arg = arg->next;
+
+    eassert(arg->op == OP_MODULO);
+    arg = arg->next;
+
+    eassert(!memcmp(arg->val, "1", 1));
+    eassert(arg->op == OP_CONSTANT);
+    arg = arg->next;
+
+    eassert(arg->op == OP_EXPONENTIATION);
+    arg = arg->next;
+
+    eassert(!memcmp(arg->val, "1", 1));
+    eassert(arg->op == OP_CONSTANT);
+    arg = arg->next;
+
+    eassert(arg->op == OP_MATH_EXPRESSION_END);
+
+    eassert(!arg->next);
+
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
+void parser_parse_glob_star_test()
+{
+    SCRATCH_ARENA_TEST_SETUP;
+
+    char* line = "ls *.md";
+    size_t len = strlen(line) + 1;
+
+    struct Args* args = parser_parse(line, len, &scratch_arena);
+
+    eassert(args->head);
+    eassert(args->count == 2);
+
+    struct Arg* arg = args->head->next;
+    eassert(!memcmp(arg->val, "ls", 3));
+    eassert(arg->op == OP_CONSTANT);
+    eassert(arg->len == 3);
+    arg = arg->next;
+
+    eassert(!memcmp(arg->val, "*.md", sizeof("*.md") - 1));
+    eassert(arg->op == OP_GLOB_EXPANSION);
+    eassert(arg->len == sizeof("*.md"));
+
+    eassert(!arg->next);
+
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
+void parser_parse_glob_question_test()
+{
+    SCRATCH_ARENA_TEST_SETUP;
+
+    char* line = "ls ?.md";
+    size_t len = strlen(line) + 1;
+
+    struct Args* args = parser_parse(line, len, &scratch_arena);
+
+    eassert(args->head);
+    eassert(args->count == 2);
+
+    struct Arg* arg = args->head->next;
+    eassert(!memcmp(arg->val, "ls", 3));
+    eassert(arg->op == OP_CONSTANT);
+    eassert(arg->len == 3);
+    arg = arg->next;
+
+    eassert(!memcmp(arg->val, "?.md", sizeof("?.md") - 1));
+    eassert(arg->op == OP_GLOB_EXPANSION);
+    eassert(arg->len == sizeof("?.md"));
+
+    eassert(!arg->next);
+
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 void parser_parse_glob_star_shouldnt_crash()
 {
-    ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
 
     // found from fuzzer crashing inputs
     char* line = "* * * * * * * * * * * * * * * * * *";
-    size_t length = strlen(line) + 1;
+    size_t len = strlen(line) + 1;
 
-    struct Args args;
-    enum eresult init_res = parser_init(&args, &arena);
-    eassert(init_res == E_SUCCESS);
-    parser_parse(line, length, &args, &arena, &scratch_arena);
+    struct Args* args = parser_parse(line, len, &scratch_arena);
 
-    eassert(args.count == 0);
+    eassert(args->count == 18);
+    struct Arg* arg = args->head->next;
+    for (size_t i = 0; i < args->count; ++i) {
+        eassert(arg->val[0] == '*');
+        eassert(arg->op == OP_GLOB_EXPANSION);
+        eassert(arg->len == 2);
+        arg = arg->next;
+    }
 
-    ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 void parser_parse_tilde_home_shouldnt_crash()
 {
-    ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
 
     // found from fuzzer crashing inputs
     char* line =
         "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~?~";
-    size_t length = strlen(line) + 1;
+    size_t len = strlen(line) + 1;
 
-    struct Args args;
-    enum eresult init_res = parser_init(&args, &arena);
-    eassert(init_res == E_SUCCESS);
-    parser_parse(line, length, &args, &arena, &scratch_arena);
+    struct Args* args = parser_parse(line, len, &scratch_arena);
 
-    eassert(args.count == 0);
+    eassert(args->count == 1);
 
-    ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 void parser_parse_glob_question_and_tilde_home_shouldnt_crash()
 {
-    ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
 
     // found from fuzzer crashing inputs
     char* line = "??~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
                  "~~~~?~>w?";
-    size_t length = strlen(line) + 1;
+    size_t len = strlen(line) + 1;
 
-    struct Args args;
-    enum eresult init_res = parser_init(&args, &arena);
-    eassert(init_res == E_SUCCESS);
-    parser_parse(line, length, &args, &arena, &scratch_arena);
+    struct Args* args = parser_parse(line, len, &scratch_arena);
 
-    eassert(args.count == 0);
+    eassert(args->count == 1);
 
-    ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 void parser_parse_bool_test()
 {
-    ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
 
     char* line = "false && true || false";
-    size_t length = strlen(line) + 1;
+    size_t len = strlen(line) + 1;
 
-    struct Args args;
-    enum eresult init_res = parser_init(&args, &arena);
-    eassert(init_res == E_SUCCESS);
-    parser_parse(line, length, &args, &arena, &scratch_arena);
+    struct Args* args = parser_parse(line, len, &scratch_arena);
 
-    eassert(args.values);
-    eassert(args.count == 5);
+    eassert(args->head);
+    eassert(args->count == 5);
 
-    eassert(memcmp(args.values[0], "false", 6) == 0);
-    eassert(args.lengths[0] == 6);
-    eassert(args.ops[0] == OP_FALSE);
+    struct Arg* arg = args->head->next;
+    eassert(!memcmp(arg->val, "false", 6));
+    eassert(arg->op == OP_FALSE);
+    eassert(arg->len == 6);
+    arg = arg->next;
 
-    eassert(memcmp(args.values[1], "&&", 3) == 0);
-    eassert(args.lengths[1] == 3);
-    eassert(args.ops[1] == OP_AND);
+    eassert(!memcmp(arg->val, "&&", 3));
+    eassert(arg->op == OP_AND);
+    eassert(arg->len == 3);
+    arg = arg->next;
 
-    eassert(memcmp(args.values[2], "true", 5) == 0);
-    eassert(args.lengths[2] == 5);
-    eassert(args.ops[2] == OP_TRUE);
+    eassert(!memcmp(arg->val, "true", 5));
+    eassert(arg->op == OP_TRUE);
+    eassert(arg->len == 5);
+    arg = arg->next;
 
-    eassert(memcmp(args.values[3], "||", 3) == 0);
-    eassert(args.lengths[3] == 3);
-    eassert(args.ops[3] == OP_OR);
+    eassert(!memcmp(arg->val, "||", 3));
+    eassert(arg->op == OP_OR);
+    eassert(arg->len == 3);
+    arg = arg->next;
 
-    eassert(memcmp(args.values[4], "false", 6) == 0);
-    eassert(args.lengths[4] == 6);
-    eassert(args.ops[4] == OP_FALSE);
+    eassert(!memcmp(arg->val, "false", 6));
+    eassert(arg->op == OP_FALSE);
+    eassert(arg->len == 6);
 
-    eassert(!args.values[5]);
+    eassert(!arg->next);
 
-    ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
@@ -799,14 +853,11 @@ int main()
     etest_run(parser_parse_variable_and_test);
     etest_run(parser_parse_variable_command_test);
     etest_run(parser_parse_git_commit_test);
-
-#ifdef NDEBUG
     etest_run(parser_parse_home_test);
     etest_run(parser_parse_home_at_start_test);
-#endif /* ifdef NDEBUG */
-
-    etest_run(parser_parse_math_operators);
-
+    etest_run(parser_parse_math_operators_test);
+    etest_run(parser_parse_glob_star_test);
+    etest_run(parser_parse_glob_question_test);
     etest_run(parser_parse_glob_star_shouldnt_crash);
     etest_run(parser_parse_tilde_home_shouldnt_crash);
     etest_run(parser_parse_glob_question_and_tilde_home_shouldnt_crash);
@@ -821,20 +872,16 @@ int main()
 // put at the end because it messes with clangd lsp
 void parser_parse_bad_input_shouldnt_crash()
 {
-    ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
 
     char* line = "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~C~~~~~~~~~~~~~k~"
                  "~~~~>ÿÿ> >ÿ>\w\>ÿ> >ÿ> \> >";
-    size_t length = strlen(line) + 1;
+    size_t len = strlen(line) + 1;
 
-    struct Args args;
-    enum eresult init_res = parser_init(&args, &arena);
-    eassert(init_res == E_SUCCESS);
-    parser_parse(line, length, &args, &arena, &scratch_arena);
+    struct Args* args = parser_parse(line, len, &scratch_arena);
 
-    // no crash is passing test here
+    // hits limit so does not process, not crashing is a test pass
+    (void)args;
 
-    ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
 }

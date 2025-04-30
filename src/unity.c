@@ -13,6 +13,7 @@
 #include "z/fzf.c"
 #include "z/z.c"
 
+#include "args.c"
 #include "arena.c"
 #include "config.c"
 #include "main.c"
