@@ -480,7 +480,7 @@ int vm_run(struct Args* restrict args, struct Tokens* const restrict tokens)
     }
 
     struct Arg* arg = args->head->next;
-    while (arg && arg->val && !vm.args_end) {
+    while (!vm.args_end && arg && arg->val) {
         arg = vm_buffer_set_command_next(arg, &vm);
 
         if (!vm.buffer[0]) {
@@ -506,7 +506,7 @@ int vm_run(struct Args* restrict args, struct Tokens* const restrict tokens)
         }
 
         if (vm_command_type == CT_EXTERNAL) {
-            if (arg->next) {
+            /*if (arg->next) {
                 if (arg->op == OP_FALSE) {
                     if (arg->next->op == OP_AND) {
                         break;
@@ -525,7 +525,7 @@ int vm_run(struct Args* restrict args, struct Tokens* const restrict tokens)
                     // arg = arg->next;
                     continue;
                 }
-            }
+            }*/
 
             vm_pid = fork();
 
@@ -583,8 +583,6 @@ int vm_run(struct Args* restrict args, struct Tokens* const restrict tokens)
 
         vm_command_type = CT_EXTERNAL;
         ++vm.command_position;
-        /*if (vm.args_end)
-            break;*/
     }
 
     vm_redirection_stop_if_needed(tokens, &vm);
