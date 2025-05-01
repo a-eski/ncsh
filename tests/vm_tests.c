@@ -11,16 +11,14 @@ extern int tests_passed;
 extern int tests_failed;
 
 // use a macro so line numbers are preserved
-#define vm_tester(input)                                                            \
-    SCRATCH_ARENA_TEST_SETUP;                                                       \
-                                                                                    \
-    struct Args args = {0};                                                         \
-    parser_init(&args, &scratch_arena);                                             \
-    parser_parse(input, strlen(input) + 1, &args, NULL, &scratch_arena);            \
-    struct Shell shell = {.args = args};                                            \
-                                                                                    \
-    eassert(vm_execute(&shell, &scratch_arena) == NCSH_COMMAND_SUCCESS_CONTINUE);   \
-                                                                                    \
+#define vm_tester(input)                                                                    \
+    SCRATCH_ARENA_TEST_SETUP;                                                               \
+                                                                                            \
+    struct Args* args = parser_parse(input, strlen(input) + 1, &scratch_arena);             \
+    struct Shell shell = {0};                                                               \
+                                                                                            \
+    eassert(vm_execute(args, &shell, &scratch_arena) == NCSH_COMMAND_SUCCESS_CONTINUE);     \
+                                                                                            \
     SCRATCH_ARENA_TEST_TEARDOWN;
 
 void vm_tests()

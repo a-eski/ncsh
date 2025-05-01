@@ -42,7 +42,7 @@ struct Input_Redirect_IO {
 };
 
 /* struct Pipe_IO
- * Stores file descriptors (fds) for piping io between processes
+ * Stores file descriptors (fds) and state for piping io between processes
  */
 struct Pipe_IO {
     int fd_one[2];
@@ -57,7 +57,6 @@ struct Vm_Data {
     char* buffer[MAX_INPUT];
     size_t buffer_len[MAX_INPUT];
     uint8_t command_position;
-    uint8_t args_position;
     bool args_end;
     enum Ops op_current;
     struct Output_Redirect_IO output_redirect_io;

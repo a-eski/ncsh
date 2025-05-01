@@ -11,12 +11,10 @@
  * Output append directs output redirections to append to the file instead of writing over it.
  */
 struct Tokens {
-    uint8_t stdout_redirect_index;
-    uint8_t stdin_redirect_index;
-    uint8_t stderr_redirect_index;
-    uint8_t stdout_and_stderr_redirect_index;
-
-    uint8_t number_of_pipe_commands;
+    struct Arg* stdout_redirect;
+    struct Arg* stdin_redirect;
+    struct Arg* stderr_redirect;
+    struct Arg* stdout_and_stderr_redirect;
 
     char* stdout_file;
     char* stdin_file;
@@ -25,7 +23,9 @@ struct Tokens {
 
     bool output_append;
     bool is_background_job;
+
+    uint8_t number_of_pipe_commands;
 };
 
-int vm_tokenizer_tokenize(struct Shell* const restrict shell, struct Tokens* const restrict tokens,
+int vm_tokenizer_tokenize(struct Args* const restrict args, struct Tokens* const restrict tokens, struct Shell* const restrict shell,
                           struct Arena* const restrict scratch_arena);
