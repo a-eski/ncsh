@@ -45,8 +45,6 @@ struct Input_Redirect_IO {
  * Stores file descriptors (fds) and state for piping io between processes
  */
 struct Pipe_IO {
-    bool pipe_one_open;
-    bool pipe_two_open;
     int fd_one[2];
     int fd_two[2];
 };

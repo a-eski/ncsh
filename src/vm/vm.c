@@ -179,11 +179,9 @@ int vm_redirection_start_if_needed(const struct Tokens* const restrict tokens,
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
-void vm_redirection_stop_if_needed(const struct Tokens* const restrict tokens, struct Vm_Data* const restrict vm)
+void vm_redirection_stop_if_needed(struct Vm_Data* const restrict vm)
 {
-    assert(tokens);
     assert(vm);
-    (void)tokens;
 
     if (vm->output_redirect_io.fd_stdout > 0) {
         vm_stdout_redirection_stop(vm->output_redirect_io.original_stdout);
@@ -219,7 +217,6 @@ int vm_pipe_start(const size_t command_position, struct Pipe_IO* const restrict 
             fflush(stdout);
             return NCSH_COMMAND_EXIT_FAILURE;
         }
-        pipes->pipe_one_open = true;
     }
     else {
         if (pipe(pipes->fd_two) != 0) {
@@ -227,14 +224,13 @@ int vm_pipe_start(const size_t command_position, struct Pipe_IO* const restrict 
             fflush(stdout);
             return NCSH_COMMAND_EXIT_FAILURE;
         }
-        pipes->pipe_two_open = true;
     }
 
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
 void vm_pipe_connect(const size_t command_position, const size_t number_of_commands,
-                     struct Pipe_IO* const restrict pipes)
+                     const struct Pipe_IO* const restrict pipes)
 {
     assert(pipes);
 
@@ -262,36 +258,29 @@ void vm_pipe_connect(const size_t command_position, const size_t number_of_comma
 }
 
 void vm_pipe_stop(const size_t command_position, const size_t number_of_commands,
-                  struct Pipe_IO* const restrict pipes)
+                  const struct Pipe_IO* const restrict pipes)
 {
     assert(pipes);
 
     if (!command_position) {
         close(pipes->fd_two[1]);
-        pipes->pipe_two_open = false;
     }
     else if (command_position == number_of_commands - 1) {
         if (number_of_commands % 2 != 0) {
             close(pipes->fd_one[0]);
-            pipes->pipe_one_open = false;
         }
         else {
             close(pipes->fd_two[0]);
-            pipes->pipe_two_open = false;
         }
     }
     else {
         if (command_position % 2 != 0) {
             close(pipes->fd_two[0]);
             close(pipes->fd_one[1]);
-            pipes->pipe_one_open = false;
-            pipes->pipe_two_open = false;
         }
         else {
             close(pipes->fd_one[0]);
             close(pipes->fd_two[1]);
-            pipes->pipe_one_open = false;
-            pipes->pipe_two_open = false;
         }
     }
 }
@@ -585,7 +574,7 @@ int vm_run(struct Args* restrict args, struct Tokens* const restrict tokens)
         ++vm.command_position;
     }
 
-    vm_redirection_stop_if_needed(tokens, &vm);
+    vm_redirection_stop_if_needed(&vm);
 
     if (vm_execvp_result == EXECVP_FAILED) {
         return NCSH_COMMAND_EXIT_FAILURE;

@@ -144,12 +144,12 @@ fuzz_parser fp:
 
 .PHONY: bench_parser, bp
 bench_parser bp:
-	$(CC) $(STD) $(debug_flags) -DNDEBUG ./src/eskilib/etest.c ./src/arena.c ./src/vars.c ./src/parser.c ./tests/parser_bench.c -o ./bin/parser_bench
+	$(CC) $(STD) $(debug_flags) -DNDEBUG ./src/eskilib/etest.c ./src/arena.c ./src/vars.c ./src/args.c ./src/parser.c ./tests/parser_bench.c -o ./bin/parser_bench
 	hyperfine --warmup 1000 --shell=none './bin/parser_bench'
 
 .PHONY: bench_parser_tests, bpt
 bench_parser_tests bpt:
-	$(CC) $(STD) $(debug_flags) -DNDEBUG ./src/eskilib/etest.c ./src/arena.c ./src/vars.c ./src/parser.c ./tests/parser_tests.c -o ./bin/parser_tests
+	$(CC) $(STD) $(debug_flags) -DNDEBUG ./src/eskilib/etest.c ./src/arena.c ./src/vars.c ./src/args.c ./src/parser.c ./tests/parser_tests.c -o ./bin/parser_tests
 	hyperfine --warmup 1000 --shell=none './bin/parser_tests'
 
 .PHONY: bench_parser_and_vm, bpv

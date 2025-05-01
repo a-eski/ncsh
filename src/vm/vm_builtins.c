@@ -16,7 +16,6 @@
 #include "../eskilib/estr.h"
 #include "../args.h"
 #include "../readline/history.h"
-// #include "../var.h"
 #include "../z/z.h"
 #include "vm_builtins.h"
 
