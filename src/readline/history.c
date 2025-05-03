@@ -11,14 +11,13 @@
 #include "../defines.h"
 #include "../eskilib/ecolors.h"
 #include "../eskilib/efile.h"
-#include "../eskilib/emap.h"
 #include "../eskilib/eresult.h"
 #include "../eskilib/estr.h"
+#include "hashset.h"
 #include "history.h"
 
 void history_file_set(struct estr config_file, struct History* restrict history, struct Arena* restrict arena)
 {
-
     constexpr size_t history_file_len = sizeof(NCSH_HISTORY_FILE);
 #ifdef NCSH_HISTORY_TEST
     history->file = arena_malloc(arena, history_file_len, char);
@@ -89,6 +88,9 @@ enum eresult history_load(struct History* restrict history, struct Arena* restri
 
     for (size_t i = 0; (buffer_length = efgets(buffer, sizeof(buffer), file)) != EOF && i < NCSH_MAX_HISTORY_FILE;
          ++i) {
+        if (buffer_length <= 0 || !*buffer)
+            continue;
+
         ++history->count;
         history->entries[i].length = (size_t)buffer_length;
         history->entries[i].value = arena_malloc(arena, (uintptr_t)buffer_length, char);
@@ -122,16 +124,18 @@ enum eresult history_reload(struct History* restrict history, struct Arena* rest
 
     for (size_t i = 0; (buffer_length = efgets(buffer, sizeof(buffer), file)) != EOF && i < NCSH_MAX_HISTORY_FILE;
          ++i) {
-        if (buffer_length > 0) {
-            ++history->count;
-            if ((size_t)buffer_length > history->entries[i].length) {
-                history->entries[i].value = arena_realloc(arena, (uintptr_t)buffer_length, char,
-                                                          history->entries[i].value, history->entries[i].length);
-            }
-            memcpy(history->entries[i].value, buffer, (size_t)buffer_length);
-            history->entries[i].value[buffer_length - 1] = '\0';
-            history->entries[i].length = (size_t)buffer_length;
+        if (buffer_length <= 0 || !*buffer) {
+            continue;
         }
+
+        ++history->count;
+        if ((size_t)buffer_length > history->entries[i].length) {
+            history->entries[i].value = arena_realloc(arena, (uintptr_t)buffer_length, char, history->entries[i].value,
+                                                      history->entries[i].length);
+        }
+        memcpy(history->entries[i].value, buffer, (size_t)buffer_length);
+        history->entries[i].value[buffer_length - 1] = '\0';
+        history->entries[i].length = (size_t)buffer_length;
     }
     fclose(file);
 
@@ -174,8 +178,8 @@ enum eresult history_clean(struct History* restrict history, struct Arena* restr
 
     printf("ncsh history: starting to clean history with %zu entries.\n", history->count);
 
-    struct emap hmap = {0};
-    emap_malloc(&scratch_arena, &hmap);
+    struct Hashset hset = {0};
+    hashset_malloc(&scratch_arena, &hset);
 
     FILE* file = fopen(history->file, "w");
     if (!file) {
@@ -188,8 +192,8 @@ enum eresult history_clean(struct History* restrict history, struct Arena* restr
             continue;
         }
 
-        if (!emap_exists(history->entries[i].value, &hmap)) {
-            emap_set(history->entries[i], &scratch_arena, &hmap);
+        if (!hashset_exists(history->entries[i].value, &hset)) {
+            hashset_set(history->entries[i], &scratch_arena, &hset);
 
             if (!fputs(history->entries[i].value, file)) {
                 perror(RED "ncsh history: Error writing to file" RESET);
@@ -280,6 +284,9 @@ enum eresult history_add(char* restrict line, size_t length, struct History* res
     }
     else if (history->count + 1 >= NCSH_MAX_HISTORY_IN_MEMORY) {
         return E_NO_OP_MAX_LIMIT_REACHED;
+    }
+    else if (length == 2 && (line[0] == ' ' || line[0] == '\n')) {
+        return E_FAILURE_BAD_STRING;
     }
 
     assert(length > 0);

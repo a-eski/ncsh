@@ -8,7 +8,6 @@
 #define _DEFAULT_SOURCE
 
 #include "eskilib/efile.c"
-#include "eskilib/emap.c"
 
 #include "z/fzf.c"
 #include "z/z.c"
@@ -20,6 +19,7 @@
 #include "noninteractive.c"
 #include "parser.c"
 #include "readline/ac.c"
+#include "readline/hashset.c"
 #include "readline/history.c"
 #include "readline/ncreadline.c"
 #include "readline/terminal.c"

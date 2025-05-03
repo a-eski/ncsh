@@ -9,7 +9,7 @@ debug_flags = -Wall -Wextra -Werror -Wpedantic -pedantic-errors -Wsign-conversio
 release_flags = -Wall -Wextra -Werror -pedantic-errors -Wsign-conversion -Wformat=2 -Wshadow -Wvla -O3 -DNDEBUG
 # fuzz_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -Wwrite-strings -fsanitize=address,leak,fuzzer -DNDEBUG -g
 fuzz_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,leak,fuzzer -DNDEBUG -g
-objects = obj/main.o obj/arena.o obj/noninteractive.o obj/ncreadline.o obj/vm.o obj/vm_tokenizer.o obj/terminal.o obj/efile.o obj/emap.o obj/vars.o obj/args.o obj/parser.o obj/vm_builtins.o obj/history.o obj/ac.o obj/config.o obj/fzf.o obj/z.o
+objects = obj/main.o obj/arena.o obj/noninteractive.o obj/ncreadline.o obj/vm.o obj/vm_tokenizer.o obj/terminal.o obj/efile.o obj/hashset.o obj/vars.o obj/args.o obj/parser.o obj/vm_builtins.o obj/history.o obj/ac.o obj/config.o obj/fzf.o obj/z.o
 target = ./bin/ncsh
 
 ifeq ($(CC), gcc)
@@ -73,7 +73,7 @@ check c:
 	make test_config
 	make test_readline
 	make test_arena
-	make test_emap
+	make test_hashset
 	make test_estr
 	make test_vars
 	make test_vm
@@ -92,14 +92,14 @@ check_local l:
 
 .PHONY: test_history, th
 test_history th:
-	$(CC) $(STD) $(debug_flags) -DNCSH_HISTORY_TEST ./src/eskilib/etest.c ./src/eskilib/efile.c ./src/eskilib/emap.c ./src/arena.c ./src/readline/history.c ./tests/history_tests.c -o ./bin/history_tests
+	$(CC) $(STD) $(debug_flags) -DNCSH_HISTORY_TEST ./src/eskilib/etest.c ./src/eskilib/efile.c ./src/readline/hashset.c ./src/arena.c ./src/readline/history.c ./tests/history_tests.c -o ./bin/history_tests
 	./bin/history_tests
 
 .PHONY: fuzz_history, fh
 fuzz_history fh:
 	chmod +x ./create_corpus_dirs.sh
 	./create_corpus_dirs.sh
-	clang-19 $(STD) $(fuzz_flags) -DNCSH_HISTORY_TEST ./tests/history_fuzzing.c ./src/arena.c ./src/readline/history.c ./src/eskilib/efile.c ./src/eskilib/emap.c -o ./bin/history_fuzz
+	clang-19 $(STD) $(fuzz_flags) -DNCSH_HISTORY_TEST ./tests/history_fuzzing.c ./src/arena.c ./src/readline/history.c ./src/eskilib/efile.c ./src/readline/hashset.c -o ./bin/history_fuzz
 	./bin/history_fuzz HISTORY_CORPUS/ -detect_leaks=0 -rss_limit_mb=4096
 
 .PHONY: test_ac, tac
@@ -193,18 +193,13 @@ test_config tc:
 
 .PHONY: test_readline, tr
 test_readline tr:
-	$(CC) $(STD) $(debug_flags) -DNCSH_HISTORY_TEST ./src/arena.c ./src/eskilib/etest.c ./src/eskilib/efile.c ./src/eskilib/emap.c ./src/readline/terminal.c ./src/readline/ac.c ./src/readline/history.c ./src/readline/ncreadline.c ./tests/ncreadline_tests.c -o ./bin/ncreadline_tests
+	$(CC) $(STD) $(debug_flags) -DNCSH_HISTORY_TEST ./src/arena.c ./src/eskilib/etest.c ./src/eskilib/efile.c ./src/readline/hashset.c ./src/readline/terminal.c ./src/readline/ac.c ./src/readline/history.c ./src/readline/ncreadline.c ./tests/ncreadline_tests.c -o ./bin/ncreadline_tests
 	./bin/ncreadline_tests
 
 .PHONY: test_arena, ta
 test_arena ta:
 	$(CC) $(STD) $(debug_flags) -DNCSH_HISTORY_TEST ./src/arena.c ./src/eskilib/etest.c ./tests/arena_tests.c -o ./bin/arena_tests
 	./bin/arena_tests
-
-.PHONY: test_emap, te
-test_emap te:
-	$(CC) $(STD) $(debug_flags) ./src/arena.c ./src/eskilib/emap.c ./src/eskilib/etest.c ./tests/emap_tests.c -o ./bin/emap_tests
-	./bin/emap_tests
 
 .PHONY: test_estr, ts
 test_estr ts:
@@ -218,8 +213,13 @@ test_vars tv:
 
 .PHONY: test_vm, tvm
 test_vm tvm:
-	$(CC) $(STD) $(debug_flags) -DNCSH_VM_TEST ./src/arena.c ./src/args.c ./src/parser.c ./src/eskilib/efile.c ./src/eskilib/emap.c ./src/vars.c ./src/readline/history.c ./src/z/fzf.c ./src/z/z.c ./src/config.c ./src/vm/vm.c ./src/vm/vm_tokenizer.c ./src/vm/vm_builtins.c ./src/eskilib/etest.c ./tests/vm_tests.c -o ./bin/vm_tests
+	$(CC) $(STD) $(debug_flags) -DNCSH_VM_TEST ./src/arena.c ./src/args.c ./src/parser.c ./src/eskilib/efile.c ./src/readline/hashset.c ./src/vars.c ./src/readline/history.c ./src/z/fzf.c ./src/z/z.c ./src/config.c ./src/vm/vm.c ./src/vm/vm_tokenizer.c ./src/vm/vm_builtins.c ./src/eskilib/etest.c ./tests/vm_tests.c -o ./bin/vm_tests
 	./bin/vm_tests
+
+.PHONY: test_hashset, ths
+test_hashset ths:
+	$(CC) $(STD) $(debug_flags) -DNCSH_VM_TEST ./src/arena.c ./src/readline/hashset.c ./src/eskilib/etest.c ./tests/hashset_tests.c -o ./bin/hashset_tests
+	./bin/hashset_tests
 
 .PHONY: clang_format, cf
 clang_format cf:
