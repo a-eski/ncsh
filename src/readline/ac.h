@@ -6,7 +6,7 @@
 #pragma once
 
 #include "../arena.h"
-#include "../eskilib/estr.h"
+#include "../eskilib/str.h"
 
 #define NCSH_LETTERS 96 // ascii printable characters 32-127
 
@@ -46,7 +46,7 @@ struct Autocompletion_Node* ac_alloc(struct Arena* restrict arena);
 void ac_add(char* restrict string, size_t length, struct Autocompletion_Node* restrict tree,
             struct Arena* restrict arena);
 
-void ac_add_multiple(struct estr* restrict strings, int count, struct Autocompletion_Node* restrict tree,
+void ac_add_multiple(struct Str* restrict strings, int count, struct Autocompletion_Node* restrict tree,
                      struct Arena* restrict arena);
 
 struct Autocompletion_Node* ac_find(char* restrict str, struct Autocompletion_Node* restrict tree);

@@ -280,7 +280,7 @@ void vm_tokenizer_assignment_process(struct Arg* restrict arg, struct Vars* vars
     memcpy(var_name, arg->val, assignment_pos);
     var_name[assignment_pos] = '\0';
     debugf("saving var_name %s\n", var_name);
-    struct estr* val = arena_malloc(arena, 1, struct estr);
+    struct Str* val = arena_malloc(arena, 1, struct Str);
     val->length = arg->len - assignment_pos - 1;
     val->value = arena_malloc(arena, val->length, char);
     memcpy(val->value, arg->val + key_len, val->length);
@@ -296,7 +296,7 @@ void vm_tokenizer_variable_process(struct Arg* restrict arg, struct Vars* restri
 {
     char* key = arg->val + 1; // skip first value in arg->val (the $)
     debugf("trying to get variable %s\n", key);
-    struct estr* val = vars_get(key, vars);
+    struct Str* val = vars_get(key, vars);
     if (!val) {
         printf("ncsh: variable with name '%s' did not have a value associated with it.\n", key);
         return;
@@ -315,7 +315,7 @@ void vm_tokenizer_variable_process(struct Arg* restrict arg, struct Vars* restri
  */
 void vm_tokenizer_alias_replace(struct Arg* restrict arg, struct Arena* restrict scratch_arena)
 {
-    struct estr alias = config_alias_check(arg->val, arg->len);
+    struct Str alias = config_alias_check(arg->val, arg->len);
     if (alias.length) {
         arg->val = arena_realloc(scratch_arena, alias.length, char, arg->val, arg->len);
         memcpy(arg->val, alias.value, alias.length);
@@ -395,7 +395,6 @@ int vm_tokenizer_ops_process(struct Args* restrict args, struct Tokens* restrict
         }
         case OP_ASSIGNMENT: {
             vm_tokenizer_assignment_process(arg, &shell->vars, &shell->arena);
-            // ++args->count;
             break;
         }
         case OP_VARIABLE: {

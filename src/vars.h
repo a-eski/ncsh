@@ -6,13 +6,13 @@
 #include <stddef.h>
 
 #include "arena.h"
-#include "eskilib/estr.h"
+#include "eskilib/str.h"
 
 #define VARS_DEFAULT_CAPACITY 100
 
 struct Vars_Entry {
     char* key;
-    struct estr value;
+    struct Str value;
 };
 
 struct Vars {
@@ -23,8 +23,8 @@ struct Vars {
 
 void vars_malloc(struct Arena* arena, struct Vars* restrict vars);
 
-struct estr* vars_get(char* key, struct Vars* restrict vars);
+struct Str* vars_get(char* key, struct Vars* restrict vars);
 
 bool vars_exists(char* key, struct Vars* restrict vars);
 
-char* vars_set(char* key, struct estr* val, struct Arena* arena, struct Vars* restrict vars);
+char* vars_set(char* key, struct Str* val, struct Arena* arena, struct Vars* restrict vars);

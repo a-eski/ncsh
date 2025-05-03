@@ -11,7 +11,7 @@
 
 #define CWD_LENGTH 528
 
-static struct estr config_location = {.length = 0, .value = NULL};
+static struct Str config_location = {.length = 0, .value = NULL};
 
 double z_score(struct z_Directory* restrict directory, int fzf_score, time_t now);
 
@@ -44,7 +44,7 @@ void z_read_non_empty_database_test()
     eassert(z_init(&config_location, &db, &arena) == Z_SUCCESS);
     eassert(db.count == 1);
 
-    struct estr new_value = {.length = 5};
+    struct Str new_value = {.length = 5};
     new_value.value = arena_malloc(&arena, new_value.length, char);
     strcpy(new_value.value, "ncsh");
 
@@ -78,10 +78,10 @@ void z_add_to_database_empty_database_test()
     eassert(z_init(&config_location, &db, &arena) == Z_SUCCESS);
     eassert(db.count == 0);
 
-    struct estr new_value = {.length = 5};
+    struct Str new_value = {.length = 5};
     new_value.value = arena_malloc(&arena, new_value.length, char);
     strcpy(new_value.value, "ncsh");
-    struct estr cwd = {.value = "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells", .length = 52};
+    struct Str cwd = {.value = "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells", .length = 52};
 
     eassert(z_database_add(new_value.value, new_value.length, cwd.value, cwd.length, &db, &arena) == Z_SUCCESS);
     eassert(db.count == 1);
@@ -194,7 +194,7 @@ void z_match_find_empty_database_test()
     eassert(z_init(&config_location, &db, &arena) == Z_SUCCESS);
     eassert(db.count == 0);
 
-    struct estr target = {.value = "path", .length = 5};
+    struct Str target = {.value = "path", .length = 5};
     char cwd[CWD_LENGTH];
     if (!getcwd(cwd, CWD_LENGTH)) {
         ARENA_TEST_TEARDOWN;
@@ -218,10 +218,10 @@ void z_write_empty_database_test()
     eassert(z_init(&config_location, &db, &arena) == Z_SUCCESS);
     eassert(db.count == 0);
 
-    struct estr new_value = {.length = 5};
+    struct Str new_value = {.length = 5};
     new_value.value = arena_malloc(&arena, new_value.length, char);
     strcpy(new_value.value, "ncsh");
-    struct estr cwd = {.value = "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells", .length = 52};
+    struct Str cwd = {.value = "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells", .length = 52};
 
     eassert(z_database_add(new_value.value, new_value.length, cwd.value, cwd.length, &db, &arena) == Z_SUCCESS);
     eassert(db.count == 1);
@@ -242,9 +242,9 @@ void z_add_to_database_empty_value_test()
     struct z_Database db = {0};
     eassert(z_init(&config_location, &db, &arena) == Z_SUCCESS);
     eassert(db.count == 1);
-    struct estr cwd = {.value = "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells", .length = 52};
+    struct Str cwd = {.value = "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells", .length = 52};
 
-    eassert(z_database_add(estr_Empty.value, estr_Empty.length, cwd.value, cwd.length, &db, &arena) ==
+    eassert(z_database_add(Str_Empty.value, Str_Empty.length, cwd.value, cwd.length, &db, &arena) ==
             Z_NULL_REFERENCE);
     eassert(db.count == 1);
 
@@ -261,10 +261,10 @@ void z_write_nonempty_database_test()
     eassert(db.count == 1);
 
     double start_rank = db.dirs[0].rank;
-    struct estr new_value = {.length = 9};
+    struct Str new_value = {.length = 9};
     new_value.value = arena_malloc(&arena, new_value.length, char);
     strcpy(new_value.value, "ttytest2");
-    struct estr cwd = {.value = "/mnt/c/Users/Alex/source/repos/PersonalRepos", .length = 45};
+    struct Str cwd = {.value = "/mnt/c/Users/Alex/source/repos/PersonalRepos", .length = 45};
 
     eassert(z_database_add(new_value.value, new_value.length, cwd.value, cwd.length, &db, &arena) == Z_SUCCESS);
     eassert(db.count == 2);
@@ -287,7 +287,7 @@ void z_match_find_finds_exact_match_test()
     eassert(z_init(&config_location, &db, &arena) == Z_SUCCESS);
     eassert(db.count == 2);
 
-    struct estr target = {.value = "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells/ncsh", .length = 57};
+    struct Str target = {.value = "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells/ncsh", .length = 57};
     char cwd[CWD_LENGTH];
     if (!getcwd(cwd, CWD_LENGTH)) {
         ARENA_TEST_TEARDOWN;
@@ -314,7 +314,7 @@ void z_match_find_finds_match_test()
     eassert(z_init(&config_location, &db, &arena) == Z_SUCCESS);
     eassert(db.count == 2);
 
-    struct estr target = {.value = "ncsh", .length = 5};
+    struct Str target = {.value = "ncsh", .length = 5};
     char cwd[CWD_LENGTH];
     if (!getcwd(cwd, CWD_LENGTH)) {
         ARENA_TEST_TEARDOWN;
@@ -341,7 +341,7 @@ void z_match_find_no_match_test()
     eassert(z_init(&config_location, &db, &arena) == Z_SUCCESS);
     eassert(db.count == 2);
 
-    struct estr target = {.value = "path", .length = 5};
+    struct Str target = {.value = "path", .length = 5};
     char cwd[CWD_LENGTH];
     if (!getcwd(cwd, CWD_LENGTH)) {
         ARENA_TEST_TEARDOWN;
@@ -366,7 +366,7 @@ void z_match_find_multiple_matches_test()
     eassert(z_init(&config_location, &db, &arena) == Z_SUCCESS);
     eassert(db.count == 2);
 
-    struct estr target = {.value = "PersonalRepos", .length = 14};
+    struct Str target = {.value = "PersonalRepos", .length = 14};
     char cwd[CWD_LENGTH];
     if (!getcwd(cwd, CWD_LENGTH)) {
         ARENA_TEST_TEARDOWN;
@@ -398,7 +398,7 @@ void z_change_directory_test()
         eassert(false);
     }
 
-    struct estr target = {.value = "ncsh", .length = 5};
+    struct Str target = {.value = "ncsh", .length = 5};
     z(target.value, target.length, buffer, &db, &arena, scratch_arena);
 
     if (!getcwd(buffer_after, CWD_LENGTH)) {
@@ -436,7 +436,7 @@ void z_home_empty_target_change_directory_test()
         eassert(false);
     }
 
-    struct estr target = estr_Empty;
+    struct Str target = Str_Empty;
     z(target.value, target.length, buffer, &db, &arena, scratch_arena);
 
     if (!getcwd(buffer_after, CWD_LENGTH)) {
@@ -477,7 +477,7 @@ void z_no_match_change_directory_test()
         eassert(false);
     }
 
-    struct estr target = {.value = "zzz", .length = 4};
+    struct Str target = {.value = "zzz", .length = 4};
     z(target.value, target.length, buffer, &db, &arena, scratch_arena);
 
     if (!getcwd(buffer_after, CWD_LENGTH)) {
@@ -517,7 +517,7 @@ void z_valid_subdirectory_change_directory_test()
         eassert(false);
     }
 
-    struct estr target = {.value = "tests", .length = 6};
+    struct Str target = {.value = "tests", .length = 6};
     z(target.value, target.length, buffer, &db, &arena, scratch_arena);
 
     if (!getcwd(buffer_after, CWD_LENGTH)) {
@@ -558,7 +558,7 @@ void z_dir_slash_dir_change_directory_test()
         eassert(false);
     }
     size_t buffer_length = strlen(buffer) + 1;
-    struct estr target = {.value = "tests/test_dir", .length = 15};
+    struct Str target = {.value = "tests/test_dir", .length = 15};
     z_database_add(target.value, target.length, buffer, buffer_length, &db, &arena);
 
     z(target.value, target.length, buffer, &db, &arena, scratch_arena);
@@ -603,7 +603,7 @@ void z_double_dot_change_directory_test()
         eassert(false);
     }
 
-    struct estr target = {.value = "..", .length = 3};
+    struct Str target = {.value = "..", .length = 3};
     z(target.value, target.length, buffer, &db, &arena, scratch_arena);
 
     if (!getcwd(buffer_after, CWD_LENGTH)) {
@@ -645,7 +645,7 @@ void z_empty_database_valid_subdirectory_change_directory_test()
         eassert(false);
     }
 
-    struct estr target = {.value = "tests", .length = 6};
+    struct Str target = {.value = "tests", .length = 6};
     z(target.value, target.length, buffer, &db, &arena, scratch_arena);
 
     if (!getcwd(buffer_after, CWD_LENGTH)) {
@@ -689,7 +689,7 @@ void z_contains_correct_match_test()
         eassert(false);
     }
 
-    struct estr target = {.value = "PersonalRepos", .length = 14};
+    struct Str target = {.value = "PersonalRepos", .length = 14};
     z(target.value, target.length, buffer, &db, &arena, scratch_arena);
     char* path = "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells";
 
@@ -723,7 +723,7 @@ void z_crashing_input_test()
     eassert(db.count == 2);
 
     char* buffer = arena_malloc(&arena, CWD_LENGTH, char);
-    struct estr target = {.value = "", .length = sizeof("")};
+    struct Str target = {.value = "", .length = sizeof("")};
     z(target.value, target.length, buffer, &db, &arena, scratch_arena);
 
     // not crashing is a test passed

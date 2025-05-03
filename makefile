@@ -74,7 +74,7 @@ check c:
 	make test_readline
 	make test_arena
 	make test_hashset
-	make test_estr
+	make test_str
 	make test_vars
 	make test_vm
 
@@ -201,10 +201,10 @@ test_arena ta:
 	$(CC) $(STD) $(debug_flags) -DNCSH_HISTORY_TEST ./src/arena.c ./src/eskilib/etest.c ./tests/arena_tests.c -o ./bin/arena_tests
 	./bin/arena_tests
 
-.PHONY: test_estr, ts
-test_estr ts:
-	$(CC) $(STD) $(debug_flags) ./src/arena.c ./src/eskilib/etest.c ./tests/estr_tests.c -o ./bin/estr_tests
-	./bin/estr_tests
+.PHONY: test_str, ts
+test_str ts:
+	$(CC) $(STD) $(debug_flags) ./src/arena.c ./src/eskilib/etest.c ./tests/str_tests.c -o ./bin/str_tests
+	./bin/str_tests
 
 .PHONY: test_vars, tv
 test_vars tv:

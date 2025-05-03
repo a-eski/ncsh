@@ -417,6 +417,12 @@ void vm_status_check()
 struct Arg* vm_buffer_set_command_next(struct Arg* restrict arg, struct Vm_Data* restrict vm)
 {
     size_t vm_buf_pos = 0;
+    /*if (arg->op == OP_ASSIGNMENT) {
+        arg = arg->next;
+        if (arg->op == OP_OR || arg->op == OP_AND) {
+            arg = arg->next;
+        }
+    }*/
 
     while (arg->val && arg->op == OP_CONSTANT) {
         assert(arg->val[arg->len - 1] == '\0');
@@ -433,6 +439,8 @@ struct Arg* vm_buffer_set_command_next(struct Arg* restrict arg, struct Vm_Data*
 
         ++vm_buf_pos;
         arg = arg->next;
+        /*if (arg->op == OP_ASSIGNMENT)
+            arg = arg->next;*/
     }
 
     if (!vm->args_end) {
@@ -499,27 +507,6 @@ int vm_run(struct Args* restrict args, struct Tokens* restrict tokens)
         }
 
         if (vm_command_type == CT_EXTERNAL) {
-            /*if (arg->next) {
-                if (arg->op == OP_FALSE) {
-                    if (arg->next->op == OP_AND) {
-                        break;
-                    }
-                    vm_command_type = CT_EXTERNAL;
-                    ++vm.command_position;
-                    // arg = arg->next;
-                    continue;
-                }
-                else if (arg->op == OP_TRUE) {
-                    if (arg->next->op == OP_OR) {
-                        break;
-                    }
-                    vm_command_type = CT_EXTERNAL;
-                    ++vm.command_position;
-                    // arg = arg->next;
-                    continue;
-                }
-            }*/
-
             vm_pid = fork();
 
             if (vm_pid < 0) {

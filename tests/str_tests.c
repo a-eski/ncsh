@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../src/eskilib/estr.h"
+#include "../src/eskilib/str.h"
 #include "../src/eskilib/etest.h"
 
 void estr_compare_no_length_test()
@@ -27,8 +27,8 @@ void estr_compare_s1_null_test()
 
 void estr_compare_empty_string_test()
 {
-    struct estr str = estr_Empty;
-    struct estr str2 = estr_Empty;
+    struct Str str = Str_Empty;
+    struct Str str2 = Str_Empty;
     bool result = estrcmp(str.value, str.length, str2.value, str2.length);
     eassert(!result);
 }
@@ -43,8 +43,8 @@ void estr_compare_true_test()
 
 void estr_compare_false_test()
 {
-    struct estr s1 = estr_New_Literal("hello hello");
-    struct estr s2 = estr_New_Literal("hello there");
+    struct Str s1 = Str_New_Literal("hello hello");
+    struct Str s2 = Str_New_Literal("hello there");
 
     bool result = estrcmp(s1.value, s1.length, s2.value, s2.length);
 
@@ -74,8 +74,8 @@ void estr_compare_partial_comparison_true_test()
 
 void estr_compare_partial_comparison_false_test()
 {
-    struct estr s1 = estr_New("hello hello", sizeof("hello hello") - 2);
-    struct estr s2 = estr_New("hello there", sizeof("hello there") - 2);
+    struct Str s1 = Str_New("hello hello", sizeof("hello hello") - 2);
+    struct Str s2 = Str_New("hello there", sizeof("hello there") - 2);
 
     bool result = estrcmp(s1.value, s1.length, s2.value, s2.length);
 

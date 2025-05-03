@@ -1,4 +1,3 @@
-#include "../src/eskilib/estr.h"
 #include "../src/eskilib/etest.h"
 #include "../src/vars.h"
 #include "lib/arena_test_helper.h"
@@ -26,7 +25,7 @@ void vars_add_one_test()
     vars_malloc(&scratch_arena, &vars);
 
     char* key = "hello";
-    struct estr val = {.value = "world", .length = 6};
+    struct Str val = {.value = "world", .length = 6};
     const char* res = vars_set(key, &val, &scratch_arena, &vars);
 
     eassert(res);
@@ -34,7 +33,7 @@ void vars_add_one_test()
     eassert(vars.capacity > 0);
     eassert(vars.size == 1);
 
-    struct estr* get_res = vars_get(key, &vars);
+    struct Str* get_res = vars_get(key, &vars);
     eassert(get_res->value);
     eassert(get_res->length == val.length);
     eassert(!memcmp(val.value, get_res->value, val.length));
@@ -49,9 +48,9 @@ void vars_add_multiple_test()
     vars_malloc(&scratch_arena, &vars);
 
     char* key1 = "hello";
-    struct estr val1 = {.value = "world", .length = 6};
+    struct Str val1 = {.value = "world", .length = 6};
     char* key2 = "test";
-    struct estr val2 = {.value = "success", .length = 8};
+    struct Str val2 = {.value = "success", .length = 8};
 
     const char* res1 = vars_set(key1, &val1, &scratch_arena, &vars);
     const char* res2 = vars_set(key2, &val2, &scratch_arena, &vars);
@@ -65,12 +64,12 @@ void vars_add_multiple_test()
     eassert(res2);
     eassert(!memcmp(res2, key2, 5));
 
-    struct estr* get_res1 = vars_get(key1, &vars);
+    struct Str* get_res1 = vars_get(key1, &vars);
     eassert(get_res1->value);
     eassert(get_res1->length == val1.length);
     eassert(!memcmp(get_res1->value, val1.value, get_res1->length));
 
-    struct estr* get_res2 = vars_get(key2, &vars);
+    struct Str* get_res2 = vars_get(key2, &vars);
     eassert(get_res2->value);
     eassert(get_res2->length = val2.length);
     eassert(!memcmp(get_res2->value, val2.value, get_res2->length));
@@ -85,7 +84,7 @@ void vars_add_duplicate_test()
     vars_malloc(&scratch_arena, &vars);
 
     char* key = "hello";
-    struct estr val = {.value = "world", .length = 6};
+    struct Str val = {.value = "world", .length = 6};
     const char* res = vars_set(key, &val, &scratch_arena, &vars);
     eassert(res);
     vars_set(key, &val, &scratch_arena, &vars);

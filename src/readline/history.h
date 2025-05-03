@@ -1,11 +1,12 @@
-/* Copyright ncsh by Alex Eski 2024 */
+/* Copyright ncsh (C) by Alex Eski 2024 */
+/* history.h: shell command history implementation with clean, count, and display options. */
 
 #pragma once
 
 #include "../arena.h"
 #include "../configurables.h"
 #include "../eskilib/eresult.h"
-#include "../eskilib/estr.h"
+#include "../eskilib/str.h"
 #include "../parser.h"
 
 #ifdef NCSH_HISTORY_TEST
@@ -20,18 +21,18 @@
 struct History {
     size_t count;
     char* file;
-    struct estr* entries;
+    struct Str* entries;
 };
 
 /* History Setup and Manipulation */
-enum eresult history_init(struct estr config_location, struct History* restrict history, struct Arena* restrict arena);
+enum eresult history_init(struct Str config_location, struct History* restrict history, struct Arena* restrict arena);
 
 enum eresult history_save(struct History* restrict history);
 
 enum eresult history_add(char* restrict line, size_t length, struct History* restrict history,
                          struct Arena* restrict arena);
 
-struct estr history_get(size_t position, struct History* restrict history);
+struct Str history_get(size_t position, struct History* restrict history);
 
 /* history_command_...
  * History Commands called from builtins when user enters commands like 'history',

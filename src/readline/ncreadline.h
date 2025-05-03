@@ -19,7 +19,7 @@ struct Input {
     // values related to prompt
     bool reprint_prompt;
     size_t prompt_len;
-    struct estr user;
+    struct Str user;
 
     // values related to the line buffer
     size_t start_pos;
@@ -35,7 +35,7 @@ struct Input {
 
     // history
     size_t history_position;
-    struct estr history_entry;
+    struct Str history_entry;
     struct History history;
 
     // autocompletions

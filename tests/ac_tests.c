@@ -2,7 +2,6 @@
 #include <string.h>
 
 #include "../src/defines.h" // used for macro NCSH_MAX_AUTOCOMPLETION_MATCHES
-#include "../src/eskilib/estr.h"
 #include "../src/eskilib/etest.h"
 #include "../src/readline/ac.h"
 #include "lib/arena_test_helper.h"
@@ -14,7 +13,7 @@ void ac_add_length_mismatch_test()
     struct Autocompletion_Node* tree = ac_alloc(&arena);
     eassert(tree != NULL);
 
-    struct estr string = {.value = "and", .length = 3};
+    struct Str string = {.value = "and", .length = 3};
     ac_add(string.value, string.length, tree, &arena);
 
     // not crashing is a test pass here
@@ -29,7 +28,7 @@ void ac_add_test()
     struct Autocompletion_Node* tree = ac_alloc(&arena);
     eassert(tree != NULL);
 
-    struct estr string = {.value = "and", .length = 4};
+    struct Str string = {.value = "and", .length = 4};
     ac_add(string.value, string.length, tree, &arena);
 
     // sanity check: unrelated letters are null
@@ -61,7 +60,7 @@ void ac_add_spaces_test()
     struct Autocompletion_Node* tree = ac_alloc(&arena);
     eassert(tree != NULL);
 
-    struct estr string = {.value = "ls | wc -c", .length = 11};
+    struct Str string = {.value = "ls | wc -c", .length = 11};
     ac_add(string.value, string.length, tree, &arena);
 
     struct Autocompletion_Node* first_node = tree->nodes[char_to_index('l')];
@@ -105,7 +104,7 @@ void ac_add_duplicate_test()
     struct Autocompletion_Node* tree = ac_alloc(&arena);
     eassert(tree != NULL);
 
-    struct estr string = {.value = "and", .length = 4};
+    struct Str string = {.value = "and", .length = 4};
     ac_add(string.value, string.length, tree, &arena);
     ac_add(string.value, string.length, tree, &arena);
 
@@ -132,9 +131,9 @@ void ac_add_multiple_unrelated_test()
     struct Autocompletion_Node* tree = ac_alloc(&arena);
     eassert(tree != NULL);
 
-    struct estr string_one = {.value = "ls", .length = 3};
+    struct Str string_one = {.value = "ls", .length = 3};
     ac_add(string_one.value, string_one.length, tree, &arena);
-    struct estr string_two = {.value = "echo", .length = 5};
+    struct Str string_two = {.value = "echo", .length = 5};
     ac_add(string_two.value, string_two.length, tree, &arena);
 
     struct Autocompletion_Node* ls_first_node = tree->nodes[char_to_index('l')];
@@ -170,11 +169,11 @@ void ac_add_multiple_related_test()
     struct Autocompletion_Node* tree = ac_alloc(&arena);
     eassert(tree != NULL);
 
-    struct estr string_one = {.value = "gene", .length = 5};
+    struct Str string_one = {.value = "gene", .length = 5};
     ac_add(string_one.value, string_one.length, tree, &arena);
-    struct estr string_two = {.value = "genetic", .length = 8};
+    struct Str string_two = {.value = "genetic", .length = 8};
     ac_add(string_two.value, string_two.length, tree, &arena);
-    struct estr string_three = {.value = "genius", .length = 7};
+    struct Str string_three = {.value = "genius", .length = 7};
     ac_add(string_three.value, string_three.length, tree, &arena);
 
     // gene
@@ -230,11 +229,11 @@ void ac_find_test()
     struct Autocompletion_Node* tree = ac_alloc(&arena);
     eassert(tree != NULL);
 
-    struct estr string_one = {.value = "gene", .length = 5};
+    struct Str string_one = {.value = "gene", .length = 5};
     ac_add(string_one.value, string_one.length, tree, &arena);
-    struct estr string_two = {.value = "genetic", .length = 8};
+    struct Str string_two = {.value = "genetic", .length = 8};
     ac_add(string_two.value, string_two.length, tree, &arena);
-    struct estr string_three = {.value = "genius", .length = 7};
+    struct Str string_three = {.value = "genius", .length = 7};
     ac_add(string_three.value, string_three.length, tree, &arena);
 
     struct Autocompletion_Node* result = ac_find("gen", tree);
@@ -304,11 +303,11 @@ void ac_find_no_results_test()
     struct Autocompletion_Node* tree = ac_alloc(&arena);
     eassert(tree != NULL);
 
-    struct estr string_one = {.value = "gene", .length = 5};
+    struct Str string_one = {.value = "gene", .length = 5};
     ac_add(string_one.value, string_one.length, tree, &arena);
-    struct estr string_two = {.value = "genetic", .length = 8};
+    struct Str string_two = {.value = "genetic", .length = 8};
     ac_add(string_two.value, string_two.length, tree, &arena);
-    struct estr string_three = {.value = "genius", .length = 7};
+    struct Str string_three = {.value = "genius", .length = 7};
     ac_add(string_three.value, string_three.length, tree, &arena);
 
     struct Autocompletion_Node* result = ac_find("ls", tree);

@@ -8,7 +8,7 @@
 #include <string.h>
 
 #include "../defines.h" // used for NCSH_MAX_INPUT macro
-#include "../eskilib/estr.h"
+#include "../eskilib/str.h"
 #include "ac.h"
 
 static inline int char_to_index(char character);
@@ -51,7 +51,7 @@ void ac_add(char* restrict string, size_t length, struct Autocompletion_Node* re
     tree->is_end_of_a_word = true;
 }
 
-void ac_add_multiple(struct estr* restrict strings, int count, struct Autocompletion_Node* restrict tree,
+void ac_add_multiple(struct Str* restrict strings, int count, struct Autocompletion_Node* restrict tree,
                      struct Arena* restrict arena)
 {
     assert(strings && tree && arena);

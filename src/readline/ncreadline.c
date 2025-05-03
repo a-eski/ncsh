@@ -16,7 +16,6 @@
 #include "../defines.h"
 #include "../eskilib/ecolors.h"
 #include "../eskilib/eresult.h"
-#include "../eskilib/estr.h"
 #include "ac.h"
 #include "ncreadline.h"
 #include "terminal.h"

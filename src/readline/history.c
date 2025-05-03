@@ -1,4 +1,5 @@
-/* Copyright ncsh by Alex Eski 2024 */
+/* Copyright ncsh (C) by Alex Eski 2024 */
+/* history.h: shell command history implementation with clean, count, and display options. */
 
 #include <assert.h>
 #include <linux/limits.h>
@@ -12,11 +13,11 @@
 #include "../eskilib/ecolors.h"
 #include "../eskilib/efile.h"
 #include "../eskilib/eresult.h"
-#include "../eskilib/estr.h"
+#include "../eskilib/str.h"
 #include "hashset.h"
 #include "history.h"
 
-void history_file_set(struct estr config_file, struct History* restrict history, struct Arena* restrict arena)
+void history_file_set(struct Str config_file, struct History* restrict history, struct Arena* restrict arena)
 {
     constexpr size_t history_file_len = sizeof(NCSH_HISTORY_FILE);
 #ifdef NCSH_HISTORY_TEST
@@ -51,7 +52,7 @@ enum eresult history_alloc(struct History* restrict history, struct Arena* restr
     }
 
     history->count = 0;
-    history->entries = arena_malloc(arena, NCSH_MAX_HISTORY_IN_MEMORY, struct estr);
+    history->entries = arena_malloc(arena, NCSH_MAX_HISTORY_IN_MEMORY, struct Str);
 
     return E_SUCCESS;
 }
@@ -143,7 +144,7 @@ enum eresult history_reload(struct History* restrict history, struct Arena* rest
 }
 
 [[nodiscard]]
-enum eresult history_init(struct estr config_location, struct History* restrict history, struct Arena* restrict arena)
+enum eresult history_init(struct Str config_location, struct History* restrict history, struct Arena* restrict arena)
 {
     assert(history && arena);
 
@@ -301,18 +302,18 @@ enum eresult history_add(char* restrict line, size_t length, struct History* res
 }
 
 [[nodiscard]]
-struct estr history_get(size_t position, struct History* restrict history)
+struct Str history_get(size_t position, struct History* restrict history)
 {
     assert(history);
 
     if (!history || !history->count || !history->entries) {
-        return estr_Empty;
+        return Str_Empty;
     }
     else if (position >= history->count) {
-        return estr_Empty;
+        return Str_Empty;
     }
     else if (history->count - position - 1 > history->count) {
-        return estr_Empty;
+        return Str_Empty;
     }
     else if (position > NCSH_MAX_HISTORY_IN_MEMORY) {
         return history->entries[NCSH_MAX_HISTORY_IN_MEMORY];
