@@ -1,6 +1,6 @@
 #include <stddef.h>
 
-#include "../src/eskilib/estr.h"
+#include "../src/eskilib/str.h"
 #include "../src/eskilib/etest.h"
 #include "../src/readline/hashset.h"
 #include "lib/arena_test_helper.h"
@@ -27,7 +27,7 @@ void hashset_add_one_test()
     hashset_malloc(&scratch_arena, &hmap);
 
     char* key = "world";
-    struct estr val = {.value = key, .length = strlen(key) + 1};
+    struct Str val = {.value = key, .length = strlen(key) + 1};
     const char* res = hashset_set(val, &scratch_arena, &hmap);
 
     eassert(res);
@@ -48,9 +48,9 @@ void hashset_add_multiple_test()
     hashset_malloc(&scratch_arena, &hset);
 
     char* key1 = "hello";
-    struct estr val1 = {.value = key1, .length = strlen(key1) + 1};
+    struct Str val1 = {.value = key1, .length = strlen(key1) + 1};
     char* key2 = "test";
-    struct estr val2 = {.value = key2, .length = strlen(key2) + 1};
+    struct Str val2 = {.value = key2, .length = strlen(key2) + 1};
 
     const char* res1 = hashset_set(val1, &scratch_arena, &hset);
     const char* res2 = hashset_set(val2, &scratch_arena, &hset);
@@ -80,7 +80,7 @@ void hashset_add_duplicate_test()
     hashset_malloc(&scratch_arena, &hset);
 
     char* key = "hello";
-    struct estr val = {.value = key, .length = strlen(key) + 1};
+    struct Str val = {.value = key, .length = strlen(key) + 1};
     const char* res = hashset_set(val, &scratch_arena, &hset);
     hashset_set(val, &scratch_arena, &hset);
 

@@ -94,7 +94,7 @@ static inline void debug_argsv_internal(char* file, int line, char* func, int ar
     fflush(stderr);
 }
 
-static inline void debug_string_internal(char* file, int line, char* func, struct estr string, char* name)
+static inline void debug_string_internal(char* file, int line, char* func, struct Str string, char* name)
 {
     fprintf(stderr, "%s %s:%d ", file, func, line);
     fprintf(stderr, "%s value: %s\n", name, string.value);

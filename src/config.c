@@ -15,7 +15,6 @@
 #include "eskilib/ecolors.h"
 #include "eskilib/efile.h"
 #include "eskilib/eresult.h"
-#include "eskilib/estr.h"
 
 [[nodiscard]]
 enum eresult config_home_init(struct Config* restrict config, struct Arena* restrict arena)
@@ -134,8 +133,8 @@ void config_path_add(char* restrict val, int len, struct Arena* restrict scratch
 }
 
 struct User_Alias {
-    struct estr* alias;
-    struct estr* actual_command;
+    struct Str* alias;
+    struct Str* actual_command;
 };
 
 #define NCSH_MAX_ALIASES 100
@@ -169,7 +168,7 @@ void config_alias_add(char* restrict val, size_t len, struct Arena* restrict are
         user_aliases = arena_malloc(arena, 10, struct User_Alias);
     }
 
-    user_aliases[user_aliases_count].alias = arena_malloc(arena, 1, struct estr);
+    user_aliases[user_aliases_count].alias = arena_malloc(arena, 1, struct Str);
     user_aliases[user_aliases_count].alias->length = i + 1;
     user_aliases[user_aliases_count].alias->value = arena_malloc(arena, i + 1, char);
     memcpy(user_aliases[user_aliases_count].alias->value, val, i);
@@ -180,7 +179,7 @@ void config_alias_add(char* restrict val, size_t len, struct Arena* restrict are
         return;
     }
 
-    user_aliases[user_aliases_count].actual_command = arena_malloc(arena, 1, struct estr);
+    user_aliases[user_aliases_count].actual_command = arena_malloc(arena, 1, struct Str);
     user_aliases[user_aliases_count].actual_command->length = ac_len;
     user_aliases[user_aliases_count].actual_command->value = arena_malloc(arena, ac_len, char);
     memcpy(user_aliases[user_aliases_count].actual_command->value, val + i + 1, ac_len - 1);
@@ -305,8 +304,8 @@ enum eresult config_init(struct Config* restrict config, struct Arena* restrict 
 /* Compile-time aliases
  */
 struct Alias {
-    struct estr alias;
-    struct estr actual_command;
+    struct Str alias;
+    struct Str actual_command;
 };
 
 const struct Alias aliases[] = {
@@ -324,12 +323,12 @@ constexpr size_t aliases_count = sizeof(aliases) / sizeof(struct Alias);
 
 /* config_alias_check
  * Checks if the input matches to any of the compile-time defined aliased commands.
- * Returns: the actual command as a struct estr, a char* value and a size_t length.
+ * Returns: the actual command as a struct Str, a char* value and a size_t length.
  */
-struct estr config_alias_check(char* restrict buffer, size_t buf_len)
+struct Str config_alias_check(char* restrict buffer, size_t buf_len)
 {
     if (!buffer || buf_len < 2) {
-        return estr_Empty;
+        return Str_Empty;
     }
 
     if (user_aliases_count) {
@@ -346,5 +345,5 @@ struct estr config_alias_check(char* restrict buffer, size_t buf_len)
         }
     }
 
-    return estr_Empty;
+    return Str_Empty;
 }

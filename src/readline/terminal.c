@@ -1,4 +1,5 @@
-/* Copyright ncsh by Alex Eski 2024 */
+/* Copyright ncsh (C) by Alex Eski 2024 */
+/* terminal.c: deal with the underlying tty */
 
 #include <assert.h>
 #include <signal.h>

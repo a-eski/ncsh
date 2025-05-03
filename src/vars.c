@@ -32,7 +32,7 @@ uint64_t vars_key(char* str)
     return i;
 }
 
-struct estr* vars_get(char* key, struct Vars* restrict vars)
+struct Str* vars_get(char* key, struct Vars* restrict vars)
 {
     uint64_t hash = vars_key(key);
     size_t index = (size_t)(hash & (uint64_t)(vars->capacity - 1));
@@ -70,7 +70,7 @@ bool vars_exists(char* key, struct Vars* restrict vars)
     return false;
 }
 
-char* vars_set_entry(struct Vars_Entry* entries, size_t capacity, char* key, struct estr* val, size_t* plength)
+char* vars_set_entry(struct Vars_Entry* entries, size_t capacity, char* key, struct Str* val, size_t* plength)
 {
     uint64_t hash = vars_key(key);
     size_t index = (size_t)(hash & (uint64_t)(capacity - 1));
@@ -118,7 +118,7 @@ bool vars_expand(char* key, struct Arena* arena, struct Vars* restrict vars)
     return true;
 }
 
-char* vars_set(char* key, struct estr* val, struct Arena* arena, struct Vars* restrict vars)
+char* vars_set(char* key, struct Str* val, struct Arena* arena, struct Vars* restrict vars)
 {
     assert(val->value && val->length);
     if (!val->value || !val->length) {

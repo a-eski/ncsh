@@ -10,7 +10,7 @@ int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size)
     ARENA_TEST_SETUP;
 
     struct History history = {};
-    history_init(estr_Empty, &history, &arena);
+    history_init(Str_Empty, &history, &arena);
     history_add((char*)Data, Size, &history, &arena);
     history_save(&history);
 

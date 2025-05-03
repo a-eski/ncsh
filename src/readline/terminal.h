@@ -1,4 +1,5 @@
-/* Copyright (c) ncsh by Alex Eski 2024 */
+/* Copyright ncsh (C) by Alex Eski 2024 */
+/* terminal.h: deal with the underlying tty */
 
 #pragma once
 

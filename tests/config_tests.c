@@ -6,7 +6,7 @@
 void config_alias_check_no_alias_test()
 {
     char buffer[] = "echo hello";
-    struct estr result = config_alias_check(buffer, sizeof(buffer));
+    struct Str result = config_alias_check(buffer, sizeof(buffer));
 
     eassert(!result.length);
     eassert(!result.value);
@@ -15,7 +15,7 @@ void config_alias_check_no_alias_test()
 void config_alias_check_alias_found_test()
 {
     char buffer[] = "n"; // alias for nvim
-    struct estr result = config_alias_check(buffer, sizeof(buffer));
+    struct Str result = config_alias_check(buffer, sizeof(buffer));
 
     char expected_result[] = "nvim";
     eassert(result.length == sizeof(expected_result));
@@ -25,7 +25,7 @@ void config_alias_check_alias_found_test()
 void config_alias_check_alias_found_multiple_chars_test()
 {
     char buffer[] = "fd"; // alias for fdfind
-    struct estr result = config_alias_check(buffer, sizeof(buffer));
+    struct Str result = config_alias_check(buffer, sizeof(buffer));
 
     char expected_result[] = "fdfind";
     eassert(result.length == sizeof(expected_result));

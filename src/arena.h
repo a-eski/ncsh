@@ -1,4 +1,6 @@
 /* Copyright ncsh (C) by Alex Eski 2025 */
+/* arena.h: a simple bump allocator for managing memory */
+/* Credit to skeeto and his blogs */
 
 #pragma once
 

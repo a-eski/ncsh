@@ -1,5 +1,5 @@
 /* Copyright ncsh (C) by Alex Eski 2024 */
-/* hashset: Simple hashset implementation */
+/* hashset.c: Simple hashset implementation */
 
 #include <assert.h>
 #include <stdint.h>
@@ -51,7 +51,7 @@ bool hashset_exists(char* restrict key, struct Hashset* restrict hset)
     return false;
 }
 
-char* hashset_set_entry(uint64_t* restrict entries, size_t capacity, struct estr val, size_t* plength)
+char* hashset_set_entry(uint64_t* restrict entries, size_t capacity, struct Str val, size_t* plength)
 {
     uint64_t hash = hashset_key(val.value);
     size_t index = (size_t)(hash & (uint64_t)(capacity - 1));
@@ -120,7 +120,7 @@ bool hashset_expand(struct Arena* restrict arena, struct Hashset* restrict hset)
     return true;
 }
 
-char* hashset_set(struct estr val, struct Arena* restrict arena, struct Hashset* restrict hset)
+char* hashset_set(struct Str val, struct Arena* restrict arena, struct Hashset* restrict hset)
 {
     assert(val.value && val.length);
     if (!val.value || !val.length) {

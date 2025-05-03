@@ -14,7 +14,6 @@
 #include "../args.h"
 #include "../defines.h"
 #include "../eskilib/ecolors.h"
-#include "../eskilib/estr.h"
 #include "../readline/history.h"
 #include "../z/z.h"
 #include "vm_builtins.h"

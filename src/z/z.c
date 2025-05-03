@@ -1,4 +1,4 @@
-/* Copyright z by Alex Eski 2024 */
+/* Copyright z (C) by Alex Eski 2024 */
 
 #ifndef _DEFAULT_SOURCE
 #define _DEFAULT_SOURCE // for anon enum DT_*
@@ -372,7 +372,7 @@ enum z_Result z_database_add(char* restrict path, size_t path_length, char* rest
     return Z_SUCCESS;
 }
 
-enum z_Result z_database_file_set(struct estr* restrict config_file, struct z_Database* restrict db,
+enum z_Result z_database_file_set(struct Str* restrict config_file, struct z_Database* restrict db,
                                   struct Arena* restrict arena)
 {
     constexpr size_t z_db_file_len = sizeof(Z_DATABASE_FILE);
@@ -402,7 +402,7 @@ enum z_Result z_database_file_set(struct estr* restrict config_file, struct z_Da
     return Z_SUCCESS;
 }
 
-enum z_Result z_init(struct estr* restrict config_file, struct z_Database* restrict db, struct Arena* restrict arena)
+enum z_Result z_init(struct Str* restrict config_file, struct z_Database* restrict db, struct Arena* restrict arena)
 {
     assert(db);
     if (!db) {
@@ -431,7 +431,7 @@ bool z_is_dir(struct dirent* restrict dir)
 }
 
 enum z_Result z_directory_match_exists(char* restrict target, size_t target_length, char* restrict cwd,
-                                       struct estr* restrict output, struct Arena* restrict scratch_arena)
+                                       struct Str* restrict output, struct Arena* restrict scratch_arena)
 {
     assert(target && cwd && target_length > 0);
 
@@ -531,7 +531,7 @@ void z(char* restrict target, size_t target_length, char* restrict cwd, struct z
     }
 
     size_t cwd_length = strlen(cwd) + 1;
-    struct estr output = {0};
+    struct Str output = {0};
     struct z_Directory* match = z_match_find(target, target_length, cwd, cwd_length, db, &scratch_arena);
 
     if (z_directory_match_exists(target, target_length, cwd, &output, &scratch_arena) == Z_SUCCESS) {
