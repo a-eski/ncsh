@@ -120,12 +120,15 @@ void config_path_add(const char* const val, const int len, struct Arena* const r
         return;
     }
 
+    assert(!val[len - 1]);
+    debugf("trying to add %s to path\n", val);
+
     char* path = getenv("PATH");
     size_t path_len = strlen(path) + 1; // null terminator here becomes : in length calc below
     char* new_path = arena_malloc(scratch_arena, path_len + (size_t)len, char);
     memcpy(new_path, path, path_len - 1);
-    new_path[path_len - 2] = ':';
-    memcpy(new_path + path_len - 1, val, (size_t)len);
+    new_path[path_len - 1] = ':';
+    memcpy(new_path + path_len, val, (size_t)len);
     debugf("Got new path to set %s\n", new_path);
     setenv(PATH, new_path, true);
 }
