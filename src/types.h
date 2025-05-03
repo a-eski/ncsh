@@ -3,9 +3,8 @@
 #pragma once
 
 #include "arena.h"
+#include "args.h"
 #include "config.h"
-#include "eskilib/emap.h"
-#include "parser.h"
 #include "readline/ncreadline.h"
 #include "vars.h"
 #include "z/z.h"
