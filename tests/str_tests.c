@@ -4,20 +4,20 @@
 #include "../src/eskilib/str.h"
 #include "../src/eskilib/etest.h"
 
-void estr_compare_no_length_test()
+void estrcmp_no_length_test()
 {
     char* val = "";
     bool result = estrcmp(val, 0, "", 0);
     eassert(!result);
 }
 
-void estr_compare_null_test()
+void estrcmp_null_test()
 {
     bool result = estrcmp(NULL, 0, NULL, 0);
     eassert(!result);
 }
 
-void estr_compare_s1_null_test()
+void estrcmp_s1_null_test()
 {
     char* val = "hello";
     constexpr size_t len = sizeof("hello") - 1;
@@ -25,7 +25,7 @@ void estr_compare_s1_null_test()
     eassert(!result);
 }
 
-void estr_compare_empty_string_test()
+void estrcmp_empty_string_test()
 {
     struct Str str = Str_Empty;
     struct Str str2 = Str_Empty;
@@ -33,7 +33,7 @@ void estr_compare_empty_string_test()
     eassert(!result);
 }
 
-void estr_compare_true_test()
+void estrcmp_true_test()
 {
     char* val = "hello";
     constexpr size_t len = sizeof("hello") - 1;
@@ -41,7 +41,7 @@ void estr_compare_true_test()
     eassert(result);
 }
 
-void estr_compare_false_test()
+void estrcmp_false_test()
 {
     struct Str s1 = Str_New_Literal("hello hello");
     struct Str s2 = Str_New_Literal("hello there");
@@ -51,7 +51,7 @@ void estr_compare_false_test()
     eassert(!result);
 }
 
-void estr_compare_mismatched_lengths_false_test()
+void estrcmp_mismatched_lengths_false_test()
 {
     char* val = "hello";
     constexpr size_t len = sizeof("hello");
@@ -63,7 +63,7 @@ void estr_compare_mismatched_lengths_false_test()
     eassert(!result);
 }
 
-void estr_compare_partial_comparison_true_test()
+void estrcmp_partial_comparison_true_test()
 {
     char* val = "hello";
     // only compare the first three characters, 'hel'
@@ -72,7 +72,7 @@ void estr_compare_partial_comparison_true_test()
     eassert(result);
 }
 
-void estr_compare_partial_comparison_false_test()
+void estrcmp_partial_comparison_false_test()
 {
     struct Str s1 = Str_New("hello hello", sizeof("hello hello") - 2);
     struct Str s2 = Str_New("hello there", sizeof("hello there") - 2);
@@ -86,15 +86,15 @@ int main()
 {
     etest_start();
 
-    etest_run(estr_compare_no_length_test);
-    etest_run(estr_compare_null_test);
-    etest_run(estr_compare_s1_null_test);
-    etest_run(estr_compare_empty_string_test);
-    etest_run(estr_compare_true_test);
-    etest_run(estr_compare_false_test);
-    etest_run(estr_compare_mismatched_lengths_false_test);
-    etest_run(estr_compare_partial_comparison_true_test);
-    etest_run(estr_compare_partial_comparison_false_test);
+    etest_run(estrcmp_no_length_test);
+    etest_run(estrcmp_null_test);
+    etest_run(estrcmp_s1_null_test);
+    etest_run(estrcmp_empty_string_test);
+    etest_run(estrcmp_true_test);
+    etest_run(estrcmp_false_test);
+    etest_run(estrcmp_mismatched_lengths_false_test);
+    etest_run(estrcmp_partial_comparison_true_test);
+    etest_run(estrcmp_partial_comparison_false_test);
 
     etest_finish();
 
