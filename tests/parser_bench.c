@@ -31,8 +31,8 @@ void parser_parse_bench()
     args = parser_parse("echo 'hello'", 13, &scratch_arena);
     args = parser_parse("echo \"hello\"", 13, &scratch_arena);
     args = parser_parse("echo `hello`", 13, &scratch_arena);
-    args = parser_parse("git commit -m \"this is a commit message\"", strlen("git commit -m \"this is a commit message\"") + 1,
-                 &scratch_arena);
+    args = parser_parse("git commit -m \"this is a commit message\"",
+                        strlen("git commit -m \"this is a commit message\"") + 1, &scratch_arena);
     args = parser_parse("( 1 + 1 - 1 * 1 / 1 % 1 ** 1 )", strlen("( 1 + 1 - 1 * 1 / 1 % 1 ** 1 )") + 1, &scratch_arena);
     (void)args;
 

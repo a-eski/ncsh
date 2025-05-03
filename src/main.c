@@ -35,7 +35,7 @@ sig_atomic_t vm_child_pid;
 volatile int sigwinch_caught;
 
 /* Signal Handling */
-static void signal_handler(int sig, siginfo_t* const info, void* const context)
+static void signal_handler(int sig, siginfo_t* info, void* context)
 {
     (void)context;
 
@@ -44,7 +44,7 @@ static void signal_handler(int sig, siginfo_t* const info, void* const context)
         return;
     }
 
-    const pid_t target = (pid_t)vm_child_pid;
+    pid_t target = (pid_t)vm_child_pid;
 
     if (target != 0 && info->si_pid != target) { // kill child process with pid vm_child_pid
         if (!kill(target, sig)) {
@@ -59,7 +59,7 @@ static void signal_handler(int sig, siginfo_t* const info, void* const context)
     }
 }
 
-static int signal_forward(const int signum)
+static int signal_forward(int signum)
 {
     struct sigaction act = {0};
     sigemptyset(&act.sa_mask);
@@ -80,7 +80,7 @@ static int signal_forward(const int signum)
  * Returns: pointer to start of the memory block allocated.
  */
 [[nodiscard]]
-char* arena_init(struct Shell* const restrict shell)
+char* arena_init(struct Shell* restrict shell)
 {
     constexpr int arena_capacity = 1 << 24;
     constexpr int scratch_arena_capacity = 1 << 16;
@@ -104,7 +104,7 @@ char* arena_init(struct Shell* const restrict shell)
  * Returns: exit result, EXIT_SUCCESS or EXIT_FAILURE
  */
 [[nodiscard]]
-char* init(struct Shell* const restrict shell)
+char* init(struct Shell* restrict shell)
 {
     char* memory = arena_init(shell);
     if (!memory) {
@@ -176,7 +176,7 @@ int run(struct Shell* shell, struct Arena scratch_arena)
 int main(int argc, char** argv)
 {
     if (argc > 1 || !isatty(STDIN_FILENO)) {
-        return (int)noninteractive(argc, (const char** const)argv);
+        return (int)noninteractive(argc, argv);
     }
 
 #ifdef NCSH_START_TIME

@@ -11,16 +11,15 @@
 
 #define CWD_LENGTH 528
 
-static const struct estr config_location = {.length = 0, .value = NULL};
+static struct estr config_location = {.length = 0, .value = NULL};
 
-double z_score(struct z_Directory* const restrict directory, const int fzf_score, const time_t now);
+double z_score(struct z_Directory* restrict directory, int fzf_score, time_t now);
 
-struct z_Directory* z_match_find(char* const target, const size_t target_length, const char* const cwd,
-                                 const size_t cwd_length, struct z_Database* const restrict db,
-                                 struct Arena* const scratch_arena);
+struct z_Directory* z_match_find(char* restrict target, size_t target_length, char* restrict cwd, size_t cwd_length,
+                                 struct z_Database* restrict db, struct Arena* restrict scratch_arena);
 
-enum z_Result z_database_add(const char* const path, const size_t path_length, const char* const cwd,
-                             const size_t cwd_length, struct z_Database* const restrict db, struct Arena* const arena);
+enum z_Result z_database_add(char* restrict path, size_t path_length, char* restrict cwd, size_t cwd_length,
+                             struct z_Database* restrict db, struct Arena* restrict arena);
 
 // read from empty database file
 void z_read_empty_database_file_test()
@@ -692,7 +691,7 @@ void z_contains_correct_match_test()
 
     struct estr target = {.value = "PersonalRepos", .length = 14};
     z(target.value, target.length, buffer, &db, &arena, scratch_arena);
-    const char* path = "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells";
+    char* path = "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells";
 
     if (!getcwd(buffer_after, CWD_LENGTH)) {
         ARENA_TEST_TEARDOWN;

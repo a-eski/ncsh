@@ -171,7 +171,6 @@ Please see COMPILE.md.
 * More compile-time configurations
 * Frecency-based autocomplete
 * More built-in commands like export, setting environment variables, etc.
-* Aliasing for user-defined commands
 * Custom prompt colors, backgrounds
 * Improve noninteractive mode
 * Add command-line flags for noninteractive mode

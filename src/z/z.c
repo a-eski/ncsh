@@ -18,7 +18,7 @@
 #include "fzf.h"
 #include "z.h"
 
-double z_score(struct z_Directory* const restrict directory, const int fzf_score, const time_t now)
+double z_score(struct z_Directory* restrict directory, int fzf_score, time_t now)
 {
     assert(directory);
     assert(fzf_score > 0);
@@ -39,12 +39,12 @@ double z_score(struct z_Directory* const restrict directory, const int fzf_score
     }
 }
 
-bool z_match_exists(const char* const target, const size_t target_length, struct z_Database* const restrict db)
+bool z_match_exists(char* restrict target, size_t target_length, struct z_Database* restrict db)
 {
     assert(db && target && target_length > 0);
 
     for (size_t i = 0; i < db->count; ++i) {
-        if (estrcmp_c((db->dirs + i)->path, (db->dirs + i)->path_length, target, target_length)) {
+        if (estrcmp((db->dirs + i)->path, (db->dirs + i)->path_length, target, target_length)) {
             ++(db->dirs + i)->rank;
             (db->dirs + i)->last_accessed = time(NULL);
             return true;
@@ -54,9 +54,8 @@ bool z_match_exists(const char* const target, const size_t target_length, struct
     return false;
 }
 
-struct z_Directory* z_match_find(char* const target, const size_t target_length, const char* const cwd,
-                                 const size_t cwd_length, struct z_Database* const restrict db,
-                                 struct Arena* const scratch_arena)
+struct z_Directory* z_match_find(char* restrict target, size_t target_length, char* restrict cwd, size_t cwd_length,
+                                 struct z_Database* restrict db, struct Arena* restrict scratch_arena)
 {
     assert(target && target_length && cwd && cwd_length && scratch_arena && db);
     if (!db->count || cwd_length < 2) {
@@ -72,7 +71,7 @@ struct z_Directory* z_match_find(char* const target, const size_t target_length,
 #endif
 
     for (size_t i = 0; i < db->count; ++i) {
-        if (!estrcmp_c((db->dirs + i)->path, (db->dirs + i)->path_length, (char*)cwd, cwd_length)) {
+        if (!estrcmp((db->dirs + i)->path, (db->dirs + i)->path_length, cwd, cwd_length)) {
             int fzf_score =
                 fzf_get_score((db->dirs + i)->path, (db->dirs + i)->path_length - 1, pattern, slab, scratch_arena);
             if (!fzf_score)
@@ -99,7 +98,7 @@ struct z_Directory* z_match_find(char* const target, const size_t target_length,
     return current_match.dir;
 }
 
-enum z_Result z_write_entry(const struct z_Directory* const restrict dir, FILE* const restrict file)
+enum z_Result z_write_entry(struct z_Directory* restrict dir, FILE* restrict file)
 {
     assert(dir && file);
 
@@ -142,7 +141,7 @@ enum z_Result z_write_entry(const struct z_Directory* const restrict dir, FILE* 
 
 #define Z_ERROR_WRITING_TO_DB_MESSAGE "Error writing to z database file"
 
-enum z_Result z_write(struct z_Database* const restrict db)
+enum z_Result z_write(struct z_Database* restrict db)
 {
     assert(db);
     if (!db) {
@@ -179,7 +178,7 @@ enum z_Result z_write(struct z_Database* const restrict db)
     return Z_SUCCESS;
 }
 
-enum z_Result z_read_entry(struct z_Directory* const restrict dir, FILE* const restrict file, struct Arena* const arena)
+enum z_Result z_read_entry(struct z_Directory* restrict dir, FILE* restrict file, struct Arena* restrict arena)
 {
     assert(dir && file);
 
@@ -230,7 +229,7 @@ enum z_Result z_read_entry(struct z_Directory* const restrict dir, FILE* const r
     "ncsh z: couldn't find number of entries header while trying to read z database file. File is empty or "           \
     "corrupted.\n"
 
-enum z_Result z_read(struct z_Database* const restrict db, struct Arena* const arena)
+enum z_Result z_read(struct z_Database* restrict db, struct Arena* restrict arena)
 {
     FILE* file = fopen(db->database_file, "rb");
 
@@ -310,8 +309,8 @@ enum z_Result z_read(struct z_Database* const restrict db, struct Arena* const a
     return Z_SUCCESS;
 }
 
-enum z_Result z_write_entry_new(const char* const path, const size_t path_length, struct z_Database* const restrict db,
-                                struct Arena* const arena)
+enum z_Result z_write_entry_new(char* restrict path, size_t path_length, struct z_Database* restrict db,
+                                struct Arena* restrict arena)
 {
     assert(path && db && path_length > 1);
     assert(path[path_length - 1] == '\0');
@@ -332,8 +331,8 @@ enum z_Result z_write_entry_new(const char* const path, const size_t path_length
     return Z_SUCCESS;
 }
 
-enum z_Result z_database_add(const char* const path, const size_t path_length, const char* const cwd,
-                             const size_t cwd_length, struct z_Database* const restrict db, struct Arena* const arena)
+enum z_Result z_database_add(char* restrict path, size_t path_length, char* restrict cwd, size_t cwd_length,
+                             struct z_Database* restrict db, struct Arena* restrict arena)
 {
     assert(db && arena);
     if (!path || !path_length) {
@@ -373,8 +372,8 @@ enum z_Result z_database_add(const char* const path, const size_t path_length, c
     return Z_SUCCESS;
 }
 
-enum z_Result z_database_file_set(const struct estr* const config_file, struct z_Database* const restrict db,
-                                  struct Arena* const arena)
+enum z_Result z_database_file_set(struct estr* restrict config_file, struct z_Database* restrict db,
+                                  struct Arena* restrict arena)
 {
     constexpr size_t z_db_file_len = sizeof(Z_DATABASE_FILE);
 #ifdef Z_TEST
@@ -403,8 +402,7 @@ enum z_Result z_database_file_set(const struct estr* const config_file, struct z
     return Z_SUCCESS;
 }
 
-enum z_Result z_init(const struct estr* const config_file, struct z_Database* const restrict db,
-                     struct Arena* const arena)
+enum z_Result z_init(struct estr* restrict config_file, struct z_Database* restrict db, struct Arena* restrict arena)
 {
     assert(db);
     if (!db) {
@@ -420,7 +418,7 @@ enum z_Result z_init(const struct estr* const config_file, struct z_Database* co
 }
 
 [[nodiscard]]
-bool z_is_dir(struct dirent* dir)
+bool z_is_dir(struct dirent* restrict dir)
 {
 #ifdef _DIRENT_HAVE_D_TYPE
     if (dir->d_type != DT_UNKNOWN) {
@@ -432,8 +430,8 @@ bool z_is_dir(struct dirent* dir)
     return !stat(dir->d_name, &sb) && S_ISDIR(sb.st_mode);
 }
 
-enum z_Result z_directory_match_exists(const char* const target, const size_t target_length, const char* const cwd,
-                                       struct estr* const output, struct Arena* const scratch_arena)
+enum z_Result z_directory_match_exists(char* restrict target, size_t target_length, char* restrict cwd,
+                                       struct estr* restrict output, struct Arena* restrict scratch_arena)
 {
     assert(target && cwd && target_length > 0);
 
@@ -456,7 +454,7 @@ enum z_Result z_directory_match_exists(const char* const target, const size_t ta
         dir_len = strlen(dir->d_name) + 1;
 #endif /* _DIRENT_HAVE_D_RECLEN */
 
-        if (z_is_dir(dir) && estrcmp_c(dir->d_name, dir_len, target, target_length)) {
+        if (z_is_dir(dir) && estrcmp(dir->d_name, dir_len, target, target_length)) {
             output->value = arena_malloc(scratch_arena, dir_len, char);
             output->length = dir_len;
             memcpy(output->value, dir->d_name, dir_len);
@@ -478,14 +476,14 @@ enum z_Result z_directory_match_exists(const char* const target, const size_t ta
     return Z_MATCH_NOT_FOUND;
 }
 
-void z(char* target, const size_t target_length, const char* const cwd, struct z_Database* const restrict db,
-       struct Arena* const arena, struct Arena scratch_arena)
+void z(char* restrict target, size_t target_length, char* restrict cwd, struct z_Database* restrict db,
+       struct Arena* restrict arena, struct Arena scratch_arena)
 {
 #ifdef Z_DEBUG
     printf("z: %s\n", target);
 #endif /* ifdef Z_DEBUG */
 
-    const char* const home = getenv("HOME");
+    char* home = getenv("HOME");
     if (!home) {
         perror("z: couldn't get HOME from environment");
     }
@@ -507,7 +505,7 @@ void z(char* target, const size_t target_length, const char* const cwd, struct z
         return;
     }
 
-    if (estrcmp_cc(target, target_length, home, strlen(home) + 1)) {
+    if (estrcmp(target, target_length, home, strlen(home) + 1)) {
         if (chdir(home) == -1) {
             perror("z: couldn't change directory to home");
         }
@@ -582,8 +580,8 @@ void z(char* target, const size_t target_length, const char* const cwd, struct z
 #define Z_ADDED_NEW_ENTRY_MESSAGE "Added new entry to z database.\n"
 #define Z_ERROR_ADDING_ENTRY_MESSAGE "Error adding new entry to z database.\n"
 
-enum z_Result z_add(const char* const path, const size_t path_length, struct z_Database* const restrict db,
-                    struct Arena* const arena)
+enum z_Result z_add(char* restrict path, size_t path_length, struct z_Database* restrict db,
+                    struct Arena* restrict arena)
 {
     if (!path || !db) {
         return Z_NULL_REFERENCE;
@@ -613,7 +611,7 @@ enum z_Result z_add(const char* const path, const size_t path_length, struct z_D
     return Z_MALLOC_ERROR;
 }
 
-void z_remove_dirs_shift(const size_t offset, struct z_Database* const restrict db)
+void z_remove_dirs_shift(size_t offset, struct z_Database* restrict db)
 {
     if (offset + 1 == db->count) {
         return;
@@ -624,7 +622,7 @@ void z_remove_dirs_shift(const size_t offset, struct z_Database* const restrict 
     }
 }
 
-enum z_Result z_remove(const char* const path, const size_t path_length, struct z_Database* const restrict db)
+enum z_Result z_remove(char* restrict path, size_t path_length, struct z_Database* restrict db)
 {
     assert(db);
 
@@ -636,7 +634,7 @@ enum z_Result z_remove(const char* const path, const size_t path_length, struct 
     }
 
     for (size_t i = 0; i < db->count; ++i) {
-        if (estrcmp_c((db->dirs + i)->path, (db->dirs + i)->path_length, (char*)path, path_length)) {
+        if (estrcmp((db->dirs + i)->path, (db->dirs + i)->path_length, (char*)path, path_length)) {
             (db->dirs + i)->path = NULL;
             (db->dirs + i)->path_length = 0;
             (db->dirs + i)->last_accessed = 0;
@@ -650,7 +648,7 @@ enum z_Result z_remove(const char* const path, const size_t path_length, struct 
     return Z_MATCH_NOT_FOUND;
 }
 
-enum z_Result z_exit(struct z_Database* const restrict db)
+enum z_Result z_exit(struct z_Database* restrict db)
 {
     assert(db);
     if (!db) {
@@ -670,7 +668,7 @@ enum z_Result z_exit(struct z_Database* const restrict db)
 
 #define Z_PRINT_MESSAGE RED_BRIGHT "z: autojump/smarter cd command implementation for ncsh.\n\n" RESET
 
-void z_print(const struct z_Database* const restrict db)
+void z_print(struct z_Database* restrict db)
 {
     if (write(STDOUT_FILENO, Z_PRINT_MESSAGE, sizeof(Z_PRINT_MESSAGE) - 1) == -1) {
         perror("z: could not print out z database");

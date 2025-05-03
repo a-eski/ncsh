@@ -9,7 +9,7 @@
 #include "arena.h"
 #include "vars.h"
 
-void vars_malloc(struct Arena* const arena, struct Vars* restrict vars)
+void vars_malloc(struct Arena* arena, struct Vars* restrict vars)
 {
     vars->size = 0;
     vars->capacity = VARS_DEFAULT_CAPACITY;
@@ -20,7 +20,7 @@ void vars_malloc(struct Arena* const arena, struct Vars* restrict vars)
 #define VARS_FNV_OFFSET 2166136261
 
 // 64-bit FNV-1a hash
-uint64_t vars_key(const char* str)
+uint64_t vars_key(char* str)
 {
     register uint64_t i;
 
@@ -70,7 +70,7 @@ bool vars_exists(char* key, struct Vars* restrict vars)
     return false;
 }
 
-const char* vars_set_entry(struct Vars_Entry* entries, size_t capacity, char* key, struct estr* val, size_t* plength)
+char* vars_set_entry(struct Vars_Entry* entries, size_t capacity, char* key, struct estr* val, size_t* plength)
 {
     uint64_t hash = vars_key(key);
     size_t index = (size_t)(hash & (uint64_t)(capacity - 1));
@@ -96,7 +96,7 @@ const char* vars_set_entry(struct Vars_Entry* entries, size_t capacity, char* ke
     return key;
 }
 
-bool vars_expand(char* key, struct Arena* const arena, struct Vars* restrict vars)
+bool vars_expand(char* key, struct Arena* arena, struct Vars* restrict vars)
 {
     size_t new_capacity = vars->capacity * 2;
     if (new_capacity < vars->capacity) {
@@ -118,7 +118,7 @@ bool vars_expand(char* key, struct Arena* const arena, struct Vars* restrict var
     return true;
 }
 
-const char* vars_set(char* key, struct estr* val, struct Arena* const arena, struct Vars* restrict vars)
+char* vars_set(char* key, struct estr* val, struct Arena* arena, struct Vars* restrict vars)
 {
     assert(val->value && val->length);
     if (!val->value || !val->length) {

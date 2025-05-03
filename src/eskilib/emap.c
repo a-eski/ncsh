@@ -7,7 +7,7 @@
 
 #include "emap.h"
 
-void emap_malloc(struct Arena* const arena, struct emap* hmap)
+void emap_malloc(struct Arena* restrict arena, struct emap* restrict hmap)
 {
     hmap->size = 0;
     hmap->capacity = ESKILIB_EMAP_DEFAULT_CAPACITY;
@@ -19,7 +19,7 @@ void emap_malloc(struct Arena* const arena, struct emap* hmap)
 #define ESKILIB_FNV_PRIME 16777619
 
 // 64-bit FNV-1a hash
-uint64_t emap_key(const char* str)
+uint64_t emap_key(char* restrict str)
 {
     register uint64_t i;
 
@@ -31,7 +31,7 @@ uint64_t emap_key(const char* str)
     return i;
 }
 
-struct estr emap_get(char* key, struct emap* hmap)
+struct estr emap_get(char* restrict key, struct emap* restrict hmap)
 {
     uint64_t hash = emap_key(key);
     size_t index = (size_t)(hash & (uint64_t)(hmap->capacity - 1));
@@ -50,7 +50,7 @@ struct estr emap_get(char* key, struct emap* hmap)
     return estr_Empty;
 }
 
-bool emap_exists(char* key, struct emap* hmap)
+bool emap_exists(char* restrict key, struct emap* restrict hmap)
 {
     uint64_t hash = emap_key(key);
     size_t index = (size_t)(hash & (uint64_t)(hmap->capacity - 1));
@@ -69,7 +69,7 @@ bool emap_exists(char* key, struct emap* hmap)
     return false;
 }
 
-const char* emap_set_entry(struct emap_Entry* entries, size_t capacity, struct estr val, size_t* plength)
+char* emap_set_entry(struct emap_Entry* restrict entries, size_t capacity, struct estr val, size_t* plength)
 {
     uint64_t hash = emap_key(val.value);
     size_t index = (size_t)(hash & (uint64_t)(capacity - 1));
@@ -95,7 +95,7 @@ const char* emap_set_entry(struct emap_Entry* entries, size_t capacity, struct e
     return val.value;
 }
 
-bool emap_expand(struct Arena* const arena, struct emap* hmap)
+bool emap_expand(struct Arena* restrict arena, struct emap* restrict hmap)
 {
     size_t new_capacity = hmap->capacity * 2;
     if (new_capacity < hmap->capacity) {
@@ -117,7 +117,7 @@ bool emap_expand(struct Arena* const arena, struct emap* hmap)
     return true;
 }
 
-const char* emap_set(struct estr val, struct Arena* const arena, struct emap* hmap)
+char* emap_set(struct estr val, struct Arena* restrict arena, struct emap* restrict hmap)
 {
     assert(val.value && val.length);
     if (!val.value || !val.length) {

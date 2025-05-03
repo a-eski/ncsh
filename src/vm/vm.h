@@ -9,11 +9,11 @@
 #include "../parser.h"
 #include "../types.h"
 
-inline int vm_output_redirection_oflags_get(const bool append)
+inline int vm_output_redirection_oflags_get(bool append)
 {
     return append ? O_WRONLY | O_CREAT | O_APPEND : O_WRONLY | O_CREAT | O_TRUNC;
 }
 
-int vm_execute(struct Args* const restrict args, struct Shell* const restrict shell, struct Arena* const restrict scratch_arena);
+int vm_execute(struct Args* restrict args, struct Shell* restrict shell, struct Arena* restrict scratch_arena);
 
-int vm_execute_noninteractive(struct Args* const restrict args, struct Shell* const restrict shell);
+int vm_execute_noninteractive(struct Args* restrict args, struct Shell* restrict shell);

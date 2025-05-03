@@ -7,7 +7,7 @@
 #include "arena.h"
 #include "args.h"
 
-struct Args* args_alloc(struct Arena* const restrict arena)
+struct Args* args_alloc(struct Arena* restrict arena)
 {
     struct Args* args = arena_malloc(arena, 1, struct Args);
     args->count = 0;
@@ -16,7 +16,7 @@ struct Args* args_alloc(struct Arena* const restrict arena)
     return args;
 }
 
-struct Arg* arg_alloc(uint8_t op, size_t len, char* val, struct Arena* const restrict arena)
+struct Arg* arg_alloc(uint8_t op, size_t len, char* restrict val, struct Arena* restrict arena)
 {
     struct Arg* arg = arena_malloc(arena, 1, struct Arg);
     arg->val = arena_malloc(arena, len, char);
@@ -27,42 +27,42 @@ struct Arg* arg_alloc(uint8_t op, size_t len, char* val, struct Arena* const res
     return arg;
 }
 
-bool arg_set_after(struct Arg* current, struct Arg* nodeToSetAfter)
+bool arg_set_after(struct Arg* restrict current, struct Arg* restrict nodeToSetAfter)
 {
-	assert(current);
-	assert(nodeToSetAfter);
-	if (!current || !nodeToSetAfter) {
-		return false;
-	}
+    assert(current);
+    assert(nodeToSetAfter);
+    if (!current || !nodeToSetAfter) {
+        return false;
+    }
 
-	struct Arg* temporaryNode = current->next;
-	current->next = nodeToSetAfter;
-	nodeToSetAfter->next = temporaryNode;
+    struct Arg* temporaryNode = current->next;
+    current->next = nodeToSetAfter;
+    nodeToSetAfter->next = temporaryNode;
 
-	return true;
+    return true;
 }
 
-bool arg_set_last(struct Args* args, struct Arg* nodeToSetLast)
+bool arg_set_last(struct Args* restrict args, struct Arg* restrict nodeToSetLast)
 {
-	assert(args && args->head);
-	if (!args) {
-		return false;
-	}
+    assert(args && args->head);
+    if (!args) {
+        return false;
+    }
 
-	assert(nodeToSetLast);
-	if (!nodeToSetLast) {
-		return false;
-	}
+    assert(nodeToSetLast);
+    if (!nodeToSetLast) {
+        return false;
+    }
 
-	struct Arg* current = args->head;
+    struct Arg* current = args->head;
 
-	while (current->next) {
-		current = current->next;
-	}
+    while (current->next) {
+        current = current->next;
+    }
 
-	current->next = nodeToSetLast;
-	nodeToSetLast->next = NULL;
+    current->next = nodeToSetLast;
+    nodeToSetLast->next = NULL;
     ++args->count;
 
-	return true;
+    return true;
 }

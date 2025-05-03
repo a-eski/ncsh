@@ -80,10 +80,10 @@ void terminal_reset(void);
 
 // void terminal_move(int x, int y);
 // void terminal_move_absolute(int x);
-void terminal_move_up(const int i);
-void terminal_move_down(const int i);
-void terminal_move_right(const int i);
-void terminal_move_left(const int i);
+void terminal_move_up(int i);
+void terminal_move_down(int i);
+void terminal_move_right(int i);
+void terminal_move_left(int i);
 void terminal_move_to_end_of_previous_line();
 void terminal_move_to_start_of_next_line();
 

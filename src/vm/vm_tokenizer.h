@@ -27,5 +27,5 @@ struct Tokens {
     uint8_t number_of_pipe_commands;
 };
 
-int vm_tokenizer_tokenize(struct Args* const restrict args, struct Tokens* const restrict tokens, struct Shell* const restrict shell,
-                          struct Arena* const restrict scratch_arena);
+int vm_tokenizer_tokenize(struct Args* restrict args, struct Tokens* restrict tokens, struct Shell* restrict shell,
+                          struct Arena* restrict scratch_arena);

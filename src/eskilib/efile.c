@@ -4,7 +4,7 @@
 #include "edefines.h"
 
 // simple fgets implementation that returns the number of characters read
-enodiscard int efgets(char* const input, const size_t len, FILE* const restrict file)
+enodiscard int efgets(char* restrict input, size_t len, FILE* restrict file)
 {
     register int character;
     register char* buffer = input;
@@ -24,7 +24,7 @@ enodiscard int efgets(char* const input, const size_t len, FILE* const restrict 
     return characters_read > 0 ? characters_read : EOF;
 }
 
-enodiscard int efgets_delim(char* const input, const size_t len, FILE* const restrict file, const char delimiter)
+enodiscard int efgets_delim(char* restrict input, size_t len, FILE* restrict file, char delimiter)
 {
     register int character;
     register char* buffer = input;

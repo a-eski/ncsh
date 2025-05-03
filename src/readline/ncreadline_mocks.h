@@ -7,12 +7,14 @@ extern size_t ncrl_test_input_pos;
 extern char* ncrl_test_output;
 extern size_t ncrl_test_output_pos;
 
-int read_mock(int fd, char* character, int n) {
+int read_mock(int fd, char* character, int n)
+{
     *character = ncrl_test_input[ncrl_test_input_pos++];
     return 1;
 }
 
-int putchar_mock(char character) {
+int putchar_mock(char character)
+{
     ncrl_test_output[ncrl_test_output_pos++] = character;
     return 0;
 }

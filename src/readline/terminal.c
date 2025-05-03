@@ -71,22 +71,22 @@ void terminal_move_absolute(int x)
     printf("\033[%dG", x);
 }*/
 
-void terminal_move_right(const int i)
+void terminal_move_right(int i)
 {
     printf("\033[%dC", i);
 }
 
-void terminal_move_left(const int i)
+void terminal_move_left(int i)
 {
     printf("\033[%dD", i);
 }
 
-void terminal_move_up(const int i)
+void terminal_move_up(int i)
 {
     printf("\033[%dA", i);
 }
 
-void terminal_move_down(const int i)
+void terminal_move_down(int i)
 {
     printf("\033[%dB", i);
 }

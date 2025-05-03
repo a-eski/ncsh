@@ -21,7 +21,7 @@
  * Parses and sends output of parser to VM. Parser data stored in scratch arena, which is then used by VM.
  * Scratch arena reset after scope ends due to passing by value.
  */
-int noninteractive_run(const char** const restrict argv, const size_t argc, struct Shell* shell)
+int noninteractive_run(char** restrict argv, size_t argc, struct Shell* shell)
 {
     struct Args* args = parser_parse_noninteractive(argv, argc, &shell->arena);
 
@@ -35,7 +35,7 @@ int noninteractive_run(const char** const restrict argv, const size_t argc, stru
  * Returns: exit status, see defines.h (EXIT_...)
  */
 [[nodiscard]]
-int noninteractive(const int argc, const char** const restrict argv)
+int noninteractive(int argc, char** restrict argv)
 {
     assert(argc > 1); // 1 because first arg is ncsh
     assert(argv);

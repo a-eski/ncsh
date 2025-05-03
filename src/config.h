@@ -19,6 +19,6 @@ struct Config {
     struct estr config_file;
 };
 
-enum eresult config_init(struct Config* const restrict config, struct Arena* const restrict arena, struct Arena scratch_arena);
+enum eresult config_init(struct Config* restrict config, struct Arena* restrict arena, struct Arena scratch_arena);
 
-struct estr config_alias_check(const char* const restrict buffer, const size_t buf_len);
+struct estr config_alias_check(char* restrict buffer, size_t buf_len);

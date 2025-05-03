@@ -13,7 +13,7 @@
 #include "../vars.h"
 
 [[nodiscard]]
-int vm_tokenizer_syntax_error(const char* const restrict message, const size_t message_length)
+int vm_tokenizer_syntax_error(char* restrict message, size_t message_length)
 {
     if (write(STDIN_FILENO, message, message_length) == -1) {
         return NCSH_COMMAND_EXIT_FAILURE;
@@ -106,7 +106,7 @@ int vmtok_invalid_syntax_check_res;
 /* vm_tokenizer_syntax_check_first_arg
  * Simple check to see if something is in first position that shouldn't be
  */
-void vm_tokenizer_syntax_check_first_arg(const uint8_t op)
+void vm_tokenizer_syntax_check_first_arg(uint8_t op)
 {
     switch (op) {
     case OP_PIPE: {
@@ -159,7 +159,7 @@ void vm_tokenizer_syntax_check_first_arg(const uint8_t op)
 /* vm_tokenizer_syntax_check_last_arg
  * Simple check to see if something is in last position that shouldn't be
  */
-void vm_tokenizer_syntax_check_last_arg(struct Args* const restrict args)
+void vm_tokenizer_syntax_check_last_arg(struct Args* restrict args)
 {
     struct Arg* arg = args->head->next;
     while (arg->next)
@@ -210,7 +210,7 @@ void vm_tokenizer_syntax_check_last_arg(struct Args* const restrict args)
 }
 
 [[nodiscard]]
-int vm_tokenizer_syntax_check(struct Args* const restrict args)
+int vm_tokenizer_syntax_check(struct Args* restrict args)
 {
     assert(args);
 
@@ -222,7 +222,8 @@ int vm_tokenizer_syntax_check(struct Args* const restrict args)
     return vmtok_invalid_syntax_check_res;
 }
 
-void vm_tokenizer_glob_process(struct Arg* restrict arg, size_t* args_count, struct Arena* const restrict scratch_arena)
+void vm_tokenizer_glob_process(struct Arg* restrict arg, size_t* restrict args_count,
+                               struct Arena* restrict scratch_arena)
 {
     glob_t glob_buf = {0};
     size_t glob_len;
@@ -263,7 +264,7 @@ void vm_tokenizer_glob_process(struct Arg* restrict arg, size_t* args_count, str
     globfree(&glob_buf);
 }
 
-void vm_tokenizer_assignment_process(struct Arg* restrict arg, struct Vars* vars, struct Arena* const restrict arena)
+void vm_tokenizer_assignment_process(struct Arg* restrict arg, struct Vars* vars, struct Arena* restrict arena)
 {
     assert(arena);
     // variable values are stored in vars hashmap.
@@ -290,7 +291,8 @@ void vm_tokenizer_assignment_process(struct Arg* restrict arg, struct Vars* vars
     vars_set(key, val, arena, vars);
 }
 
-void vm_tokenizer_variable_process(struct Arg* const restrict arg, struct Vars* const restrict vars, struct Arena* const restrict scratch_arena)
+void vm_tokenizer_variable_process(struct Arg* restrict arg, struct Vars* restrict vars,
+                                   struct Arena* restrict scratch_arena)
 {
     char* key = arg->val + 1; // skip first value in arg->val (the $)
     debugf("trying to get variable %s\n", key);
@@ -308,8 +310,21 @@ void vm_tokenizer_variable_process(struct Arg* const restrict arg, struct Vars* 
     debugf("replaced variable with value %s %zu\n", arg->val, arg->len);
 }
 
-int vm_tokenizer_ops_process(struct Args* const restrict args, struct Tokens* const restrict tokens,
-                           struct Shell* const restrict shell, struct Arena* const restrict scratch_arena)
+/* vm_tokenizer_alias_replace
+ * Replaces aliases with their aliased commands before executing
+ */
+void vm_tokenizer_alias_replace(struct Arg* restrict arg, struct Arena* restrict scratch_arena)
+{
+    struct estr alias = config_alias_check(arg->val, arg->len);
+    if (alias.length) {
+        arg->val = arena_realloc(scratch_arena, alias.length, char, arg->val, arg->len);
+        memcpy(arg->val, alias.value, alias.length);
+        arg->len = alias.length;
+    }
+}
+
+int vm_tokenizer_ops_process(struct Args* restrict args, struct Tokens* restrict tokens, struct Shell* restrict shell,
+                             struct Arena* restrict scratch_arena)
 {
     assert(args && args->head);
     assert(tokens);
@@ -380,11 +395,15 @@ int vm_tokenizer_ops_process(struct Args* const restrict args, struct Tokens* co
         }
         case OP_ASSIGNMENT: {
             vm_tokenizer_assignment_process(arg, &shell->vars, &shell->arena);
-            ++args->count;
+            // ++args->count;
             break;
         }
         case OP_VARIABLE: {
             vm_tokenizer_variable_process(arg, &shell->vars, scratch_arena);
+            break;
+        }
+        default: {
+            vm_tokenizer_alias_replace(arg, scratch_arena);
             break;
         }
         }
@@ -396,8 +415,8 @@ int vm_tokenizer_ops_process(struct Args* const restrict args, struct Tokens* co
 }
 
 [[nodiscard]]
-int vm_tokenizer_tokenize(struct Args* const restrict args, struct Tokens* const restrict tokens, struct Shell* const restrict shell,
-                          struct Arena* const restrict scratch_arena)
+int vm_tokenizer_tokenize(struct Args* restrict args, struct Tokens* restrict tokens, struct Shell* restrict shell,
+                          struct Arena* restrict scratch_arena)
 {
     assert(args);
     assert(tokens);
