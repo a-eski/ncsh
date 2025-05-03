@@ -11,10 +11,10 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include "../args.h"
 #include "../defines.h"
 #include "../eskilib/ecolors.h"
 #include "../eskilib/estr.h"
-#include "../args.h"
 #include "../readline/history.h"
 #include "../z/z.h"
 #include "vm_builtins.h"
@@ -23,8 +23,8 @@ int builtins_disabled_state = 0;
 
 #define Z_COMMAND_NOT_FOUND_MESSAGE "ncsh z: command not found, options not supported.\n"
 [[nodiscard]]
-int builtins_z(struct z_Database* const restrict z_db, struct Args* const restrict args, struct Arena* const arena,
-               struct Arena* const restrict scratch_arena)
+int builtins_z(struct z_Database* restrict z_db, struct Args* restrict args, struct Arena* arena,
+               struct Arena* restrict scratch_arena)
 {
     assert(args);
     assert(z_db);
@@ -43,7 +43,7 @@ int builtins_z(struct z_Database* const restrict z_db, struct Args* const restri
         assert(arg->val);
 
         // z print
-        if (estrcmp_c(arg->val, arg->len, Z_PRINT, sizeof(Z_PRINT))) {
+        if (estrcmp(arg->val, arg->len, Z_PRINT, sizeof(Z_PRINT))) {
             z_print(z_db);
             return NCSH_COMMAND_SUCCESS_CONTINUE;
         }
@@ -63,7 +63,7 @@ int builtins_z(struct z_Database* const restrict z_db, struct Args* const restri
         assert(arg->val && arg->next->val);
 
         // z add
-        if (estrcmp_c(arg->val, arg->len, Z_ADD, sizeof(Z_ADD))) {
+        if (estrcmp(arg->val, arg->len, Z_ADD, sizeof(Z_ADD))) {
             arg = arg->next;
             if (z_add(arg->val, arg->len, z_db, arena) != Z_SUCCESS) {
                 return NCSH_COMMAND_FAILED_CONTINUE;
@@ -72,8 +72,8 @@ int builtins_z(struct z_Database* const restrict z_db, struct Args* const restri
             return NCSH_COMMAND_SUCCESS_CONTINUE;
         }
         // z rm/remove
-        else if (estrcmp_c(arg->val, arg->len, Z_RM, sizeof(Z_RM)) ||
-                 estrcmp_c(arg->val, arg->len, Z_REMOVE, sizeof(Z_REMOVE))) {
+        else if (estrcmp(arg->val, arg->len, Z_RM, sizeof(Z_RM)) ||
+                 estrcmp(arg->val, arg->len, Z_REMOVE, sizeof(Z_REMOVE))) {
             arg = arg->next;
             if (z_remove(arg->val, arg->len, z_db) != Z_SUCCESS) {
                 return NCSH_COMMAND_FAILED_CONTINUE;
@@ -91,8 +91,8 @@ int builtins_z(struct z_Database* const restrict z_db, struct Args* const restri
 
 #define HISTORY_COMMAND_NOT_FOUND_MESSAGE "ncsh history: command not found.\n"
 [[nodiscard]]
-int builtins_history(struct History* const restrict history, struct Args* const restrict args,
-                     struct Arena* const restrict arena, struct Arena* const restrict scratch_arena)
+int builtins_history(struct History* restrict history, struct Args* restrict args, struct Arena* restrict arena,
+                     struct Arena* restrict scratch_arena)
 {
     assert(args);
     if (args->count == 1) {
@@ -106,10 +106,10 @@ int builtins_history(struct History* const restrict history, struct Args* const 
     if (args->count == 2) {
         assert(arg->val);
 
-        if (estrcmp_c(arg->val, arg->len, NCSH_HISTORY_COUNT, sizeof(NCSH_HISTORY_COUNT))) {
+        if (estrcmp(arg->val, arg->len, NCSH_HISTORY_COUNT, sizeof(NCSH_HISTORY_COUNT))) {
             return history_command_count(history);
         }
-        else if (estrcmp_c(arg->val, arg->len, NCSH_HISTORY_CLEAN, sizeof(NCSH_HISTORY_CLEAN))) {
+        else if (estrcmp(arg->val, arg->len, NCSH_HISTORY_CLEAN, sizeof(NCSH_HISTORY_CLEAN))) {
             return history_command_clean(history, arena, scratch_arena);
         }
     }
@@ -118,7 +118,7 @@ int builtins_history(struct History* const restrict history, struct Args* const 
         assert(arg->val && arg->next->val);
 
         // z add
-        if (estrcmp_c(arg->val, arg->len, NCSH_HISTORY_ADD, sizeof(NCSH_HISTORY_ADD))) {
+        if (estrcmp(arg->val, arg->len, NCSH_HISTORY_ADD, sizeof(NCSH_HISTORY_ADD))) {
             arg = arg->next;
             if (history_command_add(arg->val, arg->len, history, arena) != Z_SUCCESS) {
                 return NCSH_COMMAND_FAILED_CONTINUE;
@@ -127,8 +127,8 @@ int builtins_history(struct History* const restrict history, struct Args* const 
             return NCSH_COMMAND_SUCCESS_CONTINUE;
         }
         // z rm/remove
-        else if (estrcmp_c(arg->val, arg->len, NCSH_HISTORY_RM, sizeof(NCSH_HISTORY_RM)) ||
-                 estrcmp_c(arg->val, arg->len, NCSH_HISTORY_REMOVE, sizeof(NCSH_HISTORY_REMOVE))) {
+        else if (estrcmp(arg->val, arg->len, NCSH_HISTORY_RM, sizeof(NCSH_HISTORY_RM)) ||
+                 estrcmp(arg->val, arg->len, NCSH_HISTORY_REMOVE, sizeof(NCSH_HISTORY_REMOVE))) {
             arg = arg->next;
             if (history_command_remove(arg->val, arg->len, history, arena, scratch_arena) != Z_SUCCESS) {
                 return NCSH_COMMAND_FAILED_CONTINUE;
@@ -145,14 +145,14 @@ int builtins_history(struct History* const restrict history, struct Args* const 
 }
 
 [[nodiscard]]
-int builtins_exit(struct Args* const restrict args)
+int builtins_exit(struct Args* restrict args)
 {
     (void)args;
     return NCSH_COMMAND_EXIT;
 }
 
 [[nodiscard]]
-int builtins_echo(struct Args* const restrict args)
+int builtins_echo(struct Args* restrict args)
 {
     assert(args);
     if (args->count <= 1) {
@@ -240,7 +240,7 @@ int builtins_echo(struct Args* const restrict args)
     }
 
 [[nodiscard]]
-int builtins_help(struct Args* const restrict args)
+int builtins_help(struct Args* restrict args)
 {
     (void)args;
 
@@ -282,7 +282,7 @@ int builtins_help(struct Args* const restrict args)
 }
 
 [[nodiscard]]
-int builtins_cd(struct Args* const restrict args)
+int builtins_cd(struct Args* restrict args)
 {
     assert(args && args->head && args->head->next && args->head->next->next);
 
@@ -308,7 +308,7 @@ int builtins_cd(struct Args* const restrict args)
 }
 
 [[nodiscard]]
-int builtins_pwd(struct Args* const restrict args)
+int builtins_pwd(struct Args* restrict args)
 {
     (void)args;
 
@@ -326,7 +326,7 @@ int builtins_pwd(struct Args* const restrict args)
 #define KILL_NOTHING_TO_KILL_MESSAGE "ncsh kill: nothing to kill, please pass in a process ID (PID).\n"
 #define KILL_COULDNT_PARSE_PID_MESSAGE "ncsh kill: could not parse process ID (PID) from arguments.\n"
 [[nodiscard]]
-int builtins_kill(struct Args* const restrict args)
+int builtins_kill(struct Args* restrict args)
 {
     assert(args && args->head && args->head->next && args->head->next->next);
 
@@ -356,7 +356,7 @@ int builtins_kill(struct Args* const restrict args)
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
-int builtins_version(struct Args* const restrict args)
+int builtins_version(struct Args* restrict args)
 {
     (void)args;
 
@@ -391,7 +391,7 @@ void builtins_print_enabled()
     }
 }
 
-int builtins_disable(struct Args* const restrict args)
+int builtins_disable(struct Args* restrict args)
 {
     assert(args && args->head && args->head->next && args->head->next->next);
 
@@ -405,7 +405,7 @@ int builtins_disable(struct Args* const restrict args)
 
     for (; i < args->count; ++i) {
         for (size_t j = 0; j < builtins_count; ++j) {
-            if (estrcmp_c(arg->val, arg->len, builtins[j].value, builtins[j].length)) {
+            if (estrcmp(arg->val, arg->len, builtins[j].value, builtins[j].length)) {
                 if (!(builtins_disabled_state & builtins[j].flag)) {
                     builtins_disabled_state |= builtins[j].flag;
                     printf("ncsh disable: disabled builtin %s.\n", builtins[j].value);
@@ -419,7 +419,7 @@ int builtins_disable(struct Args* const restrict args)
 }
 
 #define ENABLE_OPTION_NOT_SUPPORTED_MESSAGE "ncsh enable: command not found, option not supported.\n"
-int builtins_enable(struct Args* const restrict args)
+int builtins_enable(struct Args* restrict args)
 {
     assert(args && args->head && args->head->next && args->head->next->next);
 
@@ -458,7 +458,7 @@ int builtins_set_e()
 #define SET_NOTHING_TO_SET_MESSAGE "ncsh set: nothing to set, please pass in a value to set (i.e. '-e', '-c')\n"
 #define SET_VALID_OPERATIONS_MESSAGE "ncsh set: valid set operations are in the form '-e', '-c', etc.\n"
 [[nodiscard]]
-int builtins_set(struct Args* const restrict args)
+int builtins_set(struct Args* restrict args)
 {
     assert(args && args->head && args->head->next && args->head->next->next);
 
@@ -495,7 +495,7 @@ int builtins_set(struct Args* const restrict args)
 // not implemented
 #define UNSET_NOTHING_TO_UNSET_MESSAGE "ncsh unset: nothing to unset, please pass in a value to unset.\n"
 [[nodiscard]]
-int builtins_unset(struct Args* const restrict args)
+int builtins_unset(struct Args* restrict args)
 {
     assert(args && args->head && args->head->next && args->head->next->next);
 

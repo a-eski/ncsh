@@ -415,7 +415,6 @@ void parser_parse_variable_command_test()
     char* line = "COMMAND=ls && $COMMAND";
     size_t len = strlen(line) + 1;
 
-
     struct Args* args = parser_parse(line, len, &scratch_arena);
 
     eassert(args->head);

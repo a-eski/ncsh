@@ -7,7 +7,7 @@
 
 #include "edefines.h"
 
-#define estr_Empty ((const struct estr){.value = NULL, .length = 0})
+#define estr_Empty ((struct estr){.value = NULL, .length = 0})
 
 // WARN: currently all string functions using this code incorporate null terminator in length
 // TODO: fix this, use length everywhere without null terminator... .length = sizeof(str) - 1
@@ -20,27 +20,7 @@ struct estr {
 };
 
 // A simple wrapper for memcmp that checks if lengths match before calling memcmp.
-enodiscard static inline bool estrcmp(char* str, const size_t str_len, char* str_two, const size_t str_two_len)
-{
-    if (str_len != str_two_len || !str_len) {
-        return false;
-    }
-
-    return !str || !memcmp(str, str_two, str_len);
-}
-
-enodiscard static inline bool estrcmp_c(char* str, const size_t str_len, const char* const str_two,
-                                        const size_t str_two_len)
-{
-    if (str_len != str_two_len || !str_len) {
-        return false;
-    }
-
-    return !str || !memcmp(str, str_two, str_len);
-}
-
-enodiscard static inline bool estrcmp_cc(const char* const str, const size_t str_len, const char* const str_two,
-                                         const size_t str_two_len)
+enodiscard static inline bool estrcmp(char* restrict str, size_t str_len, char* restrict str_two, size_t str_two_len)
 {
     if (str_len != str_two_len || !str_len) {
         return false;

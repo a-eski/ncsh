@@ -16,7 +16,7 @@
 #include "../eskilib/estr.h"
 #include "history.h"
 
-void history_file_set(const struct estr config_file, struct History* const restrict history, struct Arena* const arena)
+void history_file_set(struct estr config_file, struct History* restrict history, struct Arena* restrict arena)
 {
 
     constexpr size_t history_file_len = sizeof(NCSH_HISTORY_FILE);
@@ -44,7 +44,7 @@ void history_file_set(const struct estr config_file, struct History* const restr
 }
 
 [[nodiscard]]
-enum eresult history_alloc(struct History* const restrict history, struct Arena* const arena)
+enum eresult history_alloc(struct History* restrict history, struct Arena* restrict arena)
 {
     assert(history);
     if (!history) {
@@ -58,7 +58,7 @@ enum eresult history_alloc(struct History* const restrict history, struct Arena*
 }
 
 [[nodiscard]]
-enum eresult history_load(struct History* const restrict history, struct Arena* const arena)
+enum eresult history_load(struct History* restrict history, struct Arena* restrict arena)
 {
     assert(history && history->file && arena);
 
@@ -101,7 +101,7 @@ enum eresult history_load(struct History* const restrict history, struct Arena* 
 }
 
 [[nodiscard]]
-enum eresult history_reload(struct History* const restrict history, struct Arena* const arena)
+enum eresult history_reload(struct History* restrict history, struct Arena* restrict arena)
 {
     assert(history && history->file && arena);
 
@@ -139,8 +139,7 @@ enum eresult history_reload(struct History* const restrict history, struct Arena
 }
 
 [[nodiscard]]
-enum eresult history_init(const struct estr config_location, struct History* const restrict history,
-                          struct Arena* const arena)
+enum eresult history_init(struct estr config_location, struct History* restrict history, struct Arena* restrict arena)
 {
     assert(history && arena);
 
@@ -166,8 +165,7 @@ enum eresult history_init(const struct estr config_location, struct History* con
 }
 
 [[nodiscard]]
-enum eresult history_clean(struct History* const restrict history, struct Arena* const arena,
-                           struct Arena scratch_arena)
+enum eresult history_clean(struct History* restrict history, struct Arena* restrict arena, struct Arena scratch_arena)
 {
     assert(history && arena && scratch_arena.start);
     if (!history->count || !history->entries[0].value) {
@@ -220,7 +218,7 @@ enum eresult history_clean(struct History* const restrict history, struct Arena*
     return E_SUCCESS;
 }
 
-enum eresult history_save(struct History* const restrict history)
+enum eresult history_save(struct History* restrict history)
 {
     if (!history || !history->count || !history->entries || !history->entries[0].value) {
         return E_FAILURE_NULL_REFERENCE;
@@ -262,13 +260,11 @@ enum eresult history_save(struct History* const restrict history)
     return E_SUCCESS;
 }
 
-enum eresult history_add(const char* const line, const size_t length, struct History* const restrict history,
-                         struct Arena* const arena)
+enum eresult history_add(char* restrict line, size_t length, struct History* restrict history,
+                         struct Arena* restrict arena)
 {
     assert(history);
     assert(line);
-    assert(length > 0);
-    assert(!line[length - 1]);
 
     if (!history || !line) {
         return E_FAILURE_NULL_REFERENCE;
@@ -286,6 +282,9 @@ enum eresult history_add(const char* const line, const size_t length, struct His
         return E_NO_OP_MAX_LIMIT_REACHED;
     }
 
+    assert(length > 0);
+    assert(!line[length - 1]);
+
     history->entries[history->count].length = length;
     history->entries[history->count].value = arena_malloc(arena, length, char);
     memcpy(history->entries[history->count].value, line, length);
@@ -295,7 +294,7 @@ enum eresult history_add(const char* const line, const size_t length, struct His
 }
 
 [[nodiscard]]
-struct estr history_get(const size_t position, struct History* const restrict history)
+struct estr history_get(size_t position, struct History* restrict history)
 {
     assert(history);
 
@@ -316,7 +315,7 @@ struct estr history_get(const size_t position, struct History* const restrict hi
 }
 
 [[nodiscard]]
-int history_command_display(const struct History* const restrict history)
+int history_command_display(struct History* restrict history)
 {
     assert(history);
     if (!history || !history->count) {
@@ -330,7 +329,7 @@ int history_command_display(const struct History* const restrict history)
 }
 
 [[nodiscard]]
-int history_command_count(const struct History* history)
+int history_command_count(struct History* restrict history)
 {
     assert(history);
     printf("history count: %zu\n", history->count);
@@ -338,8 +337,8 @@ int history_command_count(const struct History* history)
 }
 
 [[nodiscard]]
-int history_command_clean(struct History* const restrict history, struct Arena* const arena,
-                          struct Arena* const scratch_arena)
+int history_command_clean(struct History* restrict history, struct Arena* restrict arena,
+                          struct Arena* restrict scratch_arena)
 {
     if (history_clean(history, arena, *scratch_arena) != E_SUCCESS) {
         return NCSH_COMMAND_FAILED_CONTINUE;
@@ -349,13 +348,13 @@ int history_command_clean(struct History* const restrict history, struct Arena* 
 }
 
 [[nodiscard]]
-int history_command_add(const char* const value, const size_t value_len, struct History* const restrict history,
-                        struct Arena* const arena)
+int history_command_add(char* restrict value, size_t value_len, struct History* restrict history,
+                        struct Arena* restrict arena)
 {
     return history_add(value, value_len, history, arena);
 }
 
-void history_remove_entries_shift(const size_t offset, struct History* const restrict history)
+void history_remove_entries_shift(size_t offset, struct History* restrict history)
 {
     if (offset + 1 == history->count) {
         return;
@@ -367,8 +366,8 @@ void history_remove_entries_shift(const size_t offset, struct History* const res
 }
 
 [[nodiscard]]
-int history_command_remove(const char* const value, const size_t value_len, struct History* const restrict history,
-                           struct Arena* const arena, struct Arena* const scratch_arena)
+int history_command_remove(char* restrict value, size_t value_len, struct History* restrict history,
+                           struct Arena* restrict arena, struct Arena* restrict scratch_arena)
 {
     assert(value);
     assert(value_len > 0);
@@ -379,7 +378,7 @@ int history_command_remove(const char* const value, const size_t value_len, stru
     }
 
     for (size_t i = 0; i < history->count; ++i) {
-        if (estrcmp_c(history->entries[i].value, history->entries[i].length, value, value_len)) {
+        if (estrcmp(history->entries[i].value, history->entries[i].length, value, value_len)) {
             history->entries[i].value = NULL;
             history->entries[i].length = 0;
             history_remove_entries_shift(i, history);

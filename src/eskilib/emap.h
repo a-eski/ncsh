@@ -11,7 +11,7 @@
 #define ESKILIB_EMAP_DEFAULT_CAPACITY 100
 
 struct emap_Entry {
-    const char* key;
+    char* key;
     struct estr value;
 };
 
@@ -21,10 +21,10 @@ struct emap {
     struct emap_Entry* entries;
 };
 
-void emap_malloc(struct Arena* const arena, struct emap* hmap);
+void emap_malloc(struct Arena* restrict arena, struct emap* restrict hmap);
 
-struct estr emap_get(char* key, struct emap* hmap);
+struct estr emap_get(char* restrict key, struct emap* restrict hmap);
 
-bool emap_exists(char* key, struct emap* hmap);
+bool emap_exists(char* restrict key, struct emap* restrict hmap);
 
-const char* emap_set(struct estr val, struct Arena* const arena, struct emap* hmap);
+char* emap_set(struct estr val, struct Arena* restrict arena, struct emap* restrict hmap);

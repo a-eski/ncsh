@@ -11,7 +11,7 @@
 #define VARS_DEFAULT_CAPACITY 100
 
 struct Vars_Entry {
-    const char* key;
+    char* key;
     struct estr value;
 };
 
@@ -21,10 +21,10 @@ struct Vars {
     struct Vars_Entry* entries;
 };
 
-void vars_malloc(struct Arena* const arena, struct Vars* restrict vars);
+void vars_malloc(struct Arena* arena, struct Vars* restrict vars);
 
 struct estr* vars_get(char* key, struct Vars* restrict vars);
 
 bool vars_exists(char* key, struct Vars* restrict vars);
 
-const char* vars_set(char* key, struct estr* val, struct Arena* const arena, struct Vars* restrict vars);
+char* vars_set(char* key, struct estr* val, struct Arena* arena, struct Vars* restrict vars);

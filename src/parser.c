@@ -100,7 +100,8 @@ size_t parser_buf_pos;
  * Bytecodes (opcodes) equivalents are stored in the array of enum Ops, ops_2char
  */
 const char* const restrict ops_2char_str[] = {
-    STDOUT_REDIRECTION_APPEND, STDERR_REDIRECTION, STDOUT_AND_STDERR_REDIRECTION, AND, OR, EXPONENTIATION, MATH_EXPRESSION_START};
+    STDOUT_REDIRECTION_APPEND, STDERR_REDIRECTION, STDOUT_AND_STDERR_REDIRECTION, AND, OR, EXPONENTIATION,
+    MATH_EXPRESSION_START};
 
 constexpr size_t ops_2char_len = sizeof(ops_2char_str) / sizeof(char*);
 
@@ -128,7 +129,7 @@ const enum Ops ops_3char[] = {OP_STDERR_REDIRECTION_APPEND, OP_STDOUT_AND_STDERR
  * Returns: a value from enum Ops, the bytecode relevant to the input
  */
 [[nodiscard]]
-enum Ops parser_op_get(const char* const restrict line, const size_t length)
+enum Ops parser_op_get(char* restrict line, size_t length)
 {
     switch (length) {
     case 0: {
@@ -241,7 +242,7 @@ uint8_t parser_op_process()
  * Handles expansions like *, ?, and ~
  * Results are stored in struct Args, variables values are stored in struct Args.vars.
  */
-struct Args* parser_parse(const char* const restrict line, const size_t length, struct Arena* scratch_arena)
+struct Args* parser_parse(char* restrict line, size_t length, struct Arena* scratch_arena)
 {
     assert(line && scratch_arena);
     struct Args* args = args_alloc(scratch_arena);
@@ -294,8 +295,7 @@ struct Args* parser_parse(const char* const restrict line, const size_t length, 
             continue;
         }
         case OPENING_PARAN: {
-            if ((parser_state & IN_DOLLAR_SIGN) &&
-                    !(parser_state & IN_MATHEMATICAL_EXPRESSION)) {
+            if ((parser_state & IN_DOLLAR_SIGN) && !(parser_state & IN_MATHEMATICAL_EXPRESSION)) {
                 parser_state |= IN_MATHEMATICAL_EXPRESSION;
                 parser_state &= ~IN_DOLLAR_SIGN;
             }
@@ -397,7 +397,7 @@ struct Args* parser_parse(const char* const restrict line, const size_t length, 
  * Allocates memory that is freed by parser_free_values at the end of each main loop of the shell.
  * Used for noninteractive mode.
  */
-struct Args* parser_parse_noninteractive(const char** const restrict inputs, const size_t inputs_count, struct Arena* scratch_arena)
+struct Args* parser_parse_noninteractive(char** restrict inputs, size_t inputs_count, struct Arena* scratch_arena)
 {
     assert(inputs && inputs_count && scratch_arena);
 

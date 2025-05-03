@@ -39,14 +39,14 @@ enum Ops : uint8_t {
     OP_MATH_EXPRESSION_START = 20, // $(
     OP_MATH_EXPRESSION_END = 21,   // )
     // Variables
-    OP_VARIABLE = 22,              // a variable value (starting with $, $VAR)
-    OP_ASSIGNMENT = 23,            // assigning a variable (var=val)
+    OP_VARIABLE = 22,   // a variable value (starting with $, $VAR)
+    OP_ASSIGNMENT = 23, // assigning a variable (var=val)
     // Boolean
-    OP_TRUE = 24,                  // true
-    OP_FALSE = 25,                 // false
+    OP_TRUE = 24,  // true
+    OP_FALSE = 25, // false
     // Expansion
-    OP_HOME_EXPANSION = 26,        // ~
-    OP_GLOB_EXPANSION = 27,        // * or ?
+    OP_HOME_EXPANSION = 26, // ~
+    OP_GLOB_EXPANSION = 27, // * or ?
 };
 
 /* struct Arg
@@ -68,10 +68,10 @@ struct Args {
     struct Arg* head;
 };
 
-struct Args* args_alloc(struct Arena* const restrict arena);
+struct Args* args_alloc(struct Arena* restrict arena);
 
-struct Arg* arg_alloc(uint8_t op, size_t len, char* val, struct Arena* const restrict arena);
+struct Arg* arg_alloc(uint8_t op, size_t len, char* restrict val, struct Arena* restrict arena);
 
-bool arg_set_after(struct Arg* currentNode, struct Arg* nodeToSetAfter);
+bool arg_set_after(struct Arg* restrict currentNode, struct Arg* restrict nodeToSetAfter);
 
-bool arg_set_last(struct Args* args, struct Arg* nodeToSetLast);
+bool arg_set_last(struct Args* restrict args, struct Arg* restrict nodeToSetLast);

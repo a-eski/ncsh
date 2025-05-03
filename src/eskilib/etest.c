@@ -10,7 +10,7 @@ bool test_failed;
 int tests_failed;
 int tests_passed;
 
-void etest_run_internal(const char* function_name, void (*function)(void))
+void etest_run_internal(char* function_name, void (*function)(void))
 {
     test_failed = false;
     printf("%s STARTED.\n", function_name);
