@@ -6,10 +6,12 @@
 #include <glob.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 #include "../args.h"
 #include "../defines.h"
+#include "../env.h"
 #include "../vars.h"
 
 [[nodiscard]]
@@ -294,6 +296,18 @@ void vm_tokenizer_assignment_process(struct Arg* restrict arg, struct Vars* vars
 void vm_tokenizer_variable_process(struct Arg* restrict arg, struct Vars* restrict vars,
                                    struct Arena* restrict scratch_arena)
 {
+    if (estrcmp(arg->val, arg->len, NCSH_PATH_VAR, sizeof(NCSH_PATH_VAR))) {
+
+        debugf("replacing variable %s\n", NCSH_PATH_VAR);
+        return;
+    }
+
+    if (estrcmp(arg->val, arg->len, NCSH_HOME_VAR, sizeof(NCSH_HOME_VAR))) {
+
+        debugf("replacing variable %s\n", NCSH_PATH_VAR);
+        return;
+    }
+
     char* key = arg->val + 1; // skip first value in arg->val (the $)
     debugf("trying to get variable %s\n", key);
     struct Str* val = vars_get(key, vars);

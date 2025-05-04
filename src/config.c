@@ -12,6 +12,7 @@
 #include "config.h"
 #include "debug.h"
 #include "defines.h"
+#include "env.h"
 #include "eskilib/ecolors.h"
 #include "eskilib/efile.h"
 #include "eskilib/eresult.h"
@@ -23,19 +24,11 @@ enum eresult config_home_init(struct Config* restrict config, struct Arena* rest
         return E_FAILURE_NULL_REFERENCE;
     }
 
-    char* home = getenv("XDG_CONFIG_HOME");
-    if (!home) {
-        home = getenv("HOME");
-        if (!home) { // neither HOME or XDG_CONFIG_HOME are available
-            return E_FAILURE_NOT_FOUND;
-        }
-    }
+    env_home_get(&config->home_location, arena);
+    if (!config->home_location.value)
+        return E_FAILURE_NOT_FOUND;
 
-    config->home_location.length = strlen(home);
-    config->home_location.value = arena_malloc(arena, config->home_location.length + 1, char);
-    memcpy(config->home_location.value, home, config->home_location.length + 1);
     debugf("config->home_location.value: %s\n", config->home_location.value);
-
     return E_SUCCESS;
 }
 
@@ -109,7 +102,6 @@ enum eresult config_file_set(struct Config* restrict config, struct Arena* restr
 /* config_path_add
  * The function which handles config items which add values to PATH.
  */
-#define PATH "PATH"
 #define PATH_ADD "PATH+="
 void config_path_add(char* restrict val, int len, struct Arena* restrict scratch_arena)
 {
@@ -122,14 +114,18 @@ void config_path_add(char* restrict val, int len, struct Arena* restrict scratch
     assert(!val[len - 1]);
     debugf("trying to add %s to path\n", val);
 
-    char* path = getenv("PATH");
-    size_t path_len = strlen(path) + 1; // null terminator here becomes : in length calc below
-    char* new_path = arena_malloc(scratch_arena, path_len + (size_t)len, char);
-    memcpy(new_path, path, path_len - 1);
-    new_path[path_len - 1] = ':';
-    memcpy(new_path + path_len, val, (size_t)len);
+    struct Str path = env_path_get();
+    if (!path.value) {
+        debug("could not load path value");
+        return;
+    }
+
+    char* new_path = arena_malloc(scratch_arena, path.length + (size_t)len, char);
+    memcpy(new_path, path.value, path.length - 1);
+    new_path[path.length - 1] = ':';
+    memcpy(new_path + path.length, val, (size_t)len);
     debugf("Got new path to set %s\n", new_path);
-    setenv(PATH, new_path, true);
+    setenv(NCSH_PATH_VAL, new_path, true);
 }
 
 struct User_Alias {

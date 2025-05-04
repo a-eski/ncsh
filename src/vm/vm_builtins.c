@@ -13,6 +13,7 @@
 
 #include "../args.h"
 #include "../defines.h"
+#include "../env.h"
 #include "../eskilib/ecolors.h"
 #include "../readline/history.h"
 #include "../z/z.h"
@@ -390,6 +391,7 @@ void builtins_print_enabled()
     }
 }
 
+// TODO: finish disable implementation
 int builtins_disable(struct Args* restrict args)
 {
     assert(args && args->head && args->head->next && args->head->next->next);
@@ -417,7 +419,7 @@ int builtins_disable(struct Args* restrict args)
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
-#define ENABLE_OPTION_NOT_SUPPORTED_MESSAGE "ncsh enable: command not found, option not supported.\n"
+#define ENABLE_OPTION_NOT_SUPPORTED_MESSAGE "ncsh enable: command not found, options entered not supported.\n"
 int builtins_enable(struct Args* restrict args)
 {
     assert(args && args->head && args->head->next && args->head->next->next);
@@ -446,7 +448,41 @@ int builtins_enable(struct Args* restrict args)
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
+#define EXPORT_OPTION_NOT_SUPPORTED_MESSAGE "ncsh export: command not found, options entered not supported.\n"
+#define EXPORT_OPTIONS_MESSAGE "ncsh export: please pass in at least once argument. export currently supports modifying $PATH and $HOME."
+int builtins_export(struct Args* restrict args)
+{
+    assert(args && args->head && args->head->next);
+
+    // skip the head (no op) and first arg since we know it is 'export'
+    struct Arg* arg = args->head->next;
+    if (!arg->next || !arg->next->val) {
+        if (write(STDOUT_FILENO, EXPORT_OPTION_NOT_SUPPORTED_MESSAGE, sizeof(EXPORT_OPTION_NOT_SUPPORTED_MESSAGE)) == -1) {
+            return NCSH_COMMAND_EXIT_FAILURE;
+        }
+        return NCSH_COMMAND_FAILED_CONTINUE;
+    }
+    arg = arg->next;
+
+    if (estrcmp(arg->val, arg->len, NCSH_PATH_VAR, sizeof(NCSH_PATH_VAR))) {
+        puts("export $PATH found");
+    }
+    else if (estrcmp(arg->val, arg->len, NCSH_HOME_VAR, sizeof(NCSH_HOME_VAR))) {
+        puts("export $HOME found");
+    }
+    else {
+        if (write(STDOUT_FILENO, EXPORT_OPTION_NOT_SUPPORTED_MESSAGE, sizeof(EXPORT_OPTION_NOT_SUPPORTED_MESSAGE)) == -1) {
+            return NCSH_COMMAND_EXIT_FAILURE;
+        }
+    }
+
+    return NCSH_COMMAND_SUCCESS_CONTINUE;
+}
+
+// TODO: implement declare
+
 // NOTE: set is not implemented.
+// TODO: finish set/unset implementations
 [[nodiscard]]
 int builtins_set_e()
 {
