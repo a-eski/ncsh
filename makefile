@@ -188,7 +188,7 @@ test_fzf tf:
 
 .PHONY: test_config, tc
 test_config tc:
-	$(CC) $(STD) $(debug_flags) -DNCSH_HISTORY_TEST ./src/arena.c ./src/eskilib/etest.c ./src/eskilib/efile.c ./src/config.c ./tests/config_tests.c -o ./bin/config_tests
+	$(CC) $(STD) $(debug_flags) -DNCSH_HISTORY_TEST ./src/arena.c ./src/eskilib/etest.c ./src/eskilib/efile.c ./src/env.c ./src/config.c ./tests/config_tests.c -o ./bin/config_tests
 	./bin/config_tests
 
 .PHONY: test_readline, tr
@@ -213,7 +213,7 @@ test_vars tv:
 
 .PHONY: test_vm, tvm
 test_vm tvm:
-	$(CC) $(STD) $(debug_flags) -DNCSH_VM_TEST ./src/arena.c ./src/args.c ./src/parser.c ./src/eskilib/efile.c ./src/readline/hashset.c ./src/vars.c ./src/readline/history.c ./src/z/fzf.c ./src/z/z.c ./src/config.c ./src/vm/vm.c ./src/vm/vm_tokenizer.c ./src/vm/vm_builtins.c ./src/eskilib/etest.c ./tests/vm_tests.c -o ./bin/vm_tests
+	$(CC) $(STD) $(debug_flags) -DNCSH_VM_TEST ./src/arena.c ./src/args.c ./src/parser.c ./src/eskilib/efile.c ./src/readline/hashset.c ./src/vars.c ./src/readline/history.c ./src/z/fzf.c ./src/z/z.c ./src/env.c ./src/config.c ./src/vm/vm.c ./src/vm/vm_tokenizer.c ./src/vm/vm_builtins.c ./src/eskilib/etest.c ./tests/vm_tests.c -o ./bin/vm_tests
 	./bin/vm_tests
 
 .PHONY: test_hashset, ths

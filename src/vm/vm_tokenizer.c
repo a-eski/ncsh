@@ -296,30 +296,40 @@ void vm_tokenizer_assignment_process(struct Arg* restrict arg, struct Vars* vars
 void vm_tokenizer_variable_process(struct Arg* restrict arg, struct Vars* restrict vars,
                                    struct Arena* restrict scratch_arena)
 {
+    struct Str var;
     if (estrcmp(arg->val, arg->len, NCSH_PATH_VAR, sizeof(NCSH_PATH_VAR))) {
 
-        debugf("replacing variable %s\n", NCSH_PATH_VAR);
-        return;
+        debug("replacing variable $PATH\n");
+        var = env_path_get();
+        if (!var.value || !*var.value) {
+            puts("ncsh: could not load path to replace $PATH variable.");
+            return;
+        }
     }
+    else if (estrcmp(arg->val, arg->len, NCSH_HOME_VAR, sizeof(NCSH_HOME_VAR))) {
 
-    if (estrcmp(arg->val, arg->len, NCSH_HOME_VAR, sizeof(NCSH_HOME_VAR))) {
-
-        debugf("replacing variable %s\n", NCSH_PATH_VAR);
-        return;
+        debug("replacing variable $HOME\n");
+        env_home_get(&var, scratch_arena);
+        if (!var.value || !*var.value) {
+            puts("ncsh: could not load path to replace $PATH variable.");
+            return;
+        }
     }
-
-    char* key = arg->val + 1; // skip first value in arg->val (the $)
-    debugf("trying to get variable %s\n", key);
-    struct Str* val = vars_get(key, vars);
-    if (!val) {
-        printf("ncsh: variable with name '%s' did not have a value associated with it.\n", key);
-        return;
+    else {
+        char* key = arg->val + 1; // skip first value in arg->val (the $)
+        debugf("trying to get variable %s\n", key);
+        struct Str* val = vars_get(key, vars);
+        if (!val || !val->value || !*val->value) {
+            printf("ncsh: variable with name '%s' did not have a value associated with it.\n", key);
+            return;
+        }
+        var = *val;
     }
 
     // replace the variable name with the value of the variable
-    arg->val = arena_realloc(scratch_arena, val->length, char, arg->val, arg->len);
-    memcpy(arg->val, val->value, val->length);
-    arg->len = val->length;
+    arg->val = arena_realloc(scratch_arena, var.length, char, arg->val, arg->len);
+    memcpy(arg->val, var.value, var.length);
+    arg->len = var.length;
     arg->op = OP_CONSTANT; // replace OP_VARIABLE to OP_CONSTANT so VM sees it as a regular constant value
     debugf("replaced variable with value %s %zu\n", arg->val, arg->len);
 }

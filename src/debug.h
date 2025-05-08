@@ -18,7 +18,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-#include "eskilib/estr.h"
+#include "eskilib/str.h"
 #include "parser.h"
 
 #define debug(buf) debug_internal(__FILE__, __LINE__, __func__, buf)
@@ -29,14 +29,14 @@
 #define debug_argsv(argsc, argsv) debug_argsv_internal(__FILE__, __LINE__, __func__, argsc, argsv)
 #define debug_string(str, name) debug_string_internal(__FILE__, __LINE__, __func__, str, name)
 
-static inline void debug_internal(char* file, int line, char* func, char* buffer)
+static inline void debug_internal(const char* file, const int line, const char* func, char* buffer)
 {
     fprintf(stderr, "%s %s:%d ", file, func, line);
     fprintf(stderr, "%s\n", buffer);
     fflush(stderr);
 }
 
-static inline void debugf_internal(char* file, int line, char* func, char* fmt, ...)
+static inline void debugf_internal(const char* file, const int line, const char* func, char* fmt, ...)
 {
     va_list args;
     va_start(args, format);
@@ -46,7 +46,7 @@ static inline void debugf_internal(char* file, int line, char* func, char* fmt, 
     fflush(stderr);
 }
 
-static inline void debug_line_internal(char* file, int line, char* func, char* buffer, size_t buf_position,
+static inline void debug_line_internal(const char* file, const int line, const char* func, char* buffer, size_t buf_position,
                                        size_t max_buf_position)
 {
     fprintf(stderr, "%s %s:%d ", file, func, line);
@@ -58,7 +58,7 @@ static inline void debug_line_internal(char* file, int line, char* func, char* b
     fflush(stderr);
 }
 
-static inline void debug_parser_input_internal(char* file, int line, char* func, char* buffer, size_t buf_position)
+static inline void debug_parser_input_internal(const char* file, const int line, const char* func, char* buffer, size_t buf_position)
 {
     fprintf(stderr, "%s %s:%d ", file, func, line);
     fprintf(stderr, "buffer: %s\n", buffer);
@@ -67,7 +67,7 @@ static inline void debug_parser_input_internal(char* file, int line, char* func,
     fflush(stderr);
 }
 
-static inline void debug_args_internal(char* file, int line, char* func, struct Args* args)
+static inline void debug_args_internal(const char* file, const int line, const char* func, struct Args* args)
 {
     fprintf(stderr, "%s %s:%d ", file, func, line);
     fprintf(stderr, "args.count: %lu\n", args->count);
@@ -85,7 +85,7 @@ static inline void debug_args_internal(char* file, int line, char* func, struct 
     fflush(stderr);
 }
 
-static inline void debug_argsv_internal(char* file, int line, char* func, int argc, char** argv)
+static inline void debug_argsv_internal(const char* file, const int line, const char* func, int argc, char** argv)
 {
     for (int i = 0; i < argc; ++i) {
         fprintf(stderr, "%s %s:%d ", file, func, line);
@@ -94,7 +94,7 @@ static inline void debug_argsv_internal(char* file, int line, char* func, int ar
     fflush(stderr);
 }
 
-static inline void debug_string_internal(char* file, int line, char* func, struct Str string, char* name)
+static inline void debug_string_internal(const char* file, const int line, const char* func, struct Str string, char* name)
 {
     fprintf(stderr, "%s %s:%d ", file, func, line);
     fprintf(stderr, "%s value: %s\n", name, string.value);

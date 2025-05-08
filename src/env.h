@@ -16,5 +16,3 @@
 void env_home_get(struct Str* restrict output, struct Arena* restrict arena);
 
 struct Str env_path_get();
-
-void env_path_add(char* restrict val, size_t len);

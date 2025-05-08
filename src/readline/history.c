@@ -180,7 +180,7 @@ enum eresult history_clean(struct History* restrict history, struct Arena* restr
     printf("ncsh history: starting to clean history with %zu entries.\n", history->count);
 
     struct Hashset hset = {0};
-    hashset_malloc(&scratch_arena, &hset);
+    hashset_malloc(history->count / 2, &scratch_arena, &hset);
 
     FILE* file = fopen(history->file, "w");
     if (!file) {

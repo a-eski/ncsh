@@ -1,4 +1,5 @@
-/* Copyright ncsh by Alex Eski 2024 */
+/* Copyright ncsh (C) by Alex Eski 2024 */
+/* config.h: interact and deal with .ncshrc and other configurations for the shell */
 
 #pragma once
 
@@ -19,6 +20,6 @@ struct Config {
     struct Str config_file;
 };
 
-enum eresult config_init(struct Config* restrict config, struct Arena* restrict arena, struct Arena scratch_arena);
+enum eresult config_init(struct Config* restrict config, struct Arena* restrict arena);
 
 struct Str config_alias_check(char* restrict buffer, size_t buf_len);

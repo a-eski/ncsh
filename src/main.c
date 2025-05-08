@@ -112,7 +112,7 @@ char* init(struct Shell* restrict shell)
         return NULL;
     }
 
-    if (config_init(&shell->config, &shell->arena, shell->scratch_arena) != E_SUCCESS) {
+    if (config_init(&shell->config, &shell->arena) != E_SUCCESS) {
         return NULL;
     }
 

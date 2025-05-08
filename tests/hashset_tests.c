@@ -10,7 +10,7 @@ void hashset_malloc_default_size_test()
     SCRATCH_ARENA_TEST_SETUP;
 
     struct Hashset hset;
-    hashset_malloc(&scratch_arena, &hset);
+    hashset_malloc(0, &scratch_arena, &hset);
 
     eassert(hset.capacity > 0);
     eassert(hset.size == 0);
@@ -24,7 +24,7 @@ void hashset_add_one_test()
     SCRATCH_ARENA_TEST_SETUP;
 
     struct Hashset hmap;
-    hashset_malloc(&scratch_arena, &hmap);
+    hashset_malloc(0, &scratch_arena, &hmap);
 
     char* key = "world";
     struct Str val = {.value = key, .length = strlen(key) + 1};
@@ -45,7 +45,7 @@ void hashset_add_multiple_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
     struct Hashset hset;
-    hashset_malloc(&scratch_arena, &hset);
+    hashset_malloc(0, &scratch_arena, &hset);
 
     char* key1 = "hello";
     struct Str val1 = {.value = key1, .length = strlen(key1) + 1};
@@ -77,7 +77,7 @@ void hashset_add_duplicate_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
     struct Hashset hset;
-    hashset_malloc(&scratch_arena, &hset);
+    hashset_malloc(0, &scratch_arena, &hset);
 
     char* key = "hello";
     struct Str val = {.value = key, .length = strlen(key) + 1};

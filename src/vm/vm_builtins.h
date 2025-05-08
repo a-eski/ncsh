@@ -53,7 +53,7 @@ int builtins_enable(struct Args* restrict args);
 #define NCSH_DISABLE "disable"
 int builtins_disable(struct Args* restrict args);
 
-#define NCSH_EXPORT "export"
+#define NCSH_EXPORT "export" // not implemented
 int builtins_export(struct Args* restrict args);
 
 #define NCSH_SET "set" // not implemented
