@@ -1,6 +1,12 @@
 /* Copyright ncsh (C) by Alex Eski 2024 */
 
-#define _POSIX_C_SOURCE 200809L
+#ifndef _DEFAULT_SOURCE
+#   define _DEFAULT_SOURCE
+#endif /* ifndef _DEFAULT_SOURCE */
+#ifndef _POXIC_C_SOURCE
+#   define _POSIX_C_SOURCE 200809L
+#endif /* ifndef _POXIC_C_SOURCE */
+
 #include <assert.h>
 #include <fcntl.h>
 #include <linux/limits.h>
@@ -13,6 +19,7 @@
 
 #include "../args.h"
 #include "../defines.h"
+#include "../env.h"
 #include "../eskilib/ecolors.h"
 #include "../readline/history.h"
 #include "../z/z.h"
@@ -34,11 +41,11 @@ int builtins_z(struct z_Database* restrict z_db, struct Args* restrict args, str
         return NCSH_COMMAND_SUCCESS_CONTINUE;
     }
 
-    assert(args->head && args->head->next && args->head->next->next);
+    assert(args->head && args->head->next);
 
     // skip the head (no op) and first arg since we know it is 'z'
     struct Arg* arg = args->head->next->next;
-    if (args->count == 2) {
+    if (args->count <= 2) {
         assert(arg->val);
 
         // z print
@@ -98,10 +105,17 @@ int builtins_history(struct History* restrict history, struct Args* restrict arg
         return history_command_display(history);
     }
 
-    assert(args->head && args->head->next && args->head->next->next);
+    assert(args->head && args->head->next);
 
     // skip the head (no op) and first arg since we know it is 'history'
     struct Arg* arg = args->head->next->next;
+    if (!arg || !arg->val) {
+        if (write(STDOUT_FILENO, HISTORY_COMMAND_NOT_FOUND_MESSAGE, sizeof(HISTORY_COMMAND_NOT_FOUND_MESSAGE)) == -1) {
+            return NCSH_COMMAND_EXIT_FAILURE;
+        }
+        return NCSH_COMMAND_FAILED_CONTINUE;
+    }
+
     if (args->count == 2) {
         assert(arg->val);
 
@@ -158,13 +172,19 @@ int builtins_echo(struct Args* restrict args)
         return NCSH_COMMAND_SUCCESS_CONTINUE;
     }
 
-    assert(args->head && args->head->next && args->head->next->next);
+    assert(args->head && args->head->next);
+    struct Arg* arg = args->head->next;
+    while (arg && !estrcmp(arg->val, arg->len, NCSH_ECHO, sizeof(NCSH_ECHO))) {
+        arg = arg->next;
+    }
+    arg = arg->next;
+
+    if (!arg || !arg->val) {
+        puts("");
+        return NCSH_COMMAND_SUCCESS_CONTINUE;
+    }
 
     bool echo_add_newline = true;
-
-    assert(args && args->head && args->head->next && args->head->next->next);
-    // skip the head (no op) and first arg since we know it is 'echo'
-    struct Arg* arg = args->head->next->next;
     struct Arg* echo_arg = NULL;
     // process options for echo
     while (arg->next) {
@@ -182,7 +202,7 @@ int builtins_echo(struct Args* restrict args)
     }
 
     // send output for echo
-    arg = echo_arg ? echo_arg : args->head->next->next;
+    arg = echo_arg ? echo_arg : arg;
     while (arg->next) {
         printf("%s ", arg->val);
         arg = arg->next;
@@ -283,11 +303,11 @@ int builtins_help(struct Args* restrict args)
 [[nodiscard]]
 int builtins_cd(struct Args* restrict args)
 {
-    assert(args && args->head && args->head->next && args->head->next->next);
+    assert(args && args->head && args->head->next);
 
     // skip the head (no op) and first arg since we know it is 'cd'
     struct Arg* arg = args->head->next->next;
-    if (!arg->val) {
+    if (!arg || !arg->val) {
         char* home = getenv("HOME");
         if (!home) {
             fputs("ncsh: could not change directory.\n", stderr);
@@ -327,11 +347,11 @@ int builtins_pwd(struct Args* restrict args)
 [[nodiscard]]
 int builtins_kill(struct Args* restrict args)
 {
-    assert(args && args->head && args->head->next && args->head->next->next);
+    assert(args && args->head && args->head->next);
 
     // skip the head (no op) and first arg since we know it is 'kill'
     struct Arg* arg = args->head->next->next;
-    if (!arg->val) {
+    if (!arg || !arg->val) {
         if (write(STDOUT_FILENO, KILL_NOTHING_TO_KILL_MESSAGE, sizeof(KILL_NOTHING_TO_KILL_MESSAGE) - 1) == -1) {
             return NCSH_COMMAND_EXIT_FAILURE;
         }
@@ -390,12 +410,16 @@ void builtins_print_enabled()
     }
 }
 
+// TODO: finish disable implementation
 int builtins_disable(struct Args* restrict args)
 {
-    assert(args && args->head && args->head->next && args->head->next->next);
+    assert(args && args->head && args->head->next);
 
     // skip the head (no op) and first arg since we know it is 'enable' or 'disable'
     struct Arg* arg = args->head->next->next;
+    if (!arg || !arg->val) {
+        builtins_print();
+    }
 
     // check if called by enabled or disabled
     // (enabled has extra option to specify disable, so start at 2 instead of 1 in that case,
@@ -417,14 +441,14 @@ int builtins_disable(struct Args* restrict args)
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
-#define ENABLE_OPTION_NOT_SUPPORTED_MESSAGE "ncsh enable: command not found, option not supported.\n"
+#define ENABLE_OPTION_NOT_SUPPORTED_MESSAGE "ncsh enable: command not found, options entered not supported.\n"
 int builtins_enable(struct Args* restrict args)
 {
-    assert(args && args->head && args->head->next && args->head->next->next);
+    assert(args && args->head && args->head->next);
 
     // skip the head (no op) and first arg since we know it is 'enable'
     struct Arg* arg = args->head->next->next;
-    if (!arg->val) {
+    if (!arg || !arg->val) {
         builtins_print();
         return NCSH_COMMAND_SUCCESS_CONTINUE;
     }
@@ -446,7 +470,40 @@ int builtins_enable(struct Args* restrict args)
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
+#define EXPORT_OPTION_NOT_SUPPORTED_MESSAGE "ncsh export: command not found, options entered not supported.\n"
+#define EXPORT_OPTIONS_MESSAGE "ncsh export: please pass in at least once argument. export currently supports modifying $PATH and $HOME."
+int builtins_export(struct Args* restrict args)
+{
+    assert(args && args->head && args->head->next);
+
+    // skip the head (no op) and first arg since we know it is 'export'
+    struct Arg* arg = args->head->next->next;
+    if (!arg || !arg->val) {
+        if (write(STDOUT_FILENO, EXPORT_OPTION_NOT_SUPPORTED_MESSAGE, sizeof(EXPORT_OPTION_NOT_SUPPORTED_MESSAGE)) == -1) {
+            return NCSH_COMMAND_EXIT_FAILURE;
+        }
+        return NCSH_COMMAND_FAILED_CONTINUE;
+    }
+
+    if (estrcmp(arg->val, arg->len, NCSH_PATH_VAR, sizeof(NCSH_PATH_VAR))) {
+        puts("export $PATH found");
+    }
+    else if (estrcmp(arg->val, arg->len, NCSH_HOME_VAR, sizeof(NCSH_HOME_VAR))) {
+        puts("export $HOME found");
+    }
+    else {
+        if (write(STDOUT_FILENO, EXPORT_OPTION_NOT_SUPPORTED_MESSAGE, sizeof(EXPORT_OPTION_NOT_SUPPORTED_MESSAGE)) == -1) {
+            return NCSH_COMMAND_EXIT_FAILURE;
+        }
+    }
+
+    return NCSH_COMMAND_SUCCESS_CONTINUE;
+}
+
+// TODO: implement declare
+
 // NOTE: set is not implemented.
+// TODO: finish set/unset implementations
 [[nodiscard]]
 int builtins_set_e()
 {
@@ -459,11 +516,11 @@ int builtins_set_e()
 [[nodiscard]]
 int builtins_set(struct Args* restrict args)
 {
-    assert(args && args->head && args->head->next && args->head->next->next);
+    assert(args && args->head && args->head->next);
 
     // skip the head (no op) and first arg since we know it is 'set'
     struct Arg* arg = args->head->next->next;
-    if (!arg->val) {
+    if (!arg || !arg->val) {
         if (write(STDOUT_FILENO, SET_NOTHING_TO_SET_MESSAGE, sizeof(SET_NOTHING_TO_SET_MESSAGE) - 1) == -1) {
             return NCSH_COMMAND_EXIT_FAILURE;
         }
@@ -496,11 +553,11 @@ int builtins_set(struct Args* restrict args)
 [[nodiscard]]
 int builtins_unset(struct Args* restrict args)
 {
-    assert(args && args->head && args->head->next && args->head->next->next);
+    assert(args && args->head && args->head->next);
 
     // skip the head (no op) and first arg since we know it is 'unset'
     struct Arg* arg = args->head->next->next;
-    if (!arg->val) {
+    if (!arg || !arg->val) {
         if (write(STDOUT_FILENO, UNSET_NOTHING_TO_UNSET_MESSAGE, sizeof(UNSET_NOTHING_TO_UNSET_MESSAGE) - 1) == -1) {
             return NCSH_COMMAND_EXIT_FAILURE;
         }

@@ -49,8 +49,12 @@ int builtins_version(struct Args* restrict args);
 #define NCSH_ENABLE "enable"
 int builtins_enable(struct Args* restrict args);
 
+// TODO: finish disable implementation
 #define NCSH_DISABLE "disable"
 int builtins_disable(struct Args* restrict args);
+
+#define NCSH_EXPORT "export" // not implemented
+int builtins_export(struct Args* restrict args);
 
 #define NCSH_SET "set" // not implemented
 int builtins_set(struct Args* restrict args);
@@ -70,8 +74,9 @@ enum Builtins_Disabled : long {
     BF_VERSION =     1 << 6,
     BF_ENABLE =      1 << 7,
     BF_DISABLE =     1 << 8,
-    BF_SET =         1 << 9,
-    BF_UNSET =       1 << 10,
+    BF_EXPORT =      1 << 9,
+    BF_SET =         1 << 10,
+    BF_UNSET =       1 << 11,
 };
 // clang-format on
 
@@ -94,6 +99,7 @@ static const struct Builtin builtins[] = {
     {.flag = BF_VERSION, .length = sizeof(NCSH_VERSION_CMD), .value = NCSH_VERSION_CMD, .func = &builtins_version},
     {.flag = BF_ENABLE, .length = sizeof(NCSH_ENABLE), .value = NCSH_ENABLE, .func = &builtins_enable},
     {.flag = BF_DISABLE, .length = sizeof(NCSH_DISABLE), .value = NCSH_DISABLE, .func = &builtins_disable},
+    {.flag = BF_EXPORT, .length = sizeof(NCSH_EXPORT), .value = NCSH_EXPORT, .func = &builtins_export},
     {.flag = BF_SET, .length = sizeof(NCSH_SET), .value = NCSH_SET, .func = &builtins_set},
     {.flag = BF_UNSET, .length = sizeof(NCSH_UNSET), .value = NCSH_UNSET, .func = &builtins_unset},
 };

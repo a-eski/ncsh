@@ -6,10 +6,12 @@
 #include <glob.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 #include "../args.h"
 #include "../defines.h"
+#include "../env.h"
 #include "../vars.h"
 
 [[nodiscard]]
@@ -294,18 +296,40 @@ void vm_tokenizer_assignment_process(struct Arg* restrict arg, struct Vars* vars
 void vm_tokenizer_variable_process(struct Arg* restrict arg, struct Vars* restrict vars,
                                    struct Arena* restrict scratch_arena)
 {
-    char* key = arg->val + 1; // skip first value in arg->val (the $)
-    debugf("trying to get variable %s\n", key);
-    struct Str* val = vars_get(key, vars);
-    if (!val) {
-        printf("ncsh: variable with name '%s' did not have a value associated with it.\n", key);
-        return;
+    struct Str var;
+    if (estrcmp(arg->val, arg->len, NCSH_PATH_VAR, sizeof(NCSH_PATH_VAR))) {
+
+        debug("replacing variable $PATH\n");
+        var = env_path_get();
+        if (!var.value || !*var.value) {
+            puts("ncsh: could not load path to replace $PATH variable.");
+            return;
+        }
+    }
+    else if (estrcmp(arg->val, arg->len, NCSH_HOME_VAR, sizeof(NCSH_HOME_VAR))) {
+
+        debug("replacing variable $HOME\n");
+        env_home_get(&var, scratch_arena);
+        if (!var.value || !*var.value) {
+            puts("ncsh: could not load path to replace $PATH variable.");
+            return;
+        }
+    }
+    else {
+        char* key = arg->val + 1; // skip first value in arg->val (the $)
+        debugf("trying to get variable %s\n", key);
+        struct Str* val = vars_get(key, vars);
+        if (!val || !val->value || !*val->value) {
+            printf("ncsh: variable with name '%s' did not have a value associated with it.\n", key);
+            return;
+        }
+        var = *val;
     }
 
     // replace the variable name with the value of the variable
-    arg->val = arena_realloc(scratch_arena, val->length, char, arg->val, arg->len);
-    memcpy(arg->val, val->value, val->length);
-    arg->len = val->length;
+    arg->val = arena_realloc(scratch_arena, var.length, char, arg->val, arg->len);
+    memcpy(arg->val, var.value, var.length);
+    arg->len = var.length;
     arg->op = OP_CONSTANT; // replace OP_VARIABLE to OP_CONSTANT so VM sees it as a regular constant value
     debugf("replaced variable with value %s %zu\n", arg->val, arg->len);
 }
@@ -331,6 +355,7 @@ int vm_tokenizer_ops_process(struct Args* restrict args, struct Tokens* restrict
     assert(scratch_arena);
 
     struct Arg* arg = args->head->next;
+    struct Arg* prev = NULL;
     tokens->is_background_job = false;
     while (arg) {
         switch (arg->op) {
@@ -395,6 +420,14 @@ int vm_tokenizer_ops_process(struct Args* restrict args, struct Tokens* restrict
         }
         case OP_ASSIGNMENT: {
             vm_tokenizer_assignment_process(arg, &shell->vars, &shell->arena);
+            if (prev && arg) {
+                arg_set_after(arg->next, prev);
+                prev = arg->next;
+                if (arg->next->next) {
+                    arg = arg->next->next;
+                    continue;
+                }
+            }
             break;
         }
         case OP_VARIABLE: {
@@ -406,6 +439,7 @@ int vm_tokenizer_ops_process(struct Args* restrict args, struct Tokens* restrict
             break;
         }
         }
+        prev = arg;
         arg = arg->next;
     }
     ++tokens->number_of_pipe_commands;

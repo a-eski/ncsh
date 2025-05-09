@@ -1,6 +1,13 @@
-/* Copyright ncsh (C) by Alex Eski 2025 */
+/* Copyright ncsh (C) by Alex Eski 2024 */
+/* config.h: interact and deal with .ncshrc and other configurations for the shell */
 
-#define _POSIX_C_SOURCE 200809L
+#ifndef _DEFAULT_SOURCE
+#   define _DEFAULT_SOURCE
+#endif /* ifndef _DEFAULT_SOURCE */
+#ifndef _POXIC_C_SOURCE
+#   define _POSIX_C_SOURCE 200809L
+#endif /* ifndef _POXIC_C_SOURCE */
+
 #include <assert.h>
 #include <linux/limits.h>
 #include <stdlib.h>
@@ -12,6 +19,7 @@
 #include "config.h"
 #include "debug.h"
 #include "defines.h"
+#include "env.h"
 #include "eskilib/ecolors.h"
 #include "eskilib/efile.h"
 #include "eskilib/eresult.h"
@@ -23,19 +31,14 @@ enum eresult config_home_init(struct Config* restrict config, struct Arena* rest
         return E_FAILURE_NULL_REFERENCE;
     }
 
-    char* home = getenv("XDG_CONFIG_HOME");
-    if (!home) {
-        home = getenv("HOME");
-        if (!home) { // neither HOME or XDG_CONFIG_HOME are available
-            return E_FAILURE_NOT_FOUND;
-        }
-    }
+    env_home_get(&config->home_location, arena);
+    if (!config->home_location.value)
+        return E_FAILURE_NOT_FOUND;
 
-    config->home_location.length = strlen(home);
-    config->home_location.value = arena_malloc(arena, config->home_location.length + 1, char);
-    memcpy(config->home_location.value, home, config->home_location.length + 1);
+    // TODO: fix weirdness with including null terminator in count but not in other places.
+    --config->home_location.length;
+
     debugf("config->home_location.value: %s\n", config->home_location.value);
-
     return E_SUCCESS;
 }
 
@@ -106,32 +109,6 @@ enum eresult config_file_set(struct Config* restrict config, struct Arena* restr
     return E_SUCCESS;
 }
 
-/* config_path_add
- * The function which handles config items which add values to PATH.
- */
-#define PATH "PATH"
-#define PATH_ADD "PATH+="
-void config_path_add(char* restrict val, int len, struct Arena* restrict scratch_arena)
-{
-    assert(val);
-    assert(len > 0);
-    if (len <= 0) {
-        return;
-    }
-
-    assert(!val[len - 1]);
-    debugf("trying to add %s to path\n", val);
-
-    char* path = getenv("PATH");
-    size_t path_len = strlen(path) + 1; // null terminator here becomes : in length calc below
-    char* new_path = arena_malloc(scratch_arena, path_len + (size_t)len, char);
-    memcpy(new_path, path, path_len - 1);
-    new_path[path_len - 1] = ':';
-    memcpy(new_path + path_len, val, (size_t)len);
-    debugf("Got new path to set %s\n", new_path);
-    setenv(PATH, new_path, true);
-}
-
 struct User_Alias {
     struct Str* alias;
     struct Str* actual_command;
@@ -142,7 +119,6 @@ size_t user_aliases_count;
 size_t user_aliases_cap;
 struct User_Alias* user_aliases;
 
-#define ALIAS_ADD "ALIAS "
 void config_alias_add(char* restrict val, size_t len, struct Arena* restrict arena)
 {
     assert(val);
@@ -193,7 +169,9 @@ void config_alias_add(char* restrict val, size_t len, struct Arena* restrict are
 /* config_process
  * Iterate through the .ncshrc config file and perform any actions needed.
  */
-void config_process(FILE* restrict file, struct Arena* restrict arena, struct Arena* restrict scratch_arena)
+#define PATH_ADD "PATH+="
+#define ALIAS_ADD "ALIAS "
+void config_process(FILE* restrict file, struct Arena* restrict arena)
 {
     user_aliases_count = 0;
 
@@ -202,12 +180,13 @@ void config_process(FILE* restrict file, struct Arena* restrict arena, struct Ar
     while ((buffer_length = efgets(buffer, sizeof(buffer), file)) != EOF) {
         // Add to path (6 because PATH+=)
         if (buffer_length > 6 && !memcmp(buffer, PATH_ADD, sizeof(PATH_ADD) - 1)) {
-            assert(buffer + 6);
-            config_path_add(buffer + 6, buffer_length - 6, scratch_arena);
+            assert(buffer + 6 && *(buffer + 6));
+            debugf("adding to PATH: %s\n", buffer + 6);
+            putenv(buffer + 6);
         }
         // Aliasing
         else if (buffer_length > 6 && !memcmp(buffer, ALIAS_ADD, sizeof(ALIAS_ADD) - 1)) {
-            assert(buffer + 6);
+            assert(buffer + 6 && *(buffer + 6));
             config_alias_add(buffer + 6, (size_t)(buffer_length - 6), arena);
         }
 
@@ -222,10 +201,8 @@ void config_process(FILE* restrict file, struct Arena* restrict arena, struct Ar
  * Returns: enum eresult, E_SUCCESS if config file loaded or user doesn't want one.
  */
 [[nodiscard]]
-enum eresult config_file_load(struct Config* restrict config, struct Arena* restrict arena,
-                              struct Arena* restrict scratch_arena)
+enum eresult config_file_load(struct Config* restrict config, struct Arena* restrict arena)
 {
-
     FILE* file = fopen(config->config_file.value, "r");
     if (!file || ferror(file)) {
         printf("ncsh: would you like to create a config file '%s'? [Y/n]: ", config->config_file.value);
@@ -250,7 +227,7 @@ enum eresult config_file_load(struct Config* restrict config, struct Arena* rest
         return E_SUCCESS;
     }
 
-    config_process(file, arena, scratch_arena);
+    config_process(file, arena);
 
     fclose(file);
     return E_SUCCESS;
@@ -262,7 +239,7 @@ enum eresult config_file_load(struct Config* restrict config, struct Arena* rest
  * Returns: enum eresult, E_SUCCESS is successful
  */
 [[nodiscard]]
-enum eresult config_init(struct Config* restrict config, struct Arena* restrict arena, struct Arena scratch_arena)
+enum eresult config_init(struct Config* restrict config, struct Arena* restrict arena)
 {
     assert(arena);
 
@@ -279,7 +256,7 @@ enum eresult config_init(struct Config* restrict config, struct Arena* restrict 
         return result;
     }
 
-    if ((result = config_file_load(config, arena, &scratch_arena)) != E_SUCCESS) {
+    if ((result = config_file_load(config, arena)) != E_SUCCESS) {
         return result;
     }
 

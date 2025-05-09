@@ -14,6 +14,7 @@
 
 #include "arena.c"
 #include "args.c"
+#include "env.c"
 #include "config.c"
 #include "main.c"
 #include "noninteractive.c"

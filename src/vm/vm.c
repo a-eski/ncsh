@@ -416,15 +416,34 @@ void vm_status_check()
 
 struct Arg* vm_buffer_set_command_next(struct Arg* restrict arg, struct Vm_Data* restrict vm)
 {
-    size_t vm_buf_pos = 0;
-    /*if (arg->op == OP_ASSIGNMENT) {
-        arg = arg->next;
-        if (arg->op == OP_OR || arg->op == OP_AND) {
-            arg = arg->next;
-        }
-    }*/
+    if (!arg) {
+        vm->buffer[0] = NULL;
+        vm->args_end = true;
+    }
 
-    while (arg->val && arg->op == OP_CONSTANT) {
+    if (arg->op == OP_ASSIGNMENT) {
+        arg = arg->next;
+        if (!arg) {
+            vm->buffer[0] = NULL;
+            vm->args_end = true;
+        }
+    }
+
+    if (arg && (arg->op == OP_AND || arg->op == OP_OR)) {
+        arg = arg->next;
+        if (!arg) {
+            vm->buffer[0] = NULL;
+            vm->args_end = true;
+        }
+    }
+
+    if (!arg) {
+        vm->buffer[0] = NULL;
+        vm->args_end = true;
+    }
+
+    size_t vm_buf_pos = 0;
+    while (arg && arg->val && arg->op == OP_CONSTANT) {
         assert(arg->val[arg->len - 1] == '\0');
         vm->buffer[vm_buf_pos] = arg->val;
         vm->buffer_len[vm_buf_pos] = arg->len;
@@ -439,8 +458,6 @@ struct Arg* vm_buffer_set_command_next(struct Arg* restrict arg, struct Vm_Data*
 
         ++vm_buf_pos;
         arg = arg->next;
-        /*if (arg->op == OP_ASSIGNMENT)
-            arg = arg->next;*/
     }
 
     if (!vm->args_end) {
@@ -450,6 +467,7 @@ struct Arg* vm_buffer_set_command_next(struct Arg* restrict arg, struct Vm_Data*
     }
 
     vm->buffer[vm_buf_pos] = NULL;
+
     return arg;
 }
 

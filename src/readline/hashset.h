@@ -10,13 +10,20 @@
 
 #define HASHSET_DEFAULT_CAPACITY 100
 
+struct Hashset_Entry {
+    char* key;
+    struct Str value;
+};
+
 struct Hashset {
     size_t size;
     size_t capacity;
-    uint64_t* entries;
+    struct Hashset_Entry* entries;
 };
 
-void hashset_malloc(struct Arena* restrict arena, struct Hashset* restrict hset);
+void hashset_malloc(size_t capacity, struct Arena* restrict arena, struct Hashset* restrict hset);
+
+struct Str hashset_get(char* restrict key, struct Hashset* restrict hset);
 
 bool hashset_exists(char* restrict key, struct Hashset* restrict hset);
 
