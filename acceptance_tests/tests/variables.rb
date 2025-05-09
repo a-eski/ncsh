@@ -89,7 +89,7 @@ def variables_tests(row)
   row = quoted_variables_test(row)
   row = command_variables_test(row)
   # row = combined_variables_test(row)
-  # row = and_variables_test(row)
+  row = and_variables_test(row)
   # row =
   multiple_variables_test(row)
   # variable_execution_test(row)

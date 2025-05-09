@@ -10,6 +10,7 @@
 
 #include "arena.h"
 #include "args.h"
+#include "configurables.h"
 #include "debug.h"
 #include "defines.h"
 #include "parser.h"

@@ -173,8 +173,12 @@ int builtins_echo(struct Args* restrict args)
     }
 
     assert(args->head && args->head->next);
-    // skip the head (no op) and first arg since we know it is 'echo'
-    struct Arg* arg = args->head->next->next;
+    struct Arg* arg = args->head->next;
+    while (arg && !estrcmp(arg->val, arg->len, NCSH_ECHO, sizeof(NCSH_ECHO))) {
+        arg = arg->next;
+    }
+    arg = arg->next;
+
     if (!arg || !arg->val) {
         puts("");
         return NCSH_COMMAND_SUCCESS_CONTINUE;
@@ -198,7 +202,7 @@ int builtins_echo(struct Args* restrict args)
     }
 
     // send output for echo
-    arg = echo_arg ? echo_arg : args->head->next->next;
+    arg = echo_arg ? echo_arg : arg;
     while (arg->next) {
         printf("%s ", arg->val);
         arg = arg->next;

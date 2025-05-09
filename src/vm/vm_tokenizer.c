@@ -355,6 +355,7 @@ int vm_tokenizer_ops_process(struct Args* restrict args, struct Tokens* restrict
     assert(scratch_arena);
 
     struct Arg* arg = args->head->next;
+    struct Arg* prev = NULL;
     tokens->is_background_job = false;
     while (arg) {
         switch (arg->op) {
@@ -419,6 +420,14 @@ int vm_tokenizer_ops_process(struct Args* restrict args, struct Tokens* restrict
         }
         case OP_ASSIGNMENT: {
             vm_tokenizer_assignment_process(arg, &shell->vars, &shell->arena);
+            if (prev && arg) {
+                arg_set_after(arg->next, prev);
+                prev = arg->next;
+                if (arg->next->next) {
+                    arg = arg->next->next;
+                    continue;
+                }
+            }
             break;
         }
         case OP_VARIABLE: {
@@ -430,6 +439,7 @@ int vm_tokenizer_ops_process(struct Args* restrict args, struct Tokens* restrict
             break;
         }
         }
+        prev = arg;
         arg = arg->next;
     }
     ++tokens->number_of_pipe_commands;

@@ -181,6 +181,7 @@ void config_process(FILE* restrict file, struct Arena* restrict arena)
         // Add to path (6 because PATH+=)
         if (buffer_length > 6 && !memcmp(buffer, PATH_ADD, sizeof(PATH_ADD) - 1)) {
             assert(buffer + 6 && *(buffer + 6));
+            debugf("adding to PATH: %s\n", buffer + 6);
             putenv(buffer + 6);
         }
         // Aliasing
