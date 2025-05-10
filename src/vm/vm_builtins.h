@@ -48,19 +48,22 @@ int builtins_kill(char** r buffer);
 int builtins_version(char** r buffer);
 
 #define NCSH_ENABLE "enable"
-int builtins_enable(struct Args* restrict args);
+int builtins_enable(char** r buffer);
 
-// TODO: finish disable implementation
+// TODO: finish implementation
 #define NCSH_DISABLE "disable"
-int builtins_disable(struct Args* restrict args);
+int builtins_disable(char** r buffer);
 
-#define NCSH_EXPORT "export" // not implemented
+// TODO: finish implementation
+#define NCSH_EXPORT "export"
 int builtins_export(struct Args* restrict args);
 
-#define NCSH_SET "set" // not implemented
+// TODO: finish implementation
+#define NCSH_SET "set"
 int builtins_set(struct Args* restrict args);
 
-#define NCSH_UNSET "unset" // not implemented
+// TODO: finish implementation
+#define NCSH_UNSET "unset"
 int builtins_unset(struct Args* restrict args);
 
 // clang-format off
@@ -98,9 +101,9 @@ static const struct Builtin builtins[] = {
     {.flag = BF_PWD, .length = sizeof(NCSH_PWD), .value = NCSH_PWD, .func = &builtins_pwd},
     {.flag = BF_KILL, .length = sizeof(NCSH_KILL), .value = NCSH_KILL, .func = &builtins_kill},
     {.flag = BF_VERSION, .length = sizeof(NCSH_VERSION_CMD), .value = NCSH_VERSION_CMD, .func = &builtins_version},
-    /*{.flag = BF_ENABLE, .length = sizeof(NCSH_ENABLE), .value = NCSH_ENABLE, .func = &builtins_enable},
+    {.flag = BF_ENABLE, .length = sizeof(NCSH_ENABLE), .value = NCSH_ENABLE, .func = &builtins_enable},
     {.flag = BF_DISABLE, .length = sizeof(NCSH_DISABLE), .value = NCSH_DISABLE, .func = &builtins_disable},
-    {.flag = BF_EXPORT, .length = sizeof(NCSH_EXPORT), .value = NCSH_EXPORT, .func = &builtins_export},
+    /*{.flag = BF_EXPORT, .length = sizeof(NCSH_EXPORT), .value = NCSH_EXPORT, .func = &builtins_export},
     {.flag = BF_SET, .length = sizeof(NCSH_SET), .value = NCSH_SET, .func = &builtins_set},
     {.flag = BF_UNSET, .length = sizeof(NCSH_UNSET), .value = NCSH_UNSET, .func = &builtins_unset},*/
 };

@@ -411,6 +411,7 @@ int vm_tokenizer_ops_process(struct Args* restrict args, struct Tokens* restrict
         case OP_HOME_EXPANSION: {
             size_t len = shell->config.home_location.length;
             arg->val = arena_malloc(scratch_arena, len, char);
+            arg->op = OP_CONSTANT;
             memcpy(arg->val, shell->config.home_location.value, len);
             break;
         }

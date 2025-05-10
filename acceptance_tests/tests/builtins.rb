@@ -82,10 +82,24 @@ def no_newline_echo_test(row)
   row
 end
 
+def multiple_echo_tests(row)
+  @tty.send_line('echo hello && echo hello && echo echo hello')
+  row += 1
+  @tty.assert_row(row, 'hello')
+  row += 1
+  @tty.assert_row(row, 'hello')
+  row += 1
+  @tty.assert_row(row, 'echo hello')
+  row += 1
+  test_passed('multiple echo test')
+  row
+end
+
 def echo_tests(row)
   row = basic_echo_test(row)
   row = quote_echo_test(row)
-  no_newline_echo_test(row)
+  row = no_newline_echo_test(row)
+  multiple_echo_tests(row)
 end
 
 def builtins_tests(row)

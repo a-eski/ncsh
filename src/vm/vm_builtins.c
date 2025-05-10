@@ -168,7 +168,7 @@ int builtins_exit(char** r buffer)
 [[nodiscard]]
 int builtins_echo(char** r buffer)
 {
-    assert(buffer);
+    assert(buffer && *buffer);
     char** arg = buffer + 1;
     if (!arg || !*arg) {
         putchar('\n');
@@ -178,8 +178,9 @@ int builtins_echo(char** r buffer)
     bool echo_add_newline = true;
     char** echo_arg = NULL;
     // process options for echo
+    size_t len = strlen(*arg) + 1;
     while (arg && *arg) {
-        if (CMP_2(*arg, "-n")) {
+        if (estrcmp(*arg, len, "-n", 3)) {
             echo_add_newline = false;
             echo_arg = arg;
             break;
@@ -188,8 +189,8 @@ int builtins_echo(char** r buffer)
     }
 
     // send output for echo
-    arg = echo_arg ? echo_arg : buffer + 1;
-    while (*arg) {
+    arg = echo_arg ? echo_arg + 1 : buffer + 1;
+    while (arg && *arg) {
         printf("%s ", *arg++);
     }
 
@@ -287,7 +288,7 @@ int builtins_help(char** r buffer)
 [[nodiscard]]
 int builtins_cd(char** r buffer)
 {
-    assert(buffer);
+    assert(buffer && *buffer);
 
     // skip first position since we know it is 'cd'
     char* arg = *(buffer + 1);
@@ -331,7 +332,7 @@ int builtins_pwd(char** r buffer)
 [[nodiscard]]
 int builtins_kill(char** r buffer)
 {
-    assert(buffer);
+    assert(buffer && *buffer);
 
     // skip first position since we know it is 'kill'
     char** arg = buffer + 1;
@@ -395,30 +396,30 @@ void builtins_print_enabled()
 }
 
 // TODO: finish disable implementation
-int builtins_disable(struct Args* restrict args)
+int builtins_disable(char** r buffer)
 {
-    assert(args && args->head && args->head->next);
+    assert(buffer && *buffer);
 
     // skip first position since we know it is 'enable' or 'disable'
-    struct Arg* arg = args->head->next->next;
-    if (!arg || !arg->val) {
+    char** arg = buffer + 1;
+    if (!arg) {
         builtins_print();
     }
 
     // check if called by enabled or disabled
     // (enabled has extra option to specify disable, so start at 2 instead of 1 in that case,
     // because 'disable' is 1 arg, but 'enable -n' is 2)
-    size_t i = arg->val[0] == 'e' ? 2 : 1;
+    size_t i = **arg == 'e' ? 2 : 1;
 
-    for (; i < args->count; ++i) {
+    for (; arg; ++i) {
         for (size_t j = 0; j < builtins_count; ++j) {
-            if (estrcmp(arg->val, arg->len, builtins[j].value, builtins[j].length)) {
+            if (estrcmp(*arg, strlen(*arg) + 1, builtins[j].value, builtins[j].length)) {
                 if (!(builtins_disabled_state & builtins[j].flag)) {
                     builtins_disabled_state |= builtins[j].flag;
                     printf("ncsh disable: disabled builtin %s.\n", builtins[j].value);
                 }
             }
-            arg = arg->next;
+            ++arg;
         }
     }
 
@@ -426,24 +427,25 @@ int builtins_disable(struct Args* restrict args)
 }
 
 #define ENABLE_OPTION_NOT_SUPPORTED_MESSAGE "ncsh enable: command not found, options entered not supported.\n"
-int builtins_enable(struct Args* restrict args)
+int builtins_enable(char** r buffer)
 {
-    assert(args && args->head && args->head->next);
+    assert(buffer && *buffer);
 
     // skip first position since we know it is 'enable'
-    struct Arg* arg = args->head->next->next;
-    if (!arg || !arg->val) {
+    char** arg = buffer + 1;
+    if (!arg) {
         builtins_print();
         return NCSH_COMMAND_SUCCESS_CONTINUE;
     }
 
-    if (arg->len == 3) {
-        if (CMP_2(arg->val, "-a")) {
+    size_t len = strlen(*arg);
+    if (len == 2) {
+        if (CMP_2(*arg, "-a")) {
             builtins_print_enabled();
             return NCSH_COMMAND_SUCCESS_CONTINUE;
         }
-        else if (CMP_2(arg->val, "-n")) {
-            builtins_disable(args);
+        else if (CMP_2(*arg, "-n")) {
+            builtins_disable(buffer);
             return NCSH_COMMAND_SUCCESS_CONTINUE;
         }
     }
@@ -454,6 +456,7 @@ int builtins_enable(struct Args* restrict args)
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
+// TODO: implement export
 #define EXPORT_OPTION_NOT_SUPPORTED_MESSAGE "ncsh export: command not found, options entered not supported.\n"
 #define EXPORT_OPTIONS_MESSAGE "ncsh export: please pass in at least once argument. export currently supports modifying $PATH and $HOME."
 int builtins_export(struct Args* restrict args)
