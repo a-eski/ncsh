@@ -96,15 +96,39 @@ def multiple_echo_tests(row)
 end
 
 def echo_tests(row)
+  starting_tests('echo')
   row = basic_echo_test(row)
   row = quote_echo_test(row)
   row = no_newline_echo_test(row)
   multiple_echo_tests(row)
 end
 
-def builtins_tests(row)
-  starting_tests('builtins')
+def nothing_to_kill_test(row)
+  @tty.send_line('kill')
+  row += 1
+  @tty.assert_row_like(row, 'nothing to kill')
+  row += 1
+  test_passed('nothing to kill test')
+  row
+end
 
+def kill_test(row)
+  @tty.send_line('kill 10000')
+  row += 1
+  @tty.assert_row_like(row, 'could not kill')
+  row += 1
+  test_passed('kill test')
+  row
+end
+
+def kill_tests(row)
+  starting_tests('kill')
+  row = nothing_to_kill_test(row)
+  kill_test(row)
+end
+
+def builtins_tests(row)
   # row = help_test(row)
-  echo_tests(row)
+  row = echo_tests(row)
+  kill_tests(row)
 end

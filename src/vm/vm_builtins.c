@@ -333,7 +333,7 @@ int builtins_pwd(char** r buffer)
 int builtins_kill(char** r buffer)
 {
     assert(buffer && *buffer && buffer + 1);
-    if (!buffer || !buffer + 1) {
+    if (!buffer) {
         if (write(STDOUT_FILENO, KILL_NOTHING_TO_KILL_MESSAGE, sizeof(KILL_NOTHING_TO_KILL_MESSAGE) - 1) == -1) {
             return NCSH_COMMAND_EXIT_FAILURE;
         }
