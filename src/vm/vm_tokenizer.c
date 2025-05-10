@@ -447,6 +447,10 @@ int vm_tokenizer_ops_process(struct Args* restrict args, struct Tokens* restrict
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
+/*int vm_tokenizer_structure(struct Args* r args, struct Tokens* r tokens) {
+   return NCSH_COMMAND_SUCCESS_CONTINUE;
+}*/
+
 [[nodiscard]]
 int vm_tokenizer_tokenize(struct Args* restrict args, struct Tokens* restrict tokens, struct Shell* restrict shell,
                           struct Arena* restrict scratch_arena)
@@ -463,6 +467,9 @@ int vm_tokenizer_tokenize(struct Args* restrict args, struct Tokens* restrict to
 
     if ((result = vm_tokenizer_ops_process(args, tokens, shell, scratch_arena)) != NCSH_COMMAND_SUCCESS_CONTINUE)
         return result;
+
+    /*if ((result = vm_tokenizer_structure(args, tokens)) != NCSH_COMMAND_SUCCESS_CONTINUE)
+        return result;*/
 
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
