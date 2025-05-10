@@ -165,9 +165,10 @@ int builtins_exit(struct Args* restrict args)
 }
 
 [[nodiscard]]
-int builtins_echo(struct Args* restrict args)
+// int builtins_echo(struct Args* restrict args)
+int builtins_echo(char** r buffer)
 {
-    assert(args);
+    /*assert(args);
     if (args->count <= 1) {
         return NCSH_COMMAND_SUCCESS_CONTINUE;
     }
@@ -182,32 +183,28 @@ int builtins_echo(struct Args* restrict args)
     if (!arg || !arg->val) {
         puts("");
         return NCSH_COMMAND_SUCCESS_CONTINUE;
-    }
+    }*/
 
+    char** arg = buffer;
     bool echo_add_newline = true;
-    struct Arg* echo_arg = NULL;
+    char** echo_arg = NULL;
     // process options for echo
-    while (arg->next) {
-        if (arg->len != 3) {
-            break;
-        }
-
-        if (CMP_2(arg->val, "-n")) {
+    while (arg && *arg) {
+        if (CMP_2(*arg, "-n")) {
             echo_add_newline = false;
-            echo_arg = arg->next;
+            echo_arg = arg;
             break;
         }
-
-        arg = arg->next;
+        ++arg;
     }
 
     // send output for echo
-    arg = echo_arg ? echo_arg : arg;
-    while (arg->next) {
-        printf("%s ", arg->val);
-        arg = arg->next;
+    arg = echo_arg ? echo_arg : buffer;
+    ++arg;
+    while (*arg) {
+        printf("%s ", *arg++);
     }
-    printf("%s", arg->val);
+    // printf("%s", *arg);
 
     if (echo_add_newline) {
         putchar('\n');

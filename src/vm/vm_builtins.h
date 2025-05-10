@@ -29,7 +29,8 @@ int builtins_history(struct History* restrict history, struct Args* restrict arg
 int builtins_exit(struct Args* restrict args);
 
 #define NCSH_ECHO "echo"
-int builtins_echo(struct Args* restrict args);
+// int builtins_echo(struct Args* restrict args);
+int builtins_echo(char** buffer);
 
 #define NCSH_HELP "help"
 int builtins_help(struct Args* restrict args);
@@ -91,7 +92,7 @@ static const struct Builtin builtins[] = {
     {.flag = BF_EXIT, .length = sizeof(NCSH_EXIT), .value = NCSH_EXIT, .func = &builtins_exit},
     {.flag = BF_EXIT, .length = sizeof(NCSH_QUIT), .value = NCSH_QUIT, .func = &builtins_exit},
     {.flag = BF_EXIT, .length = sizeof(NCSH_Q), .value = NCSH_Q, .func = &builtins_exit},
-    {.flag = BF_ECHO, .length = sizeof(NCSH_ECHO), .value = NCSH_ECHO, .func = &builtins_echo},
+    // {.flag = BF_ECHO, .length = sizeof(NCSH_ECHO), .value = NCSH_ECHO, .func = &builtins_echo},
     {.flag = BF_HELP, .length = sizeof(NCSH_HELP), .value = NCSH_HELP, .func = &builtins_help},
     {.flag = BF_CD, .length = sizeof(NCSH_CD), .value = NCSH_CD, .func = &builtins_cd},
     {.flag = BF_PWD, .length = sizeof(NCSH_PWD), .value = NCSH_PWD, .func = &builtins_pwd},

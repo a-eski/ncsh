@@ -221,6 +221,11 @@ test_hashset ths:
 	$(CC) $(STD) $(debug_flags) -DNCSH_VM_TEST ./src/arena.c ./src/readline/hashset.c ./src/eskilib/etest.c ./tests/hashset_tests.c -o ./bin/hashset_tests
 	./bin/hashset_tests
 
+.PHONY: test_lexer
+test_lexer:
+	$(CC) $(STD) $(debug_flags) ./src/arena.c ./src/lexer.c ./src/eskilib/etest.c ./tests/lexer_tests.c -o ./bin/lexer_tests
+	./bin/lexer_tests
+
 .PHONY: clang_format, cf
 clang_format cf:
 	find . -regex '.*\.\(c\|h\)' -exec clang-format -style=file -i {} \;

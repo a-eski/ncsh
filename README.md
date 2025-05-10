@@ -170,7 +170,7 @@ Please see COMPILE.md.
 * Fix issue with variables not working with command like 'STR="ls | sort" && $STR' after moving to linked list for parser output/VM
 * Add a builtin for changing and maintaining aliases
 * Have .ncshrc utilize builtins instead of DSL like it currently does
-* Finish set/unset & enable/disable implementations
+* Finish set/unset, enable/disable, export implementations
 
 ### Long-term
 
@@ -186,6 +186,5 @@ Please see COMPILE.md.
 * Background jobs implementation
 * Math/Arithmetic implementation
 * Better POSIX compliance
-* Variable expansion (works with "STR=ls && $STR" but doesn't work with 'STR="ls | sort" && $STR')
 * Usable with GDB (currently doesn't work)
 * Make aliases able to be expandable into multiple commands (works with "g" as "git", but doesn't work with "gpom" as "git pull origin main", for example)

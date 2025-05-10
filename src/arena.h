@@ -8,10 +8,10 @@
 #include <stdint.h>
 #include <sys/cdefs.h>
 
-struct Arena {
+typedef struct Arena {
     char* start;
     char* end;
-};
+} Arena;
 
 #define arena_malloc(arena, count, type) (type*)arena_malloc_internal(arena, count, sizeof(type), _Alignof(type))
 
