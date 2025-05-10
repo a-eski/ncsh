@@ -332,11 +332,8 @@ int builtins_pwd(char** r buffer)
 [[nodiscard]]
 int builtins_kill(char** r buffer)
 {
-    assert(buffer && *buffer);
-
-    // skip first position since we know it is 'kill'
-    char** arg = buffer + 1;
-    if (!arg) {
+    assert(buffer && *buffer && buffer + 1);
+    if (!buffer || !buffer + 1) {
         if (write(STDOUT_FILENO, KILL_NOTHING_TO_KILL_MESSAGE, sizeof(KILL_NOTHING_TO_KILL_MESSAGE) - 1) == -1) {
             return NCSH_COMMAND_EXIT_FAILURE;
         }
@@ -344,7 +341,17 @@ int builtins_kill(char** r buffer)
         return NCSH_COMMAND_SUCCESS_CONTINUE;
     }
 
-    pid_t pid = atoi(*arg);
+    // skip first position since we know it is 'kill'
+    char* arg = *(buffer + 1);
+    if (!arg || !*arg) {
+        if (write(STDOUT_FILENO, KILL_NOTHING_TO_KILL_MESSAGE, sizeof(KILL_NOTHING_TO_KILL_MESSAGE) - 1) == -1) {
+            return NCSH_COMMAND_EXIT_FAILURE;
+        }
+
+        return NCSH_COMMAND_SUCCESS_CONTINUE;
+    }
+
+    pid_t pid = atoi(arg);
     if (!pid) {
         if (write(STDOUT_FILENO, KILL_COULDNT_PARSE_PID_MESSAGE, sizeof(KILL_COULDNT_PARSE_PID_MESSAGE) - 1) == -1) {
             return NCSH_COMMAND_EXIT_FAILURE;
