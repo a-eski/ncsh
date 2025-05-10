@@ -416,9 +416,10 @@ int builtins_disable(char** r buffer)
     // check if called by enabled or disabled
     // (enabled has extra option to specify disable, so start at 2 instead of 1 in that case,
     // because 'disable' is 1 arg, but 'enable -n' is 2)
-    size_t i = **arg == 'e' ? 2 : 1;
+    if (**arg == 'e')
+        ++arg;
 
-    for (; arg; ++i) {
+    while (arg && *arg) {
         for (size_t j = 0; j < builtins_count; ++j) {
             if (estrcmp(*arg, strlen(*arg) + 1, builtins[j].value, builtins[j].length)) {
                 if (!(builtins_disabled_state & builtins[j].flag)) {

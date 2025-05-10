@@ -4,6 +4,7 @@
 #pragma once
 
 #include "arena.h"
+#include "defines.h"
 #include "eskilib/eresult.h"
 #include "eskilib/str.h"
 
@@ -20,6 +21,7 @@ struct Config {
     struct Str config_file;
 };
 
-enum eresult config_init(struct Config* restrict config, struct Arena* restrict arena);
+enum eresult config_init(struct Config* restrict config, struct Arena* restrict arena,
+		Arena scratch_arena);
 
 struct Str config_alias_check(char* restrict buffer, size_t buf_len);
