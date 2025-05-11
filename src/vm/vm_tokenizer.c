@@ -320,7 +320,7 @@ void vm_tokenizer_variable_process(struct Arg* restrict arg, struct Vars* restri
         debugf("trying to get variable %s\n", key);
         struct Str* val = vars_get(key, vars);
         if (!val || !val->value || !*val->value) {
-            printf("ncsh: variable with name '%s' did not have a value associated with it.\n", key);
+            printf("ncsh: variable with name '%s' did not have a value associated with it.", key);
             return;
         }
         var = *val;
@@ -411,6 +411,7 @@ int vm_tokenizer_ops_process(struct Args* restrict args, struct Tokens* restrict
         case OP_HOME_EXPANSION: {
             size_t len = shell->config.home_location.length;
             arg->val = arena_malloc(scratch_arena, len, char);
+            arg->op = OP_CONSTANT;
             memcpy(arg->val, shell->config.home_location.value, len);
             break;
         }

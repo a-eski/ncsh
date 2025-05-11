@@ -58,7 +58,7 @@ int noninteractive(int argc, char** restrict argv)
     struct Shell shell = {0};
     shell.arena = (struct Arena){.start = memory, .end = memory + (arena_capacity)};
 
-    if (config_init(&shell.config, &shell.arena) != E_SUCCESS) {
+    if (config_init(&shell.config, &shell.arena, shell.arena) != E_SUCCESS) {
         return EXIT_FAILURE;
     }
 

@@ -13,7 +13,7 @@
 
 #include "debug.h"
 
-#define NCSH_VERSION "0.0.3.3"
+#define NCSH_VERSION "0.0.3.4"
 
 /* EXIT_* Constants
  * Exit values used by a multitude of functions and areas in the shell.
@@ -80,5 +80,7 @@
 #define CMP_1(str1, str2) (str1[0] == str2[0])
 #define CMP_2(str1, str2) (str1[0] == str2[0] && str1[1] == str2[1])
 #define CMP_3(str1, str2) (str1[0] == str2[0] && str1[1] == str2[1] && str1[2] == str2[2])
+
+#define r restrict
 
 // clang-format on

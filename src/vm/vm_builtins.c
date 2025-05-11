@@ -2,6 +2,7 @@
 
 #ifndef _DEFAULT_SOURCE
 #   define _DEFAULT_SOURCE
+#include <string.h>
 #endif /* ifndef _DEFAULT_SOURCE */
 #ifndef _POXIC_C_SOURCE
 #   define _POSIX_C_SOURCE 200809L
@@ -43,7 +44,7 @@ int builtins_z(struct z_Database* restrict z_db, struct Args* restrict args, str
 
     assert(args->head && args->head->next);
 
-    // skip the head (no op) and first arg since we know it is 'z'
+    // skip first position since we know it is 'z'
     struct Arg* arg = args->head->next->next;
     if (args->count <= 2) {
         assert(arg->val);
@@ -107,7 +108,7 @@ int builtins_history(struct History* restrict history, struct Args* restrict arg
 
     assert(args->head && args->head->next);
 
-    // skip the head (no op) and first arg since we know it is 'history'
+    // skip first position since we know it is 'history'
     struct Arg* arg = args->head->next->next;
     if (!arg || !arg->val) {
         if (write(STDOUT_FILENO, HISTORY_COMMAND_NOT_FOUND_MESSAGE, sizeof(HISTORY_COMMAND_NOT_FOUND_MESSAGE)) == -1) {
@@ -158,56 +159,40 @@ int builtins_history(struct History* restrict history, struct Args* restrict arg
 }
 
 [[nodiscard]]
-int builtins_exit(struct Args* restrict args)
+int builtins_exit(char** r buffer)
 {
-    (void)args;
+    (void)buffer;
     return NCSH_COMMAND_EXIT;
 }
 
 [[nodiscard]]
-int builtins_echo(struct Args* restrict args)
+int builtins_echo(char** r buffer)
 {
-    assert(args);
-    if (args->count <= 1) {
-        return NCSH_COMMAND_SUCCESS_CONTINUE;
-    }
-
-    assert(args->head && args->head->next);
-    struct Arg* arg = args->head->next;
-    while (arg && !estrcmp(arg->val, arg->len, NCSH_ECHO, sizeof(NCSH_ECHO))) {
-        arg = arg->next;
-    }
-    arg = arg->next;
-
-    if (!arg || !arg->val) {
-        puts("");
+    assert(buffer && *buffer);
+    char** arg = buffer + 1;
+    if (!arg || !*arg) {
+        putchar('\n');
         return NCSH_COMMAND_SUCCESS_CONTINUE;
     }
 
     bool echo_add_newline = true;
-    struct Arg* echo_arg = NULL;
+    char** echo_arg = NULL;
     // process options for echo
-    while (arg->next) {
-        if (arg->len != 3) {
-            break;
-        }
-
-        if (CMP_2(arg->val, "-n")) {
+    size_t len = strlen(*arg) + 1;
+    while (arg && *arg) {
+        if (estrcmp(*arg, len, "-n", 3)) {
             echo_add_newline = false;
-            echo_arg = arg->next;
+            echo_arg = arg;
             break;
         }
-
-        arg = arg->next;
+        ++arg;
     }
 
     // send output for echo
-    arg = echo_arg ? echo_arg : arg;
-    while (arg->next) {
-        printf("%s ", arg->val);
-        arg = arg->next;
+    arg = echo_arg ? echo_arg + 1 : buffer + 1;
+    while (arg && *arg) {
+        printf("%s ", *arg++);
     }
-    printf("%s", arg->val);
 
     if (echo_add_newline) {
         putchar('\n');
@@ -259,9 +244,9 @@ int builtins_echo(struct Args* restrict args)
     }
 
 [[nodiscard]]
-int builtins_help(struct Args* restrict args)
+int builtins_help(char** r buffer)
 {
-    (void)args;
+    (void)buffer;
 
     constexpr size_t len = sizeof(NCSH_TITLE) - 1;
     if (write(STDOUT_FILENO, NCSH_TITLE, len) == -1) {
@@ -301,13 +286,13 @@ int builtins_help(struct Args* restrict args)
 }
 
 [[nodiscard]]
-int builtins_cd(struct Args* restrict args)
+int builtins_cd(char** r buffer)
 {
-    assert(args && args->head && args->head->next);
+    assert(buffer && *buffer);
 
-    // skip the head (no op) and first arg since we know it is 'cd'
-    struct Arg* arg = args->head->next->next;
-    if (!arg || !arg->val) {
+    // skip first position since we know it is 'cd'
+    char* arg = *(buffer + 1);
+    if (!arg) {
         char* home = getenv("HOME");
         if (!home) {
             fputs("ncsh: could not change directory.\n", stderr);
@@ -319,7 +304,7 @@ int builtins_cd(struct Args* restrict args)
         return NCSH_COMMAND_SUCCESS_CONTINUE;
     }
 
-    if (chdir(arg->val)) {
+    if (chdir(arg)) {
         fputs("ncsh: could not change directory.\n", stderr);
     }
 
@@ -327,9 +312,9 @@ int builtins_cd(struct Args* restrict args)
 }
 
 [[nodiscard]]
-int builtins_pwd(struct Args* restrict args)
+int builtins_pwd(char** r buffer)
 {
-    (void)args;
+    (void)buffer;
 
     char path[PATH_MAX];
     if (!getcwd(path, sizeof(path))) {
@@ -345,13 +330,10 @@ int builtins_pwd(struct Args* restrict args)
 #define KILL_NOTHING_TO_KILL_MESSAGE "ncsh kill: nothing to kill, please pass in a process ID (PID).\n"
 #define KILL_COULDNT_PARSE_PID_MESSAGE "ncsh kill: could not parse process ID (PID) from arguments.\n"
 [[nodiscard]]
-int builtins_kill(struct Args* restrict args)
+int builtins_kill(char** r buffer)
 {
-    assert(args && args->head && args->head->next);
-
-    // skip the head (no op) and first arg since we know it is 'kill'
-    struct Arg* arg = args->head->next->next;
-    if (!arg || !arg->val) {
+    assert(buffer && *buffer && buffer + 1);
+    if (!buffer) {
         if (write(STDOUT_FILENO, KILL_NOTHING_TO_KILL_MESSAGE, sizeof(KILL_NOTHING_TO_KILL_MESSAGE) - 1) == -1) {
             return NCSH_COMMAND_EXIT_FAILURE;
         }
@@ -359,7 +341,17 @@ int builtins_kill(struct Args* restrict args)
         return NCSH_COMMAND_SUCCESS_CONTINUE;
     }
 
-    pid_t pid = atoi(arg->val);
+    // skip first position since we know it is 'kill'
+    char* arg = *(buffer + 1);
+    if (!arg || !*arg) {
+        if (write(STDOUT_FILENO, KILL_NOTHING_TO_KILL_MESSAGE, sizeof(KILL_NOTHING_TO_KILL_MESSAGE) - 1) == -1) {
+            return NCSH_COMMAND_EXIT_FAILURE;
+        }
+
+        return NCSH_COMMAND_SUCCESS_CONTINUE;
+    }
+
+    pid_t pid = atoi(arg);
     if (!pid) {
         if (write(STDOUT_FILENO, KILL_COULDNT_PARSE_PID_MESSAGE, sizeof(KILL_COULDNT_PARSE_PID_MESSAGE) - 1) == -1) {
             return NCSH_COMMAND_EXIT_FAILURE;
@@ -375,9 +367,9 @@ int builtins_kill(struct Args* restrict args)
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
-int builtins_version(struct Args* restrict args)
+int builtins_version(char** r buffer)
 {
-    (void)args;
+    (void)buffer;
 
     if (write(STDOUT_FILENO, NCSH_TITLE, sizeof(NCSH_TITLE)) == -1) {
         return NCSH_COMMAND_EXIT_FAILURE;
@@ -411,30 +403,31 @@ void builtins_print_enabled()
 }
 
 // TODO: finish disable implementation
-int builtins_disable(struct Args* restrict args)
+int builtins_disable(char** r buffer)
 {
-    assert(args && args->head && args->head->next);
+    assert(buffer && *buffer);
 
-    // skip the head (no op) and first arg since we know it is 'enable' or 'disable'
-    struct Arg* arg = args->head->next->next;
-    if (!arg || !arg->val) {
+    // skip first position since we know it is 'enable' or 'disable'
+    char** arg = buffer + 1;
+    if (!arg) {
         builtins_print();
     }
 
     // check if called by enabled or disabled
     // (enabled has extra option to specify disable, so start at 2 instead of 1 in that case,
     // because 'disable' is 1 arg, but 'enable -n' is 2)
-    size_t i = arg->val[0] == 'e' ? 2 : 1;
+    if (**arg == 'e')
+        ++arg;
 
-    for (; i < args->count; ++i) {
+    while (arg && *arg) {
         for (size_t j = 0; j < builtins_count; ++j) {
-            if (estrcmp(arg->val, arg->len, builtins[j].value, builtins[j].length)) {
+            if (estrcmp(*arg, strlen(*arg) + 1, builtins[j].value, builtins[j].length)) {
                 if (!(builtins_disabled_state & builtins[j].flag)) {
                     builtins_disabled_state |= builtins[j].flag;
                     printf("ncsh disable: disabled builtin %s.\n", builtins[j].value);
                 }
             }
-            arg = arg->next;
+            ++arg;
         }
     }
 
@@ -442,24 +435,25 @@ int builtins_disable(struct Args* restrict args)
 }
 
 #define ENABLE_OPTION_NOT_SUPPORTED_MESSAGE "ncsh enable: command not found, options entered not supported.\n"
-int builtins_enable(struct Args* restrict args)
+int builtins_enable(char** r buffer)
 {
-    assert(args && args->head && args->head->next);
+    assert(buffer && *buffer);
 
-    // skip the head (no op) and first arg since we know it is 'enable'
-    struct Arg* arg = args->head->next->next;
-    if (!arg || !arg->val) {
+    // skip first position since we know it is 'enable'
+    char** arg = buffer + 1;
+    if (!arg) {
         builtins_print();
         return NCSH_COMMAND_SUCCESS_CONTINUE;
     }
 
-    if (arg->len == 3) {
-        if (CMP_2(arg->val, "-a")) {
+    size_t len = strlen(*arg);
+    if (len == 2) {
+        if (CMP_2(*arg, "-a")) {
             builtins_print_enabled();
             return NCSH_COMMAND_SUCCESS_CONTINUE;
         }
-        else if (CMP_2(arg->val, "-n")) {
-            builtins_disable(args);
+        else if (CMP_2(*arg, "-n")) {
+            builtins_disable(buffer);
             return NCSH_COMMAND_SUCCESS_CONTINUE;
         }
     }
@@ -470,13 +464,14 @@ int builtins_enable(struct Args* restrict args)
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
+// TODO: implement export
 #define EXPORT_OPTION_NOT_SUPPORTED_MESSAGE "ncsh export: command not found, options entered not supported.\n"
 #define EXPORT_OPTIONS_MESSAGE "ncsh export: please pass in at least once argument. export currently supports modifying $PATH and $HOME."
 int builtins_export(struct Args* restrict args)
 {
     assert(args && args->head && args->head->next);
 
-    // skip the head (no op) and first arg since we know it is 'export'
+    // skip first position since we know it is 'export'
     struct Arg* arg = args->head->next->next;
     if (!arg || !arg->val) {
         if (write(STDOUT_FILENO, EXPORT_OPTION_NOT_SUPPORTED_MESSAGE, sizeof(EXPORT_OPTION_NOT_SUPPORTED_MESSAGE)) == -1) {
@@ -518,7 +513,7 @@ int builtins_set(struct Args* restrict args)
 {
     assert(args && args->head && args->head->next);
 
-    // skip the head (no op) and first arg since we know it is 'set'
+    // skip first position since we know it is 'set'
     struct Arg* arg = args->head->next->next;
     if (!arg || !arg->val) {
         if (write(STDOUT_FILENO, SET_NOTHING_TO_SET_MESSAGE, sizeof(SET_NOTHING_TO_SET_MESSAGE) - 1) == -1) {
@@ -555,7 +550,7 @@ int builtins_unset(struct Args* restrict args)
 {
     assert(args && args->head && args->head->next);
 
-    // skip the head (no op) and first arg since we know it is 'unset'
+    // skip first position since we know it is 'unset'
     struct Arg* arg = args->head->next->next;
     if (!arg || !arg->val) {
         if (write(STDOUT_FILENO, UNSET_NOTHING_TO_UNSET_MESSAGE, sizeof(UNSET_NOTHING_TO_UNSET_MESSAGE) - 1) == -1) {

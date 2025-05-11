@@ -109,6 +109,32 @@ enum eresult config_file_set(struct Config* restrict config, struct Arena* restr
     return E_SUCCESS;
 }
 
+/* config_path_add
+ * The function which handles config items which add values to PATH.
+ */
+#define PATH "PATH"
+#define PATH_ADD "PATH+="
+void config_path_add(char* restrict val, int len, struct Arena* restrict scratch_arena)
+{
+    assert(val);
+    assert(len > 0);
+    if (len <= 0) {
+        return;
+    }
+
+    assert(!val[len - 1]);
+    debugf("trying to add %s to path\n", val);
+
+    char* path = getenv("PATH");
+    size_t path_len = strlen(path) + 1; // null terminator here becomes : in length calc below
+    char* new_path = arena_malloc(scratch_arena, path_len + (size_t)len, char);
+    memcpy(new_path, path, path_len - 1);
+    new_path[path_len - 1] = ':';
+    memcpy(new_path + path_len, val, (size_t)len);
+    debugf("Got new path to set %s\n", new_path);
+    setenv(PATH, new_path, true);
+}
+
 struct User_Alias {
     struct Str* alias;
     struct Str* actual_command;
@@ -171,7 +197,7 @@ void config_alias_add(char* restrict val, size_t len, struct Arena* restrict are
  */
 #define PATH_ADD "PATH+="
 #define ALIAS_ADD "ALIAS "
-void config_process(FILE* restrict file, struct Arena* restrict arena)
+void config_process(FILE* restrict file, struct Arena* restrict arena, Arena* r scratch_arena)
 {
     user_aliases_count = 0;
 
@@ -182,7 +208,7 @@ void config_process(FILE* restrict file, struct Arena* restrict arena)
         if (buffer_length > 6 && !memcmp(buffer, PATH_ADD, sizeof(PATH_ADD) - 1)) {
             assert(buffer + 6 && *(buffer + 6));
             debugf("adding to PATH: %s\n", buffer + 6);
-            putenv(buffer + 6);
+            config_path_add(buffer + 6, buffer_length - 6, scratch_arena);
         }
         // Aliasing
         else if (buffer_length > 6 && !memcmp(buffer, ALIAS_ADD, sizeof(ALIAS_ADD) - 1)) {
@@ -201,7 +227,8 @@ void config_process(FILE* restrict file, struct Arena* restrict arena)
  * Returns: enum eresult, E_SUCCESS if config file loaded or user doesn't want one.
  */
 [[nodiscard]]
-enum eresult config_file_load(struct Config* restrict config, struct Arena* restrict arena)
+enum eresult config_file_load(struct Config* restrict config, struct Arena* restrict arena,
+		Arena* r scratch_arena)
 {
     FILE* file = fopen(config->config_file.value, "r");
     if (!file || ferror(file)) {
@@ -227,7 +254,7 @@ enum eresult config_file_load(struct Config* restrict config, struct Arena* rest
         return E_SUCCESS;
     }
 
-    config_process(file, arena);
+    config_process(file, arena, scratch_arena);
 
     fclose(file);
     return E_SUCCESS;
@@ -239,7 +266,8 @@ enum eresult config_file_load(struct Config* restrict config, struct Arena* rest
  * Returns: enum eresult, E_SUCCESS is successful
  */
 [[nodiscard]]
-enum eresult config_init(struct Config* restrict config, struct Arena* restrict arena)
+enum eresult config_init(struct Config* restrict config, struct Arena* restrict arena,
+		Arena scratch_arena)
 {
     assert(arena);
 
@@ -256,7 +284,7 @@ enum eresult config_init(struct Config* restrict config, struct Arena* restrict 
         return result;
     }
 
-    if ((result = config_file_load(config, arena)) != E_SUCCESS) {
+    if ((result = config_file_load(config, arena, &scratch_arena)) != E_SUCCESS) {
         return result;
     }
 

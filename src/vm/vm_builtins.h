@@ -2,7 +2,8 @@
 
 #pragma once
 
-#include "../parser.h"
+#include "../args.h"
+#include "../defines.h"
 #include "../readline/history.h"
 #include "../z/z.h"
 
@@ -26,40 +27,43 @@ int builtins_history(struct History* restrict history, struct Args* restrict arg
 #define NCSH_EXIT "exit" // the base command
 #define NCSH_QUIT "quit" // alias for exit
 #define NCSH_Q "q"       // alias for exit
-int builtins_exit(struct Args* restrict args);
+int builtins_exit(char** r buffer);
 
 #define NCSH_ECHO "echo"
-int builtins_echo(struct Args* restrict args);
+int builtins_echo(char** r buffer);
 
 #define NCSH_HELP "help"
-int builtins_help(struct Args* restrict args);
+int builtins_help(char** r buffer);
 
 #define NCSH_CD "cd"
-int builtins_cd(struct Args* restrict args);
+int builtins_cd(char** r buffer);
 
 #define NCSH_PWD "pwd"
-int builtins_pwd(struct Args* restrict args);
+int builtins_pwd(char** r buffer);
 
 #define NCSH_KILL "kill"
-int builtins_kill(struct Args* restrict args);
+int builtins_kill(char** r buffer);
 
 #define NCSH_VERSION_CMD "version"
-int builtins_version(struct Args* restrict args);
+int builtins_version(char** r buffer);
 
 #define NCSH_ENABLE "enable"
-int builtins_enable(struct Args* restrict args);
+int builtins_enable(char** r buffer);
 
-// TODO: finish disable implementation
+// TODO: finish implementation
 #define NCSH_DISABLE "disable"
-int builtins_disable(struct Args* restrict args);
+int builtins_disable(char** r buffer);
 
-#define NCSH_EXPORT "export" // not implemented
+// TODO: finish implementation
+#define NCSH_EXPORT "export"
 int builtins_export(struct Args* restrict args);
 
-#define NCSH_SET "set" // not implemented
+// TODO: finish implementation
+#define NCSH_SET "set"
 int builtins_set(struct Args* restrict args);
 
-#define NCSH_UNSET "unset" // not implemented
+// TODO: finish implementation
+#define NCSH_UNSET "unset"
 int builtins_unset(struct Args* restrict args);
 
 // clang-format off
@@ -84,7 +88,7 @@ struct Builtin {
     enum Builtins_Disabled flag;
     size_t length;
     char* value;
-    int (*func)(struct Args* restrict);
+    int (*func)(char** r);
 };
 
 static const struct Builtin builtins[] = {
@@ -99,9 +103,9 @@ static const struct Builtin builtins[] = {
     {.flag = BF_VERSION, .length = sizeof(NCSH_VERSION_CMD), .value = NCSH_VERSION_CMD, .func = &builtins_version},
     {.flag = BF_ENABLE, .length = sizeof(NCSH_ENABLE), .value = NCSH_ENABLE, .func = &builtins_enable},
     {.flag = BF_DISABLE, .length = sizeof(NCSH_DISABLE), .value = NCSH_DISABLE, .func = &builtins_disable},
-    {.flag = BF_EXPORT, .length = sizeof(NCSH_EXPORT), .value = NCSH_EXPORT, .func = &builtins_export},
+    /*{.flag = BF_EXPORT, .length = sizeof(NCSH_EXPORT), .value = NCSH_EXPORT, .func = &builtins_export},
     {.flag = BF_SET, .length = sizeof(NCSH_SET), .value = NCSH_SET, .func = &builtins_set},
-    {.flag = BF_UNSET, .length = sizeof(NCSH_UNSET), .value = NCSH_UNSET, .func = &builtins_unset},
+    {.flag = BF_UNSET, .length = sizeof(NCSH_UNSET), .value = NCSH_UNSET, .func = &builtins_unset},*/
 };
 
 static constexpr size_t builtins_count = sizeof(builtins) / sizeof(struct Builtin);

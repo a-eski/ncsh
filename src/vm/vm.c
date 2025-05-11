@@ -477,17 +477,6 @@ int vm_execvp_result;
 int vm_result;
 int vm_pid;
 
-/*struct Builtin* vm_builtins_check(struct Vm_Data* restrict vm)
-{
-    for (size_t i = 0; i < builtins_count; ++i) {
-        if (estrcmp(vm->buffer[0], vm->buffer_len[0], builtins[i].value, builtins[i].length)) {
-            return &builtins[i];
-        }
-    }
-
-    return NULL;
-}*/
-
 [[nodiscard]]
 int vm_run(struct Args* restrict args, struct Tokens* restrict tokens)
 {
@@ -515,7 +504,7 @@ int vm_run(struct Args* restrict args, struct Tokens* restrict tokens)
         for (size_t i = 0; i < builtins_count; ++i) {
             if (estrcmp(vm.buffer[0], vm.buffer_len[0], builtins[i].value, builtins[i].length)) {
                 vm_command_type = CT_BUILTIN;
-                vm_command_result = (*builtins[i].func)(args);
+                vm_command_result = (*builtins[i].func)(vm.buffer);
 
                 if (vm.op_current == OP_PIPE) {
                     vm_pipe_stop(vm.command_position, tokens->number_of_pipe_commands, &vm.pipes_io);
