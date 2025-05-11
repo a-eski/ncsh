@@ -35,4 +35,8 @@
 #    define econstexpr
 #endif
 
+#ifndef rst
+#   define rst restrict
+#endif // !r
+
 /* clang-format on */

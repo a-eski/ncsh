@@ -6,6 +6,7 @@
 #pragma once
 
 #include "../arena.h"
+#include "../defines.h"
 #include "../eskilib/str.h"
 
 #define NCSH_LETTERS 96 // ascii printable characters 32-127
@@ -14,19 +15,19 @@
  *  Prefix tree (trie) for storing autocomplete possibilities
  *  Use stack for nodes, slightly faster than allocating on heap in benchmarks.
  */
-struct Autocompletion_Node {
+typedef struct Autocompletion_Node_ {
     bool is_end_of_a_word;
     uint8_t weight;
-    struct Autocompletion_Node* nodes[NCSH_LETTERS];
-};
+    struct Autocompletion_Node_* nodes[NCSH_LETTERS];
+} Autocompletion_Node;
 
 /* struct Autocompletion
  * Used for storing results of autocompletion matching
  */
-struct Autocompletion {
+typedef struct {
     uint8_t weight;
     char* value;
-};
+} Autocompletion;
 
 static inline int char_to_index(char character)
 {
@@ -41,28 +42,24 @@ static inline char index_to_char(int index)
  * Allocates the root of the trie using the passed in arena.
  * Returns: the root of the trie
  */
-struct Autocompletion_Node* ac_alloc(struct Arena* restrict arena);
+Autocompletion_Node* ac_alloc(Arena* rst arena);
 
-void ac_add(char* restrict string, size_t length, struct Autocompletion_Node* restrict tree,
-            struct Arena* restrict arena);
+void ac_add(char* rst string, size_t length, Autocompletion_Node* rst tree, Arena* rst arena);
 
-void ac_add_multiple(struct Str* restrict strings, int count, struct Autocompletion_Node* restrict tree,
-                     struct Arena* restrict arena);
+void ac_add_multiple(Str* rst strings, int count, Autocompletion_Node* rst tree, Arena* rst arena);
 
-struct Autocompletion_Node* ac_find(char* restrict str, struct Autocompletion_Node* restrict tree);
+Autocompletion_Node* ac_find(char* rst str, Autocompletion_Node* rst tree);
 
 /* ac_get
  * Gets all matches based on traversing the trie.
  * Populates matches into variable matches.
  * Returns: number of matches (0 if no matches)
  */
-uint8_t ac_get(char* restrict search, struct Autocompletion* restrict matches,
-               struct Autocompletion_Node* restrict tree, struct Arena scratch);
+uint8_t ac_get(char* rst search, Autocompletion* rst matches, Autocompletion_Node* rst tree, Arena scratch);
 
 /* ac_first
  * Gets highest weighted match based on traversing the tree.
  * Populates match into variable match
  * Returns: 0 if no matches, 1 if any matches
  */
-uint8_t ac_first(char* restrict search, char* restrict match, struct Autocompletion_Node* restrict tree,
-                 struct Arena scratch);
+uint8_t ac_first(char* rst search, char* rst match, Autocompletion_Node* rst tree, Arena scratch);

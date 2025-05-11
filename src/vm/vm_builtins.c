@@ -1,11 +1,11 @@
 /* Copyright ncsh (C) by Alex Eski 2024 */
 
 #ifndef _DEFAULT_SOURCE
-#   define _DEFAULT_SOURCE
+#define _DEFAULT_SOURCE
 #include <string.h>
 #endif /* ifndef _DEFAULT_SOURCE */
 #ifndef _POXIC_C_SOURCE
-#   define _POSIX_C_SOURCE 200809L
+#define _POSIX_C_SOURCE 200809L
 #endif /* ifndef _POXIC_C_SOURCE */
 
 #include <assert.h>
@@ -30,8 +30,7 @@ int builtins_disabled_state = 0;
 
 #define Z_COMMAND_NOT_FOUND_MESSAGE "ncsh z: command not found, options not supported.\n"
 [[nodiscard]]
-int builtins_z(struct z_Database* restrict z_db, struct Args* restrict args, struct Arena* arena,
-               struct Arena* restrict scratch_arena)
+int builtins_z(z_Database* rst z_db, Args* rst args, Arena* arena, Arena* rst scratch_arena)
 {
     assert(args);
     assert(z_db);
@@ -45,7 +44,7 @@ int builtins_z(struct z_Database* restrict z_db, struct Args* restrict args, str
     assert(args->head && args->head->next);
 
     // skip first position since we know it is 'z'
-    struct Arg* arg = args->head->next->next;
+    Arg* arg = args->head->next->next;
     if (args->count <= 2) {
         assert(arg->val);
 
@@ -98,8 +97,7 @@ int builtins_z(struct z_Database* restrict z_db, struct Args* restrict args, str
 
 #define HISTORY_COMMAND_NOT_FOUND_MESSAGE "ncsh history: command not found.\n"
 [[nodiscard]]
-int builtins_history(struct History* restrict history, struct Args* restrict args, struct Arena* restrict arena,
-                     struct Arena* restrict scratch_arena)
+int builtins_history(History* rst history, Args* rst args, Arena* rst arena, Arena* rst scratch_arena)
 {
     assert(args);
     if (args->count == 1) {
@@ -109,7 +107,7 @@ int builtins_history(struct History* restrict history, struct Args* restrict arg
     assert(args->head && args->head->next);
 
     // skip first position since we know it is 'history'
-    struct Arg* arg = args->head->next->next;
+    Arg* arg = args->head->next->next;
     if (!arg || !arg->val) {
         if (write(STDOUT_FILENO, HISTORY_COMMAND_NOT_FOUND_MESSAGE, sizeof(HISTORY_COMMAND_NOT_FOUND_MESSAGE)) == -1) {
             return NCSH_COMMAND_EXIT_FAILURE;
@@ -159,14 +157,14 @@ int builtins_history(struct History* restrict history, struct Args* restrict arg
 }
 
 [[nodiscard]]
-int builtins_exit(char** r buffer)
+int builtins_exit(char** rst buffer)
 {
     (void)buffer;
     return NCSH_COMMAND_EXIT;
 }
 
 [[nodiscard]]
-int builtins_echo(char** r buffer)
+int builtins_echo(char** rst buffer)
 {
     assert(buffer && *buffer);
     char** arg = buffer + 1;
@@ -244,7 +242,7 @@ int builtins_echo(char** r buffer)
     }
 
 [[nodiscard]]
-int builtins_help(char** r buffer)
+int builtins_help(char** rst buffer)
 {
     (void)buffer;
 
@@ -286,7 +284,7 @@ int builtins_help(char** r buffer)
 }
 
 [[nodiscard]]
-int builtins_cd(char** r buffer)
+int builtins_cd(char** rst buffer)
 {
     assert(buffer && *buffer);
 
@@ -312,7 +310,7 @@ int builtins_cd(char** r buffer)
 }
 
 [[nodiscard]]
-int builtins_pwd(char** r buffer)
+int builtins_pwd(char** rst buffer)
 {
     (void)buffer;
 
@@ -330,7 +328,7 @@ int builtins_pwd(char** r buffer)
 #define KILL_NOTHING_TO_KILL_MESSAGE "ncsh kill: nothing to kill, please pass in a process ID (PID).\n"
 #define KILL_COULDNT_PARSE_PID_MESSAGE "ncsh kill: could not parse process ID (PID) from arguments.\n"
 [[nodiscard]]
-int builtins_kill(char** r buffer)
+int builtins_kill(char** rst buffer)
 {
     assert(buffer && *buffer && buffer + 1);
     if (!buffer) {
@@ -367,7 +365,7 @@ int builtins_kill(char** r buffer)
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
-int builtins_version(char** r buffer)
+int builtins_version(char** rst buffer)
 {
     (void)buffer;
 
@@ -403,7 +401,7 @@ void builtins_print_enabled()
 }
 
 // TODO: finish disable implementation
-int builtins_disable(char** r buffer)
+int builtins_disable(char** rst buffer)
 {
     assert(buffer && *buffer);
 
@@ -435,7 +433,7 @@ int builtins_disable(char** r buffer)
 }
 
 #define ENABLE_OPTION_NOT_SUPPORTED_MESSAGE "ncsh enable: command not found, options entered not supported.\n"
-int builtins_enable(char** r buffer)
+int builtins_enable(char** rst buffer)
 {
     assert(buffer && *buffer);
 
@@ -466,15 +464,17 @@ int builtins_enable(char** r buffer)
 
 // TODO: implement export
 #define EXPORT_OPTION_NOT_SUPPORTED_MESSAGE "ncsh export: command not found, options entered not supported.\n"
-#define EXPORT_OPTIONS_MESSAGE "ncsh export: please pass in at least once argument. export currently supports modifying $PATH and $HOME."
-int builtins_export(struct Args* restrict args)
+#define EXPORT_OPTIONS_MESSAGE                                                                                         \
+    "ncsh export: please pass in at least once argument. export currently supports modifying $PATH and $HOME."
+int builtins_export(Args* rst args)
 {
     assert(args && args->head && args->head->next);
 
     // skip first position since we know it is 'export'
-    struct Arg* arg = args->head->next->next;
+    Arg* arg = args->head->next->next;
     if (!arg || !arg->val) {
-        if (write(STDOUT_FILENO, EXPORT_OPTION_NOT_SUPPORTED_MESSAGE, sizeof(EXPORT_OPTION_NOT_SUPPORTED_MESSAGE)) == -1) {
+        if (write(STDOUT_FILENO, EXPORT_OPTION_NOT_SUPPORTED_MESSAGE, sizeof(EXPORT_OPTION_NOT_SUPPORTED_MESSAGE)) ==
+            -1) {
             return NCSH_COMMAND_EXIT_FAILURE;
         }
         return NCSH_COMMAND_FAILED_CONTINUE;
@@ -487,7 +487,8 @@ int builtins_export(struct Args* restrict args)
         puts("export $HOME found");
     }
     else {
-        if (write(STDOUT_FILENO, EXPORT_OPTION_NOT_SUPPORTED_MESSAGE, sizeof(EXPORT_OPTION_NOT_SUPPORTED_MESSAGE)) == -1) {
+        if (write(STDOUT_FILENO, EXPORT_OPTION_NOT_SUPPORTED_MESSAGE, sizeof(EXPORT_OPTION_NOT_SUPPORTED_MESSAGE)) ==
+            -1) {
             return NCSH_COMMAND_EXIT_FAILURE;
         }
     }
@@ -509,12 +510,12 @@ int builtins_set_e()
 #define SET_NOTHING_TO_SET_MESSAGE "ncsh set: nothing to set, please pass in a value to set (i.e. '-e', '-c')\n"
 #define SET_VALID_OPERATIONS_MESSAGE "ncsh set: valid set operations are in the form '-e', '-c', etc.\n"
 [[nodiscard]]
-int builtins_set(struct Args* restrict args)
+int builtins_set(Args* rst args)
 {
     assert(args && args->head && args->head->next);
 
     // skip first position since we know it is 'set'
-    struct Arg* arg = args->head->next->next;
+    Arg* arg = args->head->next->next;
     if (!arg || !arg->val) {
         if (write(STDOUT_FILENO, SET_NOTHING_TO_SET_MESSAGE, sizeof(SET_NOTHING_TO_SET_MESSAGE) - 1) == -1) {
             return NCSH_COMMAND_EXIT_FAILURE;
@@ -546,12 +547,12 @@ int builtins_set(struct Args* restrict args)
 // not implemented
 #define UNSET_NOTHING_TO_UNSET_MESSAGE "ncsh unset: nothing to unset, please pass in a value to unset.\n"
 [[nodiscard]]
-int builtins_unset(struct Args* restrict args)
+int builtins_unset(Args* rst args)
 {
     assert(args && args->head && args->head->next);
 
     // skip first position since we know it is 'unset'
-    struct Arg* arg = args->head->next->next;
+    Arg* arg = args->head->next->next;
     if (!arg || !arg->val) {
         if (write(STDOUT_FILENO, UNSET_NOTHING_TO_UNSET_MESSAGE, sizeof(UNSET_NOTHING_TO_UNSET_MESSAGE) - 1) == -1) {
             return NCSH_COMMAND_EXIT_FAILURE;

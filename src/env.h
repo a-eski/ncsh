@@ -13,6 +13,6 @@
 #define NCSH_XDG_CONFIG_HOME_VAL "XDG_CONFIG_HOME"
 #define NCSH_HOME_VAR "$HOME"
 
-void env_home_get(struct Str* restrict output, struct Arena* restrict arena);
+void env_home_get(Str* rst output, Arena* rst arena);
 
-struct Str env_path_get();
+Str env_path_get();

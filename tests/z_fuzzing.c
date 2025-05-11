@@ -9,7 +9,7 @@
 #include "../src/z/z.h"
 #include "lib/arena_test_helper.h"
 
-static struct Str config_location = {.length = 0, .value = NULL};
+static Str config_location = {.length = 0, .value = NULL};
 
 int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size)
 {
@@ -23,7 +23,7 @@ int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size)
         return EXIT_FAILURE;
     }
 
-    struct z_Database db = {};
+    z_Database db = {};
     z_init(&config_location, &db, &arena);
     uint8_t* data = arena_malloc(&arena, Size, uint8_t);
     memcpy(data, Data, Size);

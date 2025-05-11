@@ -42,29 +42,36 @@ obj/%.o: src/z/%.c
 obj/%.o: src/%.c
 	$(cc_with_flags) -c $< -o $@
 
-.PHONY: release, r
-release r:
+.PHONY: release
+release:
 	make RELEASE=1
 
-.PHONY: debug, d
-debug d :
+.PHONY: debug
+debug :
 	make -B RELEASE=0
 
-.PHONY: unity, u
-unity u :
+.PHONY: unity
+unity :
 	$(CC) $(STD) $(release_flags) src/unity.c -o $(target)
 
-.PHONY: unity_debug, ud
-unity_debug ud :
+.PHONY: u
+u :
+	make unity
+
+.PHONY: unity_debug
+unity_debug :
 	$(CC) $(STD) $(debug_flags) src/unity.c -o $(target)
+.PHONY: ud
+ud:
+	make unity_debug
 
 .PHONY: install
 install : $(target)
 	strip $(target)
 	install -C $(target) $(DESTDIR)
 
-.PHONY: check, c
-check c:
+.PHONY: check
+check :
 	set -e
 	make test_fzf
 	make test_ac
@@ -77,154 +84,241 @@ check c:
 	make test_str
 	make test_vars
 	make test_vm
+.PHONY: c
+c :
+	make check
 
-.PHONY: acceptance_tests, at
-acceptance_tests at:
+.PHONY: acceptance_tests
+acceptance_tests :
 	chmod +x ./acceptance_tests.sh
 	./acceptance_tests.sh
+.PHONY: at
+at :
+	make acceptance_tests
 
-.PHONY: check_local, l
-check_local l:
+.PHONY: check_local
+check_local :
 	set -e
 	make check
 	make test_z
 	make at
+.PHONY: l
+l :
+	make check_local
 
-.PHONY: test_history, th
-test_history th:
-	$(CC) $(STD) $(debug_flags) -DNCSH_HISTORY_TEST ./src/eskilib/etest.c ./src/eskilib/efile.c ./src/readline/hashset.c ./src/arena.c ./src/readline/history.c ./tests/history_tests.c -o ./bin/history_tests
+.PHONY: test_history
+test_history :
+	$(CC) $(STD) $(debug_flags) -DNCSH_HISTORY_TEST ./src/eskilib/efile.c ./src/readline/hashset.c ./src/arena.c ./src/readline/history.c ./tests/history_tests.c -o ./bin/history_tests
 	./bin/history_tests
+.PHONY: th
+th :
+	make test_history
 
-.PHONY: fuzz_history, fh
-fuzz_history fh:
+.PHONY: fuzz_history
+fuzz_history :
 	chmod +x ./create_corpus_dirs.sh
 	./create_corpus_dirs.sh
 	clang-19 $(STD) $(fuzz_flags) -DNCSH_HISTORY_TEST ./tests/history_fuzzing.c ./src/arena.c ./src/readline/history.c ./src/eskilib/efile.c ./src/readline/hashset.c -o ./bin/history_fuzz
 	./bin/history_fuzz HISTORY_CORPUS/ -detect_leaks=0 -rss_limit_mb=4096
+.PHONY: fh
+fh :
+	make fuzz_history
 
-.PHONY: test_ac, tac
-test_ac tac:
-	 # $(CC) $(STD) $(debug_flags) -DAC_DEBUG ./src/eskilib/etest.c ./src/arena.c ./src/readline/ac.c ./tests/ac_tests.c -o ./bin/ac_tests
-	 $(CC) $(STD) $(debug_flags) ./src/eskilib/etest.c ./src/arena.c ./src/readline/ac.c ./tests/ac_tests.c -o ./bin/ac_tests
+.PHONY: test_ac
+test_ac :
+	 # $(CC) $(STD) $(debug_flags) -DAC_DEBUG ./src/arena.c ./src/readline/ac.c ./tests/ac_tests.c -o ./bin/ac_tests
+	 $(CC) $(STD) $(debug_flags) ./src/arena.c ./src/readline/ac.c ./tests/ac_tests.c -o ./bin/ac_tests
 	 ./bin/ac_tests
+.PHONY: tac
+tac :
+	make test_ac
 
-.PHONY: fuzz_ac, fac
-fuzz_ac fac:
+.PHONY: fuzz_ac
+fuzz_ac :
 	chmod +x ./create_corpus_dirs.sh
 	./create_corpus_dirs.sh
 	clang-19 $(STD) $(fuzz_flags) ./tests/ac_fuzzing.c ./src/arena.c ./src/readline/ac.c -o ./bin/ac_fuzz
 	./bin/ac_fuzz AUTOCOMPLETIONS_CORPUS/ -detect_leaks=0 -rss_limit_mb=8192
+.PHONY: fac
+fac :
+	make fuzz_ac
 
-.PHONY: bench_ac, bac
-bench_ac bac:
-	$(CC) $(STD) $(debug_flags) -DNDEBUG ./src/eskilib/etest.c ./src/arena.c ./src/readline/ac.c ./tests/ac_bench.c -o ./bin/ac_bench
+.PHONY: bench_ac
+bench_ac :
+	$(CC) $(STD) $(debug_flags) -DNDEBUG ./src/arena.c ./src/readline/ac.c ./tests/ac_bench.c -o ./bin/ac_bench
 	hyperfine --warmup 1000 --shell=none './bin/ac_bench'
+.PHONY: bac
+bac :
+	make bench_ac
 
-.PHONY: bench_acr, bacr
-bench_acr bacr:
-	$(CC) $(STD) $(release_flags) -DNDEBUG ./src/eskilib/etest.c ./src/arena.c ./src/readline/ac.c ./tests/ac_bench.c -o ./bin/ac_bench
+.PHONY: bench_acr
+bench_acr :
+	$(CC) $(STD) $(release_flags) -DNDEBUG ./src/arena.c ./src/readline/ac.c ./tests/ac_bench.c -o ./bin/ac_bench
 	hyperfine --warmup 1000 --shell=none './bin/ac_bench'
+.PHONY: bacr
+bacr :
+	make bench_acr
 
-.PHONY: bench_ac_tests, bact
-bench_ac_tests bact:
-	$(CC) $(STD) $(debug_flags) -DNDEBUG ./src/eskilib/etest.c ./src/arena.c ./src/readline/ac.c ./tests/ac_tests.c -o ./bin/ac_tests
+.PHONY: bench_ac_tests
+bench_ac_tests :
+	$(CC) $(STD) $(debug_flags) -DNDEBUG ./src/arena.c ./src/readline/ac.c ./tests/ac_tests.c -o ./bin/ac_tests
 	hyperfine --warmup 1000 --shell=none './bin/ac_tests'
+.PHONY: bact
+bact :
+	make bench_ac_tests
 
-.PHONY: test_parser, tp
-test_parser tp:
-	$(CC) $(STD) $(debug_flags) ./src/eskilib/etest.c ./src/arena.c ./src/args.c ./src/parser.c ./tests/parser_tests.c -o ./bin/parser_tests
+.PHONY: test_parser
+test_parser :
+	$(CC) $(STD) $(debug_flags) ./src/arena.c ./src/args.c ./src/parser.c ./tests/parser_tests.c -o ./bin/parser_tests
 	./bin/parser_tests
+.PHONY: tp
+tp :
+	make test_parser
 
-.PHONY: fuzz_parser, fp
-fuzz_parser fp:
+.PHONY: fuzz_parser
+fuzz_parser :
 	chmod +x ./create_corpus_dirs.sh
 	./create_corpus_dirs.sh
 	clang-19 $(STD) $(fuzz_flags) ./tests/parser_fuzzing.c ./src/arena.c ./src/vars.c ./src/parser.c -o ./bin/parser_fuzz
 	./bin/parser_fuzz PARSER_CORPUS/ -detect_leaks=0 -rss_limit_mb=4096
+.PHONY: fp
+fp :
+	make fuzz_parser
 
-.PHONY: bench_parser, bp
-bench_parser bp:
-	$(CC) $(STD) $(debug_flags) -DNDEBUG ./src/eskilib/etest.c ./src/arena.c ./src/vars.c ./src/args.c ./src/parser.c ./tests/parser_bench.c -o ./bin/parser_bench
+.PHONY: bench_parser
+bench_parser :
+	$(CC) $(STD) $(debug_flags) -DNDEBUG ./src/arena.c ./src/vars.c ./src/args.c ./src/parser.c ./tests/parser_bench.c -o ./bin/parser_bench
 	hyperfine --warmup 1000 --shell=none './bin/parser_bench'
+.PHONY: bp
+bp :
+	make bench_parser
 
-.PHONY: bench_parser_tests, bpt
-bench_parser_tests bpt:
-	$(CC) $(STD) $(debug_flags) -DNDEBUG ./src/eskilib/etest.c ./src/arena.c ./src/vars.c ./src/args.c ./src/parser.c ./tests/parser_tests.c -o ./bin/parser_tests
+.PHONY: bench_parser_tests
+bench_parser_tests :
+	$(CC) $(STD) $(debug_flags) -DNDEBUG ./src/arena.c ./src/vars.c ./src/args.c ./src/parser.c ./tests/parser_tests.c -o ./bin/parser_tests
 	hyperfine --warmup 1000 --shell=none './bin/parser_tests'
+.PHONY: bpt
+bpt :
+	make bench_parser_tests
 
-.PHONY: bench_parser_and_vm, bpv
-bench_parser_and_vm vpb:
+.PHONY: bench_parser_and_vm
+bench_parser_and_vm :
 	hyperfine --warmup 100 --shell /bin/ncsh 'ls' 'ls | sort' 'ls > t.txt' 'ls | sort | wc -c' 'ls | sort | wc -c > t2.txt'
 	rm t.txt t2.txt
+.PHONY: bpv
+bpv :
+	make bench_parser_and_vm
 
-.PHONY: bash_bench_parser_and_vm, bbpv
-bash_bench_parser_and_vm bbpv:
+.PHONY: bash_bench_parser_and_vm
+bash_bench_parser_and_vm :
 	hyperfine --warmup 100 --shell /bin/bash 'ls' 'ls | sort' 'ls > t.txt' 'ls | sort | wc -c' 'ls | sort | wc -c > t2.txt'
 	rm t.txt t2.txt
+.PHONY: bbpv
+bbpv :
+	make bash_bench_parser_and_vm
 
-.PHONY: test_z, tz
-test_z tz:
-	gcc -std=c2x -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined,leak -DZ_TEST ./src/arena.c ./src/eskilib/etest.c ./src/z/fzf.c ./src/z/z.c ./tests/z_tests.c -o ./bin/z_tests
+.PHONY: test_z
+test_z :
+	gcc -std=c2x -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined,leak -DZ_TEST ./src/arena.c ./src/z/fzf.c ./src/z/z.c ./tests/z_tests.c -o ./bin/z_tests
 	./bin/z_tests
+.PHONY: tz
+tz :
+	make test_z
 
-.PHONY: fuzz_z, fz
-fuzz_z fz:
+.PHONY: fuzz_z
+fuzz_z :
 	chmod +x ./create_corpus_dirs.sh
 	./create_corpus_dirs.sh
 	clang-19 -std=c2x -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined,fuzzer -O3 -DNDEBUG -DZ_TEST ./src/arena.c ./tests/z_fuzzing.c ./src/z/fzf.c ./src/z/z.c -o ./bin/z_fuzz
 	./bin/z_fuzz Z_CORPUS/ -detect_leaks=0 -rss_limit_mb=8192
+.PHONY: fz
+fz :
+	make fuzz_z
 
-.PHONY: fuzz_z_add, fza
-fuzz_z_add fza:
+.PHONY: fuzz_z_add
+fuzz_z_add :
 	chmod +x ./create_corpus_dirs.sh
 	./create_corpus_dirs.sh
 	clang-19 -std=c2x -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined,fuzzer -O3 -DNDEBUG -DZ_TEST ./src/arena.c ./tests/z_add_fuzzing.c ./src/z/fzf.c ./src/z/z.c -o ./bin/z_add_fuzz
 	./bin/z_add_fuzz Z_ADD_CORPUS/ -detect_leaks=0 -rss_limit_mb=8192
+.PHONY: fza
+fza :
+	make fuzz_z_add
 
-.PHONY: test_fzf, tf
-test_fzf tf:
+.PHONY: test_fzf
+test_fzf :
 	$(CC) $(STD) -fsanitize=address,undefined,leak -g ./src/arena.c ./src/z/fzf.c ./tests/lib/examiner.c ./tests/fzf_tests.c -o ./bin/fzf_tests
 	@LD_LIBRARY_PATH=/usr/local/lib:./bin/:${LD_LIBRARY_PATH} ./bin/fzf_tests
+.PHONY: tf
+tf :
+	make test_fzf
 
-.PHONY: test_config, tc
-test_config tc:
-	$(CC) $(STD) $(debug_flags) -DNCSH_HISTORY_TEST ./src/arena.c ./src/eskilib/etest.c ./src/eskilib/efile.c ./src/env.c ./src/config.c ./tests/config_tests.c -o ./bin/config_tests
+.PHONY: test_config
+test_config :
+	$(CC) $(STD) $(debug_flags) -DNCSH_HISTORY_TEST ./src/arena.c ./src/eskilib/efile.c ./src/env.c ./src/config.c ./tests/config_tests.c -o ./bin/config_tests
 	./bin/config_tests
+.PHONY: tc
+tc :
+	make test_confir
 
-.PHONY: test_readline, tr
-test_readline tr:
-	$(CC) $(STD) $(debug_flags) -DNCSH_HISTORY_TEST ./src/arena.c ./src/eskilib/etest.c ./src/eskilib/efile.c ./src/readline/hashset.c ./src/readline/terminal.c ./src/readline/ac.c ./src/readline/history.c ./src/readline/ncreadline.c ./tests/ncreadline_tests.c -o ./bin/ncreadline_tests
+.PHONY: test_readline
+test_readline :
+	$(CC) $(STD) $(debug_flags) -DNCSH_HISTORY_TEST ./src/arena.c ./src/eskilib/efile.c ./src/readline/hashset.c ./src/readline/terminal.c ./src/readline/ac.c ./src/readline/history.c ./src/readline/ncreadline.c ./tests/ncreadline_tests.c -o ./bin/ncreadline_tests
 	./bin/ncreadline_tests
+.PHONY: tr
+tr :
+	make test_readline
 
-.PHONY: test_arena, ta
-test_arena ta:
-	$(CC) $(STD) $(debug_flags) -DNCSH_HISTORY_TEST ./src/arena.c ./src/eskilib/etest.c ./tests/arena_tests.c -o ./bin/arena_tests
+.PHONY: test_arena
+test_arena :
+	$(CC) $(STD) $(debug_flags) -DNCSH_HISTORY_TEST ./src/arena.c ./tests/arena_tests.c -o ./bin/arena_tests
 	./bin/arena_tests
+.PHONY: ta
+ta :
+	make test_arena
 
-.PHONY: test_str, ts
-test_str ts:
-	$(CC) $(STD) $(debug_flags) ./src/arena.c ./src/eskilib/etest.c ./tests/str_tests.c -o ./bin/str_tests
+.PHONY: test_str
+test_str :
+	$(CC) $(STD) $(debug_flags) ./src/arena.c ./tests/str_tests.c -o ./bin/str_tests
 	./bin/str_tests
+.PHONY: ts
+ts :
+	make test_str
 
-.PHONY: test_vars, tv
-test_vars tv:
-	$(CC) $(STD) $(debug_flags) ./src/arena.c ./src/vars.c ./src/eskilib/etest.c ./tests/vars_tests.c -o ./bin/vars_tests
+.PHONY: test_vars
+test_vars :
+	$(CC) $(STD) $(debug_flags) ./src/arena.c ./src/vars.c ./tests/vars_tests.c -o ./bin/vars_tests
 	./bin/vars_tests
+.PHONY: tv
+tv :
+	make test_vars
 
-.PHONY: test_vm, tvm
-test_vm tvm:
-	$(CC) $(STD) $(debug_flags) -DNCSH_VM_TEST ./src/arena.c ./src/args.c ./src/parser.c ./src/eskilib/efile.c ./src/readline/hashset.c ./src/vars.c ./src/readline/history.c ./src/z/fzf.c ./src/z/z.c ./src/env.c ./src/config.c ./src/vm/vm.c ./src/vm/vm_tokenizer.c ./src/vm/vm_builtins.c ./src/eskilib/etest.c ./tests/vm_tests.c -o ./bin/vm_tests
+.PHONY: test_vm
+test_vm :
+	$(CC) $(STD) $(debug_flags) -DNCSH_VM_TEST ./src/arena.c ./src/args.c ./src/parser.c ./src/eskilib/efile.c ./src/readline/hashset.c ./src/vars.c ./src/readline/history.c ./src/z/fzf.c ./src/z/z.c ./src/env.c ./src/config.c ./src/vm/vm.c ./src/vm/vm_tokenizer.c ./src/vm/vm_builtins.c ./tests/vm_tests.c -o ./bin/vm_tests
 	./bin/vm_tests
+.PHONY: tvm
+tvm :
+	make test_vm
 
-.PHONY: test_hashset, ths
-test_hashset ths:
-	$(CC) $(STD) $(debug_flags) -DNCSH_VM_TEST ./src/arena.c ./src/readline/hashset.c ./src/eskilib/etest.c ./tests/hashset_tests.c -o ./bin/hashset_tests
+.PHONY: test_hashset
+test_hashset :
+	$(CC) $(STD) $(debug_flags) -DNCSH_VM_TEST ./src/arena.c ./src/readline/hashset.c ./tests/hashset_tests.c -o ./bin/hashset_tests
 	./bin/hashset_tests
+.PHONY: ths
+ths :
+	make test_hashset
 
-.PHONY: clang_format, cf
-clang_format cf:
+.PHONY: clang_format
+clang_format :
 	find . -regex '.*\.\(c\|h\)' -exec clang-format -style=file -i {} \;
+.PHONY: cf
+cf :
+	make clang_format
 
-.PHONY: clean, cl
-clean cl:
+.PHONY: clean
+clean :
 	rm $(target) $(objects)
+.PHONY: cl
+cl :
+	make clean

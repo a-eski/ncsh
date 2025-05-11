@@ -49,29 +49,29 @@ enum Ops : uint8_t {
     OP_GLOB_EXPANSION = 27, // * or ?
 };
 
-/* struct Arg
+/* Arg
  * Holds op code, length, and value of the parsed token.
  * Includes a pointer to next element in the linked list.
  */
-struct Arg {
+typedef struct Arg_ {
     uint8_t op;
     size_t len;
     char* val;
-    struct Arg* next;
-};
+    struct Arg_* next;
+} Arg;
 
-/* struct Args
+/* Args
  * Holds the count and head of the linked list holding args.
  */
-struct Args {
+typedef struct {
     size_t count;
-    struct Arg* head;
-};
+    Arg* head;
+} Args;
 
-struct Args* args_alloc(struct Arena* restrict arena);
+Args* args_alloc(Arena* rst arena);
 
-struct Arg* arg_alloc(uint8_t op, size_t len, char* restrict val, struct Arena* restrict arena);
+Arg* arg_alloc(uint8_t op, size_t len, char* rst val, Arena* rst arena);
 
-bool arg_set_after(struct Arg* restrict currentNode, struct Arg* restrict nodeToSetAfter);
+bool arg_set_after(Arg* rst currentNode, Arg* rst nodeToSetAfter);
 
-bool arg_set_last(struct Args* restrict args, struct Arg* restrict nodeToSetLast);
+bool arg_set_last(Args* rst args, Arg* rst nodeToSetLast);

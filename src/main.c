@@ -80,7 +80,7 @@ static int signal_forward(int signum)
  * Returns: pointer to start of the memory block allocated.
  */
 [[nodiscard]]
-char* arena_init(struct Shell* restrict shell)
+char* arena_init(Shell* rst shell)
 {
     constexpr int arena_capacity = 1 << 24;
     constexpr int scratch_arena_capacity = 1 << 16;
@@ -91,10 +91,10 @@ char* arena_init(struct Shell* restrict shell)
         return NULL;
     }
 
-    shell->arena = (struct Arena){.start = memory, .end = memory + (arena_capacity)};
+    shell->arena = (Arena){.start = memory, .end = memory + (arena_capacity)};
     char* scratch_memory_start = memory + (arena_capacity + 1);
     shell->scratch_arena =
-        (struct Arena){.start = scratch_memory_start, .end = scratch_memory_start + (scratch_arena_capacity)};
+        (Arena){.start = scratch_memory_start, .end = scratch_memory_start + (scratch_arena_capacity)};
 
     return memory;
 }
@@ -104,7 +104,7 @@ char* arena_init(struct Shell* restrict shell)
  * Returns: exit result, EXIT_SUCCESS or EXIT_FAILURE
  */
 [[nodiscard]]
-char* init(struct Shell* restrict shell)
+char* init(Shell* rst shell)
 {
     char* memory = arena_init(shell);
     if (!memory) {
@@ -135,7 +135,7 @@ char* init(struct Shell* restrict shell)
     return memory;
 }
 
-void cleanup(char* shell_memory, struct Shell* shell)
+void cleanup(char* rst shell_memory, Shell* rst shell)
 {
     // don't bother cleaning up if no shell memory allocated
     if (!shell_memory) {
@@ -154,11 +154,11 @@ void cleanup(char* shell_memory, struct Shell* shell)
  * Parse and execute.
  * Pass in copy of scratch arena so it is valid for scope of parser and VM, then resets when scope ends.
  * The scratch arena needs to be valid for scope of vm_execute, since values are stored in the scratch arena.
- * Do not change scratch arena to struct Arena* (pointer).
+ * Do not change scratch arena to Arena* (pointer).
  */
-int run(struct Shell* shell, struct Arena scratch_arena)
+int run(Shell* rst shell, Arena scratch_arena)
 {
-    struct Args* args = parser_parse(shell->input.buffer, shell->input.pos, &scratch_arena);
+    Args* args = parser_parse(shell->input.buffer, shell->input.pos, &scratch_arena);
 
     return vm_execute(args, shell, &scratch_arena);
 }
@@ -190,7 +190,7 @@ int main(int argc, char** argv)
     }
 #endif
 
-    struct Shell shell = {0};
+    Shell shell = {0};
 
     char* memory = init(&shell);
     if (!memory) {

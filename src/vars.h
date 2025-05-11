@@ -10,21 +10,21 @@
 
 #define VARS_DEFAULT_CAPACITY 100
 
-struct Vars_Entry {
+typedef struct {
     char* key;
-    struct Str value;
-};
+    Str value;
+} Vars_Entry;
 
-struct Vars {
+typedef struct {
     size_t size;
     size_t capacity;
-    struct Vars_Entry* entries;
-};
+    Vars_Entry* entries;
+} Vars;
 
-void vars_malloc(struct Arena* arena, struct Vars* restrict vars);
+void vars_malloc(Arena* rst arena, Vars* rst vars);
 
-struct Str* vars_get(char* key, struct Vars* restrict vars);
+Str* vars_get(char* rst key, Vars* rst vars);
 
-bool vars_exists(char* key, struct Vars* restrict vars);
+bool vars_exists(char* rst key, Vars* rst vars);
 
-char* vars_set(char* key, struct Str* val, struct Arena* arena, struct Vars* restrict vars);
+char* vars_set(char* rst key, Str* rst val, Arena* rst arena, Vars* rst vars);

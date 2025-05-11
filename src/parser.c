@@ -91,7 +91,7 @@ enum Parser_State: size_t {
  * and should not be accessed anywhere else in the shell.
  * They were put here because they increased speed of the parser in benchmarks.
  */
-char* parser_buffer;
+char* rst parser_buffer;
 size_t parser_state;
 size_t parser_buf_pos;
 
@@ -100,7 +100,7 @@ size_t parser_buf_pos;
  * Size of the array is stored as constant expression in ops_2char_len
  * Bytecodes (opcodes) equivalents are stored in the array of enum Ops, ops_2char
  */
-const char* const restrict ops_2char_str[] = {
+const char* const rst ops_2char_str[] = {
     STDOUT_REDIRECTION_APPEND, STDERR_REDIRECTION, STDOUT_AND_STDERR_REDIRECTION, AND, OR, EXPONENTIATION,
     MATH_EXPRESSION_START};
 
@@ -119,7 +119,7 @@ const enum Ops ops_2char[] = {OP_STDOUT_REDIRECTION_APPEND,
  * Size of the array is stored as constant expression in ops_3char_len
  * Bytecodes (opcodes) equivalents are stored in the array of enum Ops, ops_3char
  */
-const char* const restrict ops_3char_str[] = {STDERR_REDIRECTION_APPEND, STDOUT_AND_STDERR_REDIRECTION_APPEND};
+const char* const rst ops_3char_str[] = {STDERR_REDIRECTION_APPEND, STDOUT_AND_STDERR_REDIRECTION_APPEND};
 
 constexpr size_t ops_3char_len = sizeof(ops_3char_str) / sizeof(char*);
 
@@ -130,7 +130,7 @@ const enum Ops ops_3char[] = {OP_STDERR_REDIRECTION_APPEND, OP_STDOUT_AND_STDERR
  * Returns: a value from enum Ops, the bytecode relevant to the input
  */
 [[nodiscard]]
-enum Ops parser_op_get(char* restrict line, size_t length)
+enum Ops parser_op_get(char* rst line, size_t length)
 {
     switch (length) {
     case 0: {
@@ -241,12 +241,11 @@ uint8_t parser_op_process()
 /* parser_parse
  * Turns the inputted line into values, lengths, and bytecodes that the VM can work with.
  * Handles expansions like *, ?, and ~
- * Results are stored in struct Args, variables values are stored in struct Args.vars.
  */
-struct Args* parser_parse(char* restrict line, size_t length, struct Arena* scratch_arena)
+Args* parser_parse(char* rst line, size_t length, Arena* rst scratch_arena)
 {
     assert(line && scratch_arena);
-    struct Args* args = args_alloc(scratch_arena);
+    Args* args = args_alloc(scratch_arena);
     assert(args);
     if (length < 2 || length > NCSH_MAX_INPUT) {
         args->count = 0;
@@ -261,7 +260,7 @@ struct Args* parser_parse(char* restrict line, size_t length, struct Arena* scra
     parser_buf_pos = 0;
     parser_state = 0;
 
-    struct Arg* arg = args->head;
+    Arg* arg = args->head;
 
     for (register size_t line_pos = 0; line_pos < length + 1; ++line_pos) {
         if (args->count == PARSER_TOKENS_LIMIT - 1 && line_pos < length) { // can't parse all of the args
@@ -394,11 +393,11 @@ struct Args* parser_parse(char* restrict line, size_t length, struct Arena* scra
 }
 
 /* parser_parse_noninteractive
- * Parse the command line input into commands, command lengths, and op codes stored in struct Args.
+ * Parse the command line input into commands, command lengths, and op codes stored in Args.
  * Allocates memory that is freed by parser_free_values at the end of each main loop of the shell.
  * Used for noninteractive mode.
  */
-struct Args* parser_parse_noninteractive(char** restrict inputs, size_t inputs_count, struct Arena* scratch_arena)
+Args* parser_parse_noninteractive(char** rst inputs, size_t inputs_count, Arena* rst scratch_arena)
 {
     assert(inputs && inputs_count && scratch_arena);
 
@@ -406,13 +405,13 @@ struct Args* parser_parse_noninteractive(char** restrict inputs, size_t inputs_c
         return NULL;
     }
 
-    struct Args* args = parser_parse(inputs[0], strlen(inputs[0]) + 1, scratch_arena);
+    Args* args = parser_parse(inputs[0], strlen(inputs[0]) + 1, scratch_arena);
     if (inputs_count == 1)
         return args;
 
     // parse the split input one parameter at a time.
     for (size_t i = 1; i < inputs_count; ++i) {
-        struct Args* next_args = parser_parse(inputs[i], strlen(inputs[i]) + 1, scratch_arena);
+        Args* next_args = parser_parse(inputs[i], strlen(inputs[i]) + 1, scratch_arena);
         if (next_args->count > 0) {
             arg_set_last(args, next_args->head->next); // skip head
             args->count += next_args->count;

@@ -14,10 +14,10 @@
 /* struct Processes
  * Maintains details about background jobs that have been started by the user.
  */
-struct Processes {
+typedef struct {
     size_t job_number;
     __pid_t pids[NCSH_MAX_PROCESSES];
-};
+} Processes;
 
 /* struct Shell
  * Store information relevant to the shell.
@@ -25,16 +25,16 @@ struct Processes {
  * Certain parts of Args are freed in the main shell loop,
  * they live for the lifetime of the main shell loop.
  */
-struct Shell {
-    struct Arena arena;
-    struct Arena scratch_arena;
+typedef struct {
+    Arena arena;
+    Arena scratch_arena;
 
-    struct Config config;
+    Config config;
 
-    struct Input input;
-    struct Processes processes;
+    Input input;
+    Processes processes;
 
-    struct z_Database z_db;
+    z_Database z_db;
 
-    struct Vars vars;
-};
+    Vars vars;
+} Shell;

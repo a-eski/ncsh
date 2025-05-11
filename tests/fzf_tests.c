@@ -24,9 +24,8 @@ typedef enum {
     BonusFirstCharMultiplier = 2,
 } score_t;
 
-fzf_position_t* fzf_pos_array(size_t len, struct Arena* const scratch_arena);
-fzf_position_t* fzf_get_positions(const char* text, fzf_pattern_t* pattern, fzf_slab_t* slab,
-                                  struct Arena* const scratch_arena);
+fzf_position_t* fzf_pos_array(size_t len, Arena* scratch_arena);
+fzf_position_t* fzf_get_positions(const char* text, fzf_pattern_t* pattern, fzf_slab_t* slab, Arena* scratch_arena);
 
 #define call_alg(alg, case, txt, pat, assert_block)                                                                    \
     SCRATCH_ARENA_TEST_SETUP;                                                                                          \
@@ -50,7 +49,7 @@ static int8_t max_i8(int8_t a, int8_t b)
 
 #define MATCH_WRAPPER(nn, og)                                                                                          \
     fzf_result_t nn(bool case_sensitive, const char* text, const char* pattern, fzf_position_t* pos, fzf_slab_t* slab, \
-                    struct Arena* const scratch_arena)                                                                 \
+                    Arena* scratch_arena)                                                                              \
     {                                                                                                                  \
         fzf_string_t input = {.data = text, .size = strlen(text)};                                                     \
         fzf_string_t pattern_wrap = {.data = pattern, .size = strlen(pattern)};                                        \

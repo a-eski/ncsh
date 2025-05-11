@@ -156,7 +156,7 @@ char* str_replace_char(char* str, char find, char replace)
     return str;
 }
 
-char* str_replace_slashes(char* orig, size_t orig_len, struct Arena* const scratch_arena)
+char* str_replace_slashes(char* orig, size_t orig_len, Arena* scratch_arena)
 {
     if (!orig || !orig_len) {
         return NULL;
@@ -197,7 +197,7 @@ char* str_replace_slashes(char* orig, size_t orig_len, struct Arena* const scrat
 }
 
 // TODO(conni2461): REFACTOR
-char* str_tolower(char* str, size_t size, struct Arena* const scratch_arena)
+char* str_tolower(char* str, size_t size, Arena* scratch_arena)
 {
     assert(str);
     char* lower_str = arena_malloc(scratch_arena, size + 1, char);
@@ -218,7 +218,7 @@ size_t min64u(size_t a, size_t b)
     return (a < b) ? a : b;
 }
 
-fzf_position_t* fzf_pos_array(size_t len, struct Arena* const scratch_arena)
+fzf_position_t* fzf_pos_array(size_t len, Arena* scratch_arena)
 {
     fzf_position_t* pos = arena_malloc(scratch_arena, 1, fzf_position_t);
     pos->size = 0;
@@ -232,7 +232,7 @@ fzf_position_t* fzf_pos_array(size_t len, struct Arena* const scratch_arena)
     return pos;
 }
 
-void resize_pos(fzf_position_t* pos, size_t add_len, size_t comp, struct Arena* const scratch_arena)
+void resize_pos(fzf_position_t* pos, size_t add_len, size_t comp, Arena* scratch_arena)
 {
     if (!pos) {
         return;
@@ -250,7 +250,7 @@ void resize_pos(fzf_position_t* pos, size_t add_len, size_t comp, struct Arena* 
     }
 }
 
-void unsafe_append_pos(fzf_position_t* pos, size_t value, struct Arena* const scratch_arena)
+void unsafe_append_pos(fzf_position_t* pos, size_t value, Arena* scratch_arena)
 {
     assert(value <= UINT32_MAX);
     resize_pos(pos, pos->cap, 1, scratch_arena);
@@ -258,14 +258,14 @@ void unsafe_append_pos(fzf_position_t* pos, size_t value, struct Arena* const sc
     pos->size++;
 }
 
-void append_pos(fzf_position_t* pos, size_t value, struct Arena* const scratch_arena)
+void append_pos(fzf_position_t* pos, size_t value, Arena* scratch_arena)
 {
     if (pos) {
         unsafe_append_pos(pos, value, scratch_arena);
     }
 }
 
-void insert_range(fzf_position_t* pos, size_t start, size_t end, struct Arena* const scratch_arena)
+void insert_range(fzf_position_t* pos, size_t start, size_t end, Arena* scratch_arena)
 {
     if (!pos) {
         return;
@@ -284,7 +284,7 @@ void insert_range(fzf_position_t* pos, size_t start, size_t end, struct Arena* c
     }
 }
 
-fzf_i16_t alloc16(size_t* offset, fzf_slab_t* slab, size_t size, struct Arena* const scratch_arena)
+fzf_i16_t alloc16(size_t* offset, fzf_slab_t* slab, size_t size, Arena* scratch_arena)
 {
     if (slab != NULL && slab->I16.cap > *offset + size) {
         i16_slice_t slice = slice_i16(slab->I16.data, *offset, (*offset) + size);
@@ -296,7 +296,7 @@ fzf_i16_t alloc16(size_t* offset, fzf_slab_t* slab, size_t size, struct Arena* c
     return (fzf_i16_t){.data = data, .size = size, .cap = size, .allocated = true};
 }
 
-fzf_i32_t alloc32(size_t* offset, fzf_slab_t* slab, size_t size, struct Arena* const scratch_arena)
+fzf_i32_t alloc32(size_t* offset, fzf_slab_t* slab, size_t size, Arena* scratch_arena)
 {
     if (slab != NULL && slab->I32.cap > *offset + size) {
         i32_slice_t slice = slice_i32(slab->I32.data, *offset, (*offset) + size);
@@ -395,7 +395,7 @@ int32_t ascii_fuzzy_index(fzf_string_t* input, const char* pattern, size_t size,
 }
 
 int32_t calculate_score(bool case_sensitive, fzf_string_t* text, fzf_string_t* pattern, size_t sidx, size_t eidx,
-                        fzf_position_t* pos, struct Arena* const scratch_arena)
+                        fzf_position_t* pos, Arena* scratch_arena)
 {
     const size_t M = pattern->size;
 
@@ -458,7 +458,7 @@ int32_t calculate_score(bool case_sensitive, fzf_string_t* text, fzf_string_t* p
 }
 
 fzf_result_t fzf_fuzzy_match_v1(bool case_sensitive, fzf_string_t* text, fzf_string_t* pattern, fzf_position_t* pos,
-                                fzf_slab_t* slab, struct Arena* const scratch_arena)
+                                fzf_slab_t* slab, Arena* scratch_arena)
 {
     (void)slab;
     const size_t M = pattern->size;
@@ -519,7 +519,7 @@ fzf_result_t fzf_fuzzy_match_v1(bool case_sensitive, fzf_string_t* text, fzf_str
 }
 
 fzf_result_t fzf_fuzzy_match_v2(bool case_sensitive, fzf_string_t* text, fzf_string_t* pattern, fzf_position_t* pos,
-                                fzf_slab_t* slab, struct Arena* const scratch_arena)
+                                fzf_slab_t* slab, Arena* scratch_arena)
 {
     const size_t M = pattern->size;
     const size_t N = text->size;
@@ -735,7 +735,7 @@ fzf_result_t fzf_fuzzy_match_v2(bool case_sensitive, fzf_string_t* text, fzf_str
 }
 
 fzf_result_t fzf_exact_match_naive(bool case_sensitive, fzf_string_t* text, fzf_string_t* pattern, fzf_position_t* pos,
-                                   fzf_slab_t* slab, struct Arena* const scratch_arena)
+                                   fzf_slab_t* slab, Arena* scratch_arena)
 {
     (void)slab;
     const size_t M = pattern->size;
@@ -798,7 +798,7 @@ fzf_result_t fzf_exact_match_naive(bool case_sensitive, fzf_string_t* text, fzf_
 }
 
 fzf_result_t fzf_prefix_match(bool case_sensitive, fzf_string_t* text, fzf_string_t* pattern, fzf_position_t* pos,
-                              fzf_slab_t* slab, struct Arena* const scratch_arena)
+                              fzf_slab_t* slab, Arena* scratch_arena)
 {
     (void)slab;
     const size_t M = pattern->size;
@@ -831,7 +831,7 @@ fzf_result_t fzf_prefix_match(bool case_sensitive, fzf_string_t* text, fzf_strin
 }
 
 fzf_result_t fzf_suffix_match(bool case_sensitive, fzf_string_t* text, fzf_string_t* pattern, fzf_position_t* pos,
-                              fzf_slab_t* slab, struct Arena* const scratch_arena)
+                              fzf_slab_t* slab, Arena* scratch_arena)
 {
     (void)slab;
     size_t trimmed_len = text->size;
@@ -863,7 +863,7 @@ fzf_result_t fzf_suffix_match(bool case_sensitive, fzf_string_t* text, fzf_strin
 }
 
 fzf_result_t fzf_equal_match(bool case_sensitive, fzf_string_t* text, fzf_string_t* pattern, fzf_position_t* pos,
-                             fzf_slab_t* slab, struct Arena* const scratch_arena)
+                             fzf_slab_t* slab, Arena* scratch_arena)
 {
     (void)slab;
     const size_t M = pattern->size;
@@ -899,7 +899,7 @@ fzf_result_t fzf_equal_match(bool case_sensitive, fzf_string_t* text, fzf_string
     return (fzf_result_t){-1, -1, 0};
 }
 
-void append_set(fzf_term_set_t* set, fzf_term_t value, struct Arena* const scratch_arena)
+void append_set(fzf_term_set_t* set, fzf_term_t value, Arena* scratch_arena)
 {
     if (set->cap == 0) {
         set->cap = 1;
@@ -915,7 +915,7 @@ void append_set(fzf_term_set_t* set, fzf_term_t value, struct Arena* const scrat
     set->size++;
 }
 
-void append_pattern(fzf_pattern_t* pattern, fzf_term_set_t* value, struct Arena* const scratch_arena)
+void append_pattern(fzf_pattern_t* pattern, fzf_term_set_t* value, Arena* scratch_arena)
 {
     if (pattern->cap == 0) {
         pattern->cap = 1;
@@ -939,7 +939,7 @@ void append_pattern(fzf_pattern_t* pattern, fzf_term_set_t* value, struct Arena*
 /* assumption (maybe i change that later)
  * - always v2 alg
  */
-fzf_pattern_t* fzf_parse_pattern(char* const pattern, size_t pat_len, struct Arena* const scratch_arena)
+fzf_pattern_t* fzf_parse_pattern(char* const pattern, size_t pat_len, Arena* scratch_arena)
 {
     assert(scratch_arena);
 
@@ -1066,8 +1066,7 @@ fzf_pattern_t* fzf_parse_pattern(char* const pattern, size_t pat_len, struct Are
     return pat_obj;
 }
 
-int32_t fzf_get_score(const char* text, size_t text_len, fzf_pattern_t* pattern, fzf_slab_t* slab,
-                      struct Arena* const scratch_arena)
+int32_t fzf_get_score(const char* text, size_t text_len, fzf_pattern_t* pattern, fzf_slab_t* slab, Arena* scratch_arena)
 {
     // If the pattern is an empty string then pattern->ptr will be NULL and we
     // basically don't want to filter. Return 1 for telescope
@@ -1121,8 +1120,7 @@ int32_t fzf_get_score(const char* text, size_t text_len, fzf_pattern_t* pattern,
     return total_score;
 }
 
-fzf_position_t* fzf_get_positions(const char* text, fzf_pattern_t* pattern, fzf_slab_t* slab,
-                                  struct Arena* const scratch_arena)
+fzf_position_t* fzf_get_positions(const char* text, fzf_pattern_t* pattern, fzf_slab_t* slab, Arena* scratch_arena)
 {
     // If the pattern is an empty string then pattern->ptr will be NULL and we
     // basically don't want to filter. Return 1 for telescope
@@ -1161,7 +1159,7 @@ fzf_position_t* fzf_get_positions(const char* text, fzf_pattern_t* pattern, fzf_
     return all_pos;
 }
 
-fzf_slab_t* fzf_make_slab(fzf_slab_config_t config, struct Arena* const scratch_arena)
+fzf_slab_t* fzf_make_slab(fzf_slab_config_t config, Arena* scratch_arena)
 {
     fzf_slab_t* slab = arena_malloc(scratch_arena, 1, fzf_slab_t);
 
@@ -1178,7 +1176,7 @@ fzf_slab_t* fzf_make_slab(fzf_slab_config_t config, struct Arena* const scratch_
     return slab;
 }
 
-fzf_slab_t* fzf_make_default_slab(struct Arena* const scratch_arena)
+fzf_slab_t* fzf_make_default_slab(Arena* scratch_arena)
 {
     // return fzf_make_slab((fzf_slab_config_t){(size_t)1<<15, 2048}, scratch_arena);
     return fzf_make_slab((fzf_slab_config_t){(size_t)10 * 1024, 2048}, scratch_arena);
