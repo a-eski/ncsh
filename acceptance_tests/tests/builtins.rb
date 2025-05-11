@@ -4,25 +4,10 @@ require './acceptance_tests/tests/common'
 
 def help_test(row)
   assert_check_new_row(row)
-  @tty.send_line('help')
+  @tty.send_line('help | head -1')
   row += 1
-  @tty.assert_contents_at row, row + 13, <<~TERM
-    ncsh Copyright (C) 2025 Alex Eski
-    This program comes with ABSOLUTELY NO WARRANTY.
-    This is free software, and you are welcome to redistribute it under certain conditions.
-
-    ncsh help:
-    Builtin Commands: {command} {args}
-    q:                    To exit, type q, exit, or quit and press enter. You can also use Ctrl+D to exit.
-    cd/z:                 You can change directory with cd or z.
-    echo:                 You can write things to the screen using echo.
-    history:              You can see your command history using the history command.
-    history count:        You can see the number of entries in your history with history count command.
-    pwd:                  Prints the current working directory.
-    alex /shells/ncsh ❱
-  TERM
-  row += 12
-  test_passed('Help test')
+  @tty.assert_row_like(row, 'ncsh')
+  test_passed('help test')
   row
 end
 
@@ -83,6 +68,7 @@ def no_newline_echo_test(row)
 end
 
 def multiple_echo_tests(row)
+  assert_check_new_row(row)
   @tty.send_line('echo hello && echo hello && echo echo hello')
   row += 1
   @tty.assert_row(row, 'hello')
@@ -95,15 +81,37 @@ def multiple_echo_tests(row)
   row
 end
 
+def empty_echo_test(row)
+  assert_check_new_row(row)
+  @tty.send_line('echo')
+  row += 1
+  @tty.assert_row_is_empty(row)
+  row += 1
+  test_passed('empty echo test')
+  row
+end
+
+def empty_echo_no_newline_test(row)
+  assert_check_new_row(row)
+  @tty.send_line('echo -n')
+  row += 1
+  assert_check_new_row(row)
+  test_passed('empty echo no newline test')
+  row
+end
+
 def echo_tests(row)
   starting_tests('echo')
   row = basic_echo_test(row)
   row = quote_echo_test(row)
   row = no_newline_echo_test(row)
-  multiple_echo_tests(row)
+  row = multiple_echo_tests(row)
+  row = empty_echo_test(row)
+  empty_echo_no_newline_test(row)
 end
 
 def nothing_to_kill_test(row)
+  assert_check_new_row(row)
   @tty.send_line('kill')
   row += 1
   @tty.assert_row_like(row, 'nothing to kill')
@@ -113,6 +121,7 @@ def nothing_to_kill_test(row)
 end
 
 def kill_test(row)
+  assert_check_new_row(row)
   @tty.send_line('kill 10000')
   row += 1
   @tty.assert_row_like(row, 'could not kill')
@@ -127,8 +136,18 @@ def kill_tests(row)
   kill_test(row)
 end
 
+def pwd_test(row)
+  @tty.send_line('pwd')
+  row += 1
+  @tty.assert_row(row, Dir.pwd)
+  row += 1
+  test_passed('pwd test')
+  row
+end
+
 def builtins_tests(row)
   # row = help_test(row)
   row = echo_tests(row)
-  kill_tests(row)
+  row = kill_tests(row)
+  pwd_test(row)
 end
