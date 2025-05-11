@@ -9,18 +9,18 @@
 #include "arena.h"
 #include "vars.h"
 
-void vars_malloc(struct Arena* arena, struct Vars* restrict vars)
+void vars_malloc(Arena* rst arena, Vars* rst vars)
 {
     vars->size = 0;
     vars->capacity = VARS_DEFAULT_CAPACITY;
 
-    vars->entries = arena_malloc(arena, vars->capacity, struct Vars_Entry);
+    vars->entries = arena_malloc(arena, vars->capacity, Vars_Entry);
 }
 
 #define VARS_FNV_OFFSET 2166136261
 
 // 64-bit FNV-1a hash
-uint64_t vars_key(char* str)
+uint64_t vars_key(char* rst str)
 {
     register uint64_t i;
 
@@ -32,7 +32,7 @@ uint64_t vars_key(char* str)
     return i;
 }
 
-struct Str* vars_get(char* key, struct Vars* restrict vars)
+Str* vars_get(char* rst key, Vars* rst vars)
 {
     uint64_t hash = vars_key(key);
     size_t index = (size_t)(hash & (uint64_t)(vars->capacity - 1));
@@ -51,7 +51,7 @@ struct Str* vars_get(char* key, struct Vars* restrict vars)
     return NULL;
 }
 
-bool vars_exists(char* key, struct Vars* restrict vars)
+bool vars_exists(char* rst key, Vars* rst vars)
 {
     uint64_t hash = vars_key(key);
     size_t index = (size_t)(hash & (uint64_t)(vars->capacity - 1));
@@ -70,7 +70,7 @@ bool vars_exists(char* key, struct Vars* restrict vars)
     return false;
 }
 
-char* vars_set_entry(struct Vars_Entry* entries, size_t capacity, char* key, struct Str* val, size_t* plength)
+char* vars_set_entry(Vars_Entry* rst entries, size_t capacity, char* rst key, Str* rst val, size_t* rst plength)
 {
     uint64_t hash = vars_key(key);
     size_t index = (size_t)(hash & (uint64_t)(capacity - 1));
@@ -96,18 +96,18 @@ char* vars_set_entry(struct Vars_Entry* entries, size_t capacity, char* key, str
     return key;
 }
 
-bool vars_expand(char* key, struct Arena* arena, struct Vars* restrict vars)
+bool vars_expand(char* rst key, Arena* rst arena, Vars* rst vars)
 {
     size_t new_capacity = vars->capacity * 2;
     if (new_capacity < vars->capacity) {
         return false;
     }
 
-    struct Vars_Entry* new_entries = arena_malloc(arena, new_capacity, struct Vars_Entry);
+    Vars_Entry* new_entries = arena_malloc(arena, new_capacity, Vars_Entry);
 
     // Iterate entries, move all non-empty ones to new table's entries.
     for (size_t i = 0; i < vars->capacity; i++) {
-        struct Vars_Entry entry = vars->entries[i];
+        Vars_Entry entry = vars->entries[i];
         if (entry.key != NULL) {
             vars_set_entry(new_entries, new_capacity, key, &entry.value, NULL);
         }
@@ -118,7 +118,7 @@ bool vars_expand(char* key, struct Arena* arena, struct Vars* restrict vars)
     return true;
 }
 
-char* vars_set(char* key, struct Str* val, struct Arena* arena, struct Vars* restrict vars)
+char* vars_set(char* rst key, Str* rst val, Arena* rst arena, Vars* rst vars)
 {
     assert(val->value && val->length);
     if (!val->value || !val->length) {

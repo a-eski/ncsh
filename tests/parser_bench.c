@@ -6,7 +6,7 @@ void parser_parse_bench()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    struct Args* args;
+    Args* args;
     args = parser_parse("ls", 3, &scratch_arena);
     args = parser_parse("ls -l", 6, &scratch_arena);
     args = parser_parse("ls ~", 5, &scratch_arena);

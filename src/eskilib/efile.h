@@ -4,6 +4,8 @@
 
 #include <stdio.h>
 
-int efgets(char* restrict buffer, size_t len, FILE* restrict file);
+#include "edefines.h"
 
-int efgets_delim(char* restrict buffer, size_t len, FILE* restrict file, char delimiter);
+int efgets(char* rst buffer, size_t len, FILE* rst file);
+
+int efgets_delim(char* rst buffer, size_t len, FILE* rst file, char delimiter);

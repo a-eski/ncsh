@@ -13,13 +13,13 @@ void parser_parse_ls_test()
     char* line = "ls\0";
     size_t len = 3;
 
-    struct Args* args = parser_parse(line, len, &scratch_arena);
+    Args* args = parser_parse(line, len, &scratch_arena);
 
     eassert(args);
     eassert(args->head);
     eassert(args->count == 1);
 
-    struct Arg* arg = args->head->next;
+    Arg* arg = args->head->next;
     eassert(arg);
     eassert(!memcmp(arg->val, line, len));
     eassert(arg->op == OP_CONSTANT);
@@ -37,13 +37,13 @@ void parser_parse_ls_dash_l_test()
     char* line = "ls -l\0";
     size_t len = 6;
 
-    struct Args* args = parser_parse(line, len, &scratch_arena);
+    Args* args = parser_parse(line, len, &scratch_arena);
 
     eassert(args);
     eassert(args->head);
     eassert(args->count == 2);
 
-    struct Arg* arg = args->head->next;
+    Arg* arg = args->head->next;
     eassert(!memcmp(arg->val, "ls", 3));
     eassert(arg->op == OP_CONSTANT);
     eassert(arg->len == 3);
@@ -65,13 +65,13 @@ void parser_parse_pipe_test()
     char* line = "ls | sort\0";
     size_t len = 10;
 
-    struct Args* args = parser_parse(line, len, &scratch_arena);
+    Args* args = parser_parse(line, len, &scratch_arena);
 
     eassert(args);
     eassert(args->head);
     eassert(args->count == 3);
 
-    struct Arg* arg = args->head->next;
+    Arg* arg = args->head->next;
     eassert(memcmp(arg->val, "ls", 3) == 0);
     eassert(arg->op == OP_CONSTANT);
     eassert(arg->len == 3);
@@ -98,13 +98,13 @@ void parser_parse_multiple_pipe_test()
     char* line = "ls | sort | table";
     size_t len = 18;
 
-    struct Args* args = parser_parse(line, len, &scratch_arena);
+    Args* args = parser_parse(line, len, &scratch_arena);
 
     eassert(args);
     eassert(args->head);
     eassert(args->count == 5);
 
-    struct Arg* arg = args->head->next;
+    Arg* arg = args->head->next;
     eassert(!memcmp(arg->val, "ls", 3));
     eassert(arg->op == OP_CONSTANT);
     eassert(arg->len == 3);
@@ -141,13 +141,13 @@ void parser_parse_background_job_test()
     char* line = "longrunningprogram &\0";
     size_t len = 21;
 
-    struct Args* args = parser_parse(line, len, &scratch_arena);
+    Args* args = parser_parse(line, len, &scratch_arena);
 
     eassert(args);
     eassert(args->head);
     eassert(args->count == 2);
 
-    struct Arg* arg = args->head->next;
+    Arg* arg = args->head->next;
     eassert(!memcmp(arg->val, "longrunningprogram", 19));
     eassert(arg->op == OP_CONSTANT);
     eassert(arg->len == 19);
@@ -169,12 +169,12 @@ void parser_parse_output_redirection_test()
     char* line = "ls > text.txt\0";
     size_t len = 14;
 
-    struct Args* args = parser_parse(line, len, &scratch_arena);
+    Args* args = parser_parse(line, len, &scratch_arena);
 
     eassert(args->head);
     eassert(args->count == 3);
 
-    struct Arg* arg = args->head->next;
+    Arg* arg = args->head->next;
     eassert(!memcmp(arg->val, "ls", 3));
     eassert(arg->op == OP_CONSTANT);
     eassert(arg->len == 3);
@@ -201,12 +201,12 @@ void parser_parse_output_redirection_append_test()
     char* line = "ls >> text.txt\0";
     size_t len = 15;
 
-    struct Args* args = parser_parse(line, len, &scratch_arena);
+    Args* args = parser_parse(line, len, &scratch_arena);
 
     eassert(args->head);
     eassert(args->count == 3);
 
-    struct Arg* arg = args->head->next;
+    Arg* arg = args->head->next;
     eassert(!memcmp(arg->val, "ls", 3));
     eassert(arg->op == OP_CONSTANT);
     eassert(arg->len == 3);
@@ -233,12 +233,12 @@ void parser_parse_input_redirection_test()
     char* line = "t.txt < sort";
     size_t len = strlen(line) + 1;
 
-    struct Args* args = parser_parse(line, len, &scratch_arena);
+    Args* args = parser_parse(line, len, &scratch_arena);
 
     eassert(args->head);
     eassert(args->count == 3);
 
-    struct Arg* arg = args->head->next;
+    Arg* arg = args->head->next;
     eassert(!memcmp(arg->val, "t.txt", 6));
     eassert(arg->op == OP_CONSTANT);
     eassert(arg->len == 6);
@@ -265,12 +265,12 @@ void parser_parse_stdout_and_stderr_redirection_test()
     char* line = "ls &> text.txt\0";
     size_t len = 15;
 
-    struct Args* args = parser_parse(line, len, &scratch_arena);
+    Args* args = parser_parse(line, len, &scratch_arena);
 
     eassert(args->head);
     eassert(args->count == 3);
 
-    struct Arg* arg = args->head->next;
+    Arg* arg = args->head->next;
     eassert(!memcmp(arg->val, "ls", 3));
     eassert(arg->op == OP_CONSTANT);
     eassert(arg->len == 3);
@@ -297,12 +297,12 @@ void parser_parse_stdout_and_stderr_redirection_append_test()
     char* line = "ls &>> text.txt";
     size_t len = strlen(line) + 1;
 
-    struct Args* args = parser_parse(line, len, &scratch_arena);
+    Args* args = parser_parse(line, len, &scratch_arena);
 
     eassert(args->head);
     eassert(args->count == 3);
 
-    struct Arg* arg = args->head->next;
+    Arg* arg = args->head->next;
     eassert(!memcmp(arg->val, "ls", 3));
     eassert(arg->op == OP_CONSTANT);
     eassert(arg->len == 3);
@@ -329,12 +329,12 @@ void parser_parse_assignment_test()
     char* line = "STR=\"Hello\"";
     size_t len = strlen(line) + 1;
 
-    struct Args* args = parser_parse(line, len, &scratch_arena);
+    Args* args = parser_parse(line, len, &scratch_arena);
 
     eassert(args->head);
     eassert(args->count == 1);
 
-    struct Arg* arg = args->head->next;
+    Arg* arg = args->head->next;
     printf("%s\n", arg->val);
     // quotes stripped by the parser
     eassert(!memcmp(arg->val, "STR=Hello", sizeof("STR=Hello")));
@@ -351,12 +351,12 @@ void parser_parse_variable_test()
     char* line = "echo $STR";
     size_t len = strlen(line) + 1;
 
-    struct Args* args = parser_parse(line, len, &scratch_arena);
+    Args* args = parser_parse(line, len, &scratch_arena);
 
     eassert(args->head);
     eassert(args->count == 2);
 
-    struct Arg* arg = args->head->next;
+    Arg* arg = args->head->next;
     eassert(!memcmp(arg->val, "echo", 5));
     eassert(arg->op == OP_CONSTANT);
     eassert(arg->len = 5);
@@ -378,12 +378,12 @@ void parser_parse_variable_and_test()
     char* line = "STR=hello && echo $STR";
     size_t len = strlen(line) + 1;
 
-    struct Args* args = parser_parse(line, len, &scratch_arena);
+    Args* args = parser_parse(line, len, &scratch_arena);
 
     eassert(args->head);
     eassert(args->count == 4);
 
-    struct Arg* arg = args->head->next;
+    Arg* arg = args->head->next;
     eassert(!memcmp(arg->val, "STR=hello", sizeof("STR=hello")));
     eassert(arg->op == OP_ASSIGNMENT);
     eassert(arg->len == sizeof("STR=hello"));
@@ -415,12 +415,12 @@ void parser_parse_variable_command_test()
     char* line = "COMMAND=ls && $COMMAND";
     size_t len = strlen(line) + 1;
 
-    struct Args* args = parser_parse(line, len, &scratch_arena);
+    Args* args = parser_parse(line, len, &scratch_arena);
 
     eassert(args->head);
     eassert(args->count == 3);
 
-    struct Arg* arg = args->head->next;
+    Arg* arg = args->head->next;
     eassert(!memcmp(arg->val, "COMMAND=ls", sizeof("COMMAND=ls")));
     eassert(arg->op == OP_ASSIGNMENT);
     eassert(arg->len == sizeof("COMMAND=ls"));
@@ -447,12 +447,12 @@ void parser_parse_double_quotes_test()
     char* line = "echo \"hello\"\0";
     size_t len = 13;
 
-    struct Args* args = parser_parse(line, len, &scratch_arena);
+    Args* args = parser_parse(line, len, &scratch_arena);
 
     eassert(args->head);
     eassert(args->count == 2);
 
-    struct Arg* arg = args->head->next;
+    Arg* arg = args->head->next;
     eassert(!memcmp(arg->val, "echo", 5));
     eassert(arg->op == OP_CONSTANT);
     eassert(arg->len == 5);
@@ -474,12 +474,12 @@ void parser_parse_single_quotes_test()
     char* line = "echo \'hello\'\0";
     size_t len = 13;
 
-    struct Args* args = parser_parse(line, len, &scratch_arena);
+    Args* args = parser_parse(line, len, &scratch_arena);
 
     eassert(args->head);
     eassert(args->count == 2);
 
-    struct Arg* arg = args->head->next;
+    Arg* arg = args->head->next;
     eassert(!memcmp(arg->val, "echo", 5));
     eassert(arg->op == OP_CONSTANT);
     eassert(arg->len == 5);
@@ -501,12 +501,12 @@ void parser_parse_backtick_quotes_test()
     char* line = "echo `hello`\0";
     size_t len = 13;
 
-    struct Args* args = parser_parse(line, len, &scratch_arena);
+    Args* args = parser_parse(line, len, &scratch_arena);
 
     eassert(args->head);
     eassert(args->count == 2);
 
-    struct Arg* arg = args->head->next;
+    Arg* arg = args->head->next;
     eassert(!memcmp(arg->val, "echo", 5));
     eassert(arg->op == OP_CONSTANT);
     eassert(arg->len == 5);
@@ -528,12 +528,12 @@ void parser_parse_git_commit_test()
     char* line = "git commit -m \"this is a commit message\"\0";
     size_t len = strlen(line) + 1;
 
-    struct Args* args = parser_parse(line, len, &scratch_arena);
+    Args* args = parser_parse(line, len, &scratch_arena);
 
     eassert(args->head);
     eassert(args->count == 4);
 
-    struct Arg* arg = args->head->next;
+    Arg* arg = args->head->next;
     eassert(!memcmp(arg->val, "git", 4));
     eassert(arg->op == OP_CONSTANT);
     eassert(arg->len == 4);
@@ -565,12 +565,12 @@ void parser_parse_home_test()
     char* line = "ls ~\0";
     size_t len = 5;
 
-    struct Args* args = parser_parse(line, len, &scratch_arena);
+    Args* args = parser_parse(line, len, &scratch_arena);
 
     eassert(args->head);
     eassert(args->count == 2);
 
-    struct Arg* arg = args->head->next;
+    Arg* arg = args->head->next;
     eassert(!memcmp(arg->val, "ls", 3));
     eassert(arg->op == OP_CONSTANT);
     eassert(arg->len == 3);
@@ -592,12 +592,12 @@ void parser_parse_home_at_start_test()
     char* line = "ls ~/snap";
     size_t len = 10;
 
-    struct Args* args = parser_parse(line, len, &scratch_arena);
+    Args* args = parser_parse(line, len, &scratch_arena);
 
     eassert(args->head);
     eassert(args->count == 2);
 
-    struct Arg* arg = args->head->next;
+    Arg* arg = args->head->next;
     eassert(!memcmp(arg->val, "ls", 3));
     eassert(arg->op == OP_CONSTANT);
     eassert(arg->len == 3);
@@ -618,9 +618,9 @@ void parser_parse_math_operators_test()
 
     char* line = "$( 1 + 1 - 1 * 1 / 1 % 1 ** 1 )";
     size_t len = strlen(line) + 1;
-    struct Args* args = parser_parse(line, len, &scratch_arena);
+    Args* args = parser_parse(line, len, &scratch_arena);
 
-    struct Arg* arg = args->head->next;
+    Arg* arg = args->head->next;
     eassert(arg->op == OP_MATH_EXPRESSION_START);
     arg = arg->next;
 
@@ -684,12 +684,12 @@ void parser_parse_glob_star_test()
     char* line = "ls *.md";
     size_t len = strlen(line) + 1;
 
-    struct Args* args = parser_parse(line, len, &scratch_arena);
+    Args* args = parser_parse(line, len, &scratch_arena);
 
     eassert(args->head);
     eassert(args->count == 2);
 
-    struct Arg* arg = args->head->next;
+    Arg* arg = args->head->next;
     eassert(!memcmp(arg->val, "ls", 3));
     eassert(arg->op == OP_CONSTANT);
     eassert(arg->len == 3);
@@ -711,12 +711,12 @@ void parser_parse_glob_question_test()
     char* line = "ls ?.md";
     size_t len = strlen(line) + 1;
 
-    struct Args* args = parser_parse(line, len, &scratch_arena);
+    Args* args = parser_parse(line, len, &scratch_arena);
 
     eassert(args->head);
     eassert(args->count == 2);
 
-    struct Arg* arg = args->head->next;
+    Arg* arg = args->head->next;
     eassert(!memcmp(arg->val, "ls", 3));
     eassert(arg->op == OP_CONSTANT);
     eassert(arg->len == 3);
@@ -739,10 +739,10 @@ void parser_parse_glob_star_shouldnt_crash()
     char* line = "* * * * * * * * * * * * * * * * * *";
     size_t len = strlen(line) + 1;
 
-    struct Args* args = parser_parse(line, len, &scratch_arena);
+    Args* args = parser_parse(line, len, &scratch_arena);
 
     eassert(args->count == 18);
-    struct Arg* arg = args->head->next;
+    Arg* arg = args->head->next;
     for (size_t i = 0; i < args->count; ++i) {
         eassert(arg->val[0] == '*');
         eassert(arg->op == OP_GLOB_EXPANSION);
@@ -762,7 +762,7 @@ void parser_parse_tilde_home_shouldnt_crash()
         "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~?~";
     size_t len = strlen(line) + 1;
 
-    struct Args* args = parser_parse(line, len, &scratch_arena);
+    Args* args = parser_parse(line, len, &scratch_arena);
 
     eassert(args->count == 1);
 
@@ -778,7 +778,7 @@ void parser_parse_glob_question_and_tilde_home_shouldnt_crash()
                  "~~~~?~>w?";
     size_t len = strlen(line) + 1;
 
-    struct Args* args = parser_parse(line, len, &scratch_arena);
+    Args* args = parser_parse(line, len, &scratch_arena);
 
     eassert(args->count == 1);
 
@@ -792,12 +792,12 @@ void parser_parse_bool_test()
     char* line = "false && true || false";
     size_t len = strlen(line) + 1;
 
-    struct Args* args = parser_parse(line, len, &scratch_arena);
+    Args* args = parser_parse(line, len, &scratch_arena);
 
     eassert(args->head);
     eassert(args->count == 5);
 
-    struct Arg* arg = args->head->next;
+    Arg* arg = args->head->next;
     eassert(!memcmp(arg->val, "false", 6));
     eassert(arg->op == OP_FALSE);
     eassert(arg->len == 6);
@@ -877,7 +877,7 @@ void parser_parse_bad_input_shouldnt_crash()
                  "~~~~>ÿÿ> >ÿ>\w\>ÿ> >ÿ> \> >";
     size_t len = strlen(line) + 1;
 
-    struct Args* args = parser_parse(line, len, &scratch_arena);
+    Args* args = parser_parse(line, len, &scratch_arena);
 
     // hits limit so does not process, not crashing is a test pass
     (void)args;

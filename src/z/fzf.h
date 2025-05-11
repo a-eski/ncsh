@@ -51,8 +51,7 @@ typedef struct {
     size_t size;
 } fzf_string_t;
 
-typedef fzf_result_t (*fzf_algo_t)(bool, fzf_string_t*, fzf_string_t*, fzf_position_t*, fzf_slab_t*,
-                                   struct Arena* const);
+typedef fzf_result_t (*fzf_algo_t)(bool, fzf_string_t*, fzf_string_t*, fzf_position_t*, fzf_slab_t*, Arena*);
 
 typedef enum {
     CaseSmart = 0,
@@ -82,17 +81,17 @@ typedef struct {
 } fzf_pattern_t;
 
 fzf_result_t fzf_fuzzy_match_v1(bool case_sensitive, fzf_string_t* text, fzf_string_t* pattern, fzf_position_t* pos,
-                                fzf_slab_t* slab, struct Arena* const scratch_arena);
+                                fzf_slab_t* slab, Arena* scratch_arena);
 fzf_result_t fzf_fuzzy_match_v2(bool case_sensitive, fzf_string_t* text, fzf_string_t* pattern, fzf_position_t* pos,
-                                fzf_slab_t* slab, struct Arena* const scratch_arena);
+                                fzf_slab_t* slab, Arena* scratch_arena);
 fzf_result_t fzf_exact_match_naive(bool case_sensitive, fzf_string_t* text, fzf_string_t* pattern, fzf_position_t* pos,
-                                   fzf_slab_t* slab, struct Arena* const scratch_arena);
+                                   fzf_slab_t* slab, Arena* scratch_arena);
 fzf_result_t fzf_prefix_match(bool case_sensitive, fzf_string_t* text, fzf_string_t* pattern, fzf_position_t* pos,
-                              fzf_slab_t* slab, struct Arena* const scratch_arena);
+                              fzf_slab_t* slab, Arena* scratch_arena);
 fzf_result_t fzf_suffix_match(bool case_sensitive, fzf_string_t* text, fzf_string_t* pattern, fzf_position_t* pos,
-                              fzf_slab_t* slab, struct Arena* const scratch_arena);
+                              fzf_slab_t* slab, Arena* scratch_arena);
 fzf_result_t fzf_equal_match(bool case_sensitive, fzf_string_t* text, fzf_string_t* pattern, fzf_position_t* pos,
-                             fzf_slab_t* slab, struct Arena* const scratch_arena);
+                             fzf_slab_t* slab, Arena* scratch_arena);
 
 /* Public Interface */
 
@@ -101,7 +100,7 @@ fzf_result_t fzf_equal_match(bool case_sensitive, fzf_string_t* text, fzf_string
  * pat_len should be equivalent to strlen, do not include null terminator in length.
  * Returns: a pointer to the pattern.
  */
-fzf_pattern_t* fzf_parse_pattern(char* const pattern, size_t pat_len, struct Arena* const scratch_arena);
+fzf_pattern_t* fzf_parse_pattern(char* const pattern, size_t pat_len, Arena* scratch_arena);
 
 /* fzf_get_score
  * Get score for specific entry based on fzf_pattern_t.
@@ -110,10 +109,10 @@ fzf_pattern_t* fzf_parse_pattern(char* const pattern, size_t pat_len, struct Are
  * Returns: the fzf score
  */
 int32_t fzf_get_score(const char* text, size_t text_len, fzf_pattern_t* pattern, fzf_slab_t* slab,
-                      struct Arena* const scratch_arena);
+                      Arena* scratch_arena);
 
-fzf_slab_t* fzf_make_slab(fzf_slab_config_t config, struct Arena* const scratch_arena);
+fzf_slab_t* fzf_make_slab(fzf_slab_config_t config, Arena* scratch_arena);
 
-fzf_slab_t* fzf_make_default_slab(struct Arena* const scratch_arena);
+fzf_slab_t* fzf_make_default_slab(Arena* scratch_arena);
 
 #endif // FZF_H

@@ -21,45 +21,45 @@ enum Command_Type {
     CT_BUILTIN = 1
 };
 
-/* struct Output_Redirect_IO
+/* Output_Redirect_IO
  * Stores file descriptors (fds) for redirected output and original fds
  * for stdout and/or stderr
  */
-struct Output_Redirect_IO {
+typedef struct {
     int fd_stdout;
     int fd_stderr;
     int original_stdout;
     int original_stderr;
-};
+} Output_Redirect_IO;
 
-/* struct Output_Redirect_IO
+/* Output_Redirect_IO
  * Stores file descriptors (fds) for redirected input and original fd
  * for stdin
  */
-struct Input_Redirect_IO {
+typedef struct {
     int fd;
     int original_stdin;
-};
+} Input_Redirect_IO;
 
-/* struct Pipe_IO
+/* Pipe_IO
  * Stores file descriptors (fds) and state for piping io between processes
  */
-struct Pipe_IO {
+typedef struct {
     int fd_one[2];
     int fd_two[2];
-};
+} Pipe_IO;
 
-/* struct Vm_Data
+/* Vm_Data
  * Stores information related to state in the VM.
- * Used in conjunction with struct Args and then struct Tokens.
+ * Used in conjunction with Args and then Tokens.
  */
-struct Vm_Data {
+typedef struct {
     char* buffer[MAX_INPUT];
     size_t buffer_len[MAX_INPUT];
     uint8_t command_position;
     bool args_end;
     enum Ops op_current;
-    struct Output_Redirect_IO output_redirect_io;
-    struct Input_Redirect_IO input_redirect_io;
-    struct Pipe_IO pipes_io;
-};
+    Output_Redirect_IO output_redirect_io;
+    Input_Redirect_IO input_redirect_io;
+    Pipe_IO pipes_io;
+} Vm_Data;

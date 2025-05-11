@@ -17,7 +17,7 @@
 #include "hashset.h"
 #include "history.h"
 
-void history_file_set(struct Str config_file, struct History* restrict history, struct Arena* restrict arena)
+void history_file_set(Str config_file, History* rst history, Arena* rst arena)
 {
     constexpr size_t history_file_len = sizeof(NCSH_HISTORY_FILE);
 #ifdef NCSH_HISTORY_TEST
@@ -44,7 +44,7 @@ void history_file_set(struct Str config_file, struct History* restrict history, 
 }
 
 [[nodiscard]]
-enum eresult history_alloc(struct History* restrict history, struct Arena* restrict arena)
+enum eresult history_alloc(History* rst history, Arena* rst arena)
 {
     assert(history);
     if (!history) {
@@ -52,13 +52,13 @@ enum eresult history_alloc(struct History* restrict history, struct Arena* restr
     }
 
     history->count = 0;
-    history->entries = arena_malloc(arena, NCSH_MAX_HISTORY_IN_MEMORY, struct Str);
+    history->entries = arena_malloc(arena, NCSH_MAX_HISTORY_IN_MEMORY, Str);
 
     return E_SUCCESS;
 }
 
 [[nodiscard]]
-enum eresult history_load(struct History* restrict history, struct Arena* restrict arena)
+enum eresult history_load(History* rst history, Arena* rst arena)
 {
     assert(history && history->file && arena);
 
@@ -104,7 +104,7 @@ enum eresult history_load(struct History* restrict history, struct Arena* restri
 }
 
 [[nodiscard]]
-enum eresult history_reload(struct History* restrict history, struct Arena* restrict arena)
+enum eresult history_reload(History* rst history, Arena* rst arena)
 {
     assert(history && history->file && arena);
 
@@ -144,7 +144,7 @@ enum eresult history_reload(struct History* restrict history, struct Arena* rest
 }
 
 [[nodiscard]]
-enum eresult history_init(struct Str config_location, struct History* restrict history, struct Arena* restrict arena)
+enum eresult history_init(Str config_location, History* rst history, Arena* rst arena)
 {
     assert(history && arena);
 
@@ -170,7 +170,7 @@ enum eresult history_init(struct Str config_location, struct History* restrict h
 }
 
 [[nodiscard]]
-enum eresult history_clean(struct History* restrict history, struct Arena* restrict arena, struct Arena scratch_arena)
+enum eresult history_clean(History* rst history, Arena* rst arena, Arena scratch_arena)
 {
     assert(history && arena && scratch_arena.start);
     if (!history->count || !history->entries[0].value) {
@@ -179,7 +179,7 @@ enum eresult history_clean(struct History* restrict history, struct Arena* restr
 
     printf("ncsh history: starting to clean history with %zu entries.\n", history->count);
 
-    struct Hashset hset = {0};
+    Hashset hset = {0};
     hashset_malloc(history->count / 2, &scratch_arena, &hset);
 
     FILE* file = fopen(history->file, "w");
@@ -223,7 +223,7 @@ enum eresult history_clean(struct History* restrict history, struct Arena* restr
     return E_SUCCESS;
 }
 
-enum eresult history_save(struct History* restrict history)
+enum eresult history_save(History* rst history)
 {
     if (!history || !history->count || !history->entries || !history->entries[0].value) {
         return E_FAILURE_NULL_REFERENCE;
@@ -265,8 +265,7 @@ enum eresult history_save(struct History* restrict history)
     return E_SUCCESS;
 }
 
-enum eresult history_add(char* restrict line, size_t length, struct History* restrict history,
-                         struct Arena* restrict arena)
+enum eresult history_add(char* rst line, size_t length, History* rst history, Arena* rst arena)
 {
     assert(history);
     assert(line);
@@ -302,7 +301,7 @@ enum eresult history_add(char* restrict line, size_t length, struct History* res
 }
 
 [[nodiscard]]
-struct Str history_get(size_t position, struct History* restrict history)
+Str history_get(size_t position, History* rst history)
 {
     assert(history);
 
@@ -323,7 +322,7 @@ struct Str history_get(size_t position, struct History* restrict history)
 }
 
 [[nodiscard]]
-int history_command_display(struct History* restrict history)
+int history_command_display(History* rst history)
 {
     assert(history);
     if (!history || !history->count) {
@@ -337,7 +336,7 @@ int history_command_display(struct History* restrict history)
 }
 
 [[nodiscard]]
-int history_command_count(struct History* restrict history)
+int history_command_count(History* rst history)
 {
     assert(history);
     printf("history count: %zu\n", history->count);
@@ -345,8 +344,7 @@ int history_command_count(struct History* restrict history)
 }
 
 [[nodiscard]]
-int history_command_clean(struct History* restrict history, struct Arena* restrict arena,
-                          struct Arena* restrict scratch_arena)
+int history_command_clean(History* rst history, Arena* rst arena, Arena* rst scratch_arena)
 {
     if (history_clean(history, arena, *scratch_arena) != E_SUCCESS) {
         return NCSH_COMMAND_FAILED_CONTINUE;
@@ -356,13 +354,12 @@ int history_command_clean(struct History* restrict history, struct Arena* restri
 }
 
 [[nodiscard]]
-int history_command_add(char* restrict value, size_t value_len, struct History* restrict history,
-                        struct Arena* restrict arena)
+int history_command_add(char* rst value, size_t value_len, History* rst history, Arena* rst arena)
 {
     return history_add(value, value_len, history, arena);
 }
 
-void history_remove_entries_shift(size_t offset, struct History* restrict history)
+void history_remove_entries_shift(size_t offset, History* rst history)
 {
     if (offset + 1 == history->count) {
         return;
@@ -374,8 +371,8 @@ void history_remove_entries_shift(size_t offset, struct History* restrict histor
 }
 
 [[nodiscard]]
-int history_command_remove(char* restrict value, size_t value_len, struct History* restrict history,
-                           struct Arena* restrict arena, struct Arena* restrict scratch_arena)
+int history_command_remove(char* rst value, size_t value_len, History* rst history, Arena* rst arena,
+                           Arena* rst scratch_arena)
 {
     assert(value);
     assert(value_len > 0);

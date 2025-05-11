@@ -20,24 +20,24 @@
 #define Z_WEEK 7 * Z_DAY
 #define Z_MONTH 30 * Z_DAY
 
-struct z_Directory {
+typedef struct {
     double rank;
     time_t last_accessed;
     char* path;
     size_t path_length;
-};
+} z_Directory;
 
-struct z_Match {
+typedef struct {
     double z_score;
-    struct z_Directory* dir;
-};
+    z_Directory* dir;
+} z_Match;
 
-struct z_Database {
+typedef struct {
     // bool dirty;
     size_t count;
     char* database_file;
-    struct z_Directory dirs[Z_DATABASE_IN_MEMORY_LIMIT];
-};
+    z_Directory dirs[Z_DATABASE_IN_MEMORY_LIMIT];
+} z_Database;
 
 enum z_Result {
     Z_HIT_MEMORY_LIMIT = -9,
@@ -53,19 +53,17 @@ enum z_Result {
     Z_SUCCESS = 1
 };
 
-enum z_Result z_init(struct Str* restrict config_location, struct z_Database* restrict database,
-                     struct Arena* restrict arena);
+enum z_Result z_init(Str* rst config_location, z_Database* rst database, Arena* rst arena);
 
-void z(char* restrict target, size_t target_length, char* restrict cwd, struct z_Database* restrict db,
-       struct Arena* restrict arena, struct Arena scratch_arena);
+void z(char* rst target, size_t target_length, char* rst cwd, z_Database* rst db, Arena* rst arena,
+       Arena scratch_arena);
 
-enum z_Result z_add(char* restrict path, size_t path_length, struct z_Database* restrict db,
-                    struct Arena* restrict arena);
+enum z_Result z_add(char* rst path, size_t path_length, z_Database* rst db, Arena* rst arena);
 
-enum z_Result z_remove(char* restrict path, size_t path_length, struct z_Database* restrict db);
+enum z_Result z_remove(char* rst path, size_t path_length, z_Database* rst db);
 
-enum z_Result z_exit(struct z_Database* restrict db);
+enum z_Result z_exit(z_Database* rst db);
 
-void z_print(struct z_Database* restrict db);
+void z_print(z_Database* rst db);
 
 #endif // !Z_H_

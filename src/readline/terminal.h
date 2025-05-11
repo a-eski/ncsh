@@ -59,19 +59,19 @@
 #define HIDE_CURSOR "\033[?25l"
 #define SHOW_CURSOR "\033[?25h"
 
-struct Coordinates {
+typedef struct {
     int x;
     int y;
-};
+} Coordinates;
 
-struct Coordinates terminal_size(void);
+Coordinates terminal_size(void);
 
 /* terminal_init
  * Put the terminal in the proper modes for ncsh and save the previous state of the terminal in memory.
  * ncsh puts the shell in noncanonical mode, so input can be processed one character at a time.
  * Returns the current size of the terminal.
  */
-struct Coordinates terminal_init(void);
+Coordinates terminal_init(void);
 
 /* terminal_reset
  * Put the terminal in the previous state of the terminal that is stored in memory.

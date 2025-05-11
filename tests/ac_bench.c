@@ -8,7 +8,7 @@ void ac_bench()
     ARENA_TEST_SETUP;
     SCRATCH_ARENA_TEST_SETUP;
 
-    struct Autocompletion_Node* tree = ac_alloc(&arena);
+    Autocompletion_Node* tree = ac_alloc(&arena);
     eassert(tree != NULL);
 
     ac_add("ls", sizeof("ls"), tree, &arena);
@@ -169,7 +169,7 @@ void ac_bench()
     ac_add("ls -a --color", sizeof("ls -a --color"), tree, &arena);
     ac_add("version", sizeof("version"), tree, &arena);
 
-    struct Autocompletion autocomplete[NCSH_MAX_AUTOCOMPLETION_MATCHES] = {0};
+    Autocompletion autocomplete[NCSH_MAX_AUTOCOMPLETION_MATCHES] = {0};
 
     uint8_t match_count = ac_get("l", autocomplete, tree, scratch_arena);
     match_count = ac_get("ls", autocomplete, tree, scratch_arena);

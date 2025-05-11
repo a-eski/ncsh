@@ -18,34 +18,31 @@
 #define NCSH_MAX_HISTORY_FILE 2000
 #define NCSH_MAX_HISTORY_IN_MEMORY 2400
 
-struct History {
+typedef struct {
     size_t count;
     char* file;
-    struct Str* entries;
-};
+    Str* entries;
+} History;
 
 /* History Setup and Manipulation */
-enum eresult history_init(struct Str config_location, struct History* restrict history, struct Arena* restrict arena);
+enum eresult history_init(Str config_location, History* rst history, Arena* rst arena);
 
-enum eresult history_save(struct History* restrict history);
+enum eresult history_save(History* rst history);
 
-enum eresult history_add(char* restrict line, size_t length, struct History* restrict history,
-                         struct Arena* restrict arena);
+enum eresult history_add(char* rst line, size_t length, History* rst history, Arena* rst arena);
 
-struct Str history_get(size_t position, struct History* restrict history);
+Str history_get(size_t position, History* rst history);
 
 /* history_command_...
  * History Commands called from builtins when user enters commands like 'history',
  * 'history count', 'history clean', 'history add {directory}', 'history remove {directory}'. */
-int history_command_display(struct History* restrict history);
+int history_command_display(History* rst history);
 
-int history_command_count(struct History* restrict history);
+int history_command_count(History* rst history);
 
-int history_command_clean(struct History* restrict history, struct Arena* restrict arena,
-                          struct Arena* restrict scratch_arena);
+int history_command_clean(History* rst history, Arena* rst arena, Arena* rst scratch_arena);
 
-int history_command_add(char* restrict value, size_t value_len, struct History* restrict history,
-                        struct Arena* restrict arena);
+int history_command_add(char* rst value, size_t value_len, History* rst history, Arena* rst arena);
 
-int history_command_remove(char* restrict value, size_t value_len, struct History* restrict history,
-                           struct Arena* restrict arena, struct Arena* restrict scratch_arena);
+int history_command_remove(char* rst value, size_t value_len, History* rst history, Arena* rst arena,
+                           Arena* rst scratch_arena);

@@ -14,15 +14,14 @@
 static inline int char_to_index(char character);
 static inline char index_to_char(int index);
 
-struct Autocompletion_Node* ac_alloc(struct Arena* restrict arena)
+Autocompletion_Node* ac_alloc(Arena* rst arena)
 {
-    struct Autocompletion_Node* tree = arena_malloc(arena, 1, struct Autocompletion_Node);
+    Autocompletion_Node* tree = arena_malloc(arena, 1, Autocompletion_Node);
     tree->is_end_of_a_word = false;
     return tree;
 }
 
-void ac_add(char* restrict string, size_t length, struct Autocompletion_Node* restrict tree,
-            struct Arena* restrict arena)
+void ac_add(char* rst string, size_t length, Autocompletion_Node* rst tree, Arena* rst arena)
 {
     assert(string && length && tree && arena);
     if (!string || !length || length > NCSH_MAX_INPUT) {
@@ -36,7 +35,7 @@ void ac_add(char* restrict string, size_t length, struct Autocompletion_Node* re
         }
 
         if (!tree->nodes[index]) {
-            tree->nodes[index] = arena_malloc(arena, 1, struct Autocompletion_Node);
+            tree->nodes[index] = arena_malloc(arena, 1, Autocompletion_Node);
             tree->nodes[index]->is_end_of_a_word = false;
             tree->nodes[index]->weight = 1;
             tree = tree->nodes[index];
@@ -51,8 +50,7 @@ void ac_add(char* restrict string, size_t length, struct Autocompletion_Node* re
     tree->is_end_of_a_word = true;
 }
 
-void ac_add_multiple(struct Str* restrict strings, int count, struct Autocompletion_Node* restrict tree,
-                     struct Arena* restrict arena)
+void ac_add_multiple(Str* rst strings, int count, Autocompletion_Node* rst tree, Arena* rst arena)
 {
     assert(strings && tree && arena);
     if (count <= 0) {
@@ -65,10 +63,10 @@ void ac_add_multiple(struct Str* restrict strings, int count, struct Autocomplet
 }
 
 /* ac_find
- * char* p: the prefix, struct Autocompletion_Node* restrict t: the trie
+ * char* p: the prefix, Autocompletion_Node* rst t: the trie
  * Walk the trie to find the prefix. Return null if prefix not found.
  */
-struct Autocompletion_Node* ac_find(char* restrict p, struct Autocompletion_Node* restrict t)
+Autocompletion_Node* ac_find(char* rst p, Autocompletion_Node* rst t)
 {
     while (p && *p) {
         if (!t)
@@ -89,8 +87,7 @@ static uint8_t ac_match_pos;
 char ac_buffer[NCSH_MAX_INPUT];
 size_t ac_buffer_len;
 
-void ac_match(struct Autocompletion* restrict matches, struct Autocompletion_Node* restrict tree,
-              struct Arena* restrict scratch)
+void ac_match(Autocompletion* rst matches, Autocompletion_Node* rst tree, Arena* rst scratch)
 {
     if (!tree || ac_match_pos + 1 >= NCSH_MAX_AUTOCOMPLETION_MATCHES) {
         return;
@@ -126,8 +123,7 @@ void ac_match(struct Autocompletion* restrict matches, struct Autocompletion_Nod
     }
 }
 
-uint8_t ac_matches(struct Autocompletion* restrict matches, struct Autocompletion_Node* restrict prefix,
-                   struct Arena* restrict scratch)
+uint8_t ac_matches(Autocompletion* rst matches, Autocompletion_Node* rst prefix, Arena* rst scratch)
 {
     ac_str_pos = 0;
     ac_match_pos = 0;
@@ -139,12 +135,11 @@ uint8_t ac_matches(struct Autocompletion* restrict matches, struct Autocompletio
     return ac_match_pos;
 }
 
-uint8_t ac_get(char* restrict search, struct Autocompletion* restrict matches,
-               struct Autocompletion_Node* restrict tree, struct Arena scratch)
+uint8_t ac_get(char* rst search, Autocompletion* rst matches, Autocompletion_Node* rst tree, Arena scratch)
 {
     assert(search);
 
-    struct Autocompletion_Node* prefix = ac_find(search, tree);
+    Autocompletion_Node* prefix = ac_find(search, tree);
     if (!prefix)
         return 0;
 
@@ -155,21 +150,20 @@ uint8_t ac_get(char* restrict search, struct Autocompletion* restrict matches,
     return match_count;
 }
 
-uint8_t ac_first(char* restrict search, char* restrict match, struct Autocompletion_Node* restrict tree,
-                 struct Arena scratch)
+uint8_t ac_first(char* rst search, char* rst match, Autocompletion_Node* rst tree, Arena scratch)
 {
     assert(search);
 
-    struct Autocompletion_Node* prefix = ac_find(search, tree);
+    Autocompletion_Node* prefix = ac_find(search, tree);
     if (!prefix)
         return 0;
 
-    struct Autocompletion matches[NCSH_MAX_AUTOCOMPLETION_MATCHES] = {0};
+    Autocompletion matches[NCSH_MAX_AUTOCOMPLETION_MATCHES] = {0};
     uint8_t match_count = ac_matches(matches, prefix, &scratch);
     if (!match_count)
         return 0;
 
-    struct Autocompletion potential_match = matches[0];
+    Autocompletion potential_match = matches[0];
     for (uint8_t i = 1; i < match_count; ++i) {
         if (matches[i].weight > potential_match.weight) {
             potential_match = matches[i];

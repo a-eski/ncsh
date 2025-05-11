@@ -12,16 +12,15 @@
 #define DOT_CONFIG ".config"
 #define RC_FILE ".ncshrc"
 
-/* struct Config
+/* Config
  * Stores home location, config location, and full path to the config file.
  */
-struct Config {
-    struct Str home_location;
-    struct Str config_location;
-    struct Str config_file;
-};
+typedef struct {
+    Str home_location;
+    Str config_location;
+    Str config_file;
+} Config;
 
-enum eresult config_init(struct Config* restrict config, struct Arena* restrict arena,
-		Arena scratch_arena);
+enum eresult config_init(Config* rst config, Arena* rst arena, Arena scratch_arena);
 
-struct Str config_alias_check(char* restrict buffer, size_t buf_len);
+Str config_alias_check(char* rst buffer, size_t buf_len);

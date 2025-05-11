@@ -18,14 +18,14 @@
 
 static struct termios otios;
 
-struct Coordinates terminal_size(void)
+Coordinates terminal_size(void)
 {
     struct winsize window;
     ioctl(STDOUT_FILENO, TIOCGWINSZ, &window);
-    return (struct Coordinates){.x = window.ws_col, .y = window.ws_row};
+    return (Coordinates){.x = window.ws_col, .y = window.ws_row};
 }
 
-struct Coordinates terminal_init(void)
+Coordinates terminal_init(void)
 {
     if (!isatty(STDIN_FILENO)) {
         fprintf(stderr, "Not running in a terminal.\n");

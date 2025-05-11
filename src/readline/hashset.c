@@ -7,19 +7,19 @@
 
 #include "hashset.h"
 
-void hashset_malloc(size_t capacity, struct Arena* restrict arena, struct Hashset* restrict hset)
+void hashset_malloc(size_t capacity, Arena* rst arena, Hashset* rst hset)
 {
     hset->size = 0;
     hset->capacity = capacity == 0 ? HASHSET_DEFAULT_CAPACITY : capacity;
 
-    hset->entries = arena_malloc(arena, hset->capacity, struct Hashset_Entry);
+    hset->entries = arena_malloc(arena, hset->capacity, Hashset_Entry);
 }
 
 #define ESKILIB_FNV_OFFSET 2166136261
 #define ESKILIB_FNV_PRIME 16777619
 
 // 64-bit FNV-1a hash
-uint64_t hashset_key(char* restrict str)
+uint64_t hashset_key(char* rst str)
 {
     register uint64_t i;
 
@@ -31,7 +31,7 @@ uint64_t hashset_key(char* restrict str)
     return i;
 }
 
-struct Str hashset_get(char* restrict key, struct Hashset* restrict hset)
+Str hashset_get(char* rst key, Hashset* rst hset)
 {
     uint64_t hash = hashset_key(key);
     size_t index = (size_t)(hash & (uint64_t)(hset->capacity - 1));
@@ -50,7 +50,7 @@ struct Str hashset_get(char* restrict key, struct Hashset* restrict hset)
     return Str_Empty;
 }
 
-bool hashset_exists(char* restrict key, struct Hashset* restrict hset)
+bool hashset_exists(char* rst key, Hashset* rst hset)
 {
     uint64_t hash = hashset_key(key);
     size_t index = (size_t)(hash & (uint64_t)(hset->capacity - 1));
@@ -69,7 +69,7 @@ bool hashset_exists(char* restrict key, struct Hashset* restrict hset)
     return false;
 }
 
-char* hashset_set_entry(struct Hashset_Entry* restrict entries, size_t capacity, struct Str val, size_t* plength)
+char* hashset_set_entry(Hashset_Entry* rst entries, size_t capacity, Str val, size_t* plength)
 {
     uint64_t hash = hashset_key(val.value);
     size_t index = (size_t)(hash & (uint64_t)(capacity - 1));
@@ -95,18 +95,18 @@ char* hashset_set_entry(struct Hashset_Entry* restrict entries, size_t capacity,
     return val.value;
 }
 
-bool hashset_expand(struct Arena* restrict arena, struct Hashset* restrict hset)
+bool hashset_expand(Arena* rst arena, Hashset* rst hset)
 {
     size_t new_capacity = hset->capacity * 2;
     if (new_capacity < hset->capacity) {
         return false;
     }
 
-    struct Hashset_Entry* new_entries = arena_malloc(arena, new_capacity, struct Hashset_Entry);
+    Hashset_Entry* new_entries = arena_malloc(arena, new_capacity, Hashset_Entry);
 
     // Iterate entries, move all non-empty ones to new table's entries.
     for (size_t i = 0; i < hset->capacity; i++) {
-        struct Hashset_Entry entry = hset->entries[i];
+        Hashset_Entry entry = hset->entries[i];
         if (entry.key != NULL) {
             hashset_set_entry(new_entries, new_capacity, entry.value, NULL);
         }
@@ -117,7 +117,7 @@ bool hashset_expand(struct Arena* restrict arena, struct Hashset* restrict hset)
     return true;
 }
 
-char* hashset_set(struct Str val, struct Arena* restrict arena, struct Hashset* restrict hset)
+char* hashset_set(Str val, Arena* rst arena, Hashset* rst hset)
 {
     assert(val.value && val.length);
     if (!val.value || !val.length) {

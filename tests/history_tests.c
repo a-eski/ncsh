@@ -3,8 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../src/eskilib/str.h"
 #include "../src/eskilib/etest.h"
+#include "../src/eskilib/str.h"
 #include "../src/readline/history.h"
 #include "lib/arena_test_helper.h"
 
@@ -15,7 +15,7 @@ void history_load_file_not_exists_test()
     ARENA_TEST_SETUP;
 
     enum eresult result;
-    struct History history = {0};
+    History history = {0};
     result = history_init(Str_Empty, &history, &arena);
     eassert(result == E_SUCCESS);
 
@@ -32,7 +32,7 @@ void history_load_file_exists_test()
     ARENA_TEST_SETUP;
 
     enum eresult result;
-    struct History history = {0};
+    History history = {0};
     result = history_init(Str_Empty, &history, &arena);
     eassert(result == E_SUCCESS);
 
@@ -49,12 +49,12 @@ void history_get_empty_file_test()
     ARENA_TEST_SETUP;
 
     enum eresult result;
-    struct History history = {0};
+    History history = {0};
     result = history_init(Str_Empty, &history, &arena);
     eassert(result == E_SUCCESS);
     eassert(history.count == 0);
 
-    struct Str entry = history_get(0, &history);
+    Str entry = history_get(0, &history);
     eassert(entry.length == 0);
 
     history_save(&history);
@@ -63,9 +63,9 @@ void history_get_empty_file_test()
 
 void history_get_null_entries_test()
 {
-    struct History history_null_entries = {0};
+    History history_null_entries = {0};
     history_null_entries.entries = NULL;
-    struct Str entry_history_null = history_get(0, &history_null_entries);
+    Str entry_history_null = history_get(0, &history_null_entries);
     eassert(entry_history_null.length == 0);
     eassert(entry_history_null.value == NULL);
 }
@@ -74,7 +74,7 @@ void history_get_position_gt_history_count_test()
 {
     ARENA_TEST_SETUP;
 
-    struct History history = {0};
+    History history = {0};
     enum eresult result = history_init(Str_Empty, &history, &arena);
     eassert(result == E_SUCCESS);
 
@@ -82,7 +82,7 @@ void history_get_position_gt_history_count_test()
     history.count = 2;
     size_t position = 10;
 
-    struct Str entry = history_get(position, &history);
+    Str entry = history_get(position, &history);
     eassert(entry.length == 0);
     eassert(entry.value == NULL);
 
@@ -98,7 +98,7 @@ void history_get_position_equals_history_count_test()
     ARENA_TEST_SETUP;
 
     enum eresult result;
-    struct History history = {0};
+    History history = {0};
     result = history_init(Str_Empty, &history, &arena);
     eassert(result == E_SUCCESS);
 
@@ -106,7 +106,7 @@ void history_get_position_equals_history_count_test()
     history.count = 2;
     size_t position = history.count;
 
-    struct Str entry = history_get(position, &history);
+    Str entry = history_get(position, &history);
     eassert(entry.length == 0);
     eassert(entry.value == NULL);
 
@@ -122,14 +122,14 @@ void history_get_position_gt_max_test()
     ARENA_TEST_SETUP;
 
     enum eresult result;
-    struct History history = {0};
+    History history = {0};
     result = history_init(Str_Empty, &history, &arena);
     eassert(result == E_SUCCESS);
 
     // mark position history in memory max.
     size_t position = 10000;
 
-    struct Str entry = history_get(position, &history);
+    Str entry = history_get(position, &history);
     eassert(entry.length == 0);
     eassert(entry.value == NULL);
 
@@ -142,7 +142,7 @@ void history_save_adds_to_file()
     ARENA_TEST_SETUP;
 
     enum eresult result;
-    struct History history = {0};
+    History history = {0};
     result = history_init(Str_Empty, &history, &arena);
     eassert(result == E_SUCCESS);
 
@@ -170,7 +170,7 @@ void history_save_adds_multiple_to_file()
     ARENA_TEST_SETUP;
 
     enum eresult result;
-    struct History history = {0};
+    History history = {0};
     result = history_init(Str_Empty, &history, &arena);
     eassert(result == E_SUCCESS);
 
@@ -212,14 +212,14 @@ void history_get_position_last_entry_test()
     ARENA_TEST_SETUP;
 
     enum eresult result;
-    struct History history = {0};
+    History history = {0};
     result = history_init(Str_Empty, &history, &arena);
     eassert(result == E_SUCCESS);
 
     // try to get the last histroy entry.
     size_t position = history.count - 1;
 
-    struct Str entry = history_get(position, &history);
+    Str entry = history_get(position, &history);
     eassert(entry.length != 0);
     eassert(entry.value != NULL);
 
@@ -232,11 +232,11 @@ void history_load_and_get_entries_test()
     ARENA_TEST_SETUP;
 
     enum eresult result;
-    struct History history = {0};
+    History history = {0};
     result = history_init(Str_Empty, &history, &arena);
     eassert(result == E_SUCCESS);
 
-    struct Str entry = history_get(0, &history);
+    Str entry = history_get(0, &history);
     eassert(entry.length == 11);
     eassert(memcmp(entry.value, "echo hello\0", entry.length) == 0);
 
@@ -257,11 +257,11 @@ void history_load_and_get_entries_then_add_entries_test()
     ARENA_TEST_SETUP;
 
     enum eresult result;
-    struct History history = {0};
+    History history = {0};
     result = history_init(Str_Empty, &history, &arena);
     eassert(result == E_SUCCESS);
 
-    struct Str entry = history_get(0, &history);
+    Str entry = history_get(0, &history);
     eassert(entry.length == 11);
     eassert(memcmp(entry.value, "echo hello\0", entry.length) == 0);
 

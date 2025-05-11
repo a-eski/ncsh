@@ -7,18 +7,18 @@
 #include "arena.h"
 #include "args.h"
 
-struct Args* args_alloc(struct Arena* restrict arena)
+Args* args_alloc(Arena* rst arena)
 {
-    struct Args* args = arena_malloc(arena, 1, struct Args);
+    Args* args = arena_malloc(arena, 1, Args);
     args->count = 0;
     // allocate the first head as empty with no op (0 is OP_NONE)
     args->head = arg_alloc(0, 1, "\0", arena);
     return args;
 }
 
-struct Arg* arg_alloc(uint8_t op, size_t len, char* restrict val, struct Arena* restrict arena)
+Arg* arg_alloc(uint8_t op, size_t len, char* rst val, Arena* rst arena)
 {
-    struct Arg* arg = arena_malloc(arena, 1, struct Arg);
+    Arg* arg = arena_malloc(arena, 1, Arg);
     arg->val = arena_malloc(arena, len, char);
     memcpy(arg->val, val, len);
     arg->op = op;
@@ -27,7 +27,7 @@ struct Arg* arg_alloc(uint8_t op, size_t len, char* restrict val, struct Arena* 
     return arg;
 }
 
-bool arg_set_after(struct Arg* restrict current, struct Arg* restrict nodeToSetAfter)
+bool arg_set_after(Arg* rst current, Arg* rst nodeToSetAfter)
 {
     assert(current);
     assert(nodeToSetAfter);
@@ -35,14 +35,14 @@ bool arg_set_after(struct Arg* restrict current, struct Arg* restrict nodeToSetA
         return false;
     }
 
-    struct Arg* temporaryNode = current->next;
+    Arg* temporaryNode = current->next;
     current->next = nodeToSetAfter;
     nodeToSetAfter->next = temporaryNode;
 
     return true;
 }
 
-bool arg_set_last(struct Args* restrict args, struct Arg* restrict nodeToSetLast)
+bool arg_set_last(Args* rst args, Arg* rst nodeToSetLast)
 {
     assert(args && args->head);
     if (!args) {
@@ -54,7 +54,7 @@ bool arg_set_last(struct Args* restrict args, struct Arg* restrict nodeToSetLast
         return false;
     }
 
-    struct Arg* current = args->head;
+    Arg* current = args->head;
 
     while (current->next) {
         current = current->next;

@@ -51,7 +51,7 @@ size_t ncrl_prompt_size(size_t user_len, size_t dir_len)
  * Returns: length of the shortened cwd
  */
 [[nodiscard]]
-size_t ncrl_prompt_short_directory_get(char* restrict cwd, char* restrict output)
+size_t ncrl_prompt_short_directory_get(char* rst cwd, char* rst output)
 {
     assert(cwd);
 
@@ -88,7 +88,7 @@ size_t ncrl_prompt_short_directory_get(char* restrict cwd, char* restrict output
  * Returns: EXIT_FAILURE or EXIT_SUCCESS
  */
 [[nodiscard]]
-int ncrl_prompt_short_directory_print(struct Input* restrict input)
+int ncrl_prompt_short_directory_print(Input* rst input)
 {
     char cwd[PATH_MAX] = {0};
     char directory[PATH_MAX] = {0};
@@ -118,7 +118,7 @@ int ncrl_prompt_short_directory_print(struct Input* restrict input)
 #if NCSH_PROMPT_DIRECTORY == NCSH_DIRECTORY_NORMAL
 
 [[nodiscard]]
-int ncrl_prompt_directory_print(struct Input* restrict input)
+int ncrl_prompt_directory_print(Input* rst input)
 {
     char cwd[PATH_MAX] = {0};
     if (!getcwd(cwd, sizeof(cwd))) {
@@ -150,7 +150,7 @@ int ncrl_prompt_directory_print(struct Input* restrict input)
 #if NCSH_PROMPT_DIRECTORY == NCSH_DIRECTORY_NONE
 
 [[nodiscard]]
-int ncrl_prompt_no_directory_print(struct Input* restrict input)
+int ncrl_prompt_no_directory_print(Input* rst input)
 {
 #if NCSH_PROMPT_SHOW_USER == NCSH_SHOW_USER_NORMAL
     printf(ncsh_GREEN "%s" WHITE_BRIGHT NCSH_PROMPT_ENDING_STRING, input->user.value);
@@ -172,7 +172,7 @@ int ncrl_prompt_no_directory_print(struct Input* restrict input)
  * Returns: the length of the prompt.
  */
 [[nodiscard]]
-int ncrl_prompt(struct Input* restrict input)
+int ncrl_prompt(Input* rst input)
 {
 #if NCSH_PROMPT_DIRECTORY == NCSH_DIRECTORY_SHORT
     return ncrl_prompt_short_directory_print(input);
@@ -189,7 +189,7 @@ int ncrl_prompt(struct Input* restrict input)
  * Returns: the length of the prompt.
  */
 [[nodiscard]]
-int ncrl_prompt_if_needed(struct Input* restrict input)
+int ncrl_prompt_if_needed(Input* rst input)
 {
     if (input->reprint_prompt == true) {
         if (ncrl_prompt(input) == EXIT_FAILURE) {
@@ -217,7 +217,7 @@ enum Line_Adjustment : uint8_t {
  * Returns: true if at end of current line.
  */
 [[nodiscard]]
-bool ncrl_is_end_of_line(struct Input* restrict input)
+bool ncrl_is_end_of_line(Input* rst input)
 {
     if (input->lines_y == 0) {
         input->lines_x[0] = input->pos;
@@ -236,11 +236,11 @@ bool ncrl_is_end_of_line(struct Input* restrict input)
     return current_line_pos >= input->terminal_size.x;
 }
 
-int ncrl_resize(struct Input* restrict input)
+int ncrl_resize(Input* rst input)
 {
     // need to reset saved cursor position as well on resize
     // use previous size
-    // struct Coordinates prev_size = input->terminal_size;
+    // Coordinates prev_size = input->terminal_size;
 
     input->terminal_size = terminal_size();
     input->lines_y = 0;
@@ -266,7 +266,7 @@ int ncrl_resize(struct Input* restrict input)
  * previous line, decrease lines_y and current_y. Returns: enum Line_Adjustment, a value that indicates whether any line
  * change has happened or not
  */
-enum Line_Adjustment ncrl_adjust_line_if_needed(struct Input* restrict input)
+enum Line_Adjustment ncrl_adjust_line_if_needed(Input* rst input)
 {
     if (!input->pos || input->pos < (size_t)input->terminal_size.x) {
         return L_NONE;
@@ -299,7 +299,7 @@ enum Line_Adjustment ncrl_adjust_line_if_needed(struct Input* restrict input)
  * Returns: EXIT_SUCCESS OR EXIT_FAILURE
  */
 [[nodiscard]]
-int ncrl_backspace(struct Input* restrict input)
+int ncrl_backspace(Input* rst input)
 {
     if (!input->pos) {
         return EXIT_SUCCESS;
@@ -343,7 +343,7 @@ int ncrl_backspace(struct Input* restrict input)
  * Returns: EXIT_SUCCESS OR EXIT_FAILURE
  */
 [[nodiscard]]
-int ncrl_delete(struct Input* restrict input)
+int ncrl_delete(Input* rst input)
 {
     ncsh_write_literal(DELETE_STRING ERASE_CURRENT_LINE);
 
@@ -377,7 +377,7 @@ int ncrl_delete(struct Input* restrict input)
 }
 
 [[nodiscard]]
-int ncrl_line_delete(struct Input* restrict input)
+int ncrl_line_delete(Input* rst input)
 {
     if (!input->pos && !input->max_pos) {
         return EXIT_SUCCESS;
@@ -396,7 +396,7 @@ int ncrl_line_delete(struct Input* restrict input)
 }
 
 [[nodiscard]]
-int ncrl_word_delete(struct Input* restrict input)
+int ncrl_word_delete(Input* rst input)
 {
     if (!input->pos && !input->max_pos) {
         return EXIT_SUCCESS;
@@ -423,7 +423,7 @@ int ncrl_word_delete(struct Input* restrict input)
 }
 
 /*[[nodiscard]]
-int ncrl_line_reset(struct Input* restrict input)
+int ncrl_line_reset(Input* rst input)
 {
     if (input->current_autocompletion[0] == '\0') {
     return EXIT_SUCCESS;
@@ -443,7 +443,7 @@ int ncrl_line_reset(struct Input* restrict input)
 }*/
 
 [[nodiscard]]
-int ncrl_autocomplete(struct Input* restrict input, struct Arena* restrict scratch_arena)
+int ncrl_autocomplete(Input* rst input, Arena* rst scratch_arena)
 {
     if (!input->buffer[0] || input->buffer[input->pos] != '\0') {
         return EXIT_SUCCESS;
@@ -515,7 +515,7 @@ int ncrl_autocomplete(struct Input* restrict input, struct Arena* restrict scrat
  * render the current autocompletion.
  */
 [[nodiscard]]
-int ncrl_autocomplete_select(struct Input* restrict input)
+int ncrl_autocomplete_select(Input* rst input)
 {
     printf("%s", input->current_autocompletion);
     for (size_t i = 0; input->current_autocompletion[i] != '\0'; i++) {
@@ -534,7 +534,7 @@ int ncrl_autocomplete_select(struct Input* restrict input)
 }
 
 [[nodiscard]]
-int ncrl_move_cursor_right(struct Input* restrict input)
+int ncrl_move_cursor_right(Input* rst input)
 {
     if (input->pos == NCSH_MAX_INPUT - 1 || (!input->buffer[input->pos] && !input->buffer[input->pos + 1])) {
         return EXIT_SUCCESS;
@@ -551,7 +551,7 @@ int ncrl_move_cursor_right(struct Input* restrict input)
 }
 
 [[nodiscard]]
-int ncrl_right_arrow_process(struct Input* restrict input)
+int ncrl_right_arrow_process(Input* rst input)
 {
     if (input->pos == input->max_pos && input->buffer[0]) {
         if (ncrl_autocomplete_select(input) != EXIT_SUCCESS) {
@@ -567,7 +567,7 @@ int ncrl_right_arrow_process(struct Input* restrict input)
 }
 
 [[nodiscard]]
-int ncrl_history_up(struct Input* restrict input)
+int ncrl_history_up(Input* rst input)
 {
     input->history_entry = history_get(input->history_position, &input->history);
     if (input->history_entry.length > 0) {
@@ -586,7 +586,7 @@ int ncrl_history_up(struct Input* restrict input)
 }
 
 [[nodiscard]]
-int ncrl_history_down(struct Input* restrict input)
+int ncrl_history_down(Input* rst input)
 {
     input->history_entry = history_get(input->history_position - 2, &input->history);
 
@@ -612,7 +612,7 @@ int ncrl_history_down(struct Input* restrict input)
 }
 
 [[nodiscard]]
-int ncrl_move_cursor_left(struct Input* restrict input)
+int ncrl_move_cursor_left(Input* rst input)
 {
     ncsh_write_literal(MOVE_CURSOR_LEFT);
     --input->pos;
@@ -620,7 +620,7 @@ int ncrl_move_cursor_left(struct Input* restrict input)
 }
 
 [[nodiscard]]
-int ncrl_move_cursor_home(struct Input* restrict input)
+int ncrl_move_cursor_home(Input* rst input)
 {
     ncsh_write_literal(RESTORE_CURSOR_POSITION);
     input->pos = 0;
@@ -629,7 +629,7 @@ int ncrl_move_cursor_home(struct Input* restrict input)
 }
 
 [[nodiscard]]
-int ncrl_move_cursor_end(struct Input* restrict input)
+int ncrl_move_cursor_end(Input* rst input)
 {
     if (input->lines_y > input->current_y) {
         ncsh_write_literal(HIDE_CURSOR);
@@ -689,11 +689,11 @@ char ncrl_read()
 }
 
 [[nodiscard]]
-int ncrl_tab_autocomplete(struct Input* restrict input, struct Arena* restrict scratch_arena)
+int ncrl_tab_autocomplete(Input* rst input, Arena* rst scratch_arena)
 {
     ncsh_write_literal(ERASE_CURRENT_LINE "\n");
 
-    struct Autocompletion autocompletion_matches[NCSH_MAX_AUTOCOMPLETION_MATCHES] = {0};
+    Autocompletion autocompletion_matches[NCSH_MAX_AUTOCOMPLETION_MATCHES] = {0};
     int ac_matches_count = ac_get(input->buffer, autocompletion_matches, input->autocompletions_tree, *scratch_arena);
 
     if (!ac_matches_count) {
@@ -769,7 +769,7 @@ int ncrl_tab_autocomplete(struct Input* restrict input, struct Arena* restrict s
  * Allocates memory that lives for the lifetime of the shell and is used by ncrl to process user input.
  * Returns: exit status, EXIT_SUCCESS, EXIT_FAILURE, or value in defines.h (EXIT_...)
  */
-int ncreadline_init(struct Config* restrict config, struct Input* restrict input, struct Arena* restrict arena)
+int ncreadline_init(Config* rst config, Input* rst input, Arena* rst arena)
 {
     input->user.value = getenv("USER");
     input->user.length = strlen(input->user.value) + 1;
@@ -791,7 +791,7 @@ int ncreadline_init(struct Config* restrict config, struct Input* restrict input
 }
 
 [[nodiscard]]
-int ncrl_putchar(char character, struct Input* restrict input)
+int ncrl_putchar(char character, Input* rst input)
 {
     char temp_character;
 
@@ -849,7 +849,7 @@ int ncrl_putchar(char character, struct Input* restrict input)
     return EXIT_SUCCESS;
 }
 
-int ncrl_escape_char_process(struct Input* restrict input)
+int ncrl_escape_char_process(Input* rst input)
 {
     char character;
     if (read(STDIN_FILENO, &character, 1) < 0) {
@@ -952,7 +952,7 @@ int ncrl_escape_char_process(struct Input* restrict input)
     return EXIT_SUCCESS;
 }
 
-int ncrl_char_process(char character, struct Input* restrict input, struct Arena* restrict scratch_arena)
+int ncrl_char_process(char character, Input* rst input, Arena* rst scratch_arena)
 {
     int exit;
     switch (character) {
@@ -1039,7 +1039,7 @@ int ncrl_char_process(char character, struct Input* restrict input, struct Arena
  * other inputs. Returns: exit status, EXIT_SUCCESS, EXIT_FAILURE, or value in defines.h (EXIT_...)
  */
 [[nodiscard]]
-int ncreadline(struct Input* restrict input, struct Arena* restrict scratch_arena)
+int ncreadline(Input* rst input, Arena* rst scratch_arena)
 {
     char character;
     int exit = EXIT_SUCCESS;
@@ -1098,7 +1098,7 @@ exit:
 /* ncreadline_exit
  * Saves history changes and restores the terminal settings from before the shell was started.
  */
-void ncreadline_exit(struct Input* restrict input)
+void ncreadline_exit(Input* rst input)
 {
     if (input && input->history.file && input->history.entries) {
         history_save(&input->history);

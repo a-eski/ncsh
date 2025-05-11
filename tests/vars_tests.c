@@ -8,7 +8,7 @@ void vars_malloc_default_size_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    struct Vars vars = {0};
+    Vars vars = {0};
     vars_malloc(&scratch_arena, &vars);
 
     eassert(vars.capacity > 0);
@@ -21,11 +21,11 @@ void vars_add_one_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    struct Vars vars = {0};
+    Vars vars = {0};
     vars_malloc(&scratch_arena, &vars);
 
     char* key = "hello";
-    struct Str val = {.value = "world", .length = 6};
+    Str val = {.value = "world", .length = 6};
     const char* res = vars_set(key, &val, &scratch_arena, &vars);
 
     eassert(res);
@@ -33,7 +33,7 @@ void vars_add_one_test()
     eassert(vars.capacity > 0);
     eassert(vars.size == 1);
 
-    struct Str* get_res = vars_get(key, &vars);
+    Str* get_res = vars_get(key, &vars);
     eassert(get_res->value);
     eassert(get_res->length == val.length);
     eassert(!memcmp(val.value, get_res->value, val.length));
@@ -44,13 +44,13 @@ void vars_add_one_test()
 void vars_add_multiple_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
-    struct Vars vars = {0};
+    Vars vars = {0};
     vars_malloc(&scratch_arena, &vars);
 
     char* key1 = "hello";
-    struct Str val1 = {.value = "world", .length = 6};
+    Str val1 = {.value = "world", .length = 6};
     char* key2 = "test";
-    struct Str val2 = {.value = "success", .length = 8};
+    Str val2 = {.value = "success", .length = 8};
 
     const char* res1 = vars_set(key1, &val1, &scratch_arena, &vars);
     const char* res2 = vars_set(key2, &val2, &scratch_arena, &vars);
@@ -64,12 +64,12 @@ void vars_add_multiple_test()
     eassert(res2);
     eassert(!memcmp(res2, key2, 5));
 
-    struct Str* get_res1 = vars_get(key1, &vars);
+    Str* get_res1 = vars_get(key1, &vars);
     eassert(get_res1->value);
     eassert(get_res1->length == val1.length);
     eassert(!memcmp(get_res1->value, val1.value, get_res1->length));
 
-    struct Str* get_res2 = vars_get(key2, &vars);
+    Str* get_res2 = vars_get(key2, &vars);
     eassert(get_res2->value);
     eassert(get_res2->length = val2.length);
     eassert(!memcmp(get_res2->value, val2.value, get_res2->length));
@@ -80,11 +80,11 @@ void vars_add_multiple_test()
 void vars_add_duplicate_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
-    struct Vars vars = {0};
+    Vars vars = {0};
     vars_malloc(&scratch_arena, &vars);
 
     char* key = "hello";
-    struct Str val = {.value = "world", .length = 6};
+    Str val = {.value = "world", .length = 6};
     const char* res = vars_set(key, &val, &scratch_arena, &vars);
     eassert(res);
     vars_set(key, &val, &scratch_arena, &vars);

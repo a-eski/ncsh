@@ -12,8 +12,7 @@
 #define Z_RM "rm"
 #define Z_REMOVE "remove" // alias for rm
 #define Z_PRINT "print"
-int builtins_z(struct z_Database* restrict z_db, struct Args* restrict args, struct Arena* restrict arena,
-               struct Arena* restrict scratch_arena);
+int builtins_z(z_Database* rst z_db, Args* rst args, Arena* rst arena, Arena* rst scratch_arena);
 
 #define NCSH_HISTORY "history" // the base command, displays history
 #define NCSH_HISTORY_COUNT "count"
@@ -21,50 +20,49 @@ int builtins_z(struct z_Database* restrict z_db, struct Args* restrict args, str
 #define NCSH_HISTORY_ADD "add"
 #define NCSH_HISTORY_RM "rm" // alias for rm
 #define NCSH_HISTORY_REMOVE "remove"
-int builtins_history(struct History* restrict history, struct Args* restrict args, struct Arena* restrict arena,
-                     struct Arena* restrict scratch_arena);
+int builtins_history(History* rst history, Args* rst args, Arena* rst arena, Arena* rst scratch_arena);
 
 #define NCSH_EXIT "exit" // the base command
 #define NCSH_QUIT "quit" // alias for exit
 #define NCSH_Q "q"       // alias for exit
-int builtins_exit(char** r buffer);
+int builtins_exit(char** rst buffer);
 
 #define NCSH_ECHO "echo"
-int builtins_echo(char** r buffer);
+int builtins_echo(char** rst buffer);
 
 #define NCSH_HELP "help"
-int builtins_help(char** r buffer);
+int builtins_help(char** rst buffer);
 
 #define NCSH_CD "cd"
-int builtins_cd(char** r buffer);
+int builtins_cd(char** rst buffer);
 
 #define NCSH_PWD "pwd"
-int builtins_pwd(char** r buffer);
+int builtins_pwd(char** rst buffer);
 
 #define NCSH_KILL "kill"
-int builtins_kill(char** r buffer);
+int builtins_kill(char** rst buffer);
 
 #define NCSH_VERSION_CMD "version"
-int builtins_version(char** r buffer);
+int builtins_version(char** rst buffer);
 
 #define NCSH_ENABLE "enable"
-int builtins_enable(char** r buffer);
+int builtins_enable(char** rst buffer);
 
 // TODO: finish implementation
 #define NCSH_DISABLE "disable"
-int builtins_disable(char** r buffer);
+int builtins_disable(char** rst buffer);
 
 // TODO: finish implementation
 #define NCSH_EXPORT "export"
-int builtins_export(struct Args* restrict args);
+int builtins_export(Args* rst args);
 
 // TODO: finish implementation
 #define NCSH_SET "set"
-int builtins_set(struct Args* restrict args);
+int builtins_set(Args* rst args);
 
 // TODO: finish implementation
 #define NCSH_UNSET "unset"
-int builtins_unset(struct Args* restrict args);
+int builtins_unset(Args* rst args);
 
 // clang-format off
 enum Builtins_Disabled : long {
@@ -84,14 +82,14 @@ enum Builtins_Disabled : long {
 };
 // clang-format on
 
-struct Builtin {
+typedef struct {
     enum Builtins_Disabled flag;
     size_t length;
     char* value;
     int (*func)(char** r);
-};
+} Builtin;
 
-static const struct Builtin builtins[] = {
+static const Builtin builtins[] = {
     {.flag = BF_EXIT, .length = sizeof(NCSH_EXIT), .value = NCSH_EXIT, .func = &builtins_exit},
     {.flag = BF_EXIT, .length = sizeof(NCSH_QUIT), .value = NCSH_QUIT, .func = &builtins_exit},
     {.flag = BF_EXIT, .length = sizeof(NCSH_Q), .value = NCSH_Q, .func = &builtins_exit},
@@ -108,4 +106,4 @@ static const struct Builtin builtins[] = {
     {.flag = BF_UNSET, .length = sizeof(NCSH_UNSET), .value = NCSH_UNSET, .func = &builtins_unset},*/
 };
 
-static constexpr size_t builtins_count = sizeof(builtins) / sizeof(struct Builtin);
+static constexpr size_t builtins_count = sizeof(builtins) / sizeof(Builtin);
