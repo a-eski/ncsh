@@ -4,11 +4,32 @@ require './acceptance_tests/tests/common'
 
 def help_test(row)
   assert_check_new_row(row)
+  @tty.send_line('help > t.txt')
+  row += 1
+  @tty.send_line('cat t.txt | head -1')
+  row += 1
+  @tty.assert_row_starts_with(row, 'ncsh')
+  row += 1
+  @tty.send_line('rm t.txt')
+  row += 1
+  test_passed('help test')
+  row
+end
+
+def help_pipe_test(row)
+  assert_check_new_row(row)
   @tty.send_line('help | head -1')
   row += 1
   @tty.assert_row_like(row, 'ncsh')
-  test_passed('help test')
+  test_passed('help pipe test')
   row
+end
+
+def help_tests(row)
+  starting_tests('help')
+  # row =
+  help_test(row)
+  # row = help_pipe_test(row)
 end
 
 def basic_echo_test(row)
@@ -146,7 +167,7 @@ def pwd_test(row)
 end
 
 def builtins_tests(row)
-  # row = help_test(row)
+  row = help_tests(row)
   row = echo_tests(row)
   row = kill_tests(row)
   pwd_test(row)

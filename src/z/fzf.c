@@ -143,6 +143,8 @@ bool has_prefix(const char* str, const char* prefix, size_t prefix_len)
 bool has_suffix(const char* str, size_t len, const char* suffix, size_t suffix_len)
 {
     assert(str && suffix);
+    if (!str || !suffix)
+        return false;
     return len >= suffix_len && !strncmp(slice_str(str, len - suffix_len, len).data, suffix, suffix_len);
 }
 

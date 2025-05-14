@@ -37,6 +37,6 @@
 
 #ifndef rst
 #   define rst restrict
-#endif // !r
+#endif // !rst
 
 /* clang-format on */

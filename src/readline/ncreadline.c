@@ -744,6 +744,11 @@ int ncrl_tab_autocomplete(Input* rst input, Arena* rst scratch_arena)
         case '\r': {
             continue_input = false;
             size_t length = strlen(autocompletion_matches[position].value) + 1;
+            if (input->pos + length > NCSH_MAX_INPUT)
+                return EXIT_FAILURE;
+            char* input_buf = input->buffer + input->pos;
+            if (!input_buf)
+                return EXIT_FAILURE;
             memcpy(input->buffer + input->pos, autocompletion_matches[position].value, length);
             input->pos += length;
             exit = EXIT_SUCCESS_EXECUTE;
@@ -772,11 +777,16 @@ int ncrl_tab_autocomplete(Input* rst input, Arena* rst scratch_arena)
 int ncreadline_init(Config* rst config, Input* rst input, Arena* rst arena)
 {
     input->user.value = getenv("USER");
-    input->user.length = strlen(input->user.value) + 1;
+    if (!input->user.value) {
+        input->user.value = "";
+        input->user.length = 1;
+    }
+    else {
+        input->user.length = strlen(input->user.value) + 1;
+    }
     input->buffer = arena_malloc(arena, NCSH_MAX_INPUT, char);
 
-    enum eresult result;
-    if ((result = history_init(config->config_location, &input->history, arena)) != E_SUCCESS) {
+    if (history_init(config->config_location, &input->history, arena) != E_SUCCESS) {
         perror(RED "ncsh: Error when allocating data for and setting up history" RESET);
         fflush(stderr);
         return EXIT_FAILURE;

@@ -45,6 +45,7 @@ typedef struct {
  * Stores file descriptors (fds) and state for piping io between processes
  */
 typedef struct {
+    int current_output;
     int fd_one[2];
     int fd_two[2];
 } Pipe_IO;
@@ -55,7 +56,7 @@ typedef struct {
  */
 typedef struct {
     char* buffer[MAX_INPUT];
-    size_t buffer_len[MAX_INPUT];
+    size_t buffer_lens[MAX_INPUT];
     uint8_t command_position;
     bool args_end;
     enum Ops op_current;

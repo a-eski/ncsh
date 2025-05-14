@@ -40,6 +40,7 @@ typedef struct {
 } z_Database;
 
 enum z_Result {
+    Z_CANNOT_PROCESS = -10,
     Z_HIT_MEMORY_LIMIT = -9,
     Z_BAD_STRING = -8,
     Z_FILE_LENGTH_TOO_LARGE = -7,
@@ -66,4 +67,5 @@ enum z_Result z_exit(z_Database* rst db);
 
 void z_print(z_Database* rst db);
 
+void z_count(z_Database* rst db);
 #endif // !Z_H_

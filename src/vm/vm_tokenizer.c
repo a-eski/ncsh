@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "../args.h"
@@ -224,6 +225,32 @@ int vm_tokenizer_syntax_check(Args* rst args)
     return vmtok_invalid_syntax_check_res;
 }
 
+void vm_tokenizer_home_expansion_process(Arg* rst arg, Str home_location, Arena* rst scratch_arena)
+{
+    if (arg->len == 2) {
+        size_t len = home_location.length + 1;
+        arg->val = arena_malloc(scratch_arena, len, char);
+        arg->op = OP_CONSTANT;
+        arg->len = len;
+        memcpy(arg->val, home_location.value, len);
+        return;
+    }
+
+    assert(arg->val);
+    if (!arg->val)
+        return;
+
+    // TODO: account for home being in the middle of a path
+    size_t len = arg->len + home_location.length; // arg->len accounts for null termination
+    char* new_value = arena_malloc(scratch_arena, len, char);
+    memcpy(new_value, home_location.value, home_location.length);
+    memcpy(new_value + home_location.length, arg->val + 1, arg->len - 1);
+    debugf("performing home expansion on %s to %s\n", arg->val, new_value);
+    arg->val = new_value;
+    arg->op = OP_CONSTANT;
+    arg->len = len;
+}
+
 void vm_tokenizer_glob_process(Arg* rst arg, size_t* rst args_count, Arena* rst scratch_arena)
 {
     glob_t glob_buf = {0};
@@ -357,38 +384,59 @@ int vm_tokenizer_ops_process(Args* rst args, Tokens* rst tokens, Shell* rst shel
     while (arg) {
         switch (arg->op) {
         case OP_STDOUT_REDIRECTION: {
+            assert(arg->next && arg->next->val);
+            if (!arg->next || !arg->next->val)
+                break;
             tokens->stdout_file = arg->next->val;
             tokens->stdout_redirect = arg;
             break;
         }
         case OP_STDOUT_REDIRECTION_APPEND: {
+            assert(arg->next && arg->next->val);
+            if (!arg->next || !arg->next->val)
+                break;
             tokens->stdout_file = arg->next->val;
             tokens->stdout_redirect = arg;
             tokens->output_append = true;
             break;
         }
         case OP_STDIN_REDIRECTION: {
+            assert(arg->next && arg->next->val);
+            if (!arg->next || !arg->next->val)
+                break;
             tokens->stdin_file = arg->next->val;
             tokens->stdin_redirect = arg;
             break;
         }
         case OP_STDERR_REDIRECTION: {
+            assert(arg->next && arg->next->val);
+            if (!arg->next || !arg->next->val)
+                break;
             tokens->stderr_file = arg->next->val;
             tokens->stderr_redirect = arg;
             break;
         }
         case OP_STDERR_REDIRECTION_APPEND: {
+            assert(arg->next && arg->next->val);
+            if (!arg->next || !arg->next->val)
+                break;
             tokens->stderr_file = arg->next->val;
             tokens->stderr_redirect = arg;
             tokens->output_append = true;
             break;
         }
         case OP_STDOUT_AND_STDERR_REDIRECTION: {
+            assert(arg->next && arg->next->val);
+            if (!arg->next || !arg->next->val)
+                break;
             tokens->stdout_and_stderr_file = arg->next->val;
             tokens->stdout_and_stderr_redirect = arg;
             break;
         }
         case OP_STDOUT_AND_STDERR_REDIRECTION_APPEND: {
+            assert(arg->next && arg->next->val);
+            if (!arg->next || !arg->next->val)
+                break;
             tokens->stdout_and_stderr_file = arg->next->val;
             tokens->stdout_and_stderr_redirect = arg;
             tokens->output_append = true;
@@ -406,10 +454,7 @@ int vm_tokenizer_ops_process(Args* rst args, Tokens* rst tokens, Shell* rst shel
             break;
         }
         case OP_HOME_EXPANSION: {
-            size_t len = shell->config.home_location.length;
-            arg->val = arena_malloc(scratch_arena, len, char);
-            arg->op = OP_CONSTANT;
-            memcpy(arg->val, shell->config.home_location.value, len);
+            vm_tokenizer_home_expansion_process(arg, shell->config.home_location, scratch_arena);
             break;
         }
         case OP_GLOB_EXPANSION: {

@@ -1,7 +1,9 @@
 /* Copyright ncsh (C) by Alex Eski 2024 */
+/* builtins.h: shell builtins implementations for ncsh */
 
 #ifndef _DEFAULT_SOURCE
 #define _DEFAULT_SOURCE
+#include <setjmp.h>
 #include <string.h>
 #endif /* ifndef _DEFAULT_SOURCE */
 #ifndef _POXIC_C_SOURCE
@@ -9,6 +11,7 @@
 #endif /* ifndef _POXIC_C_SOURCE */
 
 #include <assert.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <linux/limits.h>
 #include <stddef.h>
@@ -24,33 +27,51 @@
 #include "../eskilib/ecolors.h"
 #include "../readline/history.h"
 #include "../z/z.h"
-#include "vm_builtins.h"
+#include "builtins.h"
+
+extern jmp_buf env;
 
 int builtins_disabled_state = 0;
 
+ssize_t builtins_write(int fd, char* buf, size_t len)
+{
+    ssize_t bytes_written = write(fd, buf, len);
+    if (bytes_written == -1 && errno == EPIPE)
+        return -1;
+    else if (bytes_written == -1)
+        longjmp(env, -99);
+    return bytes_written;
+}
+
 #define Z_COMMAND_NOT_FOUND_MESSAGE "ncsh z: command not found, options not supported.\n"
 [[nodiscard]]
-int builtins_z(z_Database* rst z_db, Args* rst args, Arena* arena, Arena* rst scratch_arena)
+int builtins_z(z_Database* rst z_db, char** rst buffer, size_t* rst buffer_lens, Arena* arena, Arena* rst scratch_arena)
 {
-    assert(args);
+    assert(buffer);
     assert(z_db);
-    assert(args->count > 0);
+    assert(buffer && *buffer);
 
-    if (args->count == 1) {
+    if (buffer_lens[0] == 0) {
         z(NULL, 0, NULL, z_db, arena, *scratch_arena);
         return NCSH_COMMAND_SUCCESS_CONTINUE;
     }
 
-    assert(args->head && args->head->next);
+    assert(buffer && buffer + 1);
 
     // skip first position since we know it is 'z'
-    Arg* arg = args->head->next->next;
-    if (args->count <= 2) {
-        assert(arg->val);
+    char** arg = buffer + 1;
+    size_t* arg_lens = buffer_lens + 1;
+    if (arg_lens[1] == 0) {
+        assert(arg && *arg);
 
         // z print
-        if (estrcmp(arg->val, arg->len, Z_PRINT, sizeof(Z_PRINT))) {
+        if (estrcmp(*arg, *arg_lens, Z_PRINT, sizeof(Z_PRINT))) {
             z_print(z_db);
+            return NCSH_COMMAND_SUCCESS_CONTINUE;
+        }
+        // z count
+        if (estrcmp(*arg, *arg_lens, Z_COUNT, sizeof(Z_COUNT))) {
+            z_count(z_db);
             return NCSH_COMMAND_SUCCESS_CONTINUE;
         }
 
@@ -61,27 +82,26 @@ int builtins_z(z_Database* rst z_db, Args* rst args, Arena* arena, Arena* rst sc
             return NCSH_COMMAND_EXIT_FAILURE;
         }
 
-        z(arg->val, arg->len, cwd, z_db, arena, *scratch_arena);
+        z(*arg, *arg_lens, cwd, z_db, arena, *scratch_arena);
         return NCSH_COMMAND_SUCCESS_CONTINUE;
     }
 
-    if (args->count > 2) {
-        assert(arg->val && arg->next->val);
+    if (arg && arg[1] && !arg[2]) {
+        assert(arg && *arg);
 
         // z add
-        if (estrcmp(arg->val, arg->len, Z_ADD, sizeof(Z_ADD))) {
-            arg = arg->next;
-            if (z_add(arg->val, arg->len, z_db, arena) != Z_SUCCESS) {
+        if (estrcmp(*arg, *arg_lens, Z_ADD, sizeof(Z_ADD))) {
+            assert(arg[1] && arg_lens[1]);
+            if (z_add(arg[1], arg_lens[1], z_db, arena) != Z_SUCCESS) {
                 return NCSH_COMMAND_FAILED_CONTINUE;
             }
 
             return NCSH_COMMAND_SUCCESS_CONTINUE;
         }
         // z rm/remove
-        else if (estrcmp(arg->val, arg->len, Z_RM, sizeof(Z_RM)) ||
-                 estrcmp(arg->val, arg->len, Z_REMOVE, sizeof(Z_REMOVE))) {
-            arg = arg->next;
-            if (z_remove(arg->val, arg->len, z_db) != Z_SUCCESS) {
+        else if (estrcmp(*arg, *arg_lens, Z_RM, sizeof(Z_RM)) || estrcmp(*arg, *arg_lens, Z_REMOVE, sizeof(Z_REMOVE))) {
+            assert(arg[1] && arg_lens[1]);
+            if (z_remove(arg[1], arg_lens[1], z_db) != Z_SUCCESS) {
                 return NCSH_COMMAND_FAILED_CONTINUE;
             }
 
@@ -89,7 +109,7 @@ int builtins_z(z_Database* rst z_db, Args* rst args, Arena* arena, Arena* rst sc
         }
     }
 
-    if (write(STDOUT_FILENO, Z_COMMAND_NOT_FOUND_MESSAGE, sizeof(Z_COMMAND_NOT_FOUND_MESSAGE)) == -1) {
+    if (builtins_write(STDOUT_FILENO, Z_COMMAND_NOT_FOUND_MESSAGE, sizeof(Z_COMMAND_NOT_FOUND_MESSAGE)) == -1) {
         return NCSH_COMMAND_EXIT_FAILURE;
     }
     return NCSH_COMMAND_SUCCESS_CONTINUE;
@@ -97,52 +117,55 @@ int builtins_z(z_Database* rst z_db, Args* rst args, Arena* arena, Arena* rst sc
 
 #define HISTORY_COMMAND_NOT_FOUND_MESSAGE "ncsh history: command not found.\n"
 [[nodiscard]]
-int builtins_history(History* rst history, Args* rst args, Arena* rst arena, Arena* rst scratch_arena)
+int builtins_history(History* rst history, char** rst buffer, size_t* rst buffer_lens, Arena* rst arena,
+                     Arena* rst scratch_arena)
 {
-    assert(args);
-    if (args->count == 1) {
+    assert(buffer && *buffer);
+    if (!buffer || !buffer[1]) {
         return history_command_display(history);
     }
 
-    assert(args->head && args->head->next);
+    assert(buffer && buffer + 1);
 
     // skip first position since we know it is 'history'
-    Arg* arg = args->head->next->next;
-    if (!arg || !arg->val) {
-        if (write(STDOUT_FILENO, HISTORY_COMMAND_NOT_FOUND_MESSAGE, sizeof(HISTORY_COMMAND_NOT_FOUND_MESSAGE)) == -1) {
+    char** arg = buffer + 1;
+    if (!arg || !*arg) {
+        if (builtins_write(STDOUT_FILENO, HISTORY_COMMAND_NOT_FOUND_MESSAGE,
+                           sizeof(HISTORY_COMMAND_NOT_FOUND_MESSAGE)) == -1) {
             return NCSH_COMMAND_EXIT_FAILURE;
         }
         return NCSH_COMMAND_FAILED_CONTINUE;
     }
 
-    if (args->count == 2) {
-        assert(arg->val);
+    size_t* arg_lens = buffer_lens + 1;
+    if (arg && arg_lens[1] == 0) {
+        assert(arg && *arg);
 
-        if (estrcmp(arg->val, arg->len, NCSH_HISTORY_COUNT, sizeof(NCSH_HISTORY_COUNT))) {
+        if (estrcmp(*arg, *arg_lens, NCSH_HISTORY_COUNT, sizeof(NCSH_HISTORY_COUNT))) {
             return history_command_count(history);
         }
-        else if (estrcmp(arg->val, arg->len, NCSH_HISTORY_CLEAN, sizeof(NCSH_HISTORY_CLEAN))) {
+        else if (estrcmp(*arg, *arg_lens, NCSH_HISTORY_CLEAN, sizeof(NCSH_HISTORY_CLEAN))) {
             return history_command_clean(history, arena, scratch_arena);
         }
     }
 
-    if (args->count == 3) {
-        assert(arg->val && arg->next->val);
+    if (arg && arg[1] && !arg[2]) {
+        assert(arg && *arg && arg[1] && *arg[1]);
 
-        // z add
-        if (estrcmp(arg->val, arg->len, NCSH_HISTORY_ADD, sizeof(NCSH_HISTORY_ADD))) {
-            arg = arg->next;
-            if (history_command_add(arg->val, arg->len, history, arena) != Z_SUCCESS) {
+        // history add
+        if (estrcmp(*arg, *arg_lens, NCSH_HISTORY_ADD, sizeof(NCSH_HISTORY_ADD))) {
+            assert(arg[1] && arg_lens[1]);
+            if (history_command_add(arg[1], arg_lens[1], history, arena) != Z_SUCCESS) {
                 return NCSH_COMMAND_FAILED_CONTINUE;
             }
 
             return NCSH_COMMAND_SUCCESS_CONTINUE;
         }
-        // z rm/remove
-        else if (estrcmp(arg->val, arg->len, NCSH_HISTORY_RM, sizeof(NCSH_HISTORY_RM)) ||
-                 estrcmp(arg->val, arg->len, NCSH_HISTORY_REMOVE, sizeof(NCSH_HISTORY_REMOVE))) {
-            arg = arg->next;
-            if (history_command_remove(arg->val, arg->len, history, arena, scratch_arena) != Z_SUCCESS) {
+        // history rm/remove
+        else if (estrcmp(*arg, *arg_lens, NCSH_HISTORY_RM, sizeof(NCSH_HISTORY_RM)) ||
+                 estrcmp(*arg, *arg_lens, NCSH_HISTORY_REMOVE, sizeof(NCSH_HISTORY_REMOVE))) {
+            assert(arg[1] && arg_lens[1]);
+            if (history_command_remove(arg[1], arg_lens[1], history, arena, scratch_arena) != Z_SUCCESS) {
                 return NCSH_COMMAND_FAILED_CONTINUE;
             }
 
@@ -150,7 +173,8 @@ int builtins_history(History* rst history, Args* rst args, Arena* rst arena, Are
         }
     }
 
-    if (write(STDOUT_FILENO, HISTORY_COMMAND_NOT_FOUND_MESSAGE, sizeof(HISTORY_COMMAND_NOT_FOUND_MESSAGE)) == -1) {
+    if (builtins_write(STDOUT_FILENO, HISTORY_COMMAND_NOT_FOUND_MESSAGE, sizeof(HISTORY_COMMAND_NOT_FOUND_MESSAGE)) ==
+        -1) {
         return NCSH_COMMAND_EXIT_FAILURE;
     }
     return NCSH_COMMAND_FAILED_CONTINUE;
@@ -189,7 +213,7 @@ int builtins_echo(char** rst buffer)
     // send output for echo
     arg = echo_arg ? echo_arg + 1 : buffer + 1;
     while (arg && *arg) {
-        printf("%s ", *arg++);
+        fprintf(stdout, "%s ", *arg++);
     }
 
     if (echo_add_newline) {
@@ -236,7 +260,7 @@ int builtins_echo(char** rst buffer)
 
 #define HELP_WRITE(str)                                                                                                \
     constexpr size_t str##_len = sizeof(str) - 1;                                                                      \
-    if (write(STDOUT_FILENO, str, str##_len) == -1) {                                                                  \
+    if (builtins_write(STDOUT_FILENO, str, str##_len) == -1) {                                                         \
         perror(RED NCSH_ERROR_STDOUT RESET);                                                                           \
         return NCSH_COMMAND_EXIT_FAILURE;                                                                              \
     }
@@ -247,7 +271,7 @@ int builtins_help(char** rst buffer)
     (void)buffer;
 
     constexpr size_t len = sizeof(NCSH_TITLE) - 1;
-    if (write(STDOUT_FILENO, NCSH_TITLE, len) == -1) {
+    if (builtins_write(STDOUT_FILENO, NCSH_TITLE, len) == -1) {
         perror(RED NCSH_ERROR_STDOUT RESET);
         return NCSH_COMMAND_EXIT_FAILURE;
     }
@@ -280,6 +304,7 @@ int builtins_help(char** rst buffer)
     // HELP_WRITE(HELP_TAB_AUTOCOMPLETIONS);
     // HELP_WRITE(HELP_AUTOCOMPLETIONS_MORE_INFO);
 
+    fflush(stdout);
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
@@ -332,7 +357,8 @@ int builtins_kill(char** rst buffer)
 {
     assert(buffer && *buffer && buffer + 1);
     if (!buffer) {
-        if (write(STDOUT_FILENO, KILL_NOTHING_TO_KILL_MESSAGE, sizeof(KILL_NOTHING_TO_KILL_MESSAGE) - 1) == -1) {
+        if (builtins_write(STDOUT_FILENO, KILL_NOTHING_TO_KILL_MESSAGE, sizeof(KILL_NOTHING_TO_KILL_MESSAGE) - 1) ==
+            -1) {
             return NCSH_COMMAND_EXIT_FAILURE;
         }
 
@@ -342,7 +368,8 @@ int builtins_kill(char** rst buffer)
     // skip first position since we know it is 'kill'
     char* arg = *(buffer + 1);
     if (!arg || !*arg) {
-        if (write(STDOUT_FILENO, KILL_NOTHING_TO_KILL_MESSAGE, sizeof(KILL_NOTHING_TO_KILL_MESSAGE) - 1) == -1) {
+        if (builtins_write(STDOUT_FILENO, KILL_NOTHING_TO_KILL_MESSAGE, sizeof(KILL_NOTHING_TO_KILL_MESSAGE) - 1) ==
+            -1) {
             return NCSH_COMMAND_EXIT_FAILURE;
         }
 
@@ -351,7 +378,8 @@ int builtins_kill(char** rst buffer)
 
     pid_t pid = atoi(arg);
     if (!pid) {
-        if (write(STDOUT_FILENO, KILL_COULDNT_PARSE_PID_MESSAGE, sizeof(KILL_COULDNT_PARSE_PID_MESSAGE) - 1) == -1) {
+        if (builtins_write(STDOUT_FILENO, KILL_COULDNT_PARSE_PID_MESSAGE, sizeof(KILL_COULDNT_PARSE_PID_MESSAGE) - 1) ==
+            -1) {
             return NCSH_COMMAND_EXIT_FAILURE;
         }
         return NCSH_COMMAND_FAILED_CONTINUE;
@@ -368,11 +396,7 @@ int builtins_kill(char** rst buffer)
 int builtins_version(char** rst buffer)
 {
     (void)buffer;
-
-    if (write(STDOUT_FILENO, NCSH_TITLE, sizeof(NCSH_TITLE)) == -1) {
-        return NCSH_COMMAND_EXIT_FAILURE;
-    }
-
+    builtins_write(STDOUT_FILENO, NCSH_TITLE, sizeof(NCSH_TITLE) - 1);
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
@@ -456,7 +480,8 @@ int builtins_enable(char** rst buffer)
         }
     }
 
-    if (write(STDOUT_FILENO, ENABLE_OPTION_NOT_SUPPORTED_MESSAGE, sizeof(ENABLE_OPTION_NOT_SUPPORTED_MESSAGE)) == -1) {
+    if (builtins_write(STDOUT_FILENO, ENABLE_OPTION_NOT_SUPPORTED_MESSAGE,
+                       sizeof(ENABLE_OPTION_NOT_SUPPORTED_MESSAGE)) == -1) {
         return NCSH_COMMAND_EXIT_FAILURE;
     }
     return NCSH_COMMAND_SUCCESS_CONTINUE;
@@ -473,8 +498,8 @@ int builtins_export(Args* rst args)
     // skip first position since we know it is 'export'
     Arg* arg = args->head->next->next;
     if (!arg || !arg->val) {
-        if (write(STDOUT_FILENO, EXPORT_OPTION_NOT_SUPPORTED_MESSAGE, sizeof(EXPORT_OPTION_NOT_SUPPORTED_MESSAGE)) ==
-            -1) {
+        if (builtins_write(STDOUT_FILENO, EXPORT_OPTION_NOT_SUPPORTED_MESSAGE,
+                           sizeof(EXPORT_OPTION_NOT_SUPPORTED_MESSAGE)) == -1) {
             return NCSH_COMMAND_EXIT_FAILURE;
         }
         return NCSH_COMMAND_FAILED_CONTINUE;
@@ -487,8 +512,8 @@ int builtins_export(Args* rst args)
         puts("export $HOME found");
     }
     else {
-        if (write(STDOUT_FILENO, EXPORT_OPTION_NOT_SUPPORTED_MESSAGE, sizeof(EXPORT_OPTION_NOT_SUPPORTED_MESSAGE)) ==
-            -1) {
+        if (builtins_write(STDOUT_FILENO, EXPORT_OPTION_NOT_SUPPORTED_MESSAGE,
+                           sizeof(EXPORT_OPTION_NOT_SUPPORTED_MESSAGE)) == -1) {
             return NCSH_COMMAND_EXIT_FAILURE;
         }
     }
@@ -517,7 +542,7 @@ int builtins_set(Args* rst args)
     // skip first position since we know it is 'set'
     Arg* arg = args->head->next->next;
     if (!arg || !arg->val) {
-        if (write(STDOUT_FILENO, SET_NOTHING_TO_SET_MESSAGE, sizeof(SET_NOTHING_TO_SET_MESSAGE) - 1) == -1) {
+        if (builtins_write(STDOUT_FILENO, SET_NOTHING_TO_SET_MESSAGE, sizeof(SET_NOTHING_TO_SET_MESSAGE) - 1) == -1) {
             return NCSH_COMMAND_EXIT_FAILURE;
         }
 
@@ -525,7 +550,8 @@ int builtins_set(Args* rst args)
     }
 
     if (arg->len > 3 || arg->val[0] != '-') {
-        if (write(STDOUT_FILENO, SET_VALID_OPERATIONS_MESSAGE, sizeof(SET_VALID_OPERATIONS_MESSAGE) - 1) == -1) {
+        if (builtins_write(STDOUT_FILENO, SET_VALID_OPERATIONS_MESSAGE, sizeof(SET_VALID_OPERATIONS_MESSAGE) - 1) ==
+            -1) {
             return NCSH_COMMAND_EXIT_FAILURE;
         }
 
@@ -554,7 +580,8 @@ int builtins_unset(Args* rst args)
     // skip first position since we know it is 'unset'
     Arg* arg = args->head->next->next;
     if (!arg || !arg->val) {
-        if (write(STDOUT_FILENO, UNSET_NOTHING_TO_UNSET_MESSAGE, sizeof(UNSET_NOTHING_TO_UNSET_MESSAGE) - 1) == -1) {
+        if (builtins_write(STDOUT_FILENO, UNSET_NOTHING_TO_UNSET_MESSAGE, sizeof(UNSET_NOTHING_TO_UNSET_MESSAGE) - 1) ==
+            -1) {
             return NCSH_COMMAND_EXIT_FAILURE;
         }
 

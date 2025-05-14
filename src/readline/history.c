@@ -77,10 +77,13 @@ enum eresult history_load(History* rst history, Arena* rst arena)
             return E_SUCCESS;*/
 
         file = fopen(history->file, "w");
-        if (!file) {
+        if (!file || ferror(file)) {
+            if (file)
+                fclose(file);
             perror(RED "ncsh: Could not load or create history file" RESET);
             return E_FAILURE_FILE_OP;
         }
+        fclose(file);
         return E_SUCCESS;
     }
 
@@ -111,12 +114,13 @@ enum eresult history_reload(History* rst history, Arena* rst arena)
     history->count = 0;
 
     FILE* file = fopen(history->file, "r");
-    if (!file) {
+    if (!file || ferror(file) || feof(file)) {
         file = fopen(history->file, "w");
-        if (!file) {
+        if (!file || ferror(file) || feof(file)) {
             perror(RED "ncsh: Could not load or create history file" RESET);
             return E_FAILURE_FILE_OP;
         }
+        fclose(file);
         return E_SUCCESS;
     }
 
@@ -128,6 +132,8 @@ enum eresult history_reload(History* rst history, Arena* rst arena)
         if (buffer_length <= 0 || !*buffer) {
             continue;
         }
+        if (!history->entries[i].value)
+            continue;
 
         ++history->count;
         if ((size_t)buffer_length > history->entries[i].length) {
@@ -180,7 +186,7 @@ enum eresult history_clean(History* rst history, Arena* rst arena, Arena scratch
     printf("ncsh history: starting to clean history with %zu entries.\n", history->count);
 
     Hashset hset = {0};
-    hashset_malloc(history->count / 2, &scratch_arena, &hset);
+    hashset_malloc(0, &scratch_arena, &hset);
 
     FILE* file = fopen(history->file, "w");
     if (!file) {
