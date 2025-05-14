@@ -44,7 +44,7 @@ end
 def and_tests(row)
   row = and_test(row)
   row = multiple_and_test(row)
-  # row = true_and_test(row)
+  row = true_and_test(row)
   false_and_test(row)
 end
 
@@ -76,14 +76,12 @@ end
 def or_tests(row)
   row = or_test(row)
   row = multiple_or_test(row)
-  # row =
-  true_or_test(row)
-  # false_or_test(row)
+  row = true_or_test(row)
+  false_or_test(row)
 end
 
 def logic_tests(row)
   starting_tests('logic tests')
-  # row =
-  and_tests(row)
-  # or_tests(row)
+  row = and_tests(row)
+  or_tests(row)
 end

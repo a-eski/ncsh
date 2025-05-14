@@ -49,8 +49,6 @@ Coordinates terminal_init(void)
         perror(RED "ncsh: Could not set terminal settings" RESET);
     }
 
-    signal(SIGHUP, SIG_DFL); // Stops the process if the terminal is closed
-
     return terminal_size();
 }
 

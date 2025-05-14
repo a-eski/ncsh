@@ -1,4 +1,5 @@
 /* Copyright ncsh (C) by Alex Eski 2024 */
+/* builtins.h: shell builtins for ncsh */
 
 #pragma once
 
@@ -7,12 +8,23 @@
 #include "../readline/history.h"
 #include "../z/z.h"
 
+struct Builtin_Args {
+    char** rst buffer;
+    size_t* rst buffer_lens;
+    int fd;
+    Arena* rst arena;
+    Arena* rst scratch_arena;
+    History* rst history;
+    z_Database* rst z_db;
+};
+
 #define Z "z" // the base command, changes directory
 #define Z_ADD "add"
 #define Z_RM "rm"
 #define Z_REMOVE "remove" // alias for rm
 #define Z_PRINT "print"
-int builtins_z(z_Database* rst z_db, Args* rst args, Arena* rst arena, Arena* rst scratch_arena);
+#define Z_COUNT "count"
+int builtins_z(z_Database* rst z_db, char** rst buffer, size_t* rst buffer_lens, Arena* arena, Arena* rst scratch_arena);
 
 #define NCSH_HISTORY "history" // the base command, displays history
 #define NCSH_HISTORY_COUNT "count"
@@ -20,7 +32,8 @@ int builtins_z(z_Database* rst z_db, Args* rst args, Arena* rst arena, Arena* rs
 #define NCSH_HISTORY_ADD "add"
 #define NCSH_HISTORY_RM "rm" // alias for rm
 #define NCSH_HISTORY_REMOVE "remove"
-int builtins_history(History* rst history, Args* rst args, Arena* rst arena, Arena* rst scratch_arena);
+int builtins_history(History* rst history, char** rst buffer, size_t* rst buffer_lens, Arena* rst arena,
+                     Arena* rst scratch_arena);
 
 #define NCSH_EXIT "exit" // the base command
 #define NCSH_QUIT "quit" // alias for exit

@@ -7,6 +7,10 @@
 #define _POSIX_C_SOURCE 200809L
 #define _DEFAULT_SOURCE
 
+#ifdef NCSH_DEBUG
+#include "debug.h"
+#endif /* ifdef NCSH_DEBUG */
+
 #include "eskilib/efile.c"
 
 #include "z/fzf.c"
@@ -25,6 +29,6 @@
 #include "readline/ncreadline.c"
 #include "readline/terminal.c"
 #include "vars.c"
+#include "vm/builtins.c"
 #include "vm/vm.c"
-#include "vm/vm_builtins.c"
 #include "vm/vm_tokenizer.c"

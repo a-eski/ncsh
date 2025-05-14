@@ -9,7 +9,7 @@ debug_flags = -Wall -Wextra -Werror -Wpedantic -pedantic-errors -Wsign-conversio
 release_flags = -Wall -Wextra -Werror -pedantic-errors -Wsign-conversion -Wformat=2 -Wshadow -Wvla -O3 -DNDEBUG
 # fuzz_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -Wwrite-strings -fsanitize=address,leak,fuzzer -DNDEBUG -g
 fuzz_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,leak,fuzzer -DNDEBUG -g
-objects = obj/main.o obj/arena.o obj/noninteractive.o obj/ncreadline.o obj/vm.o obj/vm_tokenizer.o obj/terminal.o obj/efile.o obj/hashset.o obj/vars.o obj/args.o obj/parser.o obj/vm_builtins.o obj/history.o obj/ac.o obj/env.o obj/config.o obj/fzf.o obj/z.o
+objects = obj/main.o obj/arena.o obj/noninteractive.o obj/ncreadline.o obj/vm.o obj/vm_tokenizer.o obj/terminal.o obj/efile.o obj/hashset.o obj/vars.o obj/args.o obj/parser.o obj/builtins.o obj/history.o obj/ac.o obj/env.o obj/config.o obj/fzf.o obj/z.o
 target = ./bin/ncsh
 
 ifeq ($(CC), gcc)
@@ -295,7 +295,7 @@ tv :
 
 .PHONY: test_vm
 test_vm :
-	$(CC) $(STD) $(debug_flags) -DNCSH_VM_TEST ./src/arena.c ./src/args.c ./src/parser.c ./src/eskilib/efile.c ./src/readline/hashset.c ./src/vars.c ./src/readline/history.c ./src/z/fzf.c ./src/z/z.c ./src/env.c ./src/config.c ./src/vm/vm.c ./src/vm/vm_tokenizer.c ./src/vm/vm_builtins.c ./tests/vm_tests.c -o ./bin/vm_tests
+	$(CC) $(STD) $(debug_flags) -DNCSH_VM_TEST ./src/arena.c ./src/args.c ./src/parser.c ./src/eskilib/efile.c ./src/readline/hashset.c ./src/vars.c ./src/readline/history.c ./src/z/fzf.c ./src/z/z.c ./src/env.c ./src/config.c ./src/vm/vm.c ./src/vm/vm_tokenizer.c ./src/vm/builtins.c ./tests/vm_tests.c -o ./bin/vm_tests
 	./bin/vm_tests
 .PHONY: tvm
 tvm :
@@ -315,6 +315,10 @@ clang_format :
 .PHONY: cf
 cf :
 	make clang_format
+
+.PHONY: scan_build
+scan_build:
+	scan-build-19 -analyze-headers make
 
 .PHONY: clean
 clean :

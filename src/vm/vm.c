@@ -14,8 +14,8 @@
 #include "../defines.h"
 #include "../eskilib/ecolors.h"
 #include "../types.h"
+#include "builtins.h"
 #include "vm.h"
-#include "vm_builtins.h"
 #include "vm_tokenizer.h"
 #include "vm_types.h"
 
@@ -48,6 +48,9 @@ void vm_stdout_redirection_start(char* rst file, bool append, Output_Redirect_IO
 
 void vm_stdout_redirection_stop(int original_stdout)
 {
+    assert(original_stdout >= 0);
+    if (original_stdout < 0)
+        return;
     dup2(original_stdout, STDOUT_FILENO);
 }
 
@@ -94,6 +97,9 @@ void vm_stderr_redirection_start(char* rst file, bool append, Output_Redirect_IO
 
 void vm_stderr_redirection_stop(int original_stderr)
 {
+    assert(original_stderr >= 1);
+    if (original_stderr < 0)
+        return;
     dup2(original_stderr, STDERR_FILENO);
 }
 
@@ -213,6 +219,7 @@ int vm_pipe_start(size_t command_position, Pipe_IO* rst pipes)
             fflush(stdout);
             return NCSH_COMMAND_EXIT_FAILURE;
         }
+        pipes->current_output = pipes->fd_one[1];
     }
     else {
         if (pipe(pipes->fd_two) != 0) {
@@ -220,6 +227,7 @@ int vm_pipe_start(size_t command_position, Pipe_IO* rst pipes)
             fflush(stdout);
             return NCSH_COMMAND_EXIT_FAILURE;
         }
+        pipes->current_output = pipes->fd_two[1];
     }
 
     return NCSH_COMMAND_SUCCESS_CONTINUE;
@@ -244,10 +252,12 @@ void vm_pipe_connect(size_t command_position, size_t number_of_commands, Pipe_IO
         if (command_position % 2 != 0) {
             dup2(pipes->fd_two[0], STDIN_FILENO);
             dup2(pipes->fd_one[1], STDOUT_FILENO);
+            pipes->current_output = pipes->fd_one[1];
         }
         else {
             dup2(pipes->fd_one[0], STDIN_FILENO);
             dup2(pipes->fd_two[1], STDOUT_FILENO);
+            pipes->current_output = pipes->fd_two[1];
         }
     }
 }
@@ -262,19 +272,23 @@ void vm_pipe_stop(size_t command_position, size_t number_of_commands, Pipe_IO* r
     else if (command_position == number_of_commands - 1) {
         if (number_of_commands % 2 != 0) {
             close(pipes->fd_one[0]);
+            pipes->current_output = STDOUT_FILENO;
         }
         else {
             close(pipes->fd_two[0]);
+            pipes->current_output = STDOUT_FILENO;
         }
     }
     else {
         if (command_position % 2 != 0) {
             close(pipes->fd_two[0]);
             close(pipes->fd_one[1]);
+            pipes->current_output = STDOUT_FILENO;
         }
         else {
             close(pipes->fd_one[0]);
             close(pipes->fd_two[1]);
+            pipes->current_output = STDOUT_FILENO;
         }
     }
 }
@@ -388,6 +402,12 @@ int vm_background_job_run(Args* rst args, Processes* rst processes,
 
 /* VM */
 int vm_status;
+int vm_command_result;
+enum Command_Type vm_command_type;
+int vm_execvp_result;
+int vm_result;
+int vm_pid;
+
 #define VM_COMMAND_DIED_MESSAGE "ncsh: Command child process died, cause unknown.\n"
 void vm_status_check()
 {
@@ -446,7 +466,7 @@ Arg* vm_buffer_set_command_next(Arg* rst arg, Vm_Data* rst vm)
     while (arg && arg->val && arg->op == OP_CONSTANT) {
         assert(arg->val[arg->len - 1] == '\0');
         vm->buffer[vm_buf_pos] = arg->val;
-        vm->buffer_len[vm_buf_pos] = arg->len;
+        vm->buffer_lens[vm_buf_pos] = arg->len;
         debugf("set vm->buffer[%zu] to %s, %zu\n", vm_buf_pos, arg->val, arg->len);
 
         if (!arg->next || !arg->next->val) {
@@ -471,17 +491,53 @@ Arg* vm_buffer_set_command_next(Arg* rst arg, Vm_Data* rst vm)
     return arg;
 }
 
-int vm_command_result;
-enum Command_Type vm_command_type;
-int vm_execvp_result;
-int vm_result;
-int vm_pid;
+int vm_result_aggregate()
+{
+    if (vm_execvp_result == EXECVP_FAILED) {
+        return NCSH_COMMAND_EXIT_FAILURE;
+    }
+    if (vm_status == EXIT_FAILURE) {
+        return NCSH_COMMAND_EXIT_FAILURE;
+    }
+    if (vm_command_result != NCSH_COMMAND_NONE) {
+        return vm_command_result;
+    }
+    return NCSH_COMMAND_SUCCESS_CONTINUE;
+}
+
+/* vm_builtins_check_and_run
+ * Checks current command against builtins, and if matches runs the builtin.
+ */
+[[nodiscard]]
+bool vm_builtins_check_and_run(Vm_Data* rst vm, Shell* rst shell, Arena* rst scratch_arena)
+{
+    if (shell) {
+        if (estrcmp(vm->buffer[0], vm->buffer_lens[0], Z, sizeof(Z))) {
+            vm_command_result = builtins_z(&shell->z_db, vm->buffer, vm->buffer_lens, &shell->arena, scratch_arena);
+            return true;
+        }
+
+        if (estrcmp(vm->buffer[0], vm->buffer_lens[0], NCSH_HISTORY, sizeof(NCSH_HISTORY))) {
+            vm_command_result =
+                builtins_history(&shell->input.history, vm->buffer, vm->buffer_lens, &shell->arena, scratch_arena);
+            return true;
+        }
+    }
+
+    for (size_t i = 0; i < builtins_count; ++i) {
+        if (estrcmp(vm->buffer[0], vm->buffer_lens[0], builtins[i].value, builtins[i].length)) {
+            vm_command_result = (*builtins[i].func)(vm->buffer);
+            return true;
+        }
+    }
+
+    return false;
+}
 
 [[nodiscard]]
-int vm_run(Args* rst args, Tokens* rst tokens)
+int vm_run(Args* rst args, Tokens* rst tokens, Shell* rst shell, Arena* rst scratch_arena)
 {
-    Vm_Data vm = {0};
-    vm_command_result = NCSH_COMMAND_NONE;
+    Vm_Data vm = {.pipes_io = {.current_output = STDOUT_FILENO}};
 
     if ((vm_result = vm_redirection_start_if_needed(tokens, &vm)) != NCSH_COMMAND_SUCCESS_CONTINUE) {
         return vm_result;
@@ -489,6 +545,7 @@ int vm_run(Args* rst args, Tokens* rst tokens)
 
     Arg* arg = args->head->next;
     while (!vm.args_end && arg && arg->val) {
+        vm_command_result = NCSH_COMMAND_NONE;
         arg = vm_buffer_set_command_next(arg, &vm);
 
         if (!vm.buffer[0]) {
@@ -501,15 +558,11 @@ int vm_run(Args* rst args, Tokens* rst tokens)
             }
         }
 
-        for (size_t i = 0; i < builtins_count; ++i) {
-            if (estrcmp(vm.buffer[0], vm.buffer_len[0], builtins[i].value, builtins[i].length)) {
-                vm_command_type = CT_BUILTIN;
-                vm_command_result = (*builtins[i].func)(vm.buffer);
-
-                if (vm.op_current == OP_PIPE) {
-                    vm_pipe_stop(vm.command_position, tokens->number_of_pipe_commands, &vm.pipes_io);
-                }
-                break;
+        bool builtin_ran = vm_builtins_check_and_run(&vm, shell, scratch_arena);
+        if (builtin_ran) {
+            vm_command_type = CT_BUILTIN;
+            if (vm.op_current == OP_PIPE) {
+                vm_pipe_stop(vm.command_position, tokens->number_of_pipe_commands, &vm.pipes_io);
             }
         }
 
@@ -570,21 +623,17 @@ int vm_run(Args* rst args, Tokens* rst tokens)
 
         vm_command_type = CT_EXTERNAL;
         ++vm.command_position;
+
+        // TODO: logic around failures
+        // vm_result = vm_result_aggregate();
+        // if e is set
+        // if next op is and/or
     }
 
     vm_redirection_stop_if_needed(&vm);
 
-    if (vm_execvp_result == EXECVP_FAILED) {
-        return NCSH_COMMAND_EXIT_FAILURE;
-    }
-    if (vm_status == EXIT_FAILURE) {
-        return NCSH_COMMAND_EXIT_FAILURE;
-    }
-    if (vm_command_result != NCSH_COMMAND_NONE) {
-        return vm_command_result;
-    }
-
-    return NCSH_COMMAND_SUCCESS_CONTINUE;
+    vm_result = vm_result_aggregate();
+    return vm_result;
 }
 
 /* vm_execute
@@ -605,19 +654,6 @@ int vm_execute(Args* rst args, Shell* rst shell, Arena* rst scratch_arena)
         vm_background_jobs_check(&shell->processes);
     }*/
 
-    Arg* arg = args->head->next;
-
-    // check for builtins that run outside of the main VM execute function (z, history)
-    /* TODO:: these don't work pipes and other operators as a result of being outside vm_run, need to incorporate into
-     * the VM execute function. */
-    if (estrcmp(arg->val, arg->len, Z, sizeof(Z))) {
-        return builtins_z(&shell->z_db, args, &shell->arena, scratch_arena);
-    }
-
-    if (estrcmp(arg->val, arg->len, NCSH_HISTORY, sizeof(NCSH_HISTORY))) {
-        return builtins_history(&shell->input.history, args, &shell->arena, scratch_arena);
-    }
-
     Tokens tokens = {0};
     vm_result = vm_tokenizer_tokenize(args, &tokens, shell, scratch_arena);
     if (vm_result != NCSH_COMMAND_SUCCESS_CONTINUE) {
@@ -629,7 +665,7 @@ int vm_execute(Args* rst args, Shell* rst shell, Arena* rst scratch_arena)
         return vm_background_job_run(args, &shell->processes, &tokens);
     }*/
 
-    return vm_run(args, &tokens);
+    return vm_run(args, &tokens, shell, scratch_arena);
 }
 
 /* vm_execute_noninteractive
@@ -650,5 +686,5 @@ int vm_execute_noninteractive(Args* rst args, Shell* rst shell)
         return vm_result;
     }
 
-    return vm_run(args, &tokens);
+    return vm_run(args, &tokens, shell, &shell->arena);
 }

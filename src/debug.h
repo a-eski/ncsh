@@ -68,12 +68,12 @@ static inline void debug_parser_input_internal(const char* file, const int line,
     fflush(stderr);
 }
 
-static inline void debug_args_internal(const char* file, const int line, const char* func, struct Args* args)
+static inline void debug_args_internal(const char* file, const int line, const char* func, Args* args)
 {
     fprintf(stderr, "%s %s:%d ", file, func, line);
     fprintf(stderr, "args.count: %lu\n", args->count);
 
-    struct Arg* arg = args->head->next;
+    Arg* arg = args->head->next;
     for (size_t i = 0; i < args->count; ++i) {
         fprintf(stderr, "%s %s:%d ", file, func, line);
         fprintf(stderr, "args.values[%lu] %s\n", i, arg->val);
@@ -95,7 +95,7 @@ static inline void debug_argsv_internal(const char* file, const int line, const 
     fflush(stderr);
 }
 
-static inline void debug_string_internal(const char* file, const int line, const char* func, struct Str string,
+static inline void debug_string_internal(const char* file, const int line, const char* func, Str string,
                                          char* name)
 {
     fprintf(stderr, "%s %s:%d ", file, func, line);

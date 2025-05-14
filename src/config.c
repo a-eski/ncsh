@@ -3,6 +3,7 @@
 
 #ifndef _DEFAULT_SOURCE
 #define _DEFAULT_SOURCE
+#include <stdio.h>
 #endif /* ifndef _DEFAULT_SOURCE */
 #ifndef _POXIC_C_SOURCE
 #define _POSIX_C_SOURCE 200809L
@@ -126,6 +127,9 @@ void config_path_add(char* rst val, int len, Arena* rst scratch_arena)
     debugf("trying to add %s to path\n", val);
 
     char* path = getenv("PATH");
+    if (!path || !*path) {
+        return;
+    }
     size_t path_len = strlen(path) + 1; // null terminator here becomes : in length calc below
     char* new_path = arena_malloc(scratch_arena, path_len + (size_t)len, char);
     memcpy(new_path, path, path_len - 1);
@@ -230,7 +234,7 @@ void config_process(FILE* rst file, Arena* rst arena, Arena* rst scratch_arena)
 enum eresult config_file_load(Config* rst config, Arena* rst arena, Arena* rst scratch_arena)
 {
     FILE* file = fopen(config->config_file.value, "r");
-    if (!file || ferror(file)) {
+    if (!file || ferror(file) || feof(file)) {
         printf("ncsh: would you like to create a config file '%s'? [Y/n]: ", config->config_file.value);
         fflush(stdout);
 
@@ -241,15 +245,20 @@ enum eresult config_file_load(Config* rst config, Arena* rst arena, Arena* rst s
         }
 
         if (character != 'y' && character != 'Y') {
+            if (file)
+                fclose(file);
             return E_SUCCESS;
         }
 
         file = fopen(config->config_file.value, "w");
-        if (!file) {
+        if (!file || ferror(file) || feof(file)) {
             perror(RED "ncsh: Could not load or create config file" RESET);
+            if (file)
+                fclose(file);
             return E_FAILURE_FILE_OP;
         }
         puts("\nCreated " RC_FILE " config file.");
+        fclose(file);
         return E_SUCCESS;
     }
 
