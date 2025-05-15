@@ -853,9 +853,9 @@ fzf_result_t fzf_suffix_match(bool case_sensitive, fzf_string_t* text, fzf_strin
     }
 
     size_t diff = trimmed_len - M;
-    assert(diff < trimmed_len - M);
+    assert(diff <= trimmed_len - M);
     for (size_t idx = 0; idx < M; idx++) {
-        assert(idx + diff >= 0);
+        assert(idx + diff >= idx);
         char c = text->data[idx + diff];
         if (!case_sensitive) {
             c = (char)tolower((uint8_t)c);
