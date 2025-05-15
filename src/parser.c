@@ -245,6 +245,7 @@ uint8_t parser_op_process()
 Args* parser_parse(char* rst line, size_t length, Arena* rst scratch_arena)
 {
     assert(line && scratch_arena);
+    assert(!line[length - 1]);
     Args* args = args_alloc(scratch_arena);
     assert(args);
     if (length < 2 || length > NCSH_MAX_INPUT) {
@@ -339,7 +340,7 @@ Args* parser_parse(char* rst line, size_t length, Arena* rst scratch_arena)
         }
         case DOLLAR_SIGN: {
             // exclude variables from this one
-            if (!(parser_state & IN_DOLLAR_SIGN) && line_pos < length && line[line_pos + 1] == '(')
+            if (!(parser_state & IN_DOLLAR_SIGN) && line_pos < length - 1 && line[line_pos + 1] == '(')
                 parser_state |= IN_DOLLAR_SIGN;
 
             parser_buffer[parser_buf_pos++] = line[line_pos];
