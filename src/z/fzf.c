@@ -845,9 +845,17 @@ fzf_result_t fzf_suffix_match(bool case_sensitive, fzf_string_t* text, fzf_strin
     if (M == 0) {
         return (fzf_result_t){(int32_t)trimmed_len, (int32_t)trimmed_len, 0};
     }
-    size_t diff = trimmed_len - M;
+    // not sure if this is correct behavior,
+    // but prevents undefined behavior from occuring on
+    // '''char c = text[idx + diff];'''
+    if (trimmed_len < M) {
+        return (fzf_result_t){(int32_t)trimmed_len, (int32_t)trimmed_len, 0};
+    }
 
+    size_t diff = trimmed_len - M;
+    assert(diff < trimmed_len - M);
     for (size_t idx = 0; idx < M; idx++) {
+        assert(idx + diff >= 0);
         char c = text->data[idx + diff];
         if (!case_sensitive) {
             c = (char)tolower((uint8_t)c);
