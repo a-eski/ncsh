@@ -60,7 +60,7 @@
 
 /* NCSH_START_TIME: display the amount of milliseconds it took to startup ncsh when defined. */
 #ifndef NCSH_START_TIME
-#define NCSH_START_TIME
+#define    NCSH_START_TIME
 #endif // !NCSH_START_TIME
 
 
@@ -79,16 +79,29 @@
 
 
 
+/* Autocompletion Settings */
 /* NCSH_MAX_AUTOCOMPLETION_MATCHES Macro constant
  * Max number of matches a single autocompletion request can return. Used in tab autocomplete use case.
  */
-#define NCSH_MAX_AUTOCOMPLETION_MATCHES 32
+#ifndef NCSH_MAX_AUTOCOMPLETION_MATCHES
+#define    NCSH_MAX_AUTOCOMPLETION_MATCHES 32
+#endif // !NCSH_MAX_AUTOCOMPLETION_MATCHES
+
+#define NCSH_AUTOCOMPLETION_KEY_RIGHT_ARROW 0
+#define NCSH_AUTOCOMPLETION_KEY_TAB 1 // still under development
+
+#ifndef NCSH_AUTOCOMPLETION_KEY
+#define    NCSH_AUTOCOMPLETION_KEY NCSH_AUTOCOMPLETION_KEY_RIGHT_ARROW
+#endif // !NCSH_AUTOCOMPLETION_KEYf
+
 
 
 
 /* NCSH_MAX_INPUT Macro constant
  * The max input for reading in a line. Relevant to ncsh_readline when processing user input.
  */
-#define NCSH_MAX_INPUT 1024
+#ifndef NCSH_MAX_INPUT
+#define    NCSH_MAX_INPUT 1024
+#endif // !NCSH_MAX_INPUT
 
 // clang-format on

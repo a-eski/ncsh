@@ -406,14 +406,20 @@ int ncrl_word_delete(Input* rst input)
     input->buffer[input->pos] = '\0';
     --input->pos;
 
-    while (input->pos > 0 && input->buffer[input->pos] != ' ') {
+    // while (input->pos > 0 && input->buffer[input->pos] != ' ') {
+    while (input->pos > 0) {
         if (ncrl_adjust_line_if_needed(input) == L_PREVIOUS) {
             ncsh_write_literal(ERASE_CURRENT_LINE);
             fflush(stdout);
         }
+        // if (input->buffer[input->pos] == ' ' || (input->pos > 0 && input->buffer[input-> pos - 1] == ' '))
+        if (input->buffer[input->pos] == ' ')
+            break;
         ncsh_write_literal(BACKSPACE_STRING);
         input->buffer[input->pos] = '\0';
         --input->pos;
+        /*if (input->buffer[input->pos] == ' ')
+            break;*/
     }
     fflush(stdout);
 
@@ -553,11 +559,14 @@ int ncrl_move_cursor_right(Input* rst input)
 [[nodiscard]]
 int ncrl_right_arrow_process(Input* rst input)
 {
+#if NCSH_AUTOCOMPLETION_KEY == NCSH_AUTOCOMPLETION_KEY_RIGHT_ARROW
     if (input->pos == input->max_pos && input->buffer[0]) {
         if (ncrl_autocomplete_select(input) != EXIT_SUCCESS) {
             return EXIT_FAILURE;
         }
+        return EXIT_SUCCESS;
     }
+#endif // NCSH_AUTOCOMPLETION_KEY == NCSH_AUTOCOMPLETION_KEY_RIGHT_ARROW
 
     if (ncrl_move_cursor_right(input) != EXIT_SUCCESS) {
         return EXIT_FAILURE;
@@ -691,6 +700,14 @@ char ncrl_read()
 [[nodiscard]]
 int ncrl_tab_autocomplete(Input* rst input, Arena* rst scratch_arena)
 {
+/*#if NCSH_AUTOCOMPLETION_KEY == NCSH_AUTOCOMPLETION_KEY_TAB
+    if (input->pos == input->max_pos && input->buffer[0]) {
+        if (ncrl_autocomplete_select(input) != EXIT_SUCCESS) {
+            return EXIT_FAILURE;
+        }
+        return EXIT_SUCCESS;
+    }
+#endif // NCSH_AUTOCOMPLETION_KEY == NCSH_AUTOCOMPLETION_KEY_TAB*/
     ncsh_write_literal(ERASE_CURRENT_LINE "\n");
 
     Autocompletion autocompletion_matches[NCSH_MAX_AUTOCOMPLETION_MATCHES] = {0};

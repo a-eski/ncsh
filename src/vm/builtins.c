@@ -30,6 +30,7 @@
 #include "builtins.h"
 
 extern jmp_buf env;
+extern int vm_output_fd;
 
 int builtins_disabled_state = 0;
 
@@ -109,7 +110,7 @@ int builtins_z(z_Database* rst z_db, char** rst buffer, size_t* rst buffer_lens,
         }
     }
 
-    if (builtins_write(STDOUT_FILENO, Z_COMMAND_NOT_FOUND_MESSAGE, sizeof(Z_COMMAND_NOT_FOUND_MESSAGE)) == -1) {
+    if (builtins_write(vm_output_fd, Z_COMMAND_NOT_FOUND_MESSAGE, sizeof(Z_COMMAND_NOT_FOUND_MESSAGE)) == -1) {
         return NCSH_COMMAND_EXIT_FAILURE;
     }
     return NCSH_COMMAND_SUCCESS_CONTINUE;
@@ -130,7 +131,7 @@ int builtins_history(History* rst history, char** rst buffer, size_t* rst buffer
     // skip first position since we know it is 'history'
     char** arg = buffer + 1;
     if (!arg || !*arg) {
-        if (builtins_write(STDOUT_FILENO, HISTORY_COMMAND_NOT_FOUND_MESSAGE,
+        if (builtins_write(vm_output_fd, HISTORY_COMMAND_NOT_FOUND_MESSAGE,
                            sizeof(HISTORY_COMMAND_NOT_FOUND_MESSAGE)) == -1) {
             return NCSH_COMMAND_EXIT_FAILURE;
         }
@@ -173,7 +174,7 @@ int builtins_history(History* rst history, char** rst buffer, size_t* rst buffer
         }
     }
 
-    if (builtins_write(STDOUT_FILENO, HISTORY_COMMAND_NOT_FOUND_MESSAGE, sizeof(HISTORY_COMMAND_NOT_FOUND_MESSAGE)) ==
+    if (builtins_write(vm_output_fd, HISTORY_COMMAND_NOT_FOUND_MESSAGE, sizeof(HISTORY_COMMAND_NOT_FOUND_MESSAGE)) ==
         -1) {
         return NCSH_COMMAND_EXIT_FAILURE;
     }
@@ -260,7 +261,7 @@ int builtins_echo(char** rst buffer)
 
 #define HELP_WRITE(str)                                                                                                \
     constexpr size_t str##_len = sizeof(str) - 1;                                                                      \
-    if (builtins_write(STDOUT_FILENO, str, str##_len) == -1) {                                                         \
+    if (builtins_write(vm_output_fd, str, str##_len) == -1) {                                                         \
         perror(RED NCSH_ERROR_STDOUT RESET);                                                                           \
         return NCSH_COMMAND_EXIT_FAILURE;                                                                              \
     }
@@ -271,7 +272,7 @@ int builtins_help(char** rst buffer)
     (void)buffer;
 
     constexpr size_t len = sizeof(NCSH_TITLE) - 1;
-    if (builtins_write(STDOUT_FILENO, NCSH_TITLE, len) == -1) {
+    if (builtins_write(vm_output_fd, NCSH_TITLE, len) == -1) {
         perror(RED NCSH_ERROR_STDOUT RESET);
         return NCSH_COMMAND_EXIT_FAILURE;
     }
@@ -308,6 +309,7 @@ int builtins_help(char** rst buffer)
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
+#define NCSH_COULD_NOT_CD_MESSAGE "ncsh cd: could not change directory.\n"
 [[nodiscard]]
 int builtins_cd(char** rst buffer)
 {
@@ -318,9 +320,10 @@ int builtins_cd(char** rst buffer)
     if (!arg) {
         char* home = getenv("HOME");
         if (!home) {
-            fputs("ncsh: could not change directory.\n", stderr);
+            if (builtins_write(STDERR_FILENO, NCSH_COULD_NOT_CD_MESSAGE, sizeof(NCSH_COULD_NOT_CD_MESSAGE) == -1))
+                return NCSH_COMMAND_EXIT_FAILURE;
         }
-        else if (chdir(home) != 0) {
+        else if (chdir(home)) {
             perror("ncsh: could not change directory");
         }
 
@@ -328,7 +331,8 @@ int builtins_cd(char** rst buffer)
     }
 
     if (chdir(arg)) {
-        fputs("ncsh: could not change directory.\n", stderr);
+        if (builtins_write(STDERR_FILENO, NCSH_COULD_NOT_CD_MESSAGE, sizeof(NCSH_COULD_NOT_CD_MESSAGE) == -1))
+            return NCSH_COMMAND_EXIT_FAILURE;
     }
 
     return NCSH_COMMAND_SUCCESS_CONTINUE;
@@ -357,7 +361,7 @@ int builtins_kill(char** rst buffer)
 {
     assert(buffer && *buffer && buffer + 1);
     if (!buffer) {
-        if (builtins_write(STDOUT_FILENO, KILL_NOTHING_TO_KILL_MESSAGE, sizeof(KILL_NOTHING_TO_KILL_MESSAGE) - 1) ==
+        if (builtins_write(vm_output_fd, KILL_NOTHING_TO_KILL_MESSAGE, sizeof(KILL_NOTHING_TO_KILL_MESSAGE) - 1) ==
             -1) {
             return NCSH_COMMAND_EXIT_FAILURE;
         }
@@ -368,7 +372,7 @@ int builtins_kill(char** rst buffer)
     // skip first position since we know it is 'kill'
     char* arg = *(buffer + 1);
     if (!arg || !*arg) {
-        if (builtins_write(STDOUT_FILENO, KILL_NOTHING_TO_KILL_MESSAGE, sizeof(KILL_NOTHING_TO_KILL_MESSAGE) - 1) ==
+        if (builtins_write(vm_output_fd, KILL_NOTHING_TO_KILL_MESSAGE, sizeof(KILL_NOTHING_TO_KILL_MESSAGE) - 1) ==
             -1) {
             return NCSH_COMMAND_EXIT_FAILURE;
         }
@@ -378,7 +382,7 @@ int builtins_kill(char** rst buffer)
 
     pid_t pid = atoi(arg);
     if (!pid) {
-        if (builtins_write(STDOUT_FILENO, KILL_COULDNT_PARSE_PID_MESSAGE, sizeof(KILL_COULDNT_PARSE_PID_MESSAGE) - 1) ==
+        if (builtins_write(vm_output_fd, KILL_COULDNT_PARSE_PID_MESSAGE, sizeof(KILL_COULDNT_PARSE_PID_MESSAGE) - 1) ==
             -1) {
             return NCSH_COMMAND_EXIT_FAILURE;
         }
@@ -396,7 +400,7 @@ int builtins_kill(char** rst buffer)
 int builtins_version(char** rst buffer)
 {
     (void)buffer;
-    builtins_write(STDOUT_FILENO, NCSH_TITLE, sizeof(NCSH_TITLE) - 1);
+    builtins_write(vm_output_fd, NCSH_TITLE, sizeof(NCSH_TITLE) - 1);
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
@@ -480,7 +484,7 @@ int builtins_enable(char** rst buffer)
         }
     }
 
-    if (builtins_write(STDOUT_FILENO, ENABLE_OPTION_NOT_SUPPORTED_MESSAGE,
+    if (builtins_write(vm_output_fd, ENABLE_OPTION_NOT_SUPPORTED_MESSAGE,
                        sizeof(ENABLE_OPTION_NOT_SUPPORTED_MESSAGE)) == -1) {
         return NCSH_COMMAND_EXIT_FAILURE;
     }
@@ -498,7 +502,7 @@ int builtins_export(Args* rst args)
     // skip first position since we know it is 'export'
     Arg* arg = args->head->next->next;
     if (!arg || !arg->val) {
-        if (builtins_write(STDOUT_FILENO, EXPORT_OPTION_NOT_SUPPORTED_MESSAGE,
+        if (builtins_write(vm_output_fd, EXPORT_OPTION_NOT_SUPPORTED_MESSAGE,
                            sizeof(EXPORT_OPTION_NOT_SUPPORTED_MESSAGE)) == -1) {
             return NCSH_COMMAND_EXIT_FAILURE;
         }
@@ -512,7 +516,7 @@ int builtins_export(Args* rst args)
         puts("export $HOME found");
     }
     else {
-        if (builtins_write(STDOUT_FILENO, EXPORT_OPTION_NOT_SUPPORTED_MESSAGE,
+        if (builtins_write(vm_output_fd, EXPORT_OPTION_NOT_SUPPORTED_MESSAGE,
                            sizeof(EXPORT_OPTION_NOT_SUPPORTED_MESSAGE)) == -1) {
             return NCSH_COMMAND_EXIT_FAILURE;
         }
@@ -542,7 +546,7 @@ int builtins_set(Args* rst args)
     // skip first position since we know it is 'set'
     Arg* arg = args->head->next->next;
     if (!arg || !arg->val) {
-        if (builtins_write(STDOUT_FILENO, SET_NOTHING_TO_SET_MESSAGE, sizeof(SET_NOTHING_TO_SET_MESSAGE) - 1) == -1) {
+        if (builtins_write(vm_output_fd, SET_NOTHING_TO_SET_MESSAGE, sizeof(SET_NOTHING_TO_SET_MESSAGE) - 1) == -1) {
             return NCSH_COMMAND_EXIT_FAILURE;
         }
 
@@ -550,7 +554,7 @@ int builtins_set(Args* rst args)
     }
 
     if (arg->len > 3 || arg->val[0] != '-') {
-        if (builtins_write(STDOUT_FILENO, SET_VALID_OPERATIONS_MESSAGE, sizeof(SET_VALID_OPERATIONS_MESSAGE) - 1) ==
+        if (builtins_write(vm_output_fd, SET_VALID_OPERATIONS_MESSAGE, sizeof(SET_VALID_OPERATIONS_MESSAGE) - 1) ==
             -1) {
             return NCSH_COMMAND_EXIT_FAILURE;
         }
@@ -580,7 +584,7 @@ int builtins_unset(Args* rst args)
     // skip first position since we know it is 'unset'
     Arg* arg = args->head->next->next;
     if (!arg || !arg->val) {
-        if (builtins_write(STDOUT_FILENO, UNSET_NOTHING_TO_UNSET_MESSAGE, sizeof(UNSET_NOTHING_TO_UNSET_MESSAGE) - 1) ==
+        if (builtins_write(vm_output_fd, UNSET_NOTHING_TO_UNSET_MESSAGE, sizeof(UNSET_NOTHING_TO_UNSET_MESSAGE) - 1) ==
             -1) {
             return NCSH_COMMAND_EXIT_FAILURE;
         }
