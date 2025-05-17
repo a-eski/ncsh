@@ -139,7 +139,7 @@ enum z_Result z_write_entry(z_Directory* rst dir, FILE* rst file)
     return Z_SUCCESS;
 }
 
-#define Z_ERROR_WRITING_TO_DB_MESSAGE "z: Error writing to z database file"
+#define Z_ERROR_WRITING_TO_DB_MESSAGE "z: Error writing to z database file\n"
 
 enum z_Result z_write(z_Database* rst db)
 {
@@ -586,11 +586,11 @@ void z(char* rst target, size_t target_length, char* rst cwd, z_Database* rst db
 enum z_Result z_add(char* rst path, size_t path_length, z_Database* rst db, Arena* rst arena)
 {
     if (!path || !db) {
-        fputs("Null value passed to z add", stderr);
+        fputs("Null value passed to z add.\n", stderr);
         return Z_NULL_REFERENCE;
     }
     if (path_length < 2 || path[path_length - 1] != '\0') {
-        fputs("Bad string passed to z add", stderr);
+        fputs("Bad string passed to z add.\n", stderr);
         return Z_BAD_STRING;
     }
 
@@ -633,11 +633,11 @@ enum z_Result z_remove(char* rst path, size_t path_length, z_Database* rst db)
     assert(db);
 
     if (!path) {
-        puts("Null value passed to z rm/remove");
+        fputs("Null value passed to z rm/remove.\n", stderr);
         return Z_NULL_REFERENCE;
     }
     if (path_length < 2 || path[path_length - 1] != '\0') {
-        puts("Bad string passed to z rm/remove");
+        fputs("Bad string passed to z rm/remove.\n", stderr);
         return Z_BAD_STRING;
     }
 

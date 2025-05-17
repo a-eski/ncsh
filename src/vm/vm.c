@@ -25,6 +25,8 @@
 
 extern sig_atomic_t vm_child_pid;
 
+int vm_output_fd;
+
 /* IO Redirection */
 extern inline int vm_output_redirection_oflags_get(bool append);
 
@@ -219,7 +221,7 @@ int vm_pipe_start(size_t command_position, Pipe_IO* rst pipes)
             fflush(stdout);
             return NCSH_COMMAND_EXIT_FAILURE;
         }
-        pipes->current_output = pipes->fd_one[1];
+        vm_output_fd = pipes->fd_one[1];
     }
     else {
         if (pipe(pipes->fd_two) != 0) {
@@ -227,7 +229,7 @@ int vm_pipe_start(size_t command_position, Pipe_IO* rst pipes)
             fflush(stdout);
             return NCSH_COMMAND_EXIT_FAILURE;
         }
-        pipes->current_output = pipes->fd_two[1];
+        vm_output_fd = pipes->fd_two[1];
     }
 
     return NCSH_COMMAND_SUCCESS_CONTINUE;
@@ -252,12 +254,12 @@ void vm_pipe_connect(size_t command_position, size_t number_of_commands, Pipe_IO
         if (command_position % 2 != 0) {
             dup2(pipes->fd_two[0], STDIN_FILENO);
             dup2(pipes->fd_one[1], STDOUT_FILENO);
-            pipes->current_output = pipes->fd_one[1];
+            vm_output_fd = pipes->fd_one[1];
         }
         else {
             dup2(pipes->fd_one[0], STDIN_FILENO);
             dup2(pipes->fd_two[1], STDOUT_FILENO);
-            pipes->current_output = pipes->fd_two[1];
+            vm_output_fd = pipes->fd_two[1];
         }
     }
 }
@@ -272,23 +274,23 @@ void vm_pipe_stop(size_t command_position, size_t number_of_commands, Pipe_IO* r
     else if (command_position == number_of_commands - 1) {
         if (number_of_commands % 2 != 0) {
             close(pipes->fd_one[0]);
-            pipes->current_output = STDOUT_FILENO;
+            vm_output_fd = STDOUT_FILENO;
         }
         else {
             close(pipes->fd_two[0]);
-            pipes->current_output = STDOUT_FILENO;
+            vm_output_fd = STDOUT_FILENO;
         }
     }
     else {
         if (command_position % 2 != 0) {
             close(pipes->fd_two[0]);
             close(pipes->fd_one[1]);
-            pipes->current_output = STDOUT_FILENO;
+            vm_output_fd = STDOUT_FILENO;
         }
         else {
             close(pipes->fd_one[0]);
             close(pipes->fd_two[1]);
-            pipes->current_output = STDOUT_FILENO;
+            vm_output_fd = STDOUT_FILENO;
         }
     }
 }

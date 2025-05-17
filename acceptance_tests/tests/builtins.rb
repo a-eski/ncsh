@@ -21,15 +21,15 @@ def help_pipe_test(row)
   @tty.send_line('help | head -1')
   row += 1
   @tty.assert_row_like(row, 'ncsh')
+  row += 1
   test_passed('help pipe test')
   row
 end
 
 def help_tests(row)
   starting_tests('help')
-  # row =
-  help_test(row)
-  # row = help_pipe_test(row)
+  row = help_test(row)
+  help_pipe_test(row)
 end
 
 def basic_echo_test(row)

@@ -179,7 +179,7 @@ tp :
 fuzz_parser :
 	chmod +x ./create_corpus_dirs.sh
 	./create_corpus_dirs.sh
-	clang-19 $(STD) $(fuzz_flags) ./tests/parser_fuzzing.c ./src/arena.c ./src/vars.c ./src/parser.c -o ./bin/parser_fuzz
+	clang-19 $(STD) $(fuzz_flags) ./tests/parser_fuzzing.c ./src/arena.c ./src/args.c ./src/parser.c -o ./bin/parser_fuzz
 	./bin/parser_fuzz PARSER_CORPUS/ -detect_leaks=0 -rss_limit_mb=4096
 .PHONY: fp
 fp :
