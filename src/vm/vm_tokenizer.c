@@ -292,9 +292,12 @@ void vm_tokenizer_glob_process(Arg* rst arg, size_t* rst args_count, Arena* rst 
     globfree(&glob_buf);
 }
 
-void vm_tokenizer_assignment_process(Arg* rst arg, Vars* rst vars, Arena* rst arena)
+void vm_tokenizer_assignment_process(Arg* arg, Vars* rst vars, Arena* rst arena)
 {
+    assert(arg);
+    assert(vars);
     assert(arena);
+
     // variable values are stored in vars hashmap.
     // the key is the previous value, which is tagged with OP_VARIABLE.
     // when VM comes in contact with OP_VARIABLE, it looks up value in vars.
@@ -462,8 +465,15 @@ int vm_tokenizer_ops_process(Args* rst args, Tokens* rst tokens, Shell* rst shel
             break;
         }
         case OP_ASSIGNMENT: {
+            // skip command like arguments that look like assignment.
+            // for example "CC=clang" is an assignment, "make CC=clang" is not.
+            if (arg != args->head->next) {
+                arg->op = OP_CONSTANT;
+                break;
+            }
+
             vm_tokenizer_assignment_process(arg, &shell->vars, &shell->arena);
-            if (prev && arg) {
+            if (prev && arg && arg->next) {
                 arg_set_after(arg->next, prev);
                 prev = arg->next;
                 if (arg->next->next) {

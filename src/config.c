@@ -301,8 +301,8 @@ enum eresult config_init(Config* rst config, Arena* rst arena, Arena scratch_are
 #define GIT "git"
 #define GIT_ALIAS "g"
 
-#define NEOVIM "nvim"
-#define NEOVIM_ALIAS "n"
+#define NEOVIM "/home/alex-e/nvim-linux-x86_64.appimage"
+#define NEOVIM_ALIAS "nvim"
 
 #define MAKE "make"
 #define MAKE_ALIAS "m"

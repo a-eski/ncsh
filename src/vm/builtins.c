@@ -110,7 +110,7 @@ int builtins_z(z_Database* rst z_db, char** rst buffer, size_t* rst buffer_lens,
         }
     }
 
-    if (builtins_write(vm_output_fd, Z_COMMAND_NOT_FOUND_MESSAGE, sizeof(Z_COMMAND_NOT_FOUND_MESSAGE)) == -1) {
+    if (builtins_write(vm_output_fd, Z_COMMAND_NOT_FOUND_MESSAGE, sizeof(Z_COMMAND_NOT_FOUND_MESSAGE) - 1) == -1) {
         return NCSH_COMMAND_EXIT_FAILURE;
     }
     return NCSH_COMMAND_SUCCESS_CONTINUE;
@@ -132,7 +132,7 @@ int builtins_history(History* rst history, char** rst buffer, size_t* rst buffer
     char** arg = buffer + 1;
     if (!arg || !*arg) {
         if (builtins_write(vm_output_fd, HISTORY_COMMAND_NOT_FOUND_MESSAGE,
-                           sizeof(HISTORY_COMMAND_NOT_FOUND_MESSAGE)) == -1) {
+                           sizeof(HISTORY_COMMAND_NOT_FOUND_MESSAGE) - 1) == -1) {
             return NCSH_COMMAND_EXIT_FAILURE;
         }
         return NCSH_COMMAND_FAILED_CONTINUE;
@@ -174,7 +174,7 @@ int builtins_history(History* rst history, char** rst buffer, size_t* rst buffer
         }
     }
 
-    if (builtins_write(vm_output_fd, HISTORY_COMMAND_NOT_FOUND_MESSAGE, sizeof(HISTORY_COMMAND_NOT_FOUND_MESSAGE)) ==
+    if (builtins_write(vm_output_fd, HISTORY_COMMAND_NOT_FOUND_MESSAGE, sizeof(HISTORY_COMMAND_NOT_FOUND_MESSAGE) - 1) ==
         -1) {
         return NCSH_COMMAND_EXIT_FAILURE;
     }
@@ -320,7 +320,7 @@ int builtins_cd(char** rst buffer)
     if (!arg) {
         char* home = getenv("HOME");
         if (!home) {
-            if (builtins_write(STDERR_FILENO, NCSH_COULD_NOT_CD_MESSAGE, sizeof(NCSH_COULD_NOT_CD_MESSAGE) == -1))
+            if (builtins_write(STDERR_FILENO, NCSH_COULD_NOT_CD_MESSAGE, sizeof(NCSH_COULD_NOT_CD_MESSAGE) - 1) == -1)
                 return NCSH_COMMAND_EXIT_FAILURE;
         }
         else if (chdir(home)) {
@@ -331,7 +331,7 @@ int builtins_cd(char** rst buffer)
     }
 
     if (chdir(arg)) {
-        if (builtins_write(STDERR_FILENO, NCSH_COULD_NOT_CD_MESSAGE, sizeof(NCSH_COULD_NOT_CD_MESSAGE) == -1))
+        if (builtins_write(STDERR_FILENO, NCSH_COULD_NOT_CD_MESSAGE, sizeof(NCSH_COULD_NOT_CD_MESSAGE) - 1) == -1)
             return NCSH_COMMAND_EXIT_FAILURE;
     }
 
@@ -485,7 +485,7 @@ int builtins_enable(char** rst buffer)
     }
 
     if (builtins_write(vm_output_fd, ENABLE_OPTION_NOT_SUPPORTED_MESSAGE,
-                       sizeof(ENABLE_OPTION_NOT_SUPPORTED_MESSAGE)) == -1) {
+                       sizeof(ENABLE_OPTION_NOT_SUPPORTED_MESSAGE) - 1) == -1) {
         return NCSH_COMMAND_EXIT_FAILURE;
     }
     return NCSH_COMMAND_SUCCESS_CONTINUE;
@@ -503,7 +503,7 @@ int builtins_export(Args* rst args)
     Arg* arg = args->head->next->next;
     if (!arg || !arg->val) {
         if (builtins_write(vm_output_fd, EXPORT_OPTION_NOT_SUPPORTED_MESSAGE,
-                           sizeof(EXPORT_OPTION_NOT_SUPPORTED_MESSAGE)) == -1) {
+                           sizeof(EXPORT_OPTION_NOT_SUPPORTED_MESSAGE) - 1) == -1) {
             return NCSH_COMMAND_EXIT_FAILURE;
         }
         return NCSH_COMMAND_FAILED_CONTINUE;
@@ -517,7 +517,7 @@ int builtins_export(Args* rst args)
     }
     else {
         if (builtins_write(vm_output_fd, EXPORT_OPTION_NOT_SUPPORTED_MESSAGE,
-                           sizeof(EXPORT_OPTION_NOT_SUPPORTED_MESSAGE)) == -1) {
+                           sizeof(EXPORT_OPTION_NOT_SUPPORTED_MESSAGE) - 1) == -1) {
             return NCSH_COMMAND_EXIT_FAILURE;
         }
     }
