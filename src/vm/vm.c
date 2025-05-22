@@ -15,8 +15,8 @@
 #include "../eskilib/ecolors.h"
 #include "../types.h"
 #include "builtins.h"
+#include "tokenizer.h"
 #include "vm.h"
-#include "vm_tokenizer.h"
 #include "vm_types.h"
 
 #ifdef NCSH_VM_TEST
@@ -657,7 +657,7 @@ int vm_execute(Args* rst args, Shell* rst shell, Arena* rst scratch_arena)
     }*/
 
     Tokens tokens = {0};
-    vm_result = vm_tokenizer_tokenize(args, &tokens, shell, scratch_arena);
+    vm_result = tokenizer_tokenize(args, &tokens, shell, scratch_arena);
     if (vm_result != NCSH_COMMAND_SUCCESS_CONTINUE) {
         return vm_result;
     }
@@ -683,7 +683,7 @@ int vm_execute_noninteractive(Args* rst args, Shell* rst shell)
     }
 
     Tokens tokens = {0};
-    vm_result = vm_tokenizer_tokenize(args, &tokens, shell, &shell->arena);
+    vm_result = tokenizer_tokenize(args, &tokens, shell, &shell->arena);
     if (vm_result != NCSH_COMMAND_SUCCESS_CONTINUE) {
         return vm_result;
     }

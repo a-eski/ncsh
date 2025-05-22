@@ -335,11 +335,53 @@ void parser_parse_assignment_test()
     eassert(args->count == 1);
 
     Arg* arg = args->head->next;
-    printf("%s\n", arg->val);
     // quotes stripped by the parser
-    eassert(!memcmp(arg->val, "STR=Hello", sizeof("STR=Hello")));
+    size_t stripped_len = sizeof("STR=Hello");
+    eassert(!memcmp(arg->val, "STR=Hello", stripped_len));
     eassert(arg->op == OP_ASSIGNMENT);
-    eassert(arg->len == sizeof("STR=Hello"));
+    eassert(arg->len == stripped_len);
+
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
+void parser_parse_assignment_spaces_test()
+{
+    SCRATCH_ARENA_TEST_SETUP;
+
+    char* line = "STR=\"ls -a\"";
+    size_t len = strlen(line) + 1;
+
+    Args* args = parser_parse(line, len, &scratch_arena);
+
+    eassert(args->head);
+    eassert(args->count == 1);
+
+    Arg* arg = args->head->next;
+    // quotes stripped by the parser
+    eassert(!memcmp(arg->val, "STR=ls -a", len - 2));
+    eassert(arg->op == OP_ASSIGNMENT);
+    eassert(arg->len == len - 2);
+
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
+void parser_parse_assignment_spaces_multiple_test()
+{
+    SCRATCH_ARENA_TEST_SETUP;
+
+    char* line = "STR=\"ls | sort\"";
+    size_t len = strlen(line) + 1;
+
+    Args* args = parser_parse(line, len, &scratch_arena);
+
+    eassert(args->head);
+    eassert(args->count == 1);
+
+    Arg* arg = args->head->next;
+    // quotes stripped by the parser
+    eassert(!memcmp(arg->val, "STR=ls | sort", len - 2));
+    eassert(arg->op == OP_ASSIGNMENT);
+    eassert(arg->len == len - 2);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -827,6 +869,43 @@ void parser_parse_bool_test()
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
+void parser_parse_if_test()
+{
+    SCRATCH_ARENA_TEST_SETUP;
+
+    char* line = "if [ 1 -eq 1 ]; then echo 'hi' fi";
+    size_t len = strlen(line) + 1;
+
+    Args* args = parser_parse(line, len, &scratch_arena);
+
+    eassert(args->head);
+    eassert(args->count == 10);
+
+    Arg* arg = args->head->next;
+    eassert(arg);
+    eassert(arg->op == OP_IF);
+    arg = arg->next;
+    eassert(arg->op == OP_START_EXPRESSION);
+    arg = arg->next;
+    eassert(arg->op == OP_CONSTANT);
+    arg = arg->next;
+    eassert(arg->op == OP_EQ);
+    arg = arg->next;
+    eassert(arg->op == OP_CONSTANT);
+    arg = arg->next;
+    eassert(arg->op == OP_END_EXPRESSION);
+    arg = arg->next;
+    eassert(arg->op == OP_THEN);
+    arg = arg->next;
+    eassert(arg->op == OP_CONSTANT);
+    arg = arg->next;
+    eassert(arg->op == OP_CONSTANT);
+    arg = arg->next;
+    eassert(arg->op == OP_FI);
+
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
 // forward declaration: implementation put at the end because it messes with clangd lsp
 void parser_parse_bad_input_shouldnt_crash();
 
@@ -848,6 +927,8 @@ int main()
     etest_run(parser_parse_stdout_and_stderr_redirection_test);
     etest_run(parser_parse_stdout_and_stderr_redirection_append_test);
     etest_run(parser_parse_assignment_test);
+    etest_run(parser_parse_assignment_spaces_test);
+    etest_run(parser_parse_assignment_spaces_multiple_test);
     etest_run(parser_parse_variable_test);
     etest_run(parser_parse_variable_and_test);
     etest_run(parser_parse_variable_command_test);
@@ -862,6 +943,7 @@ int main()
     etest_run(parser_parse_glob_question_and_tilde_home_shouldnt_crash);
     etest_run(parser_parse_bad_input_shouldnt_crash);
     etest_run(parser_parse_bool_test);
+    etest_run(parser_parse_if_test);
 
     etest_finish();
 

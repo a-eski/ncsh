@@ -18,7 +18,7 @@
 #include "readline/ac.h"
 #include "readline/ncreadline.h"
 #include "signals.h"
-#include "vars.h"
+#include "vm/vars.h"
 #include "vm/vm.h"
 
 /* Global Variables

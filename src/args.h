@@ -47,6 +47,14 @@ enum Ops : uint8_t {
     // Expansion
     OP_HOME_EXPANSION = 26, // ~
     OP_GLOB_EXPANSION = 27, // * or ?
+    // Control flow structures
+    OP_START_EXPRESSION,
+    OP_END_EXPRESSION,
+    OP_IF,
+    OP_ELSE,
+    OP_THEN,
+    OP_FI,
+    OP_EQ
 };
 
 /* Arg

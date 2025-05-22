@@ -57,11 +57,29 @@
 #define BOOL_TRUE "true"
 #define BOOL_FALSE "false"
 
-// expansions
+// ops: expansions
 #define GLOB_STAR '*'
 #define GLOB_QUESTION '?'
 #define TILDE '~'
 
+// ops: control flow structures
+#define IF "if"
+#define FI "fi"
+#define DO "do"
+#define THEN "then"
+#define ELSE "else"
+// #define SEMICOLON ';'
+// #define OPENING_BRACKET '['
+// #define CLOSING_BRACKET ']'
+#define START_EXPRESSION '['
+#define END_EXPRESSION "];"
+
+// ops: equality
+#define EQ "-eq"
+#define LT "-lt"
+#define GT "-gt"
+
+// ops: misc
 #define COMMENT '#'
 
 // currently unsupported
@@ -100,9 +118,16 @@ size_t parser_buf_pos;
  * Size of the array is stored as constant expression in ops_2char_len
  * Bytecodes (opcodes) equivalents are stored in the array of enum Ops, ops_2char
  */
-const char* const rst ops_2char_str[] = {
-    STDOUT_REDIRECTION_APPEND, STDERR_REDIRECTION, STDOUT_AND_STDERR_REDIRECTION, AND, OR, EXPONENTIATION,
-    MATH_EXPRESSION_START};
+const char* const rst ops_2char_str[] = {STDOUT_REDIRECTION_APPEND,
+                                         STDERR_REDIRECTION,
+                                         STDOUT_AND_STDERR_REDIRECTION,
+                                         AND,
+                                         OR,
+                                         EXPONENTIATION,
+                                         MATH_EXPRESSION_START,
+                                         IF,
+                                         FI,
+                                         END_EXPRESSION};
 
 constexpr size_t ops_2char_len = sizeof(ops_2char_str) / sizeof(char*);
 
@@ -112,18 +137,21 @@ const enum Ops ops_2char[] = {OP_STDOUT_REDIRECTION_APPEND,
                               OP_AND,
                               OP_OR,
                               OP_EXPONENTIATION,
-                              OP_MATH_EXPRESSION_START};
+                              OP_MATH_EXPRESSION_START,
+                              OP_IF,
+                              OP_FI,
+                              OP_END_EXPRESSION};
 
 /* ops_3char_str
  * A constant array that contain all shell operations that are 3 characters long, like "&>>".
  * Size of the array is stored as constant expression in ops_3char_len
  * Bytecodes (opcodes) equivalents are stored in the array of enum Ops, ops_3char
  */
-const char* const rst ops_3char_str[] = {STDERR_REDIRECTION_APPEND, STDOUT_AND_STDERR_REDIRECTION_APPEND};
+const char* const rst ops_3char_str[] = {STDERR_REDIRECTION_APPEND, STDOUT_AND_STDERR_REDIRECTION_APPEND, EQ};
 
 constexpr size_t ops_3char_len = sizeof(ops_3char_str) / sizeof(char*);
 
-const enum Ops ops_3char[] = {OP_STDERR_REDIRECTION_APPEND, OP_STDOUT_AND_STDERR_REDIRECTION_APPEND};
+const enum Ops ops_3char[] = {OP_STDERR_REDIRECTION_APPEND, OP_STDOUT_AND_STDERR_REDIRECTION_APPEND, OP_EQ};
 
 /* parser_op_get
  * Internal function used to map the inputted line to a bytecode.
@@ -172,6 +200,9 @@ enum Ops parser_op_get(char* rst line, size_t length)
         case TILDE: {
             return OP_HOME_EXPANSION;
         }
+        case START_EXPRESSION: {
+            return OP_START_EXPRESSION;
+        }
         default: {
             return OP_CONSTANT;
         }
@@ -198,15 +229,17 @@ enum Ops parser_op_get(char* rst line, size_t length)
         return OP_CONSTANT;
     }
     case 4: {
-        if (line[0] == 't' && !memcmp(line, BOOL_TRUE, 4)) {
+        if (line[0] == 't' && !memcmp(line, BOOL_TRUE, 4))
             return OP_TRUE;
-        }
+        else if (line[0] == 't' && !memcmp(line, THEN, 4))
+            return OP_THEN;
+
         break;
     }
     case 5: {
-        if (line[0] == 'f' && !memcmp(line, BOOL_FALSE, 5)) {
+        if (line[0] == 'f' && !memcmp(line, BOOL_FALSE, 5))
             return OP_FALSE;
-        }
+
         break;
     }
     }
@@ -360,6 +393,11 @@ Args* parser_parse(char* rst line, size_t length, Arena* rst scratch_arena)
         case '\0': {
             if (parser_state & IN_COMMENT && line[line_pos] != '\n')
                 continue;
+            if (parser_state & IN_SINGLE_QUOTES || parser_state & IN_DOUBLE_QUOTES ||
+                parser_state & IN_BACKTICK_QUOTES) {
+                parser_buffer[parser_buf_pos++] = line[line_pos];
+                continue;
+            }
 
             // break to code below when delimiter found and no state or certain states found
             if ((!parser_state || (parser_state & IN_MATHEMATICAL_EXPRESSION) || (parser_state & IN_ASSIGNMENT) ||

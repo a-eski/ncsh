@@ -13,6 +13,18 @@ The goal is to build a shell with modern features and experience and as close to
 * z: a native autojump/z-oxide/z command builtin.
 * Working towards POSIX compliance.
 
+### Controls
+
+A lot of controls will feel familar to GNU readline.
+
+* Right/left arrow keys move the cursor
+* Up/down arrow keys move through your history
+* home/end go to start and end of the line
+* Ctrl+W deletes a word, Ctrl+U deletes the entire line
+* If an autocompletion is visible and you are at the end of the line, right arrow will complete the autocompletion. Will add functionality to be able to switch this to tab
+* Backspace and delete work as expected.
+* Tab will show you all possible completions for your current input. Use up and down arrow to scroll through, then enter to select the completion.
+
 ### History
 
 History uses the same format as bash, text separated by newlines:
@@ -167,7 +179,6 @@ Please see COMPILE.md.
 
 ### Short-term
 
-* Fix issue with variables not working with command like 'STR="ls | sort" && $STR' after moving to linked list for parser output/VM
 * Add a builtin for changing and maintaining aliases
 * Have .ncshrc utilize builtins instead of DSL like it currently does
 * Finish set/unset, enable/disable, export implementations

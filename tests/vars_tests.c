@@ -1,8 +1,9 @@
-#include "../src/eskilib/etest.h"
-#include "../src/vars.h"
-#include "lib/arena_test_helper.h"
 #include <stddef.h>
-#include <stdlib.h> // used by macros
+#include <stdlib.h>
+
+#include "../src/eskilib/etest.h"
+#include "../src/vm/vars.h"
+#include "lib/arena_test_helper.h"
 
 void vars_malloc_default_size_test()
 {

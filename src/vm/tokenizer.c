@@ -1,6 +1,7 @@
 /* Copyright ncsh (C) by Alex Eski 2025 */
+/* tokenizer.c: Preprocessing of parser output to ensure ready for VM to process. */
 
-#include "vm_tokenizer.h"
+#include "tokenizer.h"
 
 #include <assert.h>
 #include <glob.h>
@@ -13,10 +14,10 @@
 #include "../args.h"
 #include "../defines.h"
 #include "../env.h"
-#include "../vars.h"
+#include "vars.h"
 
 [[nodiscard]]
-int vm_tokenizer_syntax_error(char* rst message, size_t message_length)
+int tokenizer_syntax_error(char* rst message, size_t message_length)
 {
     if (write(STDIN_FILENO, message, message_length) == -1) {
         return NCSH_COMMAND_EXIT_FAILURE;
@@ -102,67 +103,67 @@ int vm_tokenizer_syntax_error(char* rst message, size_t message_length)
     "ncsh: Invalid syntax: found or operator ('||') as first argument. Correct usage of or operator is "               \
     "'false || true'\n"
 
-#define INVALID_SYNTAX(message) vm_tokenizer_syntax_error(message, sizeof(message) - 1)
+#define INVALID_SYNTAX(message) tokenizer_syntax_error(message, sizeof(message) - 1)
 
-int vmtok_invalid_syntax_check_res;
+int tok_invalid_syntax_check_res;
 
-/* vm_tokenizer_syntax_check_first_arg
+/* tokenizer_syntax_check_first_arg
  * Simple check to see if something is in first position that shouldn't be
  */
-void vm_tokenizer_syntax_check_first_arg(uint8_t op)
+void tokenizer_syntax_check_first_arg(uint8_t op)
 {
     switch (op) {
     case OP_PIPE: {
-        vmtok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_PIPE_FIRST_ARG);
+        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_PIPE_FIRST_ARG);
         break;
     }
     case OP_STDOUT_REDIRECTION: {
-        vmtok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_REDIR_FIRST_ARG);
+        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_REDIR_FIRST_ARG);
         break;
     }
     case OP_STDOUT_REDIRECTION_APPEND: {
-        vmtok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_REDIR_APPEND_FIRST_ARG);
+        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_REDIR_APPEND_FIRST_ARG);
         break;
     }
     case OP_STDIN_REDIRECTION: {
-        vmtok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDIN_REDIR_FIRST_ARG);
+        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDIN_REDIR_FIRST_ARG);
         break;
     }
     case OP_STDERR_REDIRECTION: {
-        vmtok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDERR_REDIR_FIRST_ARG);
+        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDERR_REDIR_FIRST_ARG);
         break;
     }
     case OP_STDERR_REDIRECTION_APPEND: {
-        vmtok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDERR_REDIR_APPEND_FIRST_ARG);
+        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDERR_REDIR_APPEND_FIRST_ARG);
         break;
     }
     case OP_STDOUT_AND_STDERR_REDIRECTION: {
-        vmtok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_AND_STDERR_REDIR_FIRST_ARG);
+        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_AND_STDERR_REDIR_FIRST_ARG);
         break;
     }
     case OP_STDOUT_AND_STDERR_REDIRECTION_APPEND: {
-        vmtok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_AND_STDERR_REDIR_APPEND_FIRST_ARG);
+        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_AND_STDERR_REDIR_APPEND_FIRST_ARG);
         break;
     }
     case OP_BACKGROUND_JOB: {
-        vmtok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_BACKGROUND_JOB_FIRST_ARG);
+        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_BACKGROUND_JOB_FIRST_ARG);
         break;
     }
     case OP_AND: {
-        vmtok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_AND_IN_FIRST_POSITION);
+        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_AND_IN_FIRST_POSITION);
         break;
     }
     case OP_OR: {
-        vmtok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_OR_IN_FIRST_POSITION);
+        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_OR_IN_FIRST_POSITION);
         break;
     }
     }
 }
 
-/* vm_tokenizer_syntax_check_last_arg
+/* tokenizer_syntax_check_last_arg
  * Simple check to see if something is in last position that shouldn't be
  */
-void vm_tokenizer_syntax_check_last_arg(Args* rst args)
+void tokenizer_syntax_check_last_arg(Args* rst args)
 {
     Arg* arg = args->head->next;
     while (arg->next)
@@ -170,62 +171,62 @@ void vm_tokenizer_syntax_check_last_arg(Args* rst args)
 
     switch (arg->op) {
     case OP_PIPE: {
-        vmtok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_PIPE_LAST_ARG);
+        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_PIPE_LAST_ARG);
         break;
     }
     case OP_STDOUT_REDIRECTION: {
-        vmtok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_REDIR_LAST_ARG);
+        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_REDIR_LAST_ARG);
         break;
     }
     case OP_STDOUT_REDIRECTION_APPEND: {
-        vmtok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_REDIR_APPEND_LAST_ARG);
+        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_REDIR_APPEND_LAST_ARG);
         break;
     }
     case OP_STDIN_REDIRECTION: {
-        vmtok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDIN_REDIR_LAST_ARG);
+        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDIN_REDIR_LAST_ARG);
         break;
     }
     case OP_STDERR_REDIRECTION: {
-        vmtok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDERR_REDIR_LAST_ARG);
+        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDERR_REDIR_LAST_ARG);
         break;
     }
     case OP_STDERR_REDIRECTION_APPEND: {
-        vmtok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDERR_REDIR_APPEND_LAST_ARG);
+        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDERR_REDIR_APPEND_LAST_ARG);
         break;
     }
     case OP_STDOUT_AND_STDERR_REDIRECTION: {
-        vmtok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_AND_STDERR_REDIR_LAST_ARG);
+        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_AND_STDERR_REDIR_LAST_ARG);
         break;
     }
     case OP_STDOUT_AND_STDERR_REDIRECTION_APPEND: {
-        vmtok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_AND_STDERR_REDIR_APPEND_LAST_ARG);
+        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_AND_STDERR_REDIR_APPEND_LAST_ARG);
         break;
     }
     case OP_AND: {
-        vmtok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_AND_IN_LAST_POSITION);
+        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_AND_IN_LAST_POSITION);
         break;
     }
     case OP_OR: {
-        vmtok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_OR_IN_LAST_POSITION);
+        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_OR_IN_LAST_POSITION);
         break;
     }
     }
 }
 
 [[nodiscard]]
-int vm_tokenizer_syntax_check(Args* rst args)
+int tokenizer_syntax_check(Args* rst args)
 {
     assert(args);
 
-    vmtok_invalid_syntax_check_res = NCSH_COMMAND_SUCCESS_CONTINUE;
-    vm_tokenizer_syntax_check_first_arg(args->head->next->op);
-    if (vmtok_invalid_syntax_check_res != NCSH_COMMAND_SUCCESS_CONTINUE)
-        return vmtok_invalid_syntax_check_res;
-    vm_tokenizer_syntax_check_last_arg(args);
-    return vmtok_invalid_syntax_check_res;
+    tok_invalid_syntax_check_res = NCSH_COMMAND_SUCCESS_CONTINUE;
+    tokenizer_syntax_check_first_arg(args->head->next->op);
+    if (tok_invalid_syntax_check_res != NCSH_COMMAND_SUCCESS_CONTINUE)
+        return tok_invalid_syntax_check_res;
+    tokenizer_syntax_check_last_arg(args);
+    return tok_invalid_syntax_check_res;
 }
 
-void vm_tokenizer_home_expansion_process(Arg* rst arg, Str home_location, Arena* rst scratch_arena)
+void tokenizer_home_expansion_process(Arg* rst arg, Str home_location, Arena* rst scratch_arena)
 {
     if (arg->len == 2) {
         size_t len = home_location.length + 1;
@@ -237,10 +238,10 @@ void vm_tokenizer_home_expansion_process(Arg* rst arg, Str home_location, Arena*
     }
 
     assert(arg->val);
-    if (!arg->val)
+    // skip if value is null or home expansion not at beginning of value
+    if (!arg->val || arg->val[0] != '~')
         return;
 
-    // TODO: account for home being in the middle of a path
     size_t len = arg->len + home_location.length; // arg->len accounts for null termination
     char* new_value = arena_malloc(scratch_arena, len, char);
     memcpy(new_value, home_location.value, home_location.length);
@@ -251,7 +252,7 @@ void vm_tokenizer_home_expansion_process(Arg* rst arg, Str home_location, Arena*
     arg->len = len;
 }
 
-void vm_tokenizer_glob_process(Arg* rst arg, size_t* rst args_count, Arena* rst scratch_arena)
+void tokenizer_glob_process(Arg* rst arg, size_t* rst args_count, Arena* rst scratch_arena)
 {
     glob_t glob_buf = {0};
     size_t glob_len;
@@ -292,7 +293,7 @@ void vm_tokenizer_glob_process(Arg* rst arg, size_t* rst args_count, Arena* rst 
     globfree(&glob_buf);
 }
 
-void vm_tokenizer_assignment_process(Arg* arg, Vars* rst vars, Arena* rst arena)
+void tokenizer_assignment_process(Arg* arg, Vars* rst vars, Arena* rst arena)
 {
     assert(arg);
     assert(vars);
@@ -322,7 +323,16 @@ void vm_tokenizer_assignment_process(Arg* arg, Vars* rst vars, Arena* rst arena)
     vars_set(key, val, arena, vars);
 }
 
-void vm_tokenizer_variable_process(Arg* rst arg, Vars* rst vars, Arena* rst scratch_arena)
+void tokenizer_arg_update(Arg* rst arg, Str* rst var, Arena* rst scratch_arena)
+{
+    arg->val = arena_realloc(scratch_arena, var->length, char, arg->val, arg->len);
+    memcpy(arg->val, var->value, var->length);
+    arg->len = var->length;
+    arg->op = OP_CONSTANT; // replace OP_VARIABLE to OP_CONSTANT so VM sees it as a regular constant value
+    debugf("replaced variable with value %s %zu\n", arg->val, arg->len);
+}
+
+void tokenizer_variable_process(Arg* rst arg, Vars* rst vars, Arena* rst scratch_arena)
 {
     Str var;
     if (estrcmp(arg->val, arg->len, NCSH_PATH_VAR, sizeof(NCSH_PATH_VAR))) {
@@ -339,7 +349,7 @@ void vm_tokenizer_variable_process(Arg* rst arg, Vars* rst vars, Arena* rst scra
         debug("replacing variable $HOME\n");
         env_home_get(&var, scratch_arena);
         if (!var.value || !*var.value) {
-            puts("ncsh: could not load path to replace $PATH variable.");
+            puts("ncsh: could not load home to replace $HOME variable.");
             return;
         }
     }
@@ -354,18 +364,56 @@ void vm_tokenizer_variable_process(Arg* rst arg, Vars* rst vars, Arena* rst scra
         var = *val;
     }
 
-    // replace the variable name with the value of the variable
-    arg->val = arena_realloc(scratch_arena, var.length, char, arg->val, arg->len);
-    memcpy(arg->val, var.value, var.length);
-    arg->len = var.length;
-    arg->op = OP_CONSTANT; // replace OP_VARIABLE to OP_CONSTANT so VM sees it as a regular constant value
-    debugf("replaced variable with value %s %zu\n", arg->val, arg->len);
+    char* space = strchr(var.value, ' ');
+    if (!space) {
+        tokenizer_arg_update(arg, &var, scratch_arena);
+        return;
+    }
+
+    debug("found space");
+    Args* args = parser_parse(var.value, var.length, scratch_arena);
+    Arg* var_arg = args->head->next;
+    if (!var_arg) {
+        return;
+    }
+    debugf("found value %s\n", var_arg->val);
+    Str var_str = {.value = var_arg->val, .length = var_arg->len};
+    tokenizer_arg_update(arg, &var_str, scratch_arena);
+    var_arg = var_arg->next;
+
+    for (size_t i = 0; i < args->count; ++i) {
+        if (!var_arg)
+            break;
+
+        debugf("found next value %s\n", var_arg->val);
+        if (!arg) {
+            arg = var_arg;
+            var_arg = var_arg->next;
+            arg = arg->next;
+            continue;
+        }
+        else if (arg->next) {
+            arg_set_after(arg, var_arg);
+            arg = arg->next;
+            var_arg = var_arg->next;
+        }
+        else {
+            arg->next = var_arg;
+            arg = arg->next->next;
+            var_arg = var_arg->next;
+        }
+    }
+
+    if (!arg)
+        return;
+    if (arg->next)
+        arg->next = NULL;
 }
 
-/* vm_tokenizer_alias_replace
+/* tokenizer_alias_replace
  * Replaces aliases with their aliased commands before executing
  */
-void vm_tokenizer_alias_replace(Arg* rst arg, Arena* rst scratch_arena)
+void tokenizer_alias_replace(Arg* rst arg, Arena* rst scratch_arena)
 {
     Str alias = config_alias_check(arg->val, arg->len);
     if (alias.length) {
@@ -375,7 +423,76 @@ void vm_tokenizer_alias_replace(Arg* rst arg, Arena* rst scratch_arena)
     }
 }
 
-int vm_tokenizer_ops_process(Args* rst args, Tokens* rst tokens, Shell* rst shell, Arena* rst scratch_arena)
+/*enum Logic_Type {
+    OP_CODE,
+    OP_ARG
+};
+
+union Logic_Value {
+    int code;
+    Arg* arg;
+};
+
+typedef struct {
+    enum Logic_Type type;
+    union Logic_Value val;
+} Logic_Result;
+
+Logic_Result tokenizer_logic_process(Arg* rst arg, Arena* rst scratch_arena)
+{
+    assert(arg);
+    assert(scratch_arena);
+    (void)scratch_arena;
+
+    if (!arg->next) {
+        int code = INVALID_SYNTAX("ncsh: Invalid Syntax: found 'if' at end of command.\n");
+        return (Logic_Result){.type = OP_CODE, .val.code = code};
+    }
+
+    arg = arg->next;
+    if (arg->op != OP_START_EXPRESSION) {
+        int code = INVALID_SYNTAX("ncsh: Invalid Syntax: expecting expression start '[' after 'if'.\n");
+        return (Logic_Result){.type = OP_CODE, .val.code = code};
+    }
+
+    if (!arg->next) {
+        int code = INVALID_SYNTAX("ncsh: Invalid Syntax: expecting expression after 'if ['.\n");
+        return (Logic_Result){.type = OP_CODE, .val.code = code};
+    }
+    arg = arg->next;
+
+    char* val = arg->val;
+    arg = arg->next;
+    enum Ops op = arg->op;
+    arg = arg->next;
+    char* val2 = arg->val;
+    arg = arg->next;
+
+    bool result;
+    switch (op) {
+    case OP_EQ: {
+        result = atoi(val) == atoi(val2);
+        break;
+    }
+    default: {
+        result = false;
+        break;
+    }
+    }
+
+    if (!result)
+        return (Logic_Result){.type = OP_CODE, .val.code = NCSH_COMMAND_FAILED_CONTINUE};
+
+    assert(arg->op == OP_END_EXPRESSION);
+    arg = arg->next;
+    assert(arg->op == OP_THEN);
+    arg = arg->next;
+    assert(arg->op == OP_CONSTANT);
+
+    return (Logic_Result){.type = OP_ARG, .val.arg = arg};
+}*/
+
+int tokenizer_ops_process(Args* rst args, Tokens* rst tokens, Shell* rst shell, Arena* rst scratch_arena)
 {
     assert(args && args->head);
     assert(tokens);
@@ -457,11 +574,11 @@ int vm_tokenizer_ops_process(Args* rst args, Tokens* rst tokens, Shell* rst shel
             break;
         }
         case OP_HOME_EXPANSION: {
-            vm_tokenizer_home_expansion_process(arg, shell->config.home_location, scratch_arena);
+            tokenizer_home_expansion_process(arg, shell->config.home_location, scratch_arena);
             break;
         }
         case OP_GLOB_EXPANSION: {
-            vm_tokenizer_glob_process(arg, &args->count, scratch_arena);
+            tokenizer_glob_process(arg, &args->count, scratch_arena);
             break;
         }
         case OP_ASSIGNMENT: {
@@ -472,7 +589,7 @@ int vm_tokenizer_ops_process(Args* rst args, Tokens* rst tokens, Shell* rst shel
                 break;
             }
 
-            vm_tokenizer_assignment_process(arg, &shell->vars, &shell->arena);
+            tokenizer_assignment_process(arg, &shell->vars, &shell->arena);
             if (prev && arg && arg->next) {
                 arg_set_after(arg->next, prev);
                 prev = arg->next;
@@ -484,11 +601,24 @@ int vm_tokenizer_ops_process(Args* rst args, Tokens* rst tokens, Shell* rst shel
             break;
         }
         case OP_VARIABLE: {
-            vm_tokenizer_variable_process(arg, &shell->vars, scratch_arena);
+            tokenizer_variable_process(arg, &shell->vars, scratch_arena);
             break;
         }
+        /*case OP_IF: {
+            Logic_Result result = tokenizer_logic_process(arg, scratch_arena);
+            if (result.type == OP_CODE)
+                return result.val.code;
+
+            arg = result.val.arg;
+            debugf("setting arg to head %s\n", arg->val);
+            arg_set_after(!prev ? args->head : prev, arg);
+            break;
+        }
+        case OP_FI: {
+            break; // just skip unless OP_IF never found
+        }*/
         default: {
-            vm_tokenizer_alias_replace(arg, scratch_arena);
+            tokenizer_alias_replace(arg, scratch_arena);
             break;
         }
         }
@@ -501,7 +631,7 @@ int vm_tokenizer_ops_process(Args* rst args, Tokens* rst tokens, Shell* rst shel
 }
 
 [[nodiscard]]
-int vm_tokenizer_tokenize(Args* rst args, Tokens* rst tokens, Shell* rst shell, Arena* rst scratch_arena)
+int tokenizer_tokenize(Args* rst args, Tokens* rst tokens, Shell* rst shell, Arena* rst scratch_arena)
 {
     assert(args);
     assert(tokens);
@@ -510,10 +640,10 @@ int vm_tokenizer_tokenize(Args* rst args, Tokens* rst tokens, Shell* rst shell, 
         return NCSH_COMMAND_FAILED_CONTINUE;
 
     int result;
-    if ((result = vm_tokenizer_syntax_check(args)) != NCSH_COMMAND_SUCCESS_CONTINUE)
+    if ((result = tokenizer_syntax_check(args)) != NCSH_COMMAND_SUCCESS_CONTINUE)
         return result;
 
-    if ((result = vm_tokenizer_ops_process(args, tokens, shell, scratch_arena)) != NCSH_COMMAND_SUCCESS_CONTINUE)
+    if ((result = tokenizer_ops_process(args, tokens, shell, scratch_arena)) != NCSH_COMMAND_SUCCESS_CONTINUE)
         return result;
 
     return NCSH_COMMAND_SUCCESS_CONTINUE;
