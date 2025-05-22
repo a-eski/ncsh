@@ -14,7 +14,7 @@
 #include "eskilib/eresult.h"
 #include "noninteractive.h"
 #include "parser.h"
-#include "vars.h"
+#include "vm/vars.h"
 #include "vm/vm.h"
 
 /* noninteractive_run

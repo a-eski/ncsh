@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "arena.h"
+#include "../arena.h"
 #include "vars.h"
 
 void vars_malloc(Arena* rst arena, Vars* rst vars)

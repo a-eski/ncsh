@@ -1,4 +1,5 @@
 /* Copyright ncsh (C) by Alex Eski 2025 */
+/* tokenizer.h: Preprocessing of parser output to ensure ready for VM to process. */
 
 #pragma once
 
@@ -27,4 +28,4 @@ typedef struct {
     uint8_t number_of_pipe_commands;
 } Tokens;
 
-int vm_tokenizer_tokenize(Args* rst args, Tokens* rst tokens, Shell* rst shell, Arena* rst scratch_arena);
+int tokenizer_tokenize(Args* rst args, Tokens* rst tokens, Shell* rst shell, Arena* rst scratch_arena);

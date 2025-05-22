@@ -30,5 +30,5 @@
 #include "readline/terminal.c"
 #include "vars.c"
 #include "vm/builtins.c"
+#include "vm/tokenizer.c"
 #include "vm/vm.c"
-#include "vm/vm_tokenizer.c"

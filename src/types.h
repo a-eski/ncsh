@@ -6,7 +6,7 @@
 #include "args.h"
 #include "config.h"
 #include "readline/ncreadline.h"
-#include "vars.h"
+#include "vm/vars.h"
 #include "z/z.h"
 
 #define NCSH_MAX_PROCESSES 100

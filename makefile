@@ -9,7 +9,7 @@ debug_flags = -Wall -Wextra -Werror -Wpedantic -pedantic-errors -Wsign-conversio
 release_flags = -Wall -Wextra -Werror -pedantic-errors -Wsign-conversion -Wformat=2 -Wshadow -Wvla -O3 -DNDEBUG
 # fuzz_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -Wwrite-strings -fsanitize=address,leak,fuzzer -DNDEBUG -g
 fuzz_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,leak,fuzzer -DNDEBUG -g
-objects = obj/main.o obj/arena.o obj/noninteractive.o obj/ncreadline.o obj/vm.o obj/vm_tokenizer.o obj/terminal.o obj/efile.o obj/hashset.o obj/vars.o obj/args.o obj/parser.o obj/builtins.o obj/history.o obj/ac.o obj/env.o obj/config.o obj/fzf.o obj/z.o
+objects = obj/main.o obj/arena.o obj/noninteractive.o obj/ncreadline.o obj/vm.o obj/tokenizer.o obj/terminal.o obj/efile.o obj/hashset.o obj/vars.o obj/args.o obj/parser.o obj/builtins.o obj/history.o obj/ac.o obj/env.o obj/config.o obj/fzf.o obj/z.o
 target = ./bin/ncsh
 
 ifeq ($(CC), gcc)
@@ -187,7 +187,7 @@ fp :
 
 .PHONY: bench_parser
 bench_parser :
-	$(CC) $(STD) $(debug_flags) -DNDEBUG ./src/arena.c ./src/vars.c ./src/args.c ./src/parser.c ./tests/parser_bench.c -o ./bin/parser_bench
+	$(CC) $(STD) $(debug_flags) -DNDEBUG ./src/arena.c ./src/vm/vars.c ./src/args.c ./src/parser.c ./tests/parser_bench.c -o ./bin/parser_bench
 	hyperfine --warmup 1000 --shell=none './bin/parser_bench'
 .PHONY: bp
 bp :
@@ -195,7 +195,7 @@ bp :
 
 .PHONY: bench_parser_tests
 bench_parser_tests :
-	$(CC) $(STD) $(debug_flags) -DNDEBUG ./src/arena.c ./src/vars.c ./src/args.c ./src/parser.c ./tests/parser_tests.c -o ./bin/parser_tests
+	$(CC) $(STD) $(debug_flags) -DNDEBUG ./src/arena.c ./src/vm/vars.c ./src/args.c ./src/parser.c ./tests/parser_tests.c -o ./bin/parser_tests
 	hyperfine --warmup 1000 --shell=none './bin/parser_tests'
 .PHONY: bpt
 bpt :
@@ -287,7 +287,7 @@ ts :
 
 .PHONY: test_vars
 test_vars :
-	$(CC) $(STD) $(debug_flags) ./src/arena.c ./src/vars.c ./tests/vars_tests.c -o ./bin/vars_tests
+	$(CC) $(STD) $(debug_flags) ./src/arena.c ./src/vm/vars.c ./tests/vars_tests.c -o ./bin/vars_tests
 	./bin/vars_tests
 .PHONY: tv
 tv :
@@ -295,7 +295,7 @@ tv :
 
 .PHONY: test_vm
 test_vm :
-	$(CC) $(STD) $(debug_flags) -DNCSH_VM_TEST ./src/arena.c ./src/args.c ./src/parser.c ./src/eskilib/efile.c ./src/readline/hashset.c ./src/vars.c ./src/readline/history.c ./src/z/fzf.c ./src/z/z.c ./src/env.c ./src/config.c ./src/vm/vm.c ./src/vm/vm_tokenizer.c ./src/vm/builtins.c ./tests/vm_tests.c -o ./bin/vm_tests
+	$(CC) $(STD) $(debug_flags) -DNCSH_VM_TEST ./src/arena.c ./src/args.c ./src/parser.c ./src/eskilib/efile.c ./src/readline/hashset.c ./src/vm/vars.c ./src/readline/history.c ./src/z/fzf.c ./src/z/z.c ./src/env.c ./src/config.c ./src/vm/vm.c ./src/vm/tokenizer.c ./src/vm/builtins.c ./tests/vm_tests.c -o ./bin/vm_tests
 	./bin/vm_tests
 .PHONY: tvm
 tvm :

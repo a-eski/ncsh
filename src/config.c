@@ -3,6 +3,7 @@
 
 #ifndef _DEFAULT_SOURCE
 #define _DEFAULT_SOURCE
+#include "eskilib/str.h"
 #include <stdio.h>
 #endif /* ifndef _DEFAULT_SOURCE */
 #ifndef _POXIC_C_SOURCE
@@ -115,28 +116,24 @@ enum eresult config_file_set(Config* rst config, Arena* rst arena)
  */
 #define PATH "PATH"
 #define PATH_ADD "PATH+="
-void config_path_add(char* rst val, int len, Arena* rst scratch_arena)
+Str config_path_add(Str path, char* rst val, int len, Arena* rst scratch_arena)
 {
     assert(val);
     assert(len > 0);
-    if (len <= 0) {
-        return;
+    if (len <= 0 || !path.length) {
+        return path;
     }
 
     assert(!val[len - 1]);
     debugf("trying to add %s to path\n", val);
 
-    char* path = getenv("PATH");
-    if (!path || !*path) {
-        return;
-    }
-    size_t path_len = strlen(path) + 1; // null terminator here becomes : in length calc below
-    char* new_path = arena_malloc(scratch_arena, path_len + (size_t)len, char);
-    memcpy(new_path, path, path_len - 1);
-    new_path[path_len - 1] = ':';
-    memcpy(new_path + path_len, val, (size_t)len);
-    debugf("Got new path to set %s\n", new_path);
-    setenv(PATH, new_path, true);
+    Str new_path = {.length = path.length + (size_t)len};
+    new_path.value = arena_malloc(scratch_arena, new_path.length, char);
+    memcpy(new_path.value, path.value, path.length - 1);
+    new_path.value[path.length - 1] = ':';
+    memcpy(new_path.value + path.length, val, (size_t)len);
+    debugf("Got new path to set %s\n", new_path.value);
+    return new_path;
 }
 
 typedef struct {
@@ -207,12 +204,16 @@ void config_process(FILE* rst file, Arena* rst arena, Arena* rst scratch_arena)
 
     int buffer_length;
     char buffer[NCSH_MAX_INPUT] = {0};
+    bool update_path = false;
+    Str path = env_path_get();
+
     while ((buffer_length = efgets(buffer, sizeof(buffer), file)) != EOF) {
         // Add to path (6 because PATH+=)
         if (buffer_length > 6 && !memcmp(buffer, PATH_ADD, sizeof(PATH_ADD) - 1)) {
             assert(buffer + 6 && *(buffer + 6));
             debugf("adding to PATH: %s\n", buffer + 6);
-            config_path_add(buffer + 6, buffer_length - 6, scratch_arena);
+            path = config_path_add(path, buffer + 6, buffer_length - 6, scratch_arena);
+            update_path = true;
         }
         // Aliasing
         else if (buffer_length > 6 && !memcmp(buffer, ALIAS_ADD, sizeof(ALIAS_ADD) - 1)) {
@@ -222,6 +223,9 @@ void config_process(FILE* rst file, Arena* rst arena, Arena* rst scratch_arena)
 
         memset(buffer, '\0', (size_t)buffer_length);
     }
+
+    if (path.length && update_path)
+        setenv(PATH, path.value, true);
 
     debugf("user aliases count: %zu\n", user_aliases_count);
 }
