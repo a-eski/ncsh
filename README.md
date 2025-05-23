@@ -15,7 +15,7 @@ The goal is to build a shell with modern features and experience and as close to
 
 ### Controls
 
-A lot of controls will feel familar to GNU readline.
+A lot of controls will feel familar to GNU readline applications like Bash.
 
 * Right/left arrow keys move the cursor
 * Up/down arrow keys move through your history
@@ -198,4 +198,3 @@ Please see COMPILE.md.
 * Math/Arithmetic implementation
 * Better POSIX compliance
 * Usable with GDB (currently doesn't work)
-* Make aliases able to be expandable into multiple commands (works with "g" as "git", but doesn't work with "gpom" as "git pull origin main", for example)

@@ -3,8 +3,6 @@
 
 #ifndef _DEFAULT_SOURCE
 #define _DEFAULT_SOURCE
-#include "eskilib/str.h"
-#include <stdio.h>
 #endif /* ifndef _DEFAULT_SOURCE */
 #ifndef _POXIC_C_SOURCE
 #define _POSIX_C_SOURCE 200809L
@@ -12,11 +10,13 @@
 
 #include <assert.h>
 #include <linux/limits.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include "alias.h"
 #include "arena.h"
 #include "config.h"
 #include "debug.h"
@@ -25,6 +25,7 @@
 #include "eskilib/ecolors.h"
 #include "eskilib/efile.h"
 #include "eskilib/eresult.h"
+#include "eskilib/str.h"
 
 [[nodiscard]]
 enum eresult config_home_init(Config* rst config, Arena* rst arena)
@@ -136,63 +137,6 @@ Str config_path_add(Str path, char* rst val, int len, Arena* rst scratch_arena)
     return new_path;
 }
 
-typedef struct {
-    Str* alias;
-    Str* actual_command;
-} User_Alias;
-
-#define NCSH_MAX_ALIASES 100
-size_t user_aliases_count;
-size_t user_aliases_cap;
-User_Alias* user_aliases;
-
-void config_alias_add(char* rst val, size_t len, Arena* rst arena)
-{
-    assert(val);
-    assert(len > 0);
-    if (!len) {
-        return;
-    }
-
-    debugf("trying to add alias: %s\n", val);
-
-    size_t i;
-    for (i = 0; i < len; ++i) {
-        if (val[i] == '=')
-            break;
-    }
-
-    if (!i || i == len - 1) {
-        fprintf(stderr, "ncsh: Could not process alias while reading rc file: %s\n", val);
-        return;
-    }
-
-    if (!user_aliases) {
-        user_aliases = arena_malloc(arena, 10, User_Alias);
-    }
-
-    user_aliases[user_aliases_count].alias = arena_malloc(arena, 1, Str);
-    user_aliases[user_aliases_count].alias->length = i + 1;
-    user_aliases[user_aliases_count].alias->value = arena_malloc(arena, i + 1, char);
-    memcpy(user_aliases[user_aliases_count].alias->value, val, i);
-    user_aliases[user_aliases_count].alias->value[i] = '\0';
-
-    size_t ac_len = len - i;
-    if (ac_len == 0) {
-        return;
-    }
-
-    user_aliases[user_aliases_count].actual_command = arena_malloc(arena, 1, Str);
-    user_aliases[user_aliases_count].actual_command->length = ac_len;
-    user_aliases[user_aliases_count].actual_command->value = arena_malloc(arena, ac_len, char);
-    memcpy(user_aliases[user_aliases_count].actual_command->value, val + i + 1, ac_len - 1);
-    user_aliases[user_aliases_count].actual_command->value[ac_len] = '\0';
-
-    debugf("added alias %s with actual command %s\n", user_aliases[user_aliases_count].alias->value,
-           user_aliases[user_aliases_count].actual_command->value);
-    ++user_aliases_count;
-}
-
 /* config_process
  * Iterate through the .ncshrc config file and perform any actions needed.
  */
@@ -200,8 +144,6 @@ void config_alias_add(char* rst val, size_t len, Arena* rst arena)
 #define ALIAS_ADD "ALIAS "
 void config_process(FILE* rst file, Arena* rst arena, Arena* rst scratch_arena)
 {
-    user_aliases_count = 0;
-
     int buffer_length;
     char buffer[NCSH_MAX_INPUT] = {0};
     bool update_path = false;
@@ -218,7 +160,7 @@ void config_process(FILE* rst file, Arena* rst arena, Arena* rst scratch_arena)
         // Aliasing
         else if (buffer_length > 6 && !memcmp(buffer, ALIAS_ADD, sizeof(ALIAS_ADD) - 1)) {
             assert(buffer + 6 && *(buffer + 6));
-            config_alias_add(buffer + 6, (size_t)(buffer_length - 6), arena);
+            alias_add(buffer + 6, (size_t)(buffer_length - 6), arena);
         }
 
         memset(buffer, '\0', (size_t)buffer_length);
@@ -300,68 +242,4 @@ enum eresult config_init(Config* rst config, Arena* rst arena, Arena scratch_are
     }
 
     return E_SUCCESS;
-}
-
-#define GIT "git"
-#define GIT_ALIAS "g"
-
-#define NEOVIM "nvim"
-#define NEOVIM_ALIAS "n"
-// #define NEOVIM "/home/alex-e/nvim-linux-x86_64.appimage"
-// #define NEOVIM_ALIAS "nvim"
-
-#define MAKE "make"
-#define MAKE_ALIAS "m"
-
-#define FD "fdfind"
-#define FD_ALIAS "fd"
-
-#define CARGO "cargo"
-#define CARGO_ALIAS "c"
-
-/* Compile-time aliases
- */
-typedef struct {
-    Str alias;
-    Str actual_command;
-} Alias;
-
-const Alias aliases[] = {
-    {.alias = {.length = sizeof(GIT_ALIAS), .value = GIT_ALIAS},
-     .actual_command = {.length = sizeof(GIT), .value = GIT}},
-    {.alias = {.length = sizeof(NEOVIM_ALIAS), .value = NEOVIM_ALIAS},
-     .actual_command = {.length = sizeof(NEOVIM), .value = NEOVIM}},
-    {.alias = {.length = sizeof(MAKE_ALIAS), .value = MAKE_ALIAS},
-     .actual_command = {.length = sizeof(MAKE), .value = MAKE}},
-    {.alias = {.length = sizeof(FD_ALIAS), .value = FD_ALIAS}, .actual_command = {.length = sizeof(FD), .value = FD}},
-    {.alias = {.length = sizeof(CARGO_ALIAS), .value = CARGO_ALIAS},
-     .actual_command = {.length = sizeof(CARGO), .value = CARGO}},
-};
-constexpr size_t aliases_count = sizeof(aliases) / sizeof(Alias);
-
-/* config_alias_check
- * Checks if the input matches to any of the compile-time defined aliased commands.
- * Returns: the actual command as a Str, a char* value and a size_t length.
- */
-Str config_alias_check(char* rst buffer, size_t buf_len)
-{
-    if (!buffer || buf_len < 2) {
-        return Str_Empty;
-    }
-
-    if (user_aliases_count) {
-        for (size_t i = 0; i < user_aliases_count; ++i) {
-            if (estrcmp(buffer, buf_len, user_aliases[i].alias->value, user_aliases[i].alias->length)) {
-                return *user_aliases[i].actual_command;
-            }
-        }
-    }
-
-    for (size_t i = 0; i < aliases_count; ++i) {
-        if (estrcmp(buffer, buf_len, aliases[i].alias.value, aliases[i].alias.length)) {
-            return aliases[i].actual_command;
-        }
-    }
-
-    return Str_Empty;
 }
