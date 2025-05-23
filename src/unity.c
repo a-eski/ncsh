@@ -16,6 +16,7 @@
 #include "z/fzf.c"
 #include "z/z.c"
 
+#include "alias.c"
 #include "arena.c"
 #include "args.c"
 #include "config.c"
@@ -28,7 +29,8 @@
 #include "readline/history.c"
 #include "readline/ncreadline.c"
 #include "readline/terminal.c"
-#include "vars.c"
 #include "vm/builtins.c"
 #include "vm/tokenizer.c"
+#include "vm/tokenizer_syntax.c"
+#include "vm/vars.c"
 #include "vm/vm.c"
