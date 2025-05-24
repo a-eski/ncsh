@@ -3,11 +3,11 @@
 #define _POSIX_C_SOURCE 200809L
 
 #include <errno.h>
-#include <unistd.h>
 #include <setjmp.h>
 #include <signal.h>
 #include <stdio.h>
 #include <sys/types.h>
+#include <unistd.h>
 
 #include "eskilib/ecolors.h"
 
@@ -55,7 +55,8 @@ static int signal_forward(int signum)
     return 0;
 }
 
-static void signal_init() {
+static void signal_init()
+{
     signal(SIGPIPE, SIG_IGN); // Ignore sigpipe so it can be handled in code
     signal(SIGHUP, SIG_DFL);  // Stops the process if the terminal is closed
 }

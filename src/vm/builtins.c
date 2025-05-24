@@ -21,6 +21,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include "../alias.h"
 #include "../args.h"
 #include "../defines.h"
 #include "../env.h"
@@ -46,9 +47,9 @@ ssize_t builtins_write(int fd, char* buf, size_t len)
 
 #define Z_COMMAND_NOT_FOUND_MESSAGE "ncsh z: command not found, options not supported.\n"
 [[nodiscard]]
-int builtins_z(z_Database* rst z_db, char** rst buffer, size_t* rst buffer_lens, Arena* arena, Arena* rst scratch_arena)
+int builtins_z(z_Database* rst z_db, char** rst buffer, size_t* rst buffer_lens, Arena* rst arena,
+               Arena* rst scratch_arena)
 {
-    assert(buffer);
     assert(z_db);
     assert(buffer && *buffer);
 
@@ -121,12 +122,11 @@ int builtins_z(z_Database* rst z_db, char** rst buffer, size_t* rst buffer_lens,
 int builtins_history(History* rst history, char** rst buffer, size_t* rst buffer_lens, Arena* rst arena,
                      Arena* rst scratch_arena)
 {
-    assert(buffer && *buffer);
     if (!buffer || !buffer[1]) {
         return history_command_display(history);
     }
 
-    assert(buffer && buffer + 1);
+    assert(buffer && *buffer && buffer + 1);
 
     // skip first position since we know it is 'history'
     char** arg = buffer + 1;
@@ -174,11 +174,75 @@ int builtins_history(History* rst history, char** rst buffer, size_t* rst buffer
         }
     }
 
-    if (builtins_write(vm_output_fd, HISTORY_COMMAND_NOT_FOUND_MESSAGE, sizeof(HISTORY_COMMAND_NOT_FOUND_MESSAGE) - 1) ==
-        -1) {
+    if (builtins_write(vm_output_fd, HISTORY_COMMAND_NOT_FOUND_MESSAGE,
+                       sizeof(HISTORY_COMMAND_NOT_FOUND_MESSAGE) - 1) == -1) {
         return NCSH_COMMAND_EXIT_FAILURE;
     }
     return NCSH_COMMAND_FAILED_CONTINUE;
+}
+
+#define ALIASES_ADD_USAGE "ncsh aliases: add usage: aliases add {alias} {command}.\n"
+#define ALIASES_REMOVE_USAGE "ncsh aliases: remove/rm usage: aliases {remove/rm} {alias} {command}.\n"
+#define ALIASES_USAGE "ncsh aliases: option not found. Options are aliases add, remove/rm, and delete.\n"
+int builtins_aliases(char** rst buffer, size_t* rst buf_lens, Arena* rst arena)
+{
+    (void)buf_lens;
+    assert(buffer && *buffer);
+
+    if (!buffer || !buffer[1]) {
+        alias_print(vm_output_fd);
+        return NCSH_COMMAND_SUCCESS_CONTINUE;
+    }
+
+    // skip first position since we know it is 'aliases'
+    char** arg = buffer + 1;
+    size_t* arg_len = buf_lens + 1;
+    if (estrcmp(*arg, *arg_len, NCSH_ALIASES_ADD, sizeof(NCSH_ALIASES_ADD))) {
+        ++arg;
+        ++arg_len;
+        if (!arg || !*arg) {
+            if (builtins_write(vm_output_fd, ALIASES_ADD_USAGE, sizeof(ALIASES_ADD_USAGE) - 1) == -1) {
+                return NCSH_COMMAND_EXIT_FAILURE;
+            }
+            return NCSH_COMMAND_FAILED_CONTINUE;
+        }
+        char* alias = *arg;
+        size_t a_len = *arg_len;
+        ++arg;
+        ++arg_len;
+        if (!arg || !*arg) {
+            if (builtins_write(vm_output_fd, ALIASES_ADD_USAGE, sizeof(ALIASES_ADD_USAGE) - 1) == -1) {
+                return NCSH_COMMAND_EXIT_FAILURE;
+            }
+            return NCSH_COMMAND_FAILED_CONTINUE;
+        }
+        char* command = *arg;
+        size_t c_len = *arg_len;
+        alias_add_new(alias, a_len, command, c_len, arena);
+    }
+    else if (estrcmp(*arg, *arg_len, NCSH_ALIASES_RM, sizeof(NCSH_ALIASES_RM)) ||
+             estrcmp(*arg, *arg_len, NCSH_ALIASES_REMOVE, sizeof(NCSH_ALIASES_REMOVE))) {
+        ++arg;
+        ++arg_len;
+        if (!arg || !*arg) {
+            if (builtins_write(vm_output_fd, ALIASES_REMOVE_USAGE, sizeof(ALIASES_REMOVE_USAGE) - 1) == -1) {
+                return NCSH_COMMAND_EXIT_FAILURE;
+            }
+            return NCSH_COMMAND_FAILED_CONTINUE;
+        }
+        alias_remove(*arg, *arg_len);
+    }
+    else if (estrcmp(*arg, *arg_len, NCSH_ALIASES_DELETE, sizeof(NCSH_ALIASES_DELETE))) {
+        alias_delete();
+    }
+    else {
+        if (builtins_write(vm_output_fd, ALIASES_USAGE, sizeof(ALIASES_USAGE) - 1) == -1) {
+            return NCSH_COMMAND_EXIT_FAILURE;
+        }
+        return NCSH_COMMAND_FAILED_CONTINUE;
+    }
+
+    return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
 [[nodiscard]]
@@ -261,7 +325,7 @@ int builtins_echo(char** rst buffer)
 
 #define HELP_WRITE(str)                                                                                                \
     constexpr size_t str##_len = sizeof(str) - 1;                                                                      \
-    if (builtins_write(vm_output_fd, str, str##_len) == -1) {                                                         \
+    if (builtins_write(vm_output_fd, str, str##_len) == -1) {                                                          \
         perror(RED NCSH_ERROR_STDOUT RESET);                                                                           \
         return NCSH_COMMAND_EXIT_FAILURE;                                                                              \
     }
@@ -423,12 +487,13 @@ void builtins_print_enabled()
             if ((builtins_disabled_state & builtins[i].flag))
                 printf("%s: disabled\n", builtins[i].value);
             else
+
                 printf("%s: enabled\n", builtins[i].value);
         }
     }
 }
 
-// TODO: finish disable implementation
+// TODO: finish enable & disable implementation
 int builtins_disable(char** rst buffer)
 {
     assert(buffer && *buffer);

@@ -524,6 +524,11 @@ bool vm_builtins_check_and_run(Vm_Data* rst vm, Shell* rst shell, Arena* rst scr
                 builtins_history(&shell->input.history, vm->buffer, vm->buffer_lens, &shell->arena, scratch_arena);
             return true;
         }
+
+        if (estrcmp(vm->buffer[0], vm->buffer_lens[0], NCSH_ALIASES, sizeof(NCSH_ALIASES))) {
+            vm_command_result = builtins_aliases(vm->buffer, vm->buffer_lens, &shell->arena);
+            return true;
+        }
     }
 
     for (size_t i = 0; i < builtins_count; ++i) {
