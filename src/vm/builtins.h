@@ -24,7 +24,8 @@ struct Builtin_Args {
 #define Z_REMOVE "remove" // alias for rm
 #define Z_PRINT "print"
 #define Z_COUNT "count"
-int builtins_z(z_Database* rst z_db, char** rst buffer, size_t* rst buffer_lens, Arena* arena, Arena* rst scratch_arena);
+int builtins_z(z_Database* rst z_db, char** rst buffer, size_t* rst buffer_lens, Arena* arena,
+               Arena* rst scratch_arena);
 
 #define NCSH_HISTORY "history" // the base command, displays history
 #define NCSH_HISTORY_COUNT "count"

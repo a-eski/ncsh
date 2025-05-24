@@ -700,14 +700,14 @@ char ncrl_read()
 [[nodiscard]]
 int ncrl_tab_autocomplete(Input* rst input, Arena* rst scratch_arena)
 {
-/*#if NCSH_AUTOCOMPLETION_KEY == NCSH_AUTOCOMPLETION_KEY_TAB
-    if (input->pos == input->max_pos && input->buffer[0]) {
-        if (ncrl_autocomplete_select(input) != EXIT_SUCCESS) {
-            return EXIT_FAILURE;
+    /*#if NCSH_AUTOCOMPLETION_KEY == NCSH_AUTOCOMPLETION_KEY_TAB
+        if (input->pos == input->max_pos && input->buffer[0]) {
+            if (ncrl_autocomplete_select(input) != EXIT_SUCCESS) {
+                return EXIT_FAILURE;
+            }
+            return EXIT_SUCCESS;
         }
-        return EXIT_SUCCESS;
-    }
-#endif // NCSH_AUTOCOMPLETION_KEY == NCSH_AUTOCOMPLETION_KEY_TAB*/
+    #endif // NCSH_AUTOCOMPLETION_KEY == NCSH_AUTOCOMPLETION_KEY_TAB*/
     ncsh_write_literal(ERASE_CURRENT_LINE "\n");
 
     Autocompletion autocompletion_matches[NCSH_MAX_AUTOCOMPLETION_MATCHES] = {0};
