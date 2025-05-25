@@ -236,21 +236,21 @@ Logic_Result tokenizer_logic_process(Arg* rst arg, Arena* rst scratch_arena)
     assert(scratch_arena);
     (void)scratch_arena;
 
-    if (!arg->next) {
+    /*if (!arg->next) {
         int code = INVALID_SYNTAX("ncsh: Invalid Syntax: found 'if' at end of command.\n");
         return (Logic_Result){.type = OP_CODE, .val.code = code};
-    }
+    }*/
 
     arg = arg->next;
-    if (arg->op != OP_START_EXPRESSION) {
+    /*if (arg->op != OP_START_CONDITION) {
         int code = INVALID_SYNTAX("ncsh: Invalid Syntax: expecting expression start '[' after 'if'.\n");
         return (Logic_Result){.type = OP_CODE, .val.code = code};
-    }
+    }*/
 
-    if (!arg->next) {
+    /*if (!arg->next) {
         int code = INVALID_SYNTAX("ncsh: Invalid Syntax: expecting expression after 'if ['.\n");
         return (Logic_Result){.type = OP_CODE, .val.code = code};
-    }
+    }*/
     arg = arg->next;
 
     char* val = arg->val;
@@ -275,7 +275,7 @@ Logic_Result tokenizer_logic_process(Arg* rst arg, Arena* rst scratch_arena)
     if (!result)
         return (Logic_Result){.type = OP_CODE, .val.code = NCSH_COMMAND_FAILED_CONTINUE};
 
-    assert(arg->op == OP_END_EXPRESSION);
+    assert(arg->op == OP_END_CONDITION);
     arg = arg->next;
     assert(arg->op == OP_THEN);
     arg = arg->next;

@@ -215,14 +215,16 @@ void tokenizer_syntax_checks(Args* rst args)
         case OP_BACKGROUND_JOB: {
             if (arg->next) {
                 tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_BACKGROUND_JOB_NOT_LAST_ARG);
-                break;
+                return;
             }
+            break;
         }
         case OP_IF: {
             if (!arg->next) {
                 tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_IF_NO_NEXT_VAL);
-                break;
+                return;
             }
+            break;
         }
         }
     }
