@@ -92,6 +92,11 @@ int tokenizer_syntax_error(char* rst message, size_t message_length)
     "ncsh: Invalid syntax: found or operator ('||') as first argument. Correct usage of or operator is "               \
     "'false || true'\n"
 
+#define INVALID_SYNTAX_IF_NO_NEXT_VAL \
+    "ncsh: Invalid syntax: found 'if' with no value after. Correct usage of 'if' is 'if [(CONDITION)]; then [STATEMENT]; [else [STATEMENT];] fi"
+#define INVALID_SYNTAX_IF_NO_START_CONDITION \
+    "ncsh: Invalid syntax: found 'if' with condition after. Correct usage of 'if' is 'if [(CONDITION)]; then [STATEMENT]; [else [STATEMENT];] fi"
+
 #define INVALID_SYNTAX(message) tokenizer_syntax_error(message, sizeof(message) - 1)
 
 int tok_invalid_syntax_check_res;
@@ -205,10 +210,20 @@ void tokenizer_syntax_check_last_arg(Args* rst args)
 void tokenizer_syntax_checks(Args* rst args)
 {
     Arg* arg = args->head->next->next;
-    for (size_t i = 1; i < args->count; ++i) {
-        if (arg->op == OP_BACKGROUND_JOB && arg->next) {
-            tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_BACKGROUND_JOB_NOT_LAST_ARG);
-            break;
+    for (size_t i = 0; i < args->count; ++i) {
+        switch (arg->op) {
+        case OP_BACKGROUND_JOB: {
+            if (arg->next) {
+                tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_BACKGROUND_JOB_NOT_LAST_ARG);
+                break;
+            }
+        }
+        case OP_IF: {
+            if (!arg->next) {
+                tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_IF_NO_NEXT_VAL);
+                break;
+            }
+        }
         }
     }
 }

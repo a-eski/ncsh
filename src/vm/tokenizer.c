@@ -215,7 +215,7 @@ void tokenizer_alias_replace(Arg* rst arg, Arena* rst scratch_arena)
     }
 }
 
-/*enum Logic_Type {
+enum Logic_Type {
     OP_CODE,
     OP_ARG
 };
@@ -282,7 +282,7 @@ Logic_Result tokenizer_logic_process(Arg* rst arg, Arena* rst scratch_arena)
     assert(arg->op == OP_CONSTANT);
 
     return (Logic_Result){.type = OP_ARG, .val.arg = arg};
-}*/
+}
 
 int tokenizer_ops_process(Args* rst args, Tokens* rst tokens, Shell* rst shell, Arena* rst scratch_arena)
 {
