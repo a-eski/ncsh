@@ -275,7 +275,7 @@ Logic_Result tokenizer_logic_process(Arg* rst arg, Arena* rst scratch_arena)
     if (!result)
         return (Logic_Result){.type = OP_CODE, .val.code = NCSH_COMMAND_FAILED_CONTINUE};
 
-    assert(arg->op == OP_END_CONDITION);
+    assert(arg->op == OP_CONDITION_END);
     arg = arg->next;
     assert(arg->op == OP_THEN);
     arg = arg->next;

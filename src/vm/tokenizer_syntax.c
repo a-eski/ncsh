@@ -97,6 +97,9 @@ int tokenizer_syntax_error(char* rst message, size_t message_length)
 #define INVALID_SYNTAX_IF_NO_START_CONDITION \
     "ncsh: Invalid syntax: found 'if' with condition after. Correct usage of 'if' is 'if [(CONDITION)]; then [STATEMENT]; [else [STATEMENT];] fi"
 
+#define INVALID_SYNTAX_CONDITION_START_NO_NEXT_VAL \
+    "ncsh: Invalid Syntax: expecting expression after 'if ['.\n"
+
 #define INVALID_SYNTAX(message) tokenizer_syntax_error(message, sizeof(message) - 1)
 
 int tok_invalid_syntax_check_res;
@@ -222,6 +225,44 @@ void tokenizer_syntax_checks(Args* rst args)
         case OP_IF: {
             if (!arg->next) {
                 tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_IF_NO_NEXT_VAL);
+                return;
+            }
+            if (arg->next->op != OP_CONDITION_START) {
+                tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_IF_NO_START_CONDITION);
+            }
+            break;
+        }
+        case OP_CONDITION_START: {
+            if (!arg->next) {
+                tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_CONDITION_START_NO_NEXT_VAL);
+                return;
+            }
+            // OP_STATEMENT check
+            break;
+        }
+        case OP_CONDITION_END: {
+            if (!arg->next) {
+                return;
+            }
+            if (arg->next->op != OP_THEN) {
+                return;
+            }
+            break;
+        }
+        case OP_THEN: {
+            if (!arg->next) {
+                return;
+            }
+            if (arg->next->op != OP_CONSTANT) { // OP_STATEMENT for logic statements instead of using constant?
+                return;
+            }
+            break;
+        }
+        case OP_ELSE: {
+            if (!arg->next) {
+                return;
+            }
+            if (arg->next->op != OP_CONSTANT) { // OP_STATEMENT for logic statements instead of using constant?
                 return;
             }
             break;

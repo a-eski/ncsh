@@ -71,8 +71,8 @@
 // #define SEMICOLON ';'
 // #define OPENING_BRACKET '['
 // #define CLOSING_BRACKET ']'
-#define START_CONDITION '['
-#define END_CONDITION "];"
+#define CONDITION_START '['
+#define CONDITION_END "];"
 
 // ops: equality
 #define EQ "-eq"
@@ -127,7 +127,7 @@ const char* const rst ops_2char_str[] = {STDOUT_REDIRECTION_APPEND,
                                          MATH_EXPRESSION_START,
                                          IF,
                                          FI,
-                                         END_CONDITION};
+                                         CONDITION_END};
 
 constexpr size_t ops_2char_len = sizeof(ops_2char_str) / sizeof(char*);
 
@@ -140,7 +140,7 @@ const enum Ops ops_2char[] = {OP_STDOUT_REDIRECTION_APPEND,
                               OP_MATH_EXPRESSION_START,
                               OP_IF,
                               OP_FI,
-                              OP_END_CONDITION};
+                              OP_CONDITION_END};
 
 /* ops_3char_str
  * A constant array that contain all shell operations that are 3 characters long, like "&>>".
@@ -200,8 +200,8 @@ enum Ops parser_op_get(char* rst line, size_t length)
         case TILDE: {
             return OP_HOME_EXPANSION;
         }
-        case START_CONDITION: {
-            return OP_START_CONDITION;
+        case CONDITION_START: {
+            return OP_CONDITION_START;
         }
         default: {
             return OP_CONSTANT;
