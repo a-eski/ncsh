@@ -47,13 +47,13 @@ ssize_t builtins_write(int fd, char* buf, size_t len)
 
 #define Z_COMMAND_NOT_FOUND_MESSAGE "ncsh z: command not found, options not supported.\n"
 [[nodiscard]]
-int builtins_z(z_Database* rst z_db, char** rst buffer, size_t* rst buffer_lens, Arena* rst arena,
+int builtins_z(z_Database* rst z_db, char** rst buffer, size_t* rst buf_lens, Arena* rst arena,
                Arena* rst scratch_arena)
 {
     assert(z_db);
     assert(buffer && *buffer);
 
-    if (buffer_lens[0] == 0) {
+    if (buf_lens[0] == 0) {
         z(NULL, 0, NULL, z_db, arena, *scratch_arena);
         return NCSH_COMMAND_SUCCESS_CONTINUE;
     }
@@ -62,7 +62,7 @@ int builtins_z(z_Database* rst z_db, char** rst buffer, size_t* rst buffer_lens,
 
     // skip first position since we know it is 'z'
     char** arg = buffer + 1;
-    size_t* arg_lens = buffer_lens + 1;
+    size_t* arg_lens = buf_lens + 1;
     if (arg_lens[1] == 0) {
         assert(arg && *arg);
 
@@ -119,7 +119,7 @@ int builtins_z(z_Database* rst z_db, char** rst buffer, size_t* rst buffer_lens,
 
 #define HISTORY_COMMAND_NOT_FOUND_MESSAGE "ncsh history: command not found.\n"
 [[nodiscard]]
-int builtins_history(History* rst history, char** rst buffer, size_t* rst buffer_lens, Arena* rst arena,
+int builtins_history(History* rst history, char** rst buffer, size_t* rst buf_lens, Arena* rst arena,
                      Arena* rst scratch_arena)
 {
     if (!buffer || !buffer[1]) {
@@ -138,7 +138,7 @@ int builtins_history(History* rst history, char** rst buffer, size_t* rst buffer
         return NCSH_COMMAND_FAILED_CONTINUE;
     }
 
-    size_t* arg_lens = buffer_lens + 1;
+    size_t* arg_lens = buf_lens + 1;
     if (arg && arg_lens[1] == 0) {
         assert(arg && *arg);
 
@@ -181,10 +181,12 @@ int builtins_history(History* rst history, char** rst buffer, size_t* rst buffer
     return NCSH_COMMAND_FAILED_CONTINUE;
 }
 
-#define ALIASES_ADD_USAGE "ncsh aliases: add usage: aliases add {alias} {command}.\n"
-#define ALIASES_REMOVE_USAGE "ncsh aliases: remove/rm usage: aliases {remove/rm} {alias} {command}.\n"
-#define ALIASES_USAGE "ncsh aliases: option not found. Options are aliases add, remove/rm, and delete.\n"
-int builtins_aliases(char** rst buffer, size_t* rst buf_lens, Arena* rst arena)
+#define ALIAS_ADD_USAGE "ncsh: alias: add usage: alias add {alias} {command}.\n"
+#define ALIAS_REMOVE_USAGE "ncsh: alias: remove/rm usage: alias {remove/rm} {alias} {command}.\n"
+#define ALIAS_USAGE                                                                                                    \
+    "ncsh: alias: option not found. Options are alias or alias -p to print aliases, alias add, alias remove/rm, and "  \
+    "alias delete to delete all aliases.\n"
+int builtins_alias(char** rst buffer, size_t* rst buf_lens, Arena* rst arena)
 {
     (void)buf_lens;
     assert(buffer && *buffer);
@@ -194,14 +196,14 @@ int builtins_aliases(char** rst buffer, size_t* rst buf_lens, Arena* rst arena)
         return NCSH_COMMAND_SUCCESS_CONTINUE;
     }
 
-    // skip first position since we know it is 'aliases'
+    // skip first position since we know it is 'alias'
     char** arg = buffer + 1;
     size_t* arg_len = buf_lens + 1;
-    if (estrcmp(*arg, *arg_len, NCSH_ALIASES_ADD, sizeof(NCSH_ALIASES_ADD))) {
+    if (estrcmp(*arg, *arg_len, NCSH_ALIAS_ADD, sizeof(NCSH_ALIAS_ADD))) {
         ++arg;
         ++arg_len;
         if (!arg || !*arg) {
-            if (builtins_write(vm_output_fd, ALIASES_ADD_USAGE, sizeof(ALIASES_ADD_USAGE) - 1) == -1) {
+            if (builtins_write(vm_output_fd, ALIAS_ADD_USAGE, sizeof(ALIAS_ADD_USAGE) - 1) == -1) {
                 return NCSH_COMMAND_EXIT_FAILURE;
             }
             return NCSH_COMMAND_FAILED_CONTINUE;
@@ -211,7 +213,7 @@ int builtins_aliases(char** rst buffer, size_t* rst buf_lens, Arena* rst arena)
         ++arg;
         ++arg_len;
         if (!arg || !*arg) {
-            if (builtins_write(vm_output_fd, ALIASES_ADD_USAGE, sizeof(ALIASES_ADD_USAGE) - 1) == -1) {
+            if (builtins_write(vm_output_fd, ALIAS_ADD_USAGE, sizeof(ALIAS_ADD_USAGE) - 1) == -1) {
                 return NCSH_COMMAND_EXIT_FAILURE;
             }
             return NCSH_COMMAND_FAILED_CONTINUE;
@@ -220,23 +222,64 @@ int builtins_aliases(char** rst buffer, size_t* rst buf_lens, Arena* rst arena)
         size_t c_len = *arg_len;
         alias_add_new(alias, a_len, command, c_len, arena);
     }
-    else if (estrcmp(*arg, *arg_len, NCSH_ALIASES_RM, sizeof(NCSH_ALIASES_RM)) ||
-             estrcmp(*arg, *arg_len, NCSH_ALIASES_REMOVE, sizeof(NCSH_ALIASES_REMOVE))) {
+    else if (estrcmp(*arg, *arg_len, NCSH_ALIAS_RM, sizeof(NCSH_ALIAS_RM)) ||
+             estrcmp(*arg, *arg_len, NCSH_ALIAS_REMOVE, sizeof(NCSH_ALIAS_REMOVE))) {
         ++arg;
         ++arg_len;
         if (!arg || !*arg) {
-            if (builtins_write(vm_output_fd, ALIASES_REMOVE_USAGE, sizeof(ALIASES_REMOVE_USAGE) - 1) == -1) {
+            if (builtins_write(vm_output_fd, ALIAS_REMOVE_USAGE, sizeof(ALIAS_REMOVE_USAGE) - 1) == -1) {
                 return NCSH_COMMAND_EXIT_FAILURE;
             }
             return NCSH_COMMAND_FAILED_CONTINUE;
         }
         alias_remove(*arg, *arg_len);
     }
-    else if (estrcmp(*arg, *arg_len, NCSH_ALIASES_DELETE, sizeof(NCSH_ALIASES_DELETE))) {
+    else if (estrcmp(*arg, *arg_len, NCSH_ALIAS_DELETE, sizeof(NCSH_ALIAS_DELETE))) {
         alias_delete();
     }
+    else if (estrcmp(*arg, *arg_len, NCSH_ALIAS_PRINT, sizeof(NCSH_ALIAS_PRINT))) {
+        alias_print(vm_output_fd);
+    }
     else {
-        if (builtins_write(vm_output_fd, ALIASES_USAGE, sizeof(ALIASES_USAGE) - 1) == -1) {
+        if (builtins_write(vm_output_fd, ALIAS_USAGE, sizeof(ALIAS_USAGE) - 1) == -1) {
+            return NCSH_COMMAND_EXIT_FAILURE;
+        }
+        return NCSH_COMMAND_FAILED_CONTINUE;
+    }
+
+    return NCSH_COMMAND_SUCCESS_CONTINUE;
+}
+
+#define UNALIAS_USAGE                                                                                                  \
+    "ncsh: unalias: usage is unalias, unalias -a to delete all aliases, or unalias {aliases} to remove specific "      \
+    "alias(es).\n"
+int builtins_unalias(char** rst buffer, size_t* rst buf_lens)
+{
+    (void)buf_lens;
+    assert(buffer && *buffer);
+
+    if (!buffer || !buffer[1]) {
+        alias_print(vm_output_fd);
+        return NCSH_COMMAND_SUCCESS_CONTINUE;
+    }
+
+    // skip first position since we know it is 'unalias'
+    char** arg = buffer + 1;
+    size_t* arg_len = buf_lens + 1;
+    if (estrcmp(*arg, *arg_len, NCSH_UNALIAS_DELETE, sizeof(NCSH_UNALIAS_DELETE)) ||
+        estrcmp(*arg, *arg_len, NCSH_UNALIAS_DELETE_ALIAS, sizeof(NCSH_UNALIAS_DELETE_ALIAS))) {
+        alias_delete();
+        return NCSH_COMMAND_SUCCESS_CONTINUE;
+    }
+    else if (arg) {
+        while (arg) {
+            alias_remove(*arg, *arg_len);
+            ++arg;
+            ++arg_len;
+        }
+    }
+    else {
+        if (builtins_write(vm_output_fd, UNALIAS_USAGE, sizeof(UNALIAS_USAGE) - 1) == -1) {
             return NCSH_COMMAND_EXIT_FAILURE;
         }
         return NCSH_COMMAND_FAILED_CONTINUE;
@@ -246,40 +289,51 @@ int builtins_aliases(char** rst buffer, size_t* rst buf_lens, Arena* rst arena)
 }
 
 [[nodiscard]]
-int builtins_exit(char** rst buffer)
+int builtins_exit(char** rst buffer, size_t* rst buf_lens)
 {
     (void)buffer;
+    (void)buf_lens;
     return NCSH_COMMAND_EXIT;
 }
 
 [[nodiscard]]
-int builtins_echo(char** rst buffer)
+int builtins_echo(char** rst buffer, size_t* rst buf_lens)
 {
     assert(buffer && *buffer);
     char** arg = buffer + 1;
+    size_t* arg_lens = buf_lens + 1;
     if (!arg || !*arg) {
         putchar('\n');
         return NCSH_COMMAND_SUCCESS_CONTINUE;
     }
 
     bool echo_add_newline = true;
-    char** echo_arg = NULL;
     // process options for echo
-    size_t len = strlen(*arg) + 1;
     while (arg && *arg) {
-        if (estrcmp(*arg, len, "-n", 3)) {
+        if (estrcmp(*arg, *arg_lens, NCSH_ECHO_NO_NEWLINE, sizeof(NCSH_ECHO_NO_NEWLINE))) {
             echo_add_newline = false;
-            echo_arg = arg;
             break;
         }
         ++arg;
+        ++arg_lens;
     }
 
     // send output for echo
-    arg = echo_arg ? echo_arg + 1 : buffer + 1;
+    arg = !echo_add_newline ? arg + 1 : buffer + 1;
+    arg_lens = !echo_add_newline ? arg_lens + 1 : buf_lens + 1;
+    char* prev = NULL;
     while (arg && *arg) {
-        fprintf(stdout, "%s ", *arg++);
+        prev = *arg;
+        if (!prev)
+            break;
+        ++arg;
+        if (!arg || !*arg)
+            break;
+
+        dprintf(vm_output_fd, "%s ", prev);
     }
+    if (prev)
+        dprintf(vm_output_fd, "%s", prev);
 
     if (echo_add_newline) {
         putchar('\n');
@@ -331,9 +385,10 @@ int builtins_echo(char** rst buffer)
     }
 
 [[nodiscard]]
-int builtins_help(char** rst buffer)
+int builtins_help(char** rst buffer, size_t* rst buf_lens)
 {
     (void)buffer;
+    (void)buf_lens;
 
     constexpr size_t len = sizeof(NCSH_TITLE) - 1;
     if (builtins_write(vm_output_fd, NCSH_TITLE, len) == -1) {
@@ -375,8 +430,9 @@ int builtins_help(char** rst buffer)
 
 #define NCSH_COULD_NOT_CD_MESSAGE "ncsh cd: could not change directory.\n"
 [[nodiscard]]
-int builtins_cd(char** rst buffer)
+int builtins_cd(char** rst buffer, size_t* rst buf_lens)
 {
+    (void)buf_lens;
     assert(buffer && *buffer);
 
     // skip first position since we know it is 'cd'
@@ -403,9 +459,10 @@ int builtins_cd(char** rst buffer)
 }
 
 [[nodiscard]]
-int builtins_pwd(char** rst buffer)
+int builtins_pwd(char** rst buffer, size_t* rst buf_lens)
 {
     (void)buffer;
+    (void)buf_lens;
 
     char path[PATH_MAX];
     if (!getcwd(path, sizeof(path))) {
@@ -421,8 +478,9 @@ int builtins_pwd(char** rst buffer)
 #define KILL_NOTHING_TO_KILL_MESSAGE "ncsh kill: nothing to kill, please pass in a process ID (PID).\n"
 #define KILL_COULDNT_PARSE_PID_MESSAGE "ncsh kill: could not parse process ID (PID) from arguments.\n"
 [[nodiscard]]
-int builtins_kill(char** rst buffer)
+int builtins_kill(char** rst buffer, size_t* rst buf_lens)
 {
+    (void)buf_lens;
     assert(buffer && *buffer && buffer + 1);
     if (!buffer) {
         if (builtins_write(vm_output_fd, KILL_NOTHING_TO_KILL_MESSAGE, sizeof(KILL_NOTHING_TO_KILL_MESSAGE) - 1) ==
@@ -461,9 +519,10 @@ int builtins_kill(char** rst buffer)
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
-int builtins_version(char** rst buffer)
+int builtins_version(char** rst buffer, size_t* rst buf_lens)
 {
     (void)buffer;
+    (void)buf_lens;
     builtins_write(vm_output_fd, NCSH_TITLE, sizeof(NCSH_TITLE) - 1);
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
@@ -494,7 +553,7 @@ void builtins_print_enabled()
 }
 
 // TODO: finish enable & disable implementation
-int builtins_disable(char** rst buffer)
+int builtins_disable(char** rst buffer, size_t* rst buf_lens)
 {
     assert(buffer && *buffer);
 
@@ -503,22 +562,26 @@ int builtins_disable(char** rst buffer)
     if (!arg) {
         builtins_print();
     }
+    size_t* arg_lens = buf_lens + 1;
 
     // check if called by enabled or disabled
     // (enabled has extra option to specify disable, so start at 2 instead of 1 in that case,
     // because 'disable' is 1 arg, but 'enable -n' is 2)
-    if (**arg == 'e')
+    if (**arg == 'e') {
         ++arg;
+        ++arg_lens;
+    }
 
     while (arg && *arg) {
         for (size_t j = 0; j < builtins_count; ++j) {
-            if (estrcmp(*arg, strlen(*arg) + 1, builtins[j].value, builtins[j].length)) {
+            if (estrcmp(*arg, *arg_lens, builtins[j].value, builtins[j].length)) {
                 if (!(builtins_disabled_state & builtins[j].flag)) {
                     builtins_disabled_state |= builtins[j].flag;
                     printf("ncsh disable: disabled builtin %s.\n", builtins[j].value);
                 }
             }
             ++arg;
+            ++arg_lens;
         }
     }
 
@@ -526,7 +589,7 @@ int builtins_disable(char** rst buffer)
 }
 
 #define ENABLE_OPTION_NOT_SUPPORTED_MESSAGE "ncsh enable: command not found, options entered not supported.\n"
-int builtins_enable(char** rst buffer)
+int builtins_enable(char** rst buffer, size_t* rst buf_lens)
 {
     assert(buffer && *buffer);
 
@@ -536,15 +599,15 @@ int builtins_enable(char** rst buffer)
         builtins_print();
         return NCSH_COMMAND_SUCCESS_CONTINUE;
     }
+    size_t* arg_lens = buf_lens + 1;
 
-    size_t len = strlen(*arg);
-    if (len == 2) {
+    if (*arg_lens == 2) {
         if (CMP_2(*arg, "-a")) {
             builtins_print_enabled();
             return NCSH_COMMAND_SUCCESS_CONTINUE;
         }
         else if (CMP_2(*arg, "-n")) {
-            builtins_disable(buffer);
+            builtins_disable(buffer, buf_lens);
             return NCSH_COMMAND_SUCCESS_CONTINUE;
         }
     }
@@ -560,8 +623,9 @@ int builtins_enable(char** rst buffer)
 #define EXPORT_OPTION_NOT_SUPPORTED_MESSAGE "ncsh export: command not found, options entered not supported.\n"
 #define EXPORT_OPTIONS_MESSAGE                                                                                         \
     "ncsh export: please pass in at least once argument. export currently supports modifying $PATH and $HOME."
-int builtins_export(Args* rst args)
+int builtins_export(Args* rst args, size_t* rst buf_lens)
 {
+    (void)buf_lens;
     assert(args && args->head && args->head->next);
 
     // skip first position since we know it is 'export'
@@ -604,8 +668,9 @@ int builtins_set_e()
 #define SET_NOTHING_TO_SET_MESSAGE "ncsh set: nothing to set, please pass in a value to set (i.e. '-e', '-c')\n"
 #define SET_VALID_OPERATIONS_MESSAGE "ncsh set: valid set operations are in the form '-e', '-c', etc.\n"
 [[nodiscard]]
-int builtins_set(Args* rst args)
+int builtins_set(Args* rst args, size_t* rst buf_lens)
 {
+    (void)buf_lens;
     assert(args && args->head && args->head->next);
 
     // skip first position since we know it is 'set'
@@ -642,8 +707,9 @@ int builtins_set(Args* rst args)
 // not implemented
 #define UNSET_NOTHING_TO_UNSET_MESSAGE "ncsh unset: nothing to unset, please pass in a value to unset.\n"
 [[nodiscard]]
-int builtins_unset(Args* rst args)
+int builtins_unset(Args* rst args, size_t* rst buf_lens)
 {
+    (void)buf_lens;
     assert(args && args->head && args->head->next);
 
     // skip first position since we know it is 'unset'

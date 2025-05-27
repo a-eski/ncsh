@@ -182,6 +182,6 @@ void alias_delete()
 void alias_print(int fd)
 {
     for (size_t i = 0; i < aliases_count; ++i) {
-        dprintf(fd, "alias: %s, for: %s\n", aliases[i].alias->value, aliases[i].actual_command->value);
+        dprintf(fd, "alias %s=%s\n", aliases[i].alias->value, aliases[i].actual_command->value);
     }
 }
