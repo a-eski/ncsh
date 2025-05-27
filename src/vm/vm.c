@@ -525,15 +525,15 @@ bool vm_builtins_check_and_run(Vm_Data* rst vm, Shell* rst shell, Arena* rst scr
             return true;
         }
 
-        if (estrcmp(vm->buffer[0], vm->buffer_lens[0], NCSH_ALIASES, sizeof(NCSH_ALIASES))) {
-            vm_command_result = builtins_aliases(vm->buffer, vm->buffer_lens, &shell->arena);
+        if (estrcmp(vm->buffer[0], vm->buffer_lens[0], NCSH_ALIAS, sizeof(NCSH_ALIAS))) {
+            vm_command_result = builtins_alias(vm->buffer, vm->buffer_lens, &shell->arena);
             return true;
         }
     }
 
     for (size_t i = 0; i < builtins_count; ++i) {
         if (estrcmp(vm->buffer[0], vm->buffer_lens[0], builtins[i].value, builtins[i].length)) {
-            vm_command_result = (*builtins[i].func)(vm->buffer);
+            vm_command_result = (*builtins[i].func)(vm->buffer, vm->buffer_lens);
             return true;
         }
     }
