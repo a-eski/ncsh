@@ -236,28 +236,23 @@ Logic_Result tokenizer_logic_process(Arg* rst arg, Arena* rst scratch_arena)
     assert(scratch_arena);
     (void)scratch_arena;
 
-    /*if (!arg->next) {
-        int code = INVALID_SYNTAX("ncsh: Invalid Syntax: found 'if' at end of command.\n");
-        return (Logic_Result){.type = OP_CODE, .val.code = code};
-    }*/
-
+    if (!arg) {
+        puts("logic processing failed, NULL arg passed in.");
+        return (Logic_Result){.type = OP_CODE, .val.code = NCSH_COMMAND_FAILED_CONTINUE};
+    }
+    assert(arg->op == OP_IF);
     arg = arg->next;
-    /*if (arg->op != OP_START_CONDITION) {
-        int code = INVALID_SYNTAX("ncsh: Invalid Syntax: expecting expression start '[' after 'if'.\n");
-        return (Logic_Result){.type = OP_CODE, .val.code = code};
-    }*/
-
-    /*if (!arg->next) {
-        int code = INVALID_SYNTAX("ncsh: Invalid Syntax: expecting expression after 'if ['.\n");
-        return (Logic_Result){.type = OP_CODE, .val.code = code};
-    }*/
+    assert(arg->op == OP_CONDITION_START);
     arg = arg->next;
+    assert(arg->op == OP_CONSTANT);
 
     char* val = arg->val;
+    printf("val %s\n", arg->val);
     arg = arg->next;
     enum Ops op = arg->op;
     arg = arg->next;
     char* val2 = arg->val;
+    printf("val2 %s\n", arg->val);
     arg = arg->next;
 
     bool result;
@@ -280,7 +275,10 @@ Logic_Result tokenizer_logic_process(Arg* rst arg, Arena* rst scratch_arena)
     assert(arg->op == OP_THEN);
     arg = arg->next;
     assert(arg->op == OP_CONSTANT);
+    if (arg->op != OP_CONSTANT)
+        return (Logic_Result){.type = OP_CODE, .val.code = NCSH_COMMAND_FAILED_CONTINUE};
 
+    printf("return arg with val %s\n", arg->val);
     return (Logic_Result){.type = OP_ARG, .val.arg = arg};
 }
 
@@ -393,26 +391,35 @@ int tokenizer_ops_process(Args* rst args, Tokens* rst tokens, Shell* rst shell, 
             tokenizer_variable_process(arg, &shell->vars, scratch_arena);
             break;
         }
-        /*case OP_IF: {
+        case OP_IF: {
             Logic_Result result = tokenizer_logic_process(arg, scratch_arena);
             if (result.type == OP_CODE)
                 return result.val.code;
 
             arg = result.val.arg;
-            debugf("setting arg to head %s\n", arg->val);
-            arg_set_after(!prev ? args->head : prev, arg);
+            assert(arg);
+            if (!prev) {
+                printf("setting arg to after head %s\n", arg->val);
+                arg_set_after(args->head->next, arg);
+            }
+            else {
+                arg_set_after(prev, arg);
+            }
             break;
         }
         case OP_FI: {
+            if (!arg->next)
+                arg = NULL;
             break; // just skip unless OP_IF never found
-        }*/
+        }
         default: {
             tokenizer_alias_replace(arg, scratch_arena);
             break;
         }
         }
         prev = arg;
-        arg = arg->next;
+        if (arg)
+            arg = arg->next;
     }
     ++tokens->number_of_pipe_commands;
 

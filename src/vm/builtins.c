@@ -291,7 +291,7 @@ int builtins_echo(char** rst buffer)
 #define NCSH_TITLE "ncsh " NCSH_VERSION "\n"
 #define NCSH_COPYRIGHT                                                                                                 \
     "Copyright (C) 2025 Alex Eski\n"                                                                                   \
-    "License GPLv3+: GNU GPL version 3 or later <https://gnu.org/licenses/gpl.html>."                                  \
+    "License GPLv3+: GNU GPL version 3 or later <https://gnu.org/licenses/gpl.html>. "                                 \
     "This program comes with ABSOLUTELY NO WARRANTY.\n"                                                                \
     "This is free software, and you are welcome to redistribute it "                                                   \
     "under certain conditions.\n\n"
