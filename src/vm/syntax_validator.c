@@ -1,3 +1,5 @@
+/* Copyright ncsh (C) by Alex Eski 2025 */
+
 #include <assert.h>
 #include <stdint.h>
 #include <unistd.h>
@@ -8,7 +10,7 @@
 int tok_invalid_syntax_check_res;
 
 [[nodiscard]]
-int tokenizer_syntax_error(char* rst message, size_t message_length)
+int syntax_validator_error(char* rst message, size_t message_length)
 {
     if (write(STDIN_FILENO, message, message_length) == -1) {
         return NCSH_COMMAND_EXIT_FAILURE;
@@ -17,7 +19,7 @@ int tokenizer_syntax_error(char* rst message, size_t message_length)
     return NCSH_COMMAND_SYNTAX_ERROR;
 }
 
-#define INVALID_SYNTAX(message) tokenizer_syntax_error(message, sizeof(message) - 1)
+#define INVALID_SYNTAX(message) syntax_validator_error(message, sizeof(message) - 1)
 
 #define INVALID_SYNTAX_PIPE_FIRST_ARG                                                                                  \
     "ncsh: Invalid syntax: found pipe operator ('|') as first argument. Correct usage of pipe operator is 'program1 "  \
@@ -96,10 +98,10 @@ int tokenizer_syntax_error(char* rst message, size_t message_length)
     "ncsh: Invalid syntax: found or operator ('||') as first argument. Correct usage of or operator is "               \
     "'false || true'\n"
 
-/* tokenizer_syntax_check_first_arg
+/* syntax_validator_check_first_arg
  * Simple check to see if something is in first position that shouldn't be
  */
-void tokenizer_syntax_check_first_arg(uint8_t op)
+void syntax_validatator_first_arg_check(uint8_t op)
 {
     switch (op) {
     case OP_PIPE: {
@@ -149,10 +151,10 @@ void tokenizer_syntax_check_first_arg(uint8_t op)
     }
 }
 
-/* tokenizer_syntax_check_last_arg
+/* syntax_validator_check_last_arg
  * Simple check to see if something is in last position that shouldn't be
  */
-void tokenizer_syntax_check_last_arg(Args* rst args)
+void syntax_validator_last_arg_check(Args* rst args)
 {
     Arg* arg = args->head->next;
     while (arg->next)
@@ -236,13 +238,14 @@ void tokenizer_syntax_check_last_arg(Args* rst args)
     "ncsh: Invalid Syntax: expecting some statement after 'if [(CONDITION)]; then (STATEMENT); else'. "                \
     "Correct usage of 'if' is 'if [(CONDITION)]; then [STATEMENT]; [else [STATEMENT];] fi'.\n"
 
-void tokenizer_syntax_checks(Args* rst args)
+void syntax_validator_check(Args* rst args)
 {
     Arg* arg = args->head->next;
     if (!arg) {
         tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_NO_ARGS);
         return;
     }
+    Arg* prev = NULL;
 
     for (size_t i = 0; i < args->count; ++i) {
         switch (arg->op) {
@@ -267,6 +270,8 @@ void tokenizer_syntax_checks(Args* rst args)
         }
 
         case OP_CONDITION_START: {
+            if (!prev)
+                break;
             if (!arg->next) {
                 tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_CONDITION_START_NO_NEXT_ARG);
                 return;
@@ -276,6 +281,8 @@ void tokenizer_syntax_checks(Args* rst args)
         }
 
         case OP_CONDITION_END: {
+            if (!prev)
+                break;
             if (!arg->next) {
                 tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_CONDITION_END_NO_NEXT_ARG);
                 return;
@@ -288,6 +295,8 @@ void tokenizer_syntax_checks(Args* rst args)
         }
 
         case OP_THEN: {
+            if (!prev)
+                break;
             if (!arg->next) {
                 tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_THEN_NO_NEXT_ARG);
                 return;
@@ -300,6 +309,8 @@ void tokenizer_syntax_checks(Args* rst args)
         }
 
         case OP_ELSE: {
+            if (!prev)
+                break;
             if (!arg->next) {
                 tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_ELSE_NO_NEXT_ARG);
                 return;
@@ -311,6 +322,7 @@ void tokenizer_syntax_checks(Args* rst args)
             break;
         }
         }
+        prev = arg;
         arg = arg->next;
         if (!arg)
             break;
@@ -318,17 +330,17 @@ void tokenizer_syntax_checks(Args* rst args)
 }
 
 [[nodiscard]]
-int tokenizer_syntax_check(Args* rst args)
+int syntax_validator_validate(Args* rst args)
 {
     assert(args);
 
     tok_invalid_syntax_check_res = NCSH_COMMAND_SUCCESS_CONTINUE;
-    tokenizer_syntax_check_first_arg(args->head->next->op);
+    syntax_validatator_first_arg_check(args->head->next->op);
     if (tok_invalid_syntax_check_res != NCSH_COMMAND_SUCCESS_CONTINUE)
         return tok_invalid_syntax_check_res;
-    tokenizer_syntax_check_last_arg(args);
+    syntax_validator_last_arg_check(args);
     if (tok_invalid_syntax_check_res != NCSH_COMMAND_SUCCESS_CONTINUE)
         return tok_invalid_syntax_check_res;
-    tokenizer_syntax_checks(args);
+    syntax_validator_check(args);
     return tok_invalid_syntax_check_res;
 }

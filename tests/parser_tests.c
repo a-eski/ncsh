@@ -885,7 +885,7 @@ void parser_parse_if_test()
     eassert(arg);
     eassert(arg->op == OP_IF);
     arg = arg->next;
-    eassert(arg->op == OP_START_EXPRESSION);
+    eassert(arg->op == OP_CONDITION_START);
     arg = arg->next;
     eassert(arg->op == OP_CONSTANT);
     arg = arg->next;
@@ -893,7 +893,7 @@ void parser_parse_if_test()
     arg = arg->next;
     eassert(arg->op == OP_CONSTANT);
     arg = arg->next;
-    eassert(arg->op == OP_END_EXPRESSION);
+    eassert(arg->op == OP_CONDITION_END);
     arg = arg->next;
     eassert(arg->op == OP_THEN);
     arg = arg->next;
