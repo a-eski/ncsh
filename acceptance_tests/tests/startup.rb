@@ -3,6 +3,13 @@
 require './acceptance_tests/tests/common'
 
 # Tests
+def version_test(row)
+  @tty.assert_row_starts_with(row, 'ncsh version: ')
+  row += 1
+  test_passed('version test')
+  row
+end
+
 def z_database_new_test(row)
   @tty.assert_row(row, 'ncsh z: z database file could not be found or opened: No such file or directory')
   row += 1
@@ -15,7 +22,7 @@ def z_database_new_test(row)
 end
 
 def startup_test(row)
-  @tty.assert_row_starts_with(row, 'ncsh: startup time: ')
+  @tty.assert_row_starts_with(row, 'ncsh startup time: ')
   row += 1
   test_passed('Startup time test')
   row
@@ -53,6 +60,7 @@ end
 def startup_tests(row, run_z_database_new_tests)
   starting_tests('startup')
 
+  row = version_test(row)
   row = z_database_new_test(row) if run_z_database_new_tests
   row = startup_test(row)
   row = newline_sanity_test(row)

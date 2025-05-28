@@ -244,25 +244,47 @@ Logic_Result tokenizer_logic_process(Arg* rst arg)
 
     char* val = arg->val;
     arg = arg->next;
-    enum Ops op = arg->op;
-    arg = arg->next;
-    char* val2 = arg->val;
-    arg = arg->next;
+    assert(arg);
 
-    bool result;
-    switch (op) {
-    case OP_EQ: {
-        result = atoi(val) == atoi(val2);
-        break;
-    }
-    default: {
-        result = false;
-        break;
-    }
+    if (arg->op == OP_CONDITION_END) {
+        arg = arg->next;
+        assert(arg);
+        return (Logic_Result){.type = LT_IF, .val.arg = arg};
     }
 
-    if (!result)
-        return (Logic_Result){.type = LT_CODE, .val.code = NCSH_COMMAND_FAILED_CONTINUE};
+    if (arg->op != OP_CONSTANT) {
+        enum Ops op = arg->op;
+        arg = arg->next;
+        assert(arg);
+
+        char* val2 = arg->val;
+        arg = arg->next;
+        assert(arg);
+
+        bool result;
+        switch (op) {
+        case OP_EQUALS: {
+            result = atoi(val) == atoi(val2);
+            break;
+        }
+        case OP_LESS_THAN: {
+            result = atoi(val) < atoi(val2);
+            break;
+        }
+        case OP_GREATER_THAN: {
+            result = atoi(val) > atoi(val2);
+            break;
+        }
+        default: {
+            puts("ncsh: while trying to process 'if' logic, found unsupported operation.");
+            result = false;
+            break;
+        }
+        }
+
+        if (!result)
+            return (Logic_Result){.type = LT_CODE, .val.code = NCSH_COMMAND_FAILED_CONTINUE};
+    }
 
     assert(arg->op == OP_CONDITION_END);
     arg = arg->next;

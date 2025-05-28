@@ -873,7 +873,7 @@ void parser_parse_if_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    char* line = "if [ 1 -eq 1 ]; then echo 'hi' fi";
+    char* line = "if [ 1 -eq 1 ]; then echo 'hi'; fi";
     size_t len = strlen(line) + 1;
 
     Args* args = parser_parse(line, len, &scratch_arena);
@@ -889,7 +889,7 @@ void parser_parse_if_test()
     arg = arg->next;
     eassert(arg->op == OP_CONSTANT);
     arg = arg->next;
-    eassert(arg->op == OP_EQ);
+    eassert(arg->op == OP_EQUALS);
     arg = arg->next;
     eassert(arg->op == OP_CONSTANT);
     arg = arg->next;
