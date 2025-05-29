@@ -2,7 +2,10 @@
 /* vm.c: the VM for ncsh. Accepts op bytecodes and constant values and their lengths,
  * and processes those into commands. */
 
+#ifndef _POSIX_C_SOURCE
 #define _POSIX_C_SOURCE 200809L
+#endif /* ifndef _POSIX_C_SOURCE */
+
 #include <assert.h>
 #include <errno.h>
 #include <stdio.h>
@@ -15,7 +18,8 @@
 #include "../eskilib/ecolors.h"
 #include "../types.h"
 #include "builtins.h"
-#include "tokenizer.h"
+#include "preprocessor.h"
+#include "syntax_validator.h"
 #include "vm.h"
 #include "vm_types.h"
 
@@ -138,7 +142,7 @@ void vm_stdout_and_stderr_redirection_stop(Output_Redirect_IO* rst io)
 }
 
 [[nodiscard]]
-int vm_redirection_start_if_needed(Tokens* rst tokens, Vm_Data* rst vm)
+int vm_redirection_start_if_needed(Token_Data* rst tokens, Vm_Data* rst vm)
 {
     assert(tokens);
     assert(vm);
@@ -542,7 +546,7 @@ bool vm_builtins_check_and_run(Vm_Data* rst vm, Shell* rst shell, Arena* rst scr
 }
 
 [[nodiscard]]
-int vm_run(Args* rst args, Tokens* rst tokens, Shell* rst shell, Arena* rst scratch_arena)
+int vm_run(Args* rst args, Token_Data* rst tokens, Shell* rst shell, Arena* rst scratch_arena)
 {
     Vm_Data vm = {.pipes_io = {.current_output = STDOUT_FILENO}};
 
@@ -661,8 +665,12 @@ int vm_execute(Args* rst args, Shell* rst shell, Arena* rst scratch_arena)
         vm_background_jobs_check(&shell->processes);
     }*/
 
-    Tokens tokens = {0};
-    vm_result = tokenizer_tokenize(args, &tokens, shell, scratch_arena);
+    int result;
+    if ((result = syntax_validator_validate(args)) != NCSH_COMMAND_SUCCESS_CONTINUE)
+        return result;
+
+    Token_Data tokens = {0};
+    vm_result = preprocessor_preprocess(args, &tokens, shell, scratch_arena);
     if (vm_result != NCSH_COMMAND_SUCCESS_CONTINUE) {
         return vm_result;
     }
@@ -687,8 +695,12 @@ int vm_execute_noninteractive(Args* rst args, Shell* rst shell)
         return NCSH_COMMAND_SUCCESS_CONTINUE;
     }
 
-    Tokens tokens = {0};
-    vm_result = tokenizer_tokenize(args, &tokens, shell, &shell->arena);
+    int result;
+    if ((result = syntax_validator_validate(args)) != NCSH_COMMAND_SUCCESS_CONTINUE)
+        return result;
+
+    Token_Data tokens = {0};
+    vm_result = preprocessor_preprocess(args, &tokens, shell, &shell->arena);
     if (vm_result != NCSH_COMMAND_SUCCESS_CONTINUE) {
         return vm_result;
     }

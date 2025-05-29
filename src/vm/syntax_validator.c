@@ -1,3 +1,5 @@
+/* Copyright ncsh (C) by Alex Eski 2025 */
+
 #include <assert.h>
 #include <stdint.h>
 #include <unistd.h>
@@ -5,8 +7,10 @@
 #include "../args.h"
 #include "../defines.h"
 
+int tok_invalid_syntax_check_res;
+
 [[nodiscard]]
-int tokenizer_syntax_error(char* rst message, size_t message_length)
+int syntax_validator_error(char* rst message, size_t message_length)
 {
     if (write(STDIN_FILENO, message, message_length) == -1) {
         return NCSH_COMMAND_EXIT_FAILURE;
@@ -14,6 +18,8 @@ int tokenizer_syntax_error(char* rst message, size_t message_length)
 
     return NCSH_COMMAND_SYNTAX_ERROR;
 }
+
+#define INVALID_SYNTAX(message) syntax_validator_error(message, sizeof(message) - 1)
 
 #define INVALID_SYNTAX_PIPE_FIRST_ARG                                                                                  \
     "ncsh: Invalid syntax: found pipe operator ('|') as first argument. Correct usage of pipe operator is 'program1 "  \
@@ -78,28 +84,24 @@ int tokenizer_syntax_error(char* rst message, size_t message_length)
     "ncsh: Invalid syntax: found background job operator ('&') in position other than last argument. Correct usage "   \
     "of background job operator is 'program &'.\n"
 
-#define INVALID_SYNTAX_AND_IN_LAST_POSITION                                                                            \
+#define INVALID_SYNTAX_AND_IN_LAST_ARG                                                                                 \
     "ncsh: Invalid syntax: found and operator ('&&') as last argument. Correct usage of and operator is "              \
     "'true && true'\n"
-#define INVALID_SYNTAX_AND_IN_FIRST_POSITION                                                                           \
+#define INVALID_SYNTAX_AND_IN_FIRST_ARG                                                                                \
     "ncsh: Invalid syntax: found and operator ('&&') as first argument. Correct usage of and operator is "             \
     "'true && true'\n"
 
-#define INVALID_SYNTAX_OR_IN_LAST_POSITION                                                                             \
+#define INVALID_SYNTAX_OR_IN_LAST_ARG                                                                                  \
     "ncsh: Invalid syntax: found or operator ('||') as last argument. Correct usage of or operator is "                \
     "'false || true'\n"
-#define INVALID_SYNTAX_OR_IN_FIRST_POSITION                                                                            \
+#define INVALID_SYNTAX_OR_IN_FIRST_ARG                                                                                 \
     "ncsh: Invalid syntax: found or operator ('||') as first argument. Correct usage of or operator is "               \
     "'false || true'\n"
 
-#define INVALID_SYNTAX(message) tokenizer_syntax_error(message, sizeof(message) - 1)
-
-int tok_invalid_syntax_check_res;
-
-/* tokenizer_syntax_check_first_arg
+/* syntax_validator_check_first_arg
  * Simple check to see if something is in first position that shouldn't be
  */
-void tokenizer_syntax_check_first_arg(uint8_t op)
+void syntax_validatator_first_arg_check(uint8_t op)
 {
     switch (op) {
     case OP_PIPE: {
@@ -139,20 +141,20 @@ void tokenizer_syntax_check_first_arg(uint8_t op)
         break;
     }
     case OP_AND: {
-        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_AND_IN_FIRST_POSITION);
+        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_AND_IN_FIRST_ARG);
         break;
     }
     case OP_OR: {
-        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_OR_IN_FIRST_POSITION);
+        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_OR_IN_FIRST_ARG);
         break;
     }
     }
 }
 
-/* tokenizer_syntax_check_last_arg
+/* syntax_validator_check_last_arg
  * Simple check to see if something is in last position that shouldn't be
  */
-void tokenizer_syntax_check_last_arg(Args* rst args)
+void syntax_validator_last_arg_check(Args* rst args)
 {
     Arg* arg = args->head->next;
     while (arg->next)
@@ -192,39 +194,153 @@ void tokenizer_syntax_check_last_arg(Args* rst args)
         break;
     }
     case OP_AND: {
-        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_AND_IN_LAST_POSITION);
+        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_AND_IN_LAST_ARG);
         break;
     }
     case OP_OR: {
-        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_OR_IN_LAST_POSITION);
+        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_OR_IN_LAST_ARG);
         break;
     }
     }
 }
 
-void tokenizer_syntax_checks(Args* rst args)
+#define INVALID_SYNTAX_NO_ARGS "ncsh: Invalid Syntax: no values passes to syntax validation.\n"
+
+#define INVALID_SYNTAX_IF_NO_NEXT_ARG                                                                                  \
+    "ncsh: Invalid syntax: found 'if' with no value after. "                                                           \
+    "Correct usage of 'if' is 'if [(CONDITION)]; then [STATEMENT]; [else [STATEMENT];] fi'.\n"
+#define INVALID_SYNTAX_IF_NO_START_CONDITION                                                                           \
+    "ncsh: Invalid syntax: found 'if' with condition after. "                                                          \
+    "Correct usage of 'if' is 'if [(CONDITION)]; then [STATEMENT]; [else [STATEMENT];] fi'.\n"
+
+#define INVALID_SYNTAX_CONDITION_START_NO_NEXT_ARG                                                                     \
+    "ncsh: Invalid Syntax: expecting expression after 'if ['. "                                                        \
+    "Correct usage of 'if' is 'if [(CONDITION)]; then [STATEMENT]; [else [STATEMENT];] fi'.\n"
+
+#define INVALID_SYNTAX_CONDITION_END_NO_NEXT_ARG                                                                       \
+    "ncsh: Invalid Syntax: expecting values after 'if [(CONDITION)];'. "                                               \
+    "Correct usage of 'if' is 'if [(CONDITION)]; then [STATEMENT]; [else [STATEMENT];] fi'.\n"
+#define INVALID_SYNTAX_CONDITION_END_NO_NEXT_THEN                                                                      \
+    "ncsh: Invalid Syntax: expecting 'then' after 'if [(CONDITION)];'. "                                               \
+    "Correct usage of 'if' is 'if [(CONDITION)]; then [STATEMENT]; [else [STATEMENT];] fi'.\n"
+
+#define INVALID_SYNTAX_THEN_NO_NEXT_ARG                                                                                \
+    "ncsh: Invalid Syntax: expecting some value after 'if [(CONDITION)]; then'. "                                      \
+    "Correct usage of 'if' is 'if [(CONDITION)]; then [STATEMENT]; [else [STATEMENT];] fi'.\n"
+#define INVALID_SYNTAX_THEN_NO_NEXT_STATEMENT                                                                          \
+    "ncsh: Invalid Syntax: expecting some statement after 'if [(CONDITION)]; then'. "                                  \
+    "Correct usage of 'if' is 'if [(CONDITION)]; then [STATEMENT]; [else [STATEMENT];] fi'.\n"
+
+#define INVALID_SYNTAX_ELSE_NO_NEXT_ARG                                                                                \
+    "ncsh: Invalid Syntax: expecting some value after 'if [(CONDITION)]; then (STATEMENT); else'. "                    \
+    "Correct usage of 'if' is 'if [(CONDITION)]; then [STATEMENT]; [else [STATEMENT];] fi'.\n"
+#define INVALID_SYNTAX_ELSE_NO_NEXT_STATEMENT                                                                          \
+    "ncsh: Invalid Syntax: expecting some statement after 'if [(CONDITION)]; then (STATEMENT); else'. "                \
+    "Correct usage of 'if' is 'if [(CONDITION)]; then [STATEMENT]; [else [STATEMENT];] fi'.\n"
+
+void syntax_validator_check(Args* rst args)
 {
-    Arg* arg = args->head->next->next;
-    for (size_t i = 1; i < args->count; ++i) {
-        if (arg->op == OP_BACKGROUND_JOB && arg->next) {
-            tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_BACKGROUND_JOB_NOT_LAST_ARG);
+    Arg* arg = args->head->next;
+    if (!arg) {
+        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_NO_ARGS);
+        return;
+    }
+    Arg* prev = NULL;
+
+    for (size_t i = 0; i < args->count; ++i) {
+        switch (arg->op) {
+
+        case OP_BACKGROUND_JOB: {
+            if (arg->next) {
+                tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_BACKGROUND_JOB_NOT_LAST_ARG);
+                return;
+            }
             break;
         }
+
+        case OP_IF: {
+            if (!arg->next) {
+                tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_IF_NO_NEXT_ARG);
+                return;
+            }
+            if (arg->next->op != OP_CONDITION_START) {
+                tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_IF_NO_START_CONDITION);
+            }
+            break;
+        }
+
+        case OP_CONDITION_START: {
+            if (!prev)
+                break;
+            if (!arg->next) {
+                tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_CONDITION_START_NO_NEXT_ARG);
+                return;
+            }
+            // OP_STATEMENT check
+            break;
+        }
+
+        case OP_CONDITION_END: {
+            if (!prev)
+                break;
+            if (!arg->next) {
+                tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_CONDITION_END_NO_NEXT_ARG);
+                return;
+            }
+            if (arg->next->op != OP_THEN) {
+                tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_CONDITION_END_NO_NEXT_THEN);
+                return;
+            }
+            break;
+        }
+
+        case OP_THEN: {
+            if (!prev)
+                break;
+            if (!arg->next) {
+                tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_THEN_NO_NEXT_ARG);
+                return;
+            }
+            if (arg->next->op != OP_CONSTANT) { // OP_STATEMENT for logic statements instead of using constant?
+                tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_THEN_NO_NEXT_STATEMENT);
+                return;
+            }
+            break;
+        }
+
+        case OP_ELSE: {
+            if (!prev)
+                break;
+            if (!arg->next) {
+                tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_ELSE_NO_NEXT_ARG);
+                return;
+            }
+            if (arg->next->op != OP_CONSTANT) { // OP_STATEMENT for logic statements instead of using constant?
+                tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_ELSE_NO_NEXT_STATEMENT);
+                return;
+            }
+            break;
+        }
+        }
+        prev = arg;
+        arg = arg->next;
+        if (!arg)
+            break;
     }
 }
 
 [[nodiscard]]
-int tokenizer_syntax_check(Args* rst args)
+int syntax_validator_validate(Args* rst args)
 {
     assert(args);
 
     tok_invalid_syntax_check_res = NCSH_COMMAND_SUCCESS_CONTINUE;
-    tokenizer_syntax_check_first_arg(args->head->next->op);
+    syntax_validatator_first_arg_check(args->head->next->op);
     if (tok_invalid_syntax_check_res != NCSH_COMMAND_SUCCESS_CONTINUE)
         return tok_invalid_syntax_check_res;
-    tokenizer_syntax_check_last_arg(args);
+    syntax_validator_last_arg_check(args);
     if (tok_invalid_syntax_check_res != NCSH_COMMAND_SUCCESS_CONTINUE)
         return tok_invalid_syntax_check_res;
-    tokenizer_syntax_checks(args);
+    syntax_validator_check(args);
     return tok_invalid_syntax_check_res;
 }

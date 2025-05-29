@@ -71,13 +71,13 @@
 // #define SEMICOLON ';'
 // #define OPENING_BRACKET '['
 // #define CLOSING_BRACKET ']'
-#define START_EXPRESSION '['
-#define END_EXPRESSION "];"
+#define CONDITION_START '['
+#define CONDITION_END "];"
 
 // ops: equality
-#define EQ "-eq"
-#define LT "-lt"
-#define GT "-gt"
+#define EQUALS "-eq"
+#define LESS_THAN "-lt"
+#define GREATER_THAN "-gt"
 
 // ops: misc
 #define COMMENT '#'
@@ -127,7 +127,7 @@ const char* const rst ops_2char_str[] = {STDOUT_REDIRECTION_APPEND,
                                          MATH_EXPRESSION_START,
                                          IF,
                                          FI,
-                                         END_EXPRESSION};
+                                         CONDITION_END};
 
 constexpr size_t ops_2char_len = sizeof(ops_2char_str) / sizeof(char*);
 
@@ -140,18 +140,20 @@ const enum Ops ops_2char[] = {OP_STDOUT_REDIRECTION_APPEND,
                               OP_MATH_EXPRESSION_START,
                               OP_IF,
                               OP_FI,
-                              OP_END_EXPRESSION};
+                              OP_CONDITION_END};
 
 /* ops_3char_str
  * A constant array that contain all shell operations that are 3 characters long, like "&>>".
  * Size of the array is stored as constant expression in ops_3char_len
  * Bytecodes (opcodes) equivalents are stored in the array of enum Ops, ops_3char
  */
-const char* const rst ops_3char_str[] = {STDERR_REDIRECTION_APPEND, STDOUT_AND_STDERR_REDIRECTION_APPEND, EQ};
+const char* const rst ops_3char_str[] = {STDERR_REDIRECTION_APPEND, STDOUT_AND_STDERR_REDIRECTION_APPEND, EQUALS,
+                                         LESS_THAN, GREATER_THAN};
 
 constexpr size_t ops_3char_len = sizeof(ops_3char_str) / sizeof(char*);
 
-const enum Ops ops_3char[] = {OP_STDERR_REDIRECTION_APPEND, OP_STDOUT_AND_STDERR_REDIRECTION_APPEND, OP_EQ};
+const enum Ops ops_3char[] = {OP_STDERR_REDIRECTION_APPEND, OP_STDOUT_AND_STDERR_REDIRECTION_APPEND, OP_EQUALS,
+                              OP_LESS_THAN, OP_GREATER_THAN};
 
 /* parser_op_get
  * Internal function used to map the inputted line to a bytecode.
@@ -160,10 +162,13 @@ const enum Ops ops_3char[] = {OP_STDERR_REDIRECTION_APPEND, OP_STDOUT_AND_STDERR
 [[nodiscard]]
 enum Ops parser_op_get(char* rst line, size_t length)
 {
+    assert(line);
+
     switch (length) {
     case 0: {
         return OP_NONE;
     }
+
     case 1: {
         assert(line);
         switch (line[0]) {
@@ -200,16 +205,16 @@ enum Ops parser_op_get(char* rst line, size_t length)
         case TILDE: {
             return OP_HOME_EXPANSION;
         }
-        case START_EXPRESSION: {
-            return OP_START_EXPRESSION;
+        case CONDITION_START: {
+            return OP_CONDITION_START;
         }
         default: {
             return OP_CONSTANT;
         }
         }
     }
+
     case 2: {
-        assert(line);
         for (size_t i = 0; i < ops_2char_len; ++i) {
             if (CMP_2(line, ops_2char_str[i])) {
                 return ops_2char[i];
@@ -218,8 +223,8 @@ enum Ops parser_op_get(char* rst line, size_t length)
 
         return OP_CONSTANT;
     }
+
     case 3: {
-        assert(line);
         for (size_t i = 0; i < ops_3char_len; ++i) {
             if (CMP_3(line, ops_3char_str[i])) {
                 return ops_3char[i];
@@ -228,6 +233,7 @@ enum Ops parser_op_get(char* rst line, size_t length)
 
         return OP_CONSTANT;
     }
+
     case 4: {
         if (line[0] == 't' && !memcmp(line, BOOL_TRUE, 4))
             return OP_TRUE;
@@ -236,6 +242,7 @@ enum Ops parser_op_get(char* rst line, size_t length)
 
         break;
     }
+
     case 5: {
         if (line[0] == 'f' && !memcmp(line, BOOL_FALSE, 5))
             return OP_FALSE;

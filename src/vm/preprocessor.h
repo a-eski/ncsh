@@ -26,6 +26,6 @@ typedef struct {
     bool is_background_job;
 
     uint8_t number_of_pipe_commands;
-} Tokens;
+} Token_Data;
 
-int tokenizer_tokenize(Args* rst args, Tokens* rst tokens, Shell* rst shell, Arena* rst scratch_arena);
+int preprocessor_preprocess(Args* rst args, Token_Data* rst tokens, Shell* rst shell, Arena* rst scratch_arena);
