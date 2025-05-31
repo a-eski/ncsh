@@ -1,5 +1,5 @@
 /* Copyright ncsh (C) by Alex Eski 2025 */
-/* tokenizer.c: Preprocessing of parser output to ensure ready for VM to process. */
+/* preprocessor.c: Preprocessing of parser output to ensure ready for VM to process. */
 
 #include <assert.h>
 #include <glob.h>
@@ -13,17 +13,19 @@
 #include "../args.h"
 #include "../defines.h"
 #include "../env.h"
+#include "logic.h"
 #include "preprocessor.h"
 #include "vars.h"
+#include "vm_types.h"
 
-void tokenizer_home_expansion_process(Arg* rst arg, Str home_location, Arena* rst scratch_arena)
+void preprocessor_home_expansion_process(Arg* rst arg, Str home, Arena* rst scratch)
 {
     if (arg->len == 2) {
-        size_t len = home_location.length + 1;
-        arg->val = arena_malloc(scratch_arena, len, char);
+        size_t len = home.length + 1;
+        arg->val = arena_malloc(scratch, len, char);
         arg->op = OP_CONSTANT;
         arg->len = len;
-        memcpy(arg->val, home_location.value, len);
+        memcpy(arg->val, home.value, len);
         return;
     }
 
@@ -32,17 +34,17 @@ void tokenizer_home_expansion_process(Arg* rst arg, Str home_location, Arena* rs
     if (!arg->val || arg->val[0] != '~')
         return;
 
-    size_t len = arg->len + home_location.length; // arg->len accounts for null termination
-    char* new_value = arena_malloc(scratch_arena, len, char);
-    memcpy(new_value, home_location.value, home_location.length);
-    memcpy(new_value + home_location.length, arg->val + 1, arg->len - 1);
+    size_t len = arg->len + home.length; // arg->len accounts for null termination
+    char* new_value = arena_malloc(scratch, len, char);
+    memcpy(new_value, home.value, home.length);
+    memcpy(new_value + home.length, arg->val + 1, arg->len - 1);
     debugf("performing home expansion on %s to %s\n", arg->val, new_value);
     arg->val = new_value;
     arg->op = OP_CONSTANT;
     arg->len = len;
 }
 
-void tokenizer_glob_process(Arg* rst arg, size_t* rst args_count, Arena* rst scratch_arena)
+void preprocessor_glob_process(Arg* rst arg, size_t* rst args_c, Arena* rst scratch)
 {
     glob_t glob_buf = {0};
     size_t glob_len;
@@ -55,7 +57,7 @@ void tokenizer_glob_process(Arg* rst arg, size_t* rst args_count, Arena* rst scr
     // handle first arg manually to preserve pointer from previous arg to current arg
     glob_len = strlen(glob_buf.gl_pathv[0]) + 1;
     if (glob_len > arg->len) {
-        arg->val = arena_realloc(scratch_arena, glob_len, char, arg->val, arg->len);
+        arg->val = arena_realloc(scratch, glob_len, char, arg->val, arg->len);
         memcpy(arg->val, glob_buf.gl_pathv[0], glob_len);
     }
     else {
@@ -69,7 +71,7 @@ void tokenizer_glob_process(Arg* rst arg, size_t* rst args_count, Arena* rst scr
         if (!glob_len || glob_len >= NCSH_MAX_INPUT)
             break;
 
-        Arg* new_arg = arg_alloc(OP_CONSTANT, glob_len, glob_buf.gl_pathv[i], scratch_arena);
+        Arg* new_arg = arg_alloc(OP_CONSTANT, glob_len, glob_buf.gl_pathv[i], scratch);
         if (!arg->next) {
             arg->next = new_arg;
             arg = arg->next;
@@ -77,13 +79,13 @@ void tokenizer_glob_process(Arg* rst arg, size_t* rst args_count, Arena* rst scr
         else {
             arg_set_after(arg->next, new_arg);
         }
-        ++*args_count;
+        ++*args_c;
     }
 
     globfree(&glob_buf);
 }
 
-void tokenizer_assignment_process(Arg* arg, Vars* rst vars, Arena* rst arena)
+void preprocessor_assignment_process(Arg* arg, Vars* rst vars, Arena* rst arena)
 {
     assert(arg);
     assert(vars);
@@ -113,16 +115,16 @@ void tokenizer_assignment_process(Arg* arg, Vars* rst vars, Arena* rst arena)
     vars_set(key, val, arena, vars);
 }
 
-void tokenizer_arg_update(Arg* rst arg, Str* rst var, Arena* rst scratch_arena)
+void preprocessor_arg_update(Arg* rst arg, Str* rst var, Arena* rst scratch)
 {
-    arg->val = arena_realloc(scratch_arena, var->length, char, arg->val, arg->len);
+    arg->val = arena_realloc(scratch, var->length, char, arg->val, arg->len);
     memcpy(arg->val, var->value, var->length);
     arg->len = var->length;
     arg->op = OP_CONSTANT; // replace OP_VARIABLE to OP_CONSTANT so VM sees it as a regular constant value
     debugf("replaced variable with value %s %zu\n", arg->val, arg->len);
 }
 
-void tokenizer_variable_process(Arg* rst arg, Vars* rst vars, Arena* rst scratch_arena)
+void preprocessor_variable_process(Arg* rst arg, Vars* rst vars, Arena* rst scratch)
 {
     Str var;
     if (estrcmp(arg->val, arg->len, NCSH_PATH_VAR, sizeof(NCSH_PATH_VAR))) {
@@ -133,18 +135,18 @@ void tokenizer_variable_process(Arg* rst arg, Vars* rst vars, Arena* rst scratch
             puts("ncsh: could not load path to replace $PATH variable.");
             return;
         }
-        tokenizer_arg_update(arg, &var, scratch_arena);
+        preprocessor_arg_update(arg, &var, scratch);
         return;
     }
     else if (estrcmp(arg->val, arg->len, NCSH_HOME_VAR, sizeof(NCSH_HOME_VAR))) {
 
         debug("replacing variable $HOME\n");
-        env_home_get(&var, scratch_arena);
+        env_home_get(&var, scratch);
         if (!var.value || !*var.value) {
             puts("ncsh: could not load home to replace $HOME variable.");
             return;
         }
-        tokenizer_arg_update(arg, &var, scratch_arena);
+        preprocessor_arg_update(arg, &var, scratch);
         return;
     }
     else {
@@ -159,19 +161,19 @@ void tokenizer_variable_process(Arg* rst arg, Vars* rst vars, Arena* rst scratch
 
     char* space = strchr(var.value, ' ');
     if (!space) {
-        tokenizer_arg_update(arg, &var, scratch_arena);
+        preprocessor_arg_update(arg, &var, scratch);
         return;
     }
 
     debug("found space");
-    Args* args = parser_parse(var.value, var.length, scratch_arena);
+    Args* args = parser_parse(var.value, var.length, scratch);
     Arg* var_arg = args->head->next;
     if (!var_arg) {
         return;
     }
     debugf("found value %s\n", var_arg->val);
     Str var_str = {.value = var_arg->val, .length = var_arg->len};
-    tokenizer_arg_update(arg, &var_str, scratch_arena);
+    preprocessor_arg_update(arg, &var_str, scratch);
     var_arg = var_arg->next;
 
     for (size_t i = 0; i < args->count; ++i) {
@@ -203,188 +205,103 @@ void tokenizer_variable_process(Arg* rst arg, Vars* rst vars, Arena* rst scratch
         arg->next = NULL;
 }
 
-/* tokenizer_alias_replace
+/* preprocessor_alias_replace
  * Replaces aliases with their aliased commands before executing
  */
-void tokenizer_alias_replace(Arg* rst arg, Arena* rst scratch_arena)
+void preprocessor_alias_replace(Arg* rst arg, Arena* rst scratch)
 {
     Str alias = alias_check(arg->val, arg->len);
     if (alias.length) {
-        arg->val = arena_realloc(scratch_arena, alias.length, char, arg->val, arg->len);
+        arg->val = arena_realloc(scratch, alias.length, char, arg->val, arg->len);
         memcpy(arg->val, alias.value, alias.length);
         arg->len = alias.length;
     }
 }
 
-enum Logic_Type {
-    LT_CODE,
-    LT_IF,
-    LT_IF_THEN
-};
-
-union Logic_Value {
-    int code;
-    Arg* arg;
-};
-
-typedef struct {
-    enum Logic_Type type;
-    union Logic_Value val;
-} Logic_Result;
-
-Logic_Result tokenizer_logic_process(Arg* rst arg)
-{
-    assert(arg);
-
-    if (!arg) {
-        puts("logic processing failed, NULL arg passed in.");
-        return (Logic_Result){.type = LT_CODE, .val.code = NCSH_COMMAND_FAILED_CONTINUE};
-    }
-    assert(arg->op == OP_IF);
-    arg = arg->next;
-    assert(arg->op == OP_CONDITION_START);
-    arg = arg->next;
-    assert(arg->op == OP_CONSTANT);
-
-    char* val = arg->val;
-    arg = arg->next;
-    assert(arg);
-
-    if (arg->op == OP_CONDITION_END) {
-        arg = arg->next;
-        assert(arg);
-        return (Logic_Result){.type = LT_IF, .val.arg = arg};
-    }
-
-    if (arg->op != OP_CONSTANT) {
-        enum Ops op = arg->op;
-        arg = arg->next;
-        assert(arg);
-
-        char* val2 = arg->val;
-        arg = arg->next;
-        assert(arg);
-
-        bool result;
-        switch (op) {
-        case OP_EQUALS: {
-            result = atoi(val) == atoi(val2);
-            break;
-        }
-        case OP_LESS_THAN: {
-            result = atoi(val) < atoi(val2);
-            break;
-        }
-        case OP_GREATER_THAN: {
-            result = atoi(val) > atoi(val2);
-            break;
-        }
-        default: {
-            puts("ncsh: while trying to process 'if' logic, found unsupported operation.");
-            result = false;
-            break;
-        }
-        }
-
-        if (!result)
-            return (Logic_Result){.type = LT_CODE, .val.code = NCSH_COMMAND_FAILED_CONTINUE};
-    }
-
-    assert(arg->op == OP_CONDITION_END);
-    arg = arg->next;
-    assert(arg->op == OP_THEN);
-    arg = arg->next;
-    assert(arg->op == OP_CONSTANT);
-    if (arg->op != OP_CONSTANT)
-        return (Logic_Result){.type = LT_CODE, .val.code = NCSH_COMMAND_FAILED_CONTINUE};
-
-    return (Logic_Result){.type = LT_IF, .val.arg = arg};
-}
-
-int tokenizer_ops_process(Args* rst args, Token_Data* rst data, Shell* rst shell, Arena* rst scratch_arena)
+int preprocessor_ops_process(Args* rst args, Token_Data* rst tokens, Shell* rst shell, Arena* rst scratch)
 {
     assert(args && args->head);
-    assert(data);
-    assert(scratch_arena);
+    assert(tokens);
+    assert(scratch);
 
     Arg* arg = args->head->next;
     Arg* prev = NULL;
-    data->is_background_job = false;
+    tokens->is_background_job = false;
     while (arg) {
         switch (arg->op) {
         case OP_STDOUT_REDIRECTION: {
             assert(arg->next && arg->next->val);
             if (!arg->next || !arg->next->val)
                 break;
-            data->stdout_file = arg->next->val;
-            data->stdout_redirect = arg;
+            tokens->stdout_file = arg->next->val;
+            tokens->stdout_redirect = arg;
             break;
         }
         case OP_STDOUT_REDIRECTION_APPEND: {
             assert(arg->next && arg->next->val);
             if (!arg->next || !arg->next->val)
                 break;
-            data->stdout_file = arg->next->val;
-            data->stdout_redirect = arg;
-            data->output_append = true;
+            tokens->stdout_file = arg->next->val;
+            tokens->stdout_redirect = arg;
+            tokens->output_append = true;
             break;
         }
         case OP_STDIN_REDIRECTION: {
             assert(arg->next && arg->next->val);
             if (!arg->next || !arg->next->val)
                 break;
-            data->stdin_file = arg->next->val;
-            data->stdin_redirect = arg;
+            tokens->stdin_file = arg->next->val;
+            tokens->stdin_redirect = arg;
             break;
         }
         case OP_STDERR_REDIRECTION: {
             assert(arg->next && arg->next->val);
             if (!arg->next || !arg->next->val)
                 break;
-            data->stderr_file = arg->next->val;
-            data->stderr_redirect = arg;
+            tokens->stderr_file = arg->next->val;
+            tokens->stderr_redirect = arg;
             break;
         }
         case OP_STDERR_REDIRECTION_APPEND: {
             assert(arg->next && arg->next->val);
             if (!arg->next || !arg->next->val)
                 break;
-            data->stderr_file = arg->next->val;
-            data->stderr_redirect = arg;
-            data->output_append = true;
+            tokens->stderr_file = arg->next->val;
+            tokens->stderr_redirect = arg;
+            tokens->output_append = true;
             break;
         }
         case OP_STDOUT_AND_STDERR_REDIRECTION: {
             assert(arg->next && arg->next->val);
             if (!arg->next || !arg->next->val)
                 break;
-            data->stdout_and_stderr_file = arg->next->val;
-            data->stdout_and_stderr_redirect = arg;
+            tokens->stdout_and_stderr_file = arg->next->val;
+            tokens->stdout_and_stderr_redirect = arg;
             break;
         }
         case OP_STDOUT_AND_STDERR_REDIRECTION_APPEND: {
             assert(arg->next && arg->next->val);
             if (!arg->next || !arg->next->val)
                 break;
-            data->stdout_and_stderr_file = arg->next->val;
-            data->stdout_and_stderr_redirect = arg;
-            data->output_append = true;
+            tokens->stdout_and_stderr_file = arg->next->val;
+            tokens->stdout_and_stderr_redirect = arg;
+            tokens->output_append = true;
             break;
         }
         case OP_PIPE: {
-            ++data->number_of_pipe_commands;
+            ++tokens->number_of_pipe_commands;
             break;
         }
         case OP_BACKGROUND_JOB: {
-            data->is_background_job = true;
+            tokens->is_background_job = true;
             break;
         }
         case OP_HOME_EXPANSION: {
-            tokenizer_home_expansion_process(arg, shell->config.home_location, scratch_arena);
+            preprocessor_home_expansion_process(arg, shell->config.home_location, scratch);
             break;
         }
         case OP_GLOB_EXPANSION: {
-            tokenizer_glob_process(arg, &args->count, scratch_arena);
+            preprocessor_glob_process(arg, &args->count, scratch);
             break;
         }
         case OP_ASSIGNMENT: {
@@ -395,7 +312,7 @@ int tokenizer_ops_process(Args* rst args, Token_Data* rst data, Shell* rst shell
                 break;
             }
 
-            tokenizer_assignment_process(arg, &shell->vars, &shell->arena);
+            preprocessor_assignment_process(arg, &shell->vars, &shell->arena);
             if (prev && arg && arg->next) {
                 arg_set_after(arg->next, prev);
                 prev = arg->next;
@@ -407,25 +324,37 @@ int tokenizer_ops_process(Args* rst args, Token_Data* rst data, Shell* rst shell
             break;
         }
         case OP_VARIABLE: {
-            tokenizer_variable_process(arg, &shell->vars, scratch_arena);
+            preprocessor_variable_process(arg, &shell->vars, scratch);
             break;
         }
         case OP_IF: {
-            Logic_Result result = tokenizer_logic_process(arg);
-            if (result.type == LT_CODE)
+            Logic_Result result = logic_preprocess(arg, tokens, scratch);
+            if (result.type == LT_CODE) {
+                puts("ncsh: error preprocessing logic, could not process 'if' statement.");
                 return result.val.code;
+            }
 
+            tokens->logic_type = result.type;
             arg = result.val.arg;
             args->head->next = arg;
             break;
         }
         case OP_FI: {
-            if (!arg->next)
-                arg = NULL;
-            break; // just skip unless OP_IF never found
+            // just get rid of OP_FI if we preprocessed if,
+            // else set fi to constant
+            if (tokens->logic_type == LT_IF || tokens->logic_type == LT_IF_ELSE) {
+                if (!arg->next)
+                    arg = NULL;
+                else if (prev)
+                    arg_set_after(prev, arg->next);
+            }
+            else
+                arg->op = OP_CONSTANT;
+
+            break;
         }
         default: {
-            tokenizer_alias_replace(arg, scratch_arena);
+            preprocessor_alias_replace(arg, scratch);
             break;
         }
         }
@@ -433,22 +362,22 @@ int tokenizer_ops_process(Args* rst args, Token_Data* rst data, Shell* rst shell
         if (arg)
             arg = arg->next;
     }
-    ++data->number_of_pipe_commands;
+    ++tokens->number_of_pipe_commands;
 
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
 [[nodiscard]]
-int preprocessor_preprocess(Args* rst args, Token_Data* rst tokens, Shell* rst shell, Arena* rst scratch_arena)
+int preprocessor_preprocess(Args* rst args, Token_Data* rst tokens, Shell* rst shell, Arena* rst scratch)
 {
     assert(args);
     assert(tokens);
-    assert(scratch_arena);
+    assert(scratch);
     if (!args || !args->head || !args->count)
         return NCSH_COMMAND_FAILED_CONTINUE;
 
     int result;
-    if ((result = tokenizer_ops_process(args, tokens, shell, scratch_arena)) != NCSH_COMMAND_SUCCESS_CONTINUE)
+    if ((result = preprocessor_ops_process(args, tokens, shell, scratch)) != NCSH_COMMAND_SUCCESS_CONTINUE)
         return result;
 
     return NCSH_COMMAND_SUCCESS_CONTINUE;

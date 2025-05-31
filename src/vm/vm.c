@@ -21,6 +21,7 @@
 #include "preprocessor.h"
 #include "syntax_validator.h"
 #include "vm.h"
+#include "vm_buffer.h"
 #include "vm_types.h"
 
 #ifdef NCSH_VM_TEST
@@ -408,7 +409,6 @@ int vm_background_job_run(Args* rst args, Processes* rst processes,
 
 /* VM */
 int vm_status;
-int vm_command_result;
 enum Command_Type vm_command_type;
 int vm_execvp_result;
 int vm_result;
@@ -418,7 +418,7 @@ int vm_pid;
 void vm_status_check()
 {
     if (WIFEXITED(vm_status)) {
-        if (WEXITSTATUS(vm_status)) {
+        if ((vm_status = WEXITSTATUS(vm_status))) {
             fprintf(stderr, "ncsh: Command child process failed with status %d\n", WEXITSTATUS(vm_status));
         }
 #ifdef NCSH_DEBUG
@@ -440,115 +440,26 @@ void vm_status_check()
 #endif /* NCSH_DEBUG */
 }
 
-Arg* vm_buffer_set_command_next(Arg* rst arg, Vm_Data* rst vm)
-{
-    if (!arg) {
-        vm->buffer[0] = NULL;
-        vm->args_end = true;
-    }
-
-    if (arg->op == OP_ASSIGNMENT) {
-        arg = arg->next;
-        if (!arg) {
-            vm->buffer[0] = NULL;
-            vm->args_end = true;
-        }
-    }
-
-    if (arg && (arg->op == OP_AND || arg->op == OP_OR)) {
-        arg = arg->next;
-        if (!arg) {
-            vm->buffer[0] = NULL;
-            vm->args_end = true;
-        }
-    }
-
-    if (!arg) {
-        vm->buffer[0] = NULL;
-        vm->args_end = true;
-    }
-
-    size_t vm_buf_pos = 0;
-    while (arg && arg->val && arg->op == OP_CONSTANT) {
-        assert(arg->val[arg->len - 1] == '\0');
-        vm->buffer[vm_buf_pos] = arg->val;
-        vm->buffer_lens[vm_buf_pos] = arg->len;
-        debugf("set vm->buffer[%zu] to %s, %zu\n", vm_buf_pos, arg->val, arg->len);
-
-        if (!arg->next || !arg->next->val) {
-            debug("at end of args");
-            vm->args_end = true;
-            ++vm_buf_pos;
-            break;
-        }
-
-        ++vm_buf_pos;
-        arg = arg->next;
-    }
-
-    if (!vm->args_end) {
-        vm->op_current = arg->op;
-        debugf("set op current to %d\n", vm->op_current);
-        arg = arg->next;
-    }
-
-    vm->buffer[vm_buf_pos] = NULL;
-
-    return arg;
-}
-
-int vm_result_aggregate()
+int vm_result_aggregate(int builtin_command_result)
 {
     if (vm_execvp_result == EXECVP_FAILED) {
         return NCSH_COMMAND_EXIT_FAILURE;
     }
     if (vm_status == EXIT_FAILURE) {
-        return NCSH_COMMAND_EXIT_FAILURE;
+        return NCSH_COMMAND_FAILED_CONTINUE;
     }
-    if (vm_command_result != NCSH_COMMAND_NONE) {
-        return vm_command_result;
+    if (builtin_command_result != NCSH_COMMAND_NONE) {
+        return builtin_command_result;
     }
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
 
-/* vm_builtins_check_and_run
- * Checks current command against builtins, and if matches runs the builtin.
- */
 [[nodiscard]]
-bool vm_builtins_check_and_run(Vm_Data* rst vm, Shell* rst shell, Arena* rst scratch_arena)
+int vm_run(Args* rst args, Token_Data* rst tokens, Shell* rst shell, Arena* rst scratch)
 {
-    if (shell) {
-        if (estrcmp(vm->buffer[0], vm->buffer_lens[0], Z, sizeof(Z))) {
-            vm_command_result = builtins_z(&shell->z_db, vm->buffer, vm->buffer_lens, &shell->arena, scratch_arena);
-            return true;
-        }
-
-        if (estrcmp(vm->buffer[0], vm->buffer_lens[0], NCSH_HISTORY, sizeof(NCSH_HISTORY))) {
-            vm_command_result =
-                builtins_history(&shell->input.history, vm->buffer, vm->buffer_lens, &shell->arena, scratch_arena);
-            return true;
-        }
-
-        if (estrcmp(vm->buffer[0], vm->buffer_lens[0], NCSH_ALIAS, sizeof(NCSH_ALIAS))) {
-            vm_command_result = builtins_alias(vm->buffer, vm->buffer_lens, &shell->arena);
-            return true;
-        }
-    }
-
-    for (size_t i = 0; i < builtins_count; ++i) {
-        if (estrcmp(vm->buffer[0], vm->buffer_lens[0], builtins[i].value, builtins[i].length)) {
-            vm_command_result = (*builtins[i].func)(vm->buffer, vm->buffer_lens);
-            return true;
-        }
-    }
-
-    return false;
-}
-
-[[nodiscard]]
-int vm_run(Args* rst args, Token_Data* rst tokens, Shell* rst shell, Arena* rst scratch_arena)
-{
-    Vm_Data vm = {.pipes_io = {.current_output = STDOUT_FILENO}};
+    Vm_Data vm = {0};
+    vm.buffer = arena_malloc(scratch, VM_MAX_INPUT, char*);
+    vm.buffer_lens = arena_malloc(scratch, VM_MAX_INPUT, size_t);
 
     if ((vm_result = vm_redirection_start_if_needed(tokens, &vm)) != NCSH_COMMAND_SUCCESS_CONTINUE) {
         return vm_result;
@@ -556,8 +467,10 @@ int vm_run(Args* rst args, Token_Data* rst tokens, Shell* rst shell, Arena* rst 
 
     Arg* arg = args->head->next;
     while (!vm.args_end && arg && arg->val) {
-        vm_command_result = NCSH_COMMAND_NONE;
-        arg = vm_buffer_set_command_next(arg, &vm);
+        vm.builtin_command_result = NCSH_COMMAND_NONE;
+        Arg* next = vm_buffer_set(arg, tokens, &vm);
+        if (next)
+            arg = next;
 
         if (!vm.buffer[0]) {
             return NCSH_COMMAND_FAILED_CONTINUE;
@@ -569,25 +482,22 @@ int vm_run(Args* rst args, Token_Data* rst tokens, Shell* rst shell, Arena* rst 
             }
         }
 
-        bool builtin_ran = vm_builtins_check_and_run(&vm, shell, scratch_arena);
+        bool builtin_ran = builtins_check_and_run(&vm, shell, scratch);
         if (builtin_ran) {
             vm_command_type = CT_BUILTIN;
-            if (vm.op_current == OP_PIPE) {
+            if (vm.op_current == OP_PIPE)
                 vm_pipe_stop(vm.command_position, tokens->number_of_pipe_commands, &vm.pipes_io);
-            }
         }
 
         if (vm_command_type == CT_EXTERNAL) {
             vm_pid = fork();
 
-            if (vm_pid < 0) {
+            if (vm_pid < 0)
                 return vm_fork_failure(vm.command_position, tokens->number_of_pipe_commands, &vm.pipes_io);
-            }
 
             if (vm_pid == 0) { // runs in the child process
-                if (vm.op_current == OP_PIPE) {
+                if (vm.op_current == OP_PIPE)
                     vm_pipe_connect(vm.command_position, tokens->number_of_pipe_commands, &vm.pipes_io);
-                }
 
                 if ((vm_execvp_result = execvp(vm.buffer[0], vm.buffer)) == EXECVP_FAILED) {
                     vm.args_end = true;
@@ -597,13 +507,11 @@ int vm_run(Args* rst args, Token_Data* rst tokens, Shell* rst shell, Arena* rst 
                 }
             }
 
-            if (vm.op_current == OP_PIPE) {
+            if (vm.op_current == OP_PIPE)
                 vm_pipe_stop(vm.command_position, tokens->number_of_pipe_commands, &vm.pipes_io);
-            }
 
-            if (vm_execvp_result == EXECVP_FAILED) {
+            if (vm_execvp_result == EXECVP_FAILED)
                 break;
-            }
 
             vm_child_pid = vm_pid;
 
@@ -626,24 +534,29 @@ int vm_run(Args* rst args, Token_Data* rst tokens, Shell* rst shell, Arena* rst 
 
                 // check if child process has exited
                 if (waitpid_result == vm_pid) {
-                    vm_status_check();
+                    // vm_status_check();
                     break;
                 }
             }
         }
 
-        vm_command_type = CT_EXTERNAL;
-        ++vm.command_position;
+        if (vm.state == VS_CONDITION_PROCESSING && vm_status != EXIT_SUCCESS) {
+            debug("breaking out of VM loop, condition failed.");
+            break;
+        }
 
-        // TODO: logic around failures
+        // TODO: logic around failures?
         // vm_result = vm_result_aggregate();
         // if e is set
         // if next op is and/or
+
+        vm_command_type = CT_EXTERNAL;
+        ++vm.command_position;
     }
 
     vm_redirection_stop_if_needed(&vm);
 
-    vm_result = vm_result_aggregate();
+    vm_result = vm_result_aggregate(vm.builtin_command_result);
     return vm_result;
 }
 

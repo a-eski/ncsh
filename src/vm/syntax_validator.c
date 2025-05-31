@@ -10,7 +10,7 @@
 int tok_invalid_syntax_check_res;
 
 [[nodiscard]]
-int syntax_validator_error(char* rst message, size_t message_length)
+int syntax_validator_error_write(char* rst message, size_t message_length)
 {
     if (write(STDIN_FILENO, message, message_length) == -1) {
         return NCSH_COMMAND_EXIT_FAILURE;
@@ -19,7 +19,7 @@ int syntax_validator_error(char* rst message, size_t message_length)
     return NCSH_COMMAND_SYNTAX_ERROR;
 }
 
-#define INVALID_SYNTAX(message) syntax_validator_error(message, sizeof(message) - 1)
+#define INVALID_SYNTAX(message) syntax_validator_error_write(message, sizeof(message) - 1)
 
 #define INVALID_SYNTAX_PIPE_FIRST_ARG                                                                                  \
     "ncsh: Invalid syntax: found pipe operator ('|') as first argument. Correct usage of pipe operator is 'program1 "  \

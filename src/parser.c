@@ -235,16 +235,18 @@ enum Ops parser_op_get(char* rst line, size_t length)
     }
 
     case 4: {
-        if (line[0] == 't' && !memcmp(line, BOOL_TRUE, 4))
+        if (line[0] == 't' && !memcmp(line, BOOL_TRUE, sizeof(BOOL_TRUE) - 1))
             return OP_TRUE;
-        else if (line[0] == 't' && !memcmp(line, THEN, 4))
+        else if (line[0] == 't' && !memcmp(line, THEN, sizeof(THEN) - 1))
             return OP_THEN;
+        else if (line[0] == 'e' && !memcmp(line, ELSE, sizeof(ELSE) - 1))
+            return OP_ELSE;
 
         break;
     }
 
     case 5: {
-        if (line[0] == 'f' && !memcmp(line, BOOL_FALSE, 5))
+        if (line[0] == 'f' && !memcmp(line, BOOL_FALSE, sizeof(BOOL_FALSE) - 1))
             return OP_FALSE;
 
         break;

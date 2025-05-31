@@ -906,6 +906,49 @@ void parser_parse_if_test()
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
+void parser_parse_if_else_test()
+{
+    SCRATCH_ARENA_TEST_SETUP;
+
+    char* line = "if [ 1 -eq 1 ]; then echo 'hi'; else echo hello; fi";
+    size_t len = strlen(line) + 1;
+
+    Args* args = parser_parse(line, len, &scratch_arena);
+
+    eassert(args->head);
+    eassert(args->count == 13);
+
+    Arg* arg = args->head->next;
+    eassert(arg);
+    eassert(arg->op == OP_IF);
+    arg = arg->next;
+    eassert(arg->op == OP_CONDITION_START);
+    arg = arg->next;
+    eassert(arg->op == OP_CONSTANT);
+    arg = arg->next;
+    eassert(arg->op == OP_EQUALS);
+    arg = arg->next;
+    eassert(arg->op == OP_CONSTANT);
+    arg = arg->next;
+    eassert(arg->op == OP_CONDITION_END);
+    arg = arg->next;
+    eassert(arg->op == OP_THEN);
+    arg = arg->next;
+    eassert(arg->op == OP_CONSTANT);
+    arg = arg->next;
+    eassert(arg->op == OP_CONSTANT);
+    arg = arg->next;
+    eassert(arg->op == OP_ELSE);
+    arg = arg->next;
+    eassert(arg->op == OP_CONSTANT);
+    arg = arg->next;
+    eassert(arg->op == OP_CONSTANT);
+    arg = arg->next;
+    eassert(arg->op == OP_FI);
+
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
 // forward declaration: implementation put at the end because it messes with clangd lsp
 void parser_parse_bad_input_shouldnt_crash();
 
@@ -944,6 +987,7 @@ int main()
     etest_run(parser_parse_bad_input_shouldnt_crash);
     etest_run(parser_parse_bool_test);
     etest_run(parser_parse_if_test);
+    etest_run(parser_parse_if_else_test);
 
     etest_finish();
 

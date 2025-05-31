@@ -37,7 +37,13 @@ __attribute_malloc__ void* arena_malloc_internal(Arena* rst arena, uintptr_t cou
 __attribute_malloc__ void* arena_realloc_internal(Arena* rst arena, uintptr_t count, uintptr_t size,
                                                   uintptr_t alignment, void* old_ptr, uintptr_t old_count)
 {
-    assert(arena && count && size && alignment && old_ptr && old_count);
+    assert(arena);
+    assert(count);
+    assert(size);
+    assert(alignment);
+    assert(old_ptr);
+    assert(old_count);
+
     uintptr_t padding = -(uintptr_t)arena->start & (alignment - 1);
     uintptr_t available = (uintptr_t)arena->end - (uintptr_t)arena->start - padding;
     assert(count < available / size);

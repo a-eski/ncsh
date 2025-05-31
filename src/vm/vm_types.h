@@ -1,30 +1,106 @@
 /* Copyright ncsh (C) by Alex Eski 2025 */
+/* vm_types.h: Types used during preprocessing and VM execution */
 
 #pragma once
 
-#include <fcntl.h>
-#include <linux/limits.h>
-
 #include "../parser.h"
+#include "../eskilib/str.h"
+#include <stdint.h>
 
-/* Macros */
-/* Result of system call execvp when it failes */
+/****** MACROS ******/
+
+/* VM_MAX_INPUT Macro constant
+ * Size of VM buffer & buffer lengths, max number of char* VM can store and process */
+#define VM_MAX_INPUT 64
+
+/* EXECVP_FAILED Macro constant
+ * Result of system call execvp when it fails */
 #define EXECVP_FAILED -1
 
-/* Types */
+/****** TYPES ******/
+/*** PREPROCSSING AND LOGIC TYPES ***/
+enum Logic_Type {
+    LT_NONE,
+    LT_CODE,
+    LT_IF,
+    LT_IF_ELSE
+};
+
+typedef struct {
+    size_t count;
+    size_t cap;
+    enum Ops* ops;
+    size_t* lens;
+    char** vals;
+} Commands;
+
+typedef struct {
+    size_t count;
+    size_t cap;
+    Commands* commands;
+} Statements;
+
+union Logic_Value {
+    int code;
+    Arg* arg;
+};
+
+typedef struct {
+    enum Logic_Type type;
+    union Logic_Value val;
+} Logic_Result;
+
+/* Token_Data
+ * Stores information related to tokens from Args,
+ * like position of redirect operations, counts of pipe commands, and file names to use to create file descriptors.
+ * Output append directs output redirections to append to the file instead of writing over it.
+ */
+typedef struct {
+    // Redirection
+    Arg* stdout_redirect;
+    Arg* stdin_redirect;
+    Arg* stderr_redirect;
+    Arg* stdout_and_stderr_redirect;
+
+    char* stdout_file;
+    char* stdin_file;
+    char* stderr_file;
+    char* stdout_and_stderr_file;
+
+    bool output_append;
+
+    // Background Jobs
+    bool is_background_job;
+
+    // Pipes
+    uint8_t number_of_pipe_commands;
+
+    // Control flow structures
+    enum Logic_Type logic_type;
+    Commands* conditions;
+    Statements* if_statements;
+    Statements* else_statements;
+} Token_Data;
+
+/*** VM TYPES ***/
 /* enum Command_Type
  * Represents the command type, a shell builtin or external command that
- * needs to be called using fork/execvp
- */
+ * needs to be called using fork/execvp */
 enum Command_Type {
     CT_EXTERNAL = 0,
     CT_BUILTIN = 1
 };
 
+enum Vm_State {
+    VS_NORMAL = 0,
+    VS_CONDITION_PROCESSING,
+    VS_IF_STATEMENTS_PROCESSING,
+    VS_ELSE_STATEMENTS_PROCESSING
+};
+
 /* Output_Redirect_IO
  * Stores file descriptors (fds) for redirected output and original fds
- * for stdout and/or stderr
- */
+ * for stdout and/or stderr */
 typedef struct {
     int fd_stdout;
     int fd_stderr;
@@ -34,32 +110,32 @@ typedef struct {
 
 /* Output_Redirect_IO
  * Stores file descriptors (fds) for redirected input and original fd
- * for stdin
- */
+ * for stdin */
 typedef struct {
     int fd;
     int original_stdin;
 } Input_Redirect_IO;
 
 /* Pipe_IO
- * Stores file descriptors (fds) and state for piping io between processes
- */
+ * Stores file descriptors (fds) and state for piping io between processes */
 typedef struct {
-    int current_output;
     int fd_one[2];
     int fd_two[2];
 } Pipe_IO;
 
 /* Vm_Data
  * Stores information related to state in the VM.
- * Used in conjunction with Args and then Tokens.
- */
+ * Used in conjunction with Args and then Tokens. */
 typedef struct {
-    char* buffer[MAX_INPUT];
-    size_t buffer_lens[MAX_INPUT];
+    char** buffer;
+    size_t* buffer_lens;
     uint8_t command_position;
     bool args_end;
     enum Ops op_current;
+    size_t if_statment_pos;
+    size_t else_statment_pos;
+    enum Vm_State state;
+    int builtin_command_result;
     Output_Redirect_IO output_redirect_io;
     Input_Redirect_IO input_redirect_io;
     Pipe_IO pipes_io;
