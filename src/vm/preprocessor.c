@@ -135,7 +135,7 @@ void preprocessor_variable_process(Arg* rst arg, Vars* rst vars, Arena* rst scra
             puts("ncsh: could not load path to replace $PATH variable.");
             return;
         }
-        tokenizer_arg_update(arg, &var, scratch_arena);
+        preprocessor_arg_update(arg, &var, scratch);
         return;
     }
     else if (estrcmp(arg->val, arg->len, NCSH_HOME_VAR, sizeof(NCSH_HOME_VAR))) {
@@ -146,7 +146,7 @@ void preprocessor_variable_process(Arg* rst arg, Vars* rst vars, Arena* rst scra
             puts("ncsh: could not load home to replace $HOME variable.");
             return;
         }
-        tokenizer_arg_update(arg, &var, scratch_arena);
+        preprocessor_arg_update(arg, &var, scratch);
         return;
     }
     else {
