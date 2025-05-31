@@ -133,6 +133,8 @@ void tokenizer_variable_process(Arg* rst arg, Vars* rst vars, Arena* rst scratch
             puts("ncsh: could not load path to replace $PATH variable.");
             return;
         }
+        tokenizer_arg_update(arg, &var, scratch_arena);
+        return;
     }
     else if (estrcmp(arg->val, arg->len, NCSH_HOME_VAR, sizeof(NCSH_HOME_VAR))) {
 
@@ -142,6 +144,8 @@ void tokenizer_variable_process(Arg* rst arg, Vars* rst vars, Arena* rst scratch
             puts("ncsh: could not load home to replace $HOME variable.");
             return;
         }
+        tokenizer_arg_update(arg, &var, scratch_arena);
+        return;
     }
     else {
         char* key = arg->val + 1; // skip first value in arg->val (the $)
