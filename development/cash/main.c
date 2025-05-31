@@ -34,6 +34,41 @@ struct ncsh_Directory {
     char path[PATH_MAX];
 };
 
+void cash_mode(int mode)
+{
+    char* name;
+    switch (mode) {
+    case 0: {
+        name = "normal";
+        break;
+    }
+    case 1: {
+        name = "insert";
+        break;
+    }
+    default: {
+        name = "unknown";
+        break;
+    }
+    }
+    size_t len = strlen(name);
+
+    // Save the current cursor position
+    int y, x;
+    getyx(stdscr, y, x);
+
+    // Move to the bottom right corner of the screen
+    move(LINES - 1, COLS - len);
+
+    printw_color("%s", name, PAIR_AUTOCOMPLETE);
+
+    // Refresh the screen to display the message
+    refresh();
+
+    // Restore the original cursor position
+    move(y, x);
+}
+
 void cash_perror(const char* msg)
 {
     char err_msg[256];
@@ -133,7 +168,7 @@ void cash_init(void)
     keypad(stdscr, TRUE);
     noecho();
     curs_set(1);
-    scrollok(stdscr, TRUE);
+    // scrollok(stdscr, TRUE);
     cash_init_color();
     clear();
 }
@@ -153,13 +188,14 @@ void handle_input(char* buffer, struct ncsh_Directory* prompt_info)
     int character;
 
     printw("cash shell\n");
-    // cash_perror("cash: Perror test");
     refresh();
 
     while (1) {
         if (prompt(prompt_info) != EXIT_SUCCESS) {
             break;
         }
+        cash_perror("cash: Perror test");
+        cash_mode(0);
 
         while ((character = getch()) != '\004') {
             if (character == KEY_BACKSPACE) { // Handle backspace
@@ -187,6 +223,9 @@ void handle_input(char* buffer, struct ncsh_Directory* prompt_info)
                     delch();
                     memmove(&buffer[pos], &buffer[pos + 1], strlen(buffer) - pos);
                 }
+            }
+            else if (character == 'i') {
+                cash_mode(1);
             }
             else if (character == '\n' || character == '\r') {
                 move(getcury(stdscr), getcurx(stdscr) + 1);
@@ -217,7 +256,7 @@ void handle_input(char* buffer, struct ncsh_Directory* prompt_info)
             refresh();
         }
 
-        // cash_clear_perror();
+        cash_clear_perror();
         pos = 0;
         memset(buffer, '\0', CASH_MAX_INPUT);
     }

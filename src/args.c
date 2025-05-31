@@ -12,7 +12,7 @@ Args* args_alloc(Arena* rst arena)
     Args* args = arena_malloc(arena, 1, Args);
     args->count = 0;
     // allocate the first head as empty with no op (0 is OP_NONE)
-    args->head = arg_alloc(0, 1, "\0", arena);
+    args->head = arg_alloc(OP_NONE, 1, "\0", arena);
     return args;
 }
 
