@@ -320,7 +320,6 @@ int builtins_echo(char** rst buffer, size_t* rst buf_lens)
 
     // send output for echo
     arg = !echo_add_newline ? arg + 1 : buffer + 1;
-    arg_lens = !echo_add_newline ? arg_lens + 1 : buf_lens + 1;
     char* prev = NULL;
     while (arg && *arg) {
         prev = *arg;
