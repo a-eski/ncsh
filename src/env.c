@@ -1,6 +1,7 @@
 /* Copyright ncsh (C) by Alex Eski 2025 */
 /* environment.h: deal with environment variables and other things related to the environment. */
 
+#include <stdio.h>
 #define _POSIX_C_SOURCE 200809L
 #include "env.h"
 #include <assert.h>
@@ -29,8 +30,10 @@ Str env_path_get()
 {
     Str path;
     path.value = getenv(NCSH_PATH_VAL);
-    if (!path.value)
+    if (!path.value) {
+        puts("PATH not found.");
         return Str_Empty;
+    }
     path.length = strlen(path.value) + 1;
     return path;
 }
