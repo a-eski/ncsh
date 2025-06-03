@@ -390,8 +390,13 @@ def run_acceptance_tests(prompt_directory_option, prompt_user_option, is_custom_
   row = syntax_tests(row)
   row = expansion_tests(row)
   row = variables_tests(row)
-  row = parser_tests(row)
-  row = logic_tests(row)
+  parser_tests(row)
+  @tty.send_line(%(exit))
+
+  row = 0
+  @tty = TTYtest.new_terminal(%(PS1='$ ' ./bin/ncsh), width: 180, height: 160)
+  row = startup_tests(row, false)
+  logic_tests(row)
   # row = paste_tests(row)
   # row = multiline_tests(row)
 end

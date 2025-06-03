@@ -83,7 +83,8 @@ end
 def true_if_test(row)
   assert_check_new_row(row)
 
-  @tty.send_line('if [ true ]; then echo hello; fi')
+  @tty.send_keys_exact('if [ true ]; then echo hello; fi')
+  @tty.send_newline
   row += 1
   @tty.assert_row(row, 'hello')
   row += 1
@@ -93,7 +94,8 @@ end
 
 def false_if_test(row)
   assert_check_new_row(row)
-  @tty.send_line('if [ false ]; then echo hello; fi')
+  @tty.send_keys_exact('if [ false ]; then echo hello; fi')
+  @tty.send_newline
   row += 1
   assert_check_new_row(row)
   test_passed('false if test')
@@ -108,6 +110,6 @@ end
 def logic_tests(row)
   starting_tests('logic')
   row = and_tests(row)
-  or_tests(row)
-  # if_tests(row)
+  row = or_tests(row)
+  if_tests(row)
 end

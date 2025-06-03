@@ -148,8 +148,7 @@ int vm_redirection_start_if_needed(Token_Data* rst tokens, Vm_Data* rst vm)
     assert(tokens);
     assert(vm);
 
-    if (tokens->stdout_redirect && tokens->stdout_file) {
-        tokens->stdout_redirect->val = NULL;
+    if (tokens->stdout_file) {
         vm_stdout_redirection_start(tokens->stdout_file, tokens->output_append, &vm->output_redirect_io);
         if (vm->output_redirect_io.fd_stdout == -1) {
             return NCSH_COMMAND_FAILED_CONTINUE;
@@ -157,8 +156,7 @@ int vm_redirection_start_if_needed(Token_Data* rst tokens, Vm_Data* rst vm)
         debug("started stdout redirection");
     }
 
-    if (tokens->stdin_redirect && tokens->stdin_file) {
-        tokens->stdin_redirect->val = NULL;
+    if (tokens->stdin_file) {
         vm_stdin_redirection_start(tokens->stdin_file, &vm->input_redirect_io);
         if (vm->input_redirect_io.fd == -1) {
             return NCSH_COMMAND_FAILED_CONTINUE;
@@ -166,8 +164,7 @@ int vm_redirection_start_if_needed(Token_Data* rst tokens, Vm_Data* rst vm)
         debug("started stdin redirection");
     }
 
-    if (tokens->stderr_redirect && tokens->stderr_file) {
-        tokens->stderr_redirect->val = NULL;
+    if (tokens->stderr_file) {
         vm_stderr_redirection_start(tokens->stderr_file, tokens->output_append, &vm->output_redirect_io);
         if (vm->output_redirect_io.fd_stderr == -1) {
             return NCSH_COMMAND_FAILED_CONTINUE;
@@ -175,8 +172,7 @@ int vm_redirection_start_if_needed(Token_Data* rst tokens, Vm_Data* rst vm)
         debug("started stderr redirection");
     }
 
-    if (tokens->stdout_and_stderr_redirect && tokens->stdout_and_stderr_file) {
-        tokens->stdout_and_stderr_redirect->val = NULL;
+    if (tokens->stdout_and_stderr_file) {
         vm_stdout_and_stderr_redirection_start(tokens->stdout_and_stderr_file, tokens->output_append,
                                                &vm->output_redirect_io);
         if (vm->output_redirect_io.fd_stdout == -1) {
