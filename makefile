@@ -85,6 +85,7 @@ check :
 	make test_vars
 	make test_logic
 	make test_vm
+	make test_vm_buffer
 .PHONY: c
 c :
 	make check
