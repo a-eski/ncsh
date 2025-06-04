@@ -123,11 +123,11 @@ void vm_buffer_args_redirected_test()
     eassert(tokens.stdout_file);
     eassert(!strcmp(tokens.stdout_file, "t.txt"));
     eassert(tokens.logic_type == LT_NONE);
+
     Vm_Data vm = {0};
     vm.buffer = arena_malloc(&arena, VM_MAX_INPUT, char*);
     vm.buffer_lens = arena_malloc(&arena, VM_MAX_INPUT, size_t);
     Arg* arg = vm_buffer_set(args->head->next, &tokens, &vm);
-    (void)arg;
 
     eassert(!strcmp(vm.buffer[0], "ls"));
     eassert(vm.buffer_lens[0] == sizeof("ls"));
@@ -135,6 +135,34 @@ void vm_buffer_args_redirected_test()
     eassert(!vm.buffer[1]);
     eassert(vm.args_end);
     eassert(!arg->next);
+
+    ARENA_TEST_TEARDOWN;
+}
+
+void vm_buffer_if_test()
+{
+    ARENA_TEST_SETUP;
+
+    char* input = "if [ true ]; then echo hello; fi";
+    size_t len = strlen(input) + 1;
+    Args* args = parser_parse(input, len, &arena);
+    Token_Data tokens = {0};
+    preprocessor_preprocess(args, &tokens, NULL, &arena);
+    eassert(tokens.logic_type == LT_IF);
+    eassert(tokens.if_statements);
+
+    Vm_Data vm = {0};
+    vm.buffer = arena_malloc(&arena, VM_MAX_INPUT, char*);
+    vm.buffer_lens = arena_malloc(&arena, VM_MAX_INPUT, size_t);
+    Arg* arg = vm_buffer_set(args->head->next, &tokens, &vm);
+    (void)arg;
+
+    eassert(!strcmp(vm.buffer[0], "true"));
+    eassert(vm.buffer_lens[0] == sizeof("true"));
+    // eassert(vm.op_current == OP_STDOUT_REDIRECTION);
+    eassert(!vm.buffer[1]);
+    // eassert(vm.args_end);
+    eassert(!arg);
 
     ARENA_TEST_TEARDOWN;
 }
@@ -147,6 +175,7 @@ int main()
     etest_run(vm_buffer_args_test);
     etest_run(vm_buffer_args_piped_test);
     etest_run(vm_buffer_args_redirected_test);
+    etest_run(vm_buffer_if_test);
 
     etest_finish();
 
