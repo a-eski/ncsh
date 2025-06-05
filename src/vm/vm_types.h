@@ -57,11 +57,6 @@ typedef struct {
  */
 typedef struct {
     // Redirection
-    /*Arg* stdout_redirect;
-    Arg* stdin_redirect;
-    Arg* stderr_redirect;
-    Arg* stdout_and_stderr_redirect;*/
-
     char* stdout_file;
     char* stdin_file;
     char* stderr_file;

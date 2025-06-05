@@ -535,7 +535,7 @@ int vm_run(Args* rst args, Token_Data* rst tokens, Shell* rst shell, Arena* rst 
             }
         }
 
-        if (vm.state == VS_IN_CONDITIONS && vm.status != EXIT_SUCCESS) {
+        if (vm.state == VS_IN_CONDITIONS && vm.status != EXIT_SUCCESS && tokens->logic_type != LT_IF_ELSE) {
             debug("breaking out of VM loop, condition failed.");
             break;
         }
