@@ -1,11 +1,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "lib/arena_test_helper.h"
 #include "../src/eskilib/etest.h"
-#include "../src/vm/vm_types.h"
-#include "../src/vm/vm_buffer.h"
 #include "../src/vm/preprocessor.h"
+#include "../src/vm/vm_buffer.h"
+#include "../src/vm/vm_types.h"
+#include "lib/arena_test_helper.h"
 
 void vm_buffer_arg_test()
 {
@@ -149,20 +149,107 @@ void vm_buffer_if_test()
     Token_Data tokens = {0};
     preprocessor_preprocess(args, &tokens, NULL, &arena);
     eassert(tokens.logic_type == LT_IF);
+    eassert(tokens.conditions);
     eassert(tokens.if_statements);
 
     Vm_Data vm = {0};
     vm.buffer = arena_malloc(&arena, VM_MAX_INPUT, char*);
     vm.buffer_lens = arena_malloc(&arena, VM_MAX_INPUT, size_t);
-    Arg* arg = vm_buffer_set(args->head->next, &tokens, &vm);
-    (void)arg;
 
+    Arg* arg = vm_buffer_set(args->head->next, &tokens, &vm);
     eassert(!strcmp(vm.buffer[0], "true"));
     eassert(vm.buffer_lens[0] == sizeof("true"));
-    // eassert(vm.op_current == OP_STDOUT_REDIRECTION);
+    eassert(vm.op_current == OP_NONE);
     eassert(!vm.buffer[1]);
-    // eassert(vm.args_end);
     eassert(!arg);
+
+    arg = vm_buffer_set(arg, &tokens, &vm);
+    eassert(!arg);
+    eassert(!strcmp(vm.buffer[0], "echo"));
+    eassert(vm.buffer_lens[0] == sizeof("echo"));
+    eassert(!strcmp(vm.buffer[1], "hello"));
+    eassert(vm.buffer_lens[1] == sizeof("hello"));
+    eassert(vm.op_current == OP_NONE);
+    eassert(!vm.buffer[2]);
+
+    ARENA_TEST_TEARDOWN;
+}
+
+void vm_buffer_if_else_true_test()
+{
+    ARENA_TEST_SETUP;
+
+    char* input = "if [ true ]; then echo hello; else echo hi; fi";
+    size_t len = strlen(input) + 1;
+    Args* args = parser_parse(input, len, &arena);
+    Token_Data tokens = {0};
+    preprocessor_preprocess(args, &tokens, NULL, &arena);
+    eassert(tokens.logic_type == LT_IF_ELSE);
+    eassert(tokens.conditions);
+    eassert(tokens.if_statements);
+    eassert(tokens.else_statements);
+
+    Vm_Data vm = {0};
+    vm.buffer = arena_malloc(&arena, VM_MAX_INPUT, char*);
+    vm.buffer_lens = arena_malloc(&arena, VM_MAX_INPUT, size_t);
+
+    Arg* arg = vm_buffer_set(args->head->next, &tokens, &vm);
+    eassert(!arg);
+    eassert(vm.state == VS_IN_CONDITIONS);
+    eassert(!strcmp(vm.buffer[0], "true"));
+    eassert(vm.buffer_lens[0] == sizeof("true"));
+    eassert(vm.op_current == OP_NONE);
+    eassert(!vm.buffer[1]);
+
+    arg = vm_buffer_set(arg, &tokens, &vm);
+    eassert(!arg);
+    eassert(vm.state == VS_IN_IF_STATEMENTS);
+    eassert(!strcmp(vm.buffer[0], "echo"));
+    eassert(vm.buffer_lens[0] == sizeof("echo"));
+    eassert(!strcmp(vm.buffer[1], "hello"));
+    eassert(vm.buffer_lens[1] == sizeof("hello"));
+    eassert(vm.op_current == OP_NONE);
+    eassert(!vm.buffer[2]);
+
+    ARENA_TEST_TEARDOWN;
+}
+
+void vm_buffer_if_else_false_test()
+{
+    ARENA_TEST_SETUP;
+
+    char* input = "if [ false ]; then echo hello; else echo hi; fi";
+    size_t len = strlen(input) + 1;
+    Args* args = parser_parse(input, len, &arena);
+    Token_Data tokens = {0};
+    preprocessor_preprocess(args, &tokens, NULL, &arena);
+    eassert(tokens.logic_type == LT_IF_ELSE);
+    eassert(tokens.conditions);
+    eassert(tokens.if_statements);
+    eassert(tokens.else_statements);
+
+    Vm_Data vm = {0};
+    vm.buffer = arena_malloc(&arena, VM_MAX_INPUT, char*);
+    vm.buffer_lens = arena_malloc(&arena, VM_MAX_INPUT, size_t);
+
+    Arg* arg = vm_buffer_set(args->head->next, &tokens, &vm);
+    eassert(!arg);
+    eassert(vm.state == VS_IN_CONDITIONS);
+    eassert(!strcmp(vm.buffer[0], "false"));
+    eassert(vm.buffer_lens[0] == sizeof("false"));
+    eassert(vm.op_current == OP_NONE);
+    eassert(!vm.buffer[1]);
+
+    vm.status = EXIT_FAILURE; // simulate failure to have else case set
+    arg = vm_buffer_set(arg, &tokens, &vm);
+    eassert(!arg);
+    eassert(vm.state == VS_IN_ELSE_STATEMENTS);
+    eassert(!strcmp(vm.buffer[0], "echo"));
+    eassert(vm.buffer_lens[0] == sizeof("echo"));
+    eassert(!strcmp(vm.buffer[1], "hi"));
+    eassert(vm.buffer_lens[1] == sizeof("hi"));
+    eassert(vm.op_current == OP_NONE);
+    eassert(!vm.buffer[2]);
 
     ARENA_TEST_TEARDOWN;
 }
@@ -176,6 +263,8 @@ int main()
     etest_run(vm_buffer_args_piped_test);
     etest_run(vm_buffer_args_redirected_test);
     etest_run(vm_buffer_if_test);
+    etest_run(vm_buffer_if_else_true_test);
+    etest_run(vm_buffer_if_else_false_test);
 
     etest_finish();
 

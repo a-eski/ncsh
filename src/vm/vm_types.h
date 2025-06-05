@@ -93,9 +93,9 @@ enum Command_Type {
 
 enum Vm_State {
     VS_NORMAL = 0,
-    VS_CONDITION_PROCESSING,
-    VS_IF_STATEMENTS_PROCESSING,
-    VS_ELSE_STATEMENTS_PROCESSING
+    VS_IN_CONDITIONS,
+    VS_IN_IF_STATEMENTS,
+    VS_IN_ELSE_STATEMENTS
 };
 
 /* Output_Redirect_IO
@@ -135,6 +135,7 @@ typedef struct {
     size_t if_statment_pos;
     size_t else_statment_pos;
     enum Vm_State state;
+    int status;
     int builtin_command_result;
     Output_Redirect_IO output_redirect_io;
     Input_Redirect_IO input_redirect_io;

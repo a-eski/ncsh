@@ -404,18 +404,17 @@ int vm_background_job_run(Args* rst args, Processes* rst processes,
 }*/
 
 /* VM */
-int vm_status;
 enum Command_Type vm_command_type;
 int vm_execvp_result;
 int vm_result;
 int vm_pid;
 
 #define VM_COMMAND_DIED_MESSAGE "ncsh: Command child process died, cause unknown.\n"
-void vm_status_check()
+void vm_status_check(Vm_Data* rst vm)
 {
-    if (WIFEXITED(vm_status)) {
-        if ((vm_status = WEXITSTATUS(vm_status))) {
-            fprintf(stderr, "ncsh: Command child process failed with status %d\n", WEXITSTATUS(vm_status));
+    if (WIFEXITED(vm->status)) {
+        if ((vm->status = WEXITSTATUS(vm->status))) {
+            fprintf(stderr, "ncsh: Command child process failed with status %d\n", WEXITSTATUS(vm->status));
         }
 #ifdef NCSH_DEBUG
         else {
@@ -425,8 +424,8 @@ void vm_status_check()
         // return EXIT_SUCCESS;
     }
 #ifdef NCSH_DEBUG
-    else if (WIFSIGNALED(vm_status)) {
-        fprintf(stderr, "ncsh: Command child process died from signal %d\n", WTERMSIG(vm_status));
+    else if (WIFSIGNALED(vm->status)) {
+        fprintf(stderr, "ncsh: Command child process died from signal %d\n", WTERMSIG(vm->status));
     }
     else {
         if (write(STDERR_FILENO, VM_COMMAND_DIED_MESSAGE, sizeof(VM_COMMAND_DIED_MESSAGE) - 1) == -1) {
@@ -436,16 +435,16 @@ void vm_status_check()
 #endif /* NCSH_DEBUG */
 }
 
-int vm_result_aggregate(int builtin_command_result)
+int vm_result_aggregate(Vm_Data* rst vm)
 {
     if (vm_execvp_result == EXECVP_FAILED) {
         return NCSH_COMMAND_EXIT_FAILURE;
     }
-    if (vm_status == EXIT_FAILURE) {
+    if (vm->status == EXIT_FAILURE) {
         return NCSH_COMMAND_FAILED_CONTINUE;
     }
-    if (builtin_command_result != NCSH_COMMAND_NONE) {
-        return builtin_command_result;
+    if (vm->builtin_command_result != NCSH_COMMAND_NONE) {
+        return vm->builtin_command_result;
     }
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }
@@ -513,8 +512,8 @@ int vm_run(Args* rst args, Token_Data* rst tokens, Shell* rst shell, Arena* rst 
 
             pid_t waitpid_result;
             while (1) {
-                vm_status = 0;
-                waitpid_result = waitpid(vm_pid, &vm_status, WUNTRACED);
+                vm.status = 0;
+                waitpid_result = waitpid(vm_pid, &vm.status, WUNTRACED);
 
                 // check for errors
                 if (waitpid_result == -1) {
@@ -524,7 +523,7 @@ int vm_run(Args* rst args, Token_Data* rst tokens, Shell* rst shell, Arena* rst 
                     }
 
                     perror(RED "ncsh: Error waiting for child process to exit" RESET);
-                    vm_status = EXIT_FAILURE;
+                    vm.status = EXIT_FAILURE;
                     break;
                 }
 
@@ -536,7 +535,7 @@ int vm_run(Args* rst args, Token_Data* rst tokens, Shell* rst shell, Arena* rst 
             }
         }
 
-        if (vm.state == VS_CONDITION_PROCESSING && vm_status != EXIT_SUCCESS) {
+        if (vm.state == VS_IN_CONDITIONS && vm.status != EXIT_SUCCESS) {
             debug("breaking out of VM loop, condition failed.");
             break;
         }
@@ -552,7 +551,7 @@ int vm_run(Args* rst args, Token_Data* rst tokens, Shell* rst shell, Arena* rst 
 
     vm_redirection_stop_if_needed(&vm);
 
-    vm_result = vm_result_aggregate(vm.builtin_command_result);
+    vm_result = vm_result_aggregate(&vm);
     return vm_result;
 }
 
