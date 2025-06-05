@@ -85,6 +85,7 @@ check :
 	make test_vars
 	make test_logic
 	make test_vm
+	make test_vm_buffer
 .PHONY: c
 c :
 	make check
@@ -317,6 +318,14 @@ test_logic :
 .PHONY: tl
 tl :
 	make test_logic
+
+.PHONY: test_vm_buffer
+test_vm_buffer :
+	$(CC) $(STD) $(debug_flags) ./src/arena.c ./src/alias.c ./src/env.c ./src/vm/vars.c ./src/args.c ./src/parser.c ./src/vm/logic.c ./src/vm/vm_buffer.c ./src/vm/preprocessor.c ./tests/vm_buffer_tests.c -o ./bin/vm_buffer_tests
+	./bin/vm_buffer_tests
+.PHONY: tvb
+tvb :
+	make test_vm_buffer
 
 .PHONY: clang_format
 clang_format :

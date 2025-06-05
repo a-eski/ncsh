@@ -212,9 +212,9 @@ Logic_Result logic_if_preprocess(Arg* arg, Token_Data* rst tokens, Arena* rst sc
         return (Logic_Result){.type = LT_CODE, .val.code = NCSH_COMMAND_FAILED_CONTINUE};
 
     if (arg->next)
-        return (Logic_Result){.type = LT_IF, .val.arg = arg->next};
+        return (Logic_Result){.type = LT_IF_ELSE, .val.arg = arg->next};
     else
-        return (Logic_Result){.type = LT_IF, .val.arg = arg};
+        return (Logic_Result){.type = LT_IF_ELSE, .val.arg = arg};
 }
 
 Logic_Result logic_preprocess(Arg* rst arg, Token_Data* rst tokens, Arena* rst scratch)

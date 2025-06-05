@@ -80,8 +80,62 @@ def or_tests(row)
   false_or_test(row)
 end
 
+def true_if_test(row)
+  assert_check_new_row(row)
+
+  @tty.send_keys_exact('if [ true ]; then echo hello; fi')
+  @tty.send_newline
+  row += 1
+  @tty.assert_row(row, 'hello')
+  row += 1
+  test_passed('true if test')
+  row
+end
+
+def false_if_test(row)
+  assert_check_new_row(row)
+  @tty.send_keys_exact('if [ false ]; then echo hello; fi')
+  @tty.send_newline
+  row += 1
+  assert_check_new_row(row)
+  test_passed('false if test')
+  row
+end
+
+def true_if_else_test(row)
+  assert_check_new_row(row)
+
+  @tty.send_keys_exact('if [ true ]; then echo hello; else echo hi; fi')
+  @tty.send_newline
+  row += 1
+  @tty.assert_row(row, 'hello')
+  row += 1
+  test_passed('true if else test')
+  row
+end
+
+def false_if_else_test(row)
+  assert_check_new_row(row)
+  @tty.send_keys_exact('if [ false ]; then echo hello; else echo hi; fi')
+  @tty.send_newline
+  row += 1
+  @tty.assert_row(row, 'hi')
+  row += 1
+  assert_check_new_row(row)
+  test_passed('false if else test')
+  row
+end
+
+def if_tests(row)
+  row = true_if_test(row)
+  row = false_if_test(row)
+  row = true_if_else_test(row)
+  false_if_else_test(row)
+end
+
 def logic_tests(row)
-  starting_tests('logic tests')
+  starting_tests('logic')
   row = and_tests(row)
-  or_tests(row)
+  row = or_tests(row)
+  if_tests(row)
 end

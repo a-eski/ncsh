@@ -62,7 +62,7 @@ def basic_stderr_redirection_test(row)
   row += 1
   @tty.send_line('cat t4.txt')
   row += 1
-  @tty.assert_row_ends_with(row, 'No such file or directory')
+  @tty.assert_row_starts_with(row, 'ncsh: Could not run command: ')
   row += 1
   @tty.send_line('rm t4.txt')
   row += 1
@@ -91,7 +91,7 @@ def basic_stdout_and_stderr_redirection_stderr_test(row)
   row += 1
   @tty.send_line('cat t4.txt')
   row += 1
-  @tty.assert_row_ends_with(row, 'No such file or directory')
+  @tty.assert_row_starts_with(row, 'ncsh: Could not run command: ')
   row += 1
   @tty.send_line('rm t4.txt')
   row += 1

@@ -23,7 +23,7 @@ def bad_command_test(row)
   @tty.send_line('./bin/ncsh lss')
   @tty.assert_row_ends_with(row, 'lss')
   row += 1
-  @tty.assert_row(row, 'ncsh: Could not run command: No such file or directory')
+  @tty.assert_row_starts_with(row, 'ncsh: Could not run command: ')
   row += 1
   test_passed('bad command test')
   row

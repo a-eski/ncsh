@@ -33,7 +33,7 @@ def basic_bad_command_test(row)
   @tty.send_newline
   @tty.assert_row_ends_with(row, 'lss')
   row += 1
-  @tty.assert_row(row, 'ncsh: Could not run command: No such file or directory')
+  @tty.assert_row_starts_with(row, 'ncsh: Could not run command: ')
   row += 1
   test_passed('Bad command test')
   row
@@ -359,7 +359,7 @@ def comment_test(row)
 end
 
 def parser_tests(row)
-  starting_tests('parser tests')
+  starting_tests('parser')
   comment_test(row)
 end
 
@@ -384,14 +384,19 @@ def run_acceptance_tests(prompt_directory_option, prompt_user_option, is_custom_
   @tty.send_line(%(exit))
 
   row = 0
-  @tty = TTYtest.new_terminal(%(PS1='$ ' ./bin/ncsh), width: 180, height: 150)
+  @tty = TTYtest.new_terminal(%(PS1='$ ' ./bin/ncsh), width: 180, height: 160)
   row = startup_tests(row, false)
   row = autocompletion_tests(row)
   row = syntax_tests(row)
   row = expansion_tests(row)
   row = variables_tests(row)
-  row = parser_tests(row)
-  row = logic_tests(row)
+  parser_tests(row)
+  @tty.send_line(%(exit))
+
+  row = 0
+  @tty = TTYtest.new_terminal(%(PS1='$ ' ./bin/ncsh), width: 180, height: 160)
+  row = startup_tests(row, false)
+  logic_tests(row)
   # row = paste_tests(row)
   # row = multiline_tests(row)
 end

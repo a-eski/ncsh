@@ -100,7 +100,7 @@ void logic_preprocess_if_else_test()
 
     Logic_Result result = logic_preprocess(args->head->next, &tokens, &arena);
 
-    eassert(result.type == LT_IF);
+    eassert(result.type == LT_IF_ELSE);
     eassert(result.val.arg);
     eassert(result.val.arg->op == OP_FI);
 

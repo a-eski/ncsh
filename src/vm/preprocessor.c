@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "../alias.h"
@@ -234,7 +235,9 @@ int preprocessor_ops_process(Args* rst args, Token_Data* rst tokens, Shell* rst 
             if (!arg->next || !arg->next->val)
                 break;
             tokens->stdout_file = arg->next->val;
-            tokens->stdout_redirect = arg;
+            arg = NULL;
+            if (prev)
+                prev->next = NULL;
             break;
         }
         case OP_STDOUT_REDIRECTION_APPEND: {
@@ -242,7 +245,9 @@ int preprocessor_ops_process(Args* rst args, Token_Data* rst tokens, Shell* rst 
             if (!arg->next || !arg->next->val)
                 break;
             tokens->stdout_file = arg->next->val;
-            tokens->stdout_redirect = arg;
+            arg = NULL;
+            if (prev)
+                prev->next = NULL;
             tokens->output_append = true;
             break;
         }
@@ -251,7 +256,9 @@ int preprocessor_ops_process(Args* rst args, Token_Data* rst tokens, Shell* rst 
             if (!arg->next || !arg->next->val)
                 break;
             tokens->stdin_file = arg->next->val;
-            tokens->stdin_redirect = arg;
+            arg = NULL;
+            if (prev)
+                prev->next = NULL;
             break;
         }
         case OP_STDERR_REDIRECTION: {
@@ -259,7 +266,9 @@ int preprocessor_ops_process(Args* rst args, Token_Data* rst tokens, Shell* rst 
             if (!arg->next || !arg->next->val)
                 break;
             tokens->stderr_file = arg->next->val;
-            tokens->stderr_redirect = arg;
+            arg = NULL;
+            if (prev)
+                prev->next = NULL;
             break;
         }
         case OP_STDERR_REDIRECTION_APPEND: {
@@ -267,7 +276,9 @@ int preprocessor_ops_process(Args* rst args, Token_Data* rst tokens, Shell* rst 
             if (!arg->next || !arg->next->val)
                 break;
             tokens->stderr_file = arg->next->val;
-            tokens->stderr_redirect = arg;
+            arg = NULL;
+            if (prev)
+                prev->next = NULL;
             tokens->output_append = true;
             break;
         }
@@ -276,7 +287,9 @@ int preprocessor_ops_process(Args* rst args, Token_Data* rst tokens, Shell* rst 
             if (!arg->next || !arg->next->val)
                 break;
             tokens->stdout_and_stderr_file = arg->next->val;
-            tokens->stdout_and_stderr_redirect = arg;
+            arg = NULL;
+            if (prev)
+                prev->next = NULL;
             break;
         }
         case OP_STDOUT_AND_STDERR_REDIRECTION_APPEND: {
@@ -284,7 +297,9 @@ int preprocessor_ops_process(Args* rst args, Token_Data* rst tokens, Shell* rst 
             if (!arg->next || !arg->next->val)
                 break;
             tokens->stdout_and_stderr_file = arg->next->val;
-            tokens->stdout_and_stderr_redirect = arg;
+            arg = NULL;
+            if (prev)
+                prev->next = NULL;
             tokens->output_append = true;
             break;
         }
