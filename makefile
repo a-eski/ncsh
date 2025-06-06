@@ -9,7 +9,7 @@ debug_flags = -Wall -Wextra -Werror -Wpedantic -pedantic-errors -Wsign-conversio
 release_flags = -Wall -Wextra -Werror -pedantic-errors -Wsign-conversion -Wformat=2 -Wshadow -Wvla -O3 -DNDEBUG
 # fuzz_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -Wwrite-strings -fsanitize=address,leak,fuzzer -DNDEBUG -g
 fuzz_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,leak,fuzzer -DNDEBUG -g
-objects = obj/main.o obj/arena.o obj/noninteractive.o obj/ncreadline.o obj/vm_buffer.o obj/vm.o obj/syntax_validator.o obj/logic.o obj/preprocessor.o obj/terminal.o obj/efile.o obj/hashset.o obj/vars.o obj/args.o obj/parser.o obj/builtins.o obj/history.o obj/ac.o obj/env.o obj/alias.o obj/config.o obj/fzf.o obj/z.o
+objects = obj/main.o obj/arena.o obj/noninteractive.o obj/ncreadline.o obj/pipe.o obj/redirection.o obj/vm_buffer.o obj/vm.o obj/syntax_validator.o obj/logic.o obj/preprocessor.o obj/terminal.o obj/efile.o obj/hashset.o obj/vars.o obj/args.o obj/parser.o obj/builtins.o obj/history.o obj/ac.o obj/env.o obj/alias.o obj/config.o obj/fzf.o obj/z.o
 target = ./bin/ncsh
 
 ifeq ($(CC), gcc)
@@ -297,7 +297,7 @@ tv :
 
 .PHONY: test_vm
 test_vm :
-	$(CC) $(STD) $(debug_flags) -DNCSH_VM_TEST ./src/arena.c ./src/args.c ./src/parser.c ./src/eskilib/efile.c ./src/readline/hashset.c ./src/vm/vars.c ./src/readline/history.c ./src/z/fzf.c ./src/z/z.c ./src/env.c ./src/alias.c ./src/config.c ./src/vm/logic.c ./src/vm/vm_buffer.c ./src/vm/vm.c ./src/vm/syntax_validator.c ./src/vm/preprocessor.c ./src/vm/builtins.c ./tests/vm_tests.c -o ./bin/vm_tests
+	$(CC) $(STD) $(debug_flags) -DNCSH_VM_TEST ./src/arena.c ./src/args.c ./src/parser.c ./src/eskilib/efile.c ./src/readline/hashset.c ./src/vm/vars.c ./src/readline/history.c ./src/z/fzf.c ./src/z/z.c ./src/env.c ./src/alias.c ./src/config.c ./src/vm/logic.c ./src/vm/vm_buffer.c ./src/vm/vm.c ./src/vm/syntax_validator.c ./src/vm/preprocessor.c ./src/vm/builtins.c ./src/vm/pipe.c ./src/vm/redirection.c ./tests/vm_tests.c -o ./bin/vm_tests
 	./bin/vm_tests
 .PHONY: tvm
 tvm :

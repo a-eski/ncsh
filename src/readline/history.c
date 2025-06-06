@@ -332,13 +332,13 @@ int history_command_display(History* rst history)
 {
     assert(history);
     if (!history || !history->count) {
-        return NCSH_COMMAND_SUCCESS_CONTINUE;
+        return EXIT_SUCCESS;
     }
 
     for (size_t i = 0; i < history->count; ++i) {
         printf("%zu %s\n", i + 1, history->entries[i].value);
     }
-    return NCSH_COMMAND_SUCCESS_CONTINUE;
+    return EXIT_SUCCESS;
 }
 
 [[nodiscard]]
@@ -346,17 +346,17 @@ int history_command_count(History* rst history)
 {
     assert(history);
     printf("history count: %zu\n", history->count);
-    return NCSH_COMMAND_SUCCESS_CONTINUE;
+    return EXIT_SUCCESS;
 }
 
 [[nodiscard]]
 int history_command_clean(History* rst history, Arena* rst arena, Arena* rst scratch_arena)
 {
     if (history_clean(history, arena, *scratch_arena) != E_SUCCESS) {
-        return NCSH_COMMAND_FAILED_CONTINUE;
+        return EXIT_FAILURE_CONTINUE;
     }
 
-    return NCSH_COMMAND_SUCCESS_CONTINUE;
+    return EXIT_SUCCESS;
 }
 
 [[nodiscard]]
@@ -385,7 +385,7 @@ int history_command_remove(char* rst value, size_t value_len, History* rst histo
     assert(history);
 
     if (history_clean(history, arena, *scratch_arena) != E_SUCCESS) {
-        return NCSH_COMMAND_FAILED_CONTINUE;
+        return EXIT_FAILURE_CONTINUE;
     }
 
     for (size_t i = 0; i < history->count; ++i) {
@@ -395,9 +395,9 @@ int history_command_remove(char* rst value, size_t value_len, History* rst histo
             history_remove_entries_shift(i, history);
             --history->count;
             printf("ncsh history: removed entry: %s\n", value);
-            return NCSH_COMMAND_SUCCESS_CONTINUE;
+            return EXIT_SUCCESS;
         }
     }
 
-    return NCSH_COMMAND_FAILED_CONTINUE;
+    return EXIT_FAILURE_CONTINUE;
 }

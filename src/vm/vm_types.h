@@ -126,12 +126,18 @@ typedef struct {
     size_t* buffer_lens;
     uint8_t command_position;
     bool args_end;
+
     enum Ops op_current;
+    enum Vm_State state;
+    enum Command_Type command_type;
+
+    size_t conditions_pos;
     size_t if_statment_pos;
     size_t else_statment_pos;
-    enum Vm_State state;
+
     int status;
-    int builtin_command_result;
+    int exec_result;
+
     Output_Redirect_IO output_redirect_io;
     Input_Redirect_IO input_redirect_io;
     Pipe_IO pipes_io;

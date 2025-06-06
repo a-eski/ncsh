@@ -66,9 +66,7 @@ int noninteractive(int argc, char** rst argv)
 
     debug_argsv(argc, argv);
 
-    int command_result = noninteractive_run(argv + 1, (size_t)argc - 1, &shell);
-
-    int exit_code = command_result == NCSH_COMMAND_EXIT_FAILURE ? EXIT_FAILURE : EXIT_SUCCESS;
+    int exit_code = noninteractive_run(argv + 1, (size_t)argc - 1, &shell);
 
     free(memory);
 

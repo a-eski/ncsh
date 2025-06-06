@@ -21,17 +21,22 @@
 #include "args.c"
 #include "config.c"
 #include "env.c"
+#include "parser.c"
+
 #include "main.c"
 #include "noninteractive.c"
-#include "parser.c"
+
 #include "readline/ac.c"
 #include "readline/hashset.c"
 #include "readline/history.c"
 #include "readline/ncreadline.c"
 #include "readline/terminal.c"
+
 #include "vm/builtins.c"
 #include "vm/logic.c"
+#include "vm/pipe.c"
 #include "vm/preprocessor.c"
+#include "vm/redirection.c"
 #include "vm/syntax_validator.c"
 #include "vm/vars.c"
 #include "vm/vm.c"

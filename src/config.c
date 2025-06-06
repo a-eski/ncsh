@@ -168,8 +168,6 @@ void config_process(FILE* rst file, Arena* rst arena, Arena* rst scratch_arena)
 
     if (path.length && update_path)
         setenv(PATH, path.value, true);
-
-    debugf("user aliases count: %zu\n", user_aliases_count);
 }
 
 /* config_file_load

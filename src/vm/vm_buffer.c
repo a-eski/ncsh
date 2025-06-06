@@ -15,6 +15,7 @@ Arg* vm_buffer_set_command_next(Arg* rst arg, Token_Data* rst tokens, Vm_Data* r
     if (!arg) {
         vm->buffer[0] = NULL;
         vm->args_end = true;
+        return NULL;
     }
 
     if (arg->op == OP_ASSIGNMENT) {
@@ -22,10 +23,18 @@ Arg* vm_buffer_set_command_next(Arg* rst arg, Token_Data* rst tokens, Vm_Data* r
         if (!arg) {
             vm->buffer[0] = NULL;
             vm->args_end = true;
+            return NULL;
+        }
+        if (arg->op == OP_AND || arg->op == OP_OR) {
+            arg = arg->next;
+            if (!arg) {
+                vm->buffer[0] = NULL;
+                vm->args_end = true;
+            }
         }
     }
 
-    if (arg && (arg->op == OP_AND || arg->op == OP_OR)) {
+    /*if (arg && (arg->op == OP_AND || arg->op == OP_OR)) {
         arg = arg->next;
         if (!arg) {
             vm->buffer[0] = NULL;
@@ -36,10 +45,12 @@ Arg* vm_buffer_set_command_next(Arg* rst arg, Token_Data* rst tokens, Vm_Data* r
     if (!arg) {
         vm->buffer[0] = NULL;
         vm->args_end = true;
-    }
+    }*/
 
     size_t vm_buf_pos = 0;
-    while (arg && arg->val && arg->op == OP_CONSTANT) {
+    while (arg && arg->val) {
+        if (arg->op == OP_PIPE || arg->op == OP_AND || arg->op == OP_OR)
+            break;
         assert(arg->val[arg->len - 1] == '\0');
         vm->buffer[vm_buf_pos] = arg->val;
         vm->buffer_lens[vm_buf_pos] = arg->len;

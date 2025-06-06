@@ -2,6 +2,7 @@
 /* z: a better cd command */
 /* idea credited to autojump/z/z-oxide and many others */
 
+#pragma once
 #ifndef Z_H_
 #define Z_H_
 

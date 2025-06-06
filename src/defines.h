@@ -13,12 +13,13 @@
 
 #include "debug.h"
 
-#define NCSH_VERSION "0.0.3.16"
+#define NCSH_VERSION "0.0.3.17"
 
 /* EXIT_* Constants
  * Exit values used by a multitude of functions and areas in the shell.
- * Note: the VM has its own set of exit codes, NCSH_COMMAND_* defined below.
  */
+#define EXIT_SYNTAX_ERROR -3
+#define EXIT_FAILURE_CONTINUE -2
 #define EXIT_IO_FAILURE -1
 #ifndef EXIT_SUCCESS
 #    define EXIT_SUCCESS 0 // Defined in stdlib.h
@@ -61,18 +62,6 @@
         fflush(stderr);                                                                                                \
         return EXIT_FAILURE;                                                                                           \
     }
-
-/* NCSH_COMMAND_* Macro constants
- * Values returned by the VM when executing commands.
- */
-#define NCSH_COMMAND_NONE -5 // command not run yet
-#define NCSH_COMMAND_EXECVP_FAILED -3
-#define NCSH_COMMAND_SYNTAX_ERROR -2
-#define NCSH_COMMAND_EXIT_FAILURE -1
-#define NCSH_COMMAND_EXIT 0
-#define NCSH_COMMAND_SUCCESS_CONTINUE 1
-#define NCSH_COMMAND_FAILED_CONTINUE 2
-
 
 /* CMP_* Macro functions
  * compare first few characters of a string, 1, 2, or 3

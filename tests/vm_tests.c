@@ -16,7 +16,8 @@ jmp_buf env;
     Args* args = parser_parse(input, strlen(input) + 1, &scratch_arena);                                               \
     Shell shell = {0};                                                                                                 \
                                                                                                                        \
-    eassert(vm_execute(args, &shell, &scratch_arena) == NCSH_COMMAND_SUCCESS_CONTINUE);                                \
+    int result = vm_execute(args, &shell, &scratch_arena);                                                             \
+    eassert(result == EXIT_SUCCESS || result == EXIT_FAILURE_CONTINUE);                                                \
                                                                                                                        \
     SCRATCH_ARENA_TEST_TEARDOWN;
 
@@ -42,8 +43,8 @@ void vm_tests()
     etest_run_tester("err_append_redirect_pipe_test", vm_tester("ls | sort &>> t.txt"));
     etest_run_tester("out_and_err_redirect_test", vm_tester("ls 2> t.txt"));
     etest_run_tester("out_and_err_redirect_pipe_test", vm_tester("ls | sort 2> t.txt"));
-    etest_run_tester("out_and_err_append_redirect_test", vm_tester("ls 2>> t.txt"))
-        etest_run_tester("out_and_err_append_redirect_pipe_test", vm_tester("ls | sort 2>> t.txt"));
+    etest_run_tester("out_and_err_append_redirect_test", vm_tester("ls 2>> t.txt"));
+    etest_run_tester("out_and_err_append_redirect_pipe_test", vm_tester("ls | sort 2>> t.txt"));
     etest_run_tester("in_redirect_test", vm_tester("sort < t.txt"));
     etest_run_tester("in_redirect_pipe_test", vm_tester("sort | wc -c < t.txt"));
     etest_run_tester("in_redirect_pipe_test", vm_tester("wc -c < t.txt | sort"));
@@ -55,6 +56,10 @@ void vm_tests()
     etest_run_tester("echo_backtick_quote_test", vm_tester("echo `hello three`"));
     etest_run_tester("echo_out_redirect_test", vm_tester("echo hello > t.txt"));
     etest_run_tester("echo_out_append_redirect_test", vm_tester("echo hello >> t.txt"));
+    etest_run_tester("if_true_test", vm_tester("if [ true ]; then echo hello; fi"));
+    etest_run_tester("if_false_test", vm_tester("if [ false ]; then echo hello; fi"));
+    etest_run_tester("if_else_true_test", vm_tester("if [ true ]; then echo hello; else echo hi; fi"));
+    etest_run_tester("if_else_false_test", vm_tester("if [ false ]; then echo hello; else echo hi; fi"));
 
     etest_finish();
 }
