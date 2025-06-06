@@ -68,6 +68,31 @@ void vm_buffer_args_test()
     ARENA_TEST_TEARDOWN;
 }
 
+void vm_buffer_args_and_test()
+{
+    ARENA_TEST_SETUP;
+
+    char* input = "false && true";
+    size_t len = strlen(input) + 1;
+    Args* args = parser_parse(input, len, &arena);
+    Token_Data tokens = {0};
+    preprocessor_preprocess(args, &tokens, NULL, &arena);
+    eassert(tokens.logic_type == LT_NONE);
+    Vm_Data vm = {0};
+    vm.buffer = arena_malloc(&arena, VM_MAX_INPUT, char*);
+    vm.buffer_lens = arena_malloc(&arena, VM_MAX_INPUT, size_t);
+
+    Arg* arg = vm_buffer_set(args->head->next, &tokens, &vm);
+    eassert(vm.buffer[0]);
+    eassert(!strcmp(vm.buffer[0], "false"));
+    eassert(vm.buffer_lens[0] == sizeof("false"));
+    eassert(vm.op_current == OP_AND);
+    eassert(!vm.buffer[1]);
+    eassert(!arg->next);
+
+    ARENA_TEST_TEARDOWN;
+}
+
 void vm_buffer_args_piped_test()
 {
     ARENA_TEST_SETUP;
@@ -131,7 +156,6 @@ void vm_buffer_args_redirected_test()
 
     eassert(!strcmp(vm.buffer[0], "ls"));
     eassert(vm.buffer_lens[0] == sizeof("ls"));
-    // eassert(vm.op_current == OP_STDOUT_REDIRECTION);
     eassert(!vm.buffer[1]);
     eassert(vm.args_end);
     eassert(!arg->next);
@@ -161,6 +185,46 @@ void vm_buffer_if_test()
     eassert(vm.buffer_lens[0] == sizeof("true"));
     eassert(vm.op_current == OP_NONE);
     eassert(!vm.buffer[1]);
+    eassert(!arg);
+
+    arg = vm_buffer_set(arg, &tokens, &vm);
+    eassert(!arg);
+    eassert(!strcmp(vm.buffer[0], "echo"));
+    eassert(vm.buffer_lens[0] == sizeof("echo"));
+    eassert(!strcmp(vm.buffer[1], "hello"));
+    eassert(vm.buffer_lens[1] == sizeof("hello"));
+    eassert(vm.op_current == OP_NONE);
+    eassert(!vm.buffer[2]);
+
+    ARENA_TEST_TEARDOWN;
+}
+
+void vm_buffer_if_multiple_condition_test()
+{
+    ARENA_TEST_SETUP;
+
+    char* input = "if [ true && false ]; then echo hello; fi";
+    size_t len = strlen(input) + 1;
+    Args* args = parser_parse(input, len, &arena);
+    Token_Data tokens = {0};
+    preprocessor_preprocess(args, &tokens, NULL, &arena);
+    eassert(tokens.logic_type == LT_IF);
+    eassert(tokens.conditions);
+    eassert(tokens.if_statements);
+
+    Vm_Data vm = {0};
+    vm.buffer = arena_malloc(&arena, VM_MAX_INPUT, char*);
+    vm.buffer_lens = arena_malloc(&arena, VM_MAX_INPUT, size_t);
+
+    Arg* arg = vm_buffer_set(args->head->next, &tokens, &vm);
+    eassert(!strcmp(vm.buffer[0], "true"));
+    eassert(vm.buffer_lens[0] == sizeof("true"));
+    eassert(!strcmp(vm.buffer[1], "&&"));
+    eassert(vm.buffer_lens[1] == sizeof("&&"));
+    eassert(!strcmp(vm.buffer[2], "false"));
+    eassert(vm.buffer_lens[2] == sizeof("false"));
+    eassert(vm.op_current == OP_NONE);
+    eassert(!vm.buffer[3]);
     eassert(!arg);
 
     arg = vm_buffer_set(arg, &tokens, &vm);
@@ -260,9 +324,11 @@ int main()
 
     etest_run(vm_buffer_arg_test);
     etest_run(vm_buffer_args_test);
+    etest_run(vm_buffer_args_and_test);
     etest_run(vm_buffer_args_piped_test);
     etest_run(vm_buffer_args_redirected_test);
     etest_run(vm_buffer_if_test);
+    etest_run(vm_buffer_if_multiple_condition_test);
     etest_run(vm_buffer_if_else_true_test);
     etest_run(vm_buffer_if_else_false_test);
 

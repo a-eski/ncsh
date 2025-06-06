@@ -127,11 +127,14 @@ bool logic_is_arg_valid_statement(Arg* arg)
 {
     if (!arg)
         return false;
+
     switch (arg->op) {
     case OP_CONSTANT:
     case OP_TRUE:
     case OP_FALSE:
     case OP_EQUALS:
+    case OP_AND:
+    case OP_OR:
     case OP_LESS_THAN:
     case OP_GREATER_THAN: {
         return true;
@@ -167,11 +170,11 @@ Logic_Result logic_if_preprocess(Arg* arg, Token_Data* rst tokens, Arena* rst sc
 
     arg = arg->next;
     if (arg->op != OP_CONDITION_START)
-        return (Logic_Result){.type = LT_CODE, .val.code = NCSH_COMMAND_FAILED_CONTINUE};
+        return (Logic_Result){.type = LT_CODE, .val.code = EXIT_FAILURE_CONTINUE};
     arg = arg->next;
 
     if (!logic_is_arg_valid_statement(arg))
-        return (Logic_Result){.type = LT_CODE, .val.code = NCSH_COMMAND_FAILED_CONTINUE};
+        return (Logic_Result){.type = LT_CODE, .val.code = EXIT_FAILURE_CONTINUE};
 
     do {
         debugf("adding arg to conditions %s\n", arg->val);
@@ -180,15 +183,15 @@ Logic_Result logic_if_preprocess(Arg* arg, Token_Data* rst tokens, Arena* rst sc
     } while (logic_is_arg_valid_statement(arg));
 
     if (arg->op != OP_CONDITION_END)
-        return (Logic_Result){.type = LT_CODE, .val.code = NCSH_COMMAND_FAILED_CONTINUE};
+        return (Logic_Result){.type = LT_CODE, .val.code = EXIT_FAILURE_CONTINUE};
 
     arg = arg->next;
     if (arg->op != OP_THEN)
-        return (Logic_Result){.type = LT_CODE, .val.code = NCSH_COMMAND_FAILED_CONTINUE};
+        return (Logic_Result){.type = LT_CODE, .val.code = EXIT_FAILURE_CONTINUE};
 
     arg = arg->next;
     if (!logic_is_arg_valid_statement(arg))
-        return (Logic_Result){.type = LT_CODE, .val.code = NCSH_COMMAND_FAILED_CONTINUE};
+        return (Logic_Result){.type = LT_CODE, .val.code = EXIT_FAILURE_CONTINUE};
 
     debug("processing if statements");
     arg = logic_statements_process(arg, tokens->if_statements, scratch);
@@ -198,18 +201,18 @@ Logic_Result logic_if_preprocess(Arg* arg, Token_Data* rst tokens, Arena* rst sc
     }
 
     if (arg->op != OP_ELSE)
-        return (Logic_Result){.type = LT_CODE, .val.code = NCSH_COMMAND_FAILED_CONTINUE};
+        return (Logic_Result){.type = LT_CODE, .val.code = EXIT_FAILURE_CONTINUE};
 
     arg = arg->next;
     if (!logic_is_arg_valid_statement(arg))
-        return (Logic_Result){.type = LT_CODE, .val.code = NCSH_COMMAND_FAILED_CONTINUE};
+        return (Logic_Result){.type = LT_CODE, .val.code = EXIT_FAILURE_CONTINUE};
 
     debug("processing else statements");
     logic_tokens_else_init(tokens, scratch);
     arg = logic_statements_process(arg, tokens->else_statements, scratch);
 
     if (arg->op != OP_FI)
-        return (Logic_Result){.type = LT_CODE, .val.code = NCSH_COMMAND_FAILED_CONTINUE};
+        return (Logic_Result){.type = LT_CODE, .val.code = EXIT_FAILURE_CONTINUE};
 
     if (arg->next)
         return (Logic_Result){.type = LT_IF_ELSE, .val.arg = arg->next};
@@ -225,7 +228,7 @@ Logic_Result logic_preprocess(Arg* rst arg, Token_Data* rst tokens, Arena* rst s
 
     if (!arg) {
         puts("ncsh: logic processing failed, NULL arg passed in.");
-        return (Logic_Result){.type = LT_CODE, .val.code = NCSH_COMMAND_FAILED_CONTINUE};
+        return (Logic_Result){.type = LT_CODE, .val.code = EXIT_FAILURE_CONTINUE};
     }
 
     switch (arg->op) {
@@ -235,7 +238,7 @@ Logic_Result logic_preprocess(Arg* rst arg, Token_Data* rst tokens, Arena* rst s
     default: {
         puts("ncsh: an unsupported operation was found while trying to process control flow logic (i.e. 'if', 'while', "
              "'for', etc.).");
-        return (Logic_Result){.type = LT_CODE, .val.code = NCSH_COMMAND_FAILED_CONTINUE};
+        return (Logic_Result){.type = LT_CODE, .val.code = EXIT_FAILURE_CONTINUE};
     }
     }
 }
@@ -272,6 +275,6 @@ Logic_Result logic_preprocess(Arg* rst arg, Token_Data* rst tokens, Arena* rst s
         }
 
         if (!result)
-            return (Logic_Result){.type = LT_CODE, .val.code = NCSH_COMMAND_FAILED_CONTINUE};
+            return (Logic_Result){.type = LT_CODE, .val.code = EXIT_FAILURE_CONTINUE};
     }
  */

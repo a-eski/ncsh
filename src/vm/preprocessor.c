@@ -379,7 +379,7 @@ int preprocessor_ops_process(Args* rst args, Token_Data* rst tokens, Shell* rst 
     }
     ++tokens->number_of_pipe_commands;
 
-    return NCSH_COMMAND_SUCCESS_CONTINUE;
+    return EXIT_SUCCESS;
 }
 
 [[nodiscard]]
@@ -389,11 +389,11 @@ int preprocessor_preprocess(Args* rst args, Token_Data* rst tokens, Shell* rst s
     assert(tokens);
     assert(scratch);
     if (!args || !args->head || !args->count)
-        return NCSH_COMMAND_FAILED_CONTINUE;
+        return EXIT_FAILURE_CONTINUE;
 
     int result;
-    if ((result = preprocessor_ops_process(args, tokens, shell, scratch)) != NCSH_COMMAND_SUCCESS_CONTINUE)
+    if ((result = preprocessor_ops_process(args, tokens, shell, scratch)) != EXIT_SUCCESS)
         return result;
 
-    return NCSH_COMMAND_SUCCESS_CONTINUE;
+    return EXIT_SUCCESS;
 }

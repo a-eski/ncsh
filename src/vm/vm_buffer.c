@@ -8,45 +8,30 @@
 #include "../args.h"
 #include "vm_types.h"
 
-Arg* vm_buffer_set_command_next(Arg* rst arg, Token_Data* rst tokens, Vm_Data* rst vm)
+Arg* vm_buffer_set_command_next(Arg* rst arg, Vm_Data* rst vm)
 {
-    (void)tokens;
-
-    if (!arg) {
-        vm->buffer[0] = NULL;
-        vm->args_end = true;
-    }
-
-    if (arg->op == OP_ASSIGNMENT) {
+    if (arg && arg->op == OP_ASSIGNMENT) {
         arg = arg->next;
-        if (!arg) {
-            vm->buffer[0] = NULL;
-            vm->args_end = true;
-        }
-    }
-
-    if (arg && (arg->op == OP_AND || arg->op == OP_OR)) {
-        arg = arg->next;
-        if (!arg) {
-            vm->buffer[0] = NULL;
-            vm->args_end = true;
-        }
+        if (arg && (arg->op == OP_AND || arg->op == OP_OR))
+            arg = arg->next;
     }
 
     if (!arg) {
         vm->buffer[0] = NULL;
         vm->args_end = true;
+        return NULL;
     }
 
     size_t vm_buf_pos = 0;
-    while (arg && arg->val && arg->op == OP_CONSTANT) {
+    while (arg && arg->val) {
+        if (arg->op == OP_PIPE || arg->op == OP_AND || arg->op == OP_OR)
+            break;
         assert(arg->val[arg->len - 1] == '\0');
         vm->buffer[vm_buf_pos] = arg->val;
         vm->buffer_lens[vm_buf_pos] = arg->len;
         debugf("set vm->buffer[%zu] to %s, %zu\n", vm_buf_pos, arg->val, arg->len);
 
         if (!arg->next || !arg->next->val) {
-            debug("at end of args");
             vm->args_end = true;
             ++vm_buf_pos;
             break;
@@ -126,7 +111,7 @@ Arg* vm_buffer_set(Arg* rst arg, Token_Data* rst tokens, Vm_Data* rst vm)
         return NULL;
     }
     default: {
-        return vm_buffer_set_command_next(arg, tokens, vm);
+        return vm_buffer_set_command_next(arg, vm);
     }
     }
 }

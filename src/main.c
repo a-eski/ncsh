@@ -183,11 +183,11 @@ int main(int argc, char** argv)
 
         int command_result = run(&shell, shell.scratch_arena);
         switch (command_result) {
-        case NCSH_COMMAND_EXIT_FAILURE: {
+        case EXIT_FAILURE: {
             exit_code = EXIT_FAILURE;
             goto exit;
         }
-        case NCSH_COMMAND_EXIT: {
+        case EXIT_SUCCESS_END: {
             goto exit;
         }
         }

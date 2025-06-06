@@ -13,10 +13,10 @@ int tok_invalid_syntax_check_res;
 int syntax_validator_error_write(char* rst message, size_t message_length)
 {
     if (write(STDIN_FILENO, message, message_length) == -1) {
-        return NCSH_COMMAND_EXIT_FAILURE;
+        return EXIT_FAILURE;
     }
 
-    return NCSH_COMMAND_SYNTAX_ERROR;
+    return EXIT_SYNTAX_ERROR;
 }
 
 #define INVALID_SYNTAX(message) syntax_validator_error_write(message, sizeof(message) - 1)
@@ -334,12 +334,12 @@ int syntax_validator_validate(Args* rst args)
 {
     assert(args);
 
-    tok_invalid_syntax_check_res = NCSH_COMMAND_SUCCESS_CONTINUE;
+    tok_invalid_syntax_check_res = EXIT_SUCCESS;
     syntax_validatator_first_arg_check(args->head->next->op);
-    if (tok_invalid_syntax_check_res != NCSH_COMMAND_SUCCESS_CONTINUE)
+    if (tok_invalid_syntax_check_res != EXIT_SUCCESS)
         return tok_invalid_syntax_check_res;
     syntax_validator_last_arg_check(args);
-    if (tok_invalid_syntax_check_res != NCSH_COMMAND_SUCCESS_CONTINUE)
+    if (tok_invalid_syntax_check_res != EXIT_SUCCESS)
         return tok_invalid_syntax_check_res;
     syntax_validator_check(args);
     return tok_invalid_syntax_check_res;

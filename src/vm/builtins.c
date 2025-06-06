@@ -3,8 +3,6 @@
 
 #ifndef _DEFAULT_SOURCE
 #define _DEFAULT_SOURCE
-#include <setjmp.h>
-#include <string.h>
 #endif /* ifndef _DEFAULT_SOURCE */
 #ifndef _POXIC_C_SOURCE
 #define _POSIX_C_SOURCE 200809L
@@ -14,9 +12,11 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <linux/limits.h>
+#include <setjmp.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -104,6 +104,12 @@ int builtins_kill(char** rst buffer, size_t* rst buf_lens);
 #define NCSH_VERSION_CMD "version"
 int builtins_version(char** rst buffer, size_t* rst buf_lens);
 
+#define NCSH_TRUE "true"
+int builtins_true(char** rst buffer, size_t* rst buf_lens);
+
+#define NCSH_FALSE "false"
+int builtins_false(char** rst buffer, size_t* rst buf_lens);
+
 /*#define NCSH_TRUE "true"
 int builtins_true(char** rst buffer, size_t* rst buf_lens);
 
@@ -143,6 +149,8 @@ enum Builtins_Disabled : long {
     BF_VERSION =     1 << 6,
     BF_ALIAS =       1 << 7,
     BF_UNALIAS =     1 << 8,
+    BF_TRUE =        1 << 9,
+    BF_FALSE =       1 << 10,
     /*BF_ENABLE =      1 << 7,
     BF_DISABLE =     1 << 8,
     BF_EXPORT =      1 << 9,
@@ -169,7 +177,8 @@ static const Builtin builtins[] = {
     {.flag = BF_KILL, .length = sizeof(NCSH_KILL), .value = NCSH_KILL, .func = &builtins_kill},
     {.flag = BF_VERSION, .length = sizeof(NCSH_VERSION_CMD), .value = NCSH_VERSION_CMD, .func = &builtins_version},
     {.flag = BF_UNALIAS, .length = sizeof(NCSH_UNALIAS), .value = NCSH_UNALIAS, .func = &builtins_unalias},
-    // {.flag = BF_ALIAS, .length = sizeof(NCSH_ALIAS), .value = NCSH_ALIAS, .func = &builtins_alias},
+    {.flag = BF_TRUE, .length = sizeof(NCSH_TRUE), .value = NCSH_TRUE, .func = &builtins_true},
+    {.flag = BF_FALSE, .length = sizeof(NCSH_FALSE), .value = NCSH_FALSE, .func = &builtins_false},
     /*{.flag = BF_ENABLE, .length = sizeof(NCSH_ENABLE), .value = NCSH_ENABLE, .func = &builtins_enable},
     {.flag = BF_DISABLE, .length = sizeof(NCSH_DISABLE), .value = NCSH_DISABLE, .func = &builtins_disable},
     {.flag = BF_EXPORT, .length = sizeof(NCSH_EXPORT), .value = NCSH_EXPORT, .func = &builtins_export},
@@ -190,7 +199,7 @@ int builtins_z(z_Database* rst z_db, char** rst buffer, size_t* rst buf_lens, Ar
 
     if (buf_lens[0] == 0) {
         z(NULL, 0, NULL, z_db, arena, *scratch_arena);
-        return NCSH_COMMAND_SUCCESS_CONTINUE;
+        return EXIT_SUCCESS;
     }
 
     assert(buffer && buffer + 1);
@@ -204,23 +213,23 @@ int builtins_z(z_Database* rst z_db, char** rst buffer, size_t* rst buf_lens, Ar
         // z print
         if (estrcmp(*arg, *arg_lens, Z_PRINT, sizeof(Z_PRINT))) {
             z_print(z_db);
-            return NCSH_COMMAND_SUCCESS_CONTINUE;
+            return EXIT_SUCCESS;
         }
         // z count
         if (estrcmp(*arg, *arg_lens, Z_COUNT, sizeof(Z_COUNT))) {
             z_count(z_db);
-            return NCSH_COMMAND_SUCCESS_CONTINUE;
+            return EXIT_SUCCESS;
         }
 
         // z
         char cwd[PATH_MAX] = {0};
         if (!getcwd(cwd, PATH_MAX)) {
             perror(RED "ncsh z: Could not load cwd information" RESET);
-            return NCSH_COMMAND_EXIT_FAILURE;
+            return EXIT_FAILURE;
         }
 
         z(*arg, *arg_lens, cwd, z_db, arena, *scratch_arena);
-        return NCSH_COMMAND_SUCCESS_CONTINUE;
+        return EXIT_SUCCESS;
     }
 
     if (arg && arg[1] && !arg[2]) {
@@ -230,26 +239,26 @@ int builtins_z(z_Database* rst z_db, char** rst buffer, size_t* rst buf_lens, Ar
         if (estrcmp(*arg, *arg_lens, Z_ADD, sizeof(Z_ADD))) {
             assert(arg[1] && arg_lens[1]);
             if (z_add(arg[1], arg_lens[1], z_db, arena) != Z_SUCCESS) {
-                return NCSH_COMMAND_FAILED_CONTINUE;
+                return EXIT_FAILURE_CONTINUE;
             }
 
-            return NCSH_COMMAND_SUCCESS_CONTINUE;
+            return EXIT_SUCCESS;
         }
         // z rm/remove
         else if (estrcmp(*arg, *arg_lens, Z_RM, sizeof(Z_RM)) || estrcmp(*arg, *arg_lens, Z_REMOVE, sizeof(Z_REMOVE))) {
             assert(arg[1] && arg_lens[1]);
             if (z_remove(arg[1], arg_lens[1], z_db) != Z_SUCCESS) {
-                return NCSH_COMMAND_FAILED_CONTINUE;
+                return EXIT_FAILURE_CONTINUE;
             }
 
-            return NCSH_COMMAND_SUCCESS_CONTINUE;
+            return EXIT_SUCCESS;
         }
     }
 
     if (builtins_write(vm_output_fd, Z_COMMAND_NOT_FOUND_MESSAGE, sizeof(Z_COMMAND_NOT_FOUND_MESSAGE) - 1) == -1) {
-        return NCSH_COMMAND_EXIT_FAILURE;
+        return EXIT_FAILURE;
     }
-    return NCSH_COMMAND_SUCCESS_CONTINUE;
+    return EXIT_SUCCESS;
 }
 
 #define HISTORY_COMMAND_NOT_FOUND_MESSAGE "ncsh history: command not found.\n"
@@ -268,9 +277,9 @@ int builtins_history(History* rst history, char** rst buffer, size_t* rst buf_le
     if (!arg || !*arg) {
         if (builtins_write(vm_output_fd, HISTORY_COMMAND_NOT_FOUND_MESSAGE,
                            sizeof(HISTORY_COMMAND_NOT_FOUND_MESSAGE) - 1) == -1) {
-            return NCSH_COMMAND_EXIT_FAILURE;
+            return EXIT_FAILURE;
         }
-        return NCSH_COMMAND_FAILED_CONTINUE;
+        return EXIT_FAILURE_CONTINUE;
     }
 
     size_t* arg_lens = buf_lens + 1;
@@ -292,28 +301,28 @@ int builtins_history(History* rst history, char** rst buffer, size_t* rst buf_le
         if (estrcmp(*arg, *arg_lens, NCSH_HISTORY_ADD, sizeof(NCSH_HISTORY_ADD))) {
             assert(arg[1] && arg_lens[1]);
             if (history_command_add(arg[1], arg_lens[1], history, arena) != Z_SUCCESS) {
-                return NCSH_COMMAND_FAILED_CONTINUE;
+                return EXIT_FAILURE_CONTINUE;
             }
 
-            return NCSH_COMMAND_SUCCESS_CONTINUE;
+            return EXIT_SUCCESS;
         }
         // history rm/remove
         else if (estrcmp(*arg, *arg_lens, NCSH_HISTORY_RM, sizeof(NCSH_HISTORY_RM)) ||
                  estrcmp(*arg, *arg_lens, NCSH_HISTORY_REMOVE, sizeof(NCSH_HISTORY_REMOVE))) {
             assert(arg[1] && arg_lens[1]);
             if (history_command_remove(arg[1], arg_lens[1], history, arena, scratch_arena) != Z_SUCCESS) {
-                return NCSH_COMMAND_FAILED_CONTINUE;
+                return EXIT_FAILURE_CONTINUE;
             }
 
-            return NCSH_COMMAND_SUCCESS_CONTINUE;
+            return EXIT_SUCCESS;
         }
     }
 
     if (builtins_write(vm_output_fd, HISTORY_COMMAND_NOT_FOUND_MESSAGE,
                        sizeof(HISTORY_COMMAND_NOT_FOUND_MESSAGE) - 1) == -1) {
-        return NCSH_COMMAND_EXIT_FAILURE;
+        return EXIT_FAILURE;
     }
-    return NCSH_COMMAND_FAILED_CONTINUE;
+    return EXIT_FAILURE_CONTINUE;
 }
 
 #define ALIAS_ADD_USAGE "ncsh: alias: add usage: alias add {alias} {command}.\n"
@@ -328,7 +337,7 @@ int builtins_alias(char** rst buffer, size_t* rst buf_lens, Arena* rst arena)
 
     if (!buffer || !buffer[1]) {
         alias_print(vm_output_fd);
-        return NCSH_COMMAND_SUCCESS_CONTINUE;
+        return EXIT_SUCCESS;
     }
 
     // skip first position since we know it is 'alias'
@@ -339,9 +348,9 @@ int builtins_alias(char** rst buffer, size_t* rst buf_lens, Arena* rst arena)
         ++arg_len;
         if (!arg || !*arg) {
             if (builtins_write(vm_output_fd, ALIAS_ADD_USAGE, sizeof(ALIAS_ADD_USAGE) - 1) == -1) {
-                return NCSH_COMMAND_EXIT_FAILURE;
+                return EXIT_FAILURE;
             }
-            return NCSH_COMMAND_FAILED_CONTINUE;
+            return EXIT_FAILURE_CONTINUE;
         }
         char* alias = *arg;
         size_t a_len = *arg_len;
@@ -349,9 +358,9 @@ int builtins_alias(char** rst buffer, size_t* rst buf_lens, Arena* rst arena)
         ++arg_len;
         if (!arg || !*arg) {
             if (builtins_write(vm_output_fd, ALIAS_ADD_USAGE, sizeof(ALIAS_ADD_USAGE) - 1) == -1) {
-                return NCSH_COMMAND_EXIT_FAILURE;
+                return EXIT_FAILURE;
             }
-            return NCSH_COMMAND_FAILED_CONTINUE;
+            return EXIT_FAILURE_CONTINUE;
         }
         char* command = *arg;
         size_t c_len = *arg_len;
@@ -363,9 +372,9 @@ int builtins_alias(char** rst buffer, size_t* rst buf_lens, Arena* rst arena)
         ++arg_len;
         if (!arg || !*arg) {
             if (builtins_write(vm_output_fd, ALIAS_REMOVE_USAGE, sizeof(ALIAS_REMOVE_USAGE) - 1) == -1) {
-                return NCSH_COMMAND_EXIT_FAILURE;
+                return EXIT_FAILURE;
             }
-            return NCSH_COMMAND_FAILED_CONTINUE;
+            return EXIT_FAILURE_CONTINUE;
         }
         alias_remove(*arg, *arg_len);
     }
@@ -377,12 +386,12 @@ int builtins_alias(char** rst buffer, size_t* rst buf_lens, Arena* rst arena)
     }
     else {
         if (builtins_write(vm_output_fd, ALIAS_USAGE, sizeof(ALIAS_USAGE) - 1) == -1) {
-            return NCSH_COMMAND_EXIT_FAILURE;
+            return EXIT_FAILURE;
         }
-        return NCSH_COMMAND_FAILED_CONTINUE;
+        return EXIT_FAILURE_CONTINUE;
     }
 
-    return NCSH_COMMAND_SUCCESS_CONTINUE;
+    return EXIT_SUCCESS;
 }
 
 #define UNALIAS_USAGE                                                                                                  \
@@ -395,7 +404,7 @@ int builtins_unalias(char** rst buffer, size_t* rst buf_lens)
 
     if (!buffer || !buffer[1]) {
         alias_print(vm_output_fd);
-        return NCSH_COMMAND_SUCCESS_CONTINUE;
+        return EXIT_SUCCESS;
     }
 
     // skip first position since we know it is 'unalias'
@@ -404,7 +413,7 @@ int builtins_unalias(char** rst buffer, size_t* rst buf_lens)
     if (estrcmp(*arg, *arg_len, NCSH_UNALIAS_DELETE, sizeof(NCSH_UNALIAS_DELETE)) ||
         estrcmp(*arg, *arg_len, NCSH_UNALIAS_DELETE_ALIAS, sizeof(NCSH_UNALIAS_DELETE_ALIAS))) {
         alias_delete();
-        return NCSH_COMMAND_SUCCESS_CONTINUE;
+        return EXIT_SUCCESS;
     }
     else if (arg) {
         while (arg) {
@@ -415,12 +424,12 @@ int builtins_unalias(char** rst buffer, size_t* rst buf_lens)
     }
     else {
         if (builtins_write(vm_output_fd, UNALIAS_USAGE, sizeof(UNALIAS_USAGE) - 1) == -1) {
-            return NCSH_COMMAND_EXIT_FAILURE;
+            return EXIT_FAILURE;
         }
-        return NCSH_COMMAND_FAILED_CONTINUE;
+        return EXIT_FAILURE_CONTINUE;
     }
 
-    return NCSH_COMMAND_SUCCESS_CONTINUE;
+    return EXIT_SUCCESS;
 }
 
 [[nodiscard]]
@@ -428,7 +437,7 @@ int builtins_exit(char** rst buffer, size_t* rst buf_lens)
 {
     (void)buffer;
     (void)buf_lens;
-    return NCSH_COMMAND_EXIT;
+    return EXIT_SUCCESS_END;
 }
 
 [[nodiscard]]
@@ -439,7 +448,7 @@ int builtins_echo(char** rst buffer, size_t* rst buf_lens)
     size_t* arg_lens = buf_lens + 1;
     if (!arg || !*arg) {
         putchar('\n');
-        return NCSH_COMMAND_SUCCESS_CONTINUE;
+        return EXIT_SUCCESS;
     }
 
     bool echo_add_newline = true;
@@ -473,7 +482,7 @@ int builtins_echo(char** rst buffer, size_t* rst buf_lens)
         putchar('\n');
     }
 
-    return NCSH_COMMAND_SUCCESS_CONTINUE;
+    return EXIT_SUCCESS;
 }
 
 #define NCSH_TITLE "ncsh " NCSH_VERSION "\n"
@@ -515,7 +524,7 @@ int builtins_echo(char** rst buffer, size_t* rst buf_lens)
     constexpr size_t str##_len = sizeof(str) - 1;                                                                      \
     if (builtins_write(vm_output_fd, str, str##_len) == -1) {                                                          \
         perror(RED NCSH_ERROR_STDOUT RESET);                                                                           \
-        return NCSH_COMMAND_EXIT_FAILURE;                                                                              \
+        return EXIT_FAILURE;                                                                                           \
     }
 
 [[nodiscard]]
@@ -527,7 +536,7 @@ int builtins_help(char** rst buffer, size_t* rst buf_lens)
     constexpr size_t len = sizeof(NCSH_TITLE) - 1;
     if (builtins_write(vm_output_fd, NCSH_TITLE, len) == -1) {
         perror(RED NCSH_ERROR_STDOUT RESET);
-        return NCSH_COMMAND_EXIT_FAILURE;
+        return EXIT_FAILURE;
     }
 
     HELP_WRITE(NCSH_COPYRIGHT);
@@ -559,7 +568,7 @@ int builtins_help(char** rst buffer, size_t* rst buf_lens)
     // HELP_WRITE(HELP_AUTOCOMPLETIONS_MORE_INFO);
 
     fflush(stdout);
-    return NCSH_COMMAND_SUCCESS_CONTINUE;
+    return EXIT_SUCCESS;
 }
 
 #define NCSH_COULD_NOT_CD_MESSAGE "ncsh cd: could not change directory.\n"
@@ -575,21 +584,21 @@ int builtins_cd(char** rst buffer, size_t* rst buf_lens)
         char* home = getenv("HOME");
         if (!home) {
             if (builtins_write(STDERR_FILENO, NCSH_COULD_NOT_CD_MESSAGE, sizeof(NCSH_COULD_NOT_CD_MESSAGE) - 1) == -1)
-                return NCSH_COMMAND_EXIT_FAILURE;
+                return EXIT_FAILURE;
         }
         else if (chdir(home)) {
             perror("ncsh: could not change directory");
         }
 
-        return NCSH_COMMAND_SUCCESS_CONTINUE;
+        return EXIT_SUCCESS;
     }
 
     if (chdir(arg)) {
         if (builtins_write(STDERR_FILENO, NCSH_COULD_NOT_CD_MESSAGE, sizeof(NCSH_COULD_NOT_CD_MESSAGE) - 1) == -1)
-            return NCSH_COMMAND_EXIT_FAILURE;
+            return EXIT_FAILURE;
     }
 
-    return NCSH_COMMAND_SUCCESS_CONTINUE;
+    return EXIT_SUCCESS;
 }
 
 [[nodiscard]]
@@ -602,11 +611,11 @@ int builtins_pwd(char** rst buffer, size_t* rst buf_lens)
     if (!getcwd(path, sizeof(path))) {
         perror(RED "ncsh pwd: Error when getting current directory" RESET);
         fflush(stderr);
-        return NCSH_COMMAND_EXIT_FAILURE;
+        return EXIT_FAILURE;
     }
 
     puts(path);
-    return NCSH_COMMAND_SUCCESS_CONTINUE;
+    return EXIT_SUCCESS;
 }
 
 #define KILL_NOTHING_TO_KILL_MESSAGE "ncsh kill: nothing to kill, please pass in a process ID (PID).\n"
@@ -619,10 +628,10 @@ int builtins_kill(char** rst buffer, size_t* rst buf_lens)
     if (!buffer) {
         if (builtins_write(vm_output_fd, KILL_NOTHING_TO_KILL_MESSAGE, sizeof(KILL_NOTHING_TO_KILL_MESSAGE) - 1) ==
             -1) {
-            return NCSH_COMMAND_EXIT_FAILURE;
+            return EXIT_FAILURE;
         }
 
-        return NCSH_COMMAND_SUCCESS_CONTINUE;
+        return EXIT_SUCCESS;
     }
 
     // skip first position since we know it is 'kill'
@@ -630,27 +639,27 @@ int builtins_kill(char** rst buffer, size_t* rst buf_lens)
     if (!arg || !*arg) {
         if (builtins_write(vm_output_fd, KILL_NOTHING_TO_KILL_MESSAGE, sizeof(KILL_NOTHING_TO_KILL_MESSAGE) - 1) ==
             -1) {
-            return NCSH_COMMAND_EXIT_FAILURE;
+            return EXIT_FAILURE;
         }
 
-        return NCSH_COMMAND_SUCCESS_CONTINUE;
+        return EXIT_SUCCESS;
     }
 
     pid_t pid = atoi(arg);
     if (!pid) {
         if (builtins_write(vm_output_fd, KILL_COULDNT_PARSE_PID_MESSAGE, sizeof(KILL_COULDNT_PARSE_PID_MESSAGE) - 1) ==
             -1) {
-            return NCSH_COMMAND_EXIT_FAILURE;
+            return EXIT_FAILURE;
         }
-        return NCSH_COMMAND_FAILED_CONTINUE;
+        return EXIT_FAILURE_CONTINUE;
     }
 
     if (kill(pid, SIGTERM) != 0) {
         printf("ncsh kill: could not kill process with process ID (PID): %d\n", pid);
-        return NCSH_COMMAND_FAILED_CONTINUE;
+        return EXIT_FAILURE_CONTINUE;
     }
 
-    return NCSH_COMMAND_SUCCESS_CONTINUE;
+    return EXIT_SUCCESS;
 }
 
 int builtins_version(char** rst buffer, size_t* rst buf_lens)
@@ -658,7 +667,21 @@ int builtins_version(char** rst buffer, size_t* rst buf_lens)
     (void)buffer;
     (void)buf_lens;
     builtins_write(vm_output_fd, NCSH_TITLE, sizeof(NCSH_TITLE) - 1);
-    return NCSH_COMMAND_SUCCESS_CONTINUE;
+    return EXIT_SUCCESS;
+}
+
+int builtins_true(char** rst buffer, size_t* rst buf_lens)
+{
+    (void)buffer;
+    (void)buf_lens;
+    return EXIT_SUCCESS;
+}
+
+int builtins_false(char** rst buffer, size_t* rst buf_lens)
+{
+    (void)buffer;
+    (void)buf_lens;
+    return EXIT_FAILURE;
 }
 
 void builtins_print()
@@ -719,7 +742,7 @@ int builtins_disable(char** rst buffer, size_t* rst buf_lens)
         }
     }
 
-    return NCSH_COMMAND_SUCCESS_CONTINUE;
+    return EXIT_SUCCESS;
 }
 
 #define ENABLE_OPTION_NOT_SUPPORTED_MESSAGE "ncsh enable: command not found, options entered not supported.\n"
@@ -731,26 +754,26 @@ int builtins_enable(char** rst buffer, size_t* rst buf_lens)
     char** arg = buffer + 1;
     if (!arg) {
         builtins_print();
-        return NCSH_COMMAND_SUCCESS_CONTINUE;
+        return EXIT_SUCCESS;
     }
     size_t* arg_lens = buf_lens + 1;
 
     if (*arg_lens == 2) {
         if (CMP_2(*arg, "-a")) {
             builtins_print_enabled();
-            return NCSH_COMMAND_SUCCESS_CONTINUE;
+            return EXIT_SUCCESS;
         }
         else if (CMP_2(*arg, "-n")) {
             builtins_disable(buffer, buf_lens);
-            return NCSH_COMMAND_SUCCESS_CONTINUE;
+            return EXIT_SUCCESS;
         }
     }
 
     if (builtins_write(vm_output_fd, ENABLE_OPTION_NOT_SUPPORTED_MESSAGE,
                        sizeof(ENABLE_OPTION_NOT_SUPPORTED_MESSAGE) - 1) == -1) {
-        return NCSH_COMMAND_EXIT_FAILURE;
+        return EXIT_FAILURE;
     }
-    return NCSH_COMMAND_SUCCESS_CONTINUE;
+    return EXIT_SUCCESS;
 }
 
 // TODO: implement export
@@ -767,9 +790,9 @@ int builtins_export(Args* rst args, size_t* rst buf_lens)
     if (!arg || !arg->val) {
         if (builtins_write(vm_output_fd, EXPORT_OPTION_NOT_SUPPORTED_MESSAGE,
                            sizeof(EXPORT_OPTION_NOT_SUPPORTED_MESSAGE) - 1) == -1) {
-            return NCSH_COMMAND_EXIT_FAILURE;
+            return EXIT_FAILURE;
         }
-        return NCSH_COMMAND_FAILED_CONTINUE;
+        return EXIT_FAILURE_CONTINUE;
     }
 
     if (estrcmp(arg->val, arg->len, NCSH_PATH_VAR, sizeof(NCSH_PATH_VAR))) {
@@ -781,11 +804,11 @@ int builtins_export(Args* rst args, size_t* rst buf_lens)
     else {
         if (builtins_write(vm_output_fd, EXPORT_OPTION_NOT_SUPPORTED_MESSAGE,
                            sizeof(EXPORT_OPTION_NOT_SUPPORTED_MESSAGE) - 1) == -1) {
-            return NCSH_COMMAND_EXIT_FAILURE;
+            return EXIT_FAILURE;
         }
     }
 
-    return NCSH_COMMAND_SUCCESS_CONTINUE;
+    return EXIT_SUCCESS;
 }
 
 // TODO: implement declare
@@ -796,7 +819,7 @@ int builtins_export(Args* rst args, size_t* rst buf_lens)
 int builtins_set_e()
 {
     puts("set e detected");
-    return NCSH_COMMAND_SUCCESS_CONTINUE;
+    return EXIT_SUCCESS;
 }
 
 #define SET_NOTHING_TO_SET_MESSAGE "ncsh set: nothing to set, please pass in a value to set (i.e. '-e', '-c')\n"
@@ -811,19 +834,19 @@ int builtins_set(Args* rst args, size_t* rst buf_lens)
     Arg* arg = args->head->next->next;
     if (!arg || !arg->val) {
         if (builtins_write(vm_output_fd, SET_NOTHING_TO_SET_MESSAGE, sizeof(SET_NOTHING_TO_SET_MESSAGE) - 1) == -1) {
-            return NCSH_COMMAND_EXIT_FAILURE;
+            return EXIT_FAILURE;
         }
 
-        return NCSH_COMMAND_SUCCESS_CONTINUE;
+        return EXIT_SUCCESS;
     }
 
     if (arg->len > 3 || arg->val[0] != '-') {
         if (builtins_write(vm_output_fd, SET_VALID_OPERATIONS_MESSAGE, sizeof(SET_VALID_OPERATIONS_MESSAGE) - 1) ==
             -1) {
-            return NCSH_COMMAND_EXIT_FAILURE;
+            return EXIT_FAILURE;
         }
 
-        return NCSH_COMMAND_SUCCESS_CONTINUE;
+        return EXIT_SUCCESS;
     }
 
     switch (arg->val[1]) {
@@ -835,7 +858,7 @@ int builtins_set(Args* rst args, size_t* rst buf_lens)
     }
     }
 
-    return NCSH_COMMAND_SUCCESS_CONTINUE;
+    return EXIT_SUCCESS;
 }
 
 // not implemented
@@ -851,20 +874,20 @@ int builtins_unset(Args* rst args, size_t* rst buf_lens)
     if (!arg || !arg->val) {
         if (builtins_write(vm_output_fd, UNSET_NOTHING_TO_UNSET_MESSAGE, sizeof(UNSET_NOTHING_TO_UNSET_MESSAGE) - 1) ==
             -1) {
-            return NCSH_COMMAND_EXIT_FAILURE;
+            return EXIT_FAILURE;
         }
 
-        return NCSH_COMMAND_SUCCESS_CONTINUE;
+        return EXIT_SUCCESS;
     }
 
     /*bool is_set = var_exists(arg->val, &args->vars);
     if (!is_set) {
         printf("ncsh unset: no value found for '%s' to unset.\n", args->values[1]);
-        return NCSH_COMMAND_SUCCESS_CONTINUE;
+        return EXIT_SUCCESS;
     }*/
     // TODO: need a way to unset, var_set doesn't work
     // var_set(args->values[1], NULL, arena, &args->vars)
-    return NCSH_COMMAND_SUCCESS_CONTINUE;
+    return EXIT_SUCCESS;
 }
 
 /* builtins_check_and_run
@@ -875,26 +898,25 @@ bool builtins_check_and_run(Vm_Data* rst vm, Shell* rst shell, Arena* rst scratc
 {
     if (shell) {
         if (estrcmp(vm->buffer[0], vm->buffer_lens[0], Z, sizeof(Z))) {
-            vm->builtin_command_result =
-                builtins_z(&shell->z_db, vm->buffer, vm->buffer_lens, &shell->arena, scratch_arena);
+            vm->status = builtins_z(&shell->z_db, vm->buffer, vm->buffer_lens, &shell->arena, scratch_arena);
             return true;
         }
 
         if (estrcmp(vm->buffer[0], vm->buffer_lens[0], NCSH_HISTORY, sizeof(NCSH_HISTORY))) {
-            vm->builtin_command_result =
+            vm->status =
                 builtins_history(&shell->input.history, vm->buffer, vm->buffer_lens, &shell->arena, scratch_arena);
             return true;
         }
 
         if (estrcmp(vm->buffer[0], vm->buffer_lens[0], NCSH_ALIAS, sizeof(NCSH_ALIAS))) {
-            vm->builtin_command_result = builtins_alias(vm->buffer, vm->buffer_lens, &shell->arena);
+            vm->status = builtins_alias(vm->buffer, vm->buffer_lens, &shell->arena);
             return true;
         }
     }
 
     for (size_t i = 0; i < builtins_count; ++i) {
         if (estrcmp(vm->buffer[0], vm->buffer_lens[0], builtins[i].value, builtins[i].length)) {
-            vm->builtin_command_result = (*builtins[i].func)(vm->buffer, vm->buffer_lens);
+            vm->status = (*builtins[i].func)(vm->buffer, vm->buffer_lens);
             return true;
         }
     }
