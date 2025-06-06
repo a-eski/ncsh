@@ -86,17 +86,8 @@ void vm_buffer_args_and_test()
     eassert(vm.buffer[0]);
     eassert(!strcmp(vm.buffer[0], "false"));
     eassert(vm.buffer_lens[0] == sizeof("false"));
-
-    /*eassert(!strcmp(vm.buffer[1], "&&"));
-    eassert(vm.buffer_lens[1] == sizeof("&&"));
-
-    eassert(!strcmp(vm.buffer[2], "true"));
-    eassert(vm.buffer_lens[2] == sizeof("true"));*/
-
-    eassert(!vm.buffer[1]);
-
-    // eassert(vm.args_end);
     eassert(vm.op_current == OP_AND);
+    eassert(!vm.buffer[1]);
     eassert(!arg->next);
 
     ARENA_TEST_TEARDOWN;
@@ -165,7 +156,6 @@ void vm_buffer_args_redirected_test()
 
     eassert(!strcmp(vm.buffer[0], "ls"));
     eassert(vm.buffer_lens[0] == sizeof("ls"));
-    // eassert(vm.op_current == OP_STDOUT_REDIRECTION);
     eassert(!vm.buffer[1]);
     eassert(vm.args_end);
     eassert(!arg->next);

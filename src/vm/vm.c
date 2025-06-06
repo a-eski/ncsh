@@ -117,7 +117,8 @@ void vm_status_set(int pid, Vm_Data* rst vm)
     }
 }
 
-int vm_result_aggregate(Vm_Data* rst vm)
+[[nodiscard]]
+int vm_status_aggregate(Vm_Data* rst vm)
 {
     if (vm->exec_result == EXECVP_FAILED) {
         return EXIT_FAILURE;
@@ -213,7 +214,7 @@ int vm_run(Args* rst args, Token_Data* rst tokens, Shell* rst shell, Arena* rst 
     }
 
     redirection_stop_if_needed(&vm);
-    return vm_result_aggregate(&vm);
+    return vm_status_aggregate(&vm);
 }
 
 /* vm_execute

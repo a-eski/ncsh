@@ -131,7 +131,6 @@ typedef struct {
     enum Vm_State state;
     enum Command_Type command_type;
 
-    size_t conditions_pos;
     size_t if_statment_pos;
     size_t else_statment_pos;
 
