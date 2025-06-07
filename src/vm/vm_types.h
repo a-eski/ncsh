@@ -75,17 +75,10 @@ typedef struct {
     Commands* conditions;
     Statements* if_statements;
     Statements* else_statements;
+    // Statements* elif_statements;
 } Token_Data;
 
 /*** VM TYPES ***/
-/* enum Command_Type
- * Represents the command type, a shell builtin or external command that
- * needs to be called using fork/execvp */
-enum Command_Type {
-    CT_EXTERNAL = 0,
-    CT_BUILTIN = 1
-};
-
 enum Vm_State {
     VS_NORMAL = 0,
     VS_IN_CONDITIONS,
@@ -124,12 +117,12 @@ typedef struct {
 typedef struct {
     char** buffer;
     size_t* buffer_lens;
+    enum Ops* ops;
     uint8_t command_position;
     bool args_end;
 
     enum Ops op_current;
     enum Vm_State state;
-    enum Command_Type command_type;
 
     size_t if_statment_pos;
     size_t else_statment_pos;
