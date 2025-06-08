@@ -42,14 +42,17 @@ obj/%.o: src/z/%.c
 obj/%.o: src/%.c
 	$(cc_with_flags) -c $< -o $@
 
+# Normal release build
 .PHONY: release
 release:
 	make RELEASE=1
 
+# Normal debug build
 .PHONY: debug
 debug :
 	make -B RELEASE=0
 
+# Unity/jumbo release build
 .PHONY: unity
 unity :
 	$(CC) $(STD) $(release_flags) src/unity.c -o $(target)
@@ -58,6 +61,7 @@ unity :
 u :
 	make unity
 
+# Unity/jumbo debug build
 .PHONY: unity_debug
 unity_debug :
 	$(CC) $(STD) $(debug_flags) src/unity.c -o $(target)
@@ -65,11 +69,13 @@ unity_debug :
 ud:
 	make unity_debug
 
+# Install locally to DESTDIR (default /usr/bin/)
 .PHONY: install
 install : $(target)
 	strip $(target)
 	install -C $(target) $(DESTDIR)
 
+# Run the tests that get ran in CI
 .PHONY: check
 check :
 	set -e
@@ -90,6 +96,7 @@ check :
 c :
 	make check
 
+# Run User Acceptance Tests
 .PHONY: acceptance_tests
 acceptance_tests :
 	chmod +x ./acceptance_tests.sh
@@ -98,6 +105,7 @@ acceptance_tests :
 at :
 	make acceptance_tests
 
+# Run all tests including user acceptance tests
 .PHONY: check_local
 check_local :
 	set -e
@@ -108,6 +116,7 @@ check_local :
 l :
 	make check_local
 
+# Run history tests
 .PHONY: test_history
 test_history :
 	$(CC) $(STD) $(debug_flags) -DNCSH_HISTORY_TEST ./src/eskilib/efile.c ./src/readline/hashset.c ./src/arena.c ./src/readline/history.c ./tests/history_tests.c -o ./bin/history_tests
@@ -116,6 +125,7 @@ test_history :
 th :
 	make test_history
 
+# Run history fuzzer
 .PHONY: fuzz_history
 fuzz_history :
 	chmod +x ./create_corpus_dirs.sh
@@ -126,6 +136,7 @@ fuzz_history :
 fh :
 	make fuzz_history
 
+# Run autocompletion tests
 .PHONY: test_ac
 test_ac :
 	 # $(CC) $(STD) $(debug_flags) -DAC_DEBUG ./src/arena.c ./src/readline/ac.c ./tests/ac_tests.c -o ./bin/ac_tests
@@ -135,6 +146,7 @@ test_ac :
 tac :
 	make test_ac
 
+# Run autocompletion fuzzer
 .PHONY: fuzz_ac
 fuzz_ac :
 	chmod +x ./create_corpus_dirs.sh
@@ -145,6 +157,7 @@ fuzz_ac :
 fac :
 	make fuzz_ac
 
+# Run autocompletions benchmarks
 .PHONY: bench_ac
 bench_ac :
 	$(CC) $(STD) $(debug_flags) -DNDEBUG ./src/arena.c ./src/readline/ac.c ./tests/ac_bench.c -o ./bin/ac_bench
@@ -169,6 +182,7 @@ bench_ac_tests :
 bact :
 	make bench_ac_tests
 
+# Run parser tests
 .PHONY: test_parser
 test_parser :
 	$(CC) $(STD) $(debug_flags) ./src/arena.c ./src/args.c ./src/parser.c ./tests/parser_tests.c -o ./bin/parser_tests
@@ -177,6 +191,7 @@ test_parser :
 tp :
 	make test_parser
 
+# Run parser fuzzer
 .PHONY: fuzz_parser
 fuzz_parser :
 	chmod +x ./create_corpus_dirs.sh
@@ -187,6 +202,7 @@ fuzz_parser :
 fp :
 	make fuzz_parser
 
+# Run parser benchmarks
 .PHONY: bench_parser
 bench_parser :
 	$(CC) $(STD) $(debug_flags) -DNDEBUG ./src/arena.c ./src/vm/vars.c ./src/args.c ./src/parser.c ./tests/parser_bench.c -o ./bin/parser_bench
@@ -219,6 +235,7 @@ bash_bench_parser_and_vm :
 bbpv :
 	make bash_bench_parser_and_vm
 
+# Run z tests
 .PHONY: test_z
 test_z :
 	gcc -std=c2x -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined,leak -DZ_TEST ./src/arena.c ./src/z/fzf.c ./src/z/z.c ./tests/z_tests.c -o ./bin/z_tests
@@ -227,6 +244,7 @@ test_z :
 tz :
 	make test_z
 
+# Run z fuzzer
 .PHONY: fuzz_z
 fuzz_z :
 	chmod +x ./create_corpus_dirs.sh
@@ -237,6 +255,7 @@ fuzz_z :
 fz :
 	make fuzz_z
 
+# Run z add fuzzer
 .PHONY: fuzz_z_add
 fuzz_z_add :
 	chmod +x ./create_corpus_dirs.sh
@@ -247,6 +266,7 @@ fuzz_z_add :
 fza :
 	make fuzz_z_add
 
+# Run fzf tests
 .PHONY: test_fzf
 test_fzf :
 	$(CC) $(STD) -fsanitize=address,undefined,leak -g ./src/arena.c ./src/z/fzf.c ./tests/lib/examiner.c ./tests/fzf_tests.c -o ./bin/fzf_tests
@@ -255,6 +275,7 @@ test_fzf :
 tf :
 	make test_fzf
 
+# Run alias tests
 .PHONY: test_alias
 test_alias :
 	$(CC) $(STD) $(debug_flags) -DNCSH_HISTORY_TEST ./src/arena.c ./src/alias.c ./tests/alias_tests.c -o ./bin/alias_tests
@@ -263,6 +284,7 @@ test_alias :
 tal :
 	make test_alias
 
+# Run readline tests
 .PHONY: test_readline
 test_readline :
 	$(CC) $(STD) $(debug_flags) -DNCSH_HISTORY_TEST ./src/arena.c ./src/eskilib/efile.c ./src/readline/hashset.c ./src/readline/terminal.c ./src/readline/ac.c ./src/readline/history.c ./src/readline/ncreadline.c ./tests/ncreadline_tests.c -o ./bin/ncreadline_tests
@@ -271,6 +293,7 @@ test_readline :
 tr :
 	make test_readline
 
+# Run arena tests
 .PHONY: test_arena
 test_arena :
 	$(CC) $(STD) $(debug_flags) -DNCSH_HISTORY_TEST ./src/arena.c ./tests/arena_tests.c -o ./bin/arena_tests
@@ -279,6 +302,7 @@ test_arena :
 ta :
 	make test_arena
 
+# Run str tests
 .PHONY: test_str
 test_str :
 	$(CC) $(STD) $(debug_flags) ./src/arena.c ./tests/str_tests.c -o ./bin/str_tests
@@ -287,6 +311,7 @@ test_str :
 ts :
 	make test_str
 
+# Run variables (vars) tests
 .PHONY: test_vars
 test_vars :
 	$(CC) $(STD) $(debug_flags) ./src/arena.c ./src/vm/vars.c ./tests/vars_tests.c -o ./bin/vars_tests
@@ -295,6 +320,7 @@ test_vars :
 tv :
 	make test_vars
 
+# Run VM sanity tests
 .PHONY: test_vm
 test_vm :
 	$(CC) $(STD) $(debug_flags) -DNCSH_VM_TEST ./src/arena.c ./src/args.c ./src/parser.c ./src/eskilib/efile.c ./src/readline/hashset.c ./src/vm/vars.c ./src/readline/history.c ./src/z/fzf.c ./src/z/z.c ./src/env.c ./src/alias.c ./src/config.c ./src/vm/logic.c ./src/vm/vm_buffer.c ./src/vm/vm.c ./src/vm/syntax_validator.c ./src/vm/preprocessor.c ./src/vm/builtins.c ./src/vm/pipe.c ./src/vm/redirection.c ./tests/vm_tests.c -o ./bin/vm_tests
@@ -303,6 +329,7 @@ test_vm :
 tvm :
 	make test_vm
 
+# Run hashset tests
 .PHONY: test_hashset
 test_hashset :
 	$(CC) $(STD) $(debug_flags) -DNCSH_VM_TEST ./src/arena.c ./src/readline/hashset.c ./tests/hashset_tests.c -o ./bin/hashset_tests
@@ -311,6 +338,7 @@ test_hashset :
 ths :
 	make test_hashset
 
+# Run VM logic tests
 .PHONY: test_logic
 test_logic :
 	$(CC) $(STD) $(debug_flags) ./src/arena.c ./src/args.c ./src/parser.c ./src/vm/logic.c ./tests/logic_tests.c -o ./bin/logic_tests
@@ -319,6 +347,7 @@ test_logic :
 tl :
 	make test_logic
 
+# Run VM buffer processing tests
 .PHONY: test_vm_buffer
 test_vm_buffer :
 	$(CC) $(STD) $(debug_flags) ./src/arena.c ./src/alias.c ./src/env.c ./src/vm/vars.c ./src/args.c ./src/parser.c ./src/vm/logic.c ./src/vm/vm_buffer.c ./src/vm/preprocessor.c ./tests/vm_buffer_tests.c -o ./bin/vm_buffer_tests
@@ -327,6 +356,7 @@ test_vm_buffer :
 tvb :
 	make test_vm_buffer
 
+# Format the project
 .PHONY: clang_format
 clang_format :
 	find . -regex '.*\.\(c\|h\)' -exec clang-format -style=file -i {} \;
@@ -334,10 +364,12 @@ clang_format :
 cf :
 	make clang_format
 
+# Perform static analysis on the project
 .PHONY: scan_build
 scan_build:
 	scan-build-19 -analyze-headers make
 
+# Clean-up
 .PHONY: clean
 clean :
 	rm $(target) $(objects)
