@@ -59,6 +59,7 @@ void vm_buffer_set_if(Token_Data* rst tokens, Vm_Data* rst vm)
         debug("setting conditions");
         vm->buffer = tokens->conditions->vals;
         vm->buffer_lens = tokens->conditions->lens;
+        vm->ops = tokens->conditions->ops;
         vm->state = VS_IN_CONDITIONS;
         return;
     }
@@ -69,22 +70,34 @@ void vm_buffer_set_if(Token_Data* rst tokens, Vm_Data* rst vm)
         else
             goto else_statements;
     }
-    case VS_IN_IF_STATEMENTS:
+    case VS_IN_IF_STATEMENTS: {
+        if (vm->if_statment_pos < tokens->if_statements->count - 1)
+            goto if_statements;
+        else
+            goto end;
+    }
     case VS_IN_ELSE_STATEMENTS: {
-        vm->args_end = true;
-        vm->buffer[0] = NULL;
+        if (vm->else_statment_pos < tokens->else_statements->count - 1)
+            goto else_statements;
+        else
+            goto end;
     }
     default: {
-        return;
+        goto end;
     }
     }
+
+end:
+    vm->args_end = true;
+    vm->buffer[0] = NULL;
+    return;
 
 if_statements:
     debug("setting if statements");
     vm->buffer = tokens->if_statements->commands[vm->if_statment_pos].vals;
     vm->buffer_lens = tokens->if_statements->commands[vm->if_statment_pos].lens;
-    if (vm->if_statment_pos == tokens->if_statements->count - 1)
-        vm->state = VS_IN_IF_STATEMENTS;
+    vm->ops = tokens->if_statements->commands[vm->if_statment_pos].ops;
+    vm->state = VS_IN_IF_STATEMENTS;
     ++vm->if_statment_pos;
     return;
 
@@ -97,8 +110,8 @@ else_statements:
     debug("setting else statements");
     vm->buffer = tokens->else_statements->commands[vm->else_statment_pos].vals;
     vm->buffer_lens = tokens->else_statements->commands[vm->else_statment_pos].lens;
-    if (vm->else_statment_pos == tokens->else_statements->count - 1)
-        vm->state = VS_IN_ELSE_STATEMENTS;
+    vm->ops = tokens->else_statements->commands[vm->else_statment_pos].ops;
+    vm->state = VS_IN_ELSE_STATEMENTS;
     ++vm->else_statment_pos;
 }
 

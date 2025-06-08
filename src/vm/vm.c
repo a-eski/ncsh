@@ -127,6 +127,37 @@ int vm_status_aggregate(Vm_Data* rst vm)
 }
 
 [[nodiscard]]
+int vm_math_process(Vm_Data* rst vm)
+{
+    char* c1 = vm->buffer[0];
+    enum Ops op = vm->ops[1];
+    char* c2 = vm->buffer[2];
+
+    bool result;
+    switch (op) {
+    case OP_EQUALS: {
+        result = atoi(c1) == atoi(c2);
+        break;
+    }
+    case OP_LESS_THAN: {
+        result = atoi(c1) < atoi(c2);
+        break;
+    }
+    case OP_GREATER_THAN: {
+        result = atoi(c1) > atoi(c2);
+        break;
+    }
+    default: {
+        puts("ncsh: while trying to process 'if' logic, found unsupported operation.");
+        result = false;
+        break;
+    }
+    }
+
+    return result ? EXIT_SUCCESS : EXIT_FAILURE;
+}
+
+[[nodiscard]]
 int vm_run(Args* rst args, Token_Data* rst tokens, Shell* rst shell, Arena* rst scratch)
 {
     Vm_Data vm = {0};
@@ -155,12 +186,14 @@ int vm_run(Args* rst args, Token_Data* rst tokens, Shell* rst shell, Arena* rst 
 
         bool builtin_ran = builtins_check_and_run(&vm, shell, scratch);
         if (builtin_ran) {
-            vm.command_type = CT_BUILTIN;
             if (vm.op_current == OP_PIPE)
                 pipe_stop(vm.command_position, tokens->number_of_pipe_commands, &vm.pipes_io);
         }
-
-        if (vm.command_type == CT_EXTERNAL) {
+        else if (VS_IN_CONDITIONS && vm.ops &&
+                 (vm.ops[1] == OP_EQUALS || vm.ops[1] == OP_GREATER_THAN || vm.ops[1] == OP_LESS_THAN)) {
+            vm.status = vm_math_process(&vm);
+        }
+        else {
             int vm_pid = fork();
             if (vm_pid < 0)
                 return vm_fork_failure(vm.command_position, tokens->number_of_pipe_commands, &vm.pipes_io);
@@ -209,7 +242,6 @@ int vm_run(Args* rst args, Token_Data* rst tokens, Shell* rst shell, Arena* rst 
         // if e is set?
         // logic? if next op is and/or?
 
-        vm.command_type = CT_EXTERNAL;
         ++vm.command_position;
     }
 

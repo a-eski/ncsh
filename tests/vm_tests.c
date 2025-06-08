@@ -60,6 +60,18 @@ void vm_tests()
     etest_run_tester("if_false_test", vm_tester("if [ false ]; then echo hello; fi"));
     etest_run_tester("if_else_true_test", vm_tester("if [ true ]; then echo hello; else echo hi; fi"));
     etest_run_tester("if_else_false_test", vm_tester("if [ false ]; then echo hello; else echo hi; fi"));
+    etest_run_tester("if_equals_test", vm_tester("if [ 1 -eq 1 ]; then echo hello; fi"));
+    etest_run_tester("if_not_equals_test", vm_tester("if [ 2 -eq 1 ]; then echo hello; fi"));
+    etest_run_tester("if_else_equals_test", vm_tester("if [ 1 -eq 1 ]; then echo hello; else echo hi; fi"));
+    etest_run_tester("if_else_not_equals_test", vm_tester("if [ 1 -eq 2 ]; then echo hello; else echo hi; fi"));
+    etest_run_tester("if_gt_test", vm_tester("if [ 2 -gt 1 ]; then echo hello; fi"));
+    etest_run_tester("if_not_gt_test", vm_tester("if [ 1 -gt 2 ]; then echo hello; fi"));
+    etest_run_tester("if_else_gt_test", vm_tester("if [ 2 -gt 1 ]; then echo hello; else echo hi; fi"));
+    etest_run_tester("if_else_not_gt_test", vm_tester("if [ 1 -gt 2 ]; then echo hello; else echo hi; fi"));
+    etest_run_tester("if_lt_test", vm_tester("if [ 1 -lt 2 ]; then echo hello; fi"));
+    etest_run_tester("if_not_lt_test", vm_tester("if [ 1 -lt 2 ]; then echo hello; fi"));
+    etest_run_tester("if_else_lt_test", vm_tester("if [ 1 -lt 2 ]; then echo hello; else echo hi; fi"));
+    etest_run_tester("if_else_not_lt_test", vm_tester("if [ 2 -lt 1 ]; then echo hello; else echo hi; fi"));
 
     etest_finish();
 }
