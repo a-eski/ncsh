@@ -59,6 +59,7 @@ void vm_buffer_set_if(Token_Data* rst tokens, Vm_Data* rst vm)
         debug("setting conditions");
         vm->buffer = tokens->conditions->vals;
         vm->buffer_lens = tokens->conditions->lens;
+        vm->ops = tokens->conditions->ops;
         vm->state = VS_IN_CONDITIONS;
         return;
     }

@@ -154,7 +154,7 @@ int vm_math_process(Vm_Data* rst vm)
     }
     }
 
-    return !result ? EXIT_SUCCESS : EXIT_FAILURE;
+    return result ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
 [[nodiscard]]
@@ -189,7 +189,8 @@ int vm_run(Args* rst args, Token_Data* rst tokens, Shell* rst shell, Arena* rst 
             if (vm.op_current == OP_PIPE)
                 pipe_stop(vm.command_position, tokens->number_of_pipe_commands, &vm.pipes_io);
         }
-        else if (vm.ops && (vm.ops[1] == OP_EQUALS || vm.ops[1] == OP_GREATER_THAN || vm.ops[1] == OP_LESS_THAN)) {
+        else if (VS_IN_CONDITIONS && vm.ops &&
+                 (vm.ops[1] == OP_EQUALS || vm.ops[1] == OP_GREATER_THAN || vm.ops[1] == OP_LESS_THAN)) {
             vm.status = vm_math_process(&vm);
         }
         else {
