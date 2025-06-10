@@ -7,7 +7,6 @@
 #include "../configurables.h"
 #include "../eskilib/eresult.h"
 #include "../eskilib/str.h"
-#include "../parser/args.h"
 
 #ifdef NCSH_HISTORY_TEST
 #define NCSH_HISTORY_FILE "ncsh_history_test"

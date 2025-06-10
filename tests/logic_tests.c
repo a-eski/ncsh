@@ -1,9 +1,9 @@
 #include <stdlib.h>
 
+#include "../src/compiler/lexer.h"
+#include "../src/compiler/logic.h"
+#include "../src/compiler/tokens.h"
 #include "../src/eskilib/etest.h"
-#include "../src/parser/args.h"
-#include "../src/parser/parser.h"
-#include "../src/vm/logic.h"
 #include "lib/arena_test_helper.h"
 
 #define COMMAND_VALIDATE(command, index, expected, op)                                                                 \
@@ -17,35 +17,35 @@ void logic_preprocess_if_test()
 
     char* input = "if [ 1 -eq 1 ]; then echo hello; fi";
     size_t len = strlen(input) + 1;
-    Args* args = parser_parse(input, len, &arena);
-    Token_Data tokens = {0};
+    Tokens* toks = lexer_lex(input, len, &arena);
+    Token_Data data = {0};
 
-    Logic_Result result = logic_preprocess(args->head->next, &tokens, &arena);
+    Logic_Result result = logic_preprocess(toks->head->next, &data, &arena);
 
     eassert(result.type == LT_IF);
-    eassert(result.val.arg);
-    eassert(result.val.arg->op == OP_FI);
+    eassert(result.val.tok);
+    eassert(result.val.tok->op == OP_FI);
 
-    eassert(tokens.conditions);
-    eassert(tokens.conditions->count == 1);
-    eassert(tokens.conditions->commands->count == 3);
+    eassert(data.conditions);
+    eassert(data.conditions->count == 1);
+    eassert(data.conditions->commands->count == 3);
 
-    COMMAND_VALIDATE(tokens.conditions->commands, 0, "1", OP_CONSTANT);
-    COMMAND_VALIDATE(tokens.conditions->commands, 1, "-eq", OP_EQUALS);
-    COMMAND_VALIDATE(tokens.conditions->commands, 2, "1", OP_CONSTANT);
-    eassert(tokens.conditions->commands[0].lens[3] == 0);
+    COMMAND_VALIDATE(data.conditions->commands, 0, "1", OP_CONSTANT);
+    COMMAND_VALIDATE(data.conditions->commands, 1, "-eq", OP_EQUALS);
+    COMMAND_VALIDATE(data.conditions->commands, 2, "1", OP_CONSTANT);
+    eassert(data.conditions->commands[0].lens[3] == 0);
 
-    eassert(tokens.if_statements);
-    eassert(tokens.if_statements->commands);
-    eassert(tokens.if_statements->count == 1);
-    eassert(tokens.if_statements->commands->count == 2);
-    eassert(tokens.if_statements->commands->vals[0]);
+    eassert(data.if_statements);
+    eassert(data.if_statements->commands);
+    eassert(data.if_statements->count == 1);
+    eassert(data.if_statements->commands->count == 2);
+    eassert(data.if_statements->commands->vals[0]);
 
-    COMMAND_VALIDATE(tokens.if_statements->commands, 0, "echo", OP_CONSTANT);
-    COMMAND_VALIDATE(tokens.if_statements->commands, 1, "hello", OP_CONSTANT);
-    eassert(tokens.if_statements->commands->lens[3] == 0);
+    COMMAND_VALIDATE(data.if_statements->commands, 0, "echo", OP_CONSTANT);
+    COMMAND_VALIDATE(data.if_statements->commands, 1, "hello", OP_CONSTANT);
+    eassert(data.if_statements->commands->lens[3] == 0);
 
-    eassert(!tokens.else_statements);
+    eassert(!data.else_statements);
 
     ARENA_TEST_TEARDOWN;
 }
@@ -57,38 +57,38 @@ void logic_preprocess_if_long_test()
     char* input = "if [ 1 -eq 1 ]; then git commit -m \"this is a very long commit message for testing "
                   "realloc of if statements\"; fi";
     size_t len = strlen(input) + 1;
-    Args* args = parser_parse(input, len, &arena);
-    Token_Data tokens = {0};
+    Tokens* toks = lexer_lex(input, len, &arena);
+    Token_Data data = {0};
 
-    Logic_Result result = logic_preprocess(args->head->next, &tokens, &arena);
+    Logic_Result result = logic_preprocess(toks->head->next, &data, &arena);
 
     eassert(result.type == LT_IF);
-    eassert(result.val.arg);
-    eassert(result.val.arg->op == OP_FI);
+    eassert(result.val.tok);
+    eassert(result.val.tok->op == OP_FI);
 
-    eassert(tokens.conditions);
-    eassert(tokens.conditions->count == 1);
-    eassert(tokens.conditions->commands->count == 3);
+    eassert(data.conditions);
+    eassert(data.conditions->count == 1);
+    eassert(data.conditions->commands->count == 3);
 
-    COMMAND_VALIDATE(tokens.conditions->commands, 0, "1", OP_CONSTANT);
-    COMMAND_VALIDATE(tokens.conditions->commands, 1, "-eq", OP_EQUALS);
-    COMMAND_VALIDATE(tokens.conditions->commands, 2, "1", OP_CONSTANT);
-    eassert(tokens.conditions->commands->lens[3] == 0);
+    COMMAND_VALIDATE(data.conditions->commands, 0, "1", OP_CONSTANT);
+    COMMAND_VALIDATE(data.conditions->commands, 1, "-eq", OP_EQUALS);
+    COMMAND_VALIDATE(data.conditions->commands, 2, "1", OP_CONSTANT);
+    eassert(data.conditions->commands->lens[3] == 0);
 
-    eassert(tokens.if_statements);
-    eassert(tokens.if_statements->commands);
-    eassert(tokens.if_statements->count == 1);
-    eassert(tokens.if_statements->commands->count == 4);
-    eassert(tokens.if_statements->commands->vals[0]);
+    eassert(data.if_statements);
+    eassert(data.if_statements->commands);
+    eassert(data.if_statements->count == 1);
+    eassert(data.if_statements->commands->count == 4);
+    eassert(data.if_statements->commands->vals[0]);
 
-    COMMAND_VALIDATE(tokens.if_statements->commands, 0, "git", OP_CONSTANT);
-    COMMAND_VALIDATE(tokens.if_statements->commands, 1, "commit", OP_CONSTANT);
-    COMMAND_VALIDATE(tokens.if_statements->commands, 2, "-m", OP_CONSTANT);
-    COMMAND_VALIDATE(tokens.if_statements->commands, 3,
+    COMMAND_VALIDATE(data.if_statements->commands, 0, "git", OP_CONSTANT);
+    COMMAND_VALIDATE(data.if_statements->commands, 1, "commit", OP_CONSTANT);
+    COMMAND_VALIDATE(data.if_statements->commands, 2, "-m", OP_CONSTANT);
+    COMMAND_VALIDATE(data.if_statements->commands, 3,
                      "this is a very long commit message for testing realloc of if statements", OP_CONSTANT);
-    eassert(tokens.if_statements->commands->lens[4] == 0);
+    eassert(data.if_statements->commands->lens[4] == 0);
 
-    eassert(!tokens.else_statements);
+    eassert(!data.else_statements);
 
     ARENA_TEST_TEARDOWN;
 }
@@ -99,42 +99,42 @@ void logic_preprocess_if_else_test()
 
     char* input = "if [ 1 -eq 1 ]; then echo hello; else echo hi; fi";
     size_t len = strlen(input) + 1;
-    Args* args = parser_parse(input, len, &arena);
-    Token_Data tokens = {0};
+    Tokens* toks = lexer_lex(input, len, &arena);
+    Token_Data data = {0};
 
-    Logic_Result result = logic_preprocess(args->head->next, &tokens, &arena);
+    Logic_Result result = logic_preprocess(toks->head->next, &data, &arena);
 
     eassert(result.type == LT_IF_ELSE);
-    eassert(result.val.arg);
-    eassert(result.val.arg->op == OP_FI);
+    eassert(result.val.tok);
+    eassert(result.val.tok->op == OP_FI);
 
-    eassert(tokens.conditions);
-    eassert(tokens.conditions->count == 1);
-    eassert(tokens.conditions->commands->count == 3);
-    COMMAND_VALIDATE(tokens.conditions->commands, 0, "1", OP_CONSTANT);
-    COMMAND_VALIDATE(tokens.conditions->commands, 1, "-eq", OP_EQUALS);
-    COMMAND_VALIDATE(tokens.conditions->commands, 2, "1", OP_CONSTANT);
-    eassert(tokens.conditions->commands->lens[3] == 0);
+    eassert(data.conditions);
+    eassert(data.conditions->count == 1);
+    eassert(data.conditions->commands->count == 3);
+    COMMAND_VALIDATE(data.conditions->commands, 0, "1", OP_CONSTANT);
+    COMMAND_VALIDATE(data.conditions->commands, 1, "-eq", OP_EQUALS);
+    COMMAND_VALIDATE(data.conditions->commands, 2, "1", OP_CONSTANT);
+    eassert(data.conditions->commands->lens[3] == 0);
 
-    eassert(tokens.if_statements);
-    eassert(tokens.if_statements->commands);
-    eassert(tokens.if_statements->count == 1);
-    eassert(tokens.if_statements->commands->count == 2);
-    eassert(tokens.if_statements->commands->vals[0]);
+    eassert(data.if_statements);
+    eassert(data.if_statements->commands);
+    eassert(data.if_statements->count == 1);
+    eassert(data.if_statements->commands->count == 2);
+    eassert(data.if_statements->commands->vals[0]);
 
-    COMMAND_VALIDATE(tokens.if_statements->commands, 0, "echo", OP_CONSTANT);
-    COMMAND_VALIDATE(tokens.if_statements->commands, 1, "hello", OP_CONSTANT);
-    eassert(tokens.if_statements->commands->lens[3] == 0);
+    COMMAND_VALIDATE(data.if_statements->commands, 0, "echo", OP_CONSTANT);
+    COMMAND_VALIDATE(data.if_statements->commands, 1, "hello", OP_CONSTANT);
+    eassert(data.if_statements->commands->lens[3] == 0);
 
-    eassert(tokens.else_statements);
-    eassert(tokens.else_statements->commands);
-    eassert(tokens.else_statements->count == 1);
-    eassert(tokens.else_statements->commands->count == 2);
-    eassert(tokens.else_statements->commands->vals[0]);
+    eassert(data.else_statements);
+    eassert(data.else_statements->commands);
+    eassert(data.else_statements->count == 1);
+    eassert(data.else_statements->commands->count == 2);
+    eassert(data.else_statements->commands->vals[0]);
 
-    COMMAND_VALIDATE(tokens.else_statements->commands, 0, "echo", OP_CONSTANT);
-    COMMAND_VALIDATE(tokens.else_statements->commands, 1, "hi", OP_CONSTANT);
-    eassert(tokens.else_statements->commands->lens[3] == 0);
+    COMMAND_VALIDATE(data.else_statements->commands, 0, "echo", OP_CONSTANT);
+    COMMAND_VALIDATE(data.else_statements->commands, 1, "hi", OP_CONSTANT);
+    eassert(data.else_statements->commands->lens[3] == 0);
 
     ARENA_TEST_TEARDOWN;
 }

@@ -9,17 +9,15 @@
 #include <time.h>
 #include <unistd.h>
 
+#include "compiler/compiler.h"
 #include "config.h"
 #include "defines.h"
 #include "eskilib/ecolors.h"
 #include "eskilib/eresult.h"
 #include "noninteractive.h"
-#include "parser/parser.h"
 #include "readline/ac.h"
 #include "readline/ncreadline.h"
 #include "signals.h"
-#include "vm/vars.h"
-#include "vm/vm.h"
 
 /* Global Variables
  * Globals should be minimized as much as possible.
@@ -80,7 +78,7 @@ char* init(Shell* rst shell)
         return NULL;
     }
 
-    vars_malloc(&shell->arena, &shell->vars);
+    compiler_init(shell);
 
     signal_init();
     if (signal_forward(SIGINT) || signal_forward(SIGWINCH)) {
@@ -104,19 +102,6 @@ void cleanup(char* rst shell_memory, Shell* rst shell)
         z_exit(&shell->z_db);
     }
     free(shell_memory);
-}
-
-/* run
- * Parse and execute.
- * Pass in copy of scratch arena so it is valid for scope of parser and VM, then resets when scope ends.
- * The scratch arena needs to be valid for scope of vm_execute, since values are stored in the scratch arena.
- * Do not change scratch arena to Arena* (pointer).
- */
-int run(Shell* rst shell, Arena scratch_arena)
-{
-    Args* args = parser_parse(shell->input.buffer, shell->input.pos, &scratch_arena);
-
-    return vm_execute(args, shell, &scratch_arena);
 }
 
 /* main
@@ -181,7 +166,7 @@ int main(int argc, char** argv)
         }
         }
 
-        int command_result = run(&shell, shell.scratch_arena);
+        int command_result = compiler_run(&shell, shell.scratch_arena);
         switch (command_result) {
         case EXIT_FAILURE: {
             exit_code = EXIT_FAILURE;

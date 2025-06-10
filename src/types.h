@@ -3,10 +3,9 @@
 #pragma once
 
 #include "arena.h"
-#include "parser/args.h"
 #include "config.h"
 #include "readline/ncreadline.h"
-#include "vm/vars.h"
+#include "compiler/vm/vars.h"
 #include "z/z.h"
 
 #define NCSH_MAX_PROCESSES 100
@@ -14,10 +13,10 @@
 /* struct Processes
  * Maintains details about background jobs that have been started by the user.
  */
-typedef struct {
+/*typedef struct {
     size_t job_number;
     __pid_t pids[NCSH_MAX_PROCESSES];
-} Processes;
+} Processes;*/
 
 /* struct Shell
  * Store information relevant to the shell.
@@ -32,7 +31,7 @@ typedef struct {
     Config config;
 
     Input input;
-    Processes processes;
+    // Processes processes;
 
     z_Database z_db;
 

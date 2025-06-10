@@ -10,8 +10,8 @@
 #define debug(buf)
 #define debugf(fmt, ...)
 #define debug_line(buf, len, max_len)
-#define debug_parser_input(buf, len)
-#define debug_args(args)
+#define debug_lexer_input(buf, len)
+#define debug_tokens(args)
 #define debug_argsv(argsc, argsv)
 #define debug_string(str, name)
 #else /* !NCSH_DEBUG */
@@ -19,13 +19,13 @@
 #include <stdio.h>
 
 #include "eskilib/str.h"
-#include "parser.h"
+#include "lexer.h"
 
 #define debug(buf) debug_internal(__FILE__, __LINE__, __func__, buf)
 #define debugf(fmt, ...) debugf_internal(__FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__)
 #define debug_line(buf, len, max_len) debug_line_internal(__FILE__, __LINE__, __func__, buf, len, max_len)
-#define debug_parser_input(buf, len) debug_parser_input_internal(__FILE__, __LINE__, __func__, buf, len)
-#define debug_args(args) debug_args_internal(__FILE__, __LINE__, __func__, args)
+#define debug_lexer_input(buf, len) debug_lexer_input_internal(__FILE__, __LINE__, __func__, buf, len)
+#define debug_tokens(args) debug_tokens_internal(__FILE__, __LINE__, __func__, args)
 #define debug_argsv(argsc, argsv) debug_argsv_internal(__FILE__, __LINE__, __func__, argsc, argsv)
 #define debug_string(str, name) debug_string_internal(__FILE__, __LINE__, __func__, str, name)
 
@@ -58,7 +58,7 @@ static inline void debug_line_internal(const char* file, const int line, const c
     fflush(stderr);
 }
 
-static inline void debug_parser_input_internal(const char* file, const int line, const char* func, char* buffer,
+static inline void debug_lexer_input_internal(const char* file, const int line, const char* func, char* buffer,
                                                size_t buf_position)
 {
     fprintf(stderr, "%s %s:%d ", file, func, line);
@@ -68,7 +68,7 @@ static inline void debug_parser_input_internal(const char* file, const int line,
     fflush(stderr);
 }
 
-static inline void debug_args_internal(const char* file, const int line, const char* func, Args* args)
+static inline void debug_tokens_internal(const char* file, const int line, const char* func, Args* args)
 {
     fprintf(stderr, "%s %s:%d ", file, func, line);
     fprintf(stderr, "args.count: %lu\n", args->count);
