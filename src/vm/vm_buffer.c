@@ -60,7 +60,7 @@ void vm_buffer_set_if(Token_Data* rst tokens, Vm_Data* rst vm)
     }
     // conditions just processed, decide what to do next
     case VS_IN_CONDITIONS: {
-        if (vm->if_statment_pos < tokens->if_statements->count - 1)
+        if (vm->conditions_pos < tokens->conditions->count - 1)
             goto conditions;
         else if (tokens->logic_type == LT_IF || vm->status == EXIT_SUCCESS)
             goto if_statements;
