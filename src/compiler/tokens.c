@@ -7,6 +7,7 @@
 #include "../arena.h"
 #include "tokens.h"
 
+[[nodiscard]]
 Tokens* tokens_alloc(Arena* rst arena)
 {
     Tokens* toks = arena_malloc(arena, 1, Tokens);
@@ -16,6 +17,7 @@ Tokens* tokens_alloc(Arena* rst arena)
     return toks;
 }
 
+[[nodiscard]]
 Token* token_alloc(uint8_t op, size_t len, char* rst val, Arena* rst arena)
 {
     Token* tok = arena_malloc(arena, 1, Token);
@@ -27,6 +29,7 @@ Token* token_alloc(uint8_t op, size_t len, char* rst val, Arena* rst arena)
     return tok;
 }
 
+[[nodiscard]]
 bool token_set_after(Token* rst current, Token* rst after)
 {
     assert(current);
@@ -41,6 +44,7 @@ bool token_set_after(Token* rst current, Token* rst after)
     return true;
 }
 
+[[nodiscard]]
 bool token_set_last(Tokens* rst toks, Token* rst last)
 {
     assert(toks && toks->head);
