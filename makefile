@@ -9,7 +9,7 @@ debug_flags = -Wall -Wextra -Werror -Wpedantic -pedantic-errors -Wsign-conversio
 release_flags = -Wall -Wextra -Werror -pedantic-errors -Wsign-conversion -Wformat=2 -Wshadow -Wvla -O3 -DNDEBUG
 # fuzz_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -Wwrite-strings -fsanitize=address,leak,fuzzer -DNDEBUG -g
 fuzz_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,leak,fuzzer -DNDEBUG -g
-objects = obj/main.o obj/arena.o obj/noninteractive.o obj/ncreadline.o obj/pipe.o obj/redirection.o obj/vm_buffer.o obj/vm.o obj/syntax_validator.o obj/logic.o obj/preprocessor.o obj/terminal.o obj/efile.o obj/hashset.o obj/vars.o obj/args.o obj/parser.o obj/builtins.o obj/history.o obj/ac.o obj/env.o obj/alias.o obj/config.o obj/fzf.o obj/z.o
+objects = obj/main.o obj/arena.o obj/noninteractive.o obj/ncreadline.o obj/pipe.o obj/redirection.o obj/vm_buffer.o obj/vm.o obj/syntax_validator.o obj/logic.o obj/compiler.o obj/parser.o obj/terminal.o obj/efile.o obj/hashset.o obj/vars.o obj/tokens.o obj/lexer.o obj/builtins.o obj/history.o obj/ac.o obj/env.o obj/alias.o obj/config.o obj/fzf.o obj/z.o
 target = ./bin/ncsh
 
 ifeq ($(CC), gcc)
@@ -30,10 +30,10 @@ $(target) : $(objects)
 obj/%.o: src/readline/%.c
 	$(cc_with_flags) -c $< -o $@
 
-obj/%.o: src/vm/%.c
+obj/%.o: src/compiler/%.c
 	$(cc_with_flags) -c $< -o $@
 
-obj/%.o: src/parser/%.c
+obj/%.o: src/compiler/vm/%.c
 	$(cc_with_flags) -c $< -o $@
 
 obj/%.o: src/eskilib/%.c
@@ -95,7 +95,7 @@ check :
 	make test_fzf
 	make test_ac
 	make test_history
-	make test_parser
+	make test_lexer
 	make test_alias
 	make test_readline
 	make test_arena
@@ -195,42 +195,42 @@ bench_ac_tests :
 bact :
 	make bench_ac_tests
 
-# Run parser tests
-.PHONY: test_parser
-test_parser :
-	$(CC) $(STD) $(debug_flags) ./src/arena.c ./src/parser/args.c ./src/parser/parser.c ./tests/parser_tests.c -o ./bin/parser_tests
-	./bin/parser_tests
-.PHONY: tp
-tp :
-	make test_parser
+# Run lexer tests
+.PHONY: test_lexer
+test_lexer :
+	$(CC) $(STD) $(debug_flags) ./src/arena.c ./src/compiler/tokens.c ./src/compiler/lexer.c ./tests/lexer_tests.c -o ./bin/lexer_tests
+	./bin/lexer_tests
+.PHONY: tlx
+tlx :
+	make test_lexer
 
-# Run parser fuzzer
-.PHONY: fuzz_parser
-fuzz_parser :
+# Run lexer fuzzer
+.PHONY: fuzz_lexer
+fuzz_lexer :
 	chmod +x ./create_corpus_dirs.sh
 	./create_corpus_dirs.sh
-	clang-19 $(STD) $(fuzz_flags) ./tests/parser_fuzzing.c ./src/arena.c ./src/parser/args.c ./src/parser/parser.c -o ./bin/parser_fuzz
-	./bin/parser_fuzz PARSER_CORPUS/ -detect_leaks=0 -rss_limit_mb=4096
+	clang-19 $(STD) $(fuzz_flags) ./tests/lexer_fuzzing.c ./src/arena.c ./src/compiler/tokens.c ./src/compiler/lexer.c -o ./bin/lexer_fuzz
+	./bin/lexer_fuzz LEXER_CORPUS/ -detect_leaks=0 -rss_limit_mb=4096
 .PHONY: fp
 fp :
-	make fuzz_parser
+	make fuzz_lexer
 
-# Run parser benchmarks
-.PHONY: bench_parser
-bench_parser :
-	$(CC) $(STD) $(debug_flags) -DNDEBUG ./src/arena.c ./src/vm/vars.c ./src/parser/args.c ./src/parser/parser.c ./tests/parser_bench.c -o ./bin/parser_bench
-	hyperfine --warmup 1000 --shell=none './bin/parser_bench'
+# Run lexer benchmarks
+.PHONY: bench_lexer
+bench_lexer :
+	$(CC) $(STD) $(debug_flags) -DNDEBUG ./src/arena.c ./src/compiler/vm/vars.c ./src/compiler/tokens.c ./src/compiler/lexer.c ./tests/lexer_bench.c -o ./bin/lexer_bench
+	hyperfine --warmup 1000 --shell=none './bin/lexer_bench'
 .PHONY: bp
 bp :
-	make bench_parser
+	make bench_lexer
 
-.PHONY: bench_parser_tests
-bench_parser_tests :
-	$(CC) $(STD) $(debug_flags) -DNDEBUG ./src/arena.c ./src/vm/vars.c ./src/parser/args.c ./src/parser/parser.c ./tests/parser_tests.c -o ./bin/parser_tests
-	hyperfine --warmup 1000 --shell=none './bin/parser_tests'
+.PHONY: bench_lexer_tests
+bench_lexer_tests :
+	$(CC) $(STD) $(debug_flags) -DNDEBUG ./src/arena.c ./src/compiler/vm/vars.c ./src/compiler/tokens.c ./src/compiler/lexer.c ./tests/lexer_tests.c -o ./bin/lexer_tests
+	hyperfine --warmup 1000 --shell=none './bin/lexer_tests'
 .PHONY: bpt
 bpt :
-	make bench_parser_tests
+	make bench_lexer_tests
 
 # Run z tests
 .PHONY: test_z
@@ -311,7 +311,7 @@ ts :
 # Run variables (vars) tests
 .PHONY: test_vars
 test_vars :
-	$(CC) $(STD) $(debug_flags) ./src/arena.c ./src/vm/vars.c ./tests/vars_tests.c -o ./bin/vars_tests
+	$(CC) $(STD) $(debug_flags) ./src/arena.c ./src/compiler/vm/vars.c ./tests/vars_tests.c -o ./bin/vars_tests
 	./bin/vars_tests
 .PHONY: tv
 tv :
@@ -320,7 +320,7 @@ tv :
 # Run VM sanity tests
 .PHONY: test_vm
 test_vm :
-	$(CC) $(STD) $(debug_flags) -DNCSH_VM_TEST ./src/arena.c ./src/parser/args.c ./src/parser/parser.c ./src/eskilib/efile.c ./src/readline/hashset.c ./src/vm/vars.c ./src/readline/history.c ./src/z/fzf.c ./src/z/z.c ./src/env.c ./src/alias.c ./src/config.c ./src/vm/logic.c ./src/vm/vm_buffer.c ./src/vm/vm.c ./src/vm/syntax_validator.c ./src/vm/preprocessor.c ./src/vm/builtins.c ./src/vm/pipe.c ./src/vm/redirection.c ./tests/vm_tests.c -o ./bin/vm_tests
+	$(CC) $(STD) $(debug_flags) -DNCSH_VM_TEST ./src/arena.c ./src/compiler/tokens.c ./src/compiler/lexer.c ./src/eskilib/efile.c ./src/readline/hashset.c ./src/compiler/vm/vars.c ./src/readline/history.c ./src/z/fzf.c ./src/z/z.c ./src/env.c ./src/alias.c ./src/config.c ./src/compiler/logic.c ./src/compiler/vm/vm_buffer.c ./src/compiler/vm/vm.c ./src/compiler/vm/syntax_validator.c ./src/compiler/parser.c ./src/compiler/vm/builtins.c ./src/compiler/vm/pipe.c ./src/compiler/vm/redirection.c ./tests/vm_tests.c -o ./bin/vm_tests
 	./bin/vm_tests
 .PHONY: tvm
 tvm :
@@ -338,7 +338,7 @@ ths :
 # Run VM logic tests
 .PHONY: test_logic
 test_logic :
-	$(CC) $(STD) $(debug_flags) ./src/arena.c ./src/parser/args.c ./src/parser/parser.c ./src/vm/logic.c ./tests/logic_tests.c -o ./bin/logic_tests
+	$(CC) $(STD) $(debug_flags) ./src/arena.c ./src/compiler/tokens.c ./src/compiler/lexer.c ./src/compiler/logic.c ./tests/logic_tests.c -o ./bin/logic_tests
 	./bin/logic_tests
 .PHONY: tl
 tl :
@@ -347,7 +347,7 @@ tl :
 # Run VM buffer processing tests
 .PHONY: test_vm_buffer
 test_vm_buffer :
-	$(CC) $(STD) $(debug_flags) ./src/arena.c ./src/alias.c ./src/env.c ./src/vm/vars.c ./src/parser/args.c ./src/parser/parser.c ./src/vm/logic.c ./src/vm/vm_buffer.c ./src/vm/preprocessor.c ./tests/vm_buffer_tests.c -o ./bin/vm_buffer_tests
+	$(CC) $(STD) $(debug_flags) ./src/arena.c ./src/alias.c ./src/env.c ./src/compiler/vm/vars.c ./src/compiler/tokens.c ./src/compiler/lexer.c ./src/compiler/logic.c ./src/compiler/vm/vm_buffer.c ./src/compiler/parser.c ./tests/vm_buffer_tests.c -o ./bin/vm_buffer_tests
 	./bin/vm_buffer_tests
 .PHONY: tvb
 tvb :

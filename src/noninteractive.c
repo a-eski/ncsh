@@ -8,25 +8,13 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "compiler/compiler.h"
 #include "config.h"
 #include "defines.h"
 #include "eskilib/ecolors.h"
 #include "eskilib/eresult.h"
 #include "noninteractive.h"
-#include "parser/parser.h"
-#include "vm/vars.h"
-#include "vm/vm.h"
-
-/* noninteractive_run
- * Parses and sends output of parser to VM. Parser data stored in scratch arena, which is then used by VM.
- * Scratch arena reset after scope ends due to passing by value.
- */
-int noninteractive_run(char** rst argv, size_t argc, Shell* rst shell)
-{
-    Args* args = parser_parse_noninteractive(argv, argc, &shell->arena);
-
-    return vm_execute_noninteractive(args, shell);
-}
+#include "types.h"
 
 /* noninteractive
  * Main noninteractive loop of the shell.
@@ -47,6 +35,7 @@ int noninteractive(int argc, char** rst argv)
     }
 
     debug("ncsh running in noninteractive mode.");
+    debug_argsv(argc, argv);
 
     constexpr int arena_capacity = 1 << 16;
     char* memory = malloc(arena_capacity);
@@ -62,11 +51,9 @@ int noninteractive(int argc, char** rst argv)
         return EXIT_FAILURE;
     }
 
-    vars_malloc(&shell.arena, &shell.vars);
+    compiler_init(&shell);
 
-    debug_argsv(argc, argv);
-
-    int exit_code = noninteractive_run(argv + 1, (size_t)argc - 1, &shell);
+    int exit_code = compiler_run_noninteractive(argv + 1, (size_t)argc - 1, &shell);
 
     free(memory);
 

@@ -3,8 +3,8 @@
 require 'ttytest'
 
 # Test related constants
-WC_C_LENGTH_I = 255
-WC_C_LENGTH_NO_LOCAL_FILES = '221'
+WC_C_LENGTH_I = 254
+WC_C_LENGTH_NO_LOCAL_FILES = '220'
 WC_C_LENGTH = WC_C_LENGTH_I.to_s
 
 SLEEP_TIME = 0.2
