@@ -18,7 +18,9 @@ development/curses/curses
 development/readline/readline
 Z_CORPUS/*
 Z_ADD_CORPUS/*
+LEXER_CORPUS/*
 PARSER_CORPUS/*
 AUTOCOMPLETIONS_CORPUS/*
 HISTORY_CORPUS/*
+NCSH_CORPUS/*
 .idea/*
