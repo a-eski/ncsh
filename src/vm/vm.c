@@ -13,7 +13,6 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#include "../args.h"
 #include "../defines.h"
 #include "../eskilib/ecolors.h"
 #include "../types.h"
@@ -126,6 +125,38 @@ int vm_status_aggregate(Vm_Data* rst vm)
     return vm->status;
 }
 
+bool vm_condition_failed(Vm_Data* rst vm, Token_Data* rst tokens)
+{
+    if (vm->state != VS_IN_CONDITIONS)
+        return false;
+
+    return vm->status != EXIT_SUCCESS && tokens->logic_type != LT_IF_ELSE && vm->op_current != OP_OR;
+}
+
+bool vm_status_should_break(Vm_Data* rst vm, Token_Data* rst tokens)
+{
+    if (vm_condition_failed(vm, tokens)) {
+        debug("breaking out of VM loop, condition failed.");
+        vm->status = EXIT_FAILURE_CONTINUE; // make sure condition failure doesn't cause shell to exit
+        return true;
+    }
+    else if (vm->op_current == OP_AND && vm->status != EXIT_SUCCESS) {
+        debug("breaking out of VM loop, short circuiting on AND.");
+        vm->status = EXIT_FAILURE_CONTINUE; // make sure condition failure doesn't cause shell to exit
+        return true;
+    }
+    else if (vm->op_current == OP_OR && vm->status == EXIT_SUCCESS) {
+        debug("breaking out of VM loop, short circuiting on OR.");
+        return true;
+    }
+    // TODO: other logic around failures?
+    // like if e is set?
+    // logic? if next op is and/or?
+    else {
+        return false;
+    }
+}
+
 [[nodiscard]]
 int vm_math_process(Vm_Data* rst vm)
 {
@@ -220,27 +251,8 @@ int vm_run(Args* rst args, Token_Data* rst tokens, Shell* rst shell, Arena* rst 
             vm_status_set(vm_pid, &vm);
         }
 
-        if (vm.state == VS_IN_CONDITIONS && vm.status != EXIT_SUCCESS && tokens->logic_type != LT_IF_ELSE) {
-            debug("breaking out of VM loop, condition failed.");
-            vm.status = EXIT_FAILURE_CONTINUE; // make sure condition failure doesn't cause shell to exit
+        if (vm_status_should_break(&vm, tokens))
             break;
-        }
-
-        if (vm.op_current == OP_AND && vm.status != EXIT_SUCCESS) {
-            debug("breaking out of VM loop, short circuiting on AND.");
-            vm.status = EXIT_FAILURE_CONTINUE; // make sure condition failure doesn't cause shell to exit
-            break;
-        }
-
-        if (vm.op_current == OP_OR && vm.status == EXIT_SUCCESS) {
-            debug("breaking out of VM loop, short circuiting on OR.");
-            break;
-        }
-
-        // TODO: logic around failures?
-        // vm.status = vm_result_aggregate();?
-        // if e is set?
-        // logic? if next op is and/or?
 
         ++vm.command_position;
     }

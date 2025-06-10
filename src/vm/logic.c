@@ -11,44 +11,28 @@
 #define DEFAULT_N 10
 #define MAX_N 40
 
-void logic_commands_init(Commands* rst cmds, Arena* rst scratch)
+void logic_tokens_conditions_init(Token_Data* rst tokens, Arena* rst scratch)
 {
-    cmds = arena_malloc(scratch, 1, Commands);
-    cmds->vals = arena_malloc(scratch, DEFAULT_N, char*);
-    cmds->lens = arena_malloc(scratch, DEFAULT_N, size_t);
-    cmds->ops = arena_malloc(scratch, DEFAULT_N, enum Ops);
-    cmds->cap = DEFAULT_N;
-    cmds->count = 0;
-}
-
-void logic_statements_init(Statements* rst statements, Arena* rst scratch)
-{
-    statements = arena_malloc(scratch, 1, Statements);
-    statements->cap = DEFAULT_N;
-    statements->count = 0;
-    statements->commands = arena_malloc(scratch, DEFAULT_N, Commands);
-    statements->commands->cap = DEFAULT_N;
-    statements->commands->count = 0;
+    assert(tokens);
+    tokens->conditions = arena_malloc(scratch, 1, Statements);
+    tokens->conditions->cap = DEFAULT_N;
+    tokens->conditions->count = 0;
+    tokens->conditions->commands = arena_malloc(scratch, DEFAULT_N, Commands);
+    tokens->conditions->commands->cap = DEFAULT_N;
+    tokens->conditions->commands->count = 0;
 
     for (size_t i = 0; i < DEFAULT_N; ++i) {
-        statements->commands[i].vals = arena_malloc(scratch, DEFAULT_N, char*);
-        statements->commands[i].lens = arena_malloc(scratch, DEFAULT_N, size_t);
-        statements->commands[i].ops = arena_malloc(scratch, DEFAULT_N, enum Ops);
-        statements->commands[i].cap = DEFAULT_N;
-        statements->commands[i].count = 0;
+        tokens->conditions->commands[i].vals = arena_malloc(scratch, DEFAULT_N, char*);
+        tokens->conditions->commands[i].lens = arena_malloc(scratch, DEFAULT_N, size_t);
+        tokens->conditions->commands[i].ops = arena_malloc(scratch, DEFAULT_N, enum Ops);
+        tokens->conditions->commands[i].cap = DEFAULT_N;
+        tokens->conditions->commands[i].count = 0;
     }
 }
 
 void logic_tokens_if_init(Token_Data* rst tokens, Arena* rst scratch)
 {
     assert(tokens);
-    tokens->conditions = arena_malloc(scratch, 1, Commands);
-    tokens->conditions->vals = arena_malloc(scratch, DEFAULT_N, char*);
-    tokens->conditions->lens = arena_malloc(scratch, DEFAULT_N, size_t);
-    tokens->conditions->ops = arena_malloc(scratch, DEFAULT_N, enum Ops);
-    tokens->conditions->cap = DEFAULT_N;
-    tokens->conditions->count = 0;
-
     tokens->if_statements = arena_malloc(scratch, 1, Statements);
     tokens->if_statements->cap = DEFAULT_N;
     tokens->if_statements->count = 0;
@@ -161,13 +145,13 @@ Arg* logic_statements_process(Arg* rst arg, Statements* rst statements, Arena* r
         arg = arg->next;
     } while (logic_is_arg_valid_statement(arg));
 
+    if (statements->count == 0)
+        statements->count = 1;
     return arg;
 }
 
 Logic_Result logic_if_preprocess(Arg* arg, Token_Data* rst tokens, Arena* rst scratch)
 {
-    logic_tokens_if_init(tokens, scratch);
-
     arg = arg->next;
     if (arg->op != OP_CONDITION_START)
         return (Logic_Result){.type = LT_CODE, .val.code = EXIT_FAILURE_CONTINUE};
@@ -176,11 +160,9 @@ Logic_Result logic_if_preprocess(Arg* arg, Token_Data* rst tokens, Arena* rst sc
     if (!logic_is_arg_valid_statement(arg))
         return (Logic_Result){.type = LT_CODE, .val.code = EXIT_FAILURE_CONTINUE};
 
-    do {
-        debugf("adding arg to conditions %s\n", arg->val);
-        logic_commands_add(arg, tokens->conditions, scratch);
-        arg = arg->next;
-    } while (logic_is_arg_valid_statement(arg));
+    debug("processing conditions");
+    logic_tokens_conditions_init(tokens, scratch);
+    arg = logic_statements_process(arg, tokens->conditions, scratch);
 
     if (arg->op != OP_CONDITION_END)
         return (Logic_Result){.type = LT_CODE, .val.code = EXIT_FAILURE_CONTINUE};
@@ -194,11 +176,27 @@ Logic_Result logic_if_preprocess(Arg* arg, Token_Data* rst tokens, Arena* rst sc
         return (Logic_Result){.type = LT_CODE, .val.code = EXIT_FAILURE_CONTINUE};
 
     debug("processing if statements");
+    logic_tokens_if_init(tokens, scratch);
     arg = logic_statements_process(arg, tokens->if_statements, scratch);
 
     if (arg->op == OP_FI) {
         return (Logic_Result){.type = LT_IF, .val.arg = arg};
     }
+
+    /*if (arg->op != OP_ELSE || arg->op != OP_ELIF)
+        return (Logic_Result){.type = LT_CODE, .val.code = EXIT_FAILURE_CONTINUE};
+
+    while (arg->op == OP_ELIF) {
+        if (arg->op == OP_ELIF) {
+            arg = arg->next;
+            if (!logic_is_arg_valid_statement(arg))
+                return (Logic_Result){.type = LT_CODE, .val.code = EXIT_FAILURE_CONTINUE};
+
+            debug("processing else statements");
+            logic_tokens_else_init(tokens, scratch);
+            arg = logic_statements_process(arg, tokens->else_statements, scratch);
+        }
+    }*/
 
     if (arg->op != OP_ELSE)
         return (Logic_Result){.type = LT_CODE, .val.code = EXIT_FAILURE_CONTINUE};
@@ -242,39 +240,3 @@ Logic_Result logic_preprocess(Arg* rst arg, Token_Data* rst tokens, Arena* rst s
     }
     }
 }
-
-/*
- if (arg->op != OP_CONSTANT) {
-        enum Ops op = arg->op;
-        arg = arg->next;
-        assert(arg);
-
-        char* c2 = arg->val;
-        arg = arg->next;
-        assert(arg);
-
-        bool result;
-        switch (op) {
-        case OP_EQUALS: {
-            result = atoi(c1->val) == atoi(c2);
-            break;
-        }
-        case OP_LESS_THAN: {
-            result = atoi(c1->val) < atoi(c2);
-            break;
-        }
-        case OP_GREATER_THAN: {
-            result = atoi(c1->val) > atoi(c2);
-            break;
-        }
-        default: {
-            puts("ncsh: while trying to process 'if' logic, found unsupported operation.");
-            result = false;
-            break;
-        }
-        }
-
-        if (!result)
-            return (Logic_Result){.type = LT_CODE, .val.code = EXIT_FAILURE_CONTINUE};
-    }
- */

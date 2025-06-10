@@ -20,7 +20,7 @@
 void history_file_set(Str config_file, History* rst history, Arena* rst arena)
 {
     constexpr size_t history_file_len = sizeof(NCSH_HISTORY_FILE);
-#ifdef NCSH_HISTORY_TEST
+#if defined(NCSH_HISTORY_TEST) || defined(NCSH_IN_PLACE)
     history->file = arena_malloc(arena, history_file_len, char);
     memcpy(history->file, NCSH_HISTORY_FILE, history_file_len);
     return;

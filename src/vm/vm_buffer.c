@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "../args.h"
+#include "../parser/args.h"
 #include "vm_types.h"
 
 Arg* vm_buffer_set_command_next(Arg* rst arg, Vm_Data* rst vm)
@@ -56,16 +56,13 @@ void vm_buffer_set_if(Token_Data* rst tokens, Vm_Data* rst vm)
 {
     switch (vm->state) {
     case VS_NORMAL: {
-        debug("setting conditions");
-        vm->buffer = tokens->conditions->vals;
-        vm->buffer_lens = tokens->conditions->lens;
-        vm->ops = tokens->conditions->ops;
-        vm->state = VS_IN_CONDITIONS;
-        return;
+        goto conditions;
     }
     // conditions just processed, decide what to do next
     case VS_IN_CONDITIONS: {
-        if (tokens->logic_type == LT_IF || vm->status == EXIT_SUCCESS)
+        if (vm->conditions_pos < tokens->conditions->count - 1)
+            goto conditions;
+        else if (tokens->logic_type == LT_IF || vm->status == EXIT_SUCCESS)
             goto if_statements;
         else
             goto else_statements;
@@ -87,9 +84,13 @@ void vm_buffer_set_if(Token_Data* rst tokens, Vm_Data* rst vm)
     }
     }
 
-end:
-    vm->args_end = true;
-    vm->buffer[0] = NULL;
+conditions:
+    debug("setting conditions");
+    vm->buffer = tokens->conditions->commands[vm->conditions_pos].vals;
+    vm->buffer_lens = tokens->conditions->commands[vm->conditions_pos].lens;
+    vm->ops = tokens->conditions->commands[vm->conditions_pos].ops;
+    vm->state = VS_IN_CONDITIONS;
+    ++vm->conditions_pos;
     return;
 
 if_statements:
@@ -113,6 +114,11 @@ else_statements:
     vm->ops = tokens->else_statements->commands[vm->else_statment_pos].ops;
     vm->state = VS_IN_ELSE_STATEMENTS;
     ++vm->else_statment_pos;
+    return;
+
+end:
+    vm->args_end = true;
+    vm->buffer[0] = NULL;
 }
 
 Arg* vm_buffer_set(Arg* rst arg, Token_Data* rst tokens, Vm_Data* rst vm)

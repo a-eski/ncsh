@@ -11,9 +11,9 @@
 #include <unistd.h>
 
 #include "../alias.h"
-#include "../args.h"
 #include "../defines.h"
 #include "../env.h"
+#include "../parser/parser.h"
 #include "logic.h"
 #include "preprocessor.h"
 #include "vars.h"
@@ -219,6 +219,38 @@ void preprocessor_alias_replace(Arg* rst arg, Arena* rst scratch)
     }
 }
 
+int preprocessor_expansions_process(Args* rst args, Shell* rst shell, Arena* rst scratch)
+{
+    assert(args && args->head);
+    assert(scratch);
+
+    Arg* arg = args->head->next;
+    while (arg) {
+        switch (arg->op) {
+        case OP_HOME_EXPANSION: {
+            preprocessor_home_expansion_process(arg, shell->config.home_location, scratch);
+            break;
+        }
+        case OP_GLOB_EXPANSION: {
+            preprocessor_glob_process(arg, &args->count, scratch);
+            break;
+        }
+        case OP_VARIABLE: {
+            preprocessor_variable_process(arg, &shell->vars, scratch);
+            break;
+        }
+        default: {
+            preprocessor_alias_replace(arg, scratch);
+            break;
+        }
+        }
+        if (arg)
+            arg = arg->next;
+    }
+
+    return EXIT_SUCCESS;
+}
+
 int preprocessor_ops_process(Args* rst args, Token_Data* rst tokens, Shell* rst shell, Arena* rst scratch)
 {
     assert(args && args->head);
@@ -311,14 +343,6 @@ int preprocessor_ops_process(Args* rst args, Token_Data* rst tokens, Shell* rst 
             tokens->is_background_job = true;
             break;
         }
-        case OP_HOME_EXPANSION: {
-            preprocessor_home_expansion_process(arg, shell->config.home_location, scratch);
-            break;
-        }
-        case OP_GLOB_EXPANSION: {
-            preprocessor_glob_process(arg, &args->count, scratch);
-            break;
-        }
         case OP_ASSIGNMENT: {
             // skip command like arguments that look like assignment.
             // for example "CC=clang" is an assignment, "make CC=clang" is not.
@@ -336,10 +360,6 @@ int preprocessor_ops_process(Args* rst args, Token_Data* rst tokens, Shell* rst 
                     continue;
                 }
             }
-            break;
-        }
-        case OP_VARIABLE: {
-            preprocessor_variable_process(arg, &shell->vars, scratch);
             break;
         }
         case OP_IF: {
@@ -368,10 +388,6 @@ int preprocessor_ops_process(Args* rst args, Token_Data* rst tokens, Shell* rst 
 
             break;
         }
-        default: {
-            preprocessor_alias_replace(arg, scratch);
-            break;
-        }
         }
         prev = arg;
         if (arg)
@@ -392,6 +408,9 @@ int preprocessor_preprocess(Args* rst args, Token_Data* rst tokens, Shell* rst s
         return EXIT_FAILURE_CONTINUE;
 
     int result;
+    if ((result = preprocessor_expansions_process(args, shell, scratch)) != EXIT_SUCCESS)
+        return result;
+
     if ((result = preprocessor_ops_process(args, tokens, shell, scratch)) != EXIT_SUCCESS)
         return result;
 

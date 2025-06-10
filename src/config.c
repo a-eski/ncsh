@@ -4,6 +4,7 @@
 #ifndef _DEFAULT_SOURCE
 #define _DEFAULT_SOURCE
 #endif /* ifndef _DEFAULT_SOURCE */
+
 #ifndef _POXIC_C_SOURCE
 #define _POSIX_C_SOURCE 200809L
 #endif /* ifndef _POXIC_C_SOURCE */
@@ -88,6 +89,15 @@ enum eresult config_file_set(Config* rst config, Arena* rst arena)
 {
     constexpr size_t rc_len = sizeof(RC_FILE);
     constexpr size_t rc_len_nt = rc_len - 1;
+
+#if defined(NCSH_IN_PLACE)
+    config->config_file.value = arena_malloc(arena, rc_len, char);
+    memcpy(config->config_file.value, RC_FILE, rc_len_nt);
+    config->config_file.value[rc_len_nt] = '\0';
+    config->config_file.length = rc_len;
+    return E_SUCCESS;
+#endif
+
     if (!config->config_location.value || !config->config_location.length) {
         config->config_file.value = arena_malloc(arena, rc_len, char);
         memcpy(config->config_file.value, RC_FILE, rc_len_nt);

@@ -3,7 +3,7 @@
 #pragma once
 
 #include "arena.h"
-#include "args.h"
+#include "parser/args.h"
 #include "config.h"
 #include "readline/ncreadline.h"
 #include "vm/vars.h"

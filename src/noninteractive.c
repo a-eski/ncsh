@@ -13,7 +13,7 @@
 #include "eskilib/ecolors.h"
 #include "eskilib/eresult.h"
 #include "noninteractive.h"
-#include "parser.h"
+#include "parser/parser.h"
 #include "vm/vars.h"
 #include "vm/vm.h"
 

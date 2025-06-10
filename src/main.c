@@ -14,7 +14,7 @@
 #include "eskilib/ecolors.h"
 #include "eskilib/eresult.h"
 #include "noninteractive.h"
-#include "parser.h"
+#include "parser/parser.h"
 #include "readline/ac.h"
 #include "readline/ncreadline.h"
 #include "signals.h"

@@ -23,7 +23,7 @@ def run_acceptance_tests(prompt_directory_option, prompt_user_option, is_custom_
   setup_tests(prompt_directory_option, prompt_user_option, is_custom_prompt)
 
   row = 0
-  @tty = TTYtest.new_terminal(%(PS1='$ ' ./bin/ncsh), width: 120, height: 140)
+  @tty = TTYtest.new_terminal(%(PS1='$ ' ./bin/ncsh), width: 180, height: 160)
   row = startup_tests(row, true)
   row = basic_tests(row)
   row = keys_tests(row)

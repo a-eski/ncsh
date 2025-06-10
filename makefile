@@ -33,6 +33,9 @@ obj/%.o: src/readline/%.c
 obj/%.o: src/vm/%.c
 	$(cc_with_flags) -c $< -o $@
 
+obj/%.o: src/parser/%.c
+	$(cc_with_flags) -c $< -o $@
+
 obj/%.o: src/eskilib/%.c
 	$(cc_with_flags) -c $< -o $@
 
@@ -68,6 +71,16 @@ unity_debug :
 .PHONY: ud
 ud:
 	make unity_debug
+
+# Unity/jumbo debug build, with history, z database, rc file in place
+.PHONY: in_place_debug
+in_place_debug :
+	$(CC) $(STD) $(debug_flags) -DNCSH_IN_PLACE src/unity.c -o $(target)
+
+# Unity/jumbo release build, with history, z database, rc file in place
+.PHONY: in_place_release
+in_place_release :
+	$(CC) $(STD) $(release_flags) -DNCSH_IN_PLACE src/unity.c -o $(target)
 
 # Install locally to DESTDIR (default /usr/bin/)
 .PHONY: install
@@ -185,7 +198,7 @@ bact :
 # Run parser tests
 .PHONY: test_parser
 test_parser :
-	$(CC) $(STD) $(debug_flags) ./src/arena.c ./src/args.c ./src/parser.c ./tests/parser_tests.c -o ./bin/parser_tests
+	$(CC) $(STD) $(debug_flags) ./src/arena.c ./src/parser/args.c ./src/parser/parser.c ./tests/parser_tests.c -o ./bin/parser_tests
 	./bin/parser_tests
 .PHONY: tp
 tp :
@@ -196,7 +209,7 @@ tp :
 fuzz_parser :
 	chmod +x ./create_corpus_dirs.sh
 	./create_corpus_dirs.sh
-	clang-19 $(STD) $(fuzz_flags) ./tests/parser_fuzzing.c ./src/arena.c ./src/args.c ./src/parser.c -o ./bin/parser_fuzz
+	clang-19 $(STD) $(fuzz_flags) ./tests/parser_fuzzing.c ./src/arena.c ./src/parser/args.c ./src/parser/parser.c -o ./bin/parser_fuzz
 	./bin/parser_fuzz PARSER_CORPUS/ -detect_leaks=0 -rss_limit_mb=4096
 .PHONY: fp
 fp :
@@ -205,7 +218,7 @@ fp :
 # Run parser benchmarks
 .PHONY: bench_parser
 bench_parser :
-	$(CC) $(STD) $(debug_flags) -DNDEBUG ./src/arena.c ./src/vm/vars.c ./src/args.c ./src/parser.c ./tests/parser_bench.c -o ./bin/parser_bench
+	$(CC) $(STD) $(debug_flags) -DNDEBUG ./src/arena.c ./src/vm/vars.c ./src/parser/args.c ./src/parser/parser.c ./tests/parser_bench.c -o ./bin/parser_bench
 	hyperfine --warmup 1000 --shell=none './bin/parser_bench'
 .PHONY: bp
 bp :
@@ -213,27 +226,11 @@ bp :
 
 .PHONY: bench_parser_tests
 bench_parser_tests :
-	$(CC) $(STD) $(debug_flags) -DNDEBUG ./src/arena.c ./src/vm/vars.c ./src/args.c ./src/parser.c ./tests/parser_tests.c -o ./bin/parser_tests
+	$(CC) $(STD) $(debug_flags) -DNDEBUG ./src/arena.c ./src/vm/vars.c ./src/parser/args.c ./src/parser/parser.c ./tests/parser_tests.c -o ./bin/parser_tests
 	hyperfine --warmup 1000 --shell=none './bin/parser_tests'
 .PHONY: bpt
 bpt :
 	make bench_parser_tests
-
-.PHONY: bench_parser_and_vm
-bench_parser_and_vm :
-	hyperfine --warmup 100 --shell /bin/ncsh 'ls' 'ls | sort' 'ls > t.txt' 'ls | sort | wc -c' 'ls | sort | wc -c > t2.txt'
-	rm t.txt t2.txt
-.PHONY: bpv
-bpv :
-	make bench_parser_and_vm
-
-.PHONY: bash_bench_parser_and_vm
-bash_bench_parser_and_vm :
-	hyperfine --warmup 100 --shell /bin/bash 'ls' 'ls | sort' 'ls > t.txt' 'ls | sort | wc -c' 'ls | sort | wc -c > t2.txt'
-	rm t.txt t2.txt
-.PHONY: bbpv
-bbpv :
-	make bash_bench_parser_and_vm
 
 # Run z tests
 .PHONY: test_z
@@ -323,7 +320,7 @@ tv :
 # Run VM sanity tests
 .PHONY: test_vm
 test_vm :
-	$(CC) $(STD) $(debug_flags) -DNCSH_VM_TEST ./src/arena.c ./src/args.c ./src/parser.c ./src/eskilib/efile.c ./src/readline/hashset.c ./src/vm/vars.c ./src/readline/history.c ./src/z/fzf.c ./src/z/z.c ./src/env.c ./src/alias.c ./src/config.c ./src/vm/logic.c ./src/vm/vm_buffer.c ./src/vm/vm.c ./src/vm/syntax_validator.c ./src/vm/preprocessor.c ./src/vm/builtins.c ./src/vm/pipe.c ./src/vm/redirection.c ./tests/vm_tests.c -o ./bin/vm_tests
+	$(CC) $(STD) $(debug_flags) -DNCSH_VM_TEST ./src/arena.c ./src/parser/args.c ./src/parser/parser.c ./src/eskilib/efile.c ./src/readline/hashset.c ./src/vm/vars.c ./src/readline/history.c ./src/z/fzf.c ./src/z/z.c ./src/env.c ./src/alias.c ./src/config.c ./src/vm/logic.c ./src/vm/vm_buffer.c ./src/vm/vm.c ./src/vm/syntax_validator.c ./src/vm/preprocessor.c ./src/vm/builtins.c ./src/vm/pipe.c ./src/vm/redirection.c ./tests/vm_tests.c -o ./bin/vm_tests
 	./bin/vm_tests
 .PHONY: tvm
 tvm :
@@ -341,7 +338,7 @@ ths :
 # Run VM logic tests
 .PHONY: test_logic
 test_logic :
-	$(CC) $(STD) $(debug_flags) ./src/arena.c ./src/args.c ./src/parser.c ./src/vm/logic.c ./tests/logic_tests.c -o ./bin/logic_tests
+	$(CC) $(STD) $(debug_flags) ./src/arena.c ./src/parser/args.c ./src/parser/parser.c ./src/vm/logic.c ./tests/logic_tests.c -o ./bin/logic_tests
 	./bin/logic_tests
 .PHONY: tl
 tl :
@@ -350,7 +347,7 @@ tl :
 # Run VM buffer processing tests
 .PHONY: test_vm_buffer
 test_vm_buffer :
-	$(CC) $(STD) $(debug_flags) ./src/arena.c ./src/alias.c ./src/env.c ./src/vm/vars.c ./src/args.c ./src/parser.c ./src/vm/logic.c ./src/vm/vm_buffer.c ./src/vm/preprocessor.c ./tests/vm_buffer_tests.c -o ./bin/vm_buffer_tests
+	$(CC) $(STD) $(debug_flags) ./src/arena.c ./src/alias.c ./src/env.c ./src/vm/vars.c ./src/parser/args.c ./src/parser/parser.c ./src/vm/logic.c ./src/vm/vm_buffer.c ./src/vm/preprocessor.c ./tests/vm_buffer_tests.c -o ./bin/vm_buffer_tests
 	./bin/vm_buffer_tests
 .PHONY: tvb
 tvb :

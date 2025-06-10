@@ -18,13 +18,11 @@
 
 #include "alias.c"
 #include "arena.c"
-#include "args.c"
 #include "config.c"
 #include "env.c"
-#include "parser.c"
 
-#include "main.c"
-#include "noninteractive.c"
+#include "parser/args.c"
+#include "parser/parser.c"
 
 #include "readline/ac.c"
 #include "readline/hashset.c"
@@ -41,3 +39,6 @@
 #include "vm/vars.c"
 #include "vm/vm.c"
 #include "vm/vm_buffer.c"
+
+#include "main.c"
+#include "noninteractive.c"

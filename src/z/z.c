@@ -378,7 +378,7 @@ enum z_Result z_database_add(char* rst path, size_t path_length, char* rst cwd, 
 enum z_Result z_database_file_set(Str* rst config_file, z_Database* rst db, Arena* rst arena)
 {
     constexpr size_t z_db_file_len = sizeof(Z_DATABASE_FILE);
-#ifdef Z_TEST
+#if defined(Z_TEST) || defined(NCSH_IN_PLACE)
     db->database_file = arena_malloc(arena, z_db_file_len, char);
     memcpy(db->database_file, Z_DATABASE_FILE, z_db_file_len);
     return Z_SUCCESS;

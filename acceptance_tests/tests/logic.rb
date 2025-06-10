@@ -7,9 +7,9 @@ def and_test(row)
   @tty.send_line('ls && ls')
   row += 1
   @tty.assert_row_starts_with(row, LS_FIRST_ITEM)
-  row += LS_LINES - 1
+  row += LS_LINES
   @tty.assert_row_starts_with(row, LS_FIRST_ITEM)
-  row += LS_LINES - 1
+  row += LS_LINES
   test_passed('and (&&) test')
   row
 end
@@ -19,11 +19,11 @@ def multiple_and_test(row)
   @tty.send_line('ls && ls && ls')
   row += 1
   @tty.assert_row_starts_with(row, LS_FIRST_ITEM)
-  row += LS_LINES - 1
+  row += LS_LINES
   @tty.assert_row_starts_with(row, LS_FIRST_ITEM)
-  row += LS_LINES - 1
+  row += LS_LINES
   @tty.assert_row_starts_with(row, LS_FIRST_ITEM)
-  row += LS_LINES - 1
+  row += LS_LINES
   test_passed('multiple and (&&) test')
   row
 end

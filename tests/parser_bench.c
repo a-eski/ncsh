@@ -1,4 +1,4 @@
-#include "../src/parser.h"
+#include "../src/parser/parser.h"
 #include "lib/arena_test_helper.h"
 #include <string.h>
 

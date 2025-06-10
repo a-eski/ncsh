@@ -6,7 +6,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "arena.h"
+#include "../arena.h"
 
 /* enum Ops
  * Represents the bytecodes which get sent to the VM.
@@ -14,7 +14,7 @@
 enum Ops : uint8_t {
     // Default value, indicative of an issue parsing when found during execution
     OP_NONE = 0,
-    // Constant value, need to check constants array for what it is
+    // Constant value
     OP_CONSTANT = 1,
     // Shell operators
     OP_PIPE = 2,                                  // |
@@ -52,6 +52,7 @@ enum Ops : uint8_t {
     OP_CONDITION_END,
     OP_IF,
     OP_ELSE,
+    OP_ELIF,
     OP_THEN,
     OP_FI,
     OP_EQUALS,

@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "../parser.h"
+#include "../parser/args.h"
 #include "../eskilib/str.h"
 #include <stdint.h>
 
@@ -72,7 +72,7 @@ typedef struct {
 
     // Control flow structures
     enum Logic_Type logic_type;
-    Commands* conditions;
+    Statements* conditions;
     Statements* if_statements;
     Statements* else_statements;
     // Statements* elif_statements;
@@ -124,8 +124,10 @@ typedef struct {
     enum Ops op_current;
     enum Vm_State state;
 
+    size_t conditions_pos;
     size_t if_statment_pos;
     size_t else_statment_pos;
+    // size_t elif_statment_pos;
 
     int status;
     int exec_result;

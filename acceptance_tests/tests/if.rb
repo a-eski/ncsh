@@ -25,52 +25,6 @@ def false_if_test(row)
   row
 end
 
-def true_or_if_multiple_condition_test(row)
-  assert_check_new_row(row)
-
-  @tty.send_keys_exact('if [ true || false ]; then echo hello; fi')
-  @tty.send_newline
-  row += 1
-  @tty.assert_row(row, 'hello')
-  row += 1
-  test_passed('true or if multiple condition test')
-  row
-end
-
-def true_and_if_multiple_condition_test(row)
-  assert_check_new_row(row)
-
-  @tty.send_keys_exact('if [ true && true ]; then echo hello; fi')
-  @tty.send_newline
-  row += 1
-  @tty.assert_row(row, 'hello')
-  row += 1
-  test_passed('true and if multiple condition test')
-  row
-end
-
-def false_or_if_multiple_condition_test(row)
-  assert_check_new_row(row)
-  @tty.send_keys_exact('if [ false || true ]; then echo hello; fi')
-  @tty.send_newline
-  row += 1
-  @tty.assert_row(row, 'hello')
-  row += 1
-  assert_check_new_row(row)
-  test_passed('false or if multiple condition test')
-  row
-end
-
-def false_and_if_multiple_condition_test(row)
-  assert_check_new_row(row)
-  @tty.send_keys_exact('if [ false && true ]; then echo hello; fi')
-  @tty.send_newline
-  row += 1
-  assert_check_new_row(row)
-  test_passed('false and if multiple condition test')
-  row
-end
-
 def true_if_else_test(row)
   assert_check_new_row(row)
 
@@ -95,16 +49,223 @@ def false_if_else_test(row)
   row
 end
 
+def true_and_true_if_multiple_condition_test(row)
+  assert_check_new_row(row)
+
+  @tty.send_keys_exact('if [ true && true ]; then echo hello; fi')
+  @tty.send_newline
+  row += 1
+  @tty.assert_row(row, 'hello')
+  row += 1
+  test_passed('true and if multiple condition test')
+  row
+end
+
+def true_and_false_if_multiple_condition_test(row)
+  assert_check_new_row(row)
+
+  @tty.send_keys_exact('if [ true && false ]; then echo hello; fi')
+  @tty.send_newline
+  row += 1
+  assert_check_new_row(row)
+  test_passed('true and if multiple condition test')
+  row
+end
+
+def false_and_true_if_multiple_condition_test(row)
+  assert_check_new_row(row)
+  @tty.send_keys_exact('if [ false && true ]; then echo hello; fi')
+  @tty.send_newline
+  row += 1
+  assert_check_new_row(row)
+  test_passed('false and if multiple condition test')
+  row
+end
+
+def false_and_false_if_multiple_condition_test(row)
+  assert_check_new_row(row)
+  @tty.send_keys_exact('if [ false && false ]; then echo hello; fi')
+  @tty.send_newline
+  row += 1
+  assert_check_new_row(row)
+  test_passed('false and if multiple condition test')
+  row
+end
+
+def true_or_true_if_multiple_condition_test(row)
+  assert_check_new_row(row)
+
+  @tty.send_keys_exact('if [ true || true ]; then echo hello; fi')
+  @tty.send_newline
+  row += 1
+  @tty.assert_row(row, 'hello')
+  row += 1
+  test_passed('true or if multiple condition test')
+  row
+end
+
+def true_or_false_if_multiple_condition_test(row)
+  assert_check_new_row(row)
+
+  @tty.send_keys_exact('if [ true || false ]; then echo hello; fi')
+  @tty.send_newline
+  row += 1
+  @tty.assert_row(row, 'hello')
+  row += 1
+  test_passed('true or if multiple condition test')
+  row
+end
+
+def false_or_true_if_multiple_condition_test(row)
+  assert_check_new_row(row)
+  @tty.send_keys_exact('if [ false || true ]; then echo hello; fi')
+  @tty.send_newline
+  row += 1
+  @tty.assert_row(row, 'hello')
+  row += 1
+  assert_check_new_row(row)
+  test_passed('false or if multiple condition test')
+  row
+end
+
+def false_or_false_if_multiple_condition_test(row)
+  assert_check_new_row(row)
+  @tty.send_keys_exact('if [ false || false ]; then echo hello; fi')
+  @tty.send_newline
+  row += 1
+  assert_check_new_row(row)
+  test_passed('false or if multiple condition test')
+  row
+end
+
+def true_and_true_if_else_multiple_condition_test(row)
+  assert_check_new_row(row)
+
+  @tty.send_keys_exact('if [ true && true ]; then echo hello; else echo hi; fi')
+  @tty.send_newline
+  row += 1
+  @tty.assert_row(row, 'hello')
+  row += 1
+  test_passed('true and if multiple condition test')
+  row
+end
+
+def true_and_false_if_else_multiple_condition_test(row)
+  assert_check_new_row(row)
+
+  @tty.send_keys_exact('if [ true && false ]; then echo hello; else echo hi; fi')
+  @tty.send_newline
+  row += 1
+  @tty.assert_row(row, 'hi')
+  row += 1
+  test_passed('true and if multiple condition test')
+  row
+end
+
+def false_and_true_if_else_multiple_condition_test(row)
+  assert_check_new_row(row)
+  @tty.send_keys_exact('if [ false && true ]; then echo hello; else echo hi; fi')
+  @tty.send_newline
+  row += 1
+  @tty.assert_row(row, 'hi')
+  row += 1
+  assert_check_new_row(row)
+  test_passed('false and if multiple condition test')
+  row
+end
+
+def false_and_false_if_else_multiple_condition_test(row)
+  assert_check_new_row(row)
+  @tty.send_keys_exact('if [ false && false ]; then echo hello; else echo hi; fi')
+  @tty.send_newline
+  row += 1
+  @tty.assert_row(row, 'hi')
+  row += 1
+  assert_check_new_row(row)
+  test_passed('false and if multiple condition test')
+  row
+end
+
+def true_or_true_if_else_multiple_condition_test(row)
+  assert_check_new_row(row)
+
+  @tty.send_keys_exact('if [ true || true ]; then echo hello; else echo hi; fi')
+  @tty.send_newline
+  row += 1
+  @tty.assert_row(row, 'hello')
+  row += 1
+  test_passed('true or if multiple condition test')
+  row
+end
+
+def true_or_false_if_else_multiple_condition_test(row)
+  assert_check_new_row(row)
+
+  @tty.send_keys_exact('if [ true || false ]; then echo hello; else echo hi; fi')
+  @tty.send_newline
+  row += 1
+  @tty.assert_row(row, 'hello')
+  row += 1
+  test_passed('true or if multiple condition test')
+  row
+end
+
+def false_or_true_if_else_multiple_condition_test(row)
+  assert_check_new_row(row)
+  @tty.send_keys_exact('if [ false || true ]; then echo hello; else echo hi; fi')
+  @tty.send_newline
+  row += 1
+  @tty.assert_row(row, 'hello')
+  row += 1
+  assert_check_new_row(row)
+  test_passed('false or if multiple condition test')
+  row
+end
+
+def false_or_false_if_else_multiple_condition_test(row)
+  assert_check_new_row(row)
+  @tty.send_keys_exact('if [ false || false ]; then echo hello; else echo hi; fi')
+  @tty.send_newline
+  row += 1
+  @tty.assert_row(row, 'hi')
+  row += 1
+  assert_check_new_row(row)
+  test_passed('false or if multiple condition test')
+  row
+end
+
 def bool_if_tests(row)
   starting_tests('bool if')
   row = true_if_test(row)
   row = false_if_test(row)
-  row = true_or_if_multiple_condition_test(row)
-  row = true_and_if_multiple_condition_test(row)
-  # row = false_or_if_multiple_condition_test(row)
-  row = false_and_if_multiple_condition_test(row)
+
+  starting_tests('bool if else')
   row = true_if_else_test(row)
-  false_if_else_test(row)
+  row = false_if_else_test(row)
+
+  starting_tests('bool if and multiple conditions')
+  row = true_and_true_if_multiple_condition_test(row)
+  # row = true_and_false_if_multiple_condition_test(row)
+  row = false_and_true_if_multiple_condition_test(row)
+  # row = false_and_false_if_multiple_condition_test(row)
+
+  starting_tests('bool if or multiple conditions')
+  row = true_or_true_if_multiple_condition_test(row)
+  row = true_or_false_if_multiple_condition_test(row)
+  # row = false_or_true_if_multiple_condition_test(row)
+  row = false_or_false_if_multiple_condition_test(row)
+
+  starting_tests('bool if else and multiple conditions')
+  row = true_and_true_if_else_multiple_condition_test(row)
+  # row = true_and_false_if_else_multiple_condition_test(row)
+  row = false_and_true_if_else_multiple_condition_test(row)
+  # false_and_false_if_else_multiple_condition_test(row)
+
+  starting_tests('bool if or multiple conditions')
+  row = true_or_true_if_else_multiple_condition_test(row)
+  row = true_or_false_if_else_multiple_condition_test(row)
+  # row = false_or_true_if_else_multiple_condition_test(row)
+  false_or_false_if_else_multiple_condition_test(row)
 end
 
 # Equals if tests
@@ -272,9 +433,42 @@ def lt_if_tests(row)
   not_lt_if_else_test(row)
 end
 
+def if_variable_test(row)
+  assert_check_new_row(row)
+  @tty.send_line('VAL=1')
+  row += 1
+  @tty.send_keys_exact('if [ $VAL -eq 1 ]; then echo hello; else echo hi; fi')
+  @tty.send_newline
+  row += 1
+  @tty.assert_row(row, 'hello')
+  row += 1
+  test_passed('if variable test')
+  row
+end
+
+def if_variables_test(row)
+  assert_check_new_row(row)
+  @tty.send_line('VAL2=2')
+  row += 1
+  @tty.send_keys_exact('if [ $VAL -eq $VAL2 ]; then echo hello; else echo hi; fi')
+  @tty.send_newline
+  row += 1
+  @tty.assert_row(row, 'hi')
+  row += 1
+  test_passed('if variables test')
+  row
+end
+
+def if_variable_tests(row)
+  starting_tests('if variable')
+  row = if_variable_test(row)
+  if_variables_test(row)
+end
+
 def if_tests(row)
   row = bool_if_tests(row)
   row = equals_if_tests(row)
   row = gt_if_tests(row)
-  lt_if_tests(row)
+  row = lt_if_tests(row)
+  if_variable_tests(row)
 end

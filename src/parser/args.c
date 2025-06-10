@@ -4,7 +4,7 @@
 #include <assert.h>
 #include <string.h>
 
-#include "arena.h"
+#include "../arena.h"
 #include "args.h"
 
 Args* args_alloc(Arena* rst arena)

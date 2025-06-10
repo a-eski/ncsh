@@ -10,7 +10,7 @@
 
 #define NCSH "ncsh"
 #define DOT_CONFIG ".config"
-#define RC_FILE ".ncshrc"
+#define RC_FILE "ncshrc"
 
 /* Config
  * Stores home location, config location, and full path to the config file.
