@@ -75,7 +75,7 @@ typedef struct {
     Statements* conditions;
     Statements* if_statements;
     Statements* else_statements;
-    Statements* elif_statements;
+    // Statements* elif_statements;
 } Token_Data;
 
 /*** VM TYPES ***/
@@ -127,7 +127,7 @@ typedef struct {
     size_t conditions_pos;
     size_t if_statment_pos;
     size_t else_statment_pos;
-    size_t elif_statment_pos;
+    // size_t elif_statment_pos;
 
     int status;
     int exec_result;
