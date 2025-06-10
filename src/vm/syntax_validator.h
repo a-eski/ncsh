@@ -2,6 +2,6 @@
 
 #pragma once
 
-#include "../args.h"
+#include "../parser/args.h"
 
 int syntax_validator_validate(Args* rst args);

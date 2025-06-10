@@ -6,7 +6,7 @@ echo 'starting ncsh acceptance tests'
 
 rm t.txt t2.txt t3.txt t4.txt
 make clean
-rm _z_database.bin .ncsh_history .ncsh_history_test
+rm _z_database.bin ncsh_history ncsh_history_test
 # run corpus dirs since ls test currently expects those directories to exist
 chmod +x create_corpus_dirs.sh
 ./create_corpus_dirs.sh
@@ -29,7 +29,7 @@ echo "STARING SHORT DIRECTORY ACCEPTANCE TESTS"
 make clean
 
 set +e
-rm _z_database.bin .ncsh_history_test
+rm _z_database.bin ncsh_history_test
 set -e
 
 echo "COMPILING SHORT DIRECTORY NO USER ACCEPTANCE TESTS"
@@ -40,7 +40,7 @@ echo "STARTING SHORT DIRECTORY NO USER ACCEPTANCE TESTS"
 make clean
 
 set +e
-rm _z_database.bin .ncsh_history_test
+rm _z_database.bin ncsh_history_test
 set -e
 
 echo "COMPILING NORMAL DIRECTORY ACCEPTANCE TESTS"
@@ -51,7 +51,7 @@ echo "STARTING NORMAL DIRECTORY ACCEPTANCE TESTS"
 make clean
 
 set +e
-rm _z_database.bin .ncsh_history_test
+rm _z_database.bin ncsh_history_test
 set -e
 
 echo "COMPILING NORMAL DIRECTORY NO USER ACCEPTANCE TESTS"
@@ -62,7 +62,7 @@ echo "STARTING NORMAL DIRECTORY NO USER ACCEPTANCE TESTS"
 make clean
 
 set +e
-rm _z_database.bin .ncsh_history_test
+rm _z_database.bin ncsh_history_test
 set -e
 
 echo "COMPILING NO DIRECTORY ACCEPTANCE TESTS"
@@ -73,7 +73,7 @@ echo "STARTING NO DIRECTORY ACCEPTANCE TESTS"
 make clean
 
 set +e
-rm _z_database.bin .ncsh_history_test
+rm _z_database.bin ncsh_history_test
 
 echo "COMPILING NO DIRECTORY NO USER ACCEPTANCE TESTS"
 make CFLAGS="-Wall -Wextra -Werror -pedantic-errors -Wformat=2 -Wsign-conversion -Wshadow -Wvla -fsanitize=address,undefined,leak -DNCSH_HISTORY_TEST -DZ_TEST -DNCSH_PROMPT_DIRECTORY=2 -DNCSH_PROMPT_SHOW_USER=1 -DNCSH_START_TIME -DNDEBUG"
@@ -83,7 +83,7 @@ echo "STARTING NO DIRECTORY NO USER ACCEPTANCE TESTS"
 make clean
 
 set +e
-rm _z_database.bin .ncsh_history_test
+rm _z_database.bin ncsh_history_test
 set -e
 
 echo "COMPILING CUSTOM PROMPT ACCEPTANCE TESTS"
@@ -94,7 +94,7 @@ echo "STARTING CUSTOM PROMPT ACCEPTANCE TESTS"
 make clean
 
 set +e
-rm _z_database.bin .ncsh_history_test
+rm _z_database.bin ncsh_history_test
 set -e
 
 echo "COMPILING NONINTERACTIVE ACCEPTANCE TESTS"
@@ -105,6 +105,6 @@ echo "STARING NONINTERACTIVE ACCEPTANCE TESTS"
 make clean
 
 set +e
-rm _z_database.bin .ncsh_history_test
+rm _z_database.bin ncsh_history_test
 
 echo "ALL ACCEPTANCE TESTS PASSED"

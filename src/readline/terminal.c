@@ -2,7 +2,6 @@
 /* terminal.c: deal with the underlying tty */
 
 #include <assert.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/ioctl.h>

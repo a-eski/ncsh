@@ -1,15 +1,15 @@
 #include <stdlib.h>
 
-#include "../src/args.h"
 #include "../src/eskilib/etest.h"
-#include "../src/parser.h"
+#include "../src/parser/args.h"
+#include "../src/parser/parser.h"
 #include "../src/vm/logic.h"
 #include "lib/arena_test_helper.h"
 
 #define COMMAND_VALIDATE(command, index, expected, op)                                                                 \
-    eassert(!strcmp(command->vals[index], expected));                                                                  \
-    eassert(command->lens[index] == sizeof(expected));                                                                 \
-    eassert(command->ops[index] == op)
+    eassert(!strcmp((command->vals[index]), expected));                                                                \
+    eassert((command->lens[index]) == sizeof(expected));                                                               \
+    eassert((command->ops[index]) == op)
 
 void logic_preprocess_if_test()
 {
@@ -26,12 +26,14 @@ void logic_preprocess_if_test()
     eassert(result.val.arg);
     eassert(result.val.arg->op == OP_FI);
 
-    eassert(tokens.conditions->count == 3);
+    eassert(tokens.conditions);
+    eassert(tokens.conditions->count == 1);
+    eassert(tokens.conditions->commands->count == 3);
 
-    COMMAND_VALIDATE(tokens.conditions, 0, "1", OP_CONSTANT);
-    COMMAND_VALIDATE(tokens.conditions, 1, "-eq", OP_EQUALS);
-    COMMAND_VALIDATE(tokens.conditions, 2, "1", OP_CONSTANT);
-    eassert(tokens.conditions->lens[3] == 0);
+    COMMAND_VALIDATE(tokens.conditions->commands, 0, "1", OP_CONSTANT);
+    COMMAND_VALIDATE(tokens.conditions->commands, 1, "-eq", OP_EQUALS);
+    COMMAND_VALIDATE(tokens.conditions->commands, 2, "1", OP_CONSTANT);
+    eassert(tokens.conditions->commands[0].lens[3] == 0);
 
     eassert(tokens.if_statements);
     eassert(tokens.if_statements->commands);
@@ -64,12 +66,14 @@ void logic_preprocess_if_long_test()
     eassert(result.val.arg);
     eassert(result.val.arg->op == OP_FI);
 
-    eassert(tokens.conditions->count == 3);
+    eassert(tokens.conditions);
+    eassert(tokens.conditions->count == 1);
+    eassert(tokens.conditions->commands->count == 3);
 
-    COMMAND_VALIDATE(tokens.conditions, 0, "1", OP_CONSTANT);
-    COMMAND_VALIDATE(tokens.conditions, 1, "-eq", OP_EQUALS);
-    COMMAND_VALIDATE(tokens.conditions, 2, "1", OP_CONSTANT);
-    eassert(tokens.conditions->lens[3] == 0);
+    COMMAND_VALIDATE(tokens.conditions->commands, 0, "1", OP_CONSTANT);
+    COMMAND_VALIDATE(tokens.conditions->commands, 1, "-eq", OP_EQUALS);
+    COMMAND_VALIDATE(tokens.conditions->commands, 2, "1", OP_CONSTANT);
+    eassert(tokens.conditions->commands->lens[3] == 0);
 
     eassert(tokens.if_statements);
     eassert(tokens.if_statements->commands);
@@ -104,12 +108,13 @@ void logic_preprocess_if_else_test()
     eassert(result.val.arg);
     eassert(result.val.arg->op == OP_FI);
 
-    eassert(tokens.conditions->count == 3);
-
-    COMMAND_VALIDATE(tokens.conditions, 0, "1", OP_CONSTANT);
-    COMMAND_VALIDATE(tokens.conditions, 1, "-eq", OP_EQUALS);
-    COMMAND_VALIDATE(tokens.conditions, 2, "1", OP_CONSTANT);
-    eassert(tokens.conditions->lens[3] == 0);
+    eassert(tokens.conditions);
+    eassert(tokens.conditions->count == 1);
+    eassert(tokens.conditions->commands->count == 3);
+    COMMAND_VALIDATE(tokens.conditions->commands, 0, "1", OP_CONSTANT);
+    COMMAND_VALIDATE(tokens.conditions->commands, 1, "-eq", OP_EQUALS);
+    COMMAND_VALIDATE(tokens.conditions->commands, 2, "1", OP_CONSTANT);
+    eassert(tokens.conditions->commands->lens[3] == 0);
 
     eassert(tokens.if_statements);
     eassert(tokens.if_statements->commands);

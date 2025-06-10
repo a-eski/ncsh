@@ -8,11 +8,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "arena.h"
+#include "../arena.h"
+#include "../configurables.h"
+#include "../debug.h"
+#include "../defines.h"
 #include "args.h"
-#include "configurables.h"
-#include "debug.h"
-#include "defines.h"
 #include "parser.h"
 
 // supported quotes
@@ -85,6 +85,10 @@
 // currently unsupported
 // #define BANG '!'
 
+#define STRCMP(line, expected_lit) line[0] == expected_lit[0] && !memcmp(line, expected_lit, sizeof(expected_lit) - 1)
+
+#define PARSER_TOKENS_LIMIT 128
+
 /* enum Parser_State
  * Flags used by the parser to keep track of state, like whether the current character
  * being processed is inside quotes or a mathematical expression.
@@ -155,109 +159,140 @@ constexpr size_t ops_3char_len = sizeof(ops_3char_str) / sizeof(char*);
 const enum Ops ops_3char[] = {OP_STDERR_REDIRECTION_APPEND, OP_STDOUT_AND_STDERR_REDIRECTION_APPEND, OP_EQUALS,
                               OP_LESS_THAN, OP_GREATER_THAN};
 
+bool parser_op_check_var(char* line, size_t len)
+{
+    return len > 2 && line[0] == VARIABLE;
+}
+
+enum Ops parser_op_check_len_one(char* rst line)
+{
+    assert(line);
+    switch (line[0]) {
+    case PIPE: {
+        return OP_PIPE;
+    }
+    case STDOUT_REDIRECTION: {
+        return OP_STDOUT_REDIRECTION;
+    }
+    case STDIN_REDIRECTION: {
+        return OP_STDIN_REDIRECTION;
+    }
+    case BACKGROUND_JOB: {
+        return OP_BACKGROUND_JOB;
+    }
+    case ADD: {
+        return OP_ADD;
+    }
+    case SUBTRACT: {
+        return OP_SUBTRACT;
+    }
+    case MULTIPLY: {
+        return OP_MULTIPLY;
+    }
+    case DIVIDE: {
+        return OP_DIVIDE;
+    }
+    case MODULO: {
+        return OP_MODULO;
+    }
+    case CLOSING_PARAN: {
+        return OP_MATH_EXPRESSION_END;
+    }
+    case TILDE: {
+        return OP_HOME_EXPANSION;
+    }
+    case CONDITION_START: {
+        return OP_CONDITION_START;
+    }
+    default: {
+        return OP_CONSTANT;
+    }
+    }
+}
+
+enum Ops parser_op_check_len_two(char* rst line)
+{
+    for (size_t i = 0; i < ops_2char_len; ++i) {
+        if (CMP_2(line, ops_2char_str[i])) {
+            return ops_2char[i];
+        }
+    }
+
+    return OP_CONSTANT;
+}
+
+enum Ops parser_op_check_len_three(char* rst line)
+{
+    for (size_t i = 0; i < ops_3char_len; ++i) {
+        if (CMP_3(line, ops_3char_str[i])) {
+            return ops_3char[i];
+        }
+    }
+
+    return OP_CONSTANT;
+}
+
+enum Ops parser_op_check_len_four(char* rst line)
+{
+    if (STRCMP(line, BOOL_TRUE))
+        return OP_TRUE;
+    else if (STRCMP(line, THEN))
+        return OP_THEN;
+    else if (STRCMP(line, ELSE))
+        return OP_ELSE;
+
+    return OP_CONSTANT;
+}
+
+enum Ops parser_op_check_len_five(char* rst line)
+{
+    if (STRCMP(line, BOOL_FALSE))
+        return OP_FALSE;
+
+    return OP_CONSTANT;
+}
+
 /* parser_op_get
  * Internal function used to map the inputted line to a bytecode.
  * Returns: a value from enum Ops, the bytecode relevant to the input
  */
 [[nodiscard]]
-enum Ops parser_op_get(char* rst line, size_t length)
+enum Ops parser_op_get(char* rst line, size_t len)
 {
     assert(line);
 
-    switch (length) {
+    if (parser_op_check_var(line, len))
+        return OP_VARIABLE;
+
+    switch (len) {
     case 0: {
         return OP_NONE;
     }
 
     case 1: {
-        assert(line);
-        switch (line[0]) {
-        case PIPE: {
-            return OP_PIPE;
-        }
-        case STDOUT_REDIRECTION: {
-            return OP_STDOUT_REDIRECTION;
-        }
-        case STDIN_REDIRECTION: {
-            return OP_STDIN_REDIRECTION;
-        }
-        case BACKGROUND_JOB: {
-            return OP_BACKGROUND_JOB;
-        }
-        case ADD: {
-            return OP_ADD;
-        }
-        case SUBTRACT: {
-            return OP_SUBTRACT;
-        }
-        case MULTIPLY: {
-            return OP_MULTIPLY;
-        }
-        case DIVIDE: {
-            return OP_DIVIDE;
-        }
-        case MODULO: {
-            return OP_MODULO;
-        }
-        case CLOSING_PARAN: {
-            return OP_MATH_EXPRESSION_END;
-        }
-        case TILDE: {
-            return OP_HOME_EXPANSION;
-        }
-        case CONDITION_START: {
-            return OP_CONDITION_START;
-        }
-        default: {
-            return OP_CONSTANT;
-        }
-        }
+        return parser_op_check_len_one(line);
     }
 
     case 2: {
-        for (size_t i = 0; i < ops_2char_len; ++i) {
-            if (CMP_2(line, ops_2char_str[i])) {
-                return ops_2char[i];
-            }
-        }
-
-        return OP_CONSTANT;
+        return parser_op_check_len_two(line);
     }
 
     case 3: {
-        for (size_t i = 0; i < ops_3char_len; ++i) {
-            if (CMP_3(line, ops_3char_str[i])) {
-                return ops_3char[i];
-            }
-        }
-
-        return OP_CONSTANT;
+        return parser_op_check_len_three(line);
     }
 
     case 4: {
-        if (line[0] == 't' && !memcmp(line, BOOL_TRUE, sizeof(BOOL_TRUE) - 1))
-            return OP_TRUE;
-        else if (line[0] == 't' && !memcmp(line, THEN, sizeof(THEN) - 1))
-            return OP_THEN;
-        else if (line[0] == 'e' && !memcmp(line, ELSE, sizeof(ELSE) - 1))
-            return OP_ELSE;
-
-        break;
+        return parser_op_check_len_four(line);
     }
 
     case 5: {
-        if (line[0] == 'f' && !memcmp(line, BOOL_FALSE, sizeof(BOOL_FALSE) - 1))
-            return OP_FALSE;
-
-        break;
-    }
+        return parser_op_check_len_five(line);
     }
 
-    if (line[0] == VARIABLE) {
-        return OP_VARIABLE;
+    default: {
+        return OP_CONSTANT;
     }
-
-    return OP_CONSTANT;
+    }
 }
 
 uint8_t parser_op_process()
@@ -280,15 +315,47 @@ uint8_t parser_op_process()
     return parser_op_get(parser_buffer, parser_buf_pos);
 }
 
+bool parser_limit_hit(Args* rst args, size_t line_pos, size_t length)
+{
+    return args->count == PARSER_TOKENS_LIMIT - 1 && line_pos < length;
+}
+
+bool parser_completed(Args* rst args, size_t line_pos, size_t length)
+{
+    return line_pos == length || line_pos >= NCSH_MAX_INPUT - 1 || parser_buf_pos >= NCSH_MAX_INPUT - 1 ||
+           args->count == PARSER_TOKENS_LIMIT - 1;
+}
+
+Arg* parser_token_process(Arg* rst arg, Args* args, Arena* rst scratch)
+{
+    parser_buffer[parser_buf_pos] = '\0';
+
+    debugf("Current parser state: %d\n", parser_state);
+
+    uint8_t op = parser_op_process();
+    arg->next = arg_alloc(op, parser_buf_pos + 1, parser_buffer, scratch);
+    arg = arg->next;
+    ++args->count;
+
+    parser_buffer[0] = '\0';
+    parser_buf_pos = 0;
+    return arg;
+}
+
+void parser_advance(char* rst line, size_t line_pos)
+{
+    parser_buffer[parser_buf_pos++] = line[line_pos];
+}
+
 /* parser_parse
  * Turns the inputted line into values, lengths, and bytecodes that the VM can work with.
  * Handles expansions like *, ?, and ~
  */
-Args* parser_parse(char* rst line, size_t length, Arena* rst scratch_arena)
+Args* parser_parse(char* rst line, size_t length, Arena* rst scratch)
 {
-    assert(line && scratch_arena);
+    assert(line && scratch);
     assert(!line[length - 1]);
-    Args* args = args_alloc(scratch_arena);
+    Args* args = args_alloc(scratch);
     assert(args);
     if (length < 2 || length > NCSH_MAX_INPUT) {
         args->count = 0;
@@ -299,19 +366,18 @@ Args* parser_parse(char* rst line, size_t length, Arena* rst scratch_arena)
 
     debug_parser_input(line, length);
 
-    parser_buffer = arena_malloc(scratch_arena, NCSH_MAX_INPUT, char);
+    parser_buffer = arena_malloc(scratch, NCSH_MAX_INPUT, char);
     parser_buf_pos = 0;
     parser_state = 0;
 
     Arg* arg = args->head;
 
     for (register size_t line_pos = 0; line_pos < length + 1; ++line_pos) {
-        if (args->count == PARSER_TOKENS_LIMIT - 1 && line_pos < length) { // can't parse all of the args
+        if (parser_limit_hit(args, line_pos, length)) { // can't parse all of the args
             args->count = 0;
             break;
         }
-        else if (line_pos == length || line_pos >= NCSH_MAX_INPUT - 1 || parser_buf_pos >= NCSH_MAX_INPUT - 1 ||
-                 args->count == PARSER_TOKENS_LIMIT - 1) {
+        else if (parser_completed(args, line_pos, length)) {
             break;
         }
 
@@ -343,35 +409,35 @@ Args* parser_parse(char* rst line, size_t length, Arena* rst scratch_arena)
                 parser_state &= ~IN_DOLLAR_SIGN;
             }
 
-            parser_buffer[parser_buf_pos++] = line[line_pos];
+            parser_advance(line, line_pos);
             continue;
         }
         case CLOSING_PARAN: {
             if (parser_state & IN_MATHEMATICAL_EXPRESSION)
                 parser_state &= ~IN_MATHEMATICAL_EXPRESSION;
 
-            parser_buffer[parser_buf_pos++] = line[line_pos];
+            parser_advance(line, line_pos);
             continue;
         }
         case GLOB_STAR: {
             if (!(parser_state & IN_MATHEMATICAL_EXPRESSION) && !(parser_state & IN_GLOB_EXPANSION))
                 parser_state |= IN_GLOB_EXPANSION;
 
-            parser_buffer[parser_buf_pos++] = line[line_pos];
+            parser_advance(line, line_pos);
             continue;
         }
         case GLOB_QUESTION: {
             if (!(parser_state & IN_GLOB_EXPANSION))
                 parser_state |= IN_GLOB_EXPANSION;
 
-            parser_buffer[parser_buf_pos++] = line[line_pos];
+            parser_advance(line, line_pos);
             continue;
         }
         case ASSIGNMENT: {
             if (!(parser_state & IN_ASSIGNMENT))
                 parser_state |= IN_ASSIGNMENT;
 
-            parser_buffer[parser_buf_pos++] = line[line_pos];
+            parser_advance(line, line_pos);
             continue;
         }
         case COMMENT: {
@@ -385,14 +451,14 @@ Args* parser_parse(char* rst line, size_t length, Arena* rst scratch_arena)
             if (!(parser_state & IN_DOLLAR_SIGN) && line_pos < length - 1 && line[line_pos + 1] == '(')
                 parser_state |= IN_DOLLAR_SIGN;
 
-            parser_buffer[parser_buf_pos++] = line[line_pos];
+            parser_advance(line, line_pos);
             continue;
         }
         case TILDE: {
             if (!(parser_state & IN_HOME_EXPANSION))
                 parser_state |= IN_HOME_EXPANSION;
 
-            parser_buffer[parser_buf_pos++] = line[line_pos];
+            parser_advance(line, line_pos);
             continue;
         }
         // delimiter case // NOTE: should \t, \a, or EOF be included?
@@ -404,7 +470,8 @@ Args* parser_parse(char* rst line, size_t length, Arena* rst scratch_arena)
                 continue;
             if (parser_state & IN_SINGLE_QUOTES || parser_state & IN_DOUBLE_QUOTES ||
                 parser_state & IN_BACKTICK_QUOTES) {
-                parser_buffer[parser_buf_pos++] = line[line_pos];
+
+                parser_advance(line, line_pos);
                 continue;
             }
 
@@ -414,26 +481,16 @@ Args* parser_parse(char* rst line, size_t length, Arena* rst scratch_arena)
                 break;
             }
 
-            parser_buffer[parser_buf_pos++] = line[line_pos];
+            parser_advance(line, line_pos);
             continue;
         }
         default: {
-            parser_buffer[parser_buf_pos++] = line[line_pos];
+            parser_advance(line, line_pos);
             continue;
         }
         }
 
-        parser_buffer[parser_buf_pos] = '\0';
-
-        debugf("Current parser state: %d\n", parser_state);
-
-        uint8_t op = parser_op_process();
-        arg->next = arg_alloc(op, parser_buf_pos + 1, parser_buffer, scratch_arena);
-        arg = arg->next;
-        ++args->count;
-
-        parser_buffer[0] = '\0';
-        parser_buf_pos = 0;
+        arg = parser_token_process(arg, args, scratch);
     }
 
     debug_args(args);
@@ -445,21 +502,21 @@ Args* parser_parse(char* rst line, size_t length, Arena* rst scratch_arena)
  * Allocates memory that is freed by parser_free_values at the end of each main loop of the shell.
  * Used for noninteractive mode.
  */
-Args* parser_parse_noninteractive(char** rst inputs, size_t inputs_count, Arena* rst scratch_arena)
+Args* parser_parse_noninteractive(char** rst inputs, size_t inputs_count, Arena* rst scratch)
 {
-    assert(inputs && inputs_count && scratch_arena);
+    assert(inputs && inputs_count && scratch);
 
     if (!inputs || inputs_count == 0) {
         return NULL;
     }
 
-    Args* args = parser_parse(inputs[0], strlen(inputs[0]) + 1, scratch_arena);
+    Args* args = parser_parse(inputs[0], strlen(inputs[0]) + 1, scratch);
     if (inputs_count == 1)
         return args;
 
     // parse the split input one parameter at a time.
     for (size_t i = 1; i < inputs_count; ++i) {
-        Args* next_args = parser_parse(inputs[i], strlen(inputs[i]) + 1, scratch_arena);
+        Args* next_args = parser_parse(inputs[i], strlen(inputs[i]) + 1, scratch);
         if (next_args->count > 0) {
             arg_set_last(args, next_args->head->next); // skip head
             args->count += next_args->count;

@@ -40,7 +40,7 @@ def pipe_command_test(row)
   assert_check_new_row_noninteractive(row)
   @tty.send_line('./bin/ncsh ls | wc -c')
   row += 1
-  @tty.assert_row_ends_with(row, WC_C_LENGTH_NO_Z)
+  @tty.assert_row_ends_with(row, WC_C_LENGTH_NO_LOCAL_FILES)
   row += 1
   test_passed('pipe command test')
   row
@@ -51,7 +51,7 @@ def multiple_pipes_command_test(row)
   assert_check_new_row_noninteractive(row)
   @tty.send_line('./bin/ncsh ls | sort | wc -c')
   row += 1
-  @tty.assert_row_ends_with(row, WC_C_LENGTH_NO_Z)
+  @tty.assert_row_ends_with(row, WC_C_LENGTH_NO_LOCAL_FILES)
   row += 1
   test_passed('multiple pipes command test')
   row
@@ -109,7 +109,7 @@ def multiple_piped_stdout_redirection_test(row)
   @tty.send_line_then_sleep('./bin/ncsh head -1 t3.txt', SLEEP_TIME)
   @tty.assert_row_ends_with(row, %(head -1 t3.txt))
   row += 1
-  @tty.assert_row(row, (WC_C_LENGTH_NO_Z.to_i + 't3.txt'.length + 1).to_s)
+  @tty.assert_row(row, (WC_C_LENGTH_NO_LOCAL_FILES.to_i + 't3.txt'.length + 1).to_s)
   row += 1
   assert_check_new_row_noninteractive(row)
   @tty.send_line('./bin/ncsh rm t3.txt')
@@ -127,9 +127,9 @@ def stdout_redirection_append_test(row)
   row += 1
   @tty.send_line('./bin/ncsh cat t3.txt')
   row += 1
-  @tty.assert_row(row, (WC_C_LENGTH_NO_Z.to_i + 't3.txt'.length + 1).to_s)
+  @tty.assert_row(row, (WC_C_LENGTH_NO_LOCAL_FILES.to_i + 't3.txt'.length + 1).to_s)
   row += 1
-  @tty.assert_row(row, (WC_C_LENGTH_NO_Z.to_i + 't3.txt'.length + 1).to_s)
+  @tty.assert_row(row, (WC_C_LENGTH_NO_LOCAL_FILES.to_i + 't3.txt'.length + 1).to_s)
   row += 1
   @tty.send_line_then_sleep('./bin/ncsh rm t3.txt', SLEEP_TIME)
   row += 1
@@ -158,7 +158,7 @@ def basic_stdin_redirection_test(row)
   @tty.send_line_then_sleep('./bin/ncsh sort < t.txt', SLEEP_TIME)
   row += 1
   @tty.assert_row_starts_with(row, LS_FIRST_ITEM)
-  row += LS_ITEMS_NO_Z
+  row += LS_ITEMS_NO_Z - 1
   assert_check_new_row_noninteractive(row)
   @tty.send_line('./bin/ncsh rm t.txt')
   row += 1
@@ -176,7 +176,7 @@ def piped_stdin_redirection_test(row)
   @tty.send_line_then_sleep('./bin/ncsh sort | wc -c < t2.txt', SLEEP_TIME)
   @tty.assert_row_ends_with(row, %(./bin/ncsh sort | wc -c < t2.txt))
   row += 1
-  @tty.assert_row(row, (WC_C_LENGTH_NO_Z.to_i + 't2.txt'.length + 1).to_s)
+  @tty.assert_row(row, (WC_C_LENGTH_NO_LOCAL_FILES.to_i + 't2.txt'.length + 1).to_s)
   row += 1
   assert_check_new_row_noninteractive(row)
   @tty.send_line('./bin/ncsh rm t2.txt')

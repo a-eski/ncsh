@@ -3,6 +3,7 @@
 
 #include "../src/defines.h"
 #include "../src/eskilib/etest.h"
+#include "../src/parser/parser.h"
 #include "../src/vm/vm.h"
 #include "lib/arena_test_helper.h"
 

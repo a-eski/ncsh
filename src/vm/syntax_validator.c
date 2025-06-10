@@ -4,8 +4,8 @@
 #include <stdint.h>
 #include <unistd.h>
 
-#include "../args.h"
 #include "../defines.h"
+#include "../parser/args.h"
 
 int tok_invalid_syntax_check_res;
 

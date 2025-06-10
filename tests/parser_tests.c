@@ -3,7 +3,7 @@
 #include <string.h>
 
 #include "../src/eskilib/etest.h"
-#include "../src/parser.h"
+#include "../src/parser/parser.h"
 #include "lib/arena_test_helper.h"
 
 void parser_parse_ls_test()

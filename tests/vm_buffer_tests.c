@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include "../src/eskilib/etest.h"
+#include "../src/parser/parser.h"
 #include "../src/vm/preprocessor.h"
 #include "../src/vm/vm_buffer.h"
 #include "../src/vm/vm_types.h"

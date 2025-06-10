@@ -4,10 +4,8 @@
 
 #include <stddef.h>
 
-#include "arena.h"
+#include "../arena.h"
 #include "args.h"
-
-#define PARSER_TOKENS_LIMIT 128
 
 /* parser_parse
  * Turns the inputted line into values, lengths, and bytecodes that the VM can work with.

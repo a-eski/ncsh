@@ -7,12 +7,12 @@
 #include "../configurables.h"
 #include "../eskilib/eresult.h"
 #include "../eskilib/str.h"
-#include "../parser.h"
+#include "../parser/args.h"
 
 #ifdef NCSH_HISTORY_TEST
-#define NCSH_HISTORY_FILE ".ncsh_history_test"
+#define NCSH_HISTORY_FILE "ncsh_history_test"
 #else
-#define NCSH_HISTORY_FILE "/.ncsh_history"
+#define NCSH_HISTORY_FILE "/ncsh_history"
 #endif
 
 #define NCSH_MAX_HISTORY_FILE 2000
