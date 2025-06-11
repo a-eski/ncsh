@@ -3,7 +3,6 @@
 
 #include <stdint.h>
 
-#include "../tokens.h"
 #include "vm_types.h"
 
 Token* vm_buffer_set(Token* rst tok, Token_Data* rst data, Vm_Data* rst vm);

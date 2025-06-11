@@ -7,6 +7,6 @@
 #include "../../types.h"
 #include "vm_types.h"
 
-int vm_execute(Tokens* rst args, Token_Data* rst data, Shell* rst shell, Arena* rst scratch);
+int vm_execute(Tokens* rst toks, Shell* rst shell, Arena* rst scratch);
 
-int vm_execute_noninteractive(Tokens* rst args, Token_Data* rst data, Shell* rst shell);
+int vm_execute_noninteractive(Tokens* rst toks, Shell* rst shell);

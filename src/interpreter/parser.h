@@ -3,8 +3,7 @@
 
 #pragma once
 
-#include "tokens.h"
 #include "../types.h"
-#include "vm/vm_types.h"
+#include "interpreter_types.h"
 
-int parser_parse(Tokens* rst toks, Token_Data* rst data, Shell* rst shell, Arena* rst scratch);
+int parser_parse(Tokens* rst toks, Shell* rst shell, Arena* rst scratch);

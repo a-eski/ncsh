@@ -4,8 +4,10 @@
 #include <assert.h>
 #include <stddef.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 
+#include "../../eskilib/ecolors.h"
 #include "vm_types.h"
 
 extern int vm_output_fd;

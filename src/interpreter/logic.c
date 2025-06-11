@@ -1,12 +1,13 @@
 /* Copyright ncsh (C) by Alex Eski 2025 */
 /* logic.c: Preprocessing logic/control flow structures specifically to ensure ready for VM to process. */
 
-#include "logic.h"
-#include "vm/vm_types.h"
 #include <assert.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
+
+#include "interpreter_types.h"
+#include "logic.h"
 
 #define DEFAULT_N 10
 #define MAX_N 40
@@ -150,7 +151,7 @@ Token* logic_statements_process(Token* rst tok, Statements* rst statements, Aren
     return tok;
 }
 
-Logic_Result logic_if_preprocess(Token* tok, Token_Data* rst data, Arena* rst scratch)
+Logic_Result logic_if_preprocess(Token* tok, Token_Data* data, Arena* rst scratch)
 {
     tok = tok->next;
     if (tok->op != OP_CONDITION_START)
@@ -221,7 +222,6 @@ Logic_Result logic_if_preprocess(Token* tok, Token_Data* rst data, Arena* rst sc
 Logic_Result logic_preprocess(Token* rst tok, Token_Data* rst data, Arena* rst scratch)
 {
     assert(tok);
-    assert(data);
     assert(scratch);
 
     if (!tok) {

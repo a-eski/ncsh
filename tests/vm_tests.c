@@ -21,11 +21,10 @@ jmp_buf env;
     eassert(result == EXIT_SUCCESS);                                                                                   \
                                                                                                                        \
     Shell shell = {0};                                                                                                 \
-    Token_Data data = {0};                                                                                             \
-    result = parser_parse(toks, &data, &shell, &shell.arena);                                                          \
+    result = parser_parse(toks, &shell, &shell.arena);                                                                 \
     eassert(result == EXIT_SUCCESS);                                                                                   \
                                                                                                                        \
-    result = vm_execute(toks, &data, &shell, &scratch_arena);                                                          \
+    result = vm_execute(toks, &shell, &scratch_arena);                                                                 \
     eassert(result == EXIT_SUCCESS || result == EXIT_FAILURE_CONTINUE);                                                \
                                                                                                                        \
     SCRATCH_ARENA_TEST_TEARDOWN;

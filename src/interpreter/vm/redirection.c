@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#include "../../debug.h"
+#include "../../defines.h"
 #include "vm_types.h"
 
 static inline int output_redirection_oflags_get(bool append)

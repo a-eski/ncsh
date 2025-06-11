@@ -18,7 +18,6 @@
 #include "parser.h"
 #include "tokens.h"
 #include "vm/vars.h"
-#include "vm/vm_types.h"
 
 void parser_home_expansion_process(Token* rst tok, Str home, Arena* rst scratch)
 {
@@ -256,22 +255,21 @@ int parser_expansions_process(Tokens* rst toks, Shell* rst shell, Arena* rst scr
     return EXIT_SUCCESS;
 }
 
-int parser_ops_process(Tokens* rst toks, Token_Data* rst data, Shell* rst shell, Arena* rst scratch)
+int parser_ops_process(Tokens* rst toks, Shell* rst shell, Arena* rst scratch)
 {
     assert(toks && toks->head);
-    assert(data);
     assert(scratch);
 
     Token* tok = toks->head->next;
     Token* prev = NULL;
-    data->is_background_job = false;
+    toks->data.is_background_job = false;
     while (tok) {
         switch (tok->op) {
         case OP_STDOUT_REDIRECTION: {
             assert(tok->next && tok->next->val);
             if (!tok->next || !tok->next->val)
                 break;
-            data->stdout_file = tok->next->val;
+            toks->data.stdout_file = tok->next->val;
             tok = NULL;
             if (prev)
                 prev->next = NULL;
@@ -281,18 +279,18 @@ int parser_ops_process(Tokens* rst toks, Token_Data* rst data, Shell* rst shell,
             assert(tok->next && tok->next->val);
             if (!tok->next || !tok->next->val)
                 break;
-            data->stdout_file = tok->next->val;
+            toks->data.stdout_file = tok->next->val;
             tok = NULL;
             if (prev)
                 prev->next = NULL;
-            data->output_append = true;
+            toks->data.output_append = true;
             break;
         }
         case OP_STDIN_REDIRECTION: {
             assert(tok->next && tok->next->val);
             if (!tok->next || !tok->next->val)
                 break;
-            data->stdin_file = tok->next->val;
+            toks->data.stdin_file = tok->next->val;
             tok = NULL;
             if (prev)
                 prev->next = NULL;
@@ -302,7 +300,7 @@ int parser_ops_process(Tokens* rst toks, Token_Data* rst data, Shell* rst shell,
             assert(tok->next && tok->next->val);
             if (!tok->next || !tok->next->val)
                 break;
-            data->stderr_file = tok->next->val;
+            toks->data.stderr_file = tok->next->val;
             tok = NULL;
             if (prev)
                 prev->next = NULL;
@@ -312,18 +310,18 @@ int parser_ops_process(Tokens* rst toks, Token_Data* rst data, Shell* rst shell,
             assert(tok->next && tok->next->val);
             if (!tok->next || !tok->next->val)
                 break;
-            data->stderr_file = tok->next->val;
+            toks->data.stderr_file = tok->next->val;
             tok = NULL;
             if (prev)
                 prev->next = NULL;
-            data->output_append = true;
+            toks->data.output_append = true;
             break;
         }
         case OP_STDOUT_AND_STDERR_REDIRECTION: {
             assert(tok->next && tok->next->val);
             if (!tok->next || !tok->next->val)
                 break;
-            data->stdout_and_stderr_file = tok->next->val;
+            toks->data.stdout_and_stderr_file = tok->next->val;
             tok = NULL;
             if (prev)
                 prev->next = NULL;
@@ -333,20 +331,20 @@ int parser_ops_process(Tokens* rst toks, Token_Data* rst data, Shell* rst shell,
             assert(tok->next && tok->next->val);
             if (!tok->next || !tok->next->val)
                 break;
-            data->stdout_and_stderr_file = tok->next->val;
+            toks->data.stdout_and_stderr_file = tok->next->val;
             tok = NULL;
             if (prev)
                 prev->next = NULL;
-            data->output_append = true;
+            toks->data.output_append = true;
             break;
         }
 
         case OP_PIPE: {
-            ++data->number_of_pipe_commands;
+            ++toks->data.number_of_pipe_commands;
             break;
         }
         case OP_BACKGROUND_JOB: {
-            data->is_background_job = true;
+            toks->data.is_background_job = true;
             break;
         }
         case OP_ASSIGNMENT: {
@@ -369,13 +367,13 @@ int parser_ops_process(Tokens* rst toks, Token_Data* rst data, Shell* rst shell,
             break;
         }
         case OP_IF: {
-            Logic_Result result = logic_preprocess(tok, data, scratch);
+            Logic_Result result = logic_preprocess(tok, &toks->data, scratch);
             if (result.type == LT_CODE) {
                 puts("ncsh: error preprocessing logic, could not process 'if' statement.");
                 return result.val.code;
             }
 
-            data->logic_type = result.type;
+            toks->data.logic_type = result.type;
             tok = result.val.tok;
             toks->head->next = tok;
             break;
@@ -383,7 +381,7 @@ int parser_ops_process(Tokens* rst toks, Token_Data* rst data, Shell* rst shell,
         case OP_FI: {
             // just get rid of OP_FI if we preprocessed if,
             // else set fi to constant
-            if (data->logic_type == LT_IF || data->logic_type == LT_IF_ELSE) {
+            if (toks->data.logic_type == LT_IF || toks->data.logic_type == LT_IF_ELSE) {
                 if (!tok->next)
                     tok = NULL;
                 else if (prev)
@@ -399,16 +397,15 @@ int parser_ops_process(Tokens* rst toks, Token_Data* rst data, Shell* rst shell,
         if (tok)
             tok = tok->next;
     }
-    ++data->number_of_pipe_commands;
+    ++toks->data.number_of_pipe_commands;
 
     return EXIT_SUCCESS;
 }
 
 [[nodiscard]]
-int parser_parse(Tokens* rst toks, Token_Data* rst data, Shell* rst shell, Arena* rst scratch)
+int parser_parse(Tokens* rst toks, Shell* rst shell, Arena* rst scratch)
 {
     assert(toks);
-    assert(data);
     assert(scratch);
     if (!toks || !toks->head || !toks->count)
         return EXIT_FAILURE_CONTINUE;
@@ -417,7 +414,7 @@ int parser_parse(Tokens* rst toks, Token_Data* rst data, Shell* rst shell, Arena
     if ((result = parser_expansions_process(toks, shell, scratch)) != EXIT_SUCCESS)
         return result;
 
-    if ((result = parser_ops_process(toks, data, shell, scratch)) != EXIT_SUCCESS)
+    if ((result = parser_ops_process(toks, shell, scratch)) != EXIT_SUCCESS)
         return result;
 
     return EXIT_SUCCESS;
