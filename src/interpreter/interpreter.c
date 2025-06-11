@@ -9,7 +9,6 @@
 #include "semantic_analyzer.h"
 #include "vm/vars.h"
 #include "vm/vm.h"
-#include "vm/vm_types.h"
 
 void interpreter_init(Shell* rst shell)
 {
@@ -24,11 +23,10 @@ int interpreter_run(Shell* rst shell, Arena scratch)
     if ((result = semantic_analyzer_analyze(toks)) != EXIT_SUCCESS)
         return result;
 
-    Token_Data data = {0};
-    if ((result = parser_parse(toks, &data, shell, &shell->arena)) != EXIT_SUCCESS)
+    if ((result = parser_parse(toks, shell, &shell->arena)) != EXIT_SUCCESS)
         return result;
 
-    return vm_execute(toks, &data, shell, &scratch);
+    return vm_execute(toks, shell, &scratch);
 }
 
 int interpreter_run_noninteractive(char** rst argv, size_t argc, Shell* rst shell)
@@ -39,10 +37,9 @@ int interpreter_run_noninteractive(char** rst argv, size_t argc, Shell* rst shel
     if ((result = semantic_analyzer_analyze(toks)) != EXIT_SUCCESS)
         return result;
 
-    Token_Data data = {0};
-    if ((result = parser_parse(toks, &data, shell, &shell->arena)) != EXIT_SUCCESS) {
+    if ((result = parser_parse(toks, shell, &shell->arena)) != EXIT_SUCCESS) {
         return result;
     }
 
-    return vm_execute_noninteractive(toks, &data, shell);
+    return vm_execute_noninteractive(toks, shell);
 }

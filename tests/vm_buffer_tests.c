@@ -15,14 +15,13 @@ void vm_buffer_token_test()
     char* input = "ls";
     size_t len = strlen(input) + 1;
     Tokens* tokens = lexer_lex(input, len, &arena);
-    Token_Data data = {0};
-    parser_parse(tokens, &data, NULL, &arena);
-    eassert(data.logic_type == LT_NONE);
+    parser_parse(tokens, NULL, &arena);
+    eassert(tokens->data.logic_type == LT_NONE);
     Vm_Data vm = {0};
     vm.buffer = arena_malloc(&arena, VM_MAX_INPUT, char*);
     vm.buffer_lens = arena_malloc(&arena, VM_MAX_INPUT, size_t);
 
-    Token* tok = vm_buffer_set(tokens->head->next, &data, &vm);
+    Token* tok = vm_buffer_set(tokens->head->next, &tokens->data, &vm);
     eassert(!strcmp(vm.buffer[0], "ls"));
     eassert(vm.buffer_lens[0] == sizeof("ls"));
     eassert(vm.op_current == OP_NONE);
@@ -41,14 +40,13 @@ void vm_buffer_tokens_test()
     char* input = "git commit -m \"this is a commit message\"";
     size_t len = strlen(input) + 1;
     Tokens* tokens = lexer_lex(input, len, &arena);
-    Token_Data data = {0};
-    parser_parse(tokens, &data, NULL, &arena);
-    eassert(data.logic_type == LT_NONE);
+    parser_parse(tokens, NULL, &arena);
+    eassert(tokens->data.logic_type == LT_NONE);
     Vm_Data vm = {0};
     vm.buffer = arena_malloc(&arena, VM_MAX_INPUT, char*);
     vm.buffer_lens = arena_malloc(&arena, VM_MAX_INPUT, size_t);
 
-    Token* tok = vm_buffer_set(tokens->head->next, &data, &vm);
+    Token* tok = vm_buffer_set(tokens->head->next, &tokens->data, &vm);
     eassert(!strcmp(vm.buffer[0], "git"));
     eassert(vm.buffer_lens[0] == sizeof("git"));
 
@@ -76,14 +74,13 @@ void vm_buffer_tokens_and_test()
     char* input = "false && true";
     size_t len = strlen(input) + 1;
     Tokens* tokens = lexer_lex(input, len, &arena);
-    Token_Data data = {0};
-    parser_parse(tokens, &data, NULL, &arena);
-    eassert(data.logic_type == LT_NONE);
+    parser_parse(tokens, NULL, &arena);
+    eassert(tokens->data.logic_type == LT_NONE);
     Vm_Data vm = {0};
     vm.buffer = arena_malloc(&arena, VM_MAX_INPUT, char*);
     vm.buffer_lens = arena_malloc(&arena, VM_MAX_INPUT, size_t);
 
-    Token* tok = vm_buffer_set(tokens->head->next, &data, &vm);
+    Token* tok = vm_buffer_set(tokens->head->next, &tokens->data, &vm);
     eassert(vm.buffer[0]);
     eassert(!strcmp(vm.buffer[0], "false"));
     eassert(vm.buffer_lens[0] == sizeof("false"));
@@ -101,13 +98,12 @@ void vm_buffer_tokens_piped_test()
     char* input = "ls | sort | wc -c";
     size_t len = strlen(input) + 1;
     Tokens* tokens = lexer_lex(input, len, &arena);
-    Token_Data data = {0};
-    parser_parse(tokens, &data, NULL, &arena);
-    eassert(data.logic_type == LT_NONE);
+    parser_parse(tokens, NULL, &arena);
+    eassert(tokens->data.logic_type == LT_NONE);
     Vm_Data vm = {0};
     vm.buffer = arena_malloc(&arena, VM_MAX_INPUT, char*);
     vm.buffer_lens = arena_malloc(&arena, VM_MAX_INPUT, size_t);
-    Token* tok = vm_buffer_set(tokens->head->next, &data, &vm);
+    Token* tok = vm_buffer_set(tokens->head->next, &tokens->data, &vm);
 
     eassert(!strcmp(vm.buffer[0], "ls"));
     eassert(vm.buffer_lens[0] == sizeof("ls"));
@@ -115,14 +111,14 @@ void vm_buffer_tokens_piped_test()
     eassert(!vm.buffer[1]);
     eassert(!vm.tokens_end);
 
-    tok = vm_buffer_set(tok, &data, &vm);
+    tok = vm_buffer_set(tok, &tokens->data, &vm);
     eassert(!strcmp(vm.buffer[0], "sort"));
     eassert(vm.buffer_lens[0] == sizeof("sort"));
     eassert(vm.op_current == OP_PIPE);
     eassert(!vm.buffer[1]);
     eassert(!vm.tokens_end);
 
-    tok = vm_buffer_set(tok, &data, &vm);
+    tok = vm_buffer_set(tok, &tokens->data, &vm);
     eassert(!strcmp(vm.buffer[0], "wc"));
     eassert(vm.buffer_lens[0] == sizeof("wc"));
 
@@ -144,16 +140,15 @@ void vm_buffer_tokens_redirected_test()
     char* input = "ls > t.txt";
     size_t len = strlen(input) + 1;
     Tokens* tokens = lexer_lex(input, len, &arena);
-    Token_Data data = {0};
-    parser_parse(tokens, &data, NULL, &arena);
-    eassert(data.stdout_file);
-    eassert(!strcmp(data.stdout_file, "t.txt"));
-    eassert(data.logic_type == LT_NONE);
+    parser_parse(tokens, NULL, &arena);
+    eassert(tokens->data.stdout_file);
+    eassert(!strcmp(tokens->data.stdout_file, "t.txt"));
+    eassert(tokens->data.logic_type == LT_NONE);
 
     Vm_Data vm = {0};
     vm.buffer = arena_malloc(&arena, VM_MAX_INPUT, char*);
     vm.buffer_lens = arena_malloc(&arena, VM_MAX_INPUT, size_t);
-    Token* tok = vm_buffer_set(tokens->head->next, &data, &vm);
+    Token* tok = vm_buffer_set(tokens->head->next, &tokens->data, &vm);
 
     eassert(!strcmp(vm.buffer[0], "ls"));
     eassert(vm.buffer_lens[0] == sizeof("ls"));
@@ -171,24 +166,23 @@ void vm_buffer_if_test()
     char* input = "if [ true ]; then echo hello; fi";
     size_t len = strlen(input) + 1;
     Tokens* tokens = lexer_lex(input, len, &arena);
-    Token_Data data = {0};
-    parser_parse(tokens, &data, NULL, &arena);
-    eassert(data.logic_type == LT_IF);
-    eassert(data.conditions);
-    eassert(data.if_statements);
+    parser_parse(tokens, NULL, &arena);
+    eassert(tokens->data.logic_type == LT_IF);
+    eassert(tokens->data.conditions);
+    eassert(tokens->data.if_statements);
 
     Vm_Data vm = {0};
     vm.buffer = arena_malloc(&arena, VM_MAX_INPUT, char*);
     vm.buffer_lens = arena_malloc(&arena, VM_MAX_INPUT, size_t);
 
-    Token* tok = vm_buffer_set(tokens->head->next, &data, &vm);
+    Token* tok = vm_buffer_set(tokens->head->next, &tokens->data, &vm);
     eassert(!strcmp(vm.buffer[0], "true"));
     eassert(vm.buffer_lens[0] == sizeof("true"));
     eassert(vm.op_current == OP_NONE);
     eassert(!vm.buffer[1]);
     eassert(!tok);
 
-    tok = vm_buffer_set(tok, &data, &vm);
+    tok = vm_buffer_set(tok, &tokens->data, &vm);
     eassert(!tok);
     eassert(!strcmp(vm.buffer[0], "echo"));
     eassert(vm.buffer_lens[0] == sizeof("echo"));
@@ -207,17 +201,16 @@ void vm_buffer_if_multiple_condition_test()
     char* input = "if [ true && false ]; then echo hello; fi";
     size_t len = strlen(input) + 1;
     Tokens* tokens = lexer_lex(input, len, &arena);
-    Token_Data data = {0};
-    parser_parse(tokens, &data, NULL, &arena);
-    eassert(data.logic_type == LT_IF);
-    eassert(data.conditions);
-    eassert(data.if_statements);
+    parser_parse(tokens, NULL, &arena);
+    eassert(tokens->data.logic_type == LT_IF);
+    eassert(tokens->data.conditions);
+    eassert(tokens->data.if_statements);
 
     Vm_Data vm = {0};
     vm.buffer = arena_malloc(&arena, VM_MAX_INPUT, char*);
     vm.buffer_lens = arena_malloc(&arena, VM_MAX_INPUT, size_t);
 
-    Token* tok = vm_buffer_set(tokens->head->next, &data, &vm);
+    Token* tok = vm_buffer_set(tokens->head->next, &tokens->data, &vm);
     eassert(!strcmp(vm.buffer[0], "true"));
     eassert(vm.buffer_lens[0] == sizeof("true"));
     eassert(!strcmp(vm.buffer[1], "&&"));
@@ -228,7 +221,7 @@ void vm_buffer_if_multiple_condition_test()
     eassert(!vm.buffer[3]);
     eassert(!tok);
 
-    tok = vm_buffer_set(tok, &data, &vm);
+    tok = vm_buffer_set(tok, &tokens->data, &vm);
     eassert(!tok);
     eassert(!strcmp(vm.buffer[0], "echo"));
     eassert(vm.buffer_lens[0] == sizeof("echo"));
@@ -247,18 +240,17 @@ void vm_buffer_if_else_true_test()
     char* input = "if [ true ]; then echo hello; else echo hi; fi";
     size_t len = strlen(input) + 1;
     Tokens* tokens = lexer_lex(input, len, &arena);
-    Token_Data data = {0};
-    parser_parse(tokens, &data, NULL, &arena);
-    eassert(data.logic_type == LT_IF_ELSE);
-    eassert(data.conditions);
-    eassert(data.if_statements);
-    eassert(data.else_statements);
+    parser_parse(tokens, NULL, &arena);
+    eassert(tokens->data.logic_type == LT_IF_ELSE);
+    eassert(tokens->data.conditions);
+    eassert(tokens->data.if_statements);
+    eassert(tokens->data.else_statements);
 
     Vm_Data vm = {0};
     vm.buffer = arena_malloc(&arena, VM_MAX_INPUT, char*);
     vm.buffer_lens = arena_malloc(&arena, VM_MAX_INPUT, size_t);
 
-    Token* tok = vm_buffer_set(tokens->head->next, &data, &vm);
+    Token* tok = vm_buffer_set(tokens->head->next, &tokens->data, &vm);
     eassert(!tok);
     eassert(vm.state == VS_IN_CONDITIONS);
     eassert(!strcmp(vm.buffer[0], "true"));
@@ -266,7 +258,7 @@ void vm_buffer_if_else_true_test()
     eassert(vm.op_current == OP_NONE);
     eassert(!vm.buffer[1]);
 
-    tok = vm_buffer_set(tok, &data, &vm);
+    tok = vm_buffer_set(tok, &tokens->data, &vm);
     eassert(!tok);
     eassert(vm.state == VS_IN_IF_STATEMENTS);
     eassert(!strcmp(vm.buffer[0], "echo"));
@@ -286,18 +278,17 @@ void vm_buffer_if_else_false_test()
     char* input = "if [ false ]; then echo hello; else echo hi; fi";
     size_t len = strlen(input) + 1;
     Tokens* tokens = lexer_lex(input, len, &arena);
-    Token_Data data = {0};
-    parser_parse(tokens, &data, NULL, &arena);
-    eassert(data.logic_type == LT_IF_ELSE);
-    eassert(data.conditions);
-    eassert(data.if_statements);
-    eassert(data.else_statements);
+    parser_parse(tokens, NULL, &arena);
+    eassert(tokens->data.logic_type == LT_IF_ELSE);
+    eassert(tokens->data.conditions);
+    eassert(tokens->data.if_statements);
+    eassert(tokens->data.else_statements);
 
     Vm_Data vm = {0};
     vm.buffer = arena_malloc(&arena, VM_MAX_INPUT, char*);
     vm.buffer_lens = arena_malloc(&arena, VM_MAX_INPUT, size_t);
 
-    Token* tok = vm_buffer_set(tokens->head->next, &data, &vm);
+    Token* tok = vm_buffer_set(tokens->head->next, &tokens->data, &vm);
     eassert(!tok);
     eassert(vm.state == VS_IN_CONDITIONS);
     eassert(!strcmp(vm.buffer[0], "false"));
@@ -306,7 +297,7 @@ void vm_buffer_if_else_false_test()
     eassert(!vm.buffer[1]);
 
     vm.status = EXIT_FAILURE; // simulate failure to have else case set
-    tok = vm_buffer_set(tok, &data, &vm);
+    tok = vm_buffer_set(tok, &tokens->data, &vm);
     eassert(!tok);
     eassert(vm.state == VS_IN_ELSE_STATEMENTS);
     eassert(!strcmp(vm.buffer[0], "echo"));

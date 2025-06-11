@@ -3,7 +3,6 @@
 #include "../src/eskilib/etest.h"
 #include "../src/interpreter/lexer.h"
 #include "../src/interpreter/logic.h"
-#include "../src/interpreter/tokens.h"
 #include "lib/arena_test_helper.h"
 
 #define COMMAND_VALIDATE(command, index, expected, op)                                                                 \

@@ -5,8 +5,8 @@
 
 #include <stdint.h>
 
-#include "../tokens.h"
 #include "../../eskilib/str.h"
+#include "../interpreter_types.h"
 
 /****** MACROS ******/
 
@@ -19,67 +19,6 @@
 #define EXECVP_FAILED -1
 
 /****** TYPES ******/
-/*** PREPROCSSING AND LOGIC TYPES ***/
-enum Logic_Type {
-    LT_NONE,
-    LT_CODE,
-    LT_IF,
-    LT_IF_ELSE
-};
-
-typedef struct {
-    size_t count;
-    size_t cap;
-    enum Ops* ops;
-    size_t* lens;
-    char** vals;
-} Commands;
-
-typedef struct {
-    size_t count;
-    size_t cap;
-    Commands* commands;
-} Statements;
-
-union Logic_Value {
-    int code;
-    Token* tok;
-};
-
-typedef struct {
-    enum Logic_Type type;
-    union Logic_Value val;
-} Logic_Result;
-
-/* Token_Data
- * Stores information related to tokens from Args,
- * like position of redirect operations, counts of pipe commands, and file names to use to create file descriptors.
- * Output append directs output redirections to append to the file instead of writing over it.
- */
-typedef struct {
-    // Redirection
-    char* stdout_file;
-    char* stdin_file;
-    char* stderr_file;
-    char* stdout_and_stderr_file;
-
-    bool output_append;
-
-    // Background Jobs
-    bool is_background_job;
-
-    // Pipes
-    uint8_t number_of_pipe_commands;
-
-    // Control flow structures
-    enum Logic_Type logic_type;
-    Statements* conditions;
-    Statements* if_statements;
-    Statements* else_statements;
-    // Statements* elif_statements;
-} Token_Data;
-
-/*** VM TYPES ***/
 enum Vm_State {
     VS_NORMAL = 0,
     VS_IN_CONDITIONS,

@@ -187,21 +187,21 @@ int vm_math_process(Vm_Data* rst vm)
 }
 
 [[nodiscard]]
-int vm_run(Tokens* rst toks, Token_Data* rst data, Shell* rst shell, Arena* rst scratch)
+int vm_run(Tokens* rst toks, Shell* rst shell, Arena* rst scratch)
 {
     Vm_Data vm = {0};
     vm.buffer = arena_malloc(scratch, VM_MAX_INPUT, char*);
     vm.buffer_lens = arena_malloc(scratch, VM_MAX_INPUT, size_t);
 
-    if (redirection_start_if_needed(data, &vm) != EXIT_SUCCESS) {
+    if (redirection_start_if_needed(&toks->data, &vm) != EXIT_SUCCESS) {
         return EXIT_FAILURE_CONTINUE;
     }
 
-    Token* arg = toks->head->next;
-    while (!vm.tokens_end && arg && arg->val) {
-        Token* next = vm_buffer_set(arg, data, &vm);
+    Token* tok = toks->head->next;
+    while (!vm.tokens_end && tok && tok->val) {
+        Token* next = vm_buffer_set(tok, &toks->data, &vm);
         if (next)
-            arg = next;
+            tok = next;
 
         if (!vm.buffer[0]) {
             return EXIT_FAILURE_CONTINUE;
@@ -216,7 +216,7 @@ int vm_run(Tokens* rst toks, Token_Data* rst data, Shell* rst shell, Arena* rst 
         bool builtin_ran = builtins_check_and_run(&vm, shell, scratch);
         if (builtin_ran) {
             if (vm.op_current == OP_PIPE)
-                pipe_stop(vm.command_position, data->number_of_pipe_commands, &vm.pipes_io);
+                pipe_stop(vm.command_position, toks->data.number_of_pipe_commands, &vm.pipes_io);
         }
         else if (VS_IN_CONDITIONS && vm.ops &&
                  (vm.ops[1] == OP_EQUALS || vm.ops[1] == OP_GREATER_THAN || vm.ops[1] == OP_LESS_THAN)) {
@@ -225,11 +225,11 @@ int vm_run(Tokens* rst toks, Token_Data* rst data, Shell* rst shell, Arena* rst 
         else {
             int vm_pid = fork();
             if (vm_pid < 0)
-                return vm_fork_failure(vm.command_position, data->number_of_pipe_commands, &vm.pipes_io);
+                return vm_fork_failure(vm.command_position, toks->data.number_of_pipe_commands, &vm.pipes_io);
 
             if (vm_pid == 0) { // runs in the child process
                 if (vm.op_current == OP_PIPE)
-                    pipe_connect(vm.command_position, data->number_of_pipe_commands, &vm.pipes_io);
+                    pipe_connect(vm.command_position, toks->data.number_of_pipe_commands, &vm.pipes_io);
 
                 if ((vm.exec_result = execvp(vm.buffer[0], vm.buffer)) == EXECVP_FAILED) {
                     vm.tokens_end = true;
@@ -240,7 +240,7 @@ int vm_run(Tokens* rst toks, Token_Data* rst data, Shell* rst shell, Arena* rst 
             }
 
             if (vm.op_current == OP_PIPE)
-                pipe_stop(vm.command_position, data->number_of_pipe_commands, &vm.pipes_io);
+                pipe_stop(vm.command_position, toks->data.number_of_pipe_commands, &vm.pipes_io);
 
             if (vm.exec_result == EXECVP_FAILED)
                 break;
@@ -249,7 +249,7 @@ int vm_run(Tokens* rst toks, Token_Data* rst data, Shell* rst shell, Arena* rst 
             vm_status_set(vm_pid, &vm);
         }
 
-        if (vm_status_should_break(&vm, data))
+        if (vm_status_should_break(&vm, &toks->data))
             break;
 
         ++vm.command_position;
@@ -263,7 +263,7 @@ int vm_run(Tokens* rst toks, Token_Data* rst data, Shell* rst shell, Arena* rst 
  * Executes the VM in interactive mode.
  */
 [[nodiscard]]
-int vm_execute(Tokens* rst toks, Token_Data* data, Shell* rst shell, Arena* rst scratch)
+int vm_execute(Tokens* rst toks, Shell* rst shell, Arena* rst scratch)
 {
     assert(shell);
     assert(toks);
@@ -282,7 +282,7 @@ int vm_execute(Tokens* rst toks, Token_Data* data, Shell* rst shell, Arena* rst 
         return vm_background_job_run(toks, &shell->processes, data);
     }*/
 
-    return vm_run(toks, data, shell, scratch);
+    return vm_run(toks, shell, scratch);
 }
 
 /* vm_execute_noninteractive
@@ -290,12 +290,12 @@ int vm_execute(Tokens* rst toks, Token_Data* data, Shell* rst shell, Arena* rst 
  * Please note that shell->arena is used for both perm & scratch arenas in noninteractive mode.
  */
 [[nodiscard]]
-int vm_execute_noninteractive(Tokens* rst toks, Token_Data* data, Shell* rst shell)
+int vm_execute_noninteractive(Tokens* rst toks, Shell* rst shell)
 {
     assert(toks);
     if (!toks || !toks->head || !toks->head->next || !toks->count) {
         return EXIT_SUCCESS;
     }
 
-    return vm_run(toks, data, shell, &shell->arena);
+    return vm_run(toks, shell, &shell->arena);
 }

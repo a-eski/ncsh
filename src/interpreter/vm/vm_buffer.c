@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "../tokens.h"
+#include "../../debug.h"
 #include "vm_types.h"
 
 Token* vm_buffer_set_command_next(Token* rst tok, Vm_Data* rst vm)
