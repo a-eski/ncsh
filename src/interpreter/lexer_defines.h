@@ -55,6 +55,7 @@
 #define DO "do"
 #define THEN "then"
 #define ELSE "else"
+#define ELIF "elif"
 // #define SEMICOLON ';'
 // #define OPENING_BRACKET '['
 // #define CLOSING_BRACKET ']'

@@ -3,7 +3,7 @@ CC ?= gcc
 DESTDIR ?= /bin
 RELEASE ?= 1
 # debug_flags = -Wall -Wextra -Werror -Wpedantic -pedantic-errors -Wsign-conversion -Wformat=2 -Wshadow -Wvla -Wwrite-strings -fstack-protector-all -fsanitize=address,undefined,leak -g
-debug_flags = -Wall -Wextra -Werror -Wpedantic -pedantic-errors -Wsign-conversion -Wformat=2 -Wshadow -Wvla -fstack-protector-all -fsanitize=address,undefined,leak -g
+debug_flags = -Wall -Wextra -Werror -Wsign-conversion -Wformat=2 -Wshadow -Wvla -fstack-protector-all -fsanitize=address,undefined,leak -g
 # -DNCSH_DEBUG
 # release_flags = -Wall -Wextra -Werror -pedantic-errors -Wsign-conversion -Wformat=2 -Wshadow -Wvla -Wwrite-strings -O3 -DNDEBUG
 release_flags = -Wall -Wextra -Werror -pedantic-errors -Wsign-conversion -Wformat=2 -Wshadow -Wvla -O3 -DNDEBUG
@@ -220,17 +220,34 @@ fp :
 bench_lexer :
 	$(CC) $(STD) $(debug_flags) -DNDEBUG ./src/arena.c ./src/interpreter/vm/vars.c ./src/interpreter/tokens.c ./src/interpreter/lexer.c ./tests/lexer_bench.c -o ./bin/lexer_bench
 	hyperfine --warmup 1000 --shell=none './bin/lexer_bench'
-.PHONY: bp
-bp :
+.PHONY: bl
+bl :
 	make bench_lexer
 
 .PHONY: bench_lexer_tests
 bench_lexer_tests :
 	$(CC) $(STD) $(debug_flags) -DNDEBUG ./src/arena.c ./src/interpreter/vm/vars.c ./src/interpreter/tokens.c ./src/interpreter/lexer.c ./tests/lexer_tests.c -o ./bin/lexer_tests
 	hyperfine --warmup 1000 --shell=none './bin/lexer_tests'
-.PHONY: bpt
-bpt :
+.PHONY: blt
+blt :
 	make bench_lexer_tests
+
+# Run parser tests
+.PHONY: test_parser
+test_parser :
+	$(CC) $(STD) $(debug_flags) ./src/arena.c ./src/alias.c ./src/env.c ./src/interpreter/lexer.c ./src/interpreter/vm/vars.c ./src/interpreter/logic.c ./src/interpreter/tokens.c ./src/interpreter/parser.c ./tests/parser_tests.c -o ./bin/parser_tests
+	./bin/parser_tests
+.PHONY: tp
+tp :
+	make test_parser
+
+.PHONY: bench_parser
+bench_parser :
+	$(CC) $(STD) $(debug_flags) ./src/arena.c ./src/alias.c ./src/env.c ./src/interpreter/lexer.c ./src/interpreter/vm/vars.c ./src/interpreter/logic.c ./src/interpreter/tokens.c ./src/interpreter/parser.c ./tests/parser_tests.c -o ./bin/parser_tests
+	hyperfine --warmup 1000 --shell=none './bin/parser_tests'
+.PHONY: bp
+bp :
+	make bench_parser
 
 # Run z tests
 .PHONY: test_z
