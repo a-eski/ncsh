@@ -8,11 +8,11 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "compiler/compiler.h"
 #include "config.h"
 #include "defines.h"
 #include "eskilib/ecolors.h"
 #include "eskilib/eresult.h"
+#include "interpreter/interpreter.h"
 #include "noninteractive.h"
 #include "types.h"
 
@@ -51,9 +51,9 @@ int noninteractive(int argc, char** rst argv)
         return EXIT_FAILURE;
     }
 
-    compiler_init(&shell);
+    interpreter_init(&shell);
 
-    int exit_code = compiler_run_noninteractive(argv + 1, (size_t)argc - 1, &shell);
+    int exit_code = interpreter_run_noninteractive(argv + 1, (size_t)argc - 1, &shell);
 
     free(memory);
 

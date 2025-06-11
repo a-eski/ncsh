@@ -40,7 +40,7 @@ void parser_home_expansion_process(Token* rst tok, Str home, Arena* rst scratch)
     char* new_value = arena_malloc(scratch, len, char);
     memcpy(new_value, home.value, home.length);
     memcpy(new_value + home.length, tok->val + 1, tok->len - 1);
-    debugf("performing home expansion on %s to %s\n", arg->val, new_value);
+    debugf("performing home expansion on %s to %s\n", tok->val, new_value);
     tok->val = new_value;
     tok->op = OP_CONSTANT;
     tok->len = len;
@@ -121,13 +121,13 @@ void parser_assignment_process(Token* tok, Vars* rst vars, Arena* rst arena)
     vars_set(key, val, arena, vars);
 }
 
-void parser_arg_update(Token* rst tok, Str* rst var, Arena* rst scratch)
+void parser_tok_update(Token* rst tok, Str* rst var, Arena* rst scratch)
 {
     tok->val = arena_realloc(scratch, var->length, char, tok->val, tok->len);
     memcpy(tok->val, var->value, var->length);
     tok->len = var->length;
     tok->op = OP_CONSTANT; // replace OP_VARIABLE to OP_CONSTANT so VM sees it as a regular constant value
-    debugf("replaced variable with value %s %zu\n", arg->val, arg->len);
+    debugf("replaced variable with value %s %zu\n", tok->val, tok->len);
 }
 
 void parser_variable_process(Token* rst tok, Vars* rst vars, Arena* rst scratch)
@@ -141,7 +141,7 @@ void parser_variable_process(Token* rst tok, Vars* rst vars, Arena* rst scratch)
             puts("ncsh: could not load path to replace $PATH variable.");
             return;
         }
-        parser_arg_update(tok, &var, scratch);
+        parser_tok_update(tok, &var, scratch);
         return;
     }
     else if (estrcmp(tok->val, tok->len, NCSH_HOME_VAR, sizeof(NCSH_HOME_VAR))) {
@@ -152,11 +152,11 @@ void parser_variable_process(Token* rst tok, Vars* rst vars, Arena* rst scratch)
             puts("ncsh: could not load home to replace $HOME variable.");
             return;
         }
-        parser_arg_update(tok, &var, scratch);
+        parser_tok_update(tok, &var, scratch);
         return;
     }
     else {
-        char* key = tok->val + 1; // skip first value in arg->val (the $)
+        char* key = tok->val + 1; // skip first value in tok->val (the $)
         debugf("trying to get variable %s\n", key);
         Str* val = vars_get(key, vars);
         if (!val || !val->value || !*val->value) {
@@ -167,7 +167,7 @@ void parser_variable_process(Token* rst tok, Vars* rst vars, Arena* rst scratch)
 
     char* space = strchr(var.value, ' ');
     if (!space) {
-        parser_arg_update(tok, &var, scratch);
+        parser_tok_update(tok, &var, scratch);
         return;
     }
 
@@ -177,16 +177,16 @@ void parser_variable_process(Token* rst tok, Vars* rst vars, Arena* rst scratch)
     if (!var_tok) {
         return;
     }
-    debugf("found value %s\n", var_arg->val);
+    debugf("found value %s\n", var_tok->val);
     Str var_str = {.value = var_tok->val, .length = var_tok->len};
-    parser_arg_update(tok, &var_str, scratch);
+    parser_tok_update(tok, &var_str, scratch);
     var_tok = var_tok->next;
 
     for (size_t i = 0; i < toks->count; ++i) {
         if (!var_tok)
             break;
 
-        debugf("found next value %s\n", var_arg->val);
+        debugf("found next value %s\n", var_tok->val);
         if (!tok) {
             tok = var_tok;
             var_tok = var_tok->next;
@@ -350,7 +350,7 @@ int parser_ops_process(Tokens* rst toks, Token_Data* rst data, Shell* rst shell,
             break;
         }
         case OP_ASSIGNMENT: {
-            // skip command like arguments that look like assignment.
+            // skip command line arguments that look like assignment.
             // for example "CC=clang" is an assignment, "make CC=clang" is not.
             if (tok != toks->head->next) {
                 tok->op = OP_CONSTANT;

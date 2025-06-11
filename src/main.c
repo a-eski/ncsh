@@ -9,11 +9,11 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "compiler/compiler.h"
 #include "config.h"
 #include "defines.h"
 #include "eskilib/ecolors.h"
 #include "eskilib/eresult.h"
+#include "interpreter/interpreter.h"
 #include "noninteractive.h"
 #include "readline/ac.h"
 #include "readline/ncreadline.h"
@@ -78,7 +78,7 @@ char* init(Shell* rst shell)
         return NULL;
     }
 
-    compiler_init(shell);
+    interpreter_init(shell);
 
     signal_init();
     if (signal_forward(SIGINT) || signal_forward(SIGWINCH)) {
@@ -166,7 +166,7 @@ int main(int argc, char** argv)
         }
         }
 
-        int command_result = compiler_run(&shell, shell.scratch_arena);
+        int command_result = interpreter_run(&shell, shell.scratch_arena);
         switch (command_result) {
         case EXIT_FAILURE: {
             exit_code = EXIT_FAILURE;

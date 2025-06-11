@@ -11,7 +11,7 @@
 #define debugf(fmt, ...)
 #define debug_line(buf, len, max_len)
 #define debug_lexer_input(buf, len)
-#define debug_tokens(args)
+#define debug_tokens(toks)
 #define debug_argsv(argsc, argsv)
 #define debug_string(str, name)
 #else /* !NCSH_DEBUG */
@@ -19,13 +19,13 @@
 #include <stdio.h>
 
 #include "eskilib/str.h"
-#include "lexer.h"
+#include "interpreter/lexer.h"
 
 #define debug(buf) debug_internal(__FILE__, __LINE__, __func__, buf)
 #define debugf(fmt, ...) debugf_internal(__FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__)
 #define debug_line(buf, len, max_len) debug_line_internal(__FILE__, __LINE__, __func__, buf, len, max_len)
 #define debug_lexer_input(buf, len) debug_lexer_input_internal(__FILE__, __LINE__, __func__, buf, len)
-#define debug_tokens(args) debug_tokens_internal(__FILE__, __LINE__, __func__, args)
+#define debug_tokens(toks) debug_tokens_internal(__FILE__, __LINE__, __func__, toks)
 #define debug_argsv(argsc, argsv) debug_argsv_internal(__FILE__, __LINE__, __func__, argsc, argsv)
 #define debug_string(str, name) debug_string_internal(__FILE__, __LINE__, __func__, str, name)
 
@@ -68,20 +68,20 @@ static inline void debug_lexer_input_internal(const char* file, const int line, 
     fflush(stderr);
 }
 
-static inline void debug_tokens_internal(const char* file, const int line, const char* func, Args* args)
+static inline void debug_tokens_internal(const char* file, const int line, const char* func, Tokens* toks)
 {
     fprintf(stderr, "%s %s:%d ", file, func, line);
-    fprintf(stderr, "args.count: %lu\n", args->count);
+    fprintf(stderr, "toks.count: %lu\n", toks->count);
 
-    Arg* arg = args->head->next;
-    for (size_t i = 0; i < args->count; ++i) {
+    Token* tok = toks->head->next;
+    for (size_t i = 0; i < toks->count; ++i) {
         fprintf(stderr, "%s %s:%d ", file, func, line);
-        fprintf(stderr, "args.values[%lu] %s\n", i, arg->val);
+        fprintf(stderr, "toks.values[%lu] %s\n", i, tok->val);
         fprintf(stderr, "%s %s:%d ", file, func, line);
-        fprintf(stderr, "args.ops[%lu] %d\n", i, arg->op);
+        fprintf(stderr, "toks.ops[%lu] %d\n", i, tok->op);
         fprintf(stderr, "%s %s:%d ", file, func, line);
-        fprintf(stderr, "args.lengths[%lu] %zu\n", i, arg->len);
-        arg = arg->next;
+        fprintf(stderr, "toks.lengths[%lu] %zu\n", i, tok->len);
+        tok = tok->next;
     }
     fflush(stderr);
 }

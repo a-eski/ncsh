@@ -1,11 +1,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../src/compiler/lexer.h"
-#include "../src/compiler/parser.h"
-#include "../src/compiler/vm/vm_buffer.h"
-#include "../src/compiler/vm/vm_types.h"
 #include "../src/eskilib/etest.h"
+#include "../src/interpreter/lexer.h"
+#include "../src/interpreter/parser.h"
+#include "../src/interpreter/vm/vm_buffer.h"
+#include "../src/interpreter/vm/vm_types.h"
 #include "lib/arena_test_helper.h"
 
 void vm_buffer_token_test()

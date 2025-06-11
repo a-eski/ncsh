@@ -1,27 +1,27 @@
 /* Copyright ncsh (C) by Alex Eski 2025 */
-/* compiler.h: compiler implementation for ncsh */
+/* interpreter.h: interpreter implementation for ncsh */
 
 #include <stdlib.h>
 
-#include "compiler.h"
+#include "interpreter.h"
 #include "lexer.h"
 #include "parser.h"
-#include "vm/syntax_validator.h"
+#include "semantic_analyzer.h"
 #include "vm/vars.h"
 #include "vm/vm.h"
 #include "vm/vm_types.h"
 
-void compiler_init(Shell* rst shell)
+void interpreter_init(Shell* rst shell)
 {
     vars_malloc(&shell->arena, &shell->vars);
 }
 
-int compiler_run(Shell* rst shell, Arena scratch)
+int interpreter_run(Shell* rst shell, Arena scratch)
 {
     Tokens* toks = lexer_lex(shell->input.buffer, shell->input.pos, &scratch);
 
     int result;
-    if ((result = syntax_validator_validate(toks)) != EXIT_SUCCESS)
+    if ((result = semantic_analyzer_analyze(toks)) != EXIT_SUCCESS)
         return result;
 
     Token_Data data = {0};
@@ -31,12 +31,12 @@ int compiler_run(Shell* rst shell, Arena scratch)
     return vm_execute(toks, &data, shell, &scratch);
 }
 
-int compiler_run_noninteractive(char** rst argv, size_t argc, Shell* rst shell)
+int interpreter_run_noninteractive(char** rst argv, size_t argc, Shell* rst shell)
 {
     Tokens* toks = lexer_lex_noninteractive(argv, argc, &shell->arena);
 
     int result;
-    if ((result = syntax_validator_validate(toks)) != EXIT_SUCCESS)
+    if ((result = semantic_analyzer_analyze(toks)) != EXIT_SUCCESS)
         return result;
 
     Token_Data data = {0};

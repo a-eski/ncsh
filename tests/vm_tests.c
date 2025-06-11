@@ -1,12 +1,12 @@
 #include <setjmp.h>
 #include <signal.h>
 
-#include "../src/compiler/lexer.h"
-#include "../src/compiler/parser.h"
-#include "../src/compiler/vm/syntax_validator.h"
-#include "../src/compiler/vm/vm.h"
 #include "../src/defines.h"
 #include "../src/eskilib/etest.h"
+#include "../src/interpreter/lexer.h"
+#include "../src/interpreter/parser.h"
+#include "../src/interpreter/semantic_analyzer.h"
+#include "../src/interpreter/vm/vm.h"
 #include "lib/arena_test_helper.h"
 
 sig_atomic_t vm_child_pid;
@@ -17,7 +17,7 @@ jmp_buf env;
     SCRATCH_ARENA_TEST_SETUP;                                                                                          \
                                                                                                                        \
     Tokens* toks = lexer_lex(input, strlen(input) + 1, &scratch_arena);                                                \
-    int result = syntax_validator_validate(toks);                                                                      \
+    int result = semantic_analyzer_analyze(toks);                                                                      \
     eassert(result == EXIT_SUCCESS);                                                                                   \
                                                                                                                        \
     Shell shell = {0};                                                                                                 \
