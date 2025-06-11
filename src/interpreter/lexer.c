@@ -12,6 +12,7 @@
 #include "../configurables.h"
 #include "../debug.h"
 #include "../defines.h"
+#include "interpreter_types.h"
 #include "lexer_defines.h"
 #include "tokens.h"
 
@@ -162,7 +163,7 @@ enum Ops lexer_op_check_len_three(char* rst line)
     return OP_CONSTANT;
 }
 
-enum Ops lexer_op_check_len_four(char* rst line)
+/*enum Ops lexer_op_check_len_four(char* rst line)
 {
     if (STRCMP(line, BOOL_TRUE))
         return OP_TRUE;
@@ -172,14 +173,34 @@ enum Ops lexer_op_check_len_four(char* rst line)
         return OP_ELSE;
 
     return OP_CONSTANT;
+}*/
+
+enum Ops lexer_op_check_len_four(char* rst line)
+{
+    switch (line[0]) {
+    case 't': {
+        if (!memcmp(line, BOOL_TRUE, sizeof(BOOL_TRUE) - 1))
+            return OP_TRUE;
+        else if (!memcmp(line, THEN, sizeof(THEN) - 1))
+            return OP_THEN;
+        else
+            return OP_CONSTANT;
+    }
+    case 'e': {
+        if (!memcmp(line, ELSE, sizeof(ELSE) - 1))
+            return OP_ELSE;
+        else if (!memcmp(line, ELIF, sizeof(ELIF) - 1))
+            return OP_ELIF;
+
+        // FALLTHROUGH
+    }
+    }
+    return OP_CONSTANT;
 }
 
 enum Ops lexer_op_check_len_five(char* rst line)
 {
-    if (STRCMP(line, BOOL_FALSE))
-        return OP_FALSE;
-
-    return OP_CONSTANT;
+    return (STRCMP(line, BOOL_FALSE)) ? OP_FALSE : OP_CONSTANT;
 }
 
 /* lexer_op_get
@@ -252,7 +273,7 @@ uint8_t lexer_op_process()
 Tokens* lexer_lex(char* rst line, size_t length, Arena* rst scratch)
 {
     assert(line && scratch);
-    assert(!line[length - 1]);
+    // assert(!line[length - 1] && line[length - 2]);
     Tokens* toks = tokens_alloc(scratch);
     assert(toks);
     if (length < 2 || length > NCSH_MAX_INPUT) {
