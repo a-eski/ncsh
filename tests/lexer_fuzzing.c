@@ -1,7 +1,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 
-#include "../src/compiler/lexer.h"
+#include "../src/interpreter/lexer.h"
 #include "lib/arena_test_helper.h"
 
 int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size)

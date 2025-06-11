@@ -4,13 +4,13 @@
 #include <stdint.h>
 #include <unistd.h>
 
-#include "../../defines.h"
-#include "../tokens.h"
+#include "../defines.h"
+#include "tokens.h"
 
 int tok_invalid_syntax_check_res;
 
 [[nodiscard]]
-int syntax_validator_error_write(char* rst message, size_t message_length)
+int semantic_analyzer_error_write(char* rst message, size_t message_length)
 {
     if (write(STDIN_FILENO, message, message_length) == -1) {
         return EXIT_FAILURE;
@@ -19,7 +19,7 @@ int syntax_validator_error_write(char* rst message, size_t message_length)
     return EXIT_SYNTAX_ERROR;
 }
 
-#define INVALID_SYNTAX(message) syntax_validator_error_write(message, sizeof(message) - 1)
+#define INVALID_SYNTAX(message) semantic_analyzer_error_write(message, sizeof(message) - 1)
 
 #define INVALID_SYNTAX_PIPE_FIRST_ARG                                                                                  \
     "ncsh: Invalid syntax: found pipe operator ('|') as first argument. Correct usage of pipe operator is 'program1 "  \
@@ -98,7 +98,7 @@ int syntax_validator_error_write(char* rst message, size_t message_length)
     "ncsh: Invalid syntax: found or operator ('||') as first argument. Correct usage of or operator is "               \
     "'false || true'\n"
 
-/* syntax_validator_check_first_arg
+/* semantic_analyzer_check_first_arg
  * Simple check to see if something is in first position that shouldn't be
  */
 void syntax_validatator_first_arg_check(uint8_t op)
@@ -151,10 +151,10 @@ void syntax_validatator_first_arg_check(uint8_t op)
     }
 }
 
-/* syntax_validator_check_last_arg
+/* semantic_analyzer_check_last_arg
  * Simple check to see if something is in last position that shouldn't be
  */
-void syntax_validator_last_arg_check(Tokens* rst toks)
+void semantic_analyzer_last_arg_check(Tokens* rst toks)
 {
     Token* tok = toks->head->next;
     while (tok->next)
@@ -238,7 +238,7 @@ void syntax_validator_last_arg_check(Tokens* rst toks)
     "ncsh: Invalid Syntax: expecting some statement after 'if [(CONDITION)]; then (STATEMENT); else'. "                \
     "Correct usage of 'if' is 'if [(CONDITION)]; then [STATEMENT]; [else [STATEMENT];] fi'.\n"
 
-void syntax_validator_check(Tokens* rst toks)
+void semantic_analyzer_check(Tokens* rst toks)
 {
     Token* tok = toks->head->next;
     if (!tok) {
@@ -330,7 +330,7 @@ void syntax_validator_check(Tokens* rst toks)
 }
 
 [[nodiscard]]
-int syntax_validator_validate(Tokens* rst toks)
+int semantic_analyzer_analyze(Tokens* rst toks)
 {
     assert(toks);
 
@@ -338,9 +338,9 @@ int syntax_validator_validate(Tokens* rst toks)
     syntax_validatator_first_arg_check(toks->head->next->op);
     if (tok_invalid_syntax_check_res != EXIT_SUCCESS)
         return tok_invalid_syntax_check_res;
-    syntax_validator_last_arg_check(toks);
+    semantic_analyzer_last_arg_check(toks);
     if (tok_invalid_syntax_check_res != EXIT_SUCCESS)
         return tok_invalid_syntax_check_res;
-    syntax_validator_check(toks);
+    semantic_analyzer_check(toks);
     return tok_invalid_syntax_check_res;
 }

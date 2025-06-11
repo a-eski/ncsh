@@ -1,6 +1,6 @@
 #include <string.h>
 
-#include "../src/compiler/lexer.h"
+#include "../src/interpreter/lexer.h"
 #include "lib/arena_test_helper.h"
 
 void lexer_lex_bench()

@@ -29,7 +29,7 @@ Token* vm_buffer_set_command_next(Token* rst tok, Vm_Data* rst vm)
         assert(tok->val[tok->len - 1] == '\0');
         vm->buffer[vm_buf_pos] = tok->val;
         vm->buffer_lens[vm_buf_pos] = tok->len;
-        debugf("set vm->buffer[%zu] to %s, %zu\n", vm_buf_pos, arg->val, arg->len);
+        debugf("set vm->buffer[%zu] to %s, %zu\n", vm_buf_pos, tok->val, tok->len);
 
         if (!tok->next || !tok->next->val) {
             vm->tokens_end = true;

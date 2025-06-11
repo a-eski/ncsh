@@ -397,7 +397,7 @@ Tokens* lexer_lex(char* rst line, size_t length, Arena* rst scratch)
 
         lex_buf[lex_pos] = '\0';
 
-        debugf("Current lexer state: %d\n", lexer_state);
+        debugf("Current lexer state: %d\n", lex_state);
 
         uint8_t op = lexer_op_process();
         tok->next = token_alloc(op, lex_pos + 1, lex_buf, scratch);

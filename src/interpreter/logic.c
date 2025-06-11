@@ -107,7 +107,7 @@ void logic_statements_add(Token* rst tok, Statements* statements, Arena* rst scr
     logic_commands_add(tok, &statements->commands[statements->count], scratch);
 }
 
-bool logic_is_arg_valid_statement(Token* tok)
+bool logic_is_tok_valid_statement(Token* tok)
 {
     if (!tok)
         return false;
@@ -138,12 +138,12 @@ Token* logic_statements_process(Token* rst tok, Statements* rst statements, Aren
             --tok->len;
             end_of_statement = true;
         }
-        debugf("adding token to statements %s\n", arg->val);
+        debugf("adding token to statements %s\n", tok->val);
         logic_statements_add(tok, statements, scratch);
         if (end_of_statement)
             ++statements->count;
         tok = tok->next;
-    } while (logic_is_arg_valid_statement(tok));
+    } while (logic_is_tok_valid_statement(tok));
 
     if (statements->count == 0)
         statements->count = 1;
@@ -157,7 +157,7 @@ Logic_Result logic_if_preprocess(Token* tok, Token_Data* rst data, Arena* rst sc
         return (Logic_Result){.type = LT_CODE, .val.code = EXIT_FAILURE_CONTINUE};
     tok = tok->next;
 
-    if (!logic_is_arg_valid_statement(tok))
+    if (!logic_is_tok_valid_statement(tok))
         return (Logic_Result){.type = LT_CODE, .val.code = EXIT_FAILURE_CONTINUE};
 
     debug("processing conditions");
@@ -172,7 +172,7 @@ Logic_Result logic_if_preprocess(Token* tok, Token_Data* rst data, Arena* rst sc
         return (Logic_Result){.type = LT_CODE, .val.code = EXIT_FAILURE_CONTINUE};
 
     tok = tok->next;
-    if (!logic_is_arg_valid_statement(tok))
+    if (!logic_is_tok_valid_statement(tok))
         return (Logic_Result){.type = LT_CODE, .val.code = EXIT_FAILURE_CONTINUE};
 
     debug("processing if statements");
@@ -183,18 +183,18 @@ Logic_Result logic_if_preprocess(Token* tok, Token_Data* rst data, Arena* rst sc
         return (Logic_Result){.type = LT_IF, .val.tok = tok};
     }
 
-    /*if (arg->op != OP_ELSE || arg->op != OP_ELIF)
+    /*if (tok->op != OP_ELSE || tok->op != OP_ELIF)
         return (Logic_Result){.type = LT_CODE, .val.code = EXIT_FAILURE_CONTINUE};
 
-    while (arg->op == OP_ELIF) {
-        if (arg->op == OP_ELIF) {
-            arg = arg->next;
-            if (!logic_is_arg_valid_statement(arg))
+    while (tok->op == OP_ELIF) {
+        if (tok->op == OP_ELIF) {
+            tok = tok->next;
+            if (!logic_is_tok_valid_statement(tok))
                 return (Logic_Result){.type = LT_CODE, .val.code = EXIT_FAILURE_CONTINUE};
 
             debug("processing else statements");
             logic_tokens_else_init(tokens, scratch);
-            arg = logic_statements_process(arg, tokens->else_statements, scratch);
+            tok = logic_statements_process(tok, tokens->else_statements, scratch);
         }
     }*/
 
@@ -202,7 +202,7 @@ Logic_Result logic_if_preprocess(Token* tok, Token_Data* rst data, Arena* rst sc
         return (Logic_Result){.type = LT_CODE, .val.code = EXIT_FAILURE_CONTINUE};
 
     tok = tok->next;
-    if (!logic_is_arg_valid_statement(tok))
+    if (!logic_is_tok_valid_statement(tok))
         return (Logic_Result){.type = LT_CODE, .val.code = EXIT_FAILURE_CONTINUE};
 
     debug("processing else statements");
@@ -225,7 +225,7 @@ Logic_Result logic_preprocess(Token* rst tok, Token_Data* rst data, Arena* rst s
     assert(scratch);
 
     if (!tok) {
-        puts("ncsh: logic processing failed, NULL arg passed in.");
+        puts("ncsh: logic processing failed, NULL token passed in.");
         return (Logic_Result){.type = LT_CODE, .val.code = EXIT_FAILURE_CONTINUE};
     }
 
