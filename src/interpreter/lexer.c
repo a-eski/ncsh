@@ -163,18 +163,6 @@ enum Ops lexer_op_check_len_three(char* rst line)
     return OP_CONSTANT;
 }
 
-/*enum Ops lexer_op_check_len_four(char* rst line)
-{
-    if (STRCMP(line, BOOL_TRUE))
-        return OP_TRUE;
-    else if (STRCMP(line, THEN))
-        return OP_THEN;
-    else if (STRCMP(line, ELSE))
-        return OP_ELSE;
-
-    return OP_CONSTANT;
-}*/
-
 enum Ops lexer_op_check_len_four(char* rst line)
 {
     switch (line[0]) {

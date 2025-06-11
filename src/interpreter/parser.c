@@ -265,7 +265,7 @@ int parser_expansions_process(Tokens* rst toks, Shell* rst shell, Arena* rst scr
     if (prev)                                                                                                          \
         prev->next = NULL;
 
-int parser_ops_process(Tokens* rst toks, Shell* rst shell, Arena* rst scratch)
+/*int parser_ops_process(Tokens* rst toks, Shell* rst shell, Arena* rst scratch)
 {
     assert(toks && toks->head);
     assert(scratch);
@@ -414,9 +414,9 @@ int parser_ops_process(Tokens* rst toks, Shell* rst shell, Arena* rst scratch)
     ++toks->data.number_of_pipe_commands;
 
     return EXIT_SUCCESS;
-}
+}*/
 
-/*int parser_ops_process(Tokens* rst toks, Shell* rst shell, Arena* rst scratch)
+int parser_ops_process(Tokens* rst toks, Shell* rst shell, Arena* rst scratch)
 {
     assert(toks && toks->head);
     assert(scratch);
@@ -561,7 +561,7 @@ int parser_ops_process(Tokens* rst toks, Shell* rst shell, Arena* rst scratch)
     ++toks->data.number_of_pipe_commands;
 
     return EXIT_SUCCESS;
-}*/
+}
 
 [[nodiscard]]
 int parser_parse(Tokens* rst toks, Shell* rst shell, Arena* rst scratch)

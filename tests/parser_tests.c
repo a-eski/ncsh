@@ -168,7 +168,7 @@ void parser_parse_stdout_and_stderr_redirection_test()
     Tokens* toks = lexer_lex(line, len, &scratch_arena);
     int res = parser_parse(toks, NULL, &scratch_arena);
     eassert(!res);
-    // eassert(toks->data.stdout_and_stderr_file);
+    eassert(toks->data.stdout_and_stderr_file);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -183,7 +183,7 @@ void parser_parse_stdout_and_stderr_redirection_append_test()
     Tokens* toks = lexer_lex(line, len, &scratch_arena);
     int res = parser_parse(toks, NULL, &scratch_arena);
     eassert(!res);
-    // eassert(toks->data.stdout_and_stderr_file);
+    eassert(toks->data.stdout_and_stderr_file);
     eassert(toks->data.output_append);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
