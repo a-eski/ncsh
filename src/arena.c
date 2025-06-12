@@ -20,6 +20,7 @@ void arena_abort_internal()
     abort();
 }
 
+[[nodiscard]]
 __attribute_malloc__ void* arena_malloc_internal(Arena* rst arena, uintptr_t count, uintptr_t size, uintptr_t alignment)
 {
     assert(arena && count && size && alignment);
@@ -34,6 +35,7 @@ __attribute_malloc__ void* arena_malloc_internal(Arena* rst arena, uintptr_t cou
     return memset(val, 0, count * size);
 }
 
+[[nodiscard]]
 __attribute_malloc__ void* arena_realloc_internal(Arena* rst arena, uintptr_t count, uintptr_t size,
                                                   uintptr_t alignment, void* old_ptr, uintptr_t old_count)
 {

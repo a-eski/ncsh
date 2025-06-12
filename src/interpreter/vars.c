@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../../arena.h"
+#include "../arena.h"
 #include "vars.h"
 
 void vars_malloc(Arena* rst arena, Vars* rst vars)
@@ -20,6 +20,7 @@ void vars_malloc(Arena* rst arena, Vars* rst vars)
 #define VARS_FNV_OFFSET 2166136261
 
 // 64-bit FNV-1a hash
+[[nodiscard]]
 uint64_t vars_key(char* rst str)
 {
     register uint64_t i;
@@ -32,6 +33,7 @@ uint64_t vars_key(char* rst str)
     return i;
 }
 
+[[nodiscard]]
 Str* vars_get(char* rst key, Vars* rst vars)
 {
     uint64_t hash = vars_key(key);
@@ -51,6 +53,7 @@ Str* vars_get(char* rst key, Vars* rst vars)
     return NULL;
 }
 
+[[nodiscard]]
 bool vars_exists(char* rst key, Vars* rst vars)
 {
     uint64_t hash = vars_key(key);
@@ -70,6 +73,7 @@ bool vars_exists(char* rst key, Vars* rst vars)
     return false;
 }
 
+[[nodiscard]]
 char* vars_set_entry(Vars_Entry* rst entries, size_t capacity, char* rst key, Str* rst val, size_t* rst plength)
 {
     uint64_t hash = vars_key(key);
@@ -96,6 +100,7 @@ char* vars_set_entry(Vars_Entry* rst entries, size_t capacity, char* rst key, St
     return key;
 }
 
+[[nodiscard]]
 bool vars_expand(char* rst key, Arena* rst arena, Vars* rst vars)
 {
     size_t new_capacity = vars->capacity * 2;
@@ -109,7 +114,8 @@ bool vars_expand(char* rst key, Arena* rst arena, Vars* rst vars)
     for (size_t i = 0; i < vars->capacity; i++) {
         Vars_Entry entry = vars->entries[i];
         if (entry.key != NULL) {
-            vars_set_entry(new_entries, new_capacity, key, &entry.value, NULL);
+            if (!vars_set_entry(new_entries, new_capacity, key, &entry.value, NULL))
+                return false;
         }
     }
 
@@ -118,6 +124,7 @@ bool vars_expand(char* rst key, Arena* rst arena, Vars* rst vars)
     return true;
 }
 
+[[nodiscard]]
 char* vars_set(char* rst key, Str* rst val, Arena* rst arena, Vars* rst vars)
 {
     assert(val->value && val->length);

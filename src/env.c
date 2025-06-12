@@ -25,6 +25,7 @@ void env_home_get(Str* output, Arena* rst arena)
     memcpy(output->value, home, output->length);
 }
 
+[[nodiscard]]
 Str env_path_get()
 {
     Str path;

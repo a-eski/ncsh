@@ -10,6 +10,7 @@
 #include "../../defines.h"
 #include "vm_types.h"
 
+[[nodiscard]]
 static inline int output_redirection_oflags_get(bool append)
 {
     return append ? O_WRONLY | O_CREAT | O_APPEND : O_WRONLY | O_CREAT | O_TRUNC;

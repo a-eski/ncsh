@@ -108,6 +108,7 @@ void logic_statements_add(Token* rst tok, Statements* statements, Arena* rst scr
     logic_commands_add(tok, &statements->commands[statements->count], scratch);
 }
 
+[[nodiscard]]
 bool logic_is_tok_valid_statement(Token* tok)
 {
     if (!tok)
@@ -130,6 +131,7 @@ bool logic_is_tok_valid_statement(Token* tok)
     }
 }
 
+[[nodiscard]]
 Token* logic_statements_process(Token* rst tok, Statements* rst statements, Arena* rst scratch)
 {
     do {
@@ -151,6 +153,7 @@ Token* logic_statements_process(Token* rst tok, Statements* rst statements, Aren
     return tok;
 }
 
+[[nodiscard]]
 Logic_Result logic_if_preprocess(Token* tok, Token_Data* data, Arena* rst scratch)
 {
     tok = tok->next;
@@ -219,6 +222,7 @@ Logic_Result logic_if_preprocess(Token* tok, Token_Data* data, Arena* rst scratc
         return (Logic_Result){.type = LT_IF_ELSE, .val.tok = tok};
 }
 
+[[nodiscard]]
 Logic_Result logic_preprocess(Token* rst tok, Token_Data* rst data, Arena* rst scratch)
 {
     assert(tok);

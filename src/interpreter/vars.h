@@ -5,8 +5,8 @@
 
 #include <stddef.h>
 
-#include "../../arena.h"
-#include "../../eskilib/str.h"
+#include "../arena.h"
+#include "../eskilib/str.h"
 
 #define VARS_DEFAULT_CAPACITY 100
 

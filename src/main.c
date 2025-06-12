@@ -158,23 +158,21 @@ int main(int argc, char** argv)
             exit_code = EXIT_FAILURE;
             goto exit;
         }
-        case EXIT_SUCCESS: {
-            goto reset;
-        }
         case EXIT_SUCCESS_END: {
             goto exit;
+        }
+        case EXIT_SUCCESS: {
+            goto reset;
         }
         }
 
         int command_result = interpreter_run(&shell, shell.scratch_arena);
-        switch (command_result) {
-        case EXIT_FAILURE: {
+        if (command_result == EXIT_FAILURE) {
             exit_code = EXIT_FAILURE;
-            goto exit;
+            break;
         }
-        case EXIT_SUCCESS_END: {
-            goto exit;
-        }
+        else if (command_result == EXIT_SUCCESS_END) {
+            break;
         }
 
         history_add(shell.input.buffer, shell.input.pos, &shell.input.history, &shell.arena);

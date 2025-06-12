@@ -1189,5 +1189,6 @@ fzf_slab_t* fzf_make_slab(fzf_slab_config_t config, Arena* scratch_arena)
 fzf_slab_t* fzf_make_default_slab(Arena* scratch_arena)
 {
     // return fzf_make_slab((fzf_slab_config_t){(size_t)1<<15, 2048}, scratch_arena);
-    return fzf_make_slab((fzf_slab_config_t){(size_t)10 * 1024, 2048}, scratch_arena);
+    constexpr size_t size_16 = 10 * 1024;
+    return fzf_make_slab((fzf_slab_config_t){size_16, 2048}, scratch_arena);
 }

@@ -189,6 +189,7 @@ static constexpr size_t builtins_count = sizeof(builtins) / sizeof(Builtin);
 
 /* Implementations */
 #define Z_COMMAND_NOT_FOUND_MESSAGE "ncsh z: command not found, options not supported.\n"
+
 [[nodiscard]]
 int builtins_z(z_Database* rst z_db, char** rst buffer, size_t* rst buf_lens, Arena* rst arena, Arena* rst scratch)
 {
@@ -260,6 +261,7 @@ int builtins_z(z_Database* rst z_db, char** rst buffer, size_t* rst buf_lens, Ar
 }
 
 #define HISTORY_COMMAND_NOT_FOUND_MESSAGE "ncsh history: command not found.\n"
+
 [[nodiscard]]
 int builtins_history(History* rst history, char** rst buffer, size_t* rst buf_lens, Arena* rst arena,
                      Arena* rst scratch)
@@ -328,6 +330,8 @@ int builtins_history(History* rst history, char** rst buffer, size_t* rst buf_le
 #define ALIAS_USAGE                                                                                                    \
     "ncsh: alias: option not found. Options are alias or alias -p to print aliases, alias add, alias remove/rm, and "  \
     "alias delete to delete all aliases.\n"
+
+[[nodiscard]]
 int builtins_alias(char** rst buffer, size_t* rst buf_lens, Arena* rst arena)
 {
     (void)buf_lens;
@@ -395,6 +399,8 @@ int builtins_alias(char** rst buffer, size_t* rst buf_lens, Arena* rst arena)
 #define UNALIAS_USAGE                                                                                                  \
     "ncsh: unalias: usage is unalias, unalias -a to delete all aliases, or unalias {aliases} to remove specific "      \
     "alias(es).\n"
+
+[[nodiscard]]
 int builtins_unalias(char** rst buffer, size_t* rst buf_lens)
 {
     (void)buf_lens;
@@ -570,6 +576,7 @@ int builtins_help(char** rst buffer, size_t* rst buf_lens)
 }
 
 #define NCSH_COULD_NOT_CD_MESSAGE "ncsh cd: could not change directory.\n"
+
 [[nodiscard]]
 int builtins_cd(char** rst buffer, size_t* rst buf_lens)
 {
@@ -618,6 +625,7 @@ int builtins_pwd(char** rst buffer, size_t* rst buf_lens)
 
 #define KILL_NOTHING_TO_KILL_MESSAGE "ncsh kill: nothing to kill, please pass in a process ID (PID).\n"
 #define KILL_COULDNT_PARSE_PID_MESSAGE "ncsh kill: could not parse process ID (PID) from arguments.\n"
+
 [[nodiscard]]
 int builtins_kill(char** rst buffer, size_t* rst buf_lens)
 {
@@ -660,6 +668,7 @@ int builtins_kill(char** rst buffer, size_t* rst buf_lens)
     return EXIT_SUCCESS;
 }
 
+[[nodiscard]]
 int builtins_version(char** rst buffer, size_t* rst buf_lens)
 {
     (void)buffer;
@@ -668,6 +677,7 @@ int builtins_version(char** rst buffer, size_t* rst buf_lens)
     return EXIT_SUCCESS;
 }
 
+[[nodiscard]]
 int builtins_true(char** rst buffer, size_t* rst buf_lens)
 {
     (void)buffer;
@@ -675,6 +685,7 @@ int builtins_true(char** rst buffer, size_t* rst buf_lens)
     return EXIT_SUCCESS;
 }
 
+[[nodiscard]]
 int builtins_false(char** rst buffer, size_t* rst buf_lens)
 {
     (void)buffer;
@@ -708,6 +719,7 @@ void builtins_print_enabled()
 }
 
 // TODO: finish enable & disable implementation
+[[nodiscard]]
 int builtins_disable(char** rst buffer, size_t* rst buf_lens)
 {
     assert(buffer && *buffer);
@@ -744,6 +756,8 @@ int builtins_disable(char** rst buffer, size_t* rst buf_lens)
 }
 
 #define ENABLE_OPTION_NOT_SUPPORTED_MESSAGE "ncsh enable: command not found, options entered not supported.\n"
+
+[[nodiscard]]
 int builtins_enable(char** rst buffer, size_t* rst buf_lens)
 {
     assert(buffer && *buffer);
@@ -762,8 +776,7 @@ int builtins_enable(char** rst buffer, size_t* rst buf_lens)
             return EXIT_SUCCESS;
         }
         else if (CMP_2(*arg, "-n")) {
-            builtins_disable(buffer, buf_lens);
-            return EXIT_SUCCESS;
+            return builtins_disable(buffer, buf_lens);
         }
     }
 
@@ -778,6 +791,8 @@ int builtins_enable(char** rst buffer, size_t* rst buf_lens)
 #define EXPORT_OPTION_NOT_SUPPORTED_MESSAGE "ncsh export: command not found, options entered not supported.\n"
 #define EXPORT_OPTIONS_MESSAGE                                                                                         \
     "ncsh export: please pass in at least once argument. export currently supports modifying $PATH and $HOME."
+
+[[nodiscard]]
 int builtins_export(Tokens* rst toks, size_t* rst buf_lens)
 {
     (void)buf_lens;
