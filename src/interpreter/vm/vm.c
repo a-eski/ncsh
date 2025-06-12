@@ -123,6 +123,7 @@ int vm_status_aggregate(Vm_Data* rst vm)
     return vm->status;
 }
 
+[[nodiscard]]
 bool vm_condition_failed(Vm_Data* rst vm, Token_Data* rst data)
 {
     if (vm->state != VS_IN_CONDITIONS)
@@ -131,6 +132,7 @@ bool vm_condition_failed(Vm_Data* rst vm, Token_Data* rst data)
     return vm->status != EXIT_SUCCESS && data->logic_type != LT_IF_ELSE && vm->op_current != OP_OR;
 }
 
+[[nodiscard]]
 bool vm_status_should_break(Vm_Data* rst vm, Token_Data* rst data)
 {
     if (vm_condition_failed(vm, data)) {

@@ -2,7 +2,7 @@
 #include <stdlib.h>
 
 #include "../src/eskilib/etest.h"
-#include "../src/interpreter/vm/vars.h"
+#include "../src/interpreter/vars.h"
 #include "lib/arena_test_helper.h"
 
 void vars_malloc_default_size_test()

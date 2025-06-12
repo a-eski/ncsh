@@ -34,10 +34,10 @@
 #include "readline/terminal.c"
 
 #include "interpreter/semantic_analyzer.c"
+#include "interpreter/vars.c"
 #include "interpreter/vm/builtins.c"
 #include "interpreter/vm/pipe.c"
 #include "interpreter/vm/redirection.c"
-#include "interpreter/vm/vars.c"
 #include "interpreter/vm/vm.c"
 #include "interpreter/vm/vm_buffer.c"
 

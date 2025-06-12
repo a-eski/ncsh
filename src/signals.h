@@ -40,6 +40,7 @@ static void signal_handler(int sig, siginfo_t* info, void* context)
     }
 }
 
+[[nodiscard]]
 static int signal_forward(int signum)
 {
     struct sigaction act = {0};

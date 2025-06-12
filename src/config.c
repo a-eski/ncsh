@@ -127,6 +127,8 @@ enum eresult config_file_set(Config* rst config, Arena* rst arena)
  */
 #define PATH "PATH"
 #define PATH_ADD "PATH+="
+
+[[nodiscard]]
 Str config_path_add(Str path, char* rst val, int len, Arena* rst scratch_arena)
 {
     assert(val);

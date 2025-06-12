@@ -12,9 +12,21 @@
 
 // WARN: currently all string functions using this code incorporate null terminator in length
 // TODO: fix this, use length everywhere without null terminator... .length = sizeof(str) - 1
-#define Str_New_Literal(str) (Str){.value = str, .length = sizeof(str)}
-#define Str_New(str, len) (Str){.value = (str), .length = (len)}
-#define Str_Get(str) (Str){.value = (str), .length = (strlen(str) + 1)}
+#define Str_New_Literal(str)                                                                                           \
+    (Str)                                                                                                              \
+    {                                                                                                                  \
+        .value = str, .length = sizeof(str)                                                                            \
+    }
+#define Str_New(str, len)                                                                                              \
+    (Str)                                                                                                              \
+    {                                                                                                                  \
+        .value = (str), .length = (len)                                                                                \
+    }
+#define Str_Get(str)                                                                                                   \
+    (Str)                                                                                                              \
+    {                                                                                                                  \
+        .value = (str), .length = (strlen(str) + 1)                                                                    \
+    }
 
 typedef struct {
     size_t length;

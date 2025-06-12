@@ -7,7 +7,7 @@
 #include "lexer.h"
 #include "parser.h"
 #include "semantic_analyzer.h"
-#include "vm/vars.h"
+#include "vars.h"
 #include "vm/vm.h"
 
 void interpreter_init(Shell* rst shell)
@@ -15,6 +15,7 @@ void interpreter_init(Shell* rst shell)
     vars_malloc(&shell->arena, &shell->vars);
 }
 
+[[nodiscard]]
 int interpreter_run(Shell* rst shell, Arena scratch)
 {
     Tokens* toks = lexer_lex(shell->input.buffer, shell->input.pos, &scratch);
@@ -29,6 +30,7 @@ int interpreter_run(Shell* rst shell, Arena scratch)
     return vm_execute(toks, shell, &scratch);
 }
 
+[[nodiscard]]
 int interpreter_run_noninteractive(char** rst argv, size_t argc, Shell* rst shell)
 {
     Tokens* toks = lexer_lex_noninteractive(argv, argc, &shell->arena);

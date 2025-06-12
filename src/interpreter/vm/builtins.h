@@ -3,8 +3,8 @@
 
 #pragma once
 
-#include "vm_types.h"
 #include "../../arena.h"
 #include "../../types.h"
+#include "vm_types.h"
 
 bool builtins_check_and_run(Vm_Data* rst vm, Shell* rst shell, Arena* rst scratch_arena);

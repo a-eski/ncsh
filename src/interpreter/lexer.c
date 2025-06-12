@@ -90,11 +90,13 @@ constexpr size_t ops_3char_len = sizeof(ops_3char_str) / sizeof(char*);
 const enum Ops ops_3char[] = {OP_STDERR_REDIRECTION_APPEND, OP_STDOUT_AND_STDERR_REDIRECTION_APPEND, OP_EQUALS,
                               OP_LESS_THAN, OP_GREATER_THAN};
 
+[[nodiscard]]
 bool lexer_op_check_var(char* line, size_t len)
 {
     return len > 2 && line[0] == VARIABLE;
 }
 
+[[nodiscard]]
 enum Ops lexer_op_check_len_one(char* rst line)
 {
     assert(line);
@@ -141,6 +143,7 @@ enum Ops lexer_op_check_len_one(char* rst line)
     }
 }
 
+[[nodiscard]]
 enum Ops lexer_op_check_len_two(char* rst line)
 {
     for (size_t i = 0; i < ops_2char_len; ++i) {
@@ -152,6 +155,7 @@ enum Ops lexer_op_check_len_two(char* rst line)
     return OP_CONSTANT;
 }
 
+[[nodiscard]]
 enum Ops lexer_op_check_len_three(char* rst line)
 {
     for (size_t i = 0; i < ops_3char_len; ++i) {
@@ -163,6 +167,7 @@ enum Ops lexer_op_check_len_three(char* rst line)
     return OP_CONSTANT;
 }
 
+[[nodiscard]]
 enum Ops lexer_op_check_len_four(char* rst line)
 {
     switch (line[0]) {
@@ -186,6 +191,7 @@ enum Ops lexer_op_check_len_four(char* rst line)
     return OP_CONSTANT;
 }
 
+[[nodiscard]]
 enum Ops lexer_op_check_len_five(char* rst line)
 {
     return (STRCMP(line, BOOL_FALSE)) ? OP_FALSE : OP_CONSTANT;
@@ -234,6 +240,7 @@ enum Ops lexer_op_get(char* rst line, size_t len)
     }
 }
 
+[[nodiscard]]
 uint8_t lexer_op_process()
 {
     if ((lex_state & IN_HOME_EXPANSION)) {
@@ -258,6 +265,7 @@ uint8_t lexer_op_process()
  * Turns the inputted line into values, lengths, and bytecodes that the VM can work with.
  * Handles expansions like *, ?, and ~
  */
+[[nodiscard]]
 Tokens* lexer_lex(char* rst line, size_t length, Arena* rst scratch)
 {
     assert(line && scratch);
@@ -426,6 +434,7 @@ Tokens* lexer_lex(char* rst line, size_t length, Arena* rst scratch)
  * Allocates memory that is freed by lexer_free_values at the end of each main loop of the shell.
  * Used for noninteractive mode.
  */
+[[nodiscard]]
 Tokens* lexer_lex_noninteractive(char** rst inputs, size_t inputs_count, Arena* rst scratch)
 {
     assert(inputs && inputs_count && scratch);

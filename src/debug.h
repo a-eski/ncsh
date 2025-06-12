@@ -59,7 +59,7 @@ static inline void debug_line_internal(const char* file, const int line, const c
 }
 
 static inline void debug_lexer_input_internal(const char* file, const int line, const char* func, char* buffer,
-                                               size_t buf_position)
+                                              size_t buf_position)
 {
     fprintf(stderr, "%s %s:%d ", file, func, line);
     fprintf(stderr, "buffer: %s\n", buffer);

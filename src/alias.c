@@ -22,6 +22,7 @@ Alias* aliases;
  * Checks if the input matches to any of the user defined aliases for commands.
  * Returns: the actual command as a Str, a char* value and a size_t length.
  */
+[[nodiscard]]
 Str alias_check(char* rst buffer, size_t len)
 {
     if (!buffer || len < 2) {

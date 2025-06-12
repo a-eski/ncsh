@@ -8,6 +8,7 @@
 #include "../../debug.h"
 #include "vm_types.h"
 
+[[nodiscard]]
 Token* vm_buffer_set_command_next(Token* rst tok, Vm_Data* rst vm)
 {
     if (tok && tok->op == OP_ASSIGNMENT) {
@@ -121,6 +122,7 @@ end:
     vm->buffer[0] = NULL;
 }
 
+[[nodiscard]]
 Token* vm_buffer_set(Token* rst tok, Token_Data* rst data, Vm_Data* rst vm)
 {
     switch (data->logic_type) {

@@ -18,7 +18,7 @@
 #include "logic.h"
 #include "parser.h"
 #include "tokens.h"
-#include "vm/vars.h"
+#include "vars.h"
 
 void parser_home_expansion_process(Token* rst tok, Str home, Arena* rst scratch)
 {
@@ -224,6 +224,7 @@ void parser_alias_replace(Token* rst tok, Arena* rst scratch)
     }
 }
 
+[[nodiscard]]
 int parser_expansions_process(Tokens* rst toks, Shell* rst shell, Arena* rst scratch)
 {
     assert(toks && toks->head);
@@ -256,6 +257,7 @@ int parser_expansions_process(Tokens* rst toks, Shell* rst shell, Arena* rst scr
     return EXIT_SUCCESS;
 }
 
+/*
 #define REDIRECT(tok, str)                                                                                             \
     assert(tok->next && tok->next->val);                                                                               \
     if (!tok->next || !tok->next->val)                                                                                 \
@@ -265,7 +267,9 @@ int parser_expansions_process(Tokens* rst toks, Shell* rst shell, Arena* rst scr
     if (prev)                                                                                                          \
         prev->next = NULL;
 
-/*int parser_ops_process(Tokens* rst toks, Shell* rst shell, Arena* rst scratch)
+
+[[nodiscard]]
+int parser_ops_process(Tokens* rst toks, Shell* rst shell, Arena* rst scratch)
 {
     assert(toks && toks->head);
     assert(scratch);
@@ -416,6 +420,7 @@ int parser_expansions_process(Tokens* rst toks, Shell* rst shell, Arena* rst scr
     return EXIT_SUCCESS;
 }*/
 
+[[nodiscard]]
 int parser_ops_process(Tokens* rst toks, Shell* rst shell, Arena* rst scratch)
 {
     assert(toks && toks->head);
