@@ -198,7 +198,7 @@ bact :
 # Run lexer tests
 .PHONY: test_lexer
 test_lexer :
-	$(CC) $(STD) $(debug_flags) ./src/arena.c ./src/interpreter/tokens.c ./src/interpreter/lexer_op.c ./src/interpreter/lexer.c ./tests/lexer_tests.c -o ./bin/lexer_tests
+	$(CC) $(STD) $(debug_flags) ./src/arena.c ./src/interpreter/lexemes.c ./src/interpreter/lexer_op.c ./src/interpreter/lexer.c ./tests/lexer_tests.c -o ./bin/lexer_tests
 	./bin/lexer_tests
 .PHONY: tlx
 tlx :

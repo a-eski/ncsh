@@ -215,7 +215,6 @@ void lexer_lex(char* rst line, size_t length, Lexemes* lexemes, Arena* rst scrat
 
         debugf("Current lexer state: %d\n", lex_state);
 
-        uint8_t op = lexer_op_process();
         lexemes->ops[n] = lexer_op_process();
         lexemes->lens[n] = lex_buf_pos + 1;
         lexemes->vals[n] = arena_malloc(scratch, lexemes->lens[n], char);

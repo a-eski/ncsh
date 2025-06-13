@@ -4,6 +4,8 @@
 
 #include "../src/eskilib/etest.h"
 #include "../src/interpreter/lexer.h"
+#include "../src/interpreter/ops.h"
+#include "../src/interpreter/lexemes.h"
 #include "lib/arena_test_helper.h"
 
 void lexer_lex_ls_test()
@@ -13,19 +15,18 @@ void lexer_lex_ls_test()
     char* line = "ls\0";
     size_t len = 3;
 
-    Tokens* toks = lexer_lex(line, len, &scratch_arena);
+    Lexemes lexemes = {0};
+    lexemes_init(&lexemes, &scratch_arena);
+    lexer_lex(line, len, &lexemes, &scratch_arena);
 
-    eassert(toks);
-    eassert(toks->head);
-    eassert(toks->count == 1);
+    eassert(lexemes.count == 1);
 
-    Token* tok = toks->head->next;
-    eassert(tok);
-    eassert(!memcmp(tok->val, line, len));
-    eassert(tok->op == OP_CONSTANT);
-    eassert(tok->len == len);
+    eassert(lexemes.vals[0]);
+    eassert(!memcmp(lexemes.vals[0], line, len));
+    eassert(lexemes.ops[0] == OP_CONSTANT);
+    eassert(lexemes.lens[0] == len);
 
-    eassert(!tok->next);
+    eassert(!lexemes.vals[1]);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -37,23 +38,21 @@ void lexer_lex_ls_dash_l_test()
     char* line = "ls -l\0";
     size_t len = 6;
 
-    Tokens* toks = lexer_lex(line, len, &scratch_arena);
+    Lexemes lexemes = {0};
+    lexemes_init(&lexemes, &scratch_arena);
+    lexer_lex(line, len, &lexemes, &scratch_arena);
 
-    eassert(toks);
-    eassert(toks->head);
-    eassert(toks->count == 2);
+    eassert(lexemes.count == 2);
 
-    Token* tok = toks->head->next;
-    eassert(!memcmp(tok->val, "ls", 3));
-    eassert(tok->op == OP_CONSTANT);
-    eassert(tok->len == 3);
-    tok = tok->next;
+    eassert(!memcmp(lexemes.vals[0], "ls", 3));
+    eassert(lexemes.ops[0] == OP_CONSTANT);
+    eassert(lexemes.lens[0] == 3);
 
-    eassert(!memcmp(tok->val, "-l", 3));
-    eassert(tok->op == OP_CONSTANT);
-    eassert(tok->len == 3);
+    eassert(!memcmp(lexemes.vals[1], "-l", 3));
+    eassert(lexemes.ops[1] == OP_CONSTANT);
+    eassert(lexemes.lens[1] == 3);
 
-    eassert(!tok->next);
+    eassert(!lexemes.vals[2]);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -65,28 +64,25 @@ void lexer_lex_pipe_test()
     char* line = "ls | sort\0";
     size_t len = 10;
 
-    Tokens* toks = lexer_lex(line, len, &scratch_arena);
+    Lexemes lexemes = {0};
+    lexemes_init(&lexemes, &scratch_arena);
+    lexer_lex(line, len, &lexemes, &scratch_arena);
 
-    eassert(toks);
-    eassert(toks->head);
-    eassert(toks->count == 3);
+    eassert(lexemes.count == 3);
 
-    Token* tok = toks->head->next;
-    eassert(memcmp(tok->val, "ls", 3) == 0);
-    eassert(tok->op == OP_CONSTANT);
-    eassert(tok->len == 3);
-    tok = tok->next;
+    eassert(memcmp(lexemes.vals[0], "ls", 3) == 0);
+    eassert(lexemes.ops[0] == OP_CONSTANT);
+    eassert(lexemes.lens[0] == 3);
 
-    eassert(memcmp(tok->val, "|", 2) == 0);
-    eassert(tok->op == OP_PIPE);
-    eassert(tok->len == 2);
-    tok = tok->next;
+    eassert(memcmp(lexemes.vals[1], "|", 2) == 0);
+    eassert(lexemes.ops[1] == OP_PIPE);
+    eassert(lexemes.lens[1] == 2);
 
-    eassert(memcmp(tok->val, "sort", 5) == 0);
-    eassert(tok->op == OP_CONSTANT);
-    eassert(tok->len == 5);
+    eassert(memcmp(lexemes.vals[2], "sort", 5) == 0);
+    eassert(lexemes.ops[2] == OP_CONSTANT);
+    eassert(lexemes.lens[2] == 5);
 
-    eassert(!tok->next);
+    eassert(!lexemes.vals[3]);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -98,38 +94,33 @@ void lexer_lex_multiple_pipe_test()
     char* line = "ls | sort | table";
     size_t len = 18;
 
-    Tokens* toks = lexer_lex(line, len, &scratch_arena);
+    Lexemes lexemes = {0};
+    lexemes_init(&lexemes, &scratch_arena);
+    lexer_lex(line, len, &lexemes, &scratch_arena);
 
-    eassert(toks);
-    eassert(toks->head);
-    eassert(toks->count == 5);
+    eassert(lexemes.count == 5);
 
-    Token* tok = toks->head->next;
-    eassert(!memcmp(tok->val, "ls", 3));
-    eassert(tok->op == OP_CONSTANT);
-    eassert(tok->len == 3);
-    tok = tok->next;
+    eassert(!memcmp(lexemes.vals[0], "ls", 3));
+    eassert(lexemes.ops[0] == OP_CONSTANT);
+    eassert(lexemes.lens[0] == 3);
 
-    eassert(!memcmp(tok->val, "|", 2));
-    eassert(tok->op == OP_PIPE);
-    eassert(tok->len == 2);
-    tok = tok->next;
+    eassert(!memcmp(lexemes.vals[1], "|", 2));
+    eassert(lexemes.ops[1] == OP_PIPE);
+    eassert(lexemes.lens[1] == 2);
 
-    eassert(!memcmp(tok->val, "sort", 5));
-    eassert(tok->op == OP_CONSTANT);
-    eassert(tok->len == 5);
-    tok = tok->next;
+    eassert(!memcmp(lexemes.vals[2], "sort", 5));
+    eassert(lexemes.ops[2] == OP_CONSTANT);
+    eassert(lexemes.lens[2] == 5);
 
-    eassert(!memcmp(tok->val, "|", 2));
-    eassert(tok->op == OP_PIPE);
-    eassert(tok->len == 2);
-    tok = tok->next;
+    eassert(!memcmp(lexemes.vals[3], "|", 2));
+    eassert(lexemes.ops[3] == OP_PIPE);
+    eassert(lexemes.lens[3] == 2);
 
-    eassert(!memcmp(tok->val, "table", 6));
-    eassert(tok->op == OP_CONSTANT);
-    eassert(tok->len == 6);
+    eassert(!memcmp(lexemes.vals[4], "table", 6));
+    eassert(lexemes.ops[4] == OP_CONSTANT);
+    eassert(lexemes.lens[4] == 6);
 
-    eassert(!tok->next);
+    eassert(!lexemes.vals[5]);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -141,23 +132,21 @@ void lexer_lex_background_job_test()
     char* line = "longrunningprogram &\0";
     size_t len = 21;
 
-    Tokens* toks = lexer_lex(line, len, &scratch_arena);
+    Lexemes lexemes = {0};
+    lexemes_init(&lexemes, &scratch_arena);
+    lexer_lex(line, len, &lexemes, &scratch_arena);
 
-    eassert(toks);
-    eassert(toks->head);
-    eassert(toks->count == 2);
+    eassert(lexemes.count == 2);
 
-    Token* tok = toks->head->next;
-    eassert(!memcmp(tok->val, "longrunningprogram", 19));
-    eassert(tok->op == OP_CONSTANT);
-    eassert(tok->len == 19);
-    tok = tok->next;
+    eassert(!memcmp(lexemes.vals[0], "longrunningprogram", 19));
+    eassert(lexemes.ops[0] == OP_CONSTANT);
+    eassert(lexemes.lens[0] == 19);
 
-    eassert(!memcmp(tok->val, "&", 2));
-    eassert(tok->op == OP_BACKGROUND_JOB);
-    eassert(tok->len == 2);
+    eassert(!memcmp(lexemes.vals[1], "&", 2));
+    eassert(lexemes.ops[1] == OP_BACKGROUND_JOB);
+    eassert(lexemes.lens[1] == 2);
 
-    eassert(!tok->next);
+    eassert(!lexemes.vals[2]);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -169,27 +158,25 @@ void lexer_lex_output_redirection_test()
     char* line = "ls > text.txt\0";
     size_t len = 14;
 
-    Tokens* toks = lexer_lex(line, len, &scratch_arena);
+    Lexemes lexemes = {0};
+    lexemes_init(&lexemes, &scratch_arena);
+    lexer_lex(line, len, &lexemes, &scratch_arena);
 
-    eassert(toks->head);
-    eassert(toks->count == 3);
+    eassert(lexemes.count == 3);
 
-    Token* tok = toks->head->next;
-    eassert(!memcmp(tok->val, "ls", 3));
-    eassert(tok->op == OP_CONSTANT);
-    eassert(tok->len == 3);
-    tok = tok->next;
+    eassert(!memcmp(lexemes.vals[0], "ls", 3));
+    eassert(lexemes.ops[0] == OP_CONSTANT);
+    eassert(lexemes.lens[0] == 3);
 
-    eassert(!memcmp(tok->val, ">", 2));
-    eassert(tok->op == OP_STDOUT_REDIRECTION);
-    eassert(tok->len == 2);
-    tok = tok->next;
+    eassert(!memcmp(lexemes.vals[1], ">", 2));
+    eassert(lexemes.ops[1] == OP_STDOUT_REDIRECTION);
+    eassert(lexemes.lens[1] == 2);
 
-    eassert(!memcmp(tok->val, "text.txt", 9));
-    eassert(tok->op == OP_CONSTANT);
-    eassert(tok->len == 9);
+    eassert(!memcmp(lexemes.vals[2], "text.txt", 9));
+    eassert(lexemes.ops[2] == OP_CONSTANT);
+    eassert(lexemes.lens[2] == 9);
 
-    eassert(!tok->next);
+    eassert(!lexemes.vals[3]);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -201,27 +188,25 @@ void lexer_lex_output_redirection_append_test()
     char* line = "ls >> text.txt\0";
     size_t len = 15;
 
-    Tokens* toks = lexer_lex(line, len, &scratch_arena);
+    Lexemes lexemes = {0};
+    lexemes_init(&lexemes, &scratch_arena);
+    lexer_lex(line, len, &lexemes, &scratch_arena);
 
-    eassert(toks->head);
-    eassert(toks->count == 3);
+    eassert(lexemes.count == 3);
 
-    Token* tok = toks->head->next;
-    eassert(!memcmp(tok->val, "ls", 3));
-    eassert(tok->op == OP_CONSTANT);
-    eassert(tok->len == 3);
-    tok = tok->next;
+    eassert(!memcmp(lexemes.vals[0], "ls", 3));
+    eassert(lexemes.ops[0] == OP_CONSTANT);
+    eassert(lexemes.lens[0] == 3);
 
-    eassert(!memcmp(tok->val, ">>", 3));
-    eassert(tok->op == OP_STDOUT_REDIRECTION_APPEND);
-    eassert(tok->len == 3);
-    tok = tok->next;
+    eassert(!memcmp(lexemes.vals[1], ">>", 3));
+    eassert(lexemes.ops[1] == OP_STDOUT_REDIRECTION_APPEND);
+    eassert(lexemes.lens[1] == 3);
 
-    eassert(!memcmp(tok->val, "text.txt", 9));
-    eassert(tok->op == OP_CONSTANT);
-    eassert(tok->len == 9);
+    eassert(!memcmp(lexemes.vals[2], "text.txt", 9));
+    eassert(lexemes.ops[2] == OP_CONSTANT);
+    eassert(lexemes.lens[2] == 9);
 
-    eassert(!tok->next);
+    eassert(!lexemes.vals[3]);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -233,27 +218,23 @@ void lexer_lex_input_redirection_test()
     char* line = "t.txt < sort";
     size_t len = strlen(line) + 1;
 
-    Tokens* toks = lexer_lex(line, len, &scratch_arena);
+    Lexemes lexemes = {0};
+    lexemes_init(&lexemes, &scratch_arena);
+    lexer_lex(line, len, &lexemes, &scratch_arena);
 
-    eassert(toks->head);
-    eassert(toks->count == 3);
+    eassert(lexemes.count == 3);
 
-    Token* tok = toks->head->next;
-    eassert(!memcmp(tok->val, "t.txt", 6));
-    eassert(tok->op == OP_CONSTANT);
-    eassert(tok->len == 6);
-    tok = tok->next;
+    eassert(!memcmp(lexemes.vals[0], "t.txt", 6));
+    eassert(lexemes.ops[0] == OP_CONSTANT);
+    eassert(lexemes.lens[0] == 6);
 
-    eassert(!memcmp(tok->val, "<", 2));
-    eassert(tok->op == OP_STDIN_REDIRECTION);
-    eassert(tok->len == 2);
-    tok = tok->next;
+    eassert(!memcmp(lexemes.vals[1], "<", 2));
+    eassert(lexemes.ops[1] == OP_STDIN_REDIRECTION);
+    eassert(lexemes.lens[1] == 2);
 
-    eassert(!memcmp(tok->val, "sort", 5));
-    eassert(tok->op == OP_CONSTANT);
-    eassert(tok->len == 5);
-
-    eassert(!tok->next);
+    eassert(!memcmp(lexemes.vals[2], "sort", 5));
+    eassert(lexemes.ops[2] == OP_CONSTANT);
+    eassert(lexemes.lens[2] == 5);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -265,27 +246,25 @@ void lexer_lex_stdout_and_stderr_redirection_test()
     char* line = "ls &> text.txt\0";
     size_t len = 15;
 
-    Tokens* toks = lexer_lex(line, len, &scratch_arena);
+    Lexemes lexemes = {0};
+    lexemes_init(&lexemes, &scratch_arena);
+    lexer_lex(line, len, &lexemes, &scratch_arena);
 
-    eassert(toks->head);
-    eassert(toks->count == 3);
+    eassert(lexemes.count == 3);
 
-    Token* tok = toks->head->next;
-    eassert(!memcmp(tok->val, "ls", 3));
-    eassert(tok->op == OP_CONSTANT);
-    eassert(tok->len == 3);
-    tok = tok->next;
+    eassert(!memcmp(lexemes.vals[0], "ls", 3));
+    eassert(lexemes.ops[0] == OP_CONSTANT);
+    eassert(lexemes.lens[0] == 3);
 
-    eassert(!memcmp(tok->val, "&>", 3));
-    eassert(tok->op == OP_STDOUT_AND_STDERR_REDIRECTION);
-    eassert(tok->len == 3);
-    tok = tok->next;
+    eassert(!memcmp(lexemes.vals[1], "&>", 3));
+    eassert(lexemes.ops[1] == OP_STDOUT_AND_STDERR_REDIRECTION);
+    eassert(lexemes.lens[1] == 3);
 
-    eassert(!memcmp(tok->val, "text.txt", 9));
-    eassert(tok->op == OP_CONSTANT);
-    eassert(tok->len == 9);
+    eassert(!memcmp(lexemes.vals[2], "text.txt", 9));
+    eassert(lexemes.ops[2] == OP_CONSTANT);
+    eassert(lexemes.lens[2] == 9);
 
-    eassert(!tok->next);
+    eassert(!lexemes.vals[3]);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -297,27 +276,25 @@ void lexer_lex_stdout_and_stderr_redirection_append_test()
     char* line = "ls &>> text.txt";
     size_t len = strlen(line) + 1;
 
-    Tokens* toks = lexer_lex(line, len, &scratch_arena);
+    Lexemes lexemes = {0};
+    lexemes_init(&lexemes, &scratch_arena);
+    lexer_lex(line, len, &lexemes, &scratch_arena);
 
-    eassert(toks->head);
-    eassert(toks->count == 3);
+    eassert(lexemes.count == 3);
 
-    Token* tok = toks->head->next;
-    eassert(!memcmp(tok->val, "ls", 3));
-    eassert(tok->op == OP_CONSTANT);
-    eassert(tok->len == 3);
-    tok = tok->next;
+    eassert(!memcmp(lexemes.vals[0], "ls", 3));
+    eassert(lexemes.ops[0] == OP_CONSTANT);
+    eassert(lexemes.lens[0] == 3);
 
-    eassert(!memcmp(tok->val, "&>>", 4));
-    eassert(tok->op == OP_STDOUT_AND_STDERR_REDIRECTION_APPEND);
-    eassert(tok->len == 4);
-    tok = tok->next;
+    eassert(!memcmp(lexemes.vals[1], "&>>", 4));
+    eassert(lexemes.ops[1] == OP_STDOUT_AND_STDERR_REDIRECTION_APPEND);
+    eassert(lexemes.lens[1] == 4);
 
-    eassert(!memcmp(tok->val, "text.txt", 9));
-    eassert(tok->op == OP_CONSTANT);
-    eassert(tok->len == 9);
+    eassert(!memcmp(lexemes.vals[2], "text.txt", 9));
+    eassert(lexemes.ops[2] == OP_CONSTANT);
+    eassert(lexemes.lens[2] == 9);
 
-    eassert(!tok->next);
+    eassert(!lexemes.vals[3]);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -329,17 +306,19 @@ void lexer_lex_assignment_test()
     char* line = "STR=\"Hello\"";
     size_t len = strlen(line) + 1;
 
-    Tokens* toks = lexer_lex(line, len, &scratch_arena);
+    Lexemes lexemes = {0};
+    lexemes_init(&lexemes, &scratch_arena);
+    lexer_lex(line, len, &lexemes, &scratch_arena);
 
-    eassert(toks->head);
-    eassert(toks->count == 1);
+    eassert(lexemes.count == 1);
 
-    Token* tok = toks->head->next;
-    // quotes stripped by the parser
+    // quotes stripped by the lexer
     size_t stripped_len = sizeof("STR=Hello");
-    eassert(!memcmp(tok->val, "STR=Hello", stripped_len));
-    eassert(tok->op == OP_ASSIGNMENT);
-    eassert(tok->len == stripped_len);
+    eassert(!memcmp(lexemes.vals[0], "STR=Hello", stripped_len));
+    eassert(lexemes.ops[0] == OP_ASSIGNMENT);
+    eassert(lexemes.lens[0] == stripped_len);
+
+    eassert(!lexemes.vals[1]);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -351,16 +330,18 @@ void lexer_lex_assignment_spaces_test()
     char* line = "STR=\"ls -a\"";
     size_t len = strlen(line) + 1;
 
-    Tokens* toks = lexer_lex(line, len, &scratch_arena);
+    Lexemes lexemes = {0};
+    lexemes_init(&lexemes, &scratch_arena);
+    lexer_lex(line, len, &lexemes, &scratch_arena);
 
-    eassert(toks->head);
-    eassert(toks->count == 1);
+    eassert(lexemes.count == 1);
 
-    Token* tok = toks->head->next;
-    // quotes stripped by the parser
-    eassert(!memcmp(tok->val, "STR=ls -a", len - 2));
-    eassert(tok->op == OP_ASSIGNMENT);
-    eassert(tok->len == len - 2);
+    // quotes stripped by the lexer
+    eassert(!memcmp(lexemes.vals[0], "STR=ls -a", len - 2));
+    eassert(lexemes.ops[0] == OP_ASSIGNMENT);
+    eassert(lexemes.lens[0] == len - 2);
+
+    eassert(!lexemes.vals[1]);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -372,16 +353,18 @@ void lexer_lex_assignment_spaces_multiple_test()
     char* line = "STR=\"ls | sort\"";
     size_t len = strlen(line) + 1;
 
-    Tokens* toks = lexer_lex(line, len, &scratch_arena);
+    Lexemes lexemes = {0};
+    lexemes_init(&lexemes, &scratch_arena);
+    lexer_lex(line, len, &lexemes, &scratch_arena);
 
-    eassert(toks->head);
-    eassert(toks->count == 1);
+    eassert(lexemes.count == 1);
 
-    Token* tok = toks->head->next;
-    // quotes stripped by the parser
-    eassert(!memcmp(tok->val, "STR=ls | sort", len - 2));
-    eassert(tok->op == OP_ASSIGNMENT);
-    eassert(tok->len == len - 2);
+    // quotes stripped by the lexer
+    eassert(!memcmp(lexemes.vals[0], "STR=ls | sort", len - 2));
+    eassert(lexemes.ops[0] == OP_ASSIGNMENT);
+    eassert(lexemes.lens[0] == len - 2);
+
+    eassert(!lexemes.vals[1])
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -393,22 +376,21 @@ void lexer_lex_variable_test()
     char* line = "echo $STR";
     size_t len = strlen(line) + 1;
 
-    Tokens* toks = lexer_lex(line, len, &scratch_arena);
+    Lexemes lexemes = {0};
+    lexemes_init(&lexemes, &scratch_arena);
+    lexer_lex(line, len, &lexemes, &scratch_arena);
 
-    eassert(toks->head);
-    eassert(toks->count == 2);
+    eassert(lexemes.count == 2);
 
-    Token* tok = toks->head->next;
-    eassert(!memcmp(tok->val, "echo", 5));
-    eassert(tok->op == OP_CONSTANT);
-    eassert(tok->len = 5);
-    tok = tok->next;
+    eassert(!memcmp(lexemes.vals[0], "echo", 5));
+    eassert(lexemes.ops[0] == OP_CONSTANT);
+    eassert(lexemes.lens[0] = 5);
 
-    eassert(!memcmp(tok->val, "$STR", 5));
-    eassert(tok->op == OP_VARIABLE);
-    eassert(tok->len = 5);
+    eassert(!memcmp(lexemes.vals[1], "$STR", 5));
+    eassert(lexemes.ops[1] == OP_VARIABLE);
+    eassert(lexemes.lens[1] = 5);
 
-    eassert(!tok->next);
+    eassert(!lexemes.vals[2]);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -420,32 +402,29 @@ void lexer_lex_variable_and_test()
     char* line = "STR=hello && echo $STR";
     size_t len = strlen(line) + 1;
 
-    Tokens* toks = lexer_lex(line, len, &scratch_arena);
+    Lexemes lexemes = {0};
+    lexemes_init(&lexemes, &scratch_arena);
+    lexer_lex(line, len, &lexemes, &scratch_arena);
 
-    eassert(toks->head);
-    eassert(toks->count == 4);
+    eassert(lexemes.count == 4);
 
-    Token* tok = toks->head->next;
-    eassert(!memcmp(tok->val, "STR=hello", sizeof("STR=hello")));
-    eassert(tok->op == OP_ASSIGNMENT);
-    eassert(tok->len == sizeof("STR=hello"));
-    tok = tok->next;
+    eassert(!memcmp(lexemes.vals[0], "STR=hello", sizeof("STR=hello")));
+    eassert(lexemes.ops[0] == OP_ASSIGNMENT);
+    eassert(lexemes.lens[0] == sizeof("STR=hello"));
 
-    eassert(!memcmp(tok->val, "&&", 3));
-    eassert(tok->op == OP_AND);
-    eassert(tok->len == 3);
-    tok = tok->next;
+    eassert(!memcmp(lexemes.vals[1], "&&", 3));
+    eassert(lexemes.ops[1] == OP_AND);
+    eassert(lexemes.lens[1] == 3);
 
-    eassert(!memcmp(tok->val, "echo", 5));
-    eassert(tok->op == OP_CONSTANT);
-    eassert(tok->len = 5);
-    tok = tok->next;
+    eassert(!memcmp(lexemes.vals[2], "echo", 5));
+    eassert(lexemes.ops[2] == OP_CONSTANT);
+    eassert(lexemes.lens[2] = 5);
 
-    eassert(!memcmp(tok->val, "$STR", 5));
-    eassert(tok->op == OP_VARIABLE);
-    eassert(tok->len = 5);
+    eassert(!memcmp(lexemes.vals[3], "$STR", 5));
+    eassert(lexemes.ops[3] == OP_VARIABLE);
+    eassert(lexemes.lens[3] = 5);
 
-    eassert(!tok->next);
+    eassert(!lexemes.vals[4]);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -457,27 +436,25 @@ void lexer_lex_variable_command_test()
     char* line = "COMMAND=ls && $COMMAND";
     size_t len = strlen(line) + 1;
 
-    Tokens* toks = lexer_lex(line, len, &scratch_arena);
+    Lexemes lexemes = {0};
+    lexemes_init(&lexemes, &scratch_arena);
+    lexer_lex(line, len, &lexemes, &scratch_arena);
 
-    eassert(toks->head);
-    eassert(toks->count == 3);
+    eassert(lexemes.count == 3);
 
-    Token* tok = toks->head->next;
-    eassert(!memcmp(tok->val, "COMMAND=ls", sizeof("COMMAND=ls")));
-    eassert(tok->op == OP_ASSIGNMENT);
-    eassert(tok->len == sizeof("COMMAND=ls"));
-    tok = tok->next;
+    eassert(!memcmp(lexemes.vals[0], "COMMAND=ls", sizeof("COMMAND=ls")));
+    eassert(lexemes.ops[0] == OP_ASSIGNMENT);
+    eassert(lexemes.lens[0] == sizeof("COMMAND=ls"));
 
-    eassert(!memcmp(tok->val, "&&", 3));
-    eassert(tok->op == OP_AND);
-    eassert(tok->len == 3);
-    tok = tok->next;
+    eassert(!memcmp(lexemes.vals[1], "&&", 3));
+    eassert(lexemes.ops[1] == OP_AND);
+    eassert(lexemes.lens[1] == 3);
 
-    eassert(!memcmp(tok->val, "$COMMAND", 8));
-    eassert(tok->op == OP_VARIABLE);
-    eassert(tok->len = 8);
+    eassert(!memcmp(lexemes.vals[2], "$COMMAND", 8));
+    eassert(lexemes.ops[2] == OP_VARIABLE);
+    eassert(lexemes.lens[2] = 8);
 
-    eassert(!tok->next);
+    eassert(!lexemes.vals[3]);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -489,22 +466,21 @@ void lexer_lex_double_quotes_test()
     char* line = "echo \"hello\"\0";
     size_t len = 13;
 
-    Tokens* toks = lexer_lex(line, len, &scratch_arena);
+    Lexemes lexemes = {0};
+    lexemes_init(&lexemes, &scratch_arena);
+    lexer_lex(line, len, &lexemes, &scratch_arena);
 
-    eassert(toks->head);
-    eassert(toks->count == 2);
+    eassert(lexemes.count == 2);
 
-    Token* tok = toks->head->next;
-    eassert(!memcmp(tok->val, "echo", 5));
-    eassert(tok->op == OP_CONSTANT);
-    eassert(tok->len == 5);
-    tok = tok->next;
+    eassert(!memcmp(lexemes.vals[0], "echo", 5));
+    eassert(lexemes.ops[0] == OP_CONSTANT);
+    eassert(lexemes.lens[0] == 5);
 
-    eassert(!memcmp(tok->val, "hello", 6));
-    eassert(tok->op == OP_CONSTANT);
-    eassert(tok->len == 6);
+    eassert(!memcmp(lexemes.vals[1], "hello", 6));
+    eassert(lexemes.ops[1] == OP_CONSTANT);
+    eassert(lexemes.lens[1] == 6);
 
-    eassert(!tok->next);
+    eassert(!lexemes.vals[2]);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -516,22 +492,21 @@ void lexer_lex_single_quotes_test()
     char* line = "echo \'hello\'\0";
     size_t len = 13;
 
-    Tokens* toks = lexer_lex(line, len, &scratch_arena);
+    Lexemes lexemes = {0};
+    lexemes_init(&lexemes, &scratch_arena);
+    lexer_lex(line, len, &lexemes, &scratch_arena);
 
-    eassert(toks->head);
-    eassert(toks->count == 2);
+    eassert(lexemes.count == 2);
 
-    Token* tok = toks->head->next;
-    eassert(!memcmp(tok->val, "echo", 5));
-    eassert(tok->op == OP_CONSTANT);
-    eassert(tok->len == 5);
-    tok = tok->next;
+    eassert(!memcmp(lexemes.vals[0], "echo", 5));
+    eassert(lexemes.ops[0] == OP_CONSTANT);
+    eassert(lexemes.lens[0] == 5);
 
-    eassert(!memcmp(tok->val, "hello", 6));
-    eassert(tok->op == OP_CONSTANT);
-    eassert(tok->len == 6);
+    eassert(!memcmp(lexemes.vals[1], "hello", 6));
+    eassert(lexemes.ops[1] == OP_CONSTANT);
+    eassert(lexemes.lens[1] == 6);
 
-    eassert(!tok->next);
+    eassert(!lexemes.vals[2]);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -543,22 +518,21 @@ void lexer_lex_backtick_quotes_test()
     char* line = "echo `hello`\0";
     size_t len = 13;
 
-    Tokens* toks = lexer_lex(line, len, &scratch_arena);
+    Lexemes lexemes = {0};
+    lexemes_init(&lexemes, &scratch_arena);
+    lexer_lex(line, len, &lexemes, &scratch_arena);
 
-    eassert(toks->head);
-    eassert(toks->count == 2);
+    eassert(lexemes.count == 2);
 
-    Token* tok = toks->head->next;
-    eassert(!memcmp(tok->val, "echo", 5));
-    eassert(tok->op == OP_CONSTANT);
-    eassert(tok->len == 5);
-    tok = tok->next;
+    eassert(!memcmp(lexemes.vals[0], "echo", 5));
+    eassert(lexemes.ops[0] == OP_CONSTANT);
+    eassert(lexemes.lens[0] == 5);
 
-    eassert(!memcmp(tok->val, "hello", 6));
-    eassert(tok->op == OP_CONSTANT);
-    eassert(tok->len == 6);
+    eassert(!memcmp(lexemes.vals[1], "hello", 6));
+    eassert(lexemes.ops[1] == OP_CONSTANT);
+    eassert(lexemes.lens[1] == 6);
 
-    eassert(!tok->next);
+    eassert(!lexemes.vals[2]);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -570,32 +544,29 @@ void lexer_lex_git_commit_test()
     char* line = "git commit -m \"this is a commit message\"\0";
     size_t len = strlen(line) + 1;
 
-    Tokens* toks = lexer_lex(line, len, &scratch_arena);
+    Lexemes lexemes = {0};
+    lexemes_init(&lexemes, &scratch_arena);
+    lexer_lex(line, len, &lexemes, &scratch_arena);
 
-    eassert(toks->head);
-    eassert(toks->count == 4);
+    eassert(lexemes.count == 4);
 
-    Token* tok = toks->head->next;
-    eassert(!memcmp(tok->val, "git", 4));
-    eassert(tok->op == OP_CONSTANT);
-    eassert(tok->len == 4);
-    tok = tok->next;
+    eassert(!memcmp(lexemes.vals[0], "git", 4));
+    eassert(lexemes.ops[0] == OP_CONSTANT);
+    eassert(lexemes.lens[0] == 4);
 
-    eassert(!memcmp(tok->val, "commit", 7));
-    eassert(tok->op == OP_CONSTANT);
-    eassert(tok->len == 7);
-    tok = tok->next;
+    eassert(!memcmp(lexemes.vals[1], "commit", 7));
+    eassert(lexemes.ops[1] == OP_CONSTANT);
+    eassert(lexemes.lens[1] == 7);
 
-    eassert(!memcmp(tok->val, "-m", 3));
-    eassert(tok->op == OP_CONSTANT);
-    eassert(tok->len == 3);
-    tok = tok->next;
+    eassert(!memcmp(lexemes.vals[2], "-m", 3));
+    eassert(lexemes.ops[2] == OP_CONSTANT);
+    eassert(lexemes.lens[2] == 3);
 
-    eassert(!memcmp(tok->val, "this is a commit message", 25));
-    eassert(tok->op == OP_CONSTANT);
-    eassert(tok->len == 25);
+    eassert(!memcmp(lexemes.vals[3], "this is a commit message", 25));
+    eassert(lexemes.ops[3] == OP_CONSTANT);
+    eassert(lexemes.lens[3] == 25);
 
-    eassert(!tok->next);
+    eassert(!lexemes.vals[4]);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -607,22 +578,21 @@ void lexer_lex_home_test()
     char* line = "ls ~\0";
     size_t len = 5;
 
-    Tokens* toks = lexer_lex(line, len, &scratch_arena);
+    Lexemes lexemes = {0};
+    lexemes_init(&lexemes, &scratch_arena);
+    lexer_lex(line, len, &lexemes, &scratch_arena);
 
-    eassert(toks->head);
-    eassert(toks->count == 2);
+    eassert(lexemes.count == 2);
 
-    Token* tok = toks->head->next;
-    eassert(!memcmp(tok->val, "ls", 3));
-    eassert(tok->op == OP_CONSTANT);
-    eassert(tok->len == 3);
-    tok = tok->next;
+    eassert(!memcmp(lexemes.vals[0], "ls", 3));
+    eassert(lexemes.ops[0] == OP_CONSTANT);
+    eassert(lexemes.lens[0] == 3);
 
-    eassert(!memcmp(tok->val, "~", 2));
-    eassert(tok->op == OP_HOME_EXPANSION);
-    eassert(tok->len == 2);
+    eassert(!memcmp(lexemes.vals[1], "~", 2));
+    eassert(lexemes.ops[1] == OP_HOME_EXPANSION);
+    eassert(lexemes.lens[1] == 2);
 
-    eassert(!tok->next);
+    eassert(!lexemes.vals[2]);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -634,22 +604,21 @@ void lexer_lex_home_at_start_test()
     char* line = "ls ~/snap";
     size_t len = 10;
 
-    Tokens* toks = lexer_lex(line, len, &scratch_arena);
+    Lexemes lexemes = {0};
+    lexemes_init(&lexemes, &scratch_arena);
+    lexer_lex(line, len, &lexemes, &scratch_arena);
 
-    eassert(toks->head);
-    eassert(toks->count == 2);
+    eassert(lexemes.count == 2);
 
-    Token* tok = toks->head->next;
-    eassert(!memcmp(tok->val, "ls", 3));
-    eassert(tok->op == OP_CONSTANT);
-    eassert(tok->len == 3);
-    tok = tok->next;
+    eassert(!memcmp(lexemes.vals[0], "ls", 3));
+    eassert(lexemes.ops[0] == OP_CONSTANT);
+    eassert(lexemes.lens[0] == 3);
 
-    eassert(!memcmp(tok->val, "~/snap", sizeof("~/snap") - 1));
-    eassert(tok->op == OP_HOME_EXPANSION);
-    eassert(tok->len == sizeof("~/snap"));
+    eassert(!memcmp(lexemes.vals[1], "~/snap", sizeof("~/snap") - 1));
+    eassert(lexemes.ops[1] == OP_HOME_EXPANSION);
+    eassert(lexemes.lens[1] == sizeof("~/snap"));
 
-    eassert(!tok->next);
+    eassert(!lexemes.vals[2]);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -660,61 +629,49 @@ void lexer_lex_math_operators_test()
 
     char* line = "$( 1 + 1 - 1 * 1 / 1 % 1 ** 1 )";
     size_t len = strlen(line) + 1;
-    Tokens* toks = lexer_lex(line, len, &scratch_arena);
 
-    Token* tok = toks->head->next;
-    eassert(tok->op == OP_MATH_EXPRESSION_START);
-    tok = tok->next;
+    Lexemes lexemes = {0};
+    lexemes_init(&lexemes, &scratch_arena);
+    lexer_lex(line, len, &lexemes, &scratch_arena);
 
-    eassert(!memcmp(tok->val, "1", 1));
-    eassert(tok->op == OP_CONSTANT);
-    tok = tok->next;
+    eassert(lexemes.ops[0] == OP_MATH_EXPRESSION_START);
 
-    eassert(tok->op == OP_ADD);
-    tok = tok->next;
+    eassert(!memcmp(lexemes.vals[1], "1", 1));
+    eassert(lexemes.ops[1] == OP_CONSTANT);
 
-    eassert(!memcmp(tok->val, "1", 1));
-    eassert(tok->op == OP_CONSTANT);
-    tok = tok->next;
+    eassert(lexemes.ops[2] == OP_ADD);
 
-    eassert(tok->op == OP_SUBTRACT);
-    tok = tok->next;
+    eassert(!memcmp(lexemes.vals[3], "1", 1));
+    eassert(lexemes.ops[3] == OP_CONSTANT);
 
-    eassert(!memcmp(tok->val, "1", 1));
-    eassert(tok->op == OP_CONSTANT);
-    tok = tok->next;
+    eassert(lexemes.ops[4] == OP_SUBTRACT);
 
-    eassert(tok->op == OP_MULTIPLY);
-    tok = tok->next;
+    eassert(!memcmp(lexemes.vals[5], "1", 1));
+    eassert(lexemes.ops[5] == OP_CONSTANT);
 
-    eassert(!memcmp(tok->val, "1", 1));
-    eassert(tok->op == OP_CONSTANT);
-    tok = tok->next;
+    eassert(lexemes.ops[6] == OP_MULTIPLY);
 
-    eassert(tok->op == OP_DIVIDE);
-    tok = tok->next;
+    eassert(!memcmp(lexemes.vals[7], "1", 1));
+    eassert(lexemes.ops[7] == OP_CONSTANT);
 
-    eassert(!memcmp(tok->val, "1", 1));
-    eassert(tok->op == OP_CONSTANT);
-    tok = tok->next;
+    eassert(lexemes.ops[8] == OP_DIVIDE);
 
-    eassert(tok->op == OP_MODULO);
-    tok = tok->next;
+    eassert(!memcmp(lexemes.vals[9], "1", 1));
+    eassert(lexemes.ops[9] == OP_CONSTANT);
 
-    eassert(!memcmp(tok->val, "1", 1));
-    eassert(tok->op == OP_CONSTANT);
-    tok = tok->next;
+    eassert(lexemes.ops[10] == OP_MODULO);
 
-    eassert(tok->op == OP_EXPONENTIATION);
-    tok = tok->next;
+    eassert(!memcmp(lexemes.vals[11], "1", 1));
+    eassert(lexemes.ops[11] == OP_CONSTANT);
 
-    eassert(!memcmp(tok->val, "1", 1));
-    eassert(tok->op == OP_CONSTANT);
-    tok = tok->next;
+    eassert(lexemes.ops[12] == OP_EXPONENTIATION);
 
-    eassert(tok->op == OP_MATH_EXPRESSION_END);
+    eassert(!memcmp(lexemes.vals[13], "1", 1));
+    eassert(lexemes.ops[13] == OP_CONSTANT);
 
-    eassert(!tok->next);
+    eassert(lexemes.ops[14] == OP_MATH_EXPRESSION_END);
+
+    eassert(!lexemes.vals[15]);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -726,22 +683,21 @@ void lexer_lex_glob_star_test()
     char* line = "ls *.md";
     size_t len = strlen(line) + 1;
 
-    Tokens* toks = lexer_lex(line, len, &scratch_arena);
+    Lexemes lexemes = {0};
+    lexemes_init(&lexemes, &scratch_arena);
+    lexer_lex(line, len, &lexemes, &scratch_arena);
 
-    eassert(toks->head);
-    eassert(toks->count == 2);
+    eassert(lexemes.count == 2);
 
-    Token* tok = toks->head->next;
-    eassert(!memcmp(tok->val, "ls", 3));
-    eassert(tok->op == OP_CONSTANT);
-    eassert(tok->len == 3);
-    tok = tok->next;
+    eassert(!memcmp(lexemes.vals[0], "ls", 3));
+    eassert(lexemes.ops[0] == OP_CONSTANT);
+    eassert(lexemes.lens[0] == 3);
 
-    eassert(!memcmp(tok->val, "*.md", sizeof("*.md") - 1));
-    eassert(tok->op == OP_GLOB_EXPANSION);
-    eassert(tok->len == sizeof("*.md"));
+    eassert(!memcmp(lexemes.vals[1], "*.md", sizeof("*.md") - 1));
+    eassert(lexemes.ops[1] == OP_GLOB_EXPANSION);
+    eassert(lexemes.lens[1] == sizeof("*.md"));
 
-    eassert(!tok->next);
+    eassert(!lexemes.vals[2]);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -753,22 +709,21 @@ void lexer_lex_glob_question_test()
     char* line = "ls ?.md";
     size_t len = strlen(line) + 1;
 
-    Tokens* toks = lexer_lex(line, len, &scratch_arena);
+    Lexemes lexemes = {0};
+    lexemes_init(&lexemes, &scratch_arena);
+    lexer_lex(line, len, &lexemes, &scratch_arena);
 
-    eassert(toks->head);
-    eassert(toks->count == 2);
+    eassert(lexemes.count == 2);
 
-    Token* tok = toks->head->next;
-    eassert(!memcmp(tok->val, "ls", 3));
-    eassert(tok->op == OP_CONSTANT);
-    eassert(tok->len == 3);
-    tok = tok->next;
+    eassert(!memcmp(lexemes.vals[0], "ls", 3));
+    eassert(lexemes.ops[0] == OP_CONSTANT);
+    eassert(lexemes.lens[0] == 3);
 
-    eassert(!memcmp(tok->val, "?.md", sizeof("?.md") - 1));
-    eassert(tok->op == OP_GLOB_EXPANSION);
-    eassert(tok->len == sizeof("?.md"));
+    eassert(!memcmp(lexemes.vals[1], "?.md", sizeof("?.md") - 1));
+    eassert(lexemes.ops[1] == OP_GLOB_EXPANSION);
+    eassert(lexemes.lens[1] == sizeof("?.md"));
 
-    eassert(!tok->next);
+    eassert(!lexemes.vals[2]);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -781,16 +736,16 @@ void lexer_lex_glob_star_shouldnt_crash()
     char* line = "* * * * * * * * * * * * * * * * * *";
     size_t len = strlen(line) + 1;
 
-    Tokens* toks = lexer_lex(line, len, &scratch_arena);
+    Lexemes lexemes = {0};
+    lexemes_init(&lexemes, &scratch_arena);
+    lexer_lex(line, len, &lexemes, &scratch_arena);
 
-    eassert(toks->count == 18);
-    Token* tok = toks->head->next;
-    for (size_t i = 0; i < toks->count; ++i) {
-        eassert(tok->val[0] == '*');
-        eassert(tok->op == OP_GLOB_EXPANSION);
-        eassert(tok->len == 2);
-        tok = tok->next;
-    }
+    eassert(lexemes.count == 18);
+    for (size_t i = 0; i < lexemes.count; ++i) {
+        eassert(lexemes.vals[i][0] == '*');
+        eassert(lexemes.ops[0] == OP_GLOB_EXPANSION);
+        eassert(lexemes.lens[0] == 2);
+            }
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -804,9 +759,11 @@ void lexer_lex_tilde_home_shouldnt_crash()
         "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~?~";
     size_t len = strlen(line) + 1;
 
-    Tokens* toks = lexer_lex(line, len, &scratch_arena);
+    Lexemes lexemes = {0};
+    lexemes_init(&lexemes, &scratch_arena);
+    lexer_lex(line, len, &lexemes, &scratch_arena);
 
-    eassert(toks->count == 1);
+    eassert(lexemes.count == 1);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -820,9 +777,11 @@ void lexer_lex_glob_question_and_tilde_home_shouldnt_crash()
                  "~~~~?~>w?";
     size_t len = strlen(line) + 1;
 
-    Tokens* toks = lexer_lex(line, len, &scratch_arena);
+    Lexemes lexemes = {0};
+    lexemes_init(&lexemes, &scratch_arena);
+    lexer_lex(line, len, &lexemes, &scratch_arena);
 
-    eassert(toks->count == 1);
+    eassert(lexemes.count == 1);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -834,37 +793,33 @@ void lexer_lex_bool_test()
     char* line = "false && true || false";
     size_t len = strlen(line) + 1;
 
-    Tokens* toks = lexer_lex(line, len, &scratch_arena);
+    Lexemes lexemes = {0};
+    lexemes_init(&lexemes, &scratch_arena);
+    lexer_lex(line, len, &lexemes, &scratch_arena);
 
-    eassert(toks->head);
-    eassert(toks->count == 5);
+    eassert(lexemes.count == 5);
 
-    Token* tok = toks->head->next;
-    eassert(!memcmp(tok->val, "false", 6));
-    eassert(tok->op == OP_FALSE);
-    eassert(tok->len == 6);
-    tok = tok->next;
+    eassert(!memcmp(lexemes.vals[0], "false", 6));
+    eassert(lexemes.ops[0] == OP_FALSE);
+    eassert(lexemes.lens[0] == 6);
 
-    eassert(!memcmp(tok->val, "&&", 3));
-    eassert(tok->op == OP_AND);
-    eassert(tok->len == 3);
-    tok = tok->next;
+    eassert(!memcmp(lexemes.vals[1], "&&", 3));
+    eassert(lexemes.ops[1] == OP_AND);
+    eassert(lexemes.lens[1] == 3);
 
-    eassert(!memcmp(tok->val, "true", 5));
-    eassert(tok->op == OP_TRUE);
-    eassert(tok->len == 5);
-    tok = tok->next;
+    eassert(!memcmp(lexemes.vals[2], "true", 5));
+    eassert(lexemes.ops[2] == OP_TRUE);
+    eassert(lexemes.lens[2] == 5);
 
-    eassert(!memcmp(tok->val, "||", 3));
-    eassert(tok->op == OP_OR);
-    eassert(tok->len == 3);
-    tok = tok->next;
+    eassert(!memcmp(lexemes.vals[3], "||", 3));
+    eassert(lexemes.ops[3] == OP_OR);
+    eassert(lexemes.lens[3] == 3);
 
-    eassert(!memcmp(tok->val, "false", 6));
-    eassert(tok->op == OP_FALSE);
-    eassert(tok->len == 6);
+    eassert(!memcmp(lexemes.vals[4], "false", 6));
+    eassert(lexemes.ops[4] == OP_FALSE);
+    eassert(lexemes.lens[4] == 6);
 
-    eassert(!tok->next);
+    eassert(!lexemes.vals[5]);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -876,32 +831,23 @@ void lexer_lex_if_test()
     char* line = "if [ 1 -eq 1 ]; then echo 'hi'; fi";
     size_t len = strlen(line) + 1;
 
-    Tokens* toks = lexer_lex(line, len, &scratch_arena);
+    Lexemes lexemes = {0};
+    lexemes_init(&lexemes, &scratch_arena);
+    lexer_lex(line, len, &lexemes, &scratch_arena);
 
-    eassert(toks->head);
-    eassert(toks->count == 10);
+    eassert(lexemes.count == 10);
 
-    Token* tok = toks->head->next;
-    eassert(tok);
-    eassert(tok->op == OP_IF);
-    tok = tok->next;
-    eassert(tok->op == OP_CONDITION_START);
-    tok = tok->next;
-    eassert(tok->op == OP_CONSTANT);
-    tok = tok->next;
-    eassert(tok->op == OP_EQUALS);
-    tok = tok->next;
-    eassert(tok->op == OP_CONSTANT);
-    tok = tok->next;
-    eassert(tok->op == OP_CONDITION_END);
-    tok = tok->next;
-    eassert(tok->op == OP_THEN);
-    tok = tok->next;
-    eassert(tok->op == OP_CONSTANT);
-    tok = tok->next;
-    eassert(tok->op == OP_CONSTANT);
-    tok = tok->next;
-    eassert(tok->op == OP_FI);
+    eassert(lexemes.ops[0] == OP_IF);
+    eassert(lexemes.ops[1] == OP_CONDITION_START);
+    eassert(lexemes.ops[2] == OP_CONSTANT);
+    eassert(lexemes.ops[3] == OP_EQUALS);
+    eassert(lexemes.ops[4] == OP_CONSTANT);
+    eassert(lexemes.ops[5] == OP_CONDITION_END);
+    eassert(lexemes.ops[6] == OP_THEN);
+    eassert(lexemes.ops[7] == OP_CONSTANT);
+    eassert(lexemes.ops[8] == OP_CONSTANT);
+    eassert(lexemes.ops[9] == OP_FI);
+    eassert(!lexemes.ops[10])
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -913,38 +859,26 @@ void lexer_lex_if_else_test()
     char* line = "if [ 1 -eq 1 ]; then echo 'hi'; else echo hello; fi";
     size_t len = strlen(line) + 1;
 
-    Tokens* toks = lexer_lex(line, len, &scratch_arena);
+    Lexemes lexemes = {0};
+    lexemes_init(&lexemes, &scratch_arena);
+    lexer_lex(line, len, &lexemes, &scratch_arena);
 
-    eassert(toks->head);
-    eassert(toks->count == 13);
+    eassert(lexemes.count == 13);
 
-    Token* tok = toks->head->next;
-    eassert(tok);
-    eassert(tok->op == OP_IF);
-    tok = tok->next;
-    eassert(tok->op == OP_CONDITION_START);
-    tok = tok->next;
-    eassert(tok->op == OP_CONSTANT);
-    tok = tok->next;
-    eassert(tok->op == OP_EQUALS);
-    tok = tok->next;
-    eassert(tok->op == OP_CONSTANT);
-    tok = tok->next;
-    eassert(tok->op == OP_CONDITION_END);
-    tok = tok->next;
-    eassert(tok->op == OP_THEN);
-    tok = tok->next;
-    eassert(tok->op == OP_CONSTANT);
-    tok = tok->next;
-    eassert(tok->op == OP_CONSTANT);
-    tok = tok->next;
-    eassert(tok->op == OP_ELSE);
-    tok = tok->next;
-    eassert(tok->op == OP_CONSTANT);
-    tok = tok->next;
-    eassert(tok->op == OP_CONSTANT);
-    tok = tok->next;
-    eassert(tok->op == OP_FI);
+    eassert(lexemes.ops[0] == OP_IF);
+    eassert(lexemes.ops[1] == OP_CONDITION_START);
+    eassert(lexemes.ops[2] == OP_CONSTANT);
+    eassert(lexemes.ops[3] == OP_EQUALS);
+    eassert(lexemes.ops[4] == OP_CONSTANT);
+    eassert(lexemes.ops[5] == OP_CONDITION_END);
+    eassert(lexemes.ops[6] == OP_THEN);
+    eassert(lexemes.ops[7] == OP_CONSTANT);
+    eassert(lexemes.ops[8] == OP_CONSTANT);
+    eassert(lexemes.ops[9] == OP_ELSE);
+    eassert(lexemes.ops[10] == OP_CONSTANT);
+    eassert(lexemes.ops[11] == OP_CONSTANT);
+    eassert(lexemes.ops[12] == OP_FI);
+    eassert(!lexemes.ops[13])
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -956,22 +890,22 @@ void lexer_lex_comment_test()
     char* line = "echo \"hello\" # this is a comment\0";
     size_t len = strlen(line) + 1;
 
-    Tokens* toks = lexer_lex(line, len, &scratch_arena);
+    Lexemes lexemes = {0};
+    lexemes_init(&lexemes, &scratch_arena);
+    lexer_lex(line, len, &lexemes, &scratch_arena);
 
-    eassert(toks->head);
-    eassert(toks->count == 2);
+    eassert(lexemes.count == 2);
 
-    Token* tok = toks->head->next;
-    eassert(!memcmp(tok->val, "echo", 5));
-    eassert(tok->op == OP_CONSTANT);
-    eassert(tok->len == 5);
-    tok = tok->next;
+    eassert(!memcmp(lexemes.vals[0], "echo", 5));
+    eassert(lexemes.ops[0] == OP_CONSTANT);
+    eassert(lexemes.lens[0] == 5);
 
-    eassert(!memcmp(tok->val, "hello", 6));
-    eassert(tok->op == OP_CONSTANT);
-    eassert(tok->len == 6);
+    eassert(!memcmp(lexemes.vals[1], "hello", 6));
+    eassert(lexemes.ops[1] == OP_CONSTANT);
+    eassert(lexemes.lens[1] == 6);
 
-    eassert(!tok->next);
+    // comment is stripped by the lexer
+    eassert(!lexemes.vals[2]);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -1022,7 +956,7 @@ int main()
     return EXIT_SUCCESS;
 }
 
-// put at the end because it messes with clangd lsp
+// put at the end because line messes with clangd lsp
 void lexer_lex_bad_input_shouldnt_crash()
 {
     SCRATCH_ARENA_TEST_SETUP;
@@ -1031,10 +965,12 @@ void lexer_lex_bad_input_shouldnt_crash()
                  "~~~~>ÿÿ> >ÿ>\w\>ÿ> >ÿ> \> >";
     size_t len = strlen(line) + 1;
 
-    Tokens* toks = lexer_lex(line, len, &scratch_arena);
+    Lexemes lexemes = {0};
+    lexemes_init(&lexemes, &scratch_arena);
+    lexer_lex(line, len, &lexemes, &scratch_arena);
 
-    // hits limit so does not process, not crashing is a test pass
-    (void)toks;
+    // not crashing is a test pass
+    (void)lexemes;
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
