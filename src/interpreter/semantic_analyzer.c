@@ -2,12 +2,12 @@
 
 #include <assert.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <unistd.h>
 
-#include "interpreter_types.h"
 #include "lexemes.h"
-
-int tok_invalid_syntax_check_res;
+#include "ops.h"
+#include "tokens.h"
 
 [[nodiscard]]
 int semantic_analyzer_error_write(char* rst message, size_t message_length)
@@ -101,52 +101,44 @@ int semantic_analyzer_error_write(char* rst message, size_t message_length)
 /* semantic_analyzer_check_first_arg
  * Simple check to see if something is in first position that shouldn't be
  */
-void syntax_validatator_first_arg_check(uint8_t op)
+int syntax_validatator_first_arg_check(uint8_t op)
 {
     switch (op) {
     case OP_PIPE: {
-        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_PIPE_FIRST_ARG);
-        break;
+        return INVALID_SYNTAX(INVALID_SYNTAX_PIPE_FIRST_ARG);
     }
     case OP_STDOUT_REDIRECTION: {
-        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_REDIR_FIRST_ARG);
-        break;
+        return INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_REDIR_FIRST_ARG);
     }
     case OP_STDOUT_REDIRECTION_APPEND: {
-        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_REDIR_APPEND_FIRST_ARG);
-        break;
+        return INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_REDIR_APPEND_FIRST_ARG);
     }
     case OP_STDIN_REDIRECTION: {
-        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDIN_REDIR_FIRST_ARG);
-        break;
+        return INVALID_SYNTAX(INVALID_SYNTAX_STDIN_REDIR_FIRST_ARG);
     }
     case OP_STDERR_REDIRECTION: {
-        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDERR_REDIR_FIRST_ARG);
-        break;
+        return INVALID_SYNTAX(INVALID_SYNTAX_STDERR_REDIR_FIRST_ARG);
     }
     case OP_STDERR_REDIRECTION_APPEND: {
-        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDERR_REDIR_APPEND_FIRST_ARG);
-        break;
+        return INVALID_SYNTAX(INVALID_SYNTAX_STDERR_REDIR_APPEND_FIRST_ARG);
     }
     case OP_STDOUT_AND_STDERR_REDIRECTION: {
-        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_AND_STDERR_REDIR_FIRST_ARG);
-        break;
+        return INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_AND_STDERR_REDIR_FIRST_ARG);
     }
     case OP_STDOUT_AND_STDERR_REDIRECTION_APPEND: {
-        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_AND_STDERR_REDIR_APPEND_FIRST_ARG);
-        break;
+        return INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_AND_STDERR_REDIR_APPEND_FIRST_ARG);
     }
     case OP_BACKGROUND_JOB: {
-        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_BACKGROUND_JOB_FIRST_ARG);
-        break;
+        return INVALID_SYNTAX(INVALID_SYNTAX_BACKGROUND_JOB_FIRST_ARG);
     }
     case OP_AND: {
-        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_AND_IN_FIRST_ARG);
-        break;
+        return INVALID_SYNTAX(INVALID_SYNTAX_AND_IN_FIRST_ARG);
     }
     case OP_OR: {
-        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_OR_IN_FIRST_ARG);
-        break;
+        return INVALID_SYNTAX(INVALID_SYNTAX_OR_IN_FIRST_ARG);
+    }
+    default: {
+        return EXIT_SUCCESS;
     }
     }
 }
@@ -154,48 +146,41 @@ void syntax_validatator_first_arg_check(uint8_t op)
 /* semantic_analyzer_check_last_arg
  * Simple check to see if something is in last position that shouldn't be
  */
-void semantic_analyzer_last_arg_check(Lexemes* rst lexemes)
+int semantic_analyzer_last_arg_check(Lexemes* rst lexemes)
 {
     switch (lexemes->ops[lexemes->count - 1]) {
     case OP_PIPE: {
-        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_PIPE_LAST_ARG);
-        break;
+        return INVALID_SYNTAX(INVALID_SYNTAX_PIPE_LAST_ARG);
     }
     case OP_STDOUT_REDIRECTION: {
-        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_REDIR_LAST_ARG);
-        break;
+        return INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_REDIR_LAST_ARG);
     }
     case OP_STDOUT_REDIRECTION_APPEND: {
-        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_REDIR_APPEND_LAST_ARG);
-        break;
+        return INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_REDIR_APPEND_LAST_ARG);
     }
     case OP_STDIN_REDIRECTION: {
-        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDIN_REDIR_LAST_ARG);
-        break;
+        return INVALID_SYNTAX(INVALID_SYNTAX_STDIN_REDIR_LAST_ARG);
     }
     case OP_STDERR_REDIRECTION: {
-        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDERR_REDIR_LAST_ARG);
-        break;
+        return INVALID_SYNTAX(INVALID_SYNTAX_STDERR_REDIR_LAST_ARG);
     }
     case OP_STDERR_REDIRECTION_APPEND: {
-        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDERR_REDIR_APPEND_LAST_ARG);
-        break;
+        return INVALID_SYNTAX(INVALID_SYNTAX_STDERR_REDIR_APPEND_LAST_ARG);
     }
     case OP_STDOUT_AND_STDERR_REDIRECTION: {
-        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_AND_STDERR_REDIR_LAST_ARG);
-        break;
+        return INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_AND_STDERR_REDIR_LAST_ARG);
     }
     case OP_STDOUT_AND_STDERR_REDIRECTION_APPEND: {
-        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_AND_STDERR_REDIR_APPEND_LAST_ARG);
-        break;
+        return INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_AND_STDERR_REDIR_APPEND_LAST_ARG);
     }
     case OP_AND: {
-        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_AND_IN_LAST_ARG);
-        break;
+        return INVALID_SYNTAX(INVALID_SYNTAX_AND_IN_LAST_ARG);
     }
     case OP_OR: {
-        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_OR_IN_LAST_ARG);
-        break;
+        return INVALID_SYNTAX(INVALID_SYNTAX_OR_IN_LAST_ARG);
+    }
+    default: {
+        return EXIT_SUCCESS;
     }
     }
 }
@@ -234,11 +219,10 @@ void semantic_analyzer_last_arg_check(Lexemes* rst lexemes)
     "ncsh: Invalid Syntax: expecting some statement after 'if [(CONDITION)]; then (STATEMENT); else'. "                \
     "Correct usage of 'if' is 'if [(CONDITION)]; then [STATEMENT]; [else [STATEMENT];] fi'.\n"
 
-void semantic_analyzer_check(Lexemes* rst lexemes)
+int semantic_analyzer_check(Lexemes* rst lexemes)
 {
     if (!lexemes) {
-        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_NO_ARGS);
-        return;
+        return INVALID_SYNTAX(INVALID_SYNTAX_NO_ARGS);
     }
     Token* prev = NULL;
 
@@ -247,19 +231,17 @@ void semantic_analyzer_check(Lexemes* rst lexemes)
 
         case OP_BACKGROUND_JOB: {
             if (i + 1 > lexemes->count) {
-                tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_BACKGROUND_JOB_NOT_LAST_ARG);
-                return;
+                return INVALID_SYNTAX(INVALID_SYNTAX_BACKGROUND_JOB_NOT_LAST_ARG);
             }
             break;
         }
 
         case OP_IF: {
             if (i >= lexemes->count - 1) {
-                tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_IF_NO_NEXT_ARG);
-                return;
+                return INVALID_SYNTAX(INVALID_SYNTAX_IF_NO_NEXT_ARG);
             }
             if (lexemes->ops[i + 1] != OP_CONDITION_START) {
-                tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_IF_NO_START_CONDITION);
+                return INVALID_SYNTAX(INVALID_SYNTAX_IF_NO_START_CONDITION);
             }
             break;
         }
@@ -268,8 +250,7 @@ void semantic_analyzer_check(Lexemes* rst lexemes)
             if (!i)
                 break;
             if (i >= lexemes->count - 1) {
-                tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_CONDITION_START_NO_NEXT_ARG);
-                return;
+                return INVALID_SYNTAX(INVALID_SYNTAX_CONDITION_START_NO_NEXT_ARG);
             }
             // OP_STATEMENT check
             break;
@@ -279,12 +260,10 @@ void semantic_analyzer_check(Lexemes* rst lexemes)
             if (!i)
                 break;
             if (i >= lexemes->count - 1) {
-                tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_CONDITION_END_NO_NEXT_ARG);
-                return;
+                return INVALID_SYNTAX(INVALID_SYNTAX_CONDITION_END_NO_NEXT_ARG);
             }
             if (lexemes->ops[i + 1] != OP_THEN) {
-                tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_CONDITION_END_NO_NEXT_THEN);
-                return;
+                return INVALID_SYNTAX(INVALID_SYNTAX_CONDITION_END_NO_NEXT_THEN);
             }
             break;
         }
@@ -293,12 +272,10 @@ void semantic_analyzer_check(Lexemes* rst lexemes)
             if (!i)
                 break;
             if (i >= lexemes->count - 1) {
-                tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_THEN_NO_NEXT_ARG);
-                return;
+                return INVALID_SYNTAX(INVALID_SYNTAX_THEN_NO_NEXT_ARG);
             }
             if (lexemes->ops[i + 1] != OP_CONSTANT) { // OP_STATEMENT for logic statements instead of using constant?
-                tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_THEN_NO_NEXT_STATEMENT);
-                return;
+                return INVALID_SYNTAX(INVALID_SYNTAX_THEN_NO_NEXT_STATEMENT);
             }
             break;
         }
@@ -307,17 +284,17 @@ void semantic_analyzer_check(Lexemes* rst lexemes)
             if (!i)
                 break;
             if (i + 1 == lexemes->count - 1) {
-                tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_ELSE_NO_NEXT_ARG);
-                return;
+                return INVALID_SYNTAX(INVALID_SYNTAX_ELSE_NO_NEXT_ARG);
             }
             if (lexemes->ops[i + 1] != OP_CONSTANT) { // OP_STATEMENT for logic statements instead of using constant?
-                tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_ELSE_NO_NEXT_STATEMENT);
-                return;
+                return INVALID_SYNTAX(INVALID_SYNTAX_ELSE_NO_NEXT_STATEMENT);
             }
             break;
         }
         }
     }
+
+    return EXIT_SUCCESS;
 }
 
 [[nodiscard]]
@@ -325,13 +302,13 @@ int semantic_analyzer_analyze(Lexemes* rst lexemes)
 {
     assert(lexemes);
 
-    tok_invalid_syntax_check_res = EXIT_SUCCESS;
-    syntax_validatator_first_arg_check(lexemes->ops[0]);
-    if (tok_invalid_syntax_check_res != EXIT_SUCCESS)
-        return tok_invalid_syntax_check_res;
-    semantic_analyzer_last_arg_check(lexemes);
-    if (tok_invalid_syntax_check_res != EXIT_SUCCESS)
-        return tok_invalid_syntax_check_res;
-    semantic_analyzer_check(lexemes);
-    return tok_invalid_syntax_check_res;
+    return EXIT_SUCCESS;
+    int result = syntax_validatator_first_arg_check(lexemes->ops[0]);
+    if (result != EXIT_SUCCESS)
+        return result;
+    result = semantic_analyzer_last_arg_check(lexemes);
+    if (result != EXIT_SUCCESS)
+        return result;
+    result = semantic_analyzer_check(lexemes);
+    return result;
 }

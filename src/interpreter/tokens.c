@@ -2,6 +2,7 @@
 /* args.c: a linked list for storing tokens outputted by the lexer */
 
 #include <assert.h>
+#include <stdint.h>
 #include <string.h>
 
 #include "../arena.h"
@@ -22,11 +23,12 @@ Tokens* tokens_alloc(Arena* rst arena)
 Token* token_alloc(uint8_t op, size_t len, char* rst val, Arena* rst arena)
 {
     Token* tok = arena_malloc(arena, 1, Token);
-    tok->val = arena_malloc(arena, len, char);
-    memcpy(tok->val, val, len);
+    tok->vals[tok->pos] = arena_malloc(arena, len, char);
+    memcpy(tok->vals[tok->pos], val, len);
     tok->op = op;
-    tok->len = len;
+    tok->lens[tok->pos] = len;
     tok->next = NULL;
+    ++tok->pos;
     return tok;
 }
 
@@ -35,8 +37,9 @@ bool token_set_after(Token* rst current, Token* rst after)
 {
     assert(current);
     assert(after);
-    if (!current || !after)
+    if (!current || !after) {
         return false;
+    }
 
     Token* temp = current->next;
     current->next = after;
@@ -50,13 +53,15 @@ bool token_set_last(Tokens* rst toks, Token* rst last)
 {
     assert(toks && toks->head);
     assert(last);
-    if (!toks || !last)
+    if (!toks || !last) {
         return false;
+    }
 
     Token* tok = toks->head;
 
-    while (tok->next)
+    while (tok->next) {
         tok = tok->next;
+    }
 
     tok->next = last;
     last->next = NULL;

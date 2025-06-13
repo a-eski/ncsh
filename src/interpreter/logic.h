@@ -9,4 +9,16 @@
 #include "../eskilib/str.h"
 #include "vm/vm_types.h"
 
+enum Logic_Type {
+    LT_NONE,
+    LT_CODE,
+    LT_IF,
+    LT_IF_ELSE
+};
+
+typedef struct {
+    enum Logic_Type type;
+    union Logic_Value val;
+} Logic_Result;
+
 Logic_Result logic_preprocess(Token* tok, Token_Data* rst data, Arena* rst scratch);
