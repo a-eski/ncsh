@@ -4,8 +4,8 @@
 #include <stdint.h>
 #include <unistd.h>
 
-#include "../defines.h"
-#include "tokens.h"
+#include "interpreter_types.h"
+#include "lexemes.h"
 
 int tok_invalid_syntax_check_res;
 
@@ -154,13 +154,9 @@ void syntax_validatator_first_arg_check(uint8_t op)
 /* semantic_analyzer_check_last_arg
  * Simple check to see if something is in last position that shouldn't be
  */
-void semantic_analyzer_last_arg_check(Tokens* rst toks)
+void semantic_analyzer_last_arg_check(Lexemes* rst lexemes)
 {
-    Token* tok = toks->head->next;
-    while (tok->next)
-        tok = tok->next;
-
-    switch (tok->op) {
+    switch (lexemes->ops[lexemes->count - 1]) {
     case OP_PIPE: {
         tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_PIPE_LAST_ARG);
         break;
@@ -238,20 +234,19 @@ void semantic_analyzer_last_arg_check(Tokens* rst toks)
     "ncsh: Invalid Syntax: expecting some statement after 'if [(CONDITION)]; then (STATEMENT); else'. "                \
     "Correct usage of 'if' is 'if [(CONDITION)]; then [STATEMENT]; [else [STATEMENT];] fi'.\n"
 
-void semantic_analyzer_check(Tokens* rst toks)
+void semantic_analyzer_check(Lexemes* rst lexemes)
 {
-    Token* tok = toks->head->next;
-    if (!tok) {
+    if (!lexemes) {
         tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_NO_ARGS);
         return;
     }
     Token* prev = NULL;
 
-    for (size_t i = 0; i < toks->count; ++i) {
-        switch (tok->op) {
+    for (size_t i = 0; i < lexemes->count; ++i) {
+        switch (lexemes->ops[i]) {
 
         case OP_BACKGROUND_JOB: {
-            if (tok->next) {
+            if (i + 1 > lexemes->count) {
                 tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_BACKGROUND_JOB_NOT_LAST_ARG);
                 return;
             }
@@ -259,20 +254,20 @@ void semantic_analyzer_check(Tokens* rst toks)
         }
 
         case OP_IF: {
-            if (!tok->next) {
+            if (i >= lexemes->count - 1) {
                 tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_IF_NO_NEXT_ARG);
                 return;
             }
-            if (tok->next->op != OP_CONDITION_START) {
+            if (lexemes->ops[i + 1] != OP_CONDITION_START) {
                 tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_IF_NO_START_CONDITION);
             }
             break;
         }
 
         case OP_CONDITION_START: {
-            if (!prev)
+            if (!i)
                 break;
-            if (!tok->next) {
+            if (i >= lexemes->count - 1) {
                 tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_CONDITION_START_NO_NEXT_ARG);
                 return;
             }
@@ -281,13 +276,13 @@ void semantic_analyzer_check(Tokens* rst toks)
         }
 
         case OP_CONDITION_END: {
-            if (!prev)
+            if (!i)
                 break;
-            if (!tok->next) {
+            if (i >= lexemes->count - 1) {
                 tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_CONDITION_END_NO_NEXT_ARG);
                 return;
             }
-            if (tok->next->op != OP_THEN) {
+            if (lexemes->ops[i + 1] != OP_THEN) {
                 tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_CONDITION_END_NO_NEXT_THEN);
                 return;
             }
@@ -295,13 +290,13 @@ void semantic_analyzer_check(Tokens* rst toks)
         }
 
         case OP_THEN: {
-            if (!prev)
+            if (!i)
                 break;
-            if (!tok->next) {
+            if (i >= lexemes->count - 1) {
                 tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_THEN_NO_NEXT_ARG);
                 return;
             }
-            if (tok->next->op != OP_CONSTANT) { // OP_STATEMENT for logic statements instead of using constant?
+            if (lexemes->ops[i + 1] != OP_CONSTANT) { // OP_STATEMENT for logic statements instead of using constant?
                 tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_THEN_NO_NEXT_STATEMENT);
                 return;
             }
@@ -309,38 +304,34 @@ void semantic_analyzer_check(Tokens* rst toks)
         }
 
         case OP_ELSE: {
-            if (!prev)
+            if (!i)
                 break;
-            if (!tok->next) {
+            if (i + 1 == lexemes->count - 1) {
                 tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_ELSE_NO_NEXT_ARG);
                 return;
             }
-            if (tok->next->op != OP_CONSTANT) { // OP_STATEMENT for logic statements instead of using constant?
+            if (lexemes->ops[i + 1] != OP_CONSTANT) { // OP_STATEMENT for logic statements instead of using constant?
                 tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_ELSE_NO_NEXT_STATEMENT);
                 return;
             }
             break;
         }
         }
-        prev = tok;
-        tok = tok->next;
-        if (!tok)
-            break;
     }
 }
 
 [[nodiscard]]
-int semantic_analyzer_analyze(Tokens* rst toks)
+int semantic_analyzer_analyze(Lexemes* rst lexemes)
 {
-    assert(toks);
+    assert(lexemes);
 
     tok_invalid_syntax_check_res = EXIT_SUCCESS;
-    syntax_validatator_first_arg_check(toks->head->next->op);
+    syntax_validatator_first_arg_check(lexemes->ops[0]);
     if (tok_invalid_syntax_check_res != EXIT_SUCCESS)
         return tok_invalid_syntax_check_res;
-    semantic_analyzer_last_arg_check(toks);
+    semantic_analyzer_last_arg_check(lexemes);
     if (tok_invalid_syntax_check_res != EXIT_SUCCESS)
         return tok_invalid_syntax_check_res;
-    semantic_analyzer_check(toks);
+    semantic_analyzer_check(lexemes);
     return tok_invalid_syntax_check_res;
 }

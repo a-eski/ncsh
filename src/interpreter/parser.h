@@ -4,6 +4,7 @@
 #pragma once
 
 #include "../types.h"
-#include "interpreter_types.h"
+#include "lexemes.h"
+#include "tokens.h"
 
-int parser_parse(Tokens* rst toks, Shell* rst shell, Arena* rst scratch);
+int parser_parse(Lexemes* lexemes, Tokens* rst toks, Shell* rst shell, Arena* rst scratch);

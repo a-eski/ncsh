@@ -12,6 +12,17 @@
 
 
 
+/* Input Settings */
+/* USE_GNU_READLINE: use GNU readline to process input from the terminal instead of custom implementation.
+ * The custom implementation does not support as many terminals as GNU readline, so the option is provided for those cases.
+ * GNU readline must be installed on your system. */
+// Not yet implemented
+#ifndef USE_GNU_READLINE
+// #   define USE_GNU_READLINE
+#endif // !USE_GNU_READLINE
+
+
+
 /* Prompt Settings */
 /* NCSH_PROMPT_DIRECTORY section: do you want to show the entire cwd in the prompt line? no directory?
  * a shortened version? use this configurable. */
@@ -33,6 +44,7 @@
 #    define NCSH_PROMPT_ENDING_STRING_LENGTH 3
 #endif // !NCSH_PROMPT_ENDING_STRING
 
+/* For testing purposes only */
 #ifdef NCSH_PROMPT_ENDING_STRING_TEST
 #    undef NCSH_PROMPT_ENDING_STRING
 #    define NCSH_PROMPT_ENDING_STRING "$"

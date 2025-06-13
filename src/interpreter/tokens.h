@@ -7,7 +7,20 @@
 #include <stdint.h>
 
 #include "../arena.h"
-#include "interpreter_types.h"
+
+typedef struct Token_ {
+    uint8_t op;
+    size_t pos;
+    size_t count;
+    size_t* lens;
+    char** vals;
+    struct Token_* next;
+} Token;
+
+typedef struct {
+    size_t count;
+    Token* head;
+} Tokens;
 
 Tokens* tokens_alloc(Arena* rst arena);
 

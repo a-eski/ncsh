@@ -2,6 +2,6 @@
 
 #pragma once
 
-#include "tokens.h"
+#include "lexemes.h"
 
-int semantic_analyzer_analyze(Tokens* rst toks);
+int semantic_analyzer_analyze(Lexemes* rst lexemes);

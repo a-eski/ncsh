@@ -6,6 +6,7 @@
 
 #include "../arena.h"
 #include "tokens.h"
+#include "ops.h"
 
 [[nodiscard]]
 Tokens* tokens_alloc(Arena* rst arena)
