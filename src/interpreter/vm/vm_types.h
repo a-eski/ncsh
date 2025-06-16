@@ -6,7 +6,7 @@
 #include <stdint.h>
 
 #include "../../eskilib/str.h"
-#include "../interpreter_types.h"
+#include "../ops.h"
 
 /****** MACROS ******/
 

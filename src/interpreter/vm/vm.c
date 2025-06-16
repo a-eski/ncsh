@@ -20,7 +20,6 @@
 #include "pipe.h"
 #include "redirection.h"
 #include "vm.h"
-#include "vm_buffer.h"
 #include "vm_types.h"
 
 #ifdef NCSH_VM_TEST

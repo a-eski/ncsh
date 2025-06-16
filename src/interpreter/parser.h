@@ -5,6 +5,6 @@
 
 #include "../types.h"
 #include "lexemes.h"
-#include "tokens.h"
+#include "statements.h"
 
-int parser_parse(Lexemes* lexemes, Tokens* rst toks, Shell* rst shell, Arena* rst scratch);
+int parser_parse(Lexemes* lexemes, Statements* rst statements, Shell* rst shell, Arena* rst scratch);

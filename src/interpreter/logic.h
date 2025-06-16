@@ -7,6 +7,7 @@
 
 #include "../arena.h"
 #include "../eskilib/str.h"
+#include "tokens.h"
 #include "vm/vm_types.h"
 
 enum Logic_Type {
@@ -14,6 +15,11 @@ enum Logic_Type {
     LT_CODE,
     LT_IF,
     LT_IF_ELSE
+};
+
+union Logic_Value {
+    int code;
+    Token* tok;
 };
 
 typedef struct {

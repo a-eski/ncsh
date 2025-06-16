@@ -5,8 +5,8 @@
 #pragma once
 
 #include "../../types.h"
-#include "vm_types.h"
+#include "../statements.h"
 
-int vm_execute(Tokens* rst toks, Shell* rst shell, Arena* rst scratch);
+int vm_execute(Statements* rst statements, Shell* rst shell, Arena* rst scratch);
 
-int vm_execute_noninteractive(Tokens* rst toks, Shell* rst shell);
+int vm_execute_noninteractive(Statements* rst statements, Shell* rst shell);

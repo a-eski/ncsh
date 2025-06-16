@@ -6,7 +6,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "interpreter_types.h"
 #include "logic.h"
 
 #define DEFAULT_N 10

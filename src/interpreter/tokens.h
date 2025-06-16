@@ -7,30 +7,6 @@
 #include <stdint.h>
 
 #include "../arena.h"
-#include "interpreter_types.h"
-
-typedef struct {
-    // Redirection
-    char* stdout_file;
-    char* stdin_file;
-    char* stderr_file;
-    char* stdout_and_stderr_file;
-
-    bool output_append;
-
-    // Background Jobs
-    bool is_background_job;
-
-    // Pipes
-    uint8_t number_of_pipe_commands;
-
-    // Control flow structures
-    // enum Logic_Type logic_type;
-    // Statements* conditions;
-    // Statements* if_statements;
-    // Statements* else_statements;
-    // Statements* elif_statements;
-} Token_Data;
 
 typedef struct Token_ {
     uint8_t op;
@@ -44,7 +20,7 @@ typedef struct Token_ {
 typedef struct {
     size_t count;
     Token* head;
-    Token_Data* data;
+    // Token_Data* data;
 } Tokens;
 
 Tokens* tokens_alloc(Arena* rst arena);
