@@ -33,6 +33,7 @@
 #include "readline/history.c"
 #include "readline/ncreadline.c"
 #include "readline/terminal.c"
+#include "readline/prompt.c"
 
 #include "interpreter/semantic_analyzer.c"
 #include "interpreter/vars.c"

@@ -9,7 +9,7 @@ debug_flags = -Wall -Wextra -Werror -Wsign-conversion -Wformat=2 -Wshadow -Wvla 
 release_flags = -Wall -Wextra -Werror -pedantic-errors -Wsign-conversion -Wformat=2 -Wshadow -Wvla -flto=6 -Ofast -march=native -DNDEBUG
 # fuzz_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -Wwrite-strings -fsanitize=address,leak,fuzzer -DNDEBUG -g
 fuzz_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,leak,fuzzer -DNDEBUG -g
-objects = obj/main.o obj/arena.o obj/noninteractive.o obj/ncreadline.o obj/pipe.o obj/redirection.o obj/vm_buffer.o obj/vm.o obj/semantic_analyzer.o obj/logic.o obj/interpreter.o obj/parser.o obj/terminal.o obj/efile.o obj/hashset.o obj/vars.o obj/tokens.o obj/lexer.o obj/lexer_op.o obj/builtins.o obj/history.o obj/ac.o obj/env.o obj/alias.o obj/config.o obj/fzf.o obj/z.o
+objects = obj/main.o obj/arena.o obj/noninteractive.o obj/ncreadline.o obj/pipe.o obj/redirection.o obj/vm_buffer.o obj/vm.o obj/semantic_analyzer.o obj/logic.o obj/interpreter.o obj/parser.o obj/terminal.o obj/prompt.o obj/efile.o obj/hashset.o obj/vars.o obj/tokens.o obj/lexer.o obj/builtins.o obj/history.o obj/ac.o obj/env.o obj/alias.o obj/config.o obj/fzf.o obj/z.o
 target = ./bin/ncsh
 
 ifeq ($(CC), gcc)
@@ -97,7 +97,7 @@ check :
 	make test_history
 	make test_lexer
 	make test_alias
-	make test_readline
+	make test_prompt
 	make test_arena
 	make test_hashset
 	make test_str
@@ -298,14 +298,14 @@ test_alias :
 tal :
 	make test_alias
 
-# Run readline tests
-.PHONY: test_readline
-test_readline :
-	$(CC) $(STD) $(debug_flags) -DNCSH_HISTORY_TEST ./src/arena.c ./src/eskilib/efile.c ./src/readline/hashset.c ./src/readline/terminal.c ./src/readline/ac.c ./src/readline/history.c ./src/readline/ncreadline.c ./tests/ncreadline_tests.c -o ./bin/ncreadline_tests
-	./bin/ncreadline_tests
-.PHONY: tr
-tr :
-	make test_readline
+# Run prompt tests
+.PHONY: test_prompt
+test_prompt :
+	$(CC) $(STD) $(debug_flags) -DNCSH_HISTORY_TEST ./src/arena.c ./src/readline/prompt.c ./tests/prompt_tests.c -o ./bin/prompt_tests
+	./bin/prompt_tests
+.PHONY: tpr
+tpr :
+	make test_prompt
 
 # Run arena tests
 .PHONY: test_arena
