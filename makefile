@@ -97,7 +97,7 @@ check :
 	make test_history
 	make test_lexer
 	make test_alias
-	make test_readline
+	make test_prompt
 	make test_arena
 	make test_hashset
 	make test_str
@@ -298,14 +298,14 @@ test_alias :
 tal :
 	make test_alias
 
-# Run readline tests
-.PHONY: test_readline
-test_readline :
-	$(CC) $(STD) $(debug_flags) -DNCSH_HISTORY_TEST ./src/arena.c ./src/eskilib/efile.c ./src/readline/hashset.c ./src/readline/terminal.c ./src/readline/ac.c ./src/readline/history.c ./src/readline/ncreadline.c ./tests/ncreadline_tests.c -o ./bin/ncreadline_tests
-	./bin/ncreadline_tests
-.PHONY: tr
-tr :
-	make test_readline
+# Run prompt tests
+.PHONY: test_prompt
+test_prompt :
+	$(CC) $(STD) $(debug_flags) -DNCSH_HISTORY_TEST ./src/arena.c ./src/readline/prompt.c ./tests/prompt_tests.c -o ./bin/prompt_tests
+	./bin/prompt_tests
+.PHONY: tpr
+tpr :
+	make test_prompt
 
 # Run arena tests
 .PHONY: test_arena
