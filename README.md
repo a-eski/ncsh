@@ -179,7 +179,6 @@ Please see COMPILE.md.
 
 ### Short-term
 
-* Add a builtin for changing and maintaining aliases
 * Have .ncshrc utilize builtins instead of DSL like it currently does
 * Finish set/unset, enable/disable, export implementations
 

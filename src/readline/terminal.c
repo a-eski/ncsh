@@ -108,9 +108,9 @@ void terminal_move_to_start_of_next_line()
 }
 void terminal_line_delete(int i) {
     printf("\033[%dM", i);
-}*/
+}
 
 void terminal_characters_delete(int i)
 {
     printf("\033[%dP", i);
-}
+}*/
