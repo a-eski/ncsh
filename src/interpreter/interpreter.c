@@ -20,7 +20,6 @@ void interpreter_init(Shell* rst shell)
 int interpreter_run(Shell* rst shell, Arena scratch)
 {
     Lexemes lexemes = {0};
-    lexemes_init(&lexemes, &scratch);
     lexer_lex(shell->input.buffer, shell->input.pos, &lexemes, &scratch);
 
     int result = semantic_analyzer_analyze(&lexemes);
@@ -39,7 +38,6 @@ int interpreter_run(Shell* rst shell, Arena scratch)
 int interpreter_run_noninteractive(char** rst argv, size_t argc, Shell* rst shell)
 {
     Lexemes lexemes = {0};
-    lexemes_init(&lexemes, &shell->arena);
     lexer_lex_noninteractive(argv, argc, &lexemes, &shell->arena);
 
     int result;

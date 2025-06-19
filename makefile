@@ -198,7 +198,7 @@ bact :
 # Run lexer tests
 .PHONY: test_lexer
 test_lexer :
-	$(CC) $(STD) $(debug_flags) ./src/arena.c ./src/interpreter/lexemes.c ./src/interpreter/lexer_op.c ./src/interpreter/lexer.c ./tests/lexer_tests.c -o ./bin/lexer_tests
+	$(CC) $(STD) $(debug_flags) ./src/arena.c ./src/interpreter/lexemes.c ./src/interpreter/lexer.c ./tests/lexer_tests.c -o ./bin/lexer_tests
 	./bin/lexer_tests
 .PHONY: tlx
 tlx :
@@ -235,7 +235,7 @@ blt :
 # Run parser tests
 .PHONY: test_parser
 test_parser :
-	$(CC) $(STD) $(debug_flags) ./src/arena.c ./src/alias.c ./src/env.c ./src/interpreter/lexer.c ./src/interpreter/vars.c ./src/interpreter/logic.c ./src/interpreter/tokens.c ./src/interpreter/parser.c ./tests/parser_tests.c -o ./bin/parser_tests
+	$(CC) $(STD) $(debug_flags) ./src/arena.c ./src/alias.c ./src/env.c ./src/interpreter/expansions.c ./src/interpreter/vars.c ./src/interpreter/lexer.c ./src/interpreter/lexemes.c ./src/interpreter/statements.c ./src/interpreter/parser.c ./tests/parser_tests.c -o ./bin/parser_tests
 	./bin/parser_tests
 .PHONY: tp
 tp :
@@ -337,7 +337,7 @@ tv :
 # Run VM sanity tests
 .PHONY: test_vm
 test_vm :
-	$(CC) $(STD) $(debug_flags) -DNCSH_VM_TEST ./src/arena.c ./src/interpreter/tokens.c ./src/interpreter/lexer_op.c ./src/interpreter/lexer.c ./src/eskilib/efile.c ./src/readline/hashset.c ./src/interpreter/vars.c ./src/readline/history.c ./src/z/fzf.c ./src/z/z.c ./src/env.c ./src/alias.c ./src/config.c ./src/interpreter/logic.c ./src/interpreter/vm/vm_buffer.c ./src/interpreter/vm/vm.c ./src/interpreter/semantic_analyzer.c ./src/interpreter/parser.c ./src/interpreter/vm/builtins.c ./src/interpreter/vm/pipe.c ./src/interpreter/vm/redirection.c ./tests/vm_tests.c -o ./bin/vm_tests
+	$(CC) $(STD) $(debug_flags) -DNCSH_VM_TEST ./src/arena.c ./src/interpreter/tokens.c ./src/interpreter/lexer.c ./src/eskilib/efile.c ./src/readline/hashset.c ./src/interpreter/vars.c ./src/readline/history.c ./src/z/fzf.c ./src/z/z.c ./src/env.c ./src/alias.c ./src/config.c ./src/interpreter/logic.c ./src/interpreter/vm/vm_buffer.c ./src/interpreter/vm/vm.c ./src/interpreter/semantic_analyzer.c ./src/interpreter/parser.c ./src/interpreter/vm/builtins.c ./src/interpreter/vm/pipe.c ./src/interpreter/vm/redirection.c ./tests/vm_tests.c -o ./bin/vm_tests
 	./bin/vm_tests
 .PHONY: tvm
 tvm :
@@ -355,7 +355,7 @@ ths :
 # Run VM logic tests
 .PHONY: test_logic
 test_logic :
-	$(CC) $(STD) $(debug_flags) ./src/arena.c ./src/interpreter/tokens.c ./src/interpreter/lexer_op.c ./src/interpreter/lexer.c ./src/interpreter/logic.c ./tests/logic_tests.c -o ./bin/logic_tests
+	$(CC) $(STD) $(debug_flags) ./src/arena.c ./src/interpreter/tokens.c ./src/interpreter/lexer.c ./src/interpreter/logic.c ./tests/logic_tests.c -o ./bin/logic_tests
 	./bin/logic_tests
 .PHONY: tl
 tl :
@@ -364,7 +364,7 @@ tl :
 # Run VM buffer processing tests
 .PHONY: test_vm_buffer
 test_vm_buffer :
-	$(CC) $(STD) $(debug_flags) ./src/arena.c ./src/alias.c ./src/env.c ./src/interpreter/vars.c ./src/interpreter/tokens.c ./src/interpreter/lexer_op.c ./src/interpreter/lexer.c ./src/interpreter/logic.c ./src/interpreter/vm/vm_buffer.c ./src/interpreter/parser.c ./tests/vm_buffer_tests.c -o ./bin/vm_buffer_tests
+	$(CC) $(STD) $(debug_flags) ./src/arena.c ./src/alias.c ./src/env.c ./src/interpreter/vars.c ./src/interpreter/tokens.c ./src/interpreter/lexer.c ./src/interpreter/logic.c ./src/interpreter/vm/vm_buffer.c ./src/interpreter/parser.c ./tests/vm_buffer_tests.c -o ./bin/vm_buffer_tests
 	./bin/vm_buffer_tests
 .PHONY: tvb
 tvb :

@@ -16,7 +16,6 @@ void lexer_lex_ls_test()
     size_t len = 3;
 
     Lexemes lexemes = {0};
-    lexemes_init(&lexemes, &scratch_arena);
     lexer_lex(line, len, &lexemes, &scratch_arena);
 
     eassert(lexemes.count == 1);
@@ -39,7 +38,6 @@ void lexer_lex_ls_dash_l_test()
     size_t len = 6;
 
     Lexemes lexemes = {0};
-    lexemes_init(&lexemes, &scratch_arena);
     lexer_lex(line, len, &lexemes, &scratch_arena);
 
     eassert(lexemes.count == 2);
@@ -65,7 +63,6 @@ void lexer_lex_pipe_test()
     size_t len = 10;
 
     Lexemes lexemes = {0};
-    lexemes_init(&lexemes, &scratch_arena);
     lexer_lex(line, len, &lexemes, &scratch_arena);
 
     eassert(lexemes.count == 3);
@@ -95,7 +92,6 @@ void lexer_lex_multiple_pipe_test()
     size_t len = 18;
 
     Lexemes lexemes = {0};
-    lexemes_init(&lexemes, &scratch_arena);
     lexer_lex(line, len, &lexemes, &scratch_arena);
 
     eassert(lexemes.count == 5);
@@ -133,7 +129,6 @@ void lexer_lex_background_job_test()
     size_t len = 21;
 
     Lexemes lexemes = {0};
-    lexemes_init(&lexemes, &scratch_arena);
     lexer_lex(line, len, &lexemes, &scratch_arena);
 
     eassert(lexemes.count == 2);
@@ -159,7 +154,6 @@ void lexer_lex_output_redirection_test()
     size_t len = 14;
 
     Lexemes lexemes = {0};
-    lexemes_init(&lexemes, &scratch_arena);
     lexer_lex(line, len, &lexemes, &scratch_arena);
 
     eassert(lexemes.count == 3);
@@ -189,7 +183,6 @@ void lexer_lex_output_redirection_append_test()
     size_t len = 15;
 
     Lexemes lexemes = {0};
-    lexemes_init(&lexemes, &scratch_arena);
     lexer_lex(line, len, &lexemes, &scratch_arena);
 
     eassert(lexemes.count == 3);
@@ -219,7 +212,6 @@ void lexer_lex_input_redirection_test()
     size_t len = strlen(line) + 1;
 
     Lexemes lexemes = {0};
-    lexemes_init(&lexemes, &scratch_arena);
     lexer_lex(line, len, &lexemes, &scratch_arena);
 
     eassert(lexemes.count == 3);
@@ -247,7 +239,6 @@ void lexer_lex_stdout_and_stderr_redirection_test()
     size_t len = 15;
 
     Lexemes lexemes = {0};
-    lexemes_init(&lexemes, &scratch_arena);
     lexer_lex(line, len, &lexemes, &scratch_arena);
 
     eassert(lexemes.count == 3);
@@ -277,7 +268,6 @@ void lexer_lex_stdout_and_stderr_redirection_append_test()
     size_t len = strlen(line) + 1;
 
     Lexemes lexemes = {0};
-    lexemes_init(&lexemes, &scratch_arena);
     lexer_lex(line, len, &lexemes, &scratch_arena);
 
     eassert(lexemes.count == 3);
@@ -307,7 +297,6 @@ void lexer_lex_assignment_test()
     size_t len = strlen(line) + 1;
 
     Lexemes lexemes = {0};
-    lexemes_init(&lexemes, &scratch_arena);
     lexer_lex(line, len, &lexemes, &scratch_arena);
 
     eassert(lexemes.count == 1);
@@ -331,7 +320,6 @@ void lexer_lex_assignment_spaces_test()
     size_t len = strlen(line) + 1;
 
     Lexemes lexemes = {0};
-    lexemes_init(&lexemes, &scratch_arena);
     lexer_lex(line, len, &lexemes, &scratch_arena);
 
     eassert(lexemes.count == 1);
@@ -354,7 +342,6 @@ void lexer_lex_assignment_spaces_multiple_test()
     size_t len = strlen(line) + 1;
 
     Lexemes lexemes = {0};
-    lexemes_init(&lexemes, &scratch_arena);
     lexer_lex(line, len, &lexemes, &scratch_arena);
 
     eassert(lexemes.count == 1);
@@ -377,7 +364,6 @@ void lexer_lex_variable_test()
     size_t len = strlen(line) + 1;
 
     Lexemes lexemes = {0};
-    lexemes_init(&lexemes, &scratch_arena);
     lexer_lex(line, len, &lexemes, &scratch_arena);
 
     eassert(lexemes.count == 2);
@@ -403,7 +389,6 @@ void lexer_lex_variable_and_test()
     size_t len = strlen(line) + 1;
 
     Lexemes lexemes = {0};
-    lexemes_init(&lexemes, &scratch_arena);
     lexer_lex(line, len, &lexemes, &scratch_arena);
 
     eassert(lexemes.count == 4);
@@ -437,7 +422,6 @@ void lexer_lex_variable_command_test()
     size_t len = strlen(line) + 1;
 
     Lexemes lexemes = {0};
-    lexemes_init(&lexemes, &scratch_arena);
     lexer_lex(line, len, &lexemes, &scratch_arena);
 
     eassert(lexemes.count == 3);
@@ -467,7 +451,6 @@ void lexer_lex_double_quotes_test()
     size_t len = 13;
 
     Lexemes lexemes = {0};
-    lexemes_init(&lexemes, &scratch_arena);
     lexer_lex(line, len, &lexemes, &scratch_arena);
 
     eassert(lexemes.count == 2);
@@ -493,7 +476,6 @@ void lexer_lex_single_quotes_test()
     size_t len = 13;
 
     Lexemes lexemes = {0};
-    lexemes_init(&lexemes, &scratch_arena);
     lexer_lex(line, len, &lexemes, &scratch_arena);
 
     eassert(lexemes.count == 2);
@@ -519,7 +501,6 @@ void lexer_lex_backtick_quotes_test()
     size_t len = 13;
 
     Lexemes lexemes = {0};
-    lexemes_init(&lexemes, &scratch_arena);
     lexer_lex(line, len, &lexemes, &scratch_arena);
 
     eassert(lexemes.count == 2);
@@ -545,7 +526,6 @@ void lexer_lex_git_commit_test()
     size_t len = strlen(line) + 1;
 
     Lexemes lexemes = {0};
-    lexemes_init(&lexemes, &scratch_arena);
     lexer_lex(line, len, &lexemes, &scratch_arena);
 
     eassert(lexemes.count == 4);
@@ -579,7 +559,6 @@ void lexer_lex_home_test()
     size_t len = 5;
 
     Lexemes lexemes = {0};
-    lexemes_init(&lexemes, &scratch_arena);
     lexer_lex(line, len, &lexemes, &scratch_arena);
 
     eassert(lexemes.count == 2);
@@ -605,7 +584,6 @@ void lexer_lex_home_at_start_test()
     size_t len = 10;
 
     Lexemes lexemes = {0};
-    lexemes_init(&lexemes, &scratch_arena);
     lexer_lex(line, len, &lexemes, &scratch_arena);
 
     eassert(lexemes.count == 2);
@@ -631,7 +609,6 @@ void lexer_lex_math_operators_test()
     size_t len = strlen(line) + 1;
 
     Lexemes lexemes = {0};
-    lexemes_init(&lexemes, &scratch_arena);
     lexer_lex(line, len, &lexemes, &scratch_arena);
 
     eassert(lexemes.ops[0] == OP_MATH_EXPRESSION_START);
@@ -684,7 +661,6 @@ void lexer_lex_glob_star_test()
     size_t len = strlen(line) + 1;
 
     Lexemes lexemes = {0};
-    lexemes_init(&lexemes, &scratch_arena);
     lexer_lex(line, len, &lexemes, &scratch_arena);
 
     eassert(lexemes.count == 2);
@@ -710,7 +686,6 @@ void lexer_lex_glob_question_test()
     size_t len = strlen(line) + 1;
 
     Lexemes lexemes = {0};
-    lexemes_init(&lexemes, &scratch_arena);
     lexer_lex(line, len, &lexemes, &scratch_arena);
 
     eassert(lexemes.count == 2);
@@ -737,7 +712,6 @@ void lexer_lex_glob_star_shouldnt_crash()
     size_t len = strlen(line) + 1;
 
     Lexemes lexemes = {0};
-    lexemes_init(&lexemes, &scratch_arena);
     lexer_lex(line, len, &lexemes, &scratch_arena);
 
     eassert(lexemes.count == 18);
@@ -760,7 +734,6 @@ void lexer_lex_tilde_home_shouldnt_crash()
     size_t len = strlen(line) + 1;
 
     Lexemes lexemes = {0};
-    lexemes_init(&lexemes, &scratch_arena);
     lexer_lex(line, len, &lexemes, &scratch_arena);
 
     eassert(lexemes.count == 1);
@@ -778,7 +751,6 @@ void lexer_lex_glob_question_and_tilde_home_shouldnt_crash()
     size_t len = strlen(line) + 1;
 
     Lexemes lexemes = {0};
-    lexemes_init(&lexemes, &scratch_arena);
     lexer_lex(line, len, &lexemes, &scratch_arena);
 
     eassert(lexemes.count == 1);
@@ -794,7 +766,6 @@ void lexer_lex_bool_test()
     size_t len = strlen(line) + 1;
 
     Lexemes lexemes = {0};
-    lexemes_init(&lexemes, &scratch_arena);
     lexer_lex(line, len, &lexemes, &scratch_arena);
 
     eassert(lexemes.count == 5);
@@ -832,7 +803,6 @@ void lexer_lex_if_test()
     size_t len = strlen(line) + 1;
 
     Lexemes lexemes = {0};
-    lexemes_init(&lexemes, &scratch_arena);
     lexer_lex(line, len, &lexemes, &scratch_arena);
 
     eassert(lexemes.count == 10);
@@ -860,7 +830,6 @@ void lexer_lex_if_else_test()
     size_t len = strlen(line) + 1;
 
     Lexemes lexemes = {0};
-    lexemes_init(&lexemes, &scratch_arena);
     lexer_lex(line, len, &lexemes, &scratch_arena);
 
     eassert(lexemes.count == 13);
@@ -891,7 +860,6 @@ void lexer_lex_comment_test()
     size_t len = strlen(line) + 1;
 
     Lexemes lexemes = {0};
-    lexemes_init(&lexemes, &scratch_arena);
     lexer_lex(line, len, &lexemes, &scratch_arena);
 
     eassert(lexemes.count == 2);
@@ -966,7 +934,6 @@ void lexer_lex_bad_input_shouldnt_crash()
     size_t len = strlen(line) + 1;
 
     Lexemes lexemes = {0};
-    lexemes_init(&lexemes, &scratch_arena);
     lexer_lex(line, len, &lexemes, &scratch_arena);
 
     // not crashing is a test pass

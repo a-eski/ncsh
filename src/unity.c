@@ -23,7 +23,6 @@
 
 #include "interpreter/interpreter.c"
 #include "interpreter/lexer.c"
-#include "interpreter/lexer_op.c"
 #include "interpreter/logic.c"
 #include "interpreter/parser.c"
 #include "interpreter/tokens.c"

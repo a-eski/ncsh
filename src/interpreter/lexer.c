@@ -12,6 +12,7 @@
 #include "../debug.h"
 #include "../defines.h"
 #include "lexer.h"
+#include "lexemes.h"
 #include "lexer.h"
 #include "lexer_defines.h"
 #include "ops.h"
@@ -21,7 +22,8 @@
  * Size of the array is stored as constant expression in ops_2char_len
  * Bytecodes (opcodes) equivalents are stored in the array of enum Ops, ops_2char
  */
-const char* const rst ops_2char_str[] = {STDOUT_REDIRECTION_APPEND,
+const char* const rst ops_2char_str[] = {STDIN_REDIRECTION_APPEND,
+                                         STDOUT_REDIRECTION_APPEND,
                                          STDERR_REDIRECTION,
                                          STDOUT_AND_STDERR_REDIRECTION,
                                          AND,
@@ -34,7 +36,8 @@ const char* const rst ops_2char_str[] = {STDOUT_REDIRECTION_APPEND,
 
 constexpr size_t ops_2char_len = sizeof(ops_2char_str) / sizeof(char*);
 
-const enum Ops ops_2char[] = {OP_STDOUT_REDIRECTION_APPEND,
+const enum Ops ops_2char[] = {OP_STDIN_REDIRECTION_APPEND,
+                              OP_STDOUT_REDIRECTION_APPEND,
                               OP_STDERR_REDIRECTION,
                               OP_STDOUT_AND_STDERR_REDIRECTION,
                               OP_AND,
@@ -258,11 +261,15 @@ uint8_t lexer_op_process()
     return lexer_op_get(lex_buf, lex_buf_pos);
 }
 
+/* lexer_lex
+ * Turns the inputted line into values, lengths, and bytecodes that the VM can work with.
+ */
 void lexer_lex(char* rst line, size_t length, Lexemes* lexemes, Arena* rst scratch)
 {
     assert(line && scratch);
     assert(!line[length - 1] && (length <= 2 || line[length - 2]));
     assert(lexemes);
+    lexemes_init(lexemes, scratch);
     if (length < 2 || length > NCSH_MAX_INPUT) {
         lexemes->count = 0;
         return;
@@ -420,174 +427,6 @@ void lexer_lex(char* rst line, size_t length, Lexemes* lexemes, Arena* rst scrat
     lexemes->count = n;
     debug_tokens(toks);
 }
-
-/* lexer_lex
- * Turns the inputted line into values, lengths, and bytecodes that the VM can work with.
- * Handles expansions like *, ?, and ~
- */
-/*[[nodiscard]]
-Tokens* lexer_lex(char* rst line, size_t length, Arena* rst scratch)
-{
-    assert(line && scratch);
-    assert(!line[length - 1] && (length <= 2 || line[length - 2]));
-    Tokens* toks = tokens_alloc(scratch);
-    assert(toks);
-    if (length < 2 || length > NCSH_MAX_INPUT) {
-        toks->count = 0;
-        return toks;
-    }
-
-    assert(length >= 2);
-
-    debug_lexer_input(line, length);
-
-    lex_buf = arena_malloc(scratch, NCSH_MAX_INPUT, char);
-    lex_pos = 0;
-    lex_state = 0;
-
-    Token* tok = toks->head;
-
-    for (register size_t pos = 0; pos < length; ++pos) {
-        if (toks->count == LEXER_TOKENS_LIMIT - 1 && pos < length) { // can't lex all of the tokens
-            toks->count = 0;
-            break;
-        }
-        else if (pos >= NCSH_MAX_INPUT - 1 || lex_pos >= NCSH_MAX_INPUT - 1 || toks->count == LEXER_TOKENS_LIMIT - 1) {
-            break;
-        }
-
-        switch (line[pos]) {
-        case DOUBLE_QUOTE_KEY: {
-            if (!(lex_state & IN_DOUBLE_QUOTES))
-                lex_state |= IN_DOUBLE_QUOTES;
-            else
-                lex_state &= ~IN_DOUBLE_QUOTES;
-            continue;
-        }
-        case SINGLE_QUOTE_KEY: {
-            if (!(lex_state & IN_SINGLE_QUOTES))
-                lex_state |= IN_SINGLE_QUOTES;
-            else
-                lex_state &= ~IN_SINGLE_QUOTES;
-            continue;
-        }
-        case BACKTICK_QUOTE_KEY: {
-            if (!(lex_state & IN_BACKTICK_QUOTES))
-                lex_state |= IN_BACKTICK_QUOTES;
-            else
-                lex_state &= ~IN_BACKTICK_QUOTES;
-            continue;
-        }
-        case OPENING_PARAN: {
-            if ((lex_state & IN_DOLLAR_SIGN) && !(lex_state & IN_MATHEMATICAL_EXPRESSION)) {
-                lex_state |= IN_MATHEMATICAL_EXPRESSION;
-                lex_state &= ~IN_DOLLAR_SIGN;
-            }
-
-            lex_buf[lex_pos++] = line[pos];
-            continue;
-        }
-        case CLOSING_PARAN: {
-            if (lex_state & IN_MATHEMATICAL_EXPRESSION)
-                lex_state &= ~IN_MATHEMATICAL_EXPRESSION;
-
-            lex_buf[lex_pos++] = line[pos];
-            continue;
-        }
-        case GLOB_STAR: {
-            if (!(lex_state & IN_MATHEMATICAL_EXPRESSION) && !(lex_state & IN_GLOB_EXPANSION))
-                lex_state |= IN_GLOB_EXPANSION;
-
-            lex_buf[lex_pos++] = line[pos];
-            continue;
-        }
-        case GLOB_QUESTION: {
-            if (!(lex_state & IN_GLOB_EXPANSION))
-                lex_state |= IN_GLOB_EXPANSION;
-
-            lex_buf[lex_pos++] = line[pos];
-            continue;
-        }
-        case ASSIGNMENT: {
-            if (!(lex_state & IN_ASSIGNMENT))
-                lex_state |= IN_ASSIGNMENT;
-
-            lex_buf[lex_pos++] = line[pos];
-            continue;
-        }
-        case COMMENT: {
-            if (!(lex_state & IN_COMMENT))
-                lex_state |= IN_COMMENT;
-
-            continue;
-        }
-        case DOLLAR_SIGN: {
-            // exclude variables from this one
-            if (!(lex_state & IN_DOLLAR_SIGN) && pos < length - 1 && line[pos + 1] == '(')
-                lex_state |= IN_DOLLAR_SIGN;
-
-            lex_buf[lex_pos++] = line[pos];
-            continue;
-        }
-        case TILDE: {
-            if (!(lex_state & IN_HOME_EXPANSION))
-                lex_state |= IN_HOME_EXPANSION;
-
-            lex_buf[lex_pos++] = line[pos];
-            continue;
-        }
-        // delimiter case // NOTE: should \t, \a, or EOF be included?
-        case ' ':
-        case '\r':
-        case '\n':
-        case '\0': {
-            if (lex_state & IN_COMMENT) {
-                if (line[pos] != '\n') {
-                    continue;
-                }
-                else {
-                    lex_buf[0] = '\0';
-                    lex_pos = 0;
-                }
-            }
-
-            if (lex_state & IN_SINGLE_QUOTES || lex_state & IN_DOUBLE_QUOTES || lex_state & IN_BACKTICK_QUOTES) {
-
-                lex_buf[lex_pos++] = line[pos];
-                continue;
-            }
-
-            // break to code below when delimiter found and no state or certain states found
-            if ((!lex_state || (lex_state & IN_MATHEMATICAL_EXPRESSION) || (lex_state & IN_ASSIGNMENT) ||
-                 (lex_state & IN_GLOB_EXPANSION) || (lex_state & IN_HOME_EXPANSION))) {
-                break;
-            }
-
-            lex_buf[lex_pos++] = line[pos];
-            continue;
-        }
-        default: {
-            lex_buf[lex_pos++] = line[pos];
-            continue;
-        }
-        }
-
-        lex_buf[lex_pos] = '\0';
-
-        debugf("Current lexer state: %d\n", lex_state);
-
-        uint8_t op = lexer_op_process();
-        tok->next = token_alloc(op, lex_pos + 1, lex_buf, scratch);
-        tok = tok->next;
-        ++toks->count;
-
-        lex_buf[0] = '\0';
-        lex_pos = 0;
-    }
-
-    debug_tokens(toks);
-    return toks;
-}*/
 
 /* lexer_lex_noninteractive
  * lex the command line input into commands, command lengths, and op codes then stored in Tokens.
