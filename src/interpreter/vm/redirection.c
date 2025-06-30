@@ -133,36 +133,43 @@ int redirection_start_if_needed(Statements* rst statements, Vm_Data* rst vm)
     switch (statements->redirect_type) {
     case RT_OUT:
     case RT_OUT_APPEND: {
-        stdout_redirection_start(statements->redirect_filename, statements->redirect_type == RT_OUT_APPEND, &vm->output_redirect_io);
+        stdout_redirection_start(statements->redirect_filename, statements->redirect_type == RT_OUT_APPEND,
+                                 &vm->output_redirect_io);
         if (vm->output_redirect_io.fd_stdout == -1) {
             return EXIT_FAILURE_CONTINUE;
         }
         debug("started stdout redirection");
+        break;
     }
     case RT_IN:
     case RT_IN_APPEND: {
-        // TODO: support stdin redirection
+        // TODO: support stdin append redirection
         stdin_redirection_start(statements->redirect_filename, &vm->input_redirect_io);
         if (vm->input_redirect_io.fd == -1) {
             return EXIT_FAILURE_CONTINUE;
         }
         debug("started stdin redirection");
+        break;
     }
     case RT_ERR:
     case RT_ERR_APPEND: {
-        stderr_redirection_start(statements->redirect_filename, statements->redirect_type == RT_ERR_APPEND, &vm->output_redirect_io);
+        stderr_redirection_start(statements->redirect_filename, statements->redirect_type == RT_ERR_APPEND,
+                                 &vm->output_redirect_io);
         if (vm->output_redirect_io.fd_stderr == -1) {
             return EXIT_FAILURE_CONTINUE;
         }
         debug("started stderr redirection");
+        break;
     }
     case RT_OUT_ERR:
     case RT_OUT_ERR_APPEND: {
-        stdout_and_stderr_redirection_start(statements->redirect_filename, statements->redirect_type == RT_OUT_ERR_APPEND, &vm->output_redirect_io);
+        stdout_and_stderr_redirection_start(statements->redirect_filename,
+                                            statements->redirect_type == RT_OUT_ERR_APPEND, &vm->output_redirect_io);
         if (vm->output_redirect_io.fd_stdout == -1) {
             return EXIT_FAILURE_CONTINUE;
         }
         debug("started stdout and stderr redirection");
+        break;
     }
     case RT_NONE: {
         return EXIT_SUCCESS;

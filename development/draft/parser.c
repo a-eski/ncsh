@@ -161,5 +161,3 @@ int parser_ops_process(Tokens* rst toks, Shell* rst shell, Arena* rst scratch)
 
     return EXIT_SUCCESS;
 }*/
-
-

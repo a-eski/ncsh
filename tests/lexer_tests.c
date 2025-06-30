@@ -3,9 +3,9 @@
 #include <string.h>
 
 #include "../src/eskilib/etest.h"
+#include "../src/interpreter/lexemes.h"
 #include "../src/interpreter/lexer.h"
 #include "../src/interpreter/ops.h"
-#include "../src/interpreter/lexemes.h"
 #include "lib/arena_test_helper.h"
 
 void lexer_lex_ls_test()
@@ -353,7 +353,7 @@ void lexer_lex_assignment_spaces_multiple_test()
 
     eassert(!lexemes.vals[1])
 
-    SCRATCH_ARENA_TEST_TEARDOWN;
+        SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 void lexer_lex_variable_test()
@@ -719,7 +719,7 @@ void lexer_lex_glob_star_shouldnt_crash()
         eassert(lexemes.vals[i][0] == '*');
         eassert(lexemes.ops[0] == OP_GLOB_EXPANSION);
         eassert(lexemes.lens[0] == 2);
-            }
+    }
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -819,7 +819,7 @@ void lexer_lex_if_test()
     eassert(lexemes.ops[9] == OP_FI);
     eassert(!lexemes.ops[10])
 
-    SCRATCH_ARENA_TEST_TEARDOWN;
+        SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 void lexer_lex_if_else_test()
@@ -849,7 +849,7 @@ void lexer_lex_if_else_test()
     eassert(lexemes.ops[12] == OP_FI);
     eassert(!lexemes.ops[13])
 
-    SCRATCH_ARENA_TEST_TEARDOWN;
+        SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 void lexer_lex_comment_test()

@@ -179,6 +179,8 @@ Please see COMPILE.md.
 
 ### Short-term
 
+* Alias expansion
+* Variable expansion (different than how bash works)
 * Have .ncshrc utilize builtins instead of DSL like it currently does
 * Finish set/unset, enable/disable, export implementations
 

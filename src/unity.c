@@ -21,18 +21,19 @@
 #include "config.c"
 #include "env.c"
 
+#include "interpreter/expansions.c"
 #include "interpreter/interpreter.c"
+#include "interpreter/lexemes.c"
 #include "interpreter/lexer.c"
-#include "interpreter/logic.c"
 #include "interpreter/parser.c"
-#include "interpreter/tokens.c"
+#include "interpreter/statements.c"
 
 #include "readline/ac.c"
 #include "readline/hashset.c"
 #include "readline/history.c"
 #include "readline/ncreadline.c"
-#include "readline/terminal.c"
 #include "readline/prompt.c"
+#include "readline/terminal.c"
 
 #include "interpreter/semantic_analyzer.c"
 #include "interpreter/vars.c"
@@ -40,7 +41,6 @@
 #include "interpreter/vm/pipe.c"
 #include "interpreter/vm/redirection.c"
 #include "interpreter/vm/vm.c"
-#include "interpreter/vm/vm_buffer.c"
 
 #include "main.c"
 #include "noninteractive.c"

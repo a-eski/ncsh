@@ -2,17 +2,17 @@
 
 #pragma once
 
-#include <unistd.h>
 #include <stdint.h>
+#include <unistd.h>
 
 #include "../arena.h"
 
 #define LEXER_TOKENS_LIMIT 128
 
 typedef struct {
-   uint8_t op;
-   size_t len;
-   char* val;
+    uint8_t op;
+    size_t len;
+    char* val;
 } Lexeme;
 
 typedef struct {

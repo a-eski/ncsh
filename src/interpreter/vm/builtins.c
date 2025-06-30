@@ -4,6 +4,7 @@
 #ifndef _DEFAULT_SOURCE
 #define _DEFAULT_SOURCE
 #endif /* ifndef _DEFAULT_SOURCE */
+
 #ifndef _POXIC_C_SOURCE
 #define _POSIX_C_SOURCE 200809L
 #endif /* ifndef _POXIC_C_SOURCE */
@@ -24,7 +25,6 @@
 #include "../../alias.h"
 #include "../../arena.h"
 #include "../../defines.h"
-#include "../../env.h"
 #include "../../eskilib/ecolors.h"
 #include "../../readline/history.h"
 #include "../../types.h"
@@ -124,16 +124,16 @@ int builtins_enable(char** rst buffer, size_t* rst buf_lens);
 int builtins_disable(char** rst buffer, size_t* rst buf_lens);
 
 // TODO: finish implementation
-#define NCSH_EXPORT "export"
-int builtins_export(Tokens* rst toks, size_t* rst buf_lens);
-
+// #define NCSH_EXPORT "export"
+// int builtins_export(Statements* rst toks, size_t* rst buf_lens);
+//
 // TODO: finish implementation
-#define NCSH_SET "set"
-int builtins_set(Tokens* rst toks, size_t* rst buf_lens);
-
+// #define NCSH_SET "set"
+// int builtins_set(Statements* rst toks, size_t* rst buf_lens);
+//
 // TODO: finish implementation
-#define NCSH_UNSET "unset"
-int builtins_unset(Tokens* rst toks, size_t* rst buf_lens);
+// #define NCSH_UNSET "unset"
+// int builtins_unset(Statements* rst toks, size_t* rst buf_lens);
 
 /* Types */
 // clang-format off
@@ -195,8 +195,9 @@ int builtins_z(z_Database* rst z_db, char** rst buffer, size_t* rst buf_lens, Ar
 {
     assert(z_db);
     assert(buffer && *buffer);
+    assert(buf_lens && * buf_lens);
 
-    if (buf_lens[0] == 0) {
+    if (buf_lens[1] == 0) {
         z(NULL, 0, NULL, z_db, arena, *scratch);
         return EXIT_SUCCESS;
     }
@@ -788,120 +789,121 @@ int builtins_enable(char** rst buffer, size_t* rst buf_lens)
 }
 
 // TODO: implement export
-#define EXPORT_OPTION_NOT_SUPPORTED_MESSAGE "ncsh export: command not found, options entered not supported.\n"
-#define EXPORT_OPTIONS_MESSAGE                                                                                         \
-    "ncsh export: please pass in at least once argument. export currently supports modifying $PATH and $HOME."
-
-[[nodiscard]]
-int builtins_export(Tokens* rst toks, size_t* rst buf_lens)
-{
-    (void)buf_lens;
-    assert(toks && toks->head && toks->head->next);
-
-    // skip first position since we know it is 'export'
-    Token* tok = toks->head->next->next;
-    if (!tok || !tok->val) {
-        if (builtins_write(vm_output_fd, EXPORT_OPTION_NOT_SUPPORTED_MESSAGE,
-                           sizeof(EXPORT_OPTION_NOT_SUPPORTED_MESSAGE) - 1) == -1) {
-            return EXIT_FAILURE;
-        }
-        return EXIT_FAILURE_CONTINUE;
-    }
-
-    if (estrcmp(tok->val, tok->len, NCSH_PATH_VAR, sizeof(NCSH_PATH_VAR))) {
-        puts("export $PATH found");
-    }
-    else if (estrcmp(tok->val, tok->len, NCSH_HOME_VAR, sizeof(NCSH_HOME_VAR))) {
-        puts("export $HOME found");
-    }
-    else {
-        if (builtins_write(vm_output_fd, EXPORT_OPTION_NOT_SUPPORTED_MESSAGE,
-                           sizeof(EXPORT_OPTION_NOT_SUPPORTED_MESSAGE) - 1) == -1) {
-            return EXIT_FAILURE;
-        }
-    }
-
-    return EXIT_SUCCESS;
-}
-
-// TODO: implement declare
-
-// NOTE: set is not implemented.
-// TODO: finish set/unset implementations
-[[nodiscard]]
-int builtins_set_e()
-{
-    puts("set e detected");
-    return EXIT_SUCCESS;
-}
-
-#define SET_NOTHING_TO_SET_MESSAGE "ncsh set: nothing to set, please pass in a value to set (i.e. '-e', '-c')\n"
-#define SET_VALID_OPERATIONS_MESSAGE "ncsh set: valid set operations are in the form '-e', '-c', etc.\n"
-[[nodiscard]]
-int builtins_set(Tokens* rst toks, size_t* rst buf_lens)
-{
-    (void)buf_lens;
-    assert(toks && toks->head && toks->head->next);
-
-    // skip first position since we know it is 'set'
-    Token* tok = toks->head->next->next;
-    if (!tok || !tok->val) {
-        if (builtins_write(vm_output_fd, SET_NOTHING_TO_SET_MESSAGE, sizeof(SET_NOTHING_TO_SET_MESSAGE) - 1) == -1) {
-            return EXIT_FAILURE;
-        }
-
-        return EXIT_SUCCESS;
-    }
-
-    if (tok->len > 3 || tok->val[0] != '-') {
-        if (builtins_write(vm_output_fd, SET_VALID_OPERATIONS_MESSAGE, sizeof(SET_VALID_OPERATIONS_MESSAGE) - 1) ==
-            -1) {
-            return EXIT_FAILURE;
-        }
-
-        return EXIT_SUCCESS;
-    }
-
-    switch (tok->val[1]) {
-    case 'e': {
-        return builtins_set_e();
-    }
-    default: {
-        break;
-    }
-    }
-
-    return EXIT_SUCCESS;
-}
-
-// not implemented
-#define UNSET_NOTHING_TO_UNSET_MESSAGE "ncsh unset: nothing to unset, please pass in a value to unset.\n"
-[[nodiscard]]
-int builtins_unset(Tokens* rst toks, size_t* rst buf_lens)
-{
-    (void)buf_lens;
-    assert(toks && toks->head && toks->head->next);
-
-    // skip first position since we know it is 'unset'
-    Token* tok = toks->head->next->next;
-    if (!tok || !tok->val) {
-        if (builtins_write(vm_output_fd, UNSET_NOTHING_TO_UNSET_MESSAGE, sizeof(UNSET_NOTHING_TO_UNSET_MESSAGE) - 1) ==
-            -1) {
-            return EXIT_FAILURE;
-        }
-
-        return EXIT_SUCCESS;
-    }
-
-    /*bool is_set = var_exists(arg->val, &args->vars);
-    if (!is_set) {
-        printf("ncsh unset: no value found for '%s' to unset.\n", args->values[1]);
-        return EXIT_SUCCESS;
-    }*/
-    // TODO: need a way to unset, var_set doesn't work
-    // var_set(args->values[1], NULL, arena, &args->vars)
-    return EXIT_SUCCESS;
-}
+/*#define EXPORT_OPTION_NOT_SUPPORTED_MESSAGE "ncsh export: command not found, options entered not supported.\n"
+#define EXPORT_OPTIONS_MESSAGE \*/
+//     "ncsh export: please pass in at least once argument. export currently supports modifying $PATH and $HOME."
+//
+// [[nodiscard]]
+// int builtins_export(Tokens* rst toks, size_t* rst buf_lens)
+// {
+//     (void)buf_lens;
+//     assert(toks && toks->head && toks->head->next);
+//
+//     // skip first position since we know it is 'export'
+//     Token* tok = toks->head->next->next;
+//     if (!tok || !tok->val) {
+//         if (builtins_write(vm_output_fd, EXPORT_OPTION_NOT_SUPPORTED_MESSAGE,
+//                            sizeof(EXPORT_OPTION_NOT_SUPPORTED_MESSAGE) - 1) == -1) {
+//             return EXIT_FAILURE;
+//         }
+//         return EXIT_FAILURE_CONTINUE;
+//     }
+//
+//     if (estrcmp(tok->val, tok->len, NCSH_PATH_VAR, sizeof(NCSH_PATH_VAR))) {
+//         puts("export $PATH found");
+//     }
+//     else if (estrcmp(tok->val, tok->len, NCSH_HOME_VAR, sizeof(NCSH_HOME_VAR))) {
+//         puts("export $HOME found");
+//     }
+//     else {
+//         if (builtins_write(vm_output_fd, EXPORT_OPTION_NOT_SUPPORTED_MESSAGE,
+//                            sizeof(EXPORT_OPTION_NOT_SUPPORTED_MESSAGE) - 1) == -1) {
+//             return EXIT_FAILURE;
+//         }
+//     }
+//
+//     return EXIT_SUCCESS;
+// }
+//
+// // TODO: implement declare
+//
+// // NOTE: set is not implemented.
+// // TODO: finish set/unset implementations
+// [[nodiscard]]
+// int builtins_set_e()
+// {
+//     puts("set e detected");
+//     return EXIT_SUCCESS;
+// }
+//
+// #define SET_NOTHING_TO_SET_MESSAGE "ncsh set: nothing to set, please pass in a value to set (i.e. '-e', '-c')\n"
+// #define SET_VALID_OPERATIONS_MESSAGE "ncsh set: valid set operations are in the form '-e', '-c', etc.\n"
+// [[nodiscard]]
+// int builtins_set(Tokens* rst toks, size_t* rst buf_lens)
+// {
+//     (void)buf_lens;
+//     assert(toks && toks->head && toks->head->next);
+//
+//     // skip first position since we know it is 'set'
+//     Token* tok = toks->head->next->next;
+//     if (!tok || !tok->val) {
+//         if (builtins_write(vm_output_fd, SET_NOTHING_TO_SET_MESSAGE, sizeof(SET_NOTHING_TO_SET_MESSAGE) - 1) == -1) {
+//             return EXIT_FAILURE;
+//         }
+//
+//         return EXIT_SUCCESS;
+//     }
+//
+//     if (tok->len > 3 || tok->val[0] != '-') {
+//         if (builtins_write(vm_output_fd, SET_VALID_OPERATIONS_MESSAGE, sizeof(SET_VALID_OPERATIONS_MESSAGE) - 1) ==
+//             -1) {
+//             return EXIT_FAILURE;
+//         }
+//
+//         return EXIT_SUCCESS;
+//     }
+//
+//     switch (tok->val[1]) {
+//     case 'e': {
+//         return builtins_set_e();
+//     }
+//     default: {
+//         break;
+//     }
+//     }
+//
+//     return EXIT_SUCCESS;
+// }
+//
+// // not implemented
+// #define UNSET_NOTHING_TO_UNSET_MESSAGE "ncsh unset: nothing to unset, please pass in a value to unset.\n"
+// [[nodiscard]]
+// int builtins_unset(Tokens* rst toks, size_t* rst buf_lens)
+// {
+//     (void)buf_lens;
+//     assert(toks && toks->head && toks->head->next);
+//
+//     // skip first position since we know it is 'unset'
+//     Token* tok = toks->head->next->next;
+//     if (!tok || !tok->val) {
+//         if (builtins_write(vm_output_fd, UNSET_NOTHING_TO_UNSET_MESSAGE, sizeof(UNSET_NOTHING_TO_UNSET_MESSAGE) - 1)
+//         ==
+//             -1) {
+//             return EXIT_FAILURE;
+//         }
+//
+//         return EXIT_SUCCESS;
+//     }
+//
+//     /*bool is_set = var_exists(arg->val, &args->vars);
+//     if (!is_set) {
+//         printf("ncsh unset: no value found for '%s' to unset.\n", args->values[1]);
+//         return EXIT_SUCCESS;
+//     }*/
+//     // TODO: need a way to unset, var_set doesn't work
+//     // var_set(args->values[1], NULL, arena, &args->vars)
+//     return EXIT_SUCCESS;
+// }
 
 /* builtins_check_and_run
  * Checks current command against builtins, and if matches runs the builtin.

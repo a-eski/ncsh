@@ -225,26 +225,26 @@ def bool_if_tests(row)
 
   starting_tests('bool if and multiple conditions')
   row = true_and_true_if_multiple_condition_test(row)
-  # row = true_and_false_if_multiple_condition_test(row)
+  row = true_and_false_if_multiple_condition_test(row)
   row = false_and_true_if_multiple_condition_test(row)
-  # row = false_and_false_if_multiple_condition_test(row)
+  row = false_and_false_if_multiple_condition_test(row)
 
   starting_tests('bool if or multiple conditions')
   row = true_or_true_if_multiple_condition_test(row)
   row = true_or_false_if_multiple_condition_test(row)
-  # row = false_or_true_if_multiple_condition_test(row)
+  row = false_or_true_if_multiple_condition_test(row)
   row = false_or_false_if_multiple_condition_test(row)
 
   starting_tests('bool if else and multiple conditions')
   row = true_and_true_if_else_multiple_condition_test(row)
-  # row = true_and_false_if_else_multiple_condition_test(row)
+  row = true_and_false_if_else_multiple_condition_test(row)
   row = false_and_true_if_else_multiple_condition_test(row)
-  # false_and_false_if_else_multiple_condition_test(row)
+  row = false_and_false_if_else_multiple_condition_test(row)
 
   starting_tests('bool if or multiple conditions')
   row = true_or_true_if_else_multiple_condition_test(row)
   row = true_or_false_if_else_multiple_condition_test(row)
-  # row = false_or_true_if_else_multiple_condition_test(row)
+  row = false_or_true_if_else_multiple_condition_test(row)
   false_or_false_if_else_multiple_condition_test(row)
 end
 

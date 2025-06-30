@@ -11,7 +11,6 @@
 #include "../configurables.h"
 #include "../debug.h"
 #include "../defines.h"
-#include "lexer.h"
 #include "lexemes.h"
 #include "lexer.h"
 #include "lexer_defines.h"
@@ -425,7 +424,7 @@ void lexer_lex(char* rst line, size_t length, Lexemes* lexemes, Arena* rst scrat
     }
 
     lexemes->count = n;
-    debug_tokens(toks);
+    debug_lexemes(lexemes);
 }
 
 /* lexer_lex_noninteractive
@@ -445,5 +444,5 @@ void lexer_lex_noninteractive(char** rst inputs, size_t inputs_count, Lexemes* l
         lexer_lex(inputs[i], strlen(inputs[i]) + 1, lexemes, scratch);
     }
 
-    debug_tokens(toks);
+    debug_lexemes(lexemes);
 }

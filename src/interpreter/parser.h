@@ -7,4 +7,4 @@
 #include "lexemes.h"
 #include "statements.h"
 
-int parser_parse(Lexemes* lexemes, Statements* rst statements, Shell* rst shell, Arena* rst scratch);
+int parser_parse(Lexemes* lexemes, Statements* rst stmts, Shell* rst shell, Arena* rst scratch);

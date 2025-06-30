@@ -1,8 +1,8 @@
 /* Copyright ncsh (C) by Alex Eski 2025 */
 /* vm_redirection.h: IO Redirection */
 
-#include "vm_types.h"
 #include "../statements.h"
+#include "vm_types.h"
 
 int redirection_start_if_needed(Statements* rst statements, Vm_Data* rst vm);
 

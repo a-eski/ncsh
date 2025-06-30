@@ -6,8 +6,8 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include "../defines.h"
 #include "../configurables.h"
+#include "../defines.h"
 #include "ncreadline.h"
 #include "terminal.h"
 

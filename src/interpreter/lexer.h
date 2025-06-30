@@ -7,7 +7,6 @@
 #include "../arena.h"
 #include "lexemes.h"
 
-
 /* lexer_lex
  * Turns the inputted line into values, lengths, and bytecodes that can be parsed.
  * Populates lexemes with the output.

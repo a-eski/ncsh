@@ -23,7 +23,7 @@
 
 void parser_home_expansion_process(Token* rst tok, Str home, Arena* rst scratch)
 {
-   if (tok->lens[tok->pos] == 2) {
+    if (tok->lens[tok->pos] == 2) {
         size_t len = home.length + 1;
         tok->vals[tok->pos] = arena_malloc(scratch, len, char);
         tok->op = OP_CONSTANT;
@@ -561,7 +561,6 @@ int parser_parse(Lexemes* lexemes, Tokens* rst toks, Shell* rst shell, Arena* rs
 int parser_lexemes_process(Lexemes* rst lexemes, Statements* rst statements, Arena* rst scratch)
 {
     for (size_t i = 0; i < lexemes->count; ++i) {
-
     }
 }
 

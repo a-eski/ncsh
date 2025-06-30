@@ -1,5 +1,6 @@
 #include <setjmp.h>
 #include <signal.h>
+#include <stdlib.h>
 
 #include "../src/defines.h"
 #include "../src/eskilib/etest.h"
@@ -16,16 +17,16 @@ jmp_buf env;
 #define vm_tester(input)                                                                                               \
     SCRATCH_ARENA_TEST_SETUP;                                                                                          \
                                                                                                                        \
-    Tokens* toks = lexer_lex(input, strlen(input) + 1, &scratch_arena);                                                \
-    int result = semantic_analyzer_analyze(toks);                                                                      \
-    eassert(result == EXIT_SUCCESS);                                                                                   \
-                                                                                                                       \
+    Lexemes lexemes = {0};                                                                                             \
+    lexer_lex(input, strlen(input) + 1, &lexemes, &scratch_arena);                                                     \
+    int res = semantic_analyzer_analyze(&lexemes);                                                                     \
+    eassert(res == EXIT_SUCCESS);                                                                                      \
+    Statements statements = {0};                                                                                       \
     Shell shell = {0};                                                                                                 \
-    result = parser_parse(toks, &shell, &shell.arena);                                                                 \
-    eassert(result == EXIT_SUCCESS);                                                                                   \
-                                                                                                                       \
-    result = vm_execute(toks, &shell, &scratch_arena);                                                                 \
-    eassert(result == EXIT_SUCCESS || result == EXIT_FAILURE_CONTINUE);                                                \
+    res = parser_parse(&lexemes, &statements, NULL, &scratch_arena);                                                   \
+    eassert(res == EXIT_SUCCESS);                                                                                      \
+    res = vm_execute(&statements, &shell, &scratch_arena);                                                             \
+    eassert(res == EXIT_SUCCESS || res == EXIT_FAILURE_CONTINUE);                                                      \
                                                                                                                        \
     SCRATCH_ARENA_TEST_TEARDOWN;
 

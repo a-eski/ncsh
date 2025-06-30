@@ -65,11 +65,16 @@ def true_or_test(row)
   assert_check_new_row(row)
   @tty.send_line('true || ls')
   row += 1
+  assert_check_new_row(row)
   test_passed('true or (||) test')
   row
 end
 
 def false_or_test(row)
+  assert_check_new_row(row)
+  @tty.send_line('true || ls')
+  row += 1
+  assert_check_new_row(row)
   test_passed('false or (||) test')
   row
 end

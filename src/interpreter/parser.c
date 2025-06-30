@@ -8,35 +8,47 @@
 #include <unistd.h>
 
 #include "../defines.h"
+#include "expansions.h"
 #include "lexemes.h"
 #include "ops.h"
-#include "statements.h"
-#include "expansions.h"
 #include "parser.h"
+#include "statements.h"
 
-size_t command_n;
-size_t statement_n;
+// TODO: get rid of globals
 Commands* commands;
+Shell* shell_ptr;
 
-void command_next(enum Ops op, Arena* rst scratch)
+void command_next(Arena* rst scratch)
 {
-    commands->count = command_n == 0 ? 1 : command_n;
+    if (!commands->pos) {
+        commands->count = 1;
+        commands->vals[1] = NULL;
+    }
+    else {
+        commands->count = commands->pos;
+    }
+    // commands->count = commands->pos == 0 ? 1 : commands->pos;
     commands->next = commands_alloc(scratch);
+    commands->vals[commands->pos] = NULL;
+    commands->pos = 0;
 
     commands = commands->next;
-    commands->prev_op = op;
-    command_n = 0;
+    commands->pos = 0;
 }
 
-void statement_next(Statements* rst statements, enum Statement_Type type, Arena* rst scratch)
+/*void command_next_set_prev_op(enum Ops op, Arena* rst scratch)
 {
-    statements->statements[statement_n].type = type;
-    ++statements->statements[statement_n].count;
-    ++statement_n;
-    statements->statements[statement_n].commands = commands_alloc(scratch);
-    commands->count = command_n == 0 ? 1 : command_n; // update last commands count
-    commands = statements->statements[statement_n].commands;
-    command_n = 0; // reset count
+    command_next(scratch);
+    commands->prev_op = op;
+}*/
+
+void parser_statement_next(Statements* rst stmts, enum Logic_Type type, Arena* rst scratch)
+{
+    commands->count = commands->pos == 0 ? 1 : commands->pos; // update last commands count
+
+    statement_next(stmts, type, scratch);
+
+    commands = stmts->statements[stmts->pos].commands;
 }
 
 bool parser_consume(Lexemes* rst lexemes, size_t* rst n, enum Ops expected)
@@ -71,6 +83,7 @@ bool parser_is_valid_statement(enum Ops op)
     case OP_AND:
     case OP_OR:
     case OP_LESS_THAN:
+    case OP_VARIABLE:
     case OP_GREATER_THAN: {
         return true;
     }
@@ -80,10 +93,10 @@ bool parser_is_valid_statement(enum Ops op)
     }
 }
 
-int parser_commands_process(Lexemes* rst lexemes, size_t* rst n, Arena* rst scratch)
+int parser_commands_process(Lexemes* rst lexemes, size_t* rst n, Statements* rst stmts, Arena* rst scratch)
 {
     if (!parser_is_valid_statement(parser_peek(lexemes, *n))) {
-        debug("no valid statement");
+        puts("ncsh parser: no valid statement.");
         return EXIT_FAILURE;
     }
 
@@ -97,102 +110,80 @@ int parser_commands_process(Lexemes* rst lexemes, size_t* rst n, Arena* rst scra
             end_of_statement = true;
         }
 
-        commands->vals[command_n] = lexemes->vals[*n];
-        commands->lens[command_n] = lexemes->lens[*n];
-        commands->ops[command_n] = lexemes->ops[*n];
-        ++command_n;
+        switch (lexemes->ops[*n]) {
+        case OP_HOME_EXPANSION:
+            expansion_home(lexemes, *n, scratch);
+            break;
+        case OP_EQUALS:
+        case OP_LESS_THAN:
+        case OP_GREATER_THAN: {
+            commands->current_op = lexemes->ops[*n];
+            commands->prev_op = lexemes->ops[*n];
+            break;
+        }
+        case OP_VARIABLE:
+            expansion_variable(lexemes->vals[*n], lexemes->lens[*n], commands, /*stmts,*/ shell_ptr, scratch);
+            ++*n;
+            continue;
+        case OP_GLOB_EXPANSION:
+            expansion_glob(lexemes->vals[*n], commands, scratch);
+            continue;
+        case OP_PIPE:
+            ++stmts->pipes_count;
+            commands[commands->pos - 1].current_op = OP_PIPE;
+            command_next(scratch);
+            commands->prev_op = OP_PIPE;
+            continue;
+        case OP_ASSIGNMENT:
+            expansion_assignment(lexemes, *n, &shell_ptr->vars, scratch);
+            if (*n + 1 < lexemes->count && (lexemes->ops[*n + 1] == OP_AND || lexemes->ops[*n + 1] == OP_OR)) {
+                ++*n; // skip || or && on assignment, assigment not included in commands
+            }
+            continue;
+        case OP_AND:
+        case OP_OR: {
+            commands->current_op = lexemes->ops[*n];
+            command_next(scratch);
+            commands->prev_op = lexemes->ops[*n];
+            ++*n;
+            continue;
+        }
+        }
+
+        commands->vals[commands->pos] = lexemes->vals[*n];
+        commands->lens[commands->pos] = lexemes->lens[*n];
+        commands->ops[commands->pos] = lexemes->ops[*n];
+        ++commands->pos;
         ++*n;
 
-        enum Ops peeked = parser_peek(lexemes, *n);
-        if (end_of_statement || peeked == OP_AND || peeked == OP_OR) {
-            command_next(lexemes->ops[*n], scratch);
+        // enum Ops peeked = parser_peek(lexemes, *n);
+        if (end_of_statement) {
+            command_next(scratch);
             debug("end of statement");
         }
+        /*else if (peeked == OP_AND || peeked == OP_OR) {
+            command_next_set_prev_op(lexemes->ops[*n], scratch);
+            debug("end of statement, && or || found");
+        }*/
     } while (parser_is_valid_statement(parser_peek(lexemes, *n)));
 
     debug("commands processed");
     return EXIT_SUCCESS;
 }
 
-int parser_conditions(Lexemes* rst lexemes, size_t* rst n, Statements* rst statements, Arena* rst scratch)
+int parser_conditions(Lexemes* rst lexemes, size_t* rst n, Statements* rst stmts, Arena* rst scratch)
 {
-    debug("processing conditions");
-    int res =  parser_commands_process(lexemes, n, scratch);
-    if (res != EXIT_SUCCESS) {
-        return res;
-    }
-    statement_next(statements, ST_CONDITIONS, scratch);
-    return EXIT_SUCCESS;
-}
-
-int parser_if_statements(Lexemes* rst lexemes, size_t* rst n, Statements* rst statements, Arena* rst scratch)
-{
-    debug("processing if statements");
-    int res =  parser_commands_process(lexemes, n, scratch);
-    if (res != EXIT_SUCCESS) {
-        return res;
-    }
-    statement_next(statements, ST_IF, scratch);
-    return res;
-}
-
-int parser_else_statements(Lexemes* rst lexemes, size_t* rst n, Statements* rst statements, Arena* rst scratch)
-{
-    debug("processing else");
-    if (!parser_consume(lexemes, n, OP_ELSE)) {
-        return EXIT_FAILURE;
-    }
-
-    int res = parser_commands_process(lexemes, n, scratch);
-    if (res != EXIT_SUCCESS) {
-        return res;
-    }
-
-    statement_next(statements, ST_ELSE, scratch);
-    return EXIT_SUCCESS;
-}
-
-int parser_elif_statements(Lexemes* rst lexemes, size_t* rst n, Statements* rst statements, Arena* rst scratch)
-{
-    debug("processing elif");
-    if (!parser_consume(lexemes, n, OP_ELIF)) {
-        return EXIT_FAILURE;
-    }
-
-    int res = parser_commands_process(lexemes, n, scratch);
-    if (res != EXIT_SUCCESS) {
-        return EXIT_FAILURE;
-    }
-    statement_next(statements, ST_ELIF, scratch);
-
-    if (parser_peek(lexemes, *n) == OP_ELIF) {
-        res = parser_elif_statements(lexemes, n, statements, scratch);
-        if (res != EXIT_SUCCESS) {
-            return EXIT_FAILURE;
-        }
-    }
-
-    return EXIT_SUCCESS;
-}
-
-[[nodiscard]]
-int parser_if(Lexemes* rst lexemes, size_t* rst n, Statements* rst statements, Arena* rst scratch)
-{
-    debug("processing if");
-    if (!parser_consume(lexemes, n, OP_IF)) {
-        debug("no OP_IF");
-        return EXIT_FAILURE;
-    }
-
     if (!parser_consume(lexemes, n, OP_CONDITION_START)) {
         debug("no OP_CONDITION_START");
         return EXIT_FAILURE;
     }
 
-    int res = parser_conditions(lexemes, n, statements, scratch);
+    debug("processing conditions");
+    int res = parser_commands_process(lexemes, n, stmts, scratch);
     if (res != EXIT_SUCCESS) {
         return res;
     }
+    parser_statement_next(stmts, LT_CONDITIONS, scratch);
 
     if (!parser_consume(lexemes, n, OP_CONDITION_END)) {
         debug("no OP_CONDITION_END");
@@ -203,7 +194,79 @@ int parser_if(Lexemes* rst lexemes, size_t* rst n, Statements* rst statements, A
         return EXIT_FAILURE;
     }
 
-    res = parser_if_statements(lexemes, n, statements, scratch);
+    return EXIT_SUCCESS;
+}
+
+int parser_if_statements(Lexemes* rst lexemes, size_t* rst n, Statements* rst stmts, Arena* rst scratch)
+{
+    debug("processing if statements");
+    int res = parser_commands_process(lexemes, n, stmts, scratch);
+    if (res != EXIT_SUCCESS) {
+        return res;
+    }
+    parser_statement_next(stmts, LT_IF, scratch);
+    return res;
+}
+
+int parser_else_statements(Lexemes* rst lexemes, size_t* rst n, Statements* rst stmts, Arena* rst scratch)
+{
+    debug("processing else");
+    if (!parser_consume(lexemes, n, OP_ELSE)) {
+        return EXIT_FAILURE;
+    }
+
+    int res = parser_commands_process(lexemes, n, stmts, scratch);
+    if (res != EXIT_SUCCESS) {
+        return res;
+    }
+
+    parser_statement_next(stmts, LT_ELSE, scratch);
+    return EXIT_SUCCESS;
+}
+
+int parser_elif_statements(Lexemes* rst lexemes, size_t* rst n, Statements* rst stmts, Arena* rst scratch)
+{
+    debug("processing elif");
+    if (!parser_consume(lexemes, n, OP_ELIF)) {
+        return EXIT_FAILURE;
+    }
+
+    int res = parser_conditions(lexemes, n, stmts, scratch);
+    if (res != EXIT_SUCCESS) {
+        return res;
+    }
+
+    res = parser_commands_process(lexemes, n, stmts, scratch);
+    if (res != EXIT_SUCCESS) {
+        return EXIT_FAILURE;
+    }
+    parser_statement_next(stmts, LT_ELIF, scratch);
+
+    if (parser_peek(lexemes, *n) == OP_ELIF) {
+        res = parser_elif_statements(lexemes, n, stmts, scratch);
+        if (res != EXIT_SUCCESS) {
+            return EXIT_FAILURE;
+        }
+    }
+
+    return EXIT_SUCCESS;
+}
+
+[[nodiscard]]
+int parser_if(Lexemes* rst lexemes, size_t* rst n, Statements* rst stmts, Arena* rst scratch)
+{
+    debug("processing if");
+    if (!parser_consume(lexemes, n, OP_IF)) {
+        debug("no OP_IF");
+        return EXIT_FAILURE;
+    }
+
+    int res = parser_conditions(lexemes, n, stmts, scratch);
+    if (res != EXIT_SUCCESS) {
+        return res;
+    }
+
+    res = parser_if_statements(lexemes, n, stmts, scratch);
     if (res != EXIT_SUCCESS) {
         debug("can't process if statements");
         return res;
@@ -212,6 +275,7 @@ int parser_if(Lexemes* rst lexemes, size_t* rst n, Statements* rst statements, A
     if (parser_peek(lexemes, *n) == OP_FI) {
         parser_consume(lexemes, n, OP_FI);
         debug("returning success, OP_FI found, no else");
+        stmts->type = ST_IF;
         return EXIT_SUCCESS;
     }
 
@@ -223,10 +287,12 @@ int parser_if(Lexemes* rst lexemes, size_t* rst n, Statements* rst statements, A
 
     res = EXIT_FAILURE;
     if (peeked == OP_ELSE) {
-        res = parser_else_statements(lexemes, n, statements, scratch);
+        stmts->type = ST_IF_ELSE;
+        res = parser_else_statements(lexemes, n, stmts, scratch);
     }
     else if (peeked == OP_ELIF) {
-        res = parser_elif_statements(lexemes, n, statements, scratch);
+        stmts->type = ST_IF_ELIF_ELSE;
+        res = parser_elif_statements(lexemes, n, stmts, scratch);
     }
 
     if (res != EXIT_SUCCESS) {
@@ -237,101 +303,123 @@ int parser_if(Lexemes* rst lexemes, size_t* rst n, Statements* rst statements, A
         return EXIT_FAILURE;
     }
 
-    ++statements->count;
     return EXIT_SUCCESS;
 }
 
 [[nodiscard]]
-int parser_parse(Lexemes* rst lexemes, Statements* rst statements, Shell* rst shell, Arena* rst scratch)
+int parser_parse(Lexemes* rst lexemes, Statements* stmts, Shell* rst shell, Arena* rst scratch)
 {
-    assert(statements);
+    assert(stmts);
     assert(scratch);
 
-    statements_init(statements, scratch);
+    statements_init(stmts, scratch);
     if (!lexemes->count) {
         return EXIT_SUCCESS;
     }
+    assert(stmts->statements->commands);
+    assert(stmts->statements->commands->vals);
 
     int res;
-    command_n = 0;
-    statement_n = 0;
-    commands = statements->statements[statement_n].commands;
+    commands = stmts->statements[stmts->pos].commands;
+    commands->pos = commands->count;
     assert(commands);
+    shell_ptr = shell;
 
-    for (size_t i = 0; i < lexemes->count; ++i) {
-        if (!lexemes->vals[i]) {
+    if (lexemes->ops[0] == OP_CONSTANT) {
+        // TODO: check aliases in certain other conditions, like after && or ||.
+        expansion_alias(lexemes, 0, scratch);
+    }
+
+    for (size_t i = 0; i < lexemes->count && lexemes->vals[i]; ++i) {
+        if (commands->pos >= commands->cap - 1) {
+            commands_realloc(stmts, scratch);
+        }
+
+        switch (lexemes->ops[i]) {
+        case OP_HOME_EXPANSION: {
+            expansion_home(lexemes, i, scratch);
             break;
         }
-
-        if (command_n >= commands->cap) {
-            commands_realloc(statements, scratch);
+        case OP_EQUALS:
+        case OP_LESS_THAN:
+        case OP_GREATER_THAN: {
+            commands->current_op = lexemes->ops[i];
+            commands->prev_op = lexemes->ops[i];
+            break;
         }
-
-        if (i + 1 < lexemes->count &&
-            (lexemes->ops[i + 1] == OP_STDIN_REDIRECTION || lexemes->ops[i + 1] == OP_STDIN_REDIRECTION_APPEND)) {
-                statements->redirect_type = lexemes->ops[i + 1];
-                statements->redirect_filename = lexemes->vals[i];
-                ++i;
-                continue;
-        }
-        else {
-            switch (lexemes->ops[i]) {
-                case OP_PIPE:
-                    ++statements->pipes_count;
-                    break;
-                case OP_HOME_EXPANSION:
-                    expansion_home(lexemes, i, scratch);
-                    break;
-                case OP_IF:
-                    res = parser_if(lexemes, &i, statements, scratch);
-                    if (res != EXIT_SUCCESS)
-                        return EXIT_FAILURE;
-                    break;
-                case OP_BACKGROUND_JOB:
-                    statements->is_bg_job = true;
-                    continue;
-                case OP_ASSIGNMENT:
-                    expansion_assignment(lexemes + i, i, &shell->vars, scratch);
-                    if (i + 1 < lexemes->count && (lexemes->ops[i + 1] == OP_AND || lexemes->ops[i + 1] == OP_OR)) {
-                        ++i; // skip || or && on assignment, assigment not included in commands
-                    }
-                    continue;
-                case OP_AND:
-                case OP_OR: {
-                    command_next(lexemes->ops[i], scratch);
-                    continue;
-                }
-                case OP_STDOUT_REDIRECTION:
-                case OP_STDOUT_REDIRECTION_APPEND:
-                case OP_STDERR_REDIRECTION:
-                case OP_STDERR_REDIRECTION_APPEND:
-                case OP_STDOUT_AND_STDERR_REDIRECTION:
-                case OP_STDOUT_AND_STDERR_REDIRECTION_APPEND:
-                    statements->redirect_type = lexemes->ops[i];
-                    statements->redirect_filename = lexemes->vals[i + 1];
-                    ++i; // skip filename and redirect type, not needed in commands
-                    continue;
+        case OP_IF: {
+            res = parser_if(lexemes, &i, stmts, scratch);
+            if (res != EXIT_SUCCESS) {
+                return EXIT_FAILURE;
             }
+            continue;
+        }
+        case OP_VARIABLE: {
+            expansion_variable(lexemes->vals[i], lexemes->lens[i], commands, /*stmts,*/ shell, scratch);
+            continue;
+        }
+        case OP_GLOB_EXPANSION: {
+            expansion_glob(lexemes->vals[i], commands, scratch);
+            continue;
+        }
+        case OP_PIPE: {
+            ++stmts->pipes_count;
+            commands[commands->pos - 1].current_op = OP_PIPE;
+            command_next(scratch);
+            commands->prev_op = OP_PIPE;
+            continue;
+        }
+        case OP_BACKGROUND_JOB: {
+            stmts->is_bg_job = true;
+            continue;
+        }
+        case OP_ASSIGNMENT: {
+            expansion_assignment(lexemes, i, &shell->vars, scratch);
+            if (i + 1 < lexemes->count && (lexemes->ops[i + 1] == OP_AND || lexemes->ops[i + 1] == OP_OR)) {
+                ++i; // skip || or && on assignment, assigment not included in commands
+            }
+            continue;
+        }
+        case OP_AND:
+        case OP_OR: {
+            commands->current_op = lexemes->ops[i];
+            command_next(scratch);
+            commands->prev_op = lexemes->ops[i];
+            continue;
+        }
+        case OP_STDOUT_REDIRECTION:
+        case OP_STDOUT_REDIRECTION_APPEND:
+        case OP_STDIN_REDIRECTION:
+        case OP_STDIN_REDIRECTION_APPEND:
+        case OP_STDERR_REDIRECTION:
+        case OP_STDERR_REDIRECTION_APPEND:
+        case OP_STDOUT_AND_STDERR_REDIRECTION:
+        case OP_STDOUT_AND_STDERR_REDIRECTION_APPEND: {
+            stmts->redirect_type = lexemes->ops[i];
+            stmts->redirect_filename = lexemes->vals[i + 1];
+            ++i; // skip filename and redirect type, not needed in commands
+            continue;
+        }
         }
 
-        commands->vals[command_n] = lexemes->vals[i];
-        commands->lens[command_n] = lexemes->lens[i];
-        commands->ops[command_n] = lexemes->ops[i];
-        ++command_n;
+        commands->vals[commands->pos] = lexemes->vals[i];
+        commands->lens[commands->pos] = lexemes->lens[i];
+        commands->ops[commands->pos] = lexemes->ops[i];
+        ++commands->pos;
     }
 
-    if (command_n > 0) {
-        if (!statements->count) {
-            statements->count = !statement_n ? 1 : statement_n;
+    if (commands->pos > 0) {
+        if (!stmts->count) {
+            stmts->count = !stmts->pos ? 1 : stmts->pos;
         }
-        if (!statements->statements->count) {
-            ++statements->statements->count;
+        if (!stmts->statements->count) {
+            ++stmts->statements->count;
         }
-        commands->count = command_n;
+        commands->count = commands->pos;
     }
 
-    // expansions_process(lexemes, shell, scratch);
-    // ops_process
+    // no branch is fine, this value not used unless pipes are present.
+    ++stmts->pipes_count; // count the number of commands, not pipes
 
     return EXIT_SUCCESS;
 }

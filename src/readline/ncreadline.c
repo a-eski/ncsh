@@ -18,8 +18,8 @@
 #include "../eskilib/eresult.h"
 #include "ac.h"
 #include "ncreadline.h"
-#include "terminal.h"
 #include "prompt.h"
+#include "terminal.h"
 
 #ifdef NCSH_RL_TEST
 #include "ncreadline_mocks.h"

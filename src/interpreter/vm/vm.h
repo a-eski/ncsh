@@ -7,6 +7,6 @@
 #include "../../types.h"
 #include "../statements.h"
 
-int vm_execute(Statements* rst statements, Shell* rst shell, Arena* rst scratch);
+int vm_execute(Statements* rst stmts, Shell* rst shell, Arena* rst scratch);
 
-int vm_execute_noninteractive(Statements* rst statements, Shell* rst shell);
+int vm_execute_noninteractive(Statements* rst stmts, Shell* rst shell);

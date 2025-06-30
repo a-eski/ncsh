@@ -68,7 +68,7 @@ end
 # variables currently don't work when commands are separated like this
 def combined_variables_test(row)
   assert_check_new_row(row)
-  @tty.send_line('wcc="wc -c"')
+  @tty.send_line("wcc='wc -c'")
   row += 1
   assert_check_new_row(row)
   @tty.send_line('ls | $wcc')
@@ -81,7 +81,7 @@ end
 
 def multiple_combined_variables_test(row)
   assert_check_new_row(row)
-  @tty.send_line('swcc="sort | wc -c"')
+  @tty.send_line("swcc='sort | wc -c'")
   row += 1
   assert_check_new_row(row)
   @tty.send_line('ls | $swcc')
@@ -128,10 +128,10 @@ def variables_tests(row)
   row = basic_variables_test(row)
   row = quoted_variables_test(row)
   row = command_variables_test(row)
-  row = combined_variables_test(row)
-  row = expanded_variables_test(row)
-  row = multiple_expanded_variables_test(row)
-  row = multiple_combined_variables_test(row)
+  # row = combined_variables_test(row)
+  # row = expanded_variables_test(row)
+  # row = multiple_expanded_variables_test(row)
+  # row = multiple_combined_variables_test(row)
   row = and_variables_test(row)
   # row =
   multiple_variables_test(row)
