@@ -1,4 +1,0 @@
-ls
-ls | sort
-echo hello
-ls > t.txt
