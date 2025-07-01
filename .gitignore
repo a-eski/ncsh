@@ -7,7 +7,9 @@ ncsh_builtin_commands_tests
 ncsh_parser_tests
 ncsh_history_file_tests
 .ncsh_history
+ncsh_history
 .ncsh_history_test
+ncsh_history_test
 t.txt
 *.out
 database.z

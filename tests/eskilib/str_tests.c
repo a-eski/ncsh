@@ -1,8 +1,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../src/eskilib/etest.h"
-#include "../src/eskilib/str.h"
+#include "../../src/eskilib/etest.h"
+#include "../../src/eskilib/str.h"
 
 void estrcmp_no_length_test()
 {

@@ -4,6 +4,7 @@
 #include <stdlib.h>
 
 #include "interpreter.h"
+#include "lexemes.h"
 #include "lexer.h"
 #include "parser.h"
 #include "semantic_analyzer.h"
@@ -18,30 +19,36 @@ void interpreter_init(Shell* rst shell)
 [[nodiscard]]
 int interpreter_run(Shell* rst shell, Arena scratch)
 {
-    Tokens* toks = lexer_lex(shell->input.buffer, shell->input.pos, &scratch);
+    Lexemes lexemes = {0};
+    lexer_lex(shell->input.buffer, shell->input.pos, &lexemes, &scratch);
 
-    int result;
-    if ((result = semantic_analyzer_analyze(toks)) != EXIT_SUCCESS)
+    int result = semantic_analyzer_analyze(&lexemes);
+    if (result != EXIT_SUCCESS)
         return result;
 
-    if ((result = parser_parse(toks, shell, &shell->arena)) != EXIT_SUCCESS)
+    Statements statements = {0};
+    result = parser_parse(&lexemes, &statements, shell, &shell->arena);
+    if (result != EXIT_SUCCESS)
         return result;
 
-    return vm_execute(toks, shell, &scratch);
+    return vm_execute(&statements, shell, &scratch);
 }
 
 [[nodiscard]]
 int interpreter_run_noninteractive(char** rst argv, size_t argc, Shell* rst shell)
 {
-    Tokens* toks = lexer_lex_noninteractive(argv, argc, &shell->arena);
+    Lexemes lexemes = {0};
+    lexer_lex_noninteractive(argv, argc, &lexemes, &shell->arena);
 
     int result;
-    if ((result = semantic_analyzer_analyze(toks)) != EXIT_SUCCESS)
+    if ((result = semantic_analyzer_analyze(&lexemes)) != EXIT_SUCCESS)
         return result;
 
-    if ((result = parser_parse(toks, shell, &shell->arena)) != EXIT_SUCCESS) {
+    Statements statements = {0};
+    result = parser_parse(&lexemes, &statements, shell, &shell->arena);
+    if (result != EXIT_SUCCESS) {
         return result;
     }
 
-    return vm_execute_noninteractive(toks, shell);
+    return vm_execute_noninteractive(&statements, shell);
 }

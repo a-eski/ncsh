@@ -2,17 +2,16 @@
 
 #include <assert.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <unistd.h>
 
-#include "../defines.h"
-#include "tokens.h"
-
-int tok_invalid_syntax_check_res;
+#include "lexemes.h"
+#include "ops.h"
 
 [[nodiscard]]
 int semantic_analyzer_error_write(char* rst message, size_t message_length)
 {
-    if (write(STDIN_FILENO, message, message_length) == -1) {
+    if (write(STDERR_FILENO, message, message_length) == -1) {
         return EXIT_FAILURE;
     }
 
@@ -101,52 +100,44 @@ int semantic_analyzer_error_write(char* rst message, size_t message_length)
 /* semantic_analyzer_check_first_arg
  * Simple check to see if something is in first position that shouldn't be
  */
-void syntax_validatator_first_arg_check(uint8_t op)
+int syntax_validatator_first_arg_check(uint8_t op)
 {
     switch (op) {
     case OP_PIPE: {
-        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_PIPE_FIRST_ARG);
-        break;
+        return INVALID_SYNTAX(INVALID_SYNTAX_PIPE_FIRST_ARG);
     }
     case OP_STDOUT_REDIRECTION: {
-        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_REDIR_FIRST_ARG);
-        break;
+        return INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_REDIR_FIRST_ARG);
     }
     case OP_STDOUT_REDIRECTION_APPEND: {
-        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_REDIR_APPEND_FIRST_ARG);
-        break;
+        return INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_REDIR_APPEND_FIRST_ARG);
     }
     case OP_STDIN_REDIRECTION: {
-        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDIN_REDIR_FIRST_ARG);
-        break;
+        return INVALID_SYNTAX(INVALID_SYNTAX_STDIN_REDIR_FIRST_ARG);
     }
     case OP_STDERR_REDIRECTION: {
-        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDERR_REDIR_FIRST_ARG);
-        break;
+        return INVALID_SYNTAX(INVALID_SYNTAX_STDERR_REDIR_FIRST_ARG);
     }
     case OP_STDERR_REDIRECTION_APPEND: {
-        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDERR_REDIR_APPEND_FIRST_ARG);
-        break;
+        return INVALID_SYNTAX(INVALID_SYNTAX_STDERR_REDIR_APPEND_FIRST_ARG);
     }
     case OP_STDOUT_AND_STDERR_REDIRECTION: {
-        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_AND_STDERR_REDIR_FIRST_ARG);
-        break;
+        return INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_AND_STDERR_REDIR_FIRST_ARG);
     }
     case OP_STDOUT_AND_STDERR_REDIRECTION_APPEND: {
-        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_AND_STDERR_REDIR_APPEND_FIRST_ARG);
-        break;
+        return INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_AND_STDERR_REDIR_APPEND_FIRST_ARG);
     }
     case OP_BACKGROUND_JOB: {
-        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_BACKGROUND_JOB_FIRST_ARG);
-        break;
+        return INVALID_SYNTAX(INVALID_SYNTAX_BACKGROUND_JOB_FIRST_ARG);
     }
     case OP_AND: {
-        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_AND_IN_FIRST_ARG);
-        break;
+        return INVALID_SYNTAX(INVALID_SYNTAX_AND_IN_FIRST_ARG);
     }
     case OP_OR: {
-        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_OR_IN_FIRST_ARG);
-        break;
+        return INVALID_SYNTAX(INVALID_SYNTAX_OR_IN_FIRST_ARG);
+    }
+    default: {
+        return EXIT_SUCCESS;
     }
     }
 }
@@ -154,52 +145,41 @@ void syntax_validatator_first_arg_check(uint8_t op)
 /* semantic_analyzer_check_last_arg
  * Simple check to see if something is in last position that shouldn't be
  */
-void semantic_analyzer_last_arg_check(Tokens* rst toks)
+int semantic_analyzer_last_arg_check(Lexemes* rst lexemes)
 {
-    Token* tok = toks->head->next;
-    while (tok->next)
-        tok = tok->next;
-
-    switch (tok->op) {
+    switch (lexemes->ops[lexemes->count - 1]) {
     case OP_PIPE: {
-        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_PIPE_LAST_ARG);
-        break;
+        return INVALID_SYNTAX(INVALID_SYNTAX_PIPE_LAST_ARG);
     }
     case OP_STDOUT_REDIRECTION: {
-        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_REDIR_LAST_ARG);
-        break;
+        return INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_REDIR_LAST_ARG);
     }
     case OP_STDOUT_REDIRECTION_APPEND: {
-        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_REDIR_APPEND_LAST_ARG);
-        break;
+        return INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_REDIR_APPEND_LAST_ARG);
     }
     case OP_STDIN_REDIRECTION: {
-        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDIN_REDIR_LAST_ARG);
-        break;
+        return INVALID_SYNTAX(INVALID_SYNTAX_STDIN_REDIR_LAST_ARG);
     }
     case OP_STDERR_REDIRECTION: {
-        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDERR_REDIR_LAST_ARG);
-        break;
+        return INVALID_SYNTAX(INVALID_SYNTAX_STDERR_REDIR_LAST_ARG);
     }
     case OP_STDERR_REDIRECTION_APPEND: {
-        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDERR_REDIR_APPEND_LAST_ARG);
-        break;
+        return INVALID_SYNTAX(INVALID_SYNTAX_STDERR_REDIR_APPEND_LAST_ARG);
     }
     case OP_STDOUT_AND_STDERR_REDIRECTION: {
-        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_AND_STDERR_REDIR_LAST_ARG);
-        break;
+        return INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_AND_STDERR_REDIR_LAST_ARG);
     }
     case OP_STDOUT_AND_STDERR_REDIRECTION_APPEND: {
-        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_AND_STDERR_REDIR_APPEND_LAST_ARG);
-        break;
+        return INVALID_SYNTAX(INVALID_SYNTAX_STDOUT_AND_STDERR_REDIR_APPEND_LAST_ARG);
     }
     case OP_AND: {
-        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_AND_IN_LAST_ARG);
-        break;
+        return INVALID_SYNTAX(INVALID_SYNTAX_AND_IN_LAST_ARG);
     }
     case OP_OR: {
-        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_OR_IN_LAST_ARG);
-        break;
+        return INVALID_SYNTAX(INVALID_SYNTAX_OR_IN_LAST_ARG);
+    }
+    default: {
+        return EXIT_SUCCESS;
     }
     }
 }
@@ -208,139 +188,124 @@ void semantic_analyzer_last_arg_check(Tokens* rst toks)
 
 #define INVALID_SYNTAX_IF_NO_NEXT_ARG                                                                                  \
     "ncsh: Invalid syntax: found 'if' with no value after. "                                                           \
-    "Correct usage of 'if' is 'if [(CONDITION)]; then [STATEMENT]; [else [STATEMENT];] fi'.\n"
+    "Correct usage of 'if' is 'if [ (CONDITION) ]; then [STATEMENT]; [else [STATEMENT];] fi'.\n"
 #define INVALID_SYNTAX_IF_NO_START_CONDITION                                                                           \
-    "ncsh: Invalid syntax: found 'if' with condition after. "                                                          \
-    "Correct usage of 'if' is 'if [(CONDITION)]; then [STATEMENT]; [else [STATEMENT];] fi'.\n"
+    "ncsh: Invalid syntax: found 'if' with no condition after. "                                                          \
+    "Correct usage of 'if' is 'if [ (CONDITION) ]; then [STATEMENT]; [else [ STATEMENT ];] fi'.\n"
 
 #define INVALID_SYNTAX_CONDITION_START_NO_NEXT_ARG                                                                     \
     "ncsh: Invalid Syntax: expecting expression after 'if ['. "                                                        \
-    "Correct usage of 'if' is 'if [(CONDITION)]; then [STATEMENT]; [else [STATEMENT];] fi'.\n"
+    "Correct usage of 'if' is 'if [ (CONDITION) ]; then [STATEMENT]; [else [STATEMENT];] fi'.\n"
 
 #define INVALID_SYNTAX_CONDITION_END_NO_NEXT_ARG                                                                       \
-    "ncsh: Invalid Syntax: expecting values after 'if [(CONDITION)];'. "                                               \
-    "Correct usage of 'if' is 'if [(CONDITION)]; then [STATEMENT]; [else [STATEMENT];] fi'.\n"
+    "ncsh: Invalid Syntax: expecting values after 'if [ (CONDITION) ];'. "                                               \
+    "Correct usage of 'if' is 'if [ (CONDITION) ]; then [STATEMENT]; [else [STATEMENT];] fi'.\n"
 #define INVALID_SYNTAX_CONDITION_END_NO_NEXT_THEN                                                                      \
-    "ncsh: Invalid Syntax: expecting 'then' after 'if [(CONDITION)];'. "                                               \
-    "Correct usage of 'if' is 'if [(CONDITION)]; then [STATEMENT]; [else [STATEMENT];] fi'.\n"
+    "ncsh: Invalid Syntax: expecting 'then' after 'if [ (CONDITION) ];'. "                                               \
+    "Correct usage of 'if' is 'if [ (CONDITION) ]; then [STATEMENT]; [else [STATEMENT];] fi'.\n"
 
 #define INVALID_SYNTAX_THEN_NO_NEXT_ARG                                                                                \
-    "ncsh: Invalid Syntax: expecting some value after 'if [(CONDITION)]; then'. "                                      \
-    "Correct usage of 'if' is 'if [(CONDITION)]; then [STATEMENT]; [else [STATEMENT];] fi'.\n"
+    "ncsh: Invalid Syntax: expecting some value after 'if [ (CONDITION) ]; then'. "                                      \
+    "Correct usage of 'if' is 'if [ (CONDITION) ]; then [STATEMENT]; [else [STATEMENT];] fi'.\n"
 #define INVALID_SYNTAX_THEN_NO_NEXT_STATEMENT                                                                          \
-    "ncsh: Invalid Syntax: expecting some statement after 'if [(CONDITION)]; then'. "                                  \
-    "Correct usage of 'if' is 'if [(CONDITION)]; then [STATEMENT]; [else [STATEMENT];] fi'.\n"
+    "ncsh: Invalid Syntax: expecting some statement after 'if [ (CONDITION) ]; then'. "                                  \
+    "Correct usage of 'if' is 'if [ (CONDITION) ]; then [STATEMENT]; [else [STATEMENT];] fi'.\n"
 
 #define INVALID_SYNTAX_ELSE_NO_NEXT_ARG                                                                                \
-    "ncsh: Invalid Syntax: expecting some value after 'if [(CONDITION)]; then (STATEMENT); else'. "                    \
-    "Correct usage of 'if' is 'if [(CONDITION)]; then [STATEMENT]; [else [STATEMENT];] fi'.\n"
+    "ncsh: Invalid Syntax: expecting some value after 'if [ (CONDITION) ]; then (STATEMENT); else'. "                    \
+    "Correct usage of 'if' is 'if [ (CONDITION) ]; then [STATEMENT]; [else [STATEMENT];] fi'.\n"
 #define INVALID_SYNTAX_ELSE_NO_NEXT_STATEMENT                                                                          \
-    "ncsh: Invalid Syntax: expecting some statement after 'if [(CONDITION)]; then (STATEMENT); else'. "                \
-    "Correct usage of 'if' is 'if [(CONDITION)]; then [STATEMENT]; [else [STATEMENT];] fi'.\n"
+    "ncsh: Invalid Syntax: expecting some statement after 'if [ (CONDITION) ]; then (STATEMENT); else'. "                \
+    "Correct usage of 'if' is 'if [ (CONDITION) ]; then [STATEMENT]; [else [STATEMENT];] fi'.\n"
 
-void semantic_analyzer_check(Tokens* rst toks)
+int semantic_analyzer_check(Lexemes* rst lexemes)
 {
-    Token* tok = toks->head->next;
-    if (!tok) {
-        tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_NO_ARGS);
-        return;
+    if (!lexemes) {
+        return INVALID_SYNTAX(INVALID_SYNTAX_NO_ARGS);
     }
-    Token* prev = NULL;
 
-    for (size_t i = 0; i < toks->count; ++i) {
-        switch (tok->op) {
+    for (size_t i = 0; i < lexemes->count; ++i) {
+        switch (lexemes->ops[i]) {
 
         case OP_BACKGROUND_JOB: {
-            if (tok->next) {
-                tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_BACKGROUND_JOB_NOT_LAST_ARG);
-                return;
+            if (i < lexemes->count - 1) {
+                return INVALID_SYNTAX(INVALID_SYNTAX_BACKGROUND_JOB_NOT_LAST_ARG);
             }
             break;
         }
 
         case OP_IF: {
-            if (!tok->next) {
-                tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_IF_NO_NEXT_ARG);
-                return;
+            if (i >= lexemes->count - 1) {
+                return INVALID_SYNTAX(INVALID_SYNTAX_IF_NO_NEXT_ARG);
             }
-            if (tok->next->op != OP_CONDITION_START) {
-                tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_IF_NO_START_CONDITION);
+            if (lexemes->ops[i + 1] != OP_CONDITION_START) {
+                return INVALID_SYNTAX(INVALID_SYNTAX_IF_NO_START_CONDITION);
             }
             break;
         }
 
         case OP_CONDITION_START: {
-            if (!prev)
+            if (!i)
                 break;
-            if (!tok->next) {
-                tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_CONDITION_START_NO_NEXT_ARG);
-                return;
+            if (i >= lexemes->count - 1) {
+                return INVALID_SYNTAX(INVALID_SYNTAX_CONDITION_START_NO_NEXT_ARG);
             }
             // OP_STATEMENT check
             break;
         }
 
         case OP_CONDITION_END: {
-            if (!prev)
+            if (!i)
                 break;
-            if (!tok->next) {
-                tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_CONDITION_END_NO_NEXT_ARG);
-                return;
+            if (i >= lexemes->count - 1) {
+                return INVALID_SYNTAX(INVALID_SYNTAX_CONDITION_END_NO_NEXT_ARG);
             }
-            if (tok->next->op != OP_THEN) {
-                tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_CONDITION_END_NO_NEXT_THEN);
-                return;
+            if (lexemes->ops[i + 1] != OP_THEN) {
+                return INVALID_SYNTAX(INVALID_SYNTAX_CONDITION_END_NO_NEXT_THEN);
             }
             break;
         }
 
         case OP_THEN: {
-            if (!prev)
+            if (!i)
                 break;
-            if (!tok->next) {
-                tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_THEN_NO_NEXT_ARG);
-                return;
+            if (i >= lexemes->count - 1) {
+                return INVALID_SYNTAX(INVALID_SYNTAX_THEN_NO_NEXT_ARG);
             }
-            if (tok->next->op != OP_CONSTANT) { // OP_STATEMENT for logic statements instead of using constant?
-                tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_THEN_NO_NEXT_STATEMENT);
-                return;
+            if (lexemes->ops[i + 1] != OP_CONSTANT) { // OP_STATEMENT for logic statements instead of using constant?
+                return INVALID_SYNTAX(INVALID_SYNTAX_THEN_NO_NEXT_STATEMENT);
             }
             break;
         }
 
         case OP_ELSE: {
-            if (!prev)
+            if (!i)
                 break;
-            if (!tok->next) {
-                tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_ELSE_NO_NEXT_ARG);
-                return;
+            if (i + 1 == lexemes->count - 1) {
+                return INVALID_SYNTAX(INVALID_SYNTAX_ELSE_NO_NEXT_ARG);
             }
-            if (tok->next->op != OP_CONSTANT) { // OP_STATEMENT for logic statements instead of using constant?
-                tok_invalid_syntax_check_res = INVALID_SYNTAX(INVALID_SYNTAX_ELSE_NO_NEXT_STATEMENT);
-                return;
+            if (lexemes->ops[i + 1] != OP_CONSTANT) { // OP_STATEMENT for logic statements instead of using constant?
+                return INVALID_SYNTAX(INVALID_SYNTAX_ELSE_NO_NEXT_STATEMENT);
             }
             break;
         }
         }
-        prev = tok;
-        tok = tok->next;
-        if (!tok)
-            break;
     }
+
+    return EXIT_SUCCESS;
 }
 
 [[nodiscard]]
-int semantic_analyzer_analyze(Tokens* rst toks)
+int semantic_analyzer_analyze(Lexemes* rst lexemes)
 {
-    assert(toks);
+    assert(lexemes);
 
-    tok_invalid_syntax_check_res = EXIT_SUCCESS;
-    syntax_validatator_first_arg_check(toks->head->next->op);
-    if (tok_invalid_syntax_check_res != EXIT_SUCCESS)
-        return tok_invalid_syntax_check_res;
-    semantic_analyzer_last_arg_check(toks);
-    if (tok_invalid_syntax_check_res != EXIT_SUCCESS)
-        return tok_invalid_syntax_check_res;
-    semantic_analyzer_check(toks);
-    return tok_invalid_syntax_check_res;
+    int result = syntax_validatator_first_arg_check(lexemes->ops[0]);
+    if (result != EXIT_SUCCESS)
+        return result;
+    result = semantic_analyzer_last_arg_check(lexemes);
+    if (result != EXIT_SUCCESS)
+        return result;
+    result = semantic_analyzer_check(lexemes);
+    return result;
 }

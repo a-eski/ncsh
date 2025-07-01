@@ -5,9 +5,9 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wsign-conversion"
 
-#include "../src/z/fzf.h"
-#include "lib/arena_test_helper.h"
-#include "lib/examiner.h"
+#include "../../src/z/fzf.h"
+#include "../lib/arena_test_helper.h"
+#include "../lib/examiner.h"
 
 #include <assert.h>
 #include <stdlib.h>

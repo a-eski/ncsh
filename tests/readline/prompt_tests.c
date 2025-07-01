@@ -1,7 +1,7 @@
 #include <stdlib.h>
 
-#include "../src/eskilib/etest.h"
-#include "../src/readline/ncreadline.h" // NOTE: is used for macro
+#include "../../src/eskilib/etest.h"
+#include "../../src/readline/ncreadline.h" // NOTE: is used for macro
 
 volatile int sigwinch_caught;
 

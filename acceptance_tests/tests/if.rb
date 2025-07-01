@@ -6,8 +6,7 @@ require './acceptance_tests/tests/common'
 def true_if_test(row)
   assert_check_new_row(row)
 
-  @tty.send_keys_exact('if [ true ]; then echo hello; fi')
-  @tty.send_newline
+  @tty.send_line_exact('if [ true ]; then echo hello; fi')
   row += 1
   @tty.assert_row(row, 'hello')
   row += 1
@@ -17,8 +16,7 @@ end
 
 def false_if_test(row)
   assert_check_new_row(row)
-  @tty.send_keys_exact('if [ false ]; then echo hello; fi')
-  @tty.send_newline
+  @tty.send_line_exact('if [ false ]; then echo hello; fi')
   row += 1
   assert_check_new_row(row)
   test_passed('false if test')
@@ -28,8 +26,7 @@ end
 def true_if_else_test(row)
   assert_check_new_row(row)
 
-  @tty.send_keys_exact('if [ true ]; then echo hello; else echo hi; fi')
-  @tty.send_newline
+  @tty.send_line_exact('if [ true ]; then echo hello; else echo hi; fi')
   row += 1
   @tty.assert_row(row, 'hello')
   row += 1
@@ -39,8 +36,7 @@ end
 
 def false_if_else_test(row)
   assert_check_new_row(row)
-  @tty.send_keys_exact('if [ false ]; then echo hello; else echo hi; fi')
-  @tty.send_newline
+  @tty.send_line_exact('if [ false ]; then echo hello; else echo hi; fi')
   row += 1
   @tty.assert_row(row, 'hi')
   row += 1
@@ -52,8 +48,7 @@ end
 def true_and_true_if_multiple_condition_test(row)
   assert_check_new_row(row)
 
-  @tty.send_keys_exact('if [ true && true ]; then echo hello; fi')
-  @tty.send_newline
+  @tty.send_line_exact('if [ true && true ]; then echo hello; fi')
   row += 1
   @tty.assert_row(row, 'hello')
   row += 1
@@ -64,8 +59,7 @@ end
 def true_and_false_if_multiple_condition_test(row)
   assert_check_new_row(row)
 
-  @tty.send_keys_exact('if [ true && false ]; then echo hello; fi')
-  @tty.send_newline
+  @tty.send_line_exact('if [ true && false ]; then echo hello; fi')
   row += 1
   assert_check_new_row(row)
   test_passed('true and if multiple condition test')
@@ -74,8 +68,7 @@ end
 
 def false_and_true_if_multiple_condition_test(row)
   assert_check_new_row(row)
-  @tty.send_keys_exact('if [ false && true ]; then echo hello; fi')
-  @tty.send_newline
+  @tty.send_line_exact('if [ false && true ]; then echo hello; fi')
   row += 1
   assert_check_new_row(row)
   test_passed('false and if multiple condition test')
@@ -84,8 +77,7 @@ end
 
 def false_and_false_if_multiple_condition_test(row)
   assert_check_new_row(row)
-  @tty.send_keys_exact('if [ false && false ]; then echo hello; fi')
-  @tty.send_newline
+  @tty.send_line_exact('if [ false && false ]; then echo hello; fi')
   row += 1
   assert_check_new_row(row)
   test_passed('false and if multiple condition test')
@@ -95,8 +87,7 @@ end
 def true_or_true_if_multiple_condition_test(row)
   assert_check_new_row(row)
 
-  @tty.send_keys_exact('if [ true || true ]; then echo hello; fi')
-  @tty.send_newline
+  @tty.send_line_exact('if [ true || true ]; then echo hello; fi')
   row += 1
   @tty.assert_row(row, 'hello')
   row += 1
@@ -107,8 +98,7 @@ end
 def true_or_false_if_multiple_condition_test(row)
   assert_check_new_row(row)
 
-  @tty.send_keys_exact('if [ true || false ]; then echo hello; fi')
-  @tty.send_newline
+  @tty.send_line_exact('if [ true || false ]; then echo hello; fi')
   row += 1
   @tty.assert_row(row, 'hello')
   row += 1
@@ -118,8 +108,7 @@ end
 
 def false_or_true_if_multiple_condition_test(row)
   assert_check_new_row(row)
-  @tty.send_keys_exact('if [ false || true ]; then echo hello; fi')
-  @tty.send_newline
+  @tty.send_line_exact('if [ false || true ]; then echo hello; fi')
   row += 1
   @tty.assert_row(row, 'hello')
   row += 1
@@ -130,8 +119,7 @@ end
 
 def false_or_false_if_multiple_condition_test(row)
   assert_check_new_row(row)
-  @tty.send_keys_exact('if [ false || false ]; then echo hello; fi')
-  @tty.send_newline
+  @tty.send_line_exact('if [ false || false ]; then echo hello; fi')
   row += 1
   assert_check_new_row(row)
   test_passed('false or if multiple condition test')
@@ -141,8 +129,7 @@ end
 def true_and_true_if_else_multiple_condition_test(row)
   assert_check_new_row(row)
 
-  @tty.send_keys_exact('if [ true && true ]; then echo hello; else echo hi; fi')
-  @tty.send_newline
+  @tty.send_line_exact('if [ true && true ]; then echo hello; else echo hi; fi')
   row += 1
   @tty.assert_row(row, 'hello')
   row += 1
@@ -153,8 +140,7 @@ end
 def true_and_false_if_else_multiple_condition_test(row)
   assert_check_new_row(row)
 
-  @tty.send_keys_exact('if [ true && false ]; then echo hello; else echo hi; fi')
-  @tty.send_newline
+  @tty.send_line_exact('if [ true && false ]; then echo hello; else echo hi; fi')
   row += 1
   @tty.assert_row(row, 'hi')
   row += 1
@@ -164,8 +150,7 @@ end
 
 def false_and_true_if_else_multiple_condition_test(row)
   assert_check_new_row(row)
-  @tty.send_keys_exact('if [ false && true ]; then echo hello; else echo hi; fi')
-  @tty.send_newline
+  @tty.send_line_exact('if [ false && true ]; then echo hello; else echo hi; fi')
   row += 1
   @tty.assert_row(row, 'hi')
   row += 1
@@ -176,8 +161,7 @@ end
 
 def false_and_false_if_else_multiple_condition_test(row)
   assert_check_new_row(row)
-  @tty.send_keys_exact('if [ false && false ]; then echo hello; else echo hi; fi')
-  @tty.send_newline
+  @tty.send_line_exact('if [ false && false ]; then echo hello; else echo hi; fi')
   row += 1
   @tty.assert_row(row, 'hi')
   row += 1
@@ -189,8 +173,7 @@ end
 def true_or_true_if_else_multiple_condition_test(row)
   assert_check_new_row(row)
 
-  @tty.send_keys_exact('if [ true || true ]; then echo hello; else echo hi; fi')
-  @tty.send_newline
+  @tty.send_line_exact('if [ true || true ]; then echo hello; else echo hi; fi')
   row += 1
   @tty.assert_row(row, 'hello')
   row += 1
@@ -201,8 +184,7 @@ end
 def true_or_false_if_else_multiple_condition_test(row)
   assert_check_new_row(row)
 
-  @tty.send_keys_exact('if [ true || false ]; then echo hello; else echo hi; fi')
-  @tty.send_newline
+  @tty.send_line_exact('if [ true || false ]; then echo hello; else echo hi; fi')
   row += 1
   @tty.assert_row(row, 'hello')
   row += 1
@@ -212,8 +194,7 @@ end
 
 def false_or_true_if_else_multiple_condition_test(row)
   assert_check_new_row(row)
-  @tty.send_keys_exact('if [ false || true ]; then echo hello; else echo hi; fi')
-  @tty.send_newline
+  @tty.send_line_exact('if [ false || true ]; then echo hello; else echo hi; fi')
   row += 1
   @tty.assert_row(row, 'hello')
   row += 1
@@ -224,8 +205,7 @@ end
 
 def false_or_false_if_else_multiple_condition_test(row)
   assert_check_new_row(row)
-  @tty.send_keys_exact('if [ false || false ]; then echo hello; else echo hi; fi')
-  @tty.send_newline
+  @tty.send_line_exact('if [ false || false ]; then echo hello; else echo hi; fi')
   row += 1
   @tty.assert_row(row, 'hi')
   row += 1
@@ -245,26 +225,26 @@ def bool_if_tests(row)
 
   starting_tests('bool if and multiple conditions')
   row = true_and_true_if_multiple_condition_test(row)
-  # row = true_and_false_if_multiple_condition_test(row)
+  row = true_and_false_if_multiple_condition_test(row)
   row = false_and_true_if_multiple_condition_test(row)
-  # row = false_and_false_if_multiple_condition_test(row)
+  row = false_and_false_if_multiple_condition_test(row)
 
   starting_tests('bool if or multiple conditions')
   row = true_or_true_if_multiple_condition_test(row)
   row = true_or_false_if_multiple_condition_test(row)
-  # row = false_or_true_if_multiple_condition_test(row)
+  row = false_or_true_if_multiple_condition_test(row)
   row = false_or_false_if_multiple_condition_test(row)
 
   starting_tests('bool if else and multiple conditions')
   row = true_and_true_if_else_multiple_condition_test(row)
-  # row = true_and_false_if_else_multiple_condition_test(row)
+  row = true_and_false_if_else_multiple_condition_test(row)
   row = false_and_true_if_else_multiple_condition_test(row)
-  # false_and_false_if_else_multiple_condition_test(row)
+  row = false_and_false_if_else_multiple_condition_test(row)
 
   starting_tests('bool if or multiple conditions')
   row = true_or_true_if_else_multiple_condition_test(row)
   row = true_or_false_if_else_multiple_condition_test(row)
-  # row = false_or_true_if_else_multiple_condition_test(row)
+  row = false_or_true_if_else_multiple_condition_test(row)
   false_or_false_if_else_multiple_condition_test(row)
 end
 
@@ -272,8 +252,7 @@ end
 def equals_if_test(row)
   assert_check_new_row(row)
 
-  @tty.send_keys_exact('if [ 1 -eq 1 ]; then echo hello; fi')
-  @tty.send_newline
+  @tty.send_line_exact('if [ 1 -eq 1 ]; then echo hello; fi')
   row += 1
   @tty.assert_row(row, 'hello')
   row += 1
@@ -283,8 +262,7 @@ end
 
 def not_equals_if_test(row)
   assert_check_new_row(row)
-  @tty.send_keys_exact('if [ 2 -eq 1 ]; then echo hello; fi')
-  @tty.send_newline
+  @tty.send_line_exact('if [ 2 -eq 1 ]; then echo hello; fi')
   row += 1
   assert_check_new_row(row)
   test_passed('not equals if test')
@@ -294,8 +272,7 @@ end
 def equals_if_else_test(row)
   assert_check_new_row(row)
 
-  @tty.send_keys_exact('if [ 1 -eq 1 ]; then echo hello; else echo hi; fi')
-  @tty.send_newline
+  @tty.send_line_exact('if [ 1 -eq 1 ]; then echo hello; else echo hi; fi')
   row += 1
   @tty.assert_row(row, 'hello')
   row += 1
@@ -305,8 +282,7 @@ end
 
 def not_equals_if_else_test(row)
   assert_check_new_row(row)
-  @tty.send_keys_exact('if [ 2 -eq 1 ]; then echo hello; else echo hi; fi')
-  @tty.send_newline
+  @tty.send_line_exact('if [ 2 -eq 1 ]; then echo hello; else echo hi; fi')
   row += 1
   @tty.assert_row(row, 'hi')
   row += 1
@@ -327,8 +303,7 @@ end
 def gt_if_test(row)
   assert_check_new_row(row)
 
-  @tty.send_keys_exact('if [ 2 -gt 1 ]; then echo hello; fi')
-  @tty.send_newline
+  @tty.send_line_exact('if [ 2 -gt 1 ]; then echo hello; fi')
   row += 1
   @tty.assert_row(row, 'hello')
   row += 1
@@ -338,8 +313,7 @@ end
 
 def not_gt_if_test(row)
   assert_check_new_row(row)
-  @tty.send_keys_exact('if [ 1 -gt 2 ]; then echo hello; fi')
-  @tty.send_newline
+  @tty.send_line_exact('if [ 1 -gt 2 ]; then echo hello; fi')
   row += 1
   assert_check_new_row(row)
   test_passed('not gt if test')
@@ -349,8 +323,7 @@ end
 def gt_if_else_test(row)
   assert_check_new_row(row)
 
-  @tty.send_keys_exact('if [ 2 -gt 1 ]; then echo hello; else echo hi; fi')
-  @tty.send_newline
+  @tty.send_line_exact('if [ 2 -gt 1 ]; then echo hello; else echo hi; fi')
   row += 1
   @tty.assert_row(row, 'hello')
   row += 1
@@ -360,8 +333,7 @@ end
 
 def not_gt_if_else_test(row)
   assert_check_new_row(row)
-  @tty.send_keys_exact('if [ 1 -gt 2 ]; then echo hello; else echo hi; fi')
-  @tty.send_newline
+  @tty.send_line_exact('if [ 1 -gt 2 ]; then echo hello; else echo hi; fi')
   row += 1
   @tty.assert_row(row, 'hi')
   row += 1
@@ -382,8 +354,7 @@ end
 def lt_if_test(row)
   assert_check_new_row(row)
 
-  @tty.send_keys_exact('if [ 1 -lt 2 ]; then echo hello; fi')
-  @tty.send_newline
+  @tty.send_line_exact('if [ 1 -lt 2 ]; then echo hello; fi')
   row += 1
   @tty.assert_row(row, 'hello')
   row += 1
@@ -393,8 +364,7 @@ end
 
 def not_lt_if_test(row)
   assert_check_new_row(row)
-  @tty.send_keys_exact('if [ 2 -lt 1 ]; then echo hello; fi')
-  @tty.send_newline
+  @tty.send_line_exact('if [ 2 -lt 1 ]; then echo hello; fi')
   row += 1
   assert_check_new_row(row)
   test_passed('not lt if test')
@@ -404,8 +374,7 @@ end
 def lt_if_else_test(row)
   assert_check_new_row(row)
 
-  @tty.send_keys_exact('if [ 1 -lt 2 ]; then echo hello; else echo hi; fi')
-  @tty.send_newline
+  @tty.send_line_exact('if [ 1 -lt 2 ]; then echo hello; else echo hi; fi')
   row += 1
   @tty.assert_row(row, 'hello')
   row += 1
@@ -415,8 +384,7 @@ end
 
 def not_lt_if_else_test(row)
   assert_check_new_row(row)
-  @tty.send_keys_exact('if [ 2 -lt 1 ]; then echo hello; else echo hi; fi')
-  @tty.send_newline
+  @tty.send_line_exact('if [ 2 -lt 1 ]; then echo hello; else echo hi; fi')
   row += 1
   @tty.assert_row(row, 'hi')
   row += 1
@@ -437,8 +405,7 @@ def if_variable_test(row)
   assert_check_new_row(row)
   @tty.send_line('VAL=1')
   row += 1
-  @tty.send_keys_exact('if [ $VAL -eq 1 ]; then echo hello; else echo hi; fi')
-  @tty.send_newline
+  @tty.send_line_exact('if [ $VAL -eq 1 ]; then echo hello; else echo hi; fi')
   row += 1
   @tty.assert_row(row, 'hello')
   row += 1
@@ -450,8 +417,7 @@ def if_variables_test(row)
   assert_check_new_row(row)
   @tty.send_line('VAL2=2')
   row += 1
-  @tty.send_keys_exact('if [ $VAL -eq $VAL2 ]; then echo hello; else echo hi; fi')
-  @tty.send_newline
+  @tty.send_line_exact('if [ $VAL -eq $VAL2 ]; then echo hello; else echo hi; fi')
   row += 1
   @tty.assert_row(row, 'hi')
   row += 1

@@ -8,6 +8,8 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <fcntl.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/wait.h>
@@ -20,7 +22,6 @@
 #include "pipe.h"
 #include "redirection.h"
 #include "vm.h"
-#include "vm_buffer.h"
 #include "vm_types.h"
 
 #ifdef NCSH_VM_TEST
@@ -34,11 +35,6 @@ extern sig_atomic_t vm_child_pid;
 int vm_output_fd;
 /* vm_error_fd: set in redirection.c, read from builtins */
 // int vm_error_fd;
-
-/*void vm_redirection_start_if_needed(Token_Data* rst tokens, Vm_Data* rst vm)
-{
-    redirection_start_if_needed(tokens, vm);
-}*/
 
 /* Failure Handling */
 [[nodiscard]]
@@ -118,50 +114,21 @@ void vm_status_set(int pid, Vm_Data* rst vm)
 int vm_status_aggregate(Vm_Data* rst vm)
 {
     if (vm->exec_result == EXECVP_FAILED) {
+        debug("execvp failed");
         return EXIT_FAILURE;
+    }
+    if (vm->status == EXIT_FAILURE) {
+        return EXIT_FAILURE_CONTINUE;
     }
     return vm->status;
 }
 
 [[nodiscard]]
-bool vm_condition_failed(Vm_Data* rst vm, Token_Data* rst data)
-{
-    if (vm->state != VS_IN_CONDITIONS)
-        return false;
-
-    return vm->status != EXIT_SUCCESS && data->logic_type != LT_IF_ELSE && vm->op_current != OP_OR;
-}
-
-[[nodiscard]]
-bool vm_status_should_break(Vm_Data* rst vm, Token_Data* rst data)
-{
-    if (vm_condition_failed(vm, data)) {
-        debug("breaking out of VM loop, condition failed.");
-        vm->status = EXIT_FAILURE_CONTINUE; // make sure condition failure doesn't cause shell to exit
-        return true;
-    }
-    else if (vm->op_current == OP_AND && vm->status != EXIT_SUCCESS) {
-        debug("breaking out of VM loop, short circuiting on AND.");
-        vm->status = EXIT_FAILURE_CONTINUE; // make sure condition failure doesn't cause shell to exit
-        return true;
-    }
-    else if (vm->op_current == OP_OR && vm->status == EXIT_SUCCESS) {
-        debug("breaking out of VM loop, short circuiting on OR.");
-        return true;
-    }
-    // TODO: other logic around failures?
-    // like if e is set?
-    // logic? if next op is and/or?
-    else {
-        return false;
-    }
-}
-
-[[nodiscard]]
 int vm_math_process(Vm_Data* rst vm)
 {
+    debug("evaluating math conditions");
     char* c1 = vm->buffer[0];
-    enum Ops op = vm->ops[1];
+    enum Ops op = vm->op_current;
     char* c2 = vm->buffer[2];
 
     bool result;
@@ -179,7 +146,7 @@ int vm_math_process(Vm_Data* rst vm)
         break;
     }
     default: {
-        puts("ncsh: while trying to process 'if' logic, found unsupported operation.");
+        fprintf(stderr, "ncsh: while trying to process 'if' logic, found unsupported operation '%d'.", vm->op_current);
         result = false;
         break;
     }
@@ -189,27 +156,258 @@ int vm_math_process(Vm_Data* rst vm)
 }
 
 [[nodiscard]]
-int vm_run(Tokens* rst toks, Shell* rst shell, Arena* rst scratch)
+Commands* vm_command_next(Statements* rst stmts, Commands* rst cmds, Vm_Data* rst vm)
+{
+    if (!cmds->next || !cmds->next->vals[0]) {
+        ++stmts->pos;
+        if (stmts->pos >= stmts->count || stmts->pos >= stmts->cap) {
+            debugf("hit stmts->count %zu or stmts->cap %zu, marking vm end\n", stmts->count, stmts->cap);
+            vm->end = true;
+            return NULL;
+        }
+        else if (vm->state == VS_IN_IF_STATEMENTS && stmts->statements[stmts->pos].type != LT_IF) {
+            debug("at end of if statements, marking vm end");
+            vm->end = true;
+            return NULL;
+        }
+        else {
+            if (!stmts->statements[stmts->pos].commands) {
+                debug("no commands after incrementing stmts->pos, marking vm end");
+                vm->end = true;
+                return NULL;
+            }
+            debugf("setting cmds to next statment command at pos %zu\n", stmts->pos);
+            cmds = stmts->statements[stmts->pos].commands;
+            cmds->pos = 0;
+            return cmds;
+        }
+    }
+
+    cmds = cmds->next;
+    cmds->pos = 0;
+    return cmds;
+}
+
+[[nodiscard]]
+Commands* vm_command_set(Statements* rst stmts, Commands* rst cmds, Vm_Data* rst vm, enum Vm_State state)
+{
+    vm->buffer = cmds->vals;
+    vm->buffer_lens = cmds->lens;
+    vm->state = state;
+    vm->op_current = cmds->prev_op;
+    return vm_command_next(stmts, cmds, vm);
+}
+
+[[nodiscard]]
+Commands* vm_next_if(Statements* rst stmts, Commands* rst cmds, Vm_Data* rst vm)
+{
+    if (stmts->statements[stmts->pos].type == LT_CONDITIONS) {
+        if (vm->state != VS_IN_CONDITIONS) {
+            return vm_command_set(stmts, cmds, vm, VS_IN_CONDITIONS);
+        }
+
+        else if (vm->status != EXIT_SUCCESS && cmds->prev_op == OP_AND) {
+            if (stmts->type == ST_IF_ELSE) {
+                do {
+                    ++stmts->pos;
+                } while (stmts->pos < stmts->count && stmts->statements[stmts->pos].type != LT_ELSE);
+
+                if (stmts->statements[stmts->pos].type != LT_ELSE ||
+                    !stmts->statements[stmts->pos].commands) {
+                    vm->end = true;
+                    return NULL;
+                }
+
+                cmds = stmts->statements[stmts->pos].commands;
+            }
+            else {
+                vm->end = true;
+                return NULL;
+            }
+        }
+
+        else if (vm->status != EXIT_SUCCESS && cmds->prev_op == OP_OR) {
+                if (cmds->ops[cmds->pos] == OP_TRUE || cmds->ops[cmds->pos] == OP_CONSTANT) {
+                    return vm_command_set(stmts, cmds, vm, VS_IN_CONDITIONS);
+                }
+                else if (stmts->type == ST_IF_ELSE) {
+                    do {
+                        ++stmts->pos;
+                    } while (stmts->pos < stmts->count && stmts->statements[stmts->pos].type != LT_ELSE);
+
+                    if (stmts->statements[stmts->pos].type != LT_ELSE ||
+                        !stmts->statements[stmts->pos].commands) {
+                        vm->end = true;
+                        return NULL;
+                    }
+
+                    cmds = stmts->statements[stmts->pos].commands;
+                }
+                else {
+                    vm->end = true;
+                    return NULL;
+                }
+        }
+
+        else if (vm->status != EXIT_SUCCESS) {
+            if (stmts->type == ST_IF_ELSE) {
+                do {
+                    ++stmts->pos;
+                } while (stmts->pos < stmts->count && stmts->statements[stmts->pos].type != LT_ELSE);
+
+                if (stmts->statements[stmts->pos].type != LT_ELSE ||
+                    !stmts->statements[stmts->pos].commands) {
+                    vm->end = true;
+                    return NULL;
+                }
+
+                cmds = stmts->statements[stmts->pos].commands;
+            }
+            else {
+                vm->end = true;
+                return NULL;
+            }
+        }
+
+        else if (vm->status == EXIT_SUCCESS && cmds->prev_op == OP_OR) {
+            do {
+                ++stmts->pos;
+            } while (stmts->pos < stmts->count && stmts->statements[stmts->pos].type != LT_IF);
+
+            cmds = stmts->statements[stmts->pos].commands;
+        }
+
+        else {
+            return vm_command_set(stmts, cmds, vm, VS_IN_CONDITIONS);
+        }
+    }
+
+    if (stmts->statements[stmts->pos].type == LT_IF) {
+        debug("in LT_IF");
+        debugf("vm->status %d\n", vm->status);
+        if (vm->state == VS_IN_CONDITIONS && vm->status != EXIT_SUCCESS && stmts->type == ST_IF_ELSE) {
+            if (stmts->statements[stmts->pos].type != LT_ELSE) {
+                do {
+                    ++stmts->pos;
+                } while (stmts->pos < stmts->count && stmts->statements[stmts->pos].type != LT_ELSE);
+
+                if (stmts->statements[stmts->pos].type != LT_ELSE ||
+                    !stmts->statements[stmts->pos].commands) {
+                    vm->end = true;
+                    return NULL;
+                }
+            }
+
+            cmds = stmts->statements[stmts->pos].commands;
+            return vm_command_set(stmts, cmds, vm, VS_IN_ELSE_STATEMENTS);
+        }
+        if (vm->status != EXIT_SUCCESS && (vm->state == VS_IN_IF_STATEMENTS || vm->state == VS_IN_CONDITIONS) && cmds->prev_op != OP_AND) {
+
+            vm->end = true;
+            return NULL;
+        }
+
+        return vm_command_set(stmts, cmds, vm, VS_IN_IF_STATEMENTS);
+    }
+
+    if (stmts->statements[stmts->pos].type == LT_ELSE) {
+        debug("in LT_ELSE");
+        debugf("vm->status %d\n", vm->status);
+        if (vm->state == VS_IN_IF_STATEMENTS) {
+            vm->end = true;
+            return NULL;
+        }
+
+        if (vm->status == EXIT_SUCCESS && vm->state == VS_IN_ELSE_STATEMENTS) {
+            return vm_command_set(stmts, cmds, vm, VS_IN_ELSE_STATEMENTS);
+        }
+        else if (vm->state == VS_IN_CONDITIONS && vm->status != EXIT_SUCCESS) {
+            return vm_command_set(stmts, cmds, vm, VS_IN_ELSE_STATEMENTS);
+        }
+    }
+
+    debug("vm_next_if: no conditions met, marking vm->end");
+    debugf("vm->status %d\n", vm->status);
+    vm->end = true;
+    return NULL;
+}
+
+Commands* vm_next_normal(Statements* rst stmts, Commands* rst cmds, Vm_Data* rst vm)
+{
+    if (cmds && cmds->prev_op == OP_AND && vm->status != EXIT_SUCCESS) {
+        debug("breaking out of VM loop, short circuiting on AND.");
+        vm->status = EXIT_FAILURE_CONTINUE; // make sure condition failure doesn't cause shell to exit
+        vm->end = true;
+        return NULL;
+    }
+    else if (cmds && cmds->prev_op == OP_OR && vm->status == EXIT_SUCCESS) {
+        debug("breaking out of VM loop, short circuiting on OR.");
+        vm->end = true;
+        return NULL;
+    }
+
+    vm->buffer = cmds->vals;
+    vm->buffer_lens = cmds->lens;
+    cmds = vm_command_next(stmts, cmds, vm);
+
+    if (!vm->end) {
+        if ((cmds->prev_op == OP_PIPE || cmds->current_op == OP_PIPE)) {
+            vm->op_current = OP_PIPE;
+        }
+        else {
+            vm->op_current = cmds->prev_op;
+        }
+    }
+
+    return cmds;
+}
+
+Commands* vm_next(Statements* rst stmts, Commands* cmds, Vm_Data* rst vm)
+{
+    assert(stmts);
+    assert(vm);
+
+    if (!cmds || stmts->pos >= stmts->count)
+    {
+        vm->end = true;
+        return NULL;
+    }
+
+    switch (stmts->type) {
+    case ST_IF:
+    case ST_IF_ELSE:
+    case ST_IF_ELIF_ELSE: {
+        debug("vm_next_if");
+        return vm_next_if(stmts, cmds, vm);
+    }
+    default: {
+        debug("vm_next_normal");
+        return vm_next_normal(stmts, cmds, vm);
+    }
+    }
+}
+
+[[nodiscard]]
+int vm_run(Statements* rst stmts, Shell* rst shell, Arena* rst scratch)
 {
     Vm_Data vm = {0};
-    vm.buffer = arena_malloc(scratch, VM_MAX_INPUT, char*);
-    vm.buffer_lens = arena_malloc(scratch, VM_MAX_INPUT, size_t);
 
-    if (redirection_start_if_needed(&toks->data, &vm) != EXIT_SUCCESS) {
+    if (redirection_start_if_needed(stmts, &vm) != EXIT_SUCCESS) {
         return EXIT_FAILURE_CONTINUE;
     }
 
-    Token* tok = toks->head->next;
-    while (!vm.tokens_end && tok && tok->val) {
-        Token* next = vm_buffer_set(tok, &toks->data, &vm);
-        if (next)
-            tok = next;
+    stmts->pos = 0;
+    Commands* cmds = stmts->statements[0].commands;
+    cmds->pos = 0;
 
-        if (!vm.buffer[0]) {
+    while (!vm.end && cmds) {
+        cmds = vm_next(stmts, cmds, &vm);
+
+        if (!vm.buffer || !vm.buffer[0]) {
             return EXIT_FAILURE_CONTINUE;
         }
 
-        if (vm.op_current == OP_PIPE && !vm.tokens_end) {
+        if (vm.op_current == OP_PIPE && !vm.end) {
             if (pipe_start(vm.command_position, &vm.pipes_io) != EXIT_SUCCESS) {
                 return EXIT_FAILURE;
             }
@@ -217,24 +415,26 @@ int vm_run(Tokens* rst toks, Shell* rst shell, Arena* rst scratch)
 
         bool builtin_ran = builtins_check_and_run(&vm, shell, scratch);
         if (builtin_ran) {
-            if (vm.op_current == OP_PIPE)
-                pipe_stop(vm.command_position, toks->data.number_of_pipe_commands, &vm.pipes_io);
+            debugf("builtin ran %s\n", vm.buffer[0]);
+            if (vm.op_current == OP_PIPE) {
+                pipe_stop(vm.command_position, stmts->pipes_count, &vm.pipes_io);
+            }
         }
-        else if (VS_IN_CONDITIONS && vm.ops &&
-                 (vm.ops[1] == OP_EQUALS || vm.ops[1] == OP_GREATER_THAN || vm.ops[1] == OP_LESS_THAN)) {
+        else if (vm.state == VS_IN_CONDITIONS &&
+                 (vm.op_current == OP_EQUALS || vm.op_current == OP_GREATER_THAN || vm.op_current == OP_LESS_THAN)) {
             vm.status = vm_math_process(&vm);
         }
         else {
             int vm_pid = fork();
             if (vm_pid < 0)
-                return vm_fork_failure(vm.command_position, toks->data.number_of_pipe_commands, &vm.pipes_io);
+                return vm_fork_failure(vm.command_position, stmts->pipes_count, &vm.pipes_io);
 
             if (vm_pid == 0) { // runs in the child process
                 if (vm.op_current == OP_PIPE)
-                    pipe_connect(vm.command_position, toks->data.number_of_pipe_commands, &vm.pipes_io);
+                    pipe_connect(vm.command_position, stmts->pipes_count, &vm.pipes_io);
 
                 if ((vm.exec_result = execvp(vm.buffer[0], vm.buffer)) == EXECVP_FAILED) {
-                    vm.tokens_end = true;
+                    vm.end = true;
                     perror(RED "ncsh: Could not run command" RESET);
                     fflush(stdout);
                     kill(getpid(), SIGTERM);
@@ -242,7 +442,7 @@ int vm_run(Tokens* rst toks, Shell* rst shell, Arena* rst scratch)
             }
 
             if (vm.op_current == OP_PIPE)
-                pipe_stop(vm.command_position, toks->data.number_of_pipe_commands, &vm.pipes_io);
+                pipe_stop(vm.command_position, stmts->pipes_count, &vm.pipes_io);
 
             if (vm.exec_result == EXECVP_FAILED)
                 break;
@@ -250,9 +450,6 @@ int vm_run(Tokens* rst toks, Shell* rst shell, Arena* rst scratch)
             vm_child_pid = vm_pid;
             vm_status_set(vm_pid, &vm);
         }
-
-        if (vm_status_should_break(&vm, &toks->data))
-            break;
 
         ++vm.command_position;
     }
@@ -265,16 +462,15 @@ int vm_run(Tokens* rst toks, Shell* rst shell, Arena* rst scratch)
  * Executes the VM in interactive mode.
  */
 [[nodiscard]]
-int vm_execute(Tokens* rst toks, Shell* rst shell, Arena* rst scratch)
+int vm_execute(Statements* rst stmts, Shell* rst shell, Arena* rst scratch)
 {
     assert(shell);
-    assert(toks);
+    assert(stmts);
 
-    if (!toks || !toks->head || !toks->head->next || !toks->count) {
+    if (!stmts || !stmts->count) {
         return EXIT_SUCCESS;
     }
 
-    // check if any jobs finished running
     /*if (shell->processes.job_number > 0) {
         vm_background_jobs_check(&shell->processes);
     }*/
@@ -284,7 +480,7 @@ int vm_execute(Tokens* rst toks, Shell* rst shell, Arena* rst scratch)
         return vm_background_job_run(toks, &shell->processes, data);
     }*/
 
-    return vm_run(toks, shell, scratch);
+    return vm_run(stmts, shell, scratch);
 }
 
 /* vm_execute_noninteractive
@@ -292,12 +488,12 @@ int vm_execute(Tokens* rst toks, Shell* rst shell, Arena* rst scratch)
  * Please note that shell->arena is used for both perm & scratch arenas in noninteractive mode.
  */
 [[nodiscard]]
-int vm_execute_noninteractive(Tokens* rst toks, Shell* rst shell)
+int vm_execute_noninteractive(Statements* rst stmts, Shell* rst shell)
 {
-    assert(toks);
-    if (!toks || !toks->head || !toks->head->next || !toks->count) {
+    assert(stmts);
+    if (!stmts || !stmts->count) {
         return EXIT_SUCCESS;
     }
 
-    return vm_run(toks, shell, &shell->arena);
+    return vm_run(stmts, shell, &shell->arena);
 }

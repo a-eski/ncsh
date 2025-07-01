@@ -1,10 +1,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../src/defines.h" // used for macro NCSH_MAX_AUTOCOMPLETION_MATCHES
-#include "../src/eskilib/etest.h"
-#include "../src/readline/ac.h"
-#include "lib/arena_test_helper.h"
+#include "../../src/defines.h" // used for macro NCSH_MAX_AUTOCOMPLETION_MATCHES
+#include "../../src/eskilib/etest.h"
+#include "../../src/readline/ac.h"
+#include "../lib/arena_test_helper.h"
 
 void ac_add_length_mismatch_test()
 {

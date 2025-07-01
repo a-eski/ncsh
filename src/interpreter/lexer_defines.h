@@ -1,5 +1,7 @@
 #pragma once
 
+#define STRCMP(line, expected_lit) line[0] == expected_lit[0] && !memcmp(line, expected_lit, sizeof(expected_lit) - 1)
+
 // supported quotes
 #define SINGLE_QUOTE_KEY '\''
 #define DOUBLE_QUOTE_KEY '\"'
@@ -16,6 +18,7 @@
 #define STDOUT_REDIRECTION '>'
 #define BACKGROUND_JOB '&'
 
+#define STDIN_REDIRECTION_APPEND "<<"
 #define STDOUT_REDIRECTION_APPEND ">>"
 #define STDERR_REDIRECTION "2>"
 #define STDERR_REDIRECTION_APPEND "2>>"

@@ -8,6 +8,7 @@
 
 #include "../../debug.h"
 #include "../../defines.h"
+#include "../statements.h"
 #include "vm_types.h"
 
 [[nodiscard]]
@@ -124,41 +125,55 @@ void stdout_and_stderr_redirection_stop(Output_Redirect_IO* rst io)
 }
 
 [[nodiscard]]
-int redirection_start_if_needed(Token_Data* rst data, Vm_Data* rst vm)
+int redirection_start_if_needed(Statements* rst stmts, Vm_Data* rst vm)
 {
-    assert(data);
+    assert(stmts);
     assert(vm);
 
-    if (data->stdout_file) {
-        stdout_redirection_start(data->stdout_file, data->output_append, &vm->output_redirect_io);
+    switch (stmts->redirect_type) {
+    case RT_OUT:
+    case RT_OUT_APPEND: {
+        stdout_redirection_start(stmts->redirect_filename, stmts->redirect_type == RT_OUT_APPEND,
+                                 &vm->output_redirect_io);
         if (vm->output_redirect_io.fd_stdout == -1) {
             return EXIT_FAILURE_CONTINUE;
         }
         debug("started stdout redirection");
+        break;
     }
-
-    if (data->stdin_file) {
-        stdin_redirection_start(data->stdin_file, &vm->input_redirect_io);
+    case RT_IN:
+    case RT_IN_APPEND: {
+        // TODO: support stdin append redirection
+        stdin_redirection_start(stmts->redirect_filename, &vm->input_redirect_io);
         if (vm->input_redirect_io.fd == -1) {
             return EXIT_FAILURE_CONTINUE;
         }
         debug("started stdin redirection");
+        break;
     }
-
-    if (data->stderr_file) {
-        stderr_redirection_start(data->stderr_file, data->output_append, &vm->output_redirect_io);
+    case RT_ERR:
+    case RT_ERR_APPEND: {
+        stderr_redirection_start(stmts->redirect_filename, stmts->redirect_type == RT_ERR_APPEND,
+                                 &vm->output_redirect_io);
         if (vm->output_redirect_io.fd_stderr == -1) {
             return EXIT_FAILURE_CONTINUE;
         }
         debug("started stderr redirection");
+        break;
     }
-
-    if (data->stdout_and_stderr_file) {
-        stdout_and_stderr_redirection_start(data->stdout_and_stderr_file, data->output_append, &vm->output_redirect_io);
+    case RT_OUT_ERR:
+    case RT_OUT_ERR_APPEND: {
+        stdout_and_stderr_redirection_start(stmts->redirect_filename,
+                                            stmts->redirect_type == RT_OUT_ERR_APPEND, &vm->output_redirect_io);
         if (vm->output_redirect_io.fd_stdout == -1) {
             return EXIT_FAILURE_CONTINUE;
         }
         debug("started stdout and stderr redirection");
+        break;
+    }
+    case RT_NONE: {
+        return EXIT_SUCCESS;
+    }
     }
 
     return EXIT_SUCCESS;

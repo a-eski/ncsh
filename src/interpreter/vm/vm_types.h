@@ -6,7 +6,7 @@
 #include <stdint.h>
 
 #include "../../eskilib/str.h"
-#include "../interpreter_types.h"
+#include "../ops.h"
 
 /****** MACROS ******/
 
@@ -57,17 +57,11 @@ typedef struct {
 typedef struct {
     char** buffer;
     size_t* buffer_lens;
-    enum Ops* ops;
     uint8_t command_position;
-    bool tokens_end;
+    bool end;
 
     enum Ops op_current;
     enum Vm_State state;
-
-    size_t conditions_pos;
-    size_t if_statment_pos;
-    size_t else_statment_pos;
-    // size_t elif_statment_pos;
 
     int status;
     int exec_result;
