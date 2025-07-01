@@ -97,6 +97,7 @@ check :
 	make test_vars
 	make test_vm
 	make test_vm_next
+	make test_expansions
 .PHONY: c
 c :
 	make check
@@ -188,19 +189,6 @@ fuzz_lexer :
 	./bin/lexer_fuzz LEXER_CORPUS/ -detect_leaks=0 -rss_limit_mb=4096
 fp :
 	make fuzz_lexer
-
-# Run lexer benchmarks
-bench_lexer :
-	$(CC) $(STD) $(debug_flags) -DNDEBUG ./src/arena.c ./src/interpreter/vars.c ./src/interpreter/lexer.c ./tests/lexer_bench.c -o ./bin/lexer_bench
-	hyperfine --warmup 1000 --shell=none './bin/lexer_bench'
-bl :
-	make bench_lexer
-
-bench_lexer_tests :
-	$(CC) $(STD) $(debug_flags) -DNDEBUG ./src/arena.c ./src/interpreter/vars.c ./src/interpreter/lexer.c ./tests/lexer_tests.c -o ./bin/lexer_tests
-	hyperfine --warmup 1000 --shell=none './bin/lexer_tests'
-blt :
-	make bench_lexer_tests
 
 # Run parser tests
 test_parser :
@@ -301,6 +289,13 @@ test_hashset :
 	./bin/hashset_tests
 ths :
 	make test_hashset
+
+# Run expansions tests
+test_expansions :
+	$(CC) $(STD) $(debug_flags) ./src/arena.c ./src/alias.c ./src/env.c ./src/interpreter/lexemes.c ./src/interpreter/statements.c ./src/interpreter/vars.c ./src/interpreter/expansions.c ./tests/interpreter/expansions_tests.c -o ./bin/expansions_tests
+	./bin/expansions_tests
+te :
+	make test_expansions
 
 # Format the project
 clang_format :

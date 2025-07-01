@@ -5,6 +5,7 @@
 #include "../src/interpreter/lexer.h"
 #include "../src/interpreter/parser.h"
 #include "lib/arena_test_helper.h"
+#include "lib/shell_test_helper.h"
 
 #define LS "ls"
 #define SORT "sort"
@@ -19,13 +20,6 @@ constexpr size_t dashl_len = sizeof(DASH_L);
 constexpr size_t job_len = sizeof(JOB);
 constexpr size_t file_len = sizeof(FILE);
 constexpr size_t echo_len = sizeof(ECHO);
-
-void shell_init(Shell* rst shell, Arena* scratch)
-{
-    shell->arena = *scratch;
-    shell->scratch_arena = *scratch;
-    vars_malloc(&shell->arena, &shell->vars);
-}
 
 void parser_parse_ls_test()
 {

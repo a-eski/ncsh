@@ -125,15 +125,15 @@ void stdout_and_stderr_redirection_stop(Output_Redirect_IO* rst io)
 }
 
 [[nodiscard]]
-int redirection_start_if_needed(Statements* rst statements, Vm_Data* rst vm)
+int redirection_start_if_needed(Statements* rst stmts, Vm_Data* rst vm)
 {
-    assert(statements);
+    assert(stmts);
     assert(vm);
 
-    switch (statements->redirect_type) {
+    switch (stmts->redirect_type) {
     case RT_OUT:
     case RT_OUT_APPEND: {
-        stdout_redirection_start(statements->redirect_filename, statements->redirect_type == RT_OUT_APPEND,
+        stdout_redirection_start(stmts->redirect_filename, stmts->redirect_type == RT_OUT_APPEND,
                                  &vm->output_redirect_io);
         if (vm->output_redirect_io.fd_stdout == -1) {
             return EXIT_FAILURE_CONTINUE;
@@ -144,7 +144,7 @@ int redirection_start_if_needed(Statements* rst statements, Vm_Data* rst vm)
     case RT_IN:
     case RT_IN_APPEND: {
         // TODO: support stdin append redirection
-        stdin_redirection_start(statements->redirect_filename, &vm->input_redirect_io);
+        stdin_redirection_start(stmts->redirect_filename, &vm->input_redirect_io);
         if (vm->input_redirect_io.fd == -1) {
             return EXIT_FAILURE_CONTINUE;
         }
@@ -153,7 +153,7 @@ int redirection_start_if_needed(Statements* rst statements, Vm_Data* rst vm)
     }
     case RT_ERR:
     case RT_ERR_APPEND: {
-        stderr_redirection_start(statements->redirect_filename, statements->redirect_type == RT_ERR_APPEND,
+        stderr_redirection_start(stmts->redirect_filename, stmts->redirect_type == RT_ERR_APPEND,
                                  &vm->output_redirect_io);
         if (vm->output_redirect_io.fd_stderr == -1) {
             return EXIT_FAILURE_CONTINUE;
@@ -163,8 +163,8 @@ int redirection_start_if_needed(Statements* rst statements, Vm_Data* rst vm)
     }
     case RT_OUT_ERR:
     case RT_OUT_ERR_APPEND: {
-        stdout_and_stderr_redirection_start(statements->redirect_filename,
-                                            statements->redirect_type == RT_OUT_ERR_APPEND, &vm->output_redirect_io);
+        stdout_and_stderr_redirection_start(stmts->redirect_filename,
+                                            stmts->redirect_type == RT_OUT_ERR_APPEND, &vm->output_redirect_io);
         if (vm->output_redirect_io.fd_stdout == -1) {
             return EXIT_FAILURE_CONTINUE;
         }

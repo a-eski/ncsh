@@ -179,9 +179,10 @@ Please see COMPILE.md.
 
 ### Short-term
 
-* Alias expansion
-* Variable expansion (different than how bash works)
-* Have .ncshrc utilize builtins instead of DSL like it currently does
+* Fix noninteractive mode after v4.0
+* Alias expansion (aliases with spaces not expanded correctly)
+* Variable expansion (want to make it a bit different than how bash works)
+* Have .ncshrc utilize builtins instead of DSL
 * Finish set/unset, enable/disable, export implementations
 
 ### Long-term

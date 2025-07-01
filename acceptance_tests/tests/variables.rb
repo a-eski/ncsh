@@ -117,8 +117,9 @@ def multiple_variables_test(row)
   row
 end
 
+# TODO: not yet implemented
 # def variable_execution_test(row)
-#   @tty.send_line('echo $(ls)')
+#   @tty.send_line_exact('$(ls)')
 #   test_passed('multiple variables test')
 #   row
 # end

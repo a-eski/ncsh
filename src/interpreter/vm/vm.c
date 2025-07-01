@@ -124,36 +124,6 @@ int vm_status_aggregate(Vm_Data* rst vm)
 }
 
 [[nodiscard]]
-bool vm_condition_failed(Vm_Data* rst vm, Statements* rst stmts)
-{
-    if (vm->state != VS_IN_CONDITIONS) {
-        debug("vm_condition_failed false, not in conditions");
-        return false;
-    }
-
-    bool condition_failed = vm->status != EXIT_SUCCESS && stmts->type != ST_IF_ELSE && vm->op_current != OP_OR;
-    debugf("condition failed: %d\n", condition_failed);
-    return condition_failed;
-}
-
-/*[[nodiscard]]
-bool vm_status_should_break(Vm_Data* rst vm, Commands* cmds, Statements* rst stmts)
-{
-    (void)cmds;
-    if (vm_condition_failed(vm, stmts)) {
-        debug("breaking out of VM loop, condition failed.");
-        vm->status = EXIT_FAILURE_CONTINUE; // make sure condition failure doesn't cause shell to exit
-        return true;
-    }
-    TODO: other logic around failures?
-    // like if e is set?
-    // logic? if next op is and/or?
-    else {
-        return false;
-    }
-}*/
-
-[[nodiscard]]
 int vm_math_process(Vm_Data* rst vm)
 {
     debug("evaluating math conditions");
@@ -356,7 +326,7 @@ Commands* vm_next_if(Statements* rst stmts, Commands* rst cmds, Vm_Data* rst vm)
         }
     }
 
-    debug("no conditions met");
+    debug("vm_next_if: no conditions met, marking vm->end");
     debugf("vm->status %d\n", vm->status);
     vm->end = true;
     return NULL;
@@ -388,9 +358,6 @@ Commands* vm_next_normal(Statements* rst stmts, Commands* rst cmds, Vm_Data* rst
             vm->op_current = cmds->prev_op;
         }
     }
-    /*else if (!vm->end && (cmds->prev_op == OP_EQUALS || cmds->prev_op == OP_LESS_THAN || cmds->prev_op == OP_GREATER_THAN)) {
-        vm->op_current = cmds->prev_op;
-    }*/
 
     return cmds;
 }
@@ -484,11 +451,6 @@ int vm_run(Statements* rst stmts, Shell* rst shell, Arena* rst scratch)
             vm_status_set(vm_pid, &vm);
         }
 
-        /*if (vm_status_should_break(&vm, cmds, stmts)) {
-            debug("breaking bc of vm status");
-            break;
-        }*/
-
         ++vm.command_position;
     }
 
@@ -509,7 +471,6 @@ int vm_execute(Statements* rst stmts, Shell* rst shell, Arena* rst scratch)
         return EXIT_SUCCESS;
     }
 
-    // check if any jobs finished running
     /*if (shell->processes.job_number > 0) {
         vm_background_jobs_check(&shell->processes);
     }*/

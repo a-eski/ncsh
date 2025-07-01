@@ -16,7 +16,7 @@
 /* USE_GNU_READLINE: use GNU readline to process input from the terminal instead of custom implementation.
  * The custom implementation does not support as many terminals as GNU readline, so the option is provided for those cases.
  * GNU readline must be installed on your system. */
-// Not yet implemented
+// TODO: Not yet implemented
 #ifndef USE_GNU_READLINE
 // #   define USE_GNU_READLINE
 #endif // !USE_GNU_READLINE

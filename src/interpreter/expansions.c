@@ -11,9 +11,8 @@
 #include "ops.h"
 #include "statements.h"
 #include "vars.h"
-#include "lexer.h"
-#include "parser.h"
-#include "statements.h"
+// #include "lexer.h"
+// #include "parser.h"
 #include "../types.h"
 
 void expansion_home(Lexemes* rst lexemes, size_t pos, Arena* rst scratch)
