@@ -2,11 +2,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../src/eskilib/etest.h"
-#include "../src/interpreter/lexemes.h"
-#include "../src/interpreter/lexer.h"
-#include "../src/interpreter/ops.h"
-#include "lib/arena_test_helper.h"
+#include "../../src/eskilib/etest.h"
+#include "../../src/interpreter/lexemes.h"
+#include "../../src/interpreter/lexer.h"
+#include "../../src/interpreter/ops.h"
+#include "../lib/arena_test_helper.h"
 
 void lexer_lex_ls_test()
 {

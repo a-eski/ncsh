@@ -5,9 +5,9 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "../src/eskilib/etest.h"
-#include "../src/z/z.h"
-#include "lib/arena_test_helper.h"
+#include "../../src/eskilib/etest.h"
+#include "../../src/z/z.h"
+#include "../lib/arena_test_helper.h"
 
 #define CWD_LENGTH 528
 

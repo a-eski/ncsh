@@ -1,20 +1,21 @@
 /* vm_next_tests.c: tests for vm.c function vm_next. */
 
-#include "../src/interpreter/lexemes.h"
-#include "../src/interpreter/lexer.h"
-#include "../src/interpreter/parser.h"
-#include "../src/interpreter/statements.h"
-#include "../src/interpreter/vm/vm_types.h"
-#include "lib/arena_test_helper.h"
+#include <stdlib.h>
+
+#include "../../../src/interpreter/lexemes.h"
+#include "../../../src/interpreter/lexer.h"
+#include "../../../src/interpreter/parser.h"
+#include "../../../src/interpreter/statements.h"
+#include "../../../src/interpreter/vm/vm_types.h"
+#include "../../../src/eskilib/etest.h"
+#include "../../lib/arena_test_helper.h"
 
 __sig_atomic_t vm_child_pid;
 jmp_buf env;
 
 Commands* vm_next(Statements* rst stmts, Commands* cmds, Vm_Data* rst vm);
 
-#include <stdlib.h>
 
-#include "../src/eskilib/etest.h"
 
 void vm_next_simple_test()
 {

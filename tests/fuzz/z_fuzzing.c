@@ -6,8 +6,8 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "../src/z/z.h"
-#include "lib/arena_test_helper.h"
+#include "../../src/z/z.h"
+#include "../lib/arena_test_helper.h"
 
 static Str config_location = {.length = 0, .value = NULL};
 

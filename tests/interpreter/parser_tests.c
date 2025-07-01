@@ -1,11 +1,11 @@
 #include <unistd.h>
 
-#include "../src/env.h"
-#include "../src/eskilib/etest.h"
-#include "../src/interpreter/lexer.h"
-#include "../src/interpreter/parser.h"
-#include "lib/arena_test_helper.h"
-#include "lib/shell_test_helper.h"
+#include "../../src/env.h"
+#include "../../src/eskilib/etest.h"
+#include "../../src/interpreter/lexer.h"
+#include "../../src/interpreter/parser.h"
+#include "../lib/arena_test_helper.h"
+#include "../lib/shell_test_helper.h"
 
 #define LS "ls"
 #define SORT "sort"

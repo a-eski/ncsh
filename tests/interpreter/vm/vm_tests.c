@@ -2,13 +2,13 @@
 #include <signal.h>
 #include <stdlib.h>
 
-#include "../src/defines.h"
-#include "../src/eskilib/etest.h"
-#include "../src/interpreter/lexer.h"
-#include "../src/interpreter/parser.h"
-#include "../src/interpreter/semantic_analyzer.h"
-#include "../src/interpreter/vm/vm.h"
-#include "lib/arena_test_helper.h"
+#include "../../../src/defines.h"
+#include "../../../src/eskilib/etest.h"
+#include "../../../src/interpreter/lexer.h"
+#include "../../../src/interpreter/parser.h"
+#include "../../../src/interpreter/semantic_analyzer.h"
+#include "../../../src/interpreter/vm/vm.h"
+#include "../../lib/arena_test_helper.h"
 
 sig_atomic_t vm_child_pid;
 jmp_buf env;
