@@ -10,13 +10,12 @@
 #include <sys/cdefs.h>
 
 #include "arena.h"
-#include "eskilib/ecolors.h"
 
 void arena_abort_internal()
 {
-    puts(RED "ncsh: ran out of allocated memory." RESET);
+    puts("ncsh: ran out of allocated memory.");
     // TODO: implement different OOM stragety other than aborting.
-    fprintf(stderr, "\n" RED "ncsh: out of memory, aborting.\n" RESET);
+    fprintf(stderr, "\nncsh: out of memory, aborting.\n");
     abort();
 }
 

@@ -4,9 +4,8 @@
 
 #pragma once
 
-#include <setjmp.h>
 #include <stdint.h>
-#include <sys/cdefs.h>
+#include <sys/cdefs.h> // for __attribute_malloc
 
 #include "defines.h"
 

@@ -1,6 +1,8 @@
 #pragma once
 
+#ifndef _POXIC_C_SOURCE
 #define _POSIX_C_SOURCE 200809L
+#endif /* ifndef _POXIC_C_SOURCE */
 
 #include <errno.h>
 #include <setjmp.h>
@@ -8,8 +10,6 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <unistd.h>
-
-#include "eskilib/ecolors.h"
 
 extern jmp_buf env;
 extern sig_atomic_t vm_child_pid;
@@ -30,7 +30,7 @@ static void signal_handler(int sig, siginfo_t* info, void* context)
     if (target != 0 && info->si_pid != target) { // kill child process with pid vm_child_pid
         if (!kill(target, sig)) {
             if (write(STDOUT_FILENO, "\n", 1) == -1) { // write is async/signal safe, do not use fflush, putchar, prinft
-                perror(RED "ncsh: Error writing to standard output while processing a signal" RESET);
+                perror("ncsh: Error writing to standard output while processing a signal");
             }
         }
         vm_child_pid = 0;

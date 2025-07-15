@@ -8,6 +8,8 @@
 #include <unistd.h>
 
 #include "../defines.h"
+#include "../debug.h"
+#include "../ttyterm/ttyterm.h"
 #include "expansions.h"
 #include "lexemes.h"
 #include "ops.h"
@@ -17,39 +19,6 @@
 // TODO: get rid of globals
 Commands* commands;
 Shell* shell_ptr;
-
-void command_next(Arena* rst scratch)
-{
-    if (!commands->pos) {
-        commands->count = 1;
-        commands->vals[1] = NULL;
-    }
-    else {
-        commands->count = commands->pos;
-    }
-    // commands->count = commands->pos == 0 ? 1 : commands->pos;
-    commands->next = commands_alloc(scratch);
-    commands->vals[commands->pos] = NULL;
-    commands->pos = 0;
-
-    commands = commands->next;
-    commands->pos = 0;
-}
-
-/*void command_next_set_prev_op(enum Ops op, Arena* rst scratch)
-{
-    command_next(scratch);
-    commands->prev_op = op;
-}*/
-
-void parser_statement_next(Statements* rst stmts, enum Logic_Type type, Arena* rst scratch)
-{
-    commands->count = commands->pos == 0 ? 1 : commands->pos; // update last commands count
-
-    statement_next(stmts, type, scratch);
-
-    commands = stmts->statements[stmts->pos].commands;
-}
 
 bool parser_consume(Lexemes* rst lexemes, size_t* rst n, enum Ops expected)
 {
@@ -96,7 +65,7 @@ bool parser_is_valid_statement(enum Ops op)
 int parser_commands_process(Lexemes* rst lexemes, size_t* rst n, Statements* rst stmts, Arena* rst scratch)
 {
     if (!parser_is_valid_statement(parser_peek(lexemes, *n))) {
-        puts("ncsh parser: no valid statement.");
+        term_puts("ncsh parser: no valid statement.");
         return EXIT_FAILURE;
     }
 
@@ -131,7 +100,7 @@ int parser_commands_process(Lexemes* rst lexemes, size_t* rst n, Statements* rst
         case OP_PIPE:
             ++stmts->pipes_count;
             commands[commands->pos - 1].current_op = OP_PIPE;
-            command_next(scratch);
+            commands = command_next(commands, scratch);
             commands->prev_op = OP_PIPE;
             continue;
         case OP_ASSIGNMENT:
@@ -143,7 +112,7 @@ int parser_commands_process(Lexemes* rst lexemes, size_t* rst n, Statements* rst
         case OP_AND:
         case OP_OR: {
             commands->current_op = lexemes->ops[*n];
-            command_next(scratch);
+            commands = command_next(commands, scratch);
             commands->prev_op = lexemes->ops[*n];
             ++*n;
             continue;
@@ -158,7 +127,7 @@ int parser_commands_process(Lexemes* rst lexemes, size_t* rst n, Statements* rst
 
         // enum Ops peeked = parser_peek(lexemes, *n);
         if (end_of_statement) {
-            command_next(scratch);
+            commands = command_next(commands, scratch);
             debug("end of statement");
         }
         /*else if (peeked == OP_AND || peeked == OP_OR) {
@@ -171,7 +140,7 @@ int parser_commands_process(Lexemes* rst lexemes, size_t* rst n, Statements* rst
     return EXIT_SUCCESS;
 }
 
-int parser_conditions(Lexemes* rst lexemes, size_t* rst n, Statements* rst stmts, Arena* rst scratch)
+int parser_conditions(Lexemes* rst lexemes, size_t* rst n, enum Logic_Type type, Statements* rst stmts, Arena* rst scratch)
 {
     if (!parser_consume(lexemes, n, OP_CONDITION_START)) {
         debug("no OP_CONDITION_START");
@@ -183,8 +152,8 @@ int parser_conditions(Lexemes* rst lexemes, size_t* rst n, Statements* rst stmts
     if (res != EXIT_SUCCESS) {
         return res;
     }
-    parser_statement_next(stmts, LT_CONDITIONS, scratch);
 
+    commands = command_statement_next(stmts, commands, type, scratch);
     if (!parser_consume(lexemes, n, OP_CONDITION_END)) {
         debug("no OP_CONDITION_END");
         return EXIT_FAILURE;
@@ -204,7 +173,7 @@ int parser_if_statements(Lexemes* rst lexemes, size_t* rst n, Statements* rst st
     if (res != EXIT_SUCCESS) {
         return res;
     }
-    parser_statement_next(stmts, LT_IF, scratch);
+    commands = command_statement_next(stmts, commands, LT_IF, scratch);
     return res;
 }
 
@@ -220,7 +189,7 @@ int parser_else_statements(Lexemes* rst lexemes, size_t* rst n, Statements* rst 
         return res;
     }
 
-    parser_statement_next(stmts, LT_ELSE, scratch);
+    commands = command_statement_next(stmts, commands, LT_ELSE, scratch);
     return EXIT_SUCCESS;
 }
 
@@ -231,20 +200,24 @@ int parser_elif_statements(Lexemes* rst lexemes, size_t* rst n, Statements* rst 
         return EXIT_FAILURE;
     }
 
-    int res = parser_conditions(lexemes, n, stmts, scratch);
+    int res = parser_conditions(lexemes, n, LT_ELIF_CONDTIONS, stmts, scratch);
     if (res != EXIT_SUCCESS) {
+        debug("failed parsing elif conditions");
         return res;
     }
 
     res = parser_commands_process(lexemes, n, stmts, scratch);
     if (res != EXIT_SUCCESS) {
+        debug("failed parsing elif commands");
         return EXIT_FAILURE;
     }
-    parser_statement_next(stmts, LT_ELIF, scratch);
+    commands = command_statement_next(stmts, commands, LT_ELIF, scratch);
 
     if (parser_peek(lexemes, *n) == OP_ELIF) {
+        debug("found another elif to process");
         res = parser_elif_statements(lexemes, n, stmts, scratch);
         if (res != EXIT_SUCCESS) {
+            debug("failed parsing another elif");
             return EXIT_FAILURE;
         }
     }
@@ -261,7 +234,7 @@ int parser_if(Lexemes* rst lexemes, size_t* rst n, Statements* rst stmts, Arena*
         return EXIT_FAILURE;
     }
 
-    int res = parser_conditions(lexemes, n, stmts, scratch);
+    int res = parser_conditions(lexemes, n, LT_IF_CONDITIONS, stmts, scratch);
     if (res != EXIT_SUCCESS) {
         return res;
     }
@@ -291,8 +264,19 @@ int parser_if(Lexemes* rst lexemes, size_t* rst n, Statements* rst stmts, Arena*
         res = parser_else_statements(lexemes, n, stmts, scratch);
     }
     else if (peeked == OP_ELIF) {
-        stmts->type = ST_IF_ELIF_ELSE;
         res = parser_elif_statements(lexemes, n, stmts, scratch);
+        if (res != EXIT_SUCCESS) {
+            return res;
+        }
+
+        peeked = parser_peek(lexemes, *n);
+        if (peeked == OP_ELSE) {
+            stmts->type = ST_IF_ELIF_ELSE;
+            res = parser_else_statements(lexemes, n, stmts, scratch);
+        }
+        else {
+            stmts->type = ST_IF_ELIF;
+        }
     }
 
     if (res != EXIT_SUCCESS) {
@@ -365,7 +349,7 @@ int parser_parse(Lexemes* rst lexemes, Statements* stmts, Shell* rst shell, Aren
         case OP_PIPE: {
             ++stmts->pipes_count;
             commands[commands->pos - 1].current_op = OP_PIPE;
-            command_next(scratch);
+            commands = command_next(commands, scratch);
             commands->prev_op = OP_PIPE;
             continue;
         }
@@ -383,7 +367,7 @@ int parser_parse(Lexemes* rst lexemes, Statements* stmts, Shell* rst shell, Aren
         case OP_AND:
         case OP_OR: {
             commands->current_op = lexemes->ops[i];
-            command_next(scratch);
+            commands = command_next(commands, scratch);
             commands->prev_op = lexemes->ops[i];
             continue;
         }

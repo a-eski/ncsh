@@ -154,8 +154,6 @@ enum Ops lexer_op_check_len_four(char* rst line)
             return OP_ELSE;
         else if (!memcmp(line, ELIF, sizeof(ELIF) - 1))
             return OP_ELIF;
-
-        // FALLTHROUGH
     }
     }
     return OP_CONSTANT;

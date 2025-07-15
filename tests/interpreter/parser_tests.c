@@ -1116,7 +1116,7 @@ void parser_parse_if_test()
     // first statement, conditions
     Commands* commands = statements.statements[0].commands;
     eassert(statements.statements[0].count == 1);
-    eassert(statements.statements[0].type == LT_CONDITIONS);
+    eassert(statements.statements[0].type == LT_IF_CONDITIONS);
     eassert(commands->count == 3);
 
     eassert(!memcmp(commands->vals[0], "1", 1));
@@ -1183,7 +1183,7 @@ void parser_parse_if_variable_test()
     // first statement, conditions
     Commands* commands = statements.statements[0].commands;
     eassert(statements.statements[0].count == 1);
-    eassert(statements.statements[0].type == LT_CONDITIONS);
+    eassert(statements.statements[0].type == LT_IF_CONDITIONS);
     eassert(commands->count == 3);
 
     eassert(!memcmp(commands->vals[0], "1", 1));
@@ -1245,7 +1245,7 @@ void parser_parse_if_multiple_conditions_test()
     // first statement, conditions
     Commands* commands = statements.statements[0].commands;
     eassert(statements.statements[0].count == 1);
-    eassert(statements.statements[0].type == LT_CONDITIONS);
+    eassert(statements.statements[0].type == LT_IF_CONDITIONS);
     eassert(commands->count == 1);
 
     eassert(!memcmp(commands->vals[0], "true", 4));
@@ -1306,7 +1306,7 @@ void parser_parse_if_else_test()
     // first statement, conditions
     Commands* commands = statements.statements[0].commands;
     eassert(statements.statements[0].count == 1);
-    eassert(statements.statements[0].type == LT_CONDITIONS);
+    eassert(statements.statements[0].type == LT_IF_CONDITIONS);
     eassert(commands->count == 3);
 
     eassert(!memcmp(commands->vals[0], "1", 1));
@@ -1385,32 +1385,29 @@ void parser_parse_if_elif_else_test()
     int res = parser_parse(&lexemes, &statements, NULL, &scratch_arena);
 
     eassert(!res);
-    eassert(statements.count == 1);
+    eassert(statements.count == 5);
     eassert(statements.type == ST_IF_ELIF_ELSE);
 
     // first statement
     Commands* commands = statements.statements[0].commands;
     eassert(statements.statements[0].count == 1);
-    eassert(statements.statements[0].type == LT_CONDITIONS);
+    eassert(statements.statements[0].type == LT_IF_CONDITIONS);
     eassert(commands->count == 3);
 
-    // first statement, first command
     eassert(!memcmp(commands->vals[0], "1", 1));
     eassert(commands->lens[0] == 2);
     eassert(commands->ops[0] == OP_CONSTANT);
-    eassert(commands->prev_op == OP_NONE);
+    eassert(commands->prev_op == OP_EQUALS);
 
-    // first statement, second command
     eassert(!memcmp(commands->vals[1], "-eq", 3));
     eassert(commands->lens[1] == 4);
     eassert(commands->ops[1] == OP_EQUALS);
-    eassert(commands->prev_op == OP_NONE);
+    eassert(commands->current_op == OP_EQUALS);
 
-    // first statement, first command
-    eassert(!memcmp(commands->vals[2], "1", 1));
+    eassert(!memcmp(commands->vals[2], "2", 1));
     eassert(commands->lens[2] == 2);
     eassert(commands->ops[2] == OP_CONSTANT);
-    eassert(commands->prev_op == OP_NONE);
+    eassert(commands->prev_op == OP_EQUALS);
 
     eassert(!commands->vals[3]);
     eassert(!commands->next);
@@ -1421,43 +1418,190 @@ void parser_parse_if_elif_else_test()
     eassert(statements.statements[1].type == LT_IF);
     eassert(commands->count == 2);
 
-    // second statement, first command
     eassert(commands->vals[0]);
     eassert(!memcmp(commands->vals[0], ECHO, echo_len - 1));
     eassert(commands->lens[0] == echo_len);
     eassert(commands->ops[0] == OP_CONSTANT);
     eassert(commands->prev_op == OP_NONE);
 
-    // second statement, second command
     eassert(!memcmp(commands->vals[1], "hi", 2));
     eassert(commands->lens[1] == 3);
     eassert(commands->ops[1] == OP_CONSTANT);
     eassert(commands->prev_op == OP_NONE);
 
     eassert(!commands->vals[2]);
-    eassert(!commands->next);
+    eassert(!commands->next->vals[0]);
 
     // third statement
     commands = statements.statements[2].commands;
     eassert(statements.statements[2].count == 1);
-    eassert(statements.statements[2].type == LT_ELSE);
+    eassert(statements.statements[2].type == LT_ELIF_CONDTIONS);
+    eassert(commands->count == 3);
+
+    eassert(!memcmp(commands->vals[0], "1", 1));
+    eassert(commands->lens[0] == 2);
+    eassert(commands->ops[0] == OP_CONSTANT);
+    eassert(commands->prev_op == OP_EQUALS);
+
+    eassert(!memcmp(commands->vals[1], "-eq", 3));
+    eassert(commands->lens[1] == 4);
+    eassert(commands->ops[1] == OP_EQUALS);
+    eassert(commands->current_op == OP_EQUALS);
+
+    eassert(!memcmp(commands->vals[2], "1", 1));
+    eassert(commands->lens[2] == 2);
+    eassert(commands->ops[2] == OP_CONSTANT);
+    eassert(commands->prev_op == OP_EQUALS);
+
+    eassert(!commands->vals[3]);
+    eassert(!commands->next);
+
+    // fourth statement
+    commands = statements.statements[3].commands;
+    eassert(statements.statements[3].count == 1);
+    eassert(statements.statements[3].type == LT_ELIF);
     eassert(commands->count == 2);
 
-    // third statement, first command
     eassert(commands->vals[0]);
     eassert(!memcmp(commands->vals[0], ECHO, echo_len - 1));
     eassert(commands->lens[0] == echo_len);
     eassert(commands->ops[0] == OP_CONSTANT);
     eassert(commands->prev_op == OP_NONE);
 
-    // third statement, second command
+    eassert(!memcmp(commands->vals[1], "hey", 3));
+    eassert(commands->lens[1] == 4);
+    eassert(commands->ops[1] == OP_CONSTANT);
+    eassert(commands->prev_op == OP_NONE);
+
+    eassert(!commands->vals[2]);
+    eassert(!commands->next->vals[0]);
+
+    // fifth statement
+    commands = statements.statements[4].commands;
+    eassert(statements.statements[4].count == 1);
+    eassert(statements.statements[4].type == LT_ELSE);
+    eassert(commands->count == 2);
+
+    eassert(commands->vals[0]);
+    eassert(!memcmp(commands->vals[0], ECHO, echo_len - 1));
+    eassert(commands->lens[0] == echo_len);
+    eassert(commands->ops[0] == OP_CONSTANT);
+    eassert(commands->prev_op == OP_NONE);
+
     eassert(!memcmp(commands->vals[1], "hello", 5));
     eassert(commands->lens[1] == 6);
     eassert(commands->ops[1] == OP_CONSTANT);
     eassert(commands->prev_op == OP_NONE);
 
     eassert(!commands->vals[2]);
+    eassert(!commands->next->vals[0]);
+
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
+void parser_parse_if_elif_test()
+{
+    SCRATCH_ARENA_TEST_SETUP;
+
+    char* line = "if [ 1 -eq 2 ]; then echo 'hi'; elif [ 1 -eq 1 ]; then echo hey; fi";
+    size_t len = strlen(line) + 1;
+
+    Lexemes lexemes = {0};
+    lexer_lex(line, len, &lexemes, &scratch_arena);
+    Statements statements = {0};
+    int res = parser_parse(&lexemes, &statements, NULL, &scratch_arena);
+
+    eassert(!res);
+    eassert(statements.count == 4);
+    eassert(statements.type == ST_IF_ELIF);
+
+    // first statement
+    Commands* commands = statements.statements[0].commands;
+    eassert(statements.statements[0].count == 1);
+    eassert(statements.statements[0].type == LT_IF_CONDITIONS);
+    eassert(commands->count == 3);
+
+    eassert(!memcmp(commands->vals[0], "1", 1));
+    eassert(commands->lens[0] == 2);
+    eassert(commands->ops[0] == OP_CONSTANT);
+    eassert(commands->prev_op == OP_EQUALS);
+
+    eassert(!memcmp(commands->vals[1], "-eq", 3));
+    eassert(commands->lens[1] == 4);
+    eassert(commands->ops[1] == OP_EQUALS);
+    eassert(commands->current_op == OP_EQUALS);
+
+    eassert(!memcmp(commands->vals[2], "2", 1));
+    eassert(commands->lens[2] == 2);
+    eassert(commands->ops[2] == OP_CONSTANT);
+    eassert(commands->prev_op == OP_EQUALS);
+
+    eassert(!commands->vals[3]);
     eassert(!commands->next);
+
+    // second statement
+    commands = statements.statements[1].commands;
+    eassert(statements.statements[1].count == 1);
+    eassert(statements.statements[1].type == LT_IF);
+    eassert(commands->count == 2);
+
+    eassert(commands->vals[0]);
+    eassert(!memcmp(commands->vals[0], ECHO, echo_len - 1));
+    eassert(commands->lens[0] == echo_len);
+    eassert(commands->ops[0] == OP_CONSTANT);
+    eassert(commands->prev_op == OP_NONE);
+
+    eassert(!memcmp(commands->vals[1], "hi", 2));
+    eassert(commands->lens[1] == 3);
+    eassert(commands->ops[1] == OP_CONSTANT);
+    eassert(commands->prev_op == OP_NONE);
+
+    eassert(!commands->vals[2]);
+    eassert(!commands->next->vals[0]);
+
+    // third statement
+    commands = statements.statements[2].commands;
+    eassert(statements.statements[2].count == 1);
+    eassert(statements.statements[2].type == LT_ELIF_CONDTIONS);
+    eassert(commands->count == 3);
+
+    eassert(!memcmp(commands->vals[0], "1", 1));
+    eassert(commands->lens[0] == 2);
+    eassert(commands->ops[0] == OP_CONSTANT);
+    eassert(commands->prev_op == OP_EQUALS);
+
+    eassert(!memcmp(commands->vals[1], "-eq", 3));
+    eassert(commands->lens[1] == 4);
+    eassert(commands->ops[1] == OP_EQUALS);
+    eassert(commands->current_op == OP_EQUALS);
+
+    eassert(!memcmp(commands->vals[2], "1", 1));
+    eassert(commands->lens[2] == 2);
+    eassert(commands->ops[2] == OP_CONSTANT);
+    eassert(commands->prev_op == OP_EQUALS);
+
+    eassert(!commands->vals[3]);
+    eassert(!commands->next);
+
+    // fourth statement
+    commands = statements.statements[3].commands;
+    eassert(statements.statements[3].count == 1);
+    eassert(statements.statements[3].type == LT_ELIF);
+    eassert(commands->count == 2);
+
+    eassert(commands->vals[0]);
+    eassert(!memcmp(commands->vals[0], ECHO, echo_len - 1));
+    eassert(commands->lens[0] == echo_len);
+    eassert(commands->ops[0] == OP_CONSTANT);
+    eassert(commands->prev_op == OP_NONE);
+
+    eassert(!memcmp(commands->vals[1], "hey", 3));
+    eassert(commands->lens[1] == 4);
+    eassert(commands->ops[1] == OP_CONSTANT);
+    eassert(commands->prev_op == OP_NONE);
+
+    eassert(!commands->vals[2]);
+    eassert(!commands->next->vals[0]);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -1515,7 +1659,8 @@ int main()
     etest_run(parser_parse_if_variable_test);
     etest_run(parser_parse_if_multiple_conditions_test);
     etest_run(parser_parse_if_else_test);
-    // etest_run(parser_parse_if_elif_else_test);
+    etest_run(parser_parse_if_elif_else_test);
+    etest_run(parser_parse_if_elif_test);
 
     etest_finish();
 

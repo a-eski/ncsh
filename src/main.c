@@ -1,23 +1,24 @@
 /* Copyright ncsh by Alex Eski 2024 */
 
+#ifndef _POXIC_C_SOURCE
 #define _POSIX_C_SOURCE 200809L
+#endif /* ifndef _POXIC_C_SOURCE */
 
 #include <assert.h>
 #include <setjmp.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
 
 #include "config.h"
 #include "defines.h"
-#include "eskilib/ecolors.h"
 #include "eskilib/eresult.h"
 #include "interpreter/interpreter.h"
 #include "noninteractive.h"
 #include "readline/ac.h"
 #include "readline/ncreadline.h"
 #include "signals.h"
+#include "ttyterm/ttyterm.h"
 
 /* Global Variables
  * Globals should be minimized as much as possible.
@@ -61,7 +62,9 @@ char* init(Shell* rst shell)
 {
     char* memory = arena_init(shell);
     if (!memory) {
-        puts(RED "ncsh: could not start up, not enough memory available." RESET);
+        term_color_set(TERM_RED_ERROR);
+        term_puts("ncsh: could not start up, not enough memory available.");
+        term_color_reset();
         return NULL;
     }
 
@@ -82,7 +85,7 @@ char* init(Shell* rst shell)
 
     signal_init();
     if (signal_forward(SIGINT) || signal_forward(SIGWINCH)) {
-        perror("ncsh: Error setting up signal handlers");
+        term_perror("ncsh: Error setting up signal handlers");
         return NULL;
     }
 
@@ -116,6 +119,8 @@ void cleanup(char* rst shell_memory, Shell* rst shell)
 [[nodiscard]]
 int main(int argc, char** argv)
 {
+    term_init();
+
     if (argc > 1 || !isatty(STDIN_FILENO)) {
         return (int)noninteractive(argc, argv);
     }
@@ -125,12 +130,11 @@ int main(int argc, char** argv)
 #endif
 
 #ifdef NCSH_CLEAR_SCREEN_ON_STARTUP
-    constexpr size_t clear_screen_len = sizeof(CLEAR_SCREEN MOVE_CURSOR_HOME) - 1;
-    if (write(STDOUT_FILENO, CLEAR_SCREEN MOVE_CURSOR_HOME, clear_screen_len) == -1) {
-        return EXIT_FAILURE;
-    }
+    term_send(&tcaps.scr_clr);
+    term_send(&tcaps.cursor_home);
 #endif
-    puts(NCSH " version: " NCSH_VERSION);
+
+    term_puts(NCSH " version: " NCSH_VERSION);
 
     Shell shell = {0};
 
@@ -148,7 +152,7 @@ int main(int argc, char** argv)
 #ifdef NCSH_START_TIME
     clock_t end = clock();
     double elapsed_ms = ((double)(end - start)) / CLOCKS_PER_SEC * 1000;
-    printf("ncsh startup time: %.2f milliseconds\n", elapsed_ms);
+    term_println("ncsh startup time: %.2f milliseconds", elapsed_ms);
 #endif
 
     while (1) {
@@ -184,8 +188,8 @@ int main(int argc, char** argv)
         shell.input.max_pos = 0;
     }
 exit:
+    term_println("exit");
     cleanup(memory, &shell);
-    ncsh_write_literal("exit\n");
 
     return (int)exit_code;
 }

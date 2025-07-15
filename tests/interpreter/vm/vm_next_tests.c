@@ -1,6 +1,7 @@
 /* vm_next_tests.c: tests for vm.c function vm_next. */
 
 #include <stdlib.h>
+#include <setjmp.h>
 
 #include "../../../src/interpreter/lexemes.h"
 #include "../../../src/interpreter/lexer.h"
@@ -14,8 +15,6 @@ __sig_atomic_t vm_child_pid;
 jmp_buf env;
 
 Commands* vm_next(Statements* rst stmts, Commands* cmds, Vm_Data* rst vm);
-
-
 
 void vm_next_simple_test()
 {
@@ -391,6 +390,122 @@ void vm_next_if_else_false_test()
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
+void vm_next_if_elif_else_if_true_test()
+{
+    SCRATCH_ARENA_TEST_SETUP;
+
+    char* line = "if [ 1 -eq 1 ]; then echo 'hi'; elif [ 2 -eq 1 ]; then echo hey; else echo 'hello'; fi";
+    size_t len = strlen(line) + 1;
+
+    Lexemes lexemes = {0};
+    lexer_lex(line, len, &lexemes, &scratch_arena);
+    Statements stmts = {0};
+    int res = parser_parse(&lexemes, &stmts, NULL, &scratch_arena);
+    eassert(!res);
+    eassert(stmts.type == ST_IF_ELIF_ELSE);
+    eassert(stmts.count == 5);
+
+    // simulate setup the VM does
+    Vm_Data vm = {0};
+    stmts.pos = 0;
+    Commands* cmds = stmts.statements[0].commands;
+    cmds->pos = 0;
+
+    // conditions
+    cmds = vm_next(&stmts, cmds, &vm);
+
+    eassert(stmts.pos == 1);
+    eassert(vm.state == VS_IN_CONDITIONS);
+    eassert(vm.op_current == OP_EQUALS);
+    eassert(!memcmp(vm.buffer[0], "1", 1));
+    eassert(vm.buffer_lens[0] == 2);
+    eassert(!memcmp(vm.buffer[1], "-eq", 1));
+    eassert(vm.buffer_lens[1] == 4);
+    eassert(!memcmp(vm.buffer[2], "1", 1));
+    eassert(vm.buffer_lens[2] == 2);
+
+    // simulate vm status (condition result)
+    vm.status = EXIT_SUCCESS;
+
+    // if statements
+    cmds = vm_next(&stmts, cmds, &vm);
+
+    eassert(stmts.pos == 2);
+    eassert(vm.state == VS_IN_IF_STATEMENTS);
+    eassert(!memcmp(vm.buffer[0], "echo", 4));
+    eassert(!memcmp(vm.buffer[1], "hi", 2));
+
+    eassert(vm.end);
+    eassert(!cmds);
+}
+
+void vm_next_if_elif_else_elif_true_test()
+{
+    SCRATCH_ARENA_TEST_SETUP;
+
+    char* line = "if [ 2 -eq 1 ]; then echo 'hi'; elif [ 1 -eq 1 ]; then echo hey; else echo 'hello'; fi";
+    size_t len = strlen(line) + 1;
+
+    Lexemes lexemes = {0};
+    lexer_lex(line, len, &lexemes, &scratch_arena);
+    Statements stmts = {0};
+    int res = parser_parse(&lexemes, &stmts, NULL, &scratch_arena);
+    eassert(!res);
+    eassert(stmts.type == ST_IF_ELIF_ELSE);
+    eassert(stmts.count == 5);
+
+    // simulate setup the VM does
+    Vm_Data vm = {0};
+    stmts.pos = 0;
+    Commands* cmds = stmts.statements[0].commands;
+    cmds->pos = 0;
+
+    // if conditions
+    cmds = vm_next(&stmts, cmds, &vm);
+
+    eassert(stmts.pos == 1);
+    eassert(vm.state == VS_IN_CONDITIONS);
+    eassert(vm.op_current == OP_EQUALS);
+    eassert(!memcmp(vm.buffer[0], "2", 1));
+    eassert(vm.buffer_lens[0] == 2);
+    eassert(!memcmp(vm.buffer[1], "-eq", 1));
+    eassert(vm.buffer_lens[1] == 4);
+    eassert(!memcmp(vm.buffer[2], "1", 1));
+    eassert(vm.buffer_lens[2] == 2);
+
+    // simulate vm status (condition result)
+    vm.status = EXIT_FAILURE;
+
+    // elif conditions
+    cmds = vm_next(&stmts, cmds, &vm);
+
+    eassert(stmts.pos == 3);
+    eassert(vm.state == VS_IN_CONDITIONS);
+    eassert(vm.op_current == OP_EQUALS);
+    eassert(!memcmp(vm.buffer[0], "1", 1));
+    eassert(vm.buffer_lens[0] == 2);
+    eassert(!memcmp(vm.buffer[1], "-eq", 1));
+    eassert(vm.buffer_lens[1] == 4);
+    eassert(!memcmp(vm.buffer[2], "1", 1));
+    eassert(vm.buffer_lens[2] == 2);
+
+    // simulate vm status (condition result)
+    vm.status = EXIT_SUCCESS;
+
+    // elif statements
+    printf("%u\n", stmts.type);
+    cmds = vm_next(&stmts, cmds, &vm);
+
+    printf("%zu\n", stmts.pos);
+    eassert(stmts.pos == 4);
+    eassert(vm.state == VS_IN_ELIF_STATEMENTS);
+    eassert(!memcmp(vm.buffer[0], "echo", 4));
+    eassert(!memcmp(vm.buffer[1], "hey", 2));
+
+    eassert(vm.end);
+    eassert(!cmds);
+}
+
 int main()
 {
     etest_start();
@@ -402,6 +517,8 @@ int main()
     etest_run(vm_next_if_multiple_conditions_true_or_test);
     etest_run(vm_next_if_else_true_test);
     etest_run(vm_next_if_else_false_test);
+    etest_run(vm_next_if_elif_else_if_true_test);
+    // etest_run(vm_next_if_elif_else_elif_true_test);
 
     etest_finish();
 

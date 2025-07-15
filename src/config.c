@@ -11,7 +11,6 @@
 
 #include <assert.h>
 #include <linux/limits.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -23,10 +22,10 @@
 #include "debug.h"
 #include "defines.h"
 #include "env.h"
-#include "eskilib/ecolors.h"
 #include "eskilib/efile.h"
 #include "eskilib/eresult.h"
 #include "eskilib/str.h"
+#include "ttyterm/ttyterm.h"
 
 [[nodiscard]]
 enum eresult config_home_init(Config* rst config, Arena* rst arena)
@@ -169,7 +168,7 @@ void config_process(FILE* rst file, Arena* rst arena, Arena* rst scratch_arena)
             path = config_path_add(path, buffer + 6, buffer_length - 6, scratch_arena);
             update_path = true;
         }
-        // Aliasing
+        // Aliasing (aliased=alias)
         else if (buffer_length > 6 && !memcmp(buffer, ALIAS_ADD, sizeof(ALIAS_ADD) - 1)) {
             assert(buffer + 6 && *(buffer + 6));
             alias_add(buffer + 6, (size_t)(buffer_length - 6), arena);
@@ -178,8 +177,9 @@ void config_process(FILE* rst file, Arena* rst arena, Arena* rst scratch_arena)
         memset(buffer, '\0', (size_t)buffer_length);
     }
 
-    if (path.length && update_path)
+    if (path.length && update_path) {
         setenv(PATH, path.value, true);
+    }
 }
 
 /* config_file_load
@@ -191,29 +191,31 @@ enum eresult config_file_load(Config* rst config, Arena* rst arena, Arena* rst s
 {
     FILE* file = fopen(config->config_file.value, "r");
     if (!file || ferror(file) || feof(file)) {
-        printf("ncsh: would you like to create a config file '%s'? [Y/n]: ", config->config_file.value);
-        fflush(stdout);
+        term_print("ncsh: would you like to create a config file '%s'? [Y/n]: ", config->config_file.value);
 
         char character;
         if (!read(STDIN_FILENO, &character, 1)) {
-            perror(RED NCSH_ERROR_STDIN RESET);
+            term_perror(NCSH_ERROR_STDIN);
             return E_FAILURE;
         }
 
         if (character != 'y' && character != 'Y') {
-            if (file)
+            if (file) {
                 fclose(file);
+            }
             return E_SUCCESS;
         }
 
         file = fopen(config->config_file.value, "w");
         if (!file || ferror(file) || feof(file)) {
-            perror(RED "ncsh: Could not load or create config file" RESET);
-            if (file)
+            term_perror("ncsh: Could not load or create config file");
+            if (file) {
                 fclose(file);
+            }
             return E_FAILURE_FILE_OP;
         }
-        puts("\nCreated " RC_FILE " config file.");
+        term_send(&tcaps.newline);
+        term_puts("Created " RC_FILE " config file.");
         fclose(file);
         return E_SUCCESS;
     }

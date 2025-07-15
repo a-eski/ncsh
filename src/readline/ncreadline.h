@@ -6,10 +6,8 @@
 #include <stddef.h>
 
 #include "../config.h"
-#include "../eskilib/eresult.h"
 #include "ac.h"
 #include "history.h"
-#include "terminal.h"
 
 #define LINE_LIMIT 100
 
@@ -29,10 +27,9 @@ typedef struct {
     char* buffer;
 
     // position relative to start line of prompt
-    int lines_x[LINE_LIMIT];
-    int current_y;
-    int lines_y;
-    Coordinates terminal_size;
+    size_t lines_x[LINE_LIMIT];
+    size_t current_y;
+    size_t lines_y;
 
     // history
     size_t history_position;

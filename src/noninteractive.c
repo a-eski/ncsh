@@ -10,11 +10,12 @@
 
 #include "config.h"
 #include "defines.h"
-#include "eskilib/ecolors.h"
 #include "eskilib/eresult.h"
 #include "interpreter/interpreter.h"
 #include "noninteractive.h"
-#include "types.h"
+#include "ttyterm/ttyterm.h"
+#include "shell.h"
+#include "debug.h"
 
 /* noninteractive
  * Main noninteractive loop of the shell.
@@ -40,7 +41,9 @@ int noninteractive(int argc, char** rst argv)
     constexpr int arena_capacity = 1 << 16;
     char* memory = malloc(arena_capacity);
     if (!memory) {
-        puts(RED "ncsh: could not start up, not enough memory available." RESET);
+        term_color_set(TERM_RED_ERROR);
+        term_puts("ncsh: could not start up, not enough memory available.");
+        term_color_reset();
         return EXIT_FAILURE;
     }
 

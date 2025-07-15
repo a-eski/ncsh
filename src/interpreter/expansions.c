@@ -6,14 +6,16 @@
 #include <stdlib.h>
 
 #include "../alias.h"
+#include "../debug.h"
 #include "../env.h"
+#include "../ttyterm/ttyterm.h"
 #include "lexemes.h"
 #include "ops.h"
 #include "statements.h"
 #include "vars.h"
 // #include "lexer.h"
 // #include "parser.h"
-#include "../types.h"
+#include "../shell.h"
 
 void expansion_home(Lexemes* rst lexemes, size_t pos, Arena* rst scratch)
 {
@@ -125,7 +127,7 @@ void expansion_variable(char* rst in, size_t len, Commands* rst cmds, /*Statemen
         debug("replacing variable $PATH\n");
         var = env_path_get();
         if (!var.value || !*var.value) {
-            puts("ncsh: could not load path to replace $PATH variable.");
+            term_puts("ncsh: could not load path to replace $PATH variable.");
             return;
         }
 
@@ -141,7 +143,7 @@ void expansion_variable(char* rst in, size_t len, Commands* rst cmds, /*Statemen
         debug("replacing variable $HOME\n");
         env_home_get(&var, scratch);
         if (!var.value || !*var.value) {
-            puts("ncsh: could not load home to replace $HOME variable.");
+            term_puts("ncsh: could not load home to replace $HOME variable.");
             return;
         }
         cmds->vals[cmds->pos] = arena_malloc(scratch, var.length, char);

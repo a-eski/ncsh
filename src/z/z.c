@@ -7,14 +7,13 @@
 #include <assert.h>
 #include <dirent.h>
 #include <linux/limits.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
 #include "../defines.h"
-#include "../eskilib/ecolors.h"
+#include "../ttyterm/ttyterm.h"
 #include "fzf.h"
 #include "z.h"
 
@@ -139,7 +138,7 @@ enum z_Result z_write_entry(z_Directory* rst dir, FILE* rst file)
     return Z_SUCCESS;
 }
 
-#define Z_ERROR_WRITING_TO_DB_MESSAGE "z: Error writing to z database file\n"
+#define Z_ERROR_WRITING_TO_DB_MESSAGE "z: Error writing to z database file"
 
 enum z_Result z_write(z_Database* rst db)
 {
@@ -153,7 +152,7 @@ enum z_Result z_write(z_Database* rst db)
 
     FILE* file = fopen(db->database_file, "wb");
     if (!file || feof(file) || ferror(file)) {
-        perror(Z_ERROR_WRITING_TO_DB_MESSAGE);
+        term_perror(Z_ERROR_WRITING_TO_DB_MESSAGE);
         if (file) {
             fclose(file);
         }
@@ -161,7 +160,7 @@ enum z_Result z_write(z_Database* rst db)
     }
 
     if (!fwrite(&db->count, sizeof(uint32_t), 1, file) || feof(file) || ferror(file)) {
-        perror("Error writing number of entries to z database file, could not write to database file");
+        term_perror("Error writing number of entries to z database file, could not write to database file");
         fclose(file);
         return Z_FILE_ERROR;
     }
@@ -223,44 +222,30 @@ enum z_Result z_read_entry(z_Directory* rst dir, FILE* rst file, Arena* rst aren
     return Z_SUCCESS;
 }
 
-#define Z_CREATING_DB_FILE_MESSAGE "ncsh z: trying to create z database file.\n"
-#define Z_CREATED_DB_FILE "ncsh z: created z database file.\n"
+#define Z_CREATING_DB_FILE_MESSAGE "z: trying to create z database file."
+#define Z_CREATED_DB_FILE "z: created z database file."
 #define Z_NO_COUNT_HEADER                                                                                              \
-    "ncsh z: couldn't find number of entries header while trying to read z database file. File is empty or "           \
-    "corrupted.\n"
+    "z: couldn't find number of entries header while trying to read z database file. File is empty or "           \
+    "corrupted."
 
 enum z_Result z_read(z_Database* rst db, Arena* rst arena)
 {
     FILE* file = fopen(db->database_file, "rb");
 
     if (!file || feof(file) || ferror(file)) {
-        perror("ncsh z: z database file could not be found or opened");
-        if (write(STDOUT_FILENO, Z_CREATING_DB_FILE_MESSAGE, sizeof(Z_CREATING_DB_FILE_MESSAGE) - 1) == -1) {
-            perror(RED NCSH_ERROR_STDOUT RESET);
-            fflush(stderr);
-            if (file) {
-                fclose(file);
-            }
-            return Z_STDIO_ERROR;
-        }
+        term_perror("z: z database file could not be found or opened");
+        term_writeln(Z_CREATING_DB_FILE_MESSAGE, sizeof(Z_CREATING_DB_FILE_MESSAGE) - 1);
 
         file = fopen(db->database_file, "wb");
 
         if (!file || ferror(file)) {
-            perror("ncsh z: error creating z database file");
+            term_perror("z: error creating z database file");
             if (file) {
                 fclose(file);
             }
         }
         else {
-            if (write(STDOUT_FILENO, Z_CREATED_DB_FILE, sizeof(Z_CREATED_DB_FILE) - 1) == -1) {
-                perror(RED NCSH_ERROR_STDOUT RESET);
-                fflush(stderr);
-                if (file) {
-                    fclose(file);
-                }
-                return Z_STDIO_ERROR;
-            }
+            term_writeln(Z_CREATED_DB_FILE, sizeof(Z_CREATED_DB_FILE) - 1);
         }
 
         if (file) {
@@ -272,24 +257,12 @@ enum z_Result z_read(z_Database* rst db, Arena* rst arena)
     uint32_t number_of_entries = 0;
     size_t bytes_read = fread(&number_of_entries, sizeof(uint32_t), 1, file);
     if (!number_of_entries) {
-        if (write(STDOUT_FILENO, Z_NO_COUNT_HEADER, sizeof(Z_NO_COUNT_HEADER) - 1) == -1) {
-            perror(RED NCSH_ERROR_STDOUT RESET);
-            fflush(stderr);
-            if (file)
-                fclose(file);
-            return Z_STDIO_ERROR;
-        }
+        term_writeln(Z_NO_COUNT_HEADER, sizeof(Z_NO_COUNT_HEADER) - 1);
         fclose(file);
         return Z_SUCCESS;
     }
     else if (!bytes_read || ferror(file) || feof(file)) {
-        if (write(STDOUT_FILENO, Z_NO_COUNT_HEADER, sizeof(Z_NO_COUNT_HEADER) - 1) == -1) {
-            perror(RED NCSH_ERROR_STDOUT RESET);
-            fflush(stderr);
-            if (file)
-                fclose(file);
-            return Z_STDIO_ERROR;
-        }
+        term_writeln(Z_NO_COUNT_HEADER, sizeof(Z_NO_COUNT_HEADER) - 1);
         fclose(file);
         return Z_SUCCESS;
     }
@@ -440,7 +413,7 @@ enum z_Result z_directory_match_exists(char* rst target, size_t target_length, c
     struct dirent* dir;
     DIR* current_dir = opendir(cwd);
     if (!current_dir) {
-        perror("z: could not open directory");
+        term_perror("z: could not open directory");
         return Z_FAILURE;
     }
 
@@ -462,7 +435,7 @@ enum z_Result z_directory_match_exists(char* rst target, size_t target_length, c
             memcpy(output->value, dir->d_name, dir_len);
 
             if ((closedir(current_dir)) == -1) {
-                perror("z: could not close directory");
+                term_perror("z: could not close directory");
                 return Z_FAILURE;
             }
 
@@ -471,7 +444,7 @@ enum z_Result z_directory_match_exists(char* rst target, size_t target_length, c
     }
 
     if ((closedir(current_dir)) == -1) {
-        perror("z: could not close directory");
+        term_perror("z: could not close directory");
         return Z_FAILURE;
     }
 
@@ -486,13 +459,13 @@ void z(char* rst target, size_t target_length, char* rst cwd, z_Database* rst db
 
     char* home = getenv("HOME");
     if (!home) {
-        perror("z: couldn't get HOME from environment");
+        term_perror("z: couldn't get HOME from environment");
     }
 
     if (!target) {
         if (home) {
             if (chdir(home) == -1) {
-                perror("z: couldn't change directory to home");
+                term_perror("z: couldn't change directory to home");
             }
         }
 
@@ -510,7 +483,7 @@ void z(char* rst target, size_t target_length, char* rst cwd, z_Database* rst db
 
     if (estrcmp(target, target_length, home, strlen(home) + 1)) {
         if (chdir(home) == -1) {
-            perror("z: couldn't change directory to home");
+            term_perror("z: couldn't change directory to home");
         }
 
         return;
@@ -519,7 +492,7 @@ void z(char* rst target, size_t target_length, char* rst cwd, z_Database* rst db
     // handle z .
     if (target_length == 2 && target[0] == '.') {
         if (chdir(target) == -1) {
-            perror("z: couldn't change directory (1)");
+            term_perror("z: couldn't change directory (1)");
         }
 
         return;
@@ -527,7 +500,7 @@ void z(char* rst target, size_t target_length, char* rst cwd, z_Database* rst db
     // handle z ..
     else if (target_length == 3 && target[0] == '.' && target[1] == '.') {
         if (chdir(target) == -1) {
-            perror("z: couldn't change directory (2)");
+            term_perror("z: couldn't change directory (2)");
         }
 
         return;
@@ -544,7 +517,7 @@ void z(char* rst target, size_t target_length, char* rst cwd, z_Database* rst db
 
         if (chdir(output.value) == -1) {
             if (!match) {
-                perror("z: couldn't change directory (3)");
+                term_perror("z: couldn't change directory (3)");
                 return;
             }
         }
@@ -559,7 +532,7 @@ void z(char* rst target, size_t target_length, char* rst cwd, z_Database* rst db
         // try to change to the match first, if that doesn't work try target
         if (chdir(match->path) == -1) {
             if (chdir(target) == -1) {
-                perror("z: couldn't change directory (4)");
+                term_perror("z: couldn't change directory (4)");
                 return;
             }
             z_database_add(target, target_length, cwd, cwd_length, db, arena);
@@ -572,46 +545,39 @@ void z(char* rst target, size_t target_length, char* rst cwd, z_Database* rst db
     }
 
     if (chdir(target) == -1) {
-        perror("z: couldn't change directory");
+        term_perror("z: couldn't change directory");
         return;
     }
 
     z_database_add(target, target_length, cwd, cwd_length, db, arena);
 }
 
-#define Z_ENTRY_EXISTS_MESSAGE "z: Entry already exists in z database.\n"
-#define Z_ADDED_NEW_ENTRY_MESSAGE "z: Added new entry to z database.\n"
-#define Z_ERROR_ADDING_ENTRY_MESSAGE "z: Error adding new entry to z database.\n"
+#define Z_ENTRY_EXISTS_MESSAGE "z: Entry already exists in z database."
+#define Z_ADDED_NEW_ENTRY_MESSAGE "z: Added new entry to z database."
+#define Z_ERROR_ADDING_ENTRY_MESSAGE "z: Error adding new entry to z database."
 
 enum z_Result z_add(char* rst path, size_t path_length, z_Database* rst db, Arena* rst arena)
 {
     if (!path || !db) {
-        fputs("Null value passed to z add.\n", stderr);
+        term_fputs("z: Null value passed to z add.", stderr);
         return Z_NULL_REFERENCE;
     }
     if (path_length < 2 || path[path_length - 1] != '\0') {
-        fputs("Bad string passed to z add.\n", stderr);
+        term_fputs("z: Bad string passed to z add.", stderr);
         return Z_BAD_STRING;
     }
 
     if (z_match_exists(path, path_length, db)) {
-        if (write(STDOUT_FILENO, Z_ENTRY_EXISTS_MESSAGE, sizeof(Z_ENTRY_EXISTS_MESSAGE) - 1) == -1) {
-            return Z_FAILURE;
-        }
+        term_writeln(Z_ENTRY_EXISTS_MESSAGE, sizeof(Z_ENTRY_EXISTS_MESSAGE) - 1);
         return Z_SUCCESS;
     }
 
     if (z_write_entry_new(path, path_length, db, arena) == Z_SUCCESS) {
-        if (write(STDOUT_FILENO, Z_ADDED_NEW_ENTRY_MESSAGE, sizeof(Z_ADDED_NEW_ENTRY_MESSAGE) - 1) == -1) {
-            return Z_FAILURE;
-        }
+        term_writeln(Z_ADDED_NEW_ENTRY_MESSAGE, sizeof(Z_ADDED_NEW_ENTRY_MESSAGE) - 1);
         return Z_SUCCESS;
     }
 
-    if (write(STDOUT_FILENO, Z_ERROR_ADDING_ENTRY_MESSAGE, sizeof(Z_ERROR_ADDING_ENTRY_MESSAGE) - 1) == -1) {
-        return Z_FAILURE;
-    }
-
+    term_writeln(Z_ERROR_ADDING_ENTRY_MESSAGE, sizeof(Z_ERROR_ADDING_ENTRY_MESSAGE) - 1);
     return Z_CANNOT_PROCESS;
 }
 
@@ -626,18 +592,18 @@ void z_remove_dirs_shift(size_t offset, z_Database* rst db)
     }
 }
 
-#define Z_ENTRY_NOT_FOUND_MESSAGE "z: Entry could not be found in z database.\n"
-#define Z_ENTRY_REMOVED_MESSAGE "z: Removed entry from z database.\n"
+#define Z_ENTRY_NOT_FOUND_MESSAGE "z: Entry could not be found in z database."
+#define Z_ENTRY_REMOVED_MESSAGE "z: Removed entry from z database."
 enum z_Result z_remove(char* rst path, size_t path_length, z_Database* rst db)
 {
     assert(db);
 
     if (!path) {
-        fputs("Null value passed to z rm/remove.\n", stderr);
+        term_fputs("z: Null value passed to z rm/remove.", stderr);
         return Z_NULL_REFERENCE;
     }
     if (path_length < 2 || path[path_length - 1] != '\0') {
-        fputs("Bad string passed to z rm/remove.\n", stderr);
+        term_fputs("z: Bad string passed to z rm/remove.", stderr);
         return Z_BAD_STRING;
     }
 
@@ -649,16 +615,12 @@ enum z_Result z_remove(char* rst path, size_t path_length, z_Database* rst db)
             (db->dirs + i)->rank = 0;
             z_remove_dirs_shift(i, db);
             --db->count;
-            if (write(STDOUT_FILENO, Z_ENTRY_REMOVED_MESSAGE, sizeof(Z_ENTRY_REMOVED_MESSAGE) - 1) == -1) {
-                return Z_FAILURE;
-            }
+            term_writeln(Z_ENTRY_REMOVED_MESSAGE, sizeof(Z_ENTRY_REMOVED_MESSAGE) - 1);
             return Z_SUCCESS;
         }
     }
 
-    if (write(STDOUT_FILENO, Z_ENTRY_NOT_FOUND_MESSAGE, sizeof(Z_ENTRY_NOT_FOUND_MESSAGE) - 1) == -1) {
-        return Z_FAILURE;
-    }
+    term_writeln(Z_ENTRY_NOT_FOUND_MESSAGE, sizeof(Z_ENTRY_NOT_FOUND_MESSAGE) - 1);
     return Z_MATCH_NOT_FOUND;
 }
 
@@ -671,38 +633,38 @@ enum z_Result z_exit(z_Database* rst db)
 
     enum z_Result result;
     if ((result = z_write(db)) != Z_SUCCESS) {
-        if (write(STDOUT_FILENO, Z_ERROR_WRITING_TO_DB_MESSAGE, sizeof(Z_ERROR_WRITING_TO_DB_MESSAGE) - 1) == -1) {
-            return result;
-        }
+        term_writeln(Z_ERROR_WRITING_TO_DB_MESSAGE, sizeof(Z_ERROR_WRITING_TO_DB_MESSAGE) - 1);
         return result;
     }
 
     return Z_SUCCESS;
 }
 
-#define Z_PRINT_MESSAGE RED_BRIGHT "z: autojump/smarter cd command implementation for ncsh.\n\n" RESET
+#define Z_PRINT_MESSAGE "z: autojump/smarter cd command implementation for ncsh."
 
 void z_print(z_Database* rst db)
 {
-    if (write(STDOUT_FILENO, Z_PRINT_MESSAGE, sizeof(Z_PRINT_MESSAGE) - 1) == -1) {
-        perror("z: could not print out z database");
-        return;
-    }
+    term_color_set(TERM_RED_ERROR);
+    term_writeln(Z_PRINT_MESSAGE, sizeof(Z_PRINT_MESSAGE) - 1);
+    term_color_reset();
+    term_send(&tcaps.newline);
 
-    printf("Number of entries in the database is currently: %zu\n\n", db->count);
+    term_println("Number of entries in the database is currently: %zu", db->count);
+    term_send(&tcaps.newline);
     if (!db->count) {
         return;
     }
 
     for (size_t i = 0; i < db->count; ++i) {
-        printf("z[%zu].path: %s\n", i, db->dirs[i].path);
-        printf("z[%zu].path_length: %zu\n", i, db->dirs[i].path_length);
-        printf("z[%zu].last_accessed: %zu\n", i, db->dirs[i].last_accessed);
-        printf("z[%zu].rank: %f\n\n", i, db->dirs[i].rank);
+        term_println("z[%zu].path: %s", i, db->dirs[i].path);
+        term_println("z[%zu].path_length: %zu", i, db->dirs[i].path_length);
+        term_println("z[%zu].last_accessed: %zu", i, db->dirs[i].last_accessed);
+        term_println("z[%zu].rank: %f", i, db->dirs[i].rank);
+        term_send(&tcaps.newline);
     }
 }
 
 void z_count(z_Database* rst db)
 {
-    printf("Number of entries in the database is currently: %zu\n", db->count);
+    term_println("Number of entries in the database is currently: %zu", db->count);
 }

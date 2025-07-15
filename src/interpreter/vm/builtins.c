@@ -25,9 +25,9 @@
 #include "../../alias.h"
 #include "../../arena.h"
 #include "../../defines.h"
-#include "../../eskilib/ecolors.h"
 #include "../../readline/history.h"
-#include "../../types.h"
+#include "../../ttyterm/ttyterm.h"
+#include "../../shell.h"
 #include "../../z/z.h"
 #include "vm_types.h"
 
@@ -40,11 +40,25 @@ int builtins_disabled_state = 0;
 
 ssize_t builtins_write(int fd, char* buf, size_t len)
 {
-    ssize_t bytes_written = write(fd, buf, len);
-    if (bytes_written == -1 && errno == EPIPE)
-        return -1;
-    else if (bytes_written == -1)
+    ssize_t bytes_written = term_fwrite(fd, buf, len);
+    if (bytes_written == EOF && errno == EPIPE) {
+        return EOF;
+    }
+    else if (bytes_written == EOF) {
         longjmp(env, -99);
+    }
+    return bytes_written;
+}
+
+ssize_t builtins_writeln(int fd, char* buf, size_t len)
+{
+    ssize_t bytes_written = term_fwriteln(fd, buf, len);
+    if (bytes_written == EOF && errno == EPIPE) {
+        return EOF;
+    }
+    else if (bytes_written == EOF) {
+        longjmp(env, -99);
+    }
     return bytes_written;
 }
 
@@ -68,9 +82,10 @@ int builtins_history(History* rst history, char** rst buffer, size_t* rst buf_le
 
 #define NCSH_ALIAS "alias"
 #define NCSH_ALIAS_PRINT "-p"
+#define NCSH_ALIAS_PRINT_ "print"
 #define NCSH_ALIAS_ADD "add"
 #define NCSH_ALIAS_RM "rm"
-#define NCSH_ALIAS_REMOVE "rm"
+#define NCSH_ALIAS_REMOVE "remove"
 #define NCSH_ALIAS_DELETE "delete"
 int builtins_alias(char** rst buffer, size_t* rst buf_lens, Arena* rst arena);
 
@@ -188,7 +203,7 @@ static const Builtin builtins[] = {
 static constexpr size_t builtins_count = sizeof(builtins) / sizeof(Builtin);
 
 /* Implementations */
-#define Z_COMMAND_NOT_FOUND_MESSAGE "ncsh z: command not found, options not supported.\n"
+#define Z_COMMAND_NOT_FOUND_MESSAGE "ncsh z: command not found, options not supported."
 
 [[nodiscard]]
 int builtins_z(z_Database* rst z_db, char** rst buffer, size_t* rst buf_lens, Arena* rst arena, Arena* rst scratch)
@@ -224,7 +239,7 @@ int builtins_z(z_Database* rst z_db, char** rst buffer, size_t* rst buf_lens, Ar
         // z
         char cwd[PATH_MAX] = {0};
         if (!getcwd(cwd, PATH_MAX)) {
-            perror(RED "ncsh z: Could not load cwd information" RESET);
+            term_perror("ncsh z: Could not load cwd information");
             return EXIT_FAILURE;
         }
 
@@ -255,13 +270,13 @@ int builtins_z(z_Database* rst z_db, char** rst buffer, size_t* rst buf_lens, Ar
         }
     }
 
-    if (builtins_write(vm_output_fd, Z_COMMAND_NOT_FOUND_MESSAGE, sizeof(Z_COMMAND_NOT_FOUND_MESSAGE) - 1) == -1) {
+    if (builtins_writeln(vm_output_fd, Z_COMMAND_NOT_FOUND_MESSAGE, sizeof(Z_COMMAND_NOT_FOUND_MESSAGE) - 1) == -1) {
         return EXIT_FAILURE;
     }
     return EXIT_SUCCESS;
 }
 
-#define HISTORY_COMMAND_NOT_FOUND_MESSAGE "ncsh history: command not found.\n"
+#define HISTORY_COMMAND_NOT_FOUND_MESSAGE "ncsh history: command not found."
 
 [[nodiscard]]
 int builtins_history(History* rst history, char** rst buffer, size_t* rst buf_lens, Arena* rst arena,
@@ -276,7 +291,7 @@ int builtins_history(History* rst history, char** rst buffer, size_t* rst buf_le
     // skip first position since we know it is 'history'
     char** arg = buffer + 1;
     if (!arg || !*arg) {
-        if (builtins_write(vm_output_fd, HISTORY_COMMAND_NOT_FOUND_MESSAGE,
+        if (builtins_writeln(vm_output_fd, HISTORY_COMMAND_NOT_FOUND_MESSAGE,
                            sizeof(HISTORY_COMMAND_NOT_FOUND_MESSAGE) - 1) == -1) {
             return EXIT_FAILURE;
         }
@@ -319,23 +334,22 @@ int builtins_history(History* rst history, char** rst buffer, size_t* rst buf_le
         }
     }
 
-    if (builtins_write(vm_output_fd, HISTORY_COMMAND_NOT_FOUND_MESSAGE,
+    if (builtins_writeln(vm_output_fd, HISTORY_COMMAND_NOT_FOUND_MESSAGE,
                        sizeof(HISTORY_COMMAND_NOT_FOUND_MESSAGE) - 1) == -1) {
         return EXIT_FAILURE;
     }
     return EXIT_FAILURE_CONTINUE;
 }
 
-#define ALIAS_ADD_USAGE "ncsh: alias: add usage: alias add {alias} {command}.\n"
-#define ALIAS_REMOVE_USAGE "ncsh: alias: remove/rm usage: alias {remove/rm} {alias} {command}.\n"
+#define ALIAS_ADD_USAGE "ncsh: alias: add usage: alias add {alias} {command}."
+#define ALIAS_REMOVE_USAGE "ncsh: alias: remove/rm usage: alias {remove/rm} {alias} {command}."
 #define ALIAS_USAGE                                                                                                    \
     "ncsh: alias: option not found. Options are alias or alias -p to print aliases, alias add, alias remove/rm, and "  \
-    "alias delete to delete all aliases.\n"
+    "alias delete to delete all aliases."
 
 [[nodiscard]]
-int builtins_alias(char** rst buffer, size_t* rst buf_lens, Arena* rst arena)
+int builtins_alias(char** rst buffer, [[maybe_unused]] size_t* rst buf_lens, Arena* rst arena)
 {
-    (void)buf_lens;
     assert(buffer && *buffer);
 
     if (!buffer || !buffer[1]) {
@@ -350,7 +364,7 @@ int builtins_alias(char** rst buffer, size_t* rst buf_lens, Arena* rst arena)
         ++arg;
         ++arg_len;
         if (!arg || !*arg) {
-            if (builtins_write(vm_output_fd, ALIAS_ADD_USAGE, sizeof(ALIAS_ADD_USAGE) - 1) == -1) {
+            if (builtins_writeln(vm_output_fd, ALIAS_ADD_USAGE, sizeof(ALIAS_ADD_USAGE) - 1) == -1) {
                 return EXIT_FAILURE;
             }
             return EXIT_FAILURE_CONTINUE;
@@ -360,7 +374,7 @@ int builtins_alias(char** rst buffer, size_t* rst buf_lens, Arena* rst arena)
         ++arg;
         ++arg_len;
         if (!arg || !*arg) {
-            if (builtins_write(vm_output_fd, ALIAS_ADD_USAGE, sizeof(ALIAS_ADD_USAGE) - 1) == -1) {
+            if (builtins_writeln(vm_output_fd, ALIAS_ADD_USAGE, sizeof(ALIAS_ADD_USAGE) - 1) == -1) {
                 return EXIT_FAILURE;
             }
             return EXIT_FAILURE_CONTINUE;
@@ -374,7 +388,7 @@ int builtins_alias(char** rst buffer, size_t* rst buf_lens, Arena* rst arena)
         ++arg;
         ++arg_len;
         if (!arg || !*arg) {
-            if (builtins_write(vm_output_fd, ALIAS_REMOVE_USAGE, sizeof(ALIAS_REMOVE_USAGE) - 1) == -1) {
+            if (builtins_writeln(vm_output_fd, ALIAS_REMOVE_USAGE, sizeof(ALIAS_REMOVE_USAGE) - 1) == -1) {
                 return EXIT_FAILURE;
             }
             return EXIT_FAILURE_CONTINUE;
@@ -384,11 +398,12 @@ int builtins_alias(char** rst buffer, size_t* rst buf_lens, Arena* rst arena)
     else if (estrcmp(*arg, *arg_len, NCSH_ALIAS_DELETE, sizeof(NCSH_ALIAS_DELETE))) {
         alias_delete();
     }
-    else if (estrcmp(*arg, *arg_len, NCSH_ALIAS_PRINT, sizeof(NCSH_ALIAS_PRINT))) {
+    else if (estrcmp(*arg, *arg_len, NCSH_ALIAS_PRINT, sizeof(NCSH_ALIAS_PRINT)) ||
+             estrcmp(*arg, *arg_len, NCSH_ALIAS_PRINT_, sizeof(NCSH_ALIAS_PRINT_))) {
         alias_print(vm_output_fd);
     }
     else {
-        if (builtins_write(vm_output_fd, ALIAS_USAGE, sizeof(ALIAS_USAGE) - 1) == -1) {
+        if (builtins_writeln(vm_output_fd, ALIAS_USAGE, sizeof(ALIAS_USAGE) - 1) == -1) {
             return EXIT_FAILURE;
         }
         return EXIT_FAILURE_CONTINUE;
@@ -399,12 +414,11 @@ int builtins_alias(char** rst buffer, size_t* rst buf_lens, Arena* rst arena)
 
 #define UNALIAS_USAGE                                                                                                  \
     "ncsh: unalias: usage is unalias, unalias -a to delete all aliases, or unalias {aliases} to remove specific "      \
-    "alias(es).\n"
+    "alias(es)."
 
 [[nodiscard]]
-int builtins_unalias(char** rst buffer, size_t* rst buf_lens)
+int builtins_unalias(char** rst buffer, [[maybe_unused]] size_t* rst buf_lens)
 {
-    (void)buf_lens;
     assert(buffer && *buffer);
 
     if (!buffer || !buffer[1]) {
@@ -428,7 +442,7 @@ int builtins_unalias(char** rst buffer, size_t* rst buf_lens)
         }
     }
     else {
-        if (builtins_write(vm_output_fd, UNALIAS_USAGE, sizeof(UNALIAS_USAGE) - 1) == -1) {
+        if (builtins_writeln(vm_output_fd, UNALIAS_USAGE, sizeof(UNALIAS_USAGE) - 1) == -1) {
             return EXIT_FAILURE;
         }
         return EXIT_FAILURE_CONTINUE;
@@ -438,10 +452,8 @@ int builtins_unalias(char** rst buffer, size_t* rst buf_lens)
 }
 
 [[nodiscard]]
-int builtins_exit(char** rst buffer, size_t* rst buf_lens)
+int builtins_exit([[maybe_unused]] char** rst buffer, [[maybe_unused]] size_t* rst buf_lens)
 {
-    (void)buffer;
-    (void)buf_lens;
     return EXIT_SUCCESS_END;
 }
 
@@ -452,7 +464,7 @@ int builtins_echo(char** rst buffer, size_t* rst buf_lens)
     char** arg = buffer + 1;
     size_t* arg_lens = buf_lens + 1;
     if (!arg || !*arg) {
-        putchar('\n');
+        term_send(&tcaps.newline);
         return EXIT_SUCCESS;
     }
 
@@ -472,95 +484,113 @@ int builtins_echo(char** rst buffer, size_t* rst buf_lens)
     char* prev = NULL;
     while (arg && *arg) {
         prev = *arg;
-        if (!prev)
+        if (!prev) {
             break;
+        }
         ++arg;
-        if (!arg || !*arg)
+        if (!arg || !*arg) {
             break;
+        }
 
-        dprintf(vm_output_fd, "%s ", prev);
+        term_dprint(vm_output_fd, "%s ", prev);
     }
-    if (prev)
-        dprintf(vm_output_fd, "%s", prev);
+    if (prev) {
+        term_dprint(vm_output_fd, "%s", prev);
+    }
 
     if (echo_add_newline) {
-        putchar('\n');
+        term_send(&tcaps.newline);
     }
 
     return EXIT_SUCCESS;
 }
 
-#define NCSH_TITLE "ncsh " NCSH_VERSION "\n"
-#define NCSH_COPYRIGHT                                                                                                 \
-    "Copyright (C) 2025 Alex Eski\n"                                                                                   \
-    "License GPLv3+: GNU GPL version 3 or later <https://gnu.org/licenses/gpl.html>. "                                 \
-    "This program comes with ABSOLUTELY NO WARRANTY.\n"                                                                \
-    "This is free software, and you are welcome to redistribute it "                                                   \
-    "under certain conditions.\n\n"
+#define NCSH_TITLE "ncsh " NCSH_VERSION ""
 
-#define HELP_MESSAGE "ncsh help\n\n"
-#define HELP_FORMAT "Builtin Commands: {command} {args}\n\n"
+#define NCSH_COPYRIGHT                                                                                                 \
+    "Copyright (C) 2025 Alex Eski"
+
+#define NCSH_LICENSE                                                                                                   \
+    "License GPLv3+: GNU GPL version 3 or later <https://gnu.org/licenses/gpl.html>. "
+#define NCSH_LICENSE_NO_WARRANTY                                                                                       \
+    "This program comes with ABSOLUTELY NO WARRANTY."
+#define NCSH_LICENSE_INFO                                                                                              \
+    "This is free software, and you are welcome to redistribute it "                                                   \
+    "under certain conditions."
+
+#define HELP_MESSAGE "ncsh help"
+#define HELP_FORMAT "Builtin Commands: {command} {args}"
 #define HELP_QUIT                                                                                                      \
-    "q:		          To exit, type q, exit, or quit and press enter. You can also use Ctrl+D to exit.\n\n"
-#define HELP_CHANGEDIR "cd/z:		          You can change directory with cd or z.\n\n"
+    "q:		          To exit, type q, exit, or quit and press enter. You can also use Ctrl+D to exit."
+#define HELP_CHANGEDIR "cd/z:		          You can change directory with cd or z."
 #define HELP_Z                                                                                                         \
     "z {directory}:            A builtin autojump/z command. An enhanced cd command that keeps track of history and "  \
-    "fuzzy matches against previously visited directories.\n\n"
-#define HELP_Z_ADD "z add {directory}:        Manually add a directory to your z database.\n\n"
+    "fuzzy matches against previously visited directories."
+#define HELP_Z_ADD "z add {directory}:        Manually add a directory to your z database."
 #define HELP_Z_RM                                                                                                      \
     "z rm {directory}:         Manually remove a directory from your z database. Can also call using 'z remove "       \
-    "{directory}'.\n\n"
-#define HELP_Z_PRINT "z print:                  Print out information about the entries in your z database.\n\n"
-#define HELP_ECHO "echo:		          You can write things to the screen using echo.\n\n"
-#define HELP_HISTORY "history:	          You can see your command history using the history command.\n\n"
+    "{directory}'."
+#define HELP_Z_PRINT "z print:                  Print out information about the entries in your z database."
+#define HELP_ECHO "echo:		          You can write things to the screen using echo."
+#define HELP_HISTORY "history:	          You can see your command history using the history command."
 #define HELP_HISTORY_COUNT                                                                                             \
-    "history count:            You can see the number of entries in your history with history count command.\n\n"
+    "history count:            You can see the number of entries in your history with history count command."
 #define HELP_HISTORY_CLEAN                                                                                             \
     "history clean:            Removes all duplicates from the history file and reloads deduplicated history into "    \
-    "memory.\n\n"
-#define HELP_HISTORY_ADD "history add {command}:    Add a command to your history without executing the command.\n\n"
+    "memory."
+#define HELP_HISTORY_ADD "history add {command}:    Add a command to your history without executing the command."
 #define HELP_HISTORY_RM                                                                                                \
     "history rm {command}:     Remove a command from your history. Please note, the history is cleaned first to "      \
-    "dededuplicate. Can also call using 'history remove {command}.\n\n"
-#define HELP_PWD "pwd:         	          Prints the current working directory.\n\n"
-#define HELP_KILL "kill {processId}:         Terminates the process with associated processId.\n"
+    "dededuplicate. Can also call using 'history remove {command}."
+#define HELP_PWD "pwd:         	          Prints the current working directory."
+#define HELP_KILL "kill {processId}:         Terminates the process with associated processId."
 
 #define HELP_WRITE(str)                                                                                                \
     constexpr size_t str##_len = sizeof(str) - 1;                                                                      \
-    if (builtins_write(vm_output_fd, str, str##_len) == -1) {                                                          \
-        perror(RED NCSH_ERROR_STDOUT RESET);                                                                           \
+    if (builtins_writeln(vm_output_fd, str, str##_len) == -1) {                                                          \
+        term_perror(NCSH_ERROR_STDOUT);                                                                           \
         return EXIT_FAILURE;                                                                                           \
     }
 
-[[nodiscard]]
-int builtins_help(char** rst buffer, size_t* rst buf_lens)
-{
-    (void)buffer;
-    (void)buf_lens;
+#define HELP_WRITELN(str)                                                                                                \
+    constexpr size_t str##_len = sizeof(str) - 1;                                                                      \
+    if (builtins_writeln(vm_output_fd, str, str##_len) == -1) {                                                          \
+        term_perror(NCSH_ERROR_STDOUT);                                                                           \
+        return EXIT_FAILURE;                                                                                           \
+    } \
+    term_send(&tcaps.newline);
 
+
+[[nodiscard]]
+int builtins_help([[maybe_unused]] char** rst buffer,
+                  [[maybe_unused]] size_t* rst buf_lens)
+{
     constexpr size_t len = sizeof(NCSH_TITLE) - 1;
-    if (builtins_write(vm_output_fd, NCSH_TITLE, len) == -1) {
-        perror(RED NCSH_ERROR_STDOUT RESET);
+    if (builtins_writeln(vm_output_fd, NCSH_TITLE, len) == -1) {
+        term_perror(NCSH_ERROR_STDOUT);
         return EXIT_FAILURE;
     }
 
     HELP_WRITE(NCSH_COPYRIGHT);
-    HELP_WRITE(HELP_MESSAGE);
-    HELP_WRITE(HELP_FORMAT);
-    HELP_WRITE(HELP_QUIT);
-    HELP_WRITE(HELP_CHANGEDIR);
-    HELP_WRITE(HELP_Z);
-    HELP_WRITE(HELP_Z_ADD);
-    HELP_WRITE(HELP_Z_RM);
-    HELP_WRITE(HELP_Z_PRINT);
-    HELP_WRITE(HELP_ECHO);
-    HELP_WRITE(HELP_HISTORY);
-    HELP_WRITE(HELP_HISTORY_COUNT);
-    HELP_WRITE(HELP_HISTORY_CLEAN);
-    HELP_WRITE(HELP_HISTORY_ADD);
-    HELP_WRITE(HELP_HISTORY_RM);
-    HELP_WRITE(HELP_PWD);
-    HELP_WRITE(HELP_KILL);
+    HELP_WRITE(NCSH_LICENSE);
+    HELP_WRITE(NCSH_LICENSE_NO_WARRANTY);
+    HELP_WRITELN(NCSH_LICENSE_INFO);
+    HELP_WRITELN(HELP_MESSAGE);
+    HELP_WRITELN(HELP_FORMAT);
+    HELP_WRITELN(HELP_QUIT);
+    HELP_WRITELN(HELP_CHANGEDIR);
+    HELP_WRITELN(HELP_Z);
+    HELP_WRITELN(HELP_Z_ADD);
+    HELP_WRITELN(HELP_Z_RM);
+    HELP_WRITELN(HELP_Z_PRINT);
+    HELP_WRITELN(HELP_ECHO);
+    HELP_WRITELN(HELP_HISTORY);
+    HELP_WRITELN(HELP_HISTORY_COUNT);
+    HELP_WRITELN(HELP_HISTORY_CLEAN);
+    HELP_WRITELN(HELP_HISTORY_ADD);
+    HELP_WRITELN(HELP_HISTORY_RM);
+    HELP_WRITELN(HELP_PWD);
+    HELP_WRITELN(HELP_KILL);
 
     // controls
     // HELP_WRITE(HELP_BASIC_CONTROLS);
@@ -576,12 +606,11 @@ int builtins_help(char** rst buffer, size_t* rst buf_lens)
     return EXIT_SUCCESS;
 }
 
-#define NCSH_COULD_NOT_CD_MESSAGE "ncsh cd: could not change directory.\n"
+#define NCSH_COULD_NOT_CD_MESSAGE "ncsh cd: could not change directory."
 
 [[nodiscard]]
-int builtins_cd(char** rst buffer, size_t* rst buf_lens)
+int builtins_cd(char** rst buffer, [[maybe_unused]] size_t* rst buf_lens)
 {
-    (void)buf_lens;
     assert(buffer && *buffer);
 
     // skip first position since we know it is 'cd'
@@ -589,18 +618,18 @@ int builtins_cd(char** rst buffer, size_t* rst buf_lens)
     if (!arg) {
         char* home = getenv("HOME");
         if (!home) {
-            if (builtins_write(STDERR_FILENO, NCSH_COULD_NOT_CD_MESSAGE, sizeof(NCSH_COULD_NOT_CD_MESSAGE) - 1) == -1)
+            if (builtins_writeln(STDERR_FILENO, NCSH_COULD_NOT_CD_MESSAGE, sizeof(NCSH_COULD_NOT_CD_MESSAGE) - 1) == -1)
                 return EXIT_FAILURE;
         }
         else if (chdir(home)) {
-            perror("ncsh: could not change directory");
+            term_perror("ncsh: could not change directory");
         }
 
         return EXIT_SUCCESS;
     }
 
     if (chdir(arg)) {
-        if (builtins_write(STDERR_FILENO, NCSH_COULD_NOT_CD_MESSAGE, sizeof(NCSH_COULD_NOT_CD_MESSAGE) - 1) == -1)
+        if (builtins_writeln(STDERR_FILENO, NCSH_COULD_NOT_CD_MESSAGE, sizeof(NCSH_COULD_NOT_CD_MESSAGE) - 1) == -1)
             return EXIT_FAILURE;
     }
 
@@ -608,32 +637,27 @@ int builtins_cd(char** rst buffer, size_t* rst buf_lens)
 }
 
 [[nodiscard]]
-int builtins_pwd(char** rst buffer, size_t* rst buf_lens)
+int builtins_pwd([[maybe_unused]] char** rst buffer, [[maybe_unused]] size_t* rst buf_lens)
 {
-    (void)buffer;
-    (void)buf_lens;
-
     char path[PATH_MAX];
     if (!getcwd(path, sizeof(path))) {
-        perror(RED "ncsh pwd: Error when getting current directory" RESET);
-        fflush(stderr);
+        term_perror("ncsh pwd: Error when getting current directory");
         return EXIT_FAILURE;
     }
 
-    puts(path);
+    term_puts(path);
     return EXIT_SUCCESS;
 }
 
-#define KILL_NOTHING_TO_KILL_MESSAGE "ncsh kill: nothing to kill, please pass in a process ID (PID).\n"
-#define KILL_COULDNT_PARSE_PID_MESSAGE "ncsh kill: could not parse process ID (PID) from arguments.\n"
+#define KILL_NOTHING_TO_KILL_MESSAGE "ncsh kill: nothing to kill, please pass in a process ID (PID)."
+#define KILL_COULDNT_PARSE_PID_MESSAGE "ncsh kill: could not parse process ID (PID) from arguments."
 
 [[nodiscard]]
-int builtins_kill(char** rst buffer, size_t* rst buf_lens)
+int builtins_kill(char** rst buffer, [[maybe_unused]] size_t* rst buf_lens)
 {
-    (void)buf_lens;
     assert(buffer && *buffer && buffer + 1);
     if (!buffer) {
-        if (builtins_write(vm_output_fd, KILL_NOTHING_TO_KILL_MESSAGE, sizeof(KILL_NOTHING_TO_KILL_MESSAGE) - 1) ==
+        if (builtins_writeln(vm_output_fd, KILL_NOTHING_TO_KILL_MESSAGE, sizeof(KILL_NOTHING_TO_KILL_MESSAGE) - 1) ==
             -1) {
             return EXIT_FAILURE;
         }
@@ -644,7 +668,7 @@ int builtins_kill(char** rst buffer, size_t* rst buf_lens)
     // skip first position since we know it is 'kill'
     char* arg = *(buffer + 1);
     if (!arg || !*arg) {
-        if (builtins_write(vm_output_fd, KILL_NOTHING_TO_KILL_MESSAGE, sizeof(KILL_NOTHING_TO_KILL_MESSAGE) - 1) ==
+        if (builtins_writeln(vm_output_fd, KILL_NOTHING_TO_KILL_MESSAGE, sizeof(KILL_NOTHING_TO_KILL_MESSAGE) - 1) ==
             -1) {
             return EXIT_FAILURE;
         }
@@ -654,7 +678,7 @@ int builtins_kill(char** rst buffer, size_t* rst buf_lens)
 
     pid_t pid = atoi(arg);
     if (!pid) {
-        if (builtins_write(vm_output_fd, KILL_COULDNT_PARSE_PID_MESSAGE, sizeof(KILL_COULDNT_PARSE_PID_MESSAGE) - 1) ==
+        if (builtins_writeln(vm_output_fd, KILL_COULDNT_PARSE_PID_MESSAGE, sizeof(KILL_COULDNT_PARSE_PID_MESSAGE) - 1) ==
             -1) {
             return EXIT_FAILURE;
         }
@@ -662,7 +686,7 @@ int builtins_kill(char** rst buffer, size_t* rst buf_lens)
     }
 
     if (kill(pid, SIGTERM) != 0) {
-        printf("ncsh kill: could not kill process with process ID (PID): %d\n", pid);
+        term_println("ncsh kill: could not kill process with process ID (PID): %d", pid);
         return EXIT_FAILURE_CONTINUE;
     }
 
@@ -670,34 +694,28 @@ int builtins_kill(char** rst buffer, size_t* rst buf_lens)
 }
 
 [[nodiscard]]
-int builtins_version(char** rst buffer, size_t* rst buf_lens)
+int builtins_version([[maybe_unused]] char** rst buffer, [[maybe_unused]] size_t* rst buf_lens)
 {
-    (void)buffer;
-    (void)buf_lens;
-    builtins_write(vm_output_fd, NCSH_TITLE, sizeof(NCSH_TITLE) - 1);
+    builtins_writeln(vm_output_fd, NCSH_TITLE, sizeof(NCSH_TITLE) - 1);
     return EXIT_SUCCESS;
 }
 
 [[nodiscard]]
-int builtins_true(char** rst buffer, size_t* rst buf_lens)
+int builtins_true([[maybe_unused]] char** rst buffer, [[maybe_unused]] size_t* rst buf_lens)
 {
-    (void)buffer;
-    (void)buf_lens;
     return EXIT_SUCCESS;
 }
 
 [[nodiscard]]
-int builtins_false(char** rst buffer, size_t* rst buf_lens)
+int builtins_false([[maybe_unused]] char** rst buffer, [[maybe_unused]] size_t* rst buf_lens)
 {
-    (void)buffer;
-    (void)buf_lens;
     return EXIT_FAILURE;
 }
 
 void builtins_print()
 {
     for (size_t i = 0; i < builtins_count; ++i) {
-        printf("%s\n", builtins[i].value);
+        term_println("%s", builtins[i].value);
     }
 }
 
@@ -705,16 +723,17 @@ void builtins_print_enabled()
 {
     if (!builtins_disabled_state) {
         for (size_t i = 0; i < builtins_count; ++i) {
-            printf("%s: enabled\n", builtins[i].value);
+            term_println("%s: enabled", builtins[i].value);
         }
     }
     else {
         for (size_t i = 0; i < builtins_count; ++i) {
-            if ((builtins_disabled_state & builtins[i].flag))
-                printf("%s: disabled\n", builtins[i].value);
-            else
-
-                printf("%s: enabled\n", builtins[i].value);
+            if ((builtins_disabled_state & builtins[i].flag)) {
+                term_println("%s: disabled", builtins[i].value);
+            }
+            else {
+                term_println("%s: enabled", builtins[i].value);
+            }
         }
     }
 }
@@ -745,7 +764,7 @@ int builtins_disable(char** rst buffer, size_t* rst buf_lens)
             if (estrcmp(*arg, *arg_lens, builtins[j].value, builtins[j].length)) {
                 if (!(builtins_disabled_state & builtins[j].flag)) {
                     builtins_disabled_state |= builtins[j].flag;
-                    printf("ncsh disable: disabled builtin %s.\n", builtins[j].value);
+                    term_println("ncsh disable: disabled builtin %s.", builtins[j].value);
                 }
             }
             ++arg;
@@ -756,7 +775,7 @@ int builtins_disable(char** rst buffer, size_t* rst buf_lens)
     return EXIT_SUCCESS;
 }
 
-#define ENABLE_OPTION_NOT_SUPPORTED_MESSAGE "ncsh enable: command not found, options entered not supported.\n"
+#define ENABLE_OPTION_NOT_SUPPORTED_MESSAGE "ncsh enable: command not found, options entered not supported."
 
 [[nodiscard]]
 int builtins_enable(char** rst buffer, size_t* rst buf_lens)
@@ -781,7 +800,7 @@ int builtins_enable(char** rst buffer, size_t* rst buf_lens)
         }
     }
 
-    if (builtins_write(vm_output_fd, ENABLE_OPTION_NOT_SUPPORTED_MESSAGE,
+    if (builtins_writeln(vm_output_fd, ENABLE_OPTION_NOT_SUPPORTED_MESSAGE,
                        sizeof(ENABLE_OPTION_NOT_SUPPORTED_MESSAGE) - 1) == -1) {
         return EXIT_FAILURE;
     }
@@ -789,7 +808,7 @@ int builtins_enable(char** rst buffer, size_t* rst buf_lens)
 }
 
 // TODO: implement export
-/*#define EXPORT_OPTION_NOT_SUPPORTED_MESSAGE "ncsh export: command not found, options entered not supported.\n"
+/*#define EXPORT_OPTION_NOT_SUPPORTED_MESSAGE "ncsh export: command not found, options entered not supported."
 #define EXPORT_OPTIONS_MESSAGE \*/
 //     "ncsh export: please pass in at least once argument. export currently supports modifying $PATH and $HOME."
 //
@@ -836,8 +855,8 @@ int builtins_enable(char** rst buffer, size_t* rst buf_lens)
 //     return EXIT_SUCCESS;
 // }
 //
-// #define SET_NOTHING_TO_SET_MESSAGE "ncsh set: nothing to set, please pass in a value to set (i.e. '-e', '-c')\n"
-// #define SET_VALID_OPERATIONS_MESSAGE "ncsh set: valid set operations are in the form '-e', '-c', etc.\n"
+// #define SET_NOTHING_TO_SET_MESSAGE "ncsh set: nothing to set, please pass in a value to set (i.e. '-e', '-c')"
+// #define SET_VALID_OPERATIONS_MESSAGE "ncsh set: valid set operations are in the form '-e', '-c', etc."
 // [[nodiscard]]
 // int builtins_set(Tokens* rst toks, size_t* rst buf_lens)
 // {
@@ -876,7 +895,7 @@ int builtins_enable(char** rst buffer, size_t* rst buf_lens)
 // }
 //
 // // not implemented
-// #define UNSET_NOTHING_TO_UNSET_MESSAGE "ncsh unset: nothing to unset, please pass in a value to unset.\n"
+// #define UNSET_NOTHING_TO_UNSET_MESSAGE "ncsh unset: nothing to unset, please pass in a value to unset."
 // [[nodiscard]]
 // int builtins_unset(Tokens* rst toks, size_t* rst buf_lens)
 // {
@@ -897,7 +916,7 @@ int builtins_enable(char** rst buffer, size_t* rst buf_lens)
 //
 //     /*bool is_set = var_exists(arg->val, &args->vars);
 //     if (!is_set) {
-//         printf("ncsh unset: no value found for '%s' to unset.\n", args->values[1]);
+//         printf("ncsh unset: no value found for '%s' to unset.", args->values[1]);
 //         return EXIT_SUCCESS;
 //     }*/
 //     // TODO: need a way to unset, var_set doesn't work

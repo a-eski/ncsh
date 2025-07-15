@@ -48,6 +48,34 @@ void commands_realloc(Statements* rst stmts, Arena* rst scratch)
         arena_realloc(scratch, new_cap, enum Ops, stmts->statements[stmts->count].commands->ops, cap);
 }
 
+Commands* command_next(Commands* rst cmds, Arena* rst scratch)
+{
+    if (!cmds->pos) {
+        cmds->count = 1;
+        cmds->vals[1] = NULL;
+    }
+    else {
+        cmds->count = cmds->pos;
+    }
+
+    cmds->next = commands_alloc(scratch);
+    cmds->vals[cmds->pos] = NULL;
+    cmds->pos = 0;
+
+    cmds = cmds->next;
+    cmds->pos = 0;
+    return cmds;
+}
+
+Commands* command_statement_next(Statements* rst stmts, Commands* cmds, enum Logic_Type type, Arena* rst scratch)
+{
+    cmds->count = cmds->pos == 0 ? 1 : cmds->pos; // update last commands count
+
+    statement_next(stmts, type, scratch);
+
+    return stmts->statements[stmts->pos].commands;
+}
+
 void statements_init(Statements* rst stmts, Arena* rst scratch)
 {
     assert(stmts);
@@ -58,7 +86,7 @@ void statements_init(Statements* rst stmts, Arena* rst scratch)
     stmts->statements->commands = commands_alloc(scratch);
 }
 
-// TODO: implement
+// TODO: implement?
 /*void statements_realloc(Statements* rst statements, Arena* rst scratch)
 {
 

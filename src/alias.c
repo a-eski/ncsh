@@ -5,12 +5,13 @@
 #endif /* ifndef _POXIC_C_SOURCE */
 
 #include <assert.h>
-#include <stdio.h>
 #include <string.h>
 
 #include "alias.h"
 #include "arena.h"
+#include "debug.h"
 #include "eskilib/str.h"
+#include "ttyterm/ttyterm.h"
 
 #define NCSH_DEFAULT_ALIASES 10
 #define NCSH_MAX_ALIASES 100
@@ -57,7 +58,7 @@ void alias_add(char* rst val, size_t len, Arena* rst arena)
     }
 
     if (!i || i == len - 1) {
-        fprintf(stderr, "ncsh: Could not process alias while reading rc file: %s\n", val);
+        term_fprintln(stderr, "ncsh: Could not process alias while reading rc file: %s", val);
         return;
     }
 
@@ -183,6 +184,6 @@ void alias_delete()
 void alias_print(int fd)
 {
     for (size_t i = 0; i < aliases_count; ++i) {
-        dprintf(fd, "alias %s=%s\n", aliases[i].alias->value, aliases[i].actual_command->value);
+        term_dprintln(fd, "alias %s=%s", aliases[i].alias->value, aliases[i].actual_command->value);
     }
 }

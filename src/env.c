@@ -30,8 +30,9 @@ Str env_path_get()
 {
     Str path;
     path.value = getenv(NCSH_PATH_VAL);
-    if (!path.value)
+    if (!path.value) {
         return Str_Empty;
+    }
     path.length = strlen(path.value) + 1;
     return path;
 }

@@ -13,13 +13,18 @@
 
 #include "eskilib/efile.c"
 
+#ifndef TERMINFO_DIRS
+#define TERMINFO_DIRS "" // this is defined at compile time.
+#endif /* ifndef TERMINFO_DIRS */
+
+#include "ttyterm/lib/uniutil.c"
+#include "ttyterm/lib/uninames.c"
+#include "ttyterm/lib/unibilium.c"
+#include "ttyterm/tcaps.c"
+#include "ttyterm/ttyterm.c"
+
 #include "z/fzf.c"
 #include "z/z.c"
-
-#include "alias.c"
-#include "arena.c"
-#include "config.c"
-#include "env.c"
 
 #include "interpreter/expansions.c"
 #include "interpreter/interpreter.c"
@@ -33,7 +38,6 @@
 #include "readline/history.c"
 #include "readline/ncreadline.c"
 #include "readline/prompt.c"
-#include "readline/terminal.c"
 
 #include "interpreter/semantic_analyzer.c"
 #include "interpreter/vars.c"
@@ -41,6 +45,11 @@
 #include "interpreter/vm/pipe.c"
 #include "interpreter/vm/redirection.c"
 #include "interpreter/vm/vm.c"
+
+#include "alias.c"
+#include "arena.c"
+#include "config.c"
+#include "env.c"
 
 #include "main.c"
 #include "noninteractive.c"

@@ -6,7 +6,7 @@
 #include <limits.h>
 #include <linux/limits.h>
 #include <stddef.h>
-#include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -14,12 +14,12 @@
 #include "../config.h"
 #include "../configurables.h"
 #include "../defines.h"
-#include "../eskilib/ecolors.h"
 #include "../eskilib/eresult.h"
+#include "../ttyterm/ttyterm.h"
 #include "ac.h"
 #include "ncreadline.h"
 #include "prompt.h"
-#include "terminal.h"
+#include "input.h"
 
 #ifdef NCSH_RL_TEST
 #include "ncreadline_mocks.h"
@@ -46,19 +46,17 @@ bool ncrl_is_end_of_line(Input* rst input)
 {
     if (input->lines_y == 0) {
         input->lines_x[0] = input->pos;
-        return input->pos + input->prompt_len >= (size_t)input->terminal_size.x;
+        return input->pos + input->prompt_len >= term.size.x;
     }
 
-    int current_line_pos = input->pos;
-    for (int i = 0; i < input->lines_y; ++i) {
+    size_t current_line_pos = input->pos;
+    for (size_t i = 0; i < input->lines_y; ++i) {
+        assert(input->lines_x[i] >= current_line_pos);
         current_line_pos -= input->lines_x[i];
     }
 
-    if (current_line_pos < 0) {
-        return false;
-    }
     input->lines_x[input->lines_y] = current_line_pos;
-    return current_line_pos >= input->terminal_size.x;
+    return (size_t)current_line_pos >= term.size.x;
 }
 
 int ncrl_resize(Input* rst input)
@@ -67,17 +65,16 @@ int ncrl_resize(Input* rst input)
     // use previous size
     // Coordinates prev_size = input->terminal_size;
 
-    input->terminal_size = terminal_size();
     input->lines_y = 0;
     size_t len = input->pos;
     while (len) {
-        if (len < (size_t)input->terminal_size.x) {
+        if (len < term.size.x) {
             input->lines_x[input->lines_y] = len;
             break;
         }
-        input->lines_x[input->lines_y] = input->terminal_size.x;
+        input->lines_x[input->lines_y] = term.size.x;
         ++input->lines_y;
-        len -= (size_t)input->terminal_size.x;
+        len -= term.size.x;
     }
     input->current_y = input->lines_y;
 
@@ -93,7 +90,7 @@ int ncrl_resize(Input* rst input)
  */
 enum Line_Adjustment ncrl_adjust_line_if_needed(Input* rst input)
 {
-    if (!input->pos || input->pos < (size_t)input->terminal_size.x) {
+    if (!input->pos || input->pos < term.size.x) {
         return L_NONE;
     }
 
@@ -110,8 +107,8 @@ enum Line_Adjustment ncrl_adjust_line_if_needed(Input* rst input)
     if (input->lines_y > 0 && input->lines_x[input->lines_y] == 0) {
         --input->lines_y;
         input->current_y = input->lines_y;
-        terminal_move_to_end_of_previous_line();
-        fflush(stdout);
+
+        term_goto_prev_eol();
         return L_PREVIOUS;
     }
 
@@ -137,25 +134,24 @@ int ncrl_backspace(Input* rst input)
         --input->max_pos;
     }
 
-    ncsh_write_literal(BACKSPACE_STRING ERASE_CURRENT_LINE);
+    term_send(&tcaps.bs);
+    term_send(&tcaps.line_clr_to_eol);
 
     input->start_pos = input->pos;
     memmove(input->buffer + input->pos, input->buffer + input->pos + 1, input->max_pos);
     input->buffer[input->max_pos] = '\0';
 
     while (input->buffer[input->pos] != '\0') {
-        putchar(input->buffer[input->pos]);
+        term_write(&input->buffer[input->pos], 1);
         ++input->pos;
     }
-
-    fflush(stdout);
 
     while (input->pos > input->start_pos) {
         if (!input->pos || !input->buffer[input->pos - 1]) {
             break;
         }
 
-        ncsh_write_literal(MOVE_CURSOR_LEFT);
+        term_send(&tcaps.cursor_left);
         --input->pos;
     }
 
@@ -170,7 +166,8 @@ int ncrl_backspace(Input* rst input)
 [[nodiscard]]
 int ncrl_delete(Input* rst input)
 {
-    ncsh_write_literal(DELETE_STRING ERASE_CURRENT_LINE);
+    term_send(&tcaps.del);
+    term_send(&tcaps.line_clr_to_eol);
 
     input->start_pos = input->pos;
     memmove(input->buffer + input->pos, input->buffer + input->pos + 1, input->max_pos);
@@ -180,17 +177,16 @@ int ncrl_delete(Input* rst input)
     }
 
     while (input->pos < input->max_pos && input->buffer[input->pos]) {
-        putchar(input->buffer[input->pos]);
+        term_write(&input->buffer[input->pos], 1);
         ++input->pos;
     }
-    fflush(stdout);
 
     if (!input->pos) {
         return EXIT_SUCCESS;
     }
 
     while (input->pos > input->start_pos && input->pos != 0 && input->buffer[input->pos - 1]) {
-        ncsh_write_literal(MOVE_CURSOR_LEFT);
+        term_send(&tcaps.cursor_left);
         --input->pos;
     }
 
@@ -208,9 +204,8 @@ int ncrl_line_delete(Input* rst input)
         return EXIT_SUCCESS;
     }
 
-    ncsh_write_literal(RESTORE_CURSOR_POSITION);
-    ncsh_write_literal(ERASE_BELOW);
-    fflush(stdout);
+    term_send(&tcaps.cursor_restore);
+    term_send(&tcaps.scr_clr_to_eos);
 
     memset(input->buffer, '\0', input->max_pos + 1);
     input->max_pos = 0;
@@ -227,26 +222,26 @@ int ncrl_word_delete(Input* rst input)
         return EXIT_SUCCESS;
     }
 
-    ncsh_write_literal(BACKSPACE_STRING ERASE_CURRENT_LINE);
+    term_send(&tcaps.bs);
+    term_send(&tcaps.line_clr_to_eol);
     input->buffer[input->pos] = '\0';
     --input->pos;
 
     // while (input->pos > 0 && input->buffer[input->pos] != ' ') {
     while (input->pos > 0) {
         if (ncrl_adjust_line_if_needed(input) == L_PREVIOUS) {
-            ncsh_write_literal(ERASE_CURRENT_LINE);
-            fflush(stdout);
+            term_send(&tcaps.line_clr_to_eol);
         }
         // if (input->buffer[input->pos] == ' ' || (input->pos > 0 && input->buffer[input-> pos - 1] == ' '))
         if (input->buffer[input->pos] == ' ')
             break;
-        ncsh_write_literal(BACKSPACE_STRING);
+
+        term_send(&tcaps.bs);
         input->buffer[input->pos] = '\0';
         --input->pos;
         /*if (input->buffer[input->pos] == ' ')
             break;*/
     }
-    fflush(stdout);
 
     input->max_pos = input->pos;
 
@@ -296,8 +291,7 @@ int ncrl_autocomplete(Input* rst input, Arena* rst scratch)
         // deletes chars, but doesn't work, prevents line wrap
         // ncsh_write_literal(ERASE_CURRENT_LINE);
 
-        fflush(stdout);
-        ncsh_write_literal(ERASE_CURRENT_LINE);
+        term_send(&tcaps.line_clr_to_eol);
         input->current_autocompletion[0] = '\0';
         input->current_autocompletion_len = 0;
         return EXIT_SUCCESS;
@@ -306,19 +300,22 @@ int ncrl_autocomplete(Input* rst input, Arena* rst scratch)
     input->current_autocompletion_len = strlen(input->current_autocompletion);
     if (input->current_y == 0 &&
         input->prompt_len + (size_t)input->lines_x[input->lines_y] + input->current_autocompletion_len >
-            (size_t)input->terminal_size.x) {
+            term.size.x) {
         input->current_autocompletion[0] = '\0';
         input->current_autocompletion_len = 0;
         return EXIT_SUCCESS;
     }
     else if ((size_t)input->lines_x[input->lines_y] + input->current_autocompletion_len >
-             (size_t)input->terminal_size.x) {
+             term.size.x) {
         input->current_autocompletion[0] = '\0';
         input->current_autocompletion_len = 0;
         return EXIT_SUCCESS;
     }
 
-    printf(ERASE_CURRENT_LINE WHITE_DIM "%s" RESET, input->current_autocompletion);
+    term_send(&tcaps.line_clr_to_eol);
+    term_color_set(244);
+    term_print(input->current_autocompletion);
+    term_send(&tcaps.color_reset);
     /*int start_y = input->lines_y;
     if (start_y == 0) {
         int new_len = input->prompt_len + input->pos + current_autocompletion_len;
@@ -337,8 +334,7 @@ int ncrl_autocomplete(Input* rst input, Arena* rst scratch)
     fflush(stdout);*/
     // ncsh_write(input->current_autocompletion, strlen(input->current_autocompletion));
     // ncsh_write_literal(RESET);
-    terminal_move_left(input->current_autocompletion_len);
-    fflush(stdout);
+    term_send_n(&tcaps.cursor_left, input->current_autocompletion_len);
     return EXIT_SUCCESS;
 }
 
@@ -348,7 +344,7 @@ int ncrl_autocomplete(Input* rst input, Arena* rst scratch)
 [[nodiscard]]
 int ncrl_autocomplete_select(Input* rst input)
 {
-    printf("%s", input->current_autocompletion);
+    term_print(input->current_autocompletion);
     for (size_t i = 0; input->current_autocompletion[i] != '\0'; i++) {
         input->buffer[input->pos] = input->current_autocompletion[i];
         ++input->pos;
@@ -359,7 +355,6 @@ int ncrl_autocomplete_select(Input* rst input)
         input->max_pos = input->pos;
     }
 
-    fflush(stdout);
     input->current_autocompletion[0] = '\0';
     return EXIT_SUCCESS;
 }
@@ -371,7 +366,7 @@ int ncrl_move_cursor_right(Input* rst input)
         return EXIT_SUCCESS;
     }
 
-    ncsh_write_literal(MOVE_CURSOR_RIGHT);
+    term_send(&tcaps.cursor_right);
 
     ++input->pos;
     if (input->pos > input->max_pos) {
@@ -406,13 +401,14 @@ int ncrl_history_up(Input* rst input)
     input->history_entry = history_get(input->history_position, &input->history);
     if (input->history_entry.length > 0) {
         ++input->history_position;
-        ncsh_write_literal(RESTORE_CURSOR_POSITION ERASE_CURRENT_LINE);
+        term_send(&tcaps.cursor_restore);
+        term_send(&tcaps.line_clr_to_eol);
 
         input->pos = input->history_entry.length - 1;
         input->max_pos = input->history_entry.length - 1;
         memcpy(input->buffer, input->history_entry.value, input->pos);
 
-        ncsh_write(input->buffer, input->pos);
+        term_write(input->buffer, input->pos);
         ncrl_adjust_line_if_needed(input);
     }
 
@@ -424,7 +420,8 @@ int ncrl_history_down(Input* rst input)
 {
     input->history_entry = history_get(input->history_position - 2, &input->history);
 
-    ncsh_write_literal(RESTORE_CURSOR_POSITION ERASE_CURRENT_LINE);
+    term_send(&tcaps.cursor_restore);
+    term_send(&tcaps.line_clr_to_eol);
 
     if (input->history_entry.length > 0) {
         --input->history_position;
@@ -432,7 +429,7 @@ int ncrl_history_down(Input* rst input)
         input->max_pos = input->history_entry.length - 1;
         memcpy(input->buffer, input->history_entry.value, input->pos);
 
-        ncsh_write(input->buffer, input->pos);
+        term_write(input->buffer, input->pos);
     }
     else {
         input->buffer[0] = '\0';
@@ -448,7 +445,7 @@ int ncrl_history_down(Input* rst input)
 [[nodiscard]]
 int ncrl_move_cursor_left(Input* rst input)
 {
-    ncsh_write_literal(MOVE_CURSOR_LEFT);
+    term_send(&tcaps.cursor_left);
     --input->pos;
     return EXIT_SUCCESS;
 }
@@ -456,7 +453,7 @@ int ncrl_move_cursor_left(Input* rst input)
 [[nodiscard]]
 int ncrl_move_cursor_home(Input* rst input)
 {
-    ncsh_write_literal(RESTORE_CURSOR_POSITION);
+    term_send(&tcaps.cursor_restore);
     input->pos = 0;
     input->current_y = 0;
     return EXIT_SUCCESS;
@@ -466,20 +463,19 @@ int ncrl_move_cursor_home(Input* rst input)
 int ncrl_move_cursor_end(Input* rst input)
 {
     if (input->lines_y > input->current_y) {
-        ncsh_write_literal(HIDE_CURSOR);
+        term_send(&tcaps.cursor_hide);
         input->current_y = input->lines_y - input->current_y;
-        terminal_move_down(input->current_y);
-        putchar(MOVE_CURSOR_START_OF_LINE_CHAR);
-        fflush(stdout);
-        terminal_move_right(input->lines_x[input->current_y] - 1);
-        ncsh_write_literal(SHOW_CURSOR);
-        fflush(stdout);
+        assert(input->current_y > 0);
+        term_send_n(&tcaps.cursor_down, input->current_y);
+        term_send(&tcaps.line_goto_bol);
+        term_send_n(&tcaps.cursor_right, input->lines_x[input->current_y] - 1);
+        term_send(&tcaps.cursor_show);
         input->pos = input->max_pos;
         return EXIT_SUCCESS;
     }
 
     while (input->buffer[input->pos]) {
-        ncsh_write_literal(MOVE_CURSOR_RIGHT);
+        term_send(&tcaps.cursor_right);
         ++input->pos;
     }
 
@@ -491,20 +487,20 @@ char ncrl_read()
 {
     char character = 0;
     if (read(STDIN_FILENO, &character, 1) < 0) {
-        perror(RED NCSH_ERROR_STDIN RESET);
+        term_perror(NCSH_ERROR_STDIN);
         return EXIT_IO_FAILURE;
     }
 
     switch (character) {
     case ESCAPE_CHARACTER: {
         if (read(STDIN_FILENO, &character, 1) < 0) {
-            perror(RED NCSH_ERROR_STDIN RESET);
+            term_perror(NCSH_ERROR_STDIN);
             return EXIT_IO_FAILURE;
         }
 
         if (character == '[') {
             if (read(STDIN_FILENO, &character, 1) < 0) {
-                perror(RED NCSH_ERROR_STDIN RESET);
+                term_perror(NCSH_ERROR_STDIN);
                 return EXIT_IO_FAILURE;
             }
 
@@ -533,10 +529,11 @@ int ncrl_autocompletions_select_from(Input* rst input, Arena* rst scratch)
             return EXIT_SUCCESS;
         }
     #endif // NCSH_AUTOCOMPLETION_KEY == NCSH_AUTOCOMPLETION_KEY_TAB*/
-    ncsh_write_literal(ERASE_CURRENT_LINE "\n");
+    term_send(&tcaps.line_clr_to_eol);
+    term_send(&tcaps.newline);
 
     Autocompletion autocompletion_matches[NCSH_MAX_AUTOCOMPLETION_MATCHES] = {0};
-    int ac_matches_count = ac_get(input->buffer, autocompletion_matches, input->autocompletions_tree, *scratch);
+    uint8_t ac_matches_count = ac_get(input->buffer, autocompletion_matches, input->autocompletions_tree, *scratch);
 
     if (!ac_matches_count) {
         return EXIT_SUCCESS;
@@ -544,19 +541,18 @@ int ncrl_autocompletions_select_from(Input* rst input, Arena* rst scratch)
 
     if (input->buffer) {
         for (int i = 0; i < ac_matches_count; ++i) {
-            printf("%s%s\n", input->buffer, autocompletion_matches[i].value);
+            term_println("%s%s", input->buffer, autocompletion_matches[i].value);
         }
     }
     else {
         for (int i = 0; i < ac_matches_count; ++i) {
-            printf("%s\n", autocompletion_matches[i].value);
+            term_println("%s", autocompletion_matches[i].value);
         }
     }
 
-    terminal_move_up(ac_matches_count);
-    fflush(stdout);
+    term_send_n(&tcaps.cursor_up, ac_matches_count);
 
-    int position = 0;
+    size_t position = 0;
     char character;
 
     int exit = EXIT_SUCCESS;
@@ -570,15 +566,15 @@ int ncrl_autocompletions_select_from(Input* rst input, Arena* rst scratch)
             if (!position) {
                 break;
             }
-            ncsh_write_literal(MOVE_CURSOR_UP);
+            term_send(&tcaps.cursor_up);
             --position;
             break;
         }
         case DOWN_ARROW: {
-            if (position == ac_matches_count - 1) {
+            if (position == (size_t)(ac_matches_count - 1)) {
                 break;
             }
-            ncsh_write_literal(MOVE_CURSOR_DOWN);
+            term_send(&tcaps.cursor_down);
             ++position;
             break;
         }
@@ -603,13 +599,36 @@ int ncrl_autocompletions_select_from(Input* rst input, Arena* rst scratch)
         }
     }
 
-    terminal_move_down(ac_matches_count + 1 - position);
+    term_send_n(&tcaps.cursor_down, ac_matches_count + 1 - position);
     if (input->buffer && exit == EXIT_SUCCESS_EXECUTE) {
-        printf(YELLOW "%s\n" RESET, input->buffer);
+        term_color_set(220);
+        term_println(input->buffer);
+        term_send(&tcaps.color_reset);
     }
-    fflush(stdout);
 
     return exit;
+}
+
+void ncrl_prompt_init()
+{
+    bool show_user = true;
+#if NCSH_PROMPT_SHOW_USER == NCSH_SHOW_USER_NORMAL
+    show_user = true;
+#elif NCSH_PROMPT_SHOW_USER == NCSH_SHOW_USER_NONE
+    show_user = false;
+#endif /* NCSH_PROMPT_SHOW_USER == NCSH_SHOW_USER_NORMAL */
+
+    enum Dir_Type dir_type = DIR_SHORT;
+
+#if NCSH_PROMPT_DIRECTORY == NCSH_DIRECTORY_NORMAL
+    dir_type = DIR_NORMAL;
+#elif NCSH_PROMPT_DIRECTORY == NCSH_DIRECTORY_SHORT
+    dir_type = DIR_SHORT;
+#elif NCSH_PROMPT_DIRECTORY == NCSH_DIRECTORY_NONE
+    dir_type = DIR_NONE;
+#endif /* NCSH_PROMPT_DIRECTORY == NCSH_PROMPT_DIRECTORY */
+
+    prompt_init(show_user, dir_type);
 }
 
 /* ncreadline_init
@@ -618,9 +637,11 @@ int ncrl_autocompletions_select_from(Input* rst input, Arena* rst scratch)
  */
 int ncreadline_init(Config* rst config, Input* rst input, Arena* rst arena)
 {
+    ncrl_prompt_init();
+
     input->user.value = getenv("USER");
     if (!input->user.value) {
-        input->user.value = "";
+        input->user.value = (char*)"";
         input->user.length = 1;
     }
     else {
@@ -629,8 +650,8 @@ int ncreadline_init(Config* rst config, Input* rst input, Arena* rst arena)
     input->buffer = arena_malloc(arena, NCSH_MAX_INPUT, char);
 
     if (history_init(config->config_location, &input->history, arena) != E_SUCCESS) {
-        perror(RED "ncsh: Error when allocating data for and setting up history" RESET);
-        fflush(stderr);
+
+        term_perror("ncsh: Error when allocating data for and setting up history");
         return EXIT_FAILURE;
     }
 
@@ -654,7 +675,7 @@ int ncrl_putchar(char character, Input* rst input)
         if (!input->pos) {
             temp_character = input->buffer[0];
             input->buffer[0] = character;
-            putchar(character);
+            term_putc(character);
             character = temp_character;
             ++input->pos;
         }
@@ -663,7 +684,7 @@ int ncrl_putchar(char character, Input* rst input)
             temp_character = character;
             character = input->buffer[i + 1];
             input->buffer[i + 1] = temp_character;
-            putchar(temp_character);
+            term_putc(temp_character);
             ++input->pos;
         }
 
@@ -675,20 +696,17 @@ int ncrl_putchar(char character, Input* rst input)
             input->buffer[input->pos] = '\0';
         }
 
-        fflush(stdout);
-
         if (!input->pos || input->buffer[1] == '\0') {
             return EXIT_CONTINUE;
         }
 
         while (input->pos > input->start_pos + 1) {
-            ncsh_write_literal(MOVE_CURSOR_LEFT);
+            term_send(&tcaps.cursor_left);
             --input->pos;
         }
     }
     else { // end of line insertions
-        putchar(character);
-        fflush(stdout);
+        term_putc(character);
         input->buffer[input->pos++] = character;
 
         if (input->pos >= input->max_pos) {
@@ -747,8 +765,7 @@ int ncrl_escape_char_process(Input* rst input)
 {
     char character;
     if (read(STDIN_FILENO, &character, 1) < 0) {
-        perror(RED NCSH_ERROR_STDIN RESET);
-        fflush(stderr);
+        term_perror(NCSH_ERROR_STDIN);
         return EXIT_FAILURE;
     }
 
@@ -757,8 +774,7 @@ int ncrl_escape_char_process(Input* rst input)
     }
 
     if (read(STDIN_FILENO, &character, 1) < 0) {
-        perror(RED NCSH_ERROR_STDIN RESET);
-        fflush(stderr);
+        term_perror(NCSH_ERROR_STDIN);
         return EXIT_FAILURE;
     }
 
@@ -805,8 +821,7 @@ int ncrl_escape_char_process(Input* rst input)
     }
     case DELETE_PREFIX_KEY: {
         if (read(STDIN_FILENO, &character, 1) < 0) {
-            perror(RED NCSH_ERROR_STDIN RESET);
-            fflush(stderr);
+            term_perror(NCSH_ERROR_STDIN);
             return EXIT_FAILURE;
         }
 
@@ -842,6 +857,48 @@ int ncrl_escape_char_process(Input* rst input)
 
         return EXIT_SUCCESS;
     }
+    // Shift left arrow or shift right arrow
+    // ^[[1;2C
+    // ^[[1;2D
+    case '[': {
+        if (read(STDIN_FILENO, &character, 1) < 0) {
+            term_perror(NCSH_ERROR_STDIN);
+            return EXIT_FAILURE;
+        }
+
+        if (character != '1') {
+            return EXIT_SUCCESS;
+        }
+
+        if (read(STDIN_FILENO, &character, 1) < 0) {
+            term_perror(NCSH_ERROR_STDIN);
+            return EXIT_FAILURE;
+        }
+
+        if (character != ';') {
+            return EXIT_SUCCESS;
+        }
+
+        if (read(STDIN_FILENO, &character, 1) < 0) {
+            term_perror(NCSH_ERROR_STDIN);
+            return EXIT_FAILURE;
+        }
+
+        if (character != '2') {
+            return EXIT_SUCCESS;
+        }
+
+        switch (character) {
+        case RIGHT_ARROW: {
+            term_puts("detected shift right arrow");
+            break;
+        }
+        case LEFT_ARROW: {
+            term_puts("detected shift left arrow");
+            break;
+        }
+        }
+    }
     }
     return EXIT_SUCCESS;
 }
@@ -851,9 +908,8 @@ int ncrl_char_process(char character, Input* rst input, Arena* rst scratch)
     int exit;
     switch (character) {
     case CTRL_D: { // exit
-        ncsh_write_literal(ERASE_CURRENT_LINE);
-        putchar('\n');
-        fflush(stdout);
+        term_send(&tcaps.line_clr_to_eol);
+        term_send(&tcaps.newline);
         return EXIT_SUCCESS_END;
     }
     case CTRL_W: { // delete last word
@@ -903,14 +959,13 @@ int ncrl_char_process(char character, Input* rst input, Arena* rst scratch)
     case '\n': {
         if (!input->pos && !input->buffer[input->pos]) {
             input->reprint_prompt = true;
-            putchar('\n');
-            fflush(stdout);
+            term_send(&tcaps.newline);
             return EXIT_CONTINUE;
         }
 
         while (input->pos < input->max_pos && input->buffer[input->pos]) {
             ++input->pos;
-            ncsh_write_literal(MOVE_CURSOR_RIGHT);
+            term_send(&tcaps.cursor_right);
         }
 
         while (input->pos > 1 && input->buffer[input->pos - 1] == ' ') {
@@ -918,13 +973,16 @@ int ncrl_char_process(char character, Input* rst input, Arena* rst scratch)
         }
         ++input->pos;
 
-        ncsh_write_literal(ERASE_CURRENT_LINE "\n");
-        fflush(stdout);
+        term_send(&tcaps.line_clr_to_eol);
+        term_send(&tcaps.newline);
         return EXIT_SUCCESS_EXECUTE;
     }
     default: {
         if (input->pos == NCSH_MAX_INPUT - 1) {
-            fputs(RED "\nncsh: Hit max input.\n" RESET, stderr);
+            term_color_set(196);
+            term_send(&tcaps.newline);
+            term_fprintln(stderr, "ncsh: Hit max input.");
+            term_send(&tcaps.color_reset);
             input->buffer[0] = '\0';
             input->pos = 0;
             input->max_pos = 0;
@@ -949,7 +1007,7 @@ int ncreadline(Input* rst input, Arena* rst scratch)
     int exit = EXIT_SUCCESS;
 
     input->reprint_prompt = true;
-    input->terminal_size = terminal_init();
+    // input->terminal_size = terminal_init();
 
     while (1) {
         if (prompt_if_needed(input) != EXIT_SUCCESS) {
@@ -958,8 +1016,7 @@ int ncreadline(Input* rst input, Arena* rst scratch)
         }
 
         if (read(STDIN_FILENO, &character, 1) < 0) {
-            perror(RED NCSH_ERROR_STDIN RESET);
-            fflush(stderr);
+            term_perror(NCSH_ERROR_STDIN);
             exit = EXIT_FAILURE;
             break;
         }
@@ -995,7 +1052,7 @@ int ncreadline(Input* rst input, Arena* rst scratch)
     }
 
 exit:
-    terminal_reset();
+    // terminal_reset();
     return exit;
 }
 
@@ -1007,5 +1064,5 @@ void ncreadline_exit(Input* rst input)
     if (input && input->history.file && input->history.entries) {
         history_save(&input->history);
     }
-    terminal_reset();
+    term_reset();
 }

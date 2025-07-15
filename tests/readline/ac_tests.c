@@ -119,7 +119,9 @@ void ac_add_duplicate_test()
     Autocompletion_Node* third_node = second_node->nodes[char_to_index('d')];
     eassert(third_node != NULL);
     eassert(third_node->is_end_of_a_word == true);
+#ifndef NCSH_AC_CHARACTER_WEIGHTING
     eassert(third_node->weight == 3); // starts at 1, each add adds 1
+#endif
 
     ARENA_TEST_TEARDOWN;
 }

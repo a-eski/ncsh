@@ -3,12 +3,12 @@
 
 #include <assert.h>
 #include <fcntl.h>
-#include <stdio.h>
 #include <unistd.h>
 
 #include "../../debug.h"
 #include "../../defines.h"
 #include "../statements.h"
+#include "../../ttyterm/ttyterm.h"
 #include "vm_types.h"
 
 [[nodiscard]]
@@ -24,8 +24,8 @@ void stdout_redirection_start(char* rst file, bool append, Output_Redirect_IO* r
 
     io->fd_stdout = open(file, output_redirection_oflags_get(append), 0644);
     if (io->fd_stdout == -1) {
-        fprintf(stderr, "ncsh: Invalid file handle '%s': could not open file for output redirection.\n", file);
-        perror("ncsh: file error");
+        term_fprintln(stderr, "ncsh: Invalid file handle '%s': could not open file for output redirection.", file);
+        term_perror("ncsh: file error");
         return;
     }
 
@@ -50,8 +50,8 @@ void stdin_redirection_start(char* rst file, Input_Redirect_IO* rst io)
 
     io->fd = open(file, O_RDONLY);
     if (io->fd == -1) {
-        fprintf(stderr, "ncsh: Invalid file handle '%s': could not open file for input redirection.\n", file);
-        perror("ncsh: file error");
+        term_fprintln(stderr, "ncsh: Invalid file handle '%s': could not open file for input redirection.", file);
+        term_perror("ncsh: file error");
         return;
     }
 
@@ -73,8 +73,8 @@ void stderr_redirection_start(char* rst file, bool append, Output_Redirect_IO* r
 
     io->fd_stderr = open(file, output_redirection_oflags_get(append), 0644);
     if (io->fd_stderr == -1) {
-        fprintf(stderr, "ncsh: Invalid file handle '%s': could not open file for error redirection.\n", file);
-        perror("ncsh: file error");
+        term_fprintln(stderr, "ncsh: Invalid file handle '%s': could not open file for error redirection.", file);
+        term_perror("ncsh: file error");
         return;
     }
 
@@ -101,8 +101,8 @@ void stdout_and_stderr_redirection_start(char* rst file, bool append, Output_Red
     if (file_descriptor == -1) {
         io->fd_stdout = -1;
         io->fd_stderr = -1;
-        fprintf(stderr, "ncsh: Invalid file handle '%s': could not open file for ouput & error redirection.\n", file);
-        perror("ncsh: file error");
+        term_fprintln(stderr, "ncsh: Invalid file handle '%s': could not open file for ouput & error redirection.", file);
+        term_perror("ncsh: file error");
         return;
     }
     io->fd_stdout = file_descriptor;

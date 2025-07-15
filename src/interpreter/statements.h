@@ -35,9 +35,10 @@ typedef struct Commands_ {
 
 enum Logic_Type {
     LT_NORMAL = 0,
-    LT_CONDITIONS = 1,
+    LT_IF_CONDITIONS = 1,
     LT_IF,
     LT_ELSE,
+    LT_ELIF_CONDTIONS,
     LT_ELIF
 };
 
@@ -51,6 +52,7 @@ enum Statements_Type {
     ST_NORMAL = 0,
     ST_IF,
     ST_IF_ELSE,
+    ST_IF_ELIF,
     ST_IF_ELIF_ELSE,
 };
 
@@ -71,6 +73,9 @@ Commands* commands_alloc(Arena* rst scratch);
 
 void command_realloc(Commands* rst cmds, Arena* rst scratch);
 void commands_realloc(Statements* rst stmts, Arena* rst scratch);
+
+Commands* command_next(Commands* rst cmds, Arena* rst scratch);
+Commands* command_statement_next(Statements* rst stmts, Commands* cmds, enum Logic_Type type, Arena* rst scratch);
 
 void statements_init(Statements* rst stmts, Arena* rst scratch);
 

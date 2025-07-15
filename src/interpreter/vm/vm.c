@@ -10,14 +10,14 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
 #include "../../defines.h"
-#include "../../eskilib/ecolors.h"
-#include "../../types.h"
+#include "../../shell.h"
+#include "../../debug.h"
+#include "../../ttyterm/ttyterm.h"
 #include "builtins.h"
 #include "pipe.h"
 #include "redirection.h"
@@ -51,34 +51,31 @@ int vm_fork_failure(size_t command_position, size_t number_of_commands, Pipe_IO*
         }
     }
 
-    perror(RED "ncsh: Error when forking process" RESET);
-    fflush(stdout);
+    term_perror("ncsh: Error when forking process");
     return EXIT_FAILURE;
 }
 
 /* VM */
-#define VM_COMMAND_DIED_MESSAGE "ncsh: Command child process died, cause unknown.\n"
+#define VM_COMMAND_DIED_MESSAGE "ncsh: Command child process died, cause unknown."
 void vm_status_check(Vm_Data* rst vm)
 {
     if (WIFEXITED(vm->status)) {
         if ((vm->status = WEXITSTATUS(vm->status))) {
-            fprintf(stderr, "ncsh: Command child process failed with status %d\n", WEXITSTATUS(vm->status));
+            term_fprintln(stderr, "ncsh: Command child process failed with status %d", WEXITSTATUS(vm->status));
         }
 #ifdef NCSH_DEBUG
         else {
-            fprintf(stderr, "ncsh: Command child process exited successfully.\n");
+            term_fprintln(stderr, "ncsh: Command child process exited successfully.");
         }
 #endif /* NCSH_DEBUG */
         // return EXIT_SUCCESS;
     }
 #ifdef NCSH_DEBUG
     else if (WIFSIGNALED(vm->status)) {
-        fprintf(stderr, "ncsh: Command child process died from signal %d\n", WTERMSIG(vm->status));
+        term_fprintln(stderr, "ncsh: Command child process died from signal %d", WTERMSIG(vm->status));
     }
     else {
-        if (write(STDERR_FILENO, VM_COMMAND_DIED_MESSAGE, sizeof(VM_COMMAND_DIED_MESSAGE) - 1) == -1) {
-            perror("ncsh: Error writing to stderr");
-        }
+        term_writeln(VM_COMMAND_DIED_MESSAGE, sizeof(VM_COMMAND_DIED_MESSAGE) - 1);
     }
 #endif /* NCSH_DEBUG */
 }
@@ -97,7 +94,7 @@ void vm_status_set(int pid, Vm_Data* rst vm)
                 continue;
             }
 
-            perror(RED "ncsh: Error waiting for child process to exit" RESET);
+            term_perror("ncsh: Error waiting for child process to exit");
             vm->status = EXIT_FAILURE;
             break;
         }
@@ -146,7 +143,7 @@ int vm_math_process(Vm_Data* rst vm)
         break;
     }
     default: {
-        fprintf(stderr, "ncsh: while trying to process 'if' logic, found unsupported operation '%d'.", vm->op_current);
+        term_fprintln(stderr, "ncsh: while trying to process 'if' logic, found unsupported operation '%d'.", vm->op_current);
         result = false;
         break;
     }
@@ -198,27 +195,80 @@ Commands* vm_command_set(Statements* rst stmts, Commands* rst cmds, Vm_Data* rst
     return vm_command_next(stmts, cmds, vm);
 }
 
+Commands* vm_next_if_statement(Statements* rst stmts, Vm_Data* rst vm)
+{
+    do {
+        ++stmts->pos;
+    } while (stmts->pos < stmts->count && stmts->statements[stmts->pos].type != LT_IF);
+
+    if (stmts->statements[stmts->pos].type != LT_IF ||
+        !stmts->statements[stmts->pos].commands) {
+        vm->end = true;
+        return NULL;
+    }
+
+    return stmts->statements[stmts->pos].commands;
+}
+
+Commands* vm_next_else_statement(Statements* rst stmts, Vm_Data* rst vm)
+{
+    do {
+        ++stmts->pos;
+    } while (stmts->pos < stmts->count && stmts->statements[stmts->pos].type != LT_ELSE);
+
+    if (stmts->statements[stmts->pos].type != LT_ELSE ||
+        !stmts->statements[stmts->pos].commands) {
+        vm->end = true;
+        return NULL;
+    }
+
+    return stmts->statements[stmts->pos].commands;
+}
+
+Commands* vm_next_elif_condition(Statements* rst stmts, Vm_Data* rst vm)
+{
+    do {
+        ++stmts->pos;
+    } while (stmts->pos < stmts->count && stmts->statements[stmts->pos].type != LT_ELIF_CONDTIONS);
+
+    if (stmts->statements[stmts->pos].type != LT_ELIF_CONDTIONS ||
+        !stmts->statements[stmts->pos].commands) {
+        vm->end = true;
+        return NULL;
+    }
+
+    return stmts->statements[stmts->pos].commands;
+}
+
+Commands* vm_next_elif_statement(Statements* rst stmts, Vm_Data* rst vm)
+{
+    do {
+        ++stmts->pos;
+    } while (stmts->pos < stmts->count && stmts->statements[stmts->pos].type != LT_ELIF);
+
+    if (stmts->statements[stmts->pos].type != LT_ELIF ||
+        !stmts->statements[stmts->pos].commands) {
+        vm->end = true;
+        return NULL;
+    }
+
+    return stmts->statements[stmts->pos].commands;
+}
+
 [[nodiscard]]
 Commands* vm_next_if(Statements* rst stmts, Commands* rst cmds, Vm_Data* rst vm)
 {
-    if (stmts->statements[stmts->pos].type == LT_CONDITIONS) {
+    if (stmts->statements[stmts->pos].type == LT_IF_CONDITIONS) {
         if (vm->state != VS_IN_CONDITIONS) {
             return vm_command_set(stmts, cmds, vm, VS_IN_CONDITIONS);
         }
 
         else if (vm->status != EXIT_SUCCESS && cmds->prev_op == OP_AND) {
             if (stmts->type == ST_IF_ELSE) {
-                do {
-                    ++stmts->pos;
-                } while (stmts->pos < stmts->count && stmts->statements[stmts->pos].type != LT_ELSE);
-
-                if (stmts->statements[stmts->pos].type != LT_ELSE ||
-                    !stmts->statements[stmts->pos].commands) {
-                    vm->end = true;
+                cmds = vm_next_else_statement(stmts, vm);
+                if (!cmds) {
                     return NULL;
                 }
-
-                cmds = stmts->statements[stmts->pos].commands;
             }
             else {
                 vm->end = true;
@@ -231,17 +281,10 @@ Commands* vm_next_if(Statements* rst stmts, Commands* rst cmds, Vm_Data* rst vm)
                     return vm_command_set(stmts, cmds, vm, VS_IN_CONDITIONS);
                 }
                 else if (stmts->type == ST_IF_ELSE) {
-                    do {
-                        ++stmts->pos;
-                    } while (stmts->pos < stmts->count && stmts->statements[stmts->pos].type != LT_ELSE);
-
-                    if (stmts->statements[stmts->pos].type != LT_ELSE ||
-                        !stmts->statements[stmts->pos].commands) {
-                        vm->end = true;
+                    cmds = vm_next_else_statement(stmts, vm);
+                    if (!cmds) {
                         return NULL;
                     }
-
-                    cmds = stmts->statements[stmts->pos].commands;
                 }
                 else {
                     vm->end = true;
@@ -251,17 +294,17 @@ Commands* vm_next_if(Statements* rst stmts, Commands* rst cmds, Vm_Data* rst vm)
 
         else if (vm->status != EXIT_SUCCESS) {
             if (stmts->type == ST_IF_ELSE) {
-                do {
-                    ++stmts->pos;
-                } while (stmts->pos < stmts->count && stmts->statements[stmts->pos].type != LT_ELSE);
-
-                if (stmts->statements[stmts->pos].type != LT_ELSE ||
-                    !stmts->statements[stmts->pos].commands) {
-                    vm->end = true;
+                cmds = vm_next_else_statement(stmts, vm);
+                if (!cmds) {
                     return NULL;
                 }
-
-                cmds = stmts->statements[stmts->pos].commands;
+            }
+            else if (stmts->type == ST_IF_ELIF || stmts->type == ST_IF_ELIF_ELSE) {
+                debug("going to next elif condition");
+                cmds = vm_next_elif_condition(stmts, vm);
+                if (!cmds) {
+                    return NULL;
+                }
             }
             else {
                 vm->end = true;
@@ -270,11 +313,10 @@ Commands* vm_next_if(Statements* rst stmts, Commands* rst cmds, Vm_Data* rst vm)
         }
 
         else if (vm->status == EXIT_SUCCESS && cmds->prev_op == OP_OR) {
-            do {
-                ++stmts->pos;
-            } while (stmts->pos < stmts->count && stmts->statements[stmts->pos].type != LT_IF);
-
-            cmds = stmts->statements[stmts->pos].commands;
+            cmds = vm_next_if_statement(stmts, vm);
+            if (!cmds) {
+                return NULL;
+            }
         }
 
         else {
@@ -287,19 +329,26 @@ Commands* vm_next_if(Statements* rst stmts, Commands* rst cmds, Vm_Data* rst vm)
         debugf("vm->status %d\n", vm->status);
         if (vm->state == VS_IN_CONDITIONS && vm->status != EXIT_SUCCESS && stmts->type == ST_IF_ELSE) {
             if (stmts->statements[stmts->pos].type != LT_ELSE) {
-                do {
-                    ++stmts->pos;
-                } while (stmts->pos < stmts->count && stmts->statements[stmts->pos].type != LT_ELSE);
-
-                if (stmts->statements[stmts->pos].type != LT_ELSE ||
-                    !stmts->statements[stmts->pos].commands) {
-                    vm->end = true;
+                cmds = vm_next_else_statement(stmts, vm);
+                if (!cmds) {
                     return NULL;
                 }
             }
 
             cmds = stmts->statements[stmts->pos].commands;
             return vm_command_set(stmts, cmds, vm, VS_IN_ELSE_STATEMENTS);
+        }
+        if (vm->state == VS_IN_CONDITIONS && vm->status != EXIT_SUCCESS && (stmts->type == ST_IF_ELIF || stmts->type == ST_IF_ELIF_ELSE)) {
+            debug("in LT_IF ST_IF_ELIF or ST_IF_ELIF_ELSE");
+            if (stmts->statements[stmts->pos].type != LT_ELIF_CONDTIONS) {
+                cmds = vm_next_elif_condition(stmts, vm);
+                if (!cmds) {
+                    return NULL;
+                }
+            }
+
+            cmds = stmts->statements[stmts->pos].commands;
+            return vm_command_set(stmts, cmds, vm, VS_IN_CONDITIONS);
         }
         if (vm->status != EXIT_SUCCESS && (vm->state == VS_IN_IF_STATEMENTS || vm->state == VS_IN_CONDITIONS) && cmds->prev_op != OP_AND) {
 
@@ -323,6 +372,87 @@ Commands* vm_next_if(Statements* rst stmts, Commands* rst cmds, Vm_Data* rst vm)
         }
         else if (vm->state == VS_IN_CONDITIONS && vm->status != EXIT_SUCCESS) {
             return vm_command_set(stmts, cmds, vm, VS_IN_ELSE_STATEMENTS);
+        }
+        else {
+            vm->end = true;
+            return NULL;
+        }
+    }
+
+    if (stmts->statements[stmts->pos].type == LT_ELIF_CONDTIONS) {
+        debug("in LT_ELIF_CONDITIONS");
+        if (vm->state != VS_IN_CONDITIONS) {
+            return vm_command_set(stmts, cmds, vm, VS_IN_CONDITIONS);
+        }
+
+        else if (vm->status != EXIT_SUCCESS && cmds->prev_op == OP_AND) {
+            if (stmts->type == ST_IF_ELIF_ELSE) {
+                cmds = vm_next_else_statement(stmts, vm);
+                if (!cmds) {
+                    return NULL;
+                }
+            }
+            else {
+                vm->end = true;
+                return NULL;
+            }
+        }
+
+        else if (vm->status != EXIT_SUCCESS && cmds->prev_op == OP_OR) {
+                if (cmds->ops[cmds->pos] == OP_TRUE || cmds->ops[cmds->pos] == OP_CONSTANT) {
+                    return vm_command_set(stmts, cmds, vm, VS_IN_CONDITIONS);
+                }
+                else if (stmts->type == ST_IF_ELIF_ELSE) {
+                    cmds = vm_next_else_statement(stmts, vm);
+                    if (!cmds) {
+                        return NULL;
+                    }
+                }
+                else {
+                    vm->end = true;
+                    return NULL;
+                }
+        }
+
+        else if (vm->status != EXIT_SUCCESS) {
+            if (stmts->type == ST_IF_ELIF_ELSE) {
+                // need to check if there is another elif condition or not
+                cmds = vm_next_else_statement(stmts, vm);
+                if (!cmds) {
+                    return NULL;
+                }
+            }
+            else if (stmts->type == ST_IF_ELIF && stmts->pos < stmts->count - 1) {
+                debug("going to next elif condition");
+                cmds = vm_next_elif_condition(stmts, vm);
+                if (!cmds) {
+                    return NULL;
+                }
+            }
+            else {
+                vm->end = true;
+                return NULL;
+            }
+        }
+
+        else if (vm->status == EXIT_SUCCESS && cmds->prev_op == OP_OR) {
+            cmds = vm_next_elif_condition(stmts, vm);
+            if (!cmds) {
+                return NULL;
+            }
+        }
+
+        else {
+            return vm_command_set(stmts, cmds, vm, VS_IN_CONDITIONS);
+        }
+    }
+
+    if (stmts->statements[stmts->pos].type == LT_ELIF) {
+        debug("in LT_ELIF");
+        debugf("vm->status %d\n", vm->status);
+
+        if (vm->status == EXIT_SUCCESS && vm->state == VS_IN_ELIF_STATEMENTS) {
+            return vm_command_set(stmts, cmds, vm, VS_IN_ELIF_STATEMENTS);
         }
     }
 
@@ -376,6 +506,7 @@ Commands* vm_next(Statements* rst stmts, Commands* cmds, Vm_Data* rst vm)
     switch (stmts->type) {
     case ST_IF:
     case ST_IF_ELSE:
+    case ST_IF_ELIF:
     case ST_IF_ELIF_ELSE: {
         debug("vm_next_if");
         return vm_next_if(stmts, cmds, vm);
@@ -435,8 +566,7 @@ int vm_run(Statements* rst stmts, Shell* rst shell, Arena* rst scratch)
 
                 if ((vm.exec_result = execvp(vm.buffer[0], vm.buffer)) == EXECVP_FAILED) {
                     vm.end = true;
-                    perror(RED "ncsh: Could not run command" RESET);
-                    fflush(stdout);
+                    term_perror("ncsh: Could not run command");
                     kill(getpid(), SIGTERM);
                 }
             }

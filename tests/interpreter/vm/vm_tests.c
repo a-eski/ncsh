@@ -8,6 +8,7 @@
 #include "../../../src/interpreter/parser.h"
 #include "../../../src/interpreter/semantic_analyzer.h"
 #include "../../../src/interpreter/vm/vm.h"
+#include "../../../src/ttyterm/ttyterm.h"
 #include "../../lib/arena_test_helper.h"
 
 sig_atomic_t vm_child_pid;
@@ -88,7 +89,9 @@ void vm_tests()
 
 int main()
 {
+    term_init();
     vm_tests();
 
     remove("t.txt");
+    term_reset();
 }

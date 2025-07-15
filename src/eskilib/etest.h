@@ -4,9 +4,11 @@
 
 #include <stdbool.h>
 #include <stdio.h>
-#include <stdlib.h>
 
-#include "ecolors.h"
+#define RESET "\033[0m"
+#define RED "\033[31m"
+#define GREEN "\033[32m"
+#define YELLOW_BRIGHT "\033[93m"
 
 #define eassert(condition)                                                                                             \
     if (!(condition)) {                                                                                                \

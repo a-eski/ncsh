@@ -7,8 +7,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "../../eskilib/ecolors.h"
 #include "vm_types.h"
+#include "../../ttyterm/ttyterm.h"
 
 extern int vm_output_fd;
 
@@ -19,16 +19,14 @@ int pipe_start(size_t command_position, Pipe_IO* rst pipes)
 
     if (command_position % 2 != 0) {
         if (pipe(pipes->fd_one) != 0) {
-            perror(RED "ncsh: Error when piping process" RESET);
-            fflush(stdout);
+            term_perror("ncsh: Error when piping process");
             return EXIT_FAILURE;
         }
         vm_output_fd = pipes->fd_one[1];
     }
     else {
         if (pipe(pipes->fd_two) != 0) {
-            perror(RED "ncsh: Error when piping process" RESET);
-            fflush(stdout);
+            term_perror("ncsh: Error when piping process");
             return EXIT_FAILURE;
         }
         vm_output_fd = pipes->fd_two[1];

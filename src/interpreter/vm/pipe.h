@@ -1,6 +1,8 @@
 /* Copyright ncsh (C) by Alex Eski 2025 */
 /* pipe.h: Pipes functions */
 
+#pragma once
+
 #include <stddef.h>
 
 #include "vm_types.h"

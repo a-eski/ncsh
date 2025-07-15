@@ -1,5 +1,5 @@
 #include "../../src/arena.h"
-#include "../../src/types.h"
+#include "../../src/shell.h"
 
 static inline void shell_init(Shell* rst shell, Arena* scratch)
 {
