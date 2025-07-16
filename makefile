@@ -114,7 +114,6 @@ check :
 	make test_str
 	make test_arena
 	make test_alias
-	make test_config
 	# make test_prompt
 	make test_ac
 	make test_hashset
@@ -144,6 +143,7 @@ check_local :
 	set -e
 	make check
 	make test_env
+	make test_config
 	make test_z
 	make at
 .PHONY: l
