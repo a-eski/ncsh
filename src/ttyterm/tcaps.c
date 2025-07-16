@@ -74,8 +74,9 @@ void tcaps_init_keys()
     const char* del = unibi_get_str(uterm, unibi_key_dc);
     tcaps_set(del, tcaps.del, FB_DEL, CAP_DEL);
 
-    const char* newline = unibi_get_str(uterm, unibi_newline);
-    tcaps_set(newline, tcaps.newline, FB_NEWLINE, CAP_NEWLINE);
+    // const char* newline = unibi_get_str(uterm, unibi_newline);
+    // tcaps_set(newline, tcaps.newline, FB_NEWLINE, CAP_NEWLINE);
+    tcaps_set_no_fb(FB_NEWLINE, tcaps.newline, CAP_NEWLINE);
 }
 
 void tcaps_init_scr()

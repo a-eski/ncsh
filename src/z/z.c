@@ -66,7 +66,7 @@ z_Directory* z_match_find(char* rst target, size_t target_length, char* rst cwd,
     z_Match current_match = {0};
     time_t now = time(NULL);
 #ifdef Z_DEBUG
-    printf("cwd %s, len %zu\n", cwd, cwd_length);
+    term_println("cwd %s, len %zu", cwd, cwd_length);
 #endif
 
     for (size_t i = 0; i < db->count; ++i) {
@@ -78,9 +78,9 @@ z_Directory* z_match_find(char* rst target, size_t target_length, char* rst cwd,
 
             double potential_match_z_score = z_score((db->dirs + i), fzf_score, now);
 #ifdef Z_DEBUG
-            printf("%zu %s len: %zu\n", i, (db->dirs + i)->path, (db->dirs + i)->path_length);
-            printf("%s fzf_score %d\n", (db->dirs + i)->path, fzf_score);
-            printf("%s z_score %f\n", (db->dirs + i)->path, potential_match_z_score);
+            term_println("%zu %s len: %zu", i, (db->dirs + i)->path, (db->dirs + i)->path_length);
+            term_println("%s fzf_score %d", (db->dirs + i)->path, fzf_score);
+            term_println("%s z_score %f", (db->dirs + i)->path, potential_match_z_score);
 #endif /* ifdef Z_DEBUG */
 
             if (!current_match.dir || current_match.z_score < potential_match_z_score) {
@@ -91,7 +91,7 @@ z_Directory* z_match_find(char* rst target, size_t target_length, char* rst cwd,
     }
 
 #ifdef Z_DEBUG
-    printf("match %s\n", current_match.dir->path);
+    term_println("match %s", current_match.dir->path);
 #endif /* ifdef Z_DEBUG */
 
     return current_match.dir;
@@ -274,9 +274,9 @@ enum z_Result z_read(z_Database* rst db, Arena* rst arena)
             return result;
         }
 #ifdef Z_DEBUG
-        printf("Rank: %f\n", (db->dirs + i)->rank);
-        printf("Last accessed: %ld\n", (db->dirs + i)->last_accessed);
-        printf("Path: %s\n", (db->dirs + i)->path);
+        term_println("Rank: %f", (db->dirs + i)->rank);
+        term_println("Last accessed: %ld", (db->dirs + i)->last_accessed);
+        term_println("Path: %s", (db->dirs + i)->path);
 #endif /* ifdef Z_DEBUG */
     }
 
@@ -337,7 +337,7 @@ enum z_Result z_database_add(char* rst path, size_t path_length, char* rst cwd, 
     assert(db->dirs[db->count].path[total_length - 1] == '\0');
 
 #ifdef Z_DEBUG
-    printf("adding new value to db after memcpys %s\n", db->dirs[db->count].path);
+    term_println("adding new value to db after memcpys %s", db->dirs[db->count].path);
 #endif /* ifdef Z_DEBUG */
 
     db->dirs[db->count].path_length = total_length;
@@ -371,7 +371,7 @@ enum z_Result z_database_file_set(Str* rst config_file, z_Database* rst db, Aren
     memcpy(db->database_file + config_file->length - 1, Z_DATABASE_FILE, z_db_file_len);
 
 #ifdef Z_DEBUG
-    printf("db->database_file :%s\n", db->database_file);
+    term_println("db->database_file :%s", db->database_file);
 #endif /* ifdef Z_DEBUG */
 
     return Z_SUCCESS;
@@ -454,7 +454,7 @@ enum z_Result z_directory_match_exists(char* rst target, size_t target_length, c
 void z(char* rst target, size_t target_length, char* rst cwd, z_Database* rst db, Arena* rst arena, Arena scratch_arena)
 {
 #ifdef Z_DEBUG
-    printf("z: %s\n", target);
+    term_println("z: %s", target);
 #endif /* ifdef Z_DEBUG */
 
     char* home = getenv("HOME");
@@ -512,7 +512,7 @@ void z(char* rst target, size_t target_length, char* rst cwd, z_Database* rst db
 
     if (z_directory_match_exists(target, target_length, cwd, &output, &scratch_arena) == Z_SUCCESS) {
 #ifdef Z_DEBUG
-        printf("dir matches %s\n", output.value);
+        term_println("dir matches %s", output.value);
 #endif /* ifdef Z_DEBUG */
 
         if (chdir(output.value) == -1) {

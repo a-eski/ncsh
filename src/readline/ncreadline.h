@@ -22,7 +22,7 @@ typedef struct {
 
     // values related to the line buffer
     size_t start_pos;
-    size_t pos; // same as max_x, or all of lines_x added together
+    size_t pos;
     size_t max_pos;
     char* buffer;
 

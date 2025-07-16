@@ -558,7 +558,7 @@ int builtins_echo(char** rst buffer, size_t* rst buf_lens)
         term_perror(NCSH_ERROR_STDOUT);                                                                           \
         return EXIT_FAILURE;                                                                                           \
     } \
-    term_send(&tcaps.newline);
+    term_dsend(vm_output_fd, &tcaps.newline);
 
 
 [[nodiscard]]

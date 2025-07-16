@@ -28,9 +28,8 @@ end
 
 def help_tests(row)
   starting_tests('help')
-  # row = help_test(row)
-  # help_pipe_test(row)
-  row
+  row = help_test(row)
+  help_pipe_test(row)
 end
 
 def basic_echo_test(row)

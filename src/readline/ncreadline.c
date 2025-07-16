@@ -61,9 +61,7 @@ bool ncrl_is_end_of_line(Input* rst input)
 
 int ncrl_resize(Input* rst input)
 {
-    // need to reset saved cursor position as well on resize
-    // use previous size
-    // Coordinates prev_size = input->terminal_size;
+    // need to reset saved cursor position as well on resize, use previous size
 
     input->lines_y = 0;
     size_t len = input->pos;
@@ -1007,7 +1005,6 @@ int ncreadline(Input* rst input, Arena* rst scratch)
     int exit = EXIT_SUCCESS;
 
     input->reprint_prompt = true;
-    // input->terminal_size = terminal_init();
 
     while (1) {
         if (prompt_if_needed(input) != EXIT_SUCCESS) {
@@ -1052,7 +1049,6 @@ int ncreadline(Input* rst input, Arena* rst scratch)
     }
 
 exit:
-    // terminal_reset();
     return exit;
 }
 
