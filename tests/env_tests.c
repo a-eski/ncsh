@@ -32,14 +32,34 @@ void env_path_get_test()
     eassert(!memcmp(path.value, env_path, path.length - 1));
 }
 
-int main()
+void env_user_get_test()
+{
+    char* env_usr = getenv("USER");
+    size_t env_usr_len = strlen(env_usr) + 1;
+
+    Str usr = env_user_get();
+
+    eassert(usr.value && *usr.value);
+    eassert(usr.length == env_usr_len);
+    eassert(!memcmp(usr.value, env_usr, usr.length - 1));
+}
+
+void env_tests()
 {
     etest_start();
 
     etest_run(env_home_get_test);
     etest_run(env_path_get_test);
+    etest_run(env_user_get_test);
 
     etest_finish();
+}
+
+#ifndef TEST_ALL
+int main()
+{
+    env_tests();
 
     return EXIT_SUCCESS;
 }
+#endif /* ifndef TEST_ALL */

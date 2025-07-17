@@ -87,7 +87,7 @@ void expansion_variable_test()
     ARENA_TEST_TEARDOWN;
 }
 
-int main()
+void expansion_tests()
 {
     etest_start();
 
@@ -97,6 +97,13 @@ int main()
     etest_run(expansion_variable_test);
 
     etest_finish();
+}
+
+#ifndef TEST_ALL
+int main()
+{
+    expansion_tests();
 
     return EXIT_SUCCESS;
 }
+#endif /* ifndef TEST_ALL */

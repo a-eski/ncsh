@@ -506,7 +506,7 @@ void vm_next_if_elif_else_elif_true_test()
     eassert(!cmds);
 }
 
-int main()
+void vm_next_tests()
 {
     etest_start();
 
@@ -521,6 +521,13 @@ int main()
     // etest_run(vm_next_if_elif_else_elif_true_test);
 
     etest_finish();
+}
+
+#ifndef TEST_ALL
+int main()
+{
+    vm_next_tests();
 
     return EXIT_SUCCESS;
 }
+#endif /* ifndef TEST_ALL */

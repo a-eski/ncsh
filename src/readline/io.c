@@ -62,11 +62,17 @@ int io_init(Config* restrict config, Input* restrict input, Arena* restrict aren
 /* io_exit
  * Saves history changes and restores the terminal settings from before the shell was started.
  */
-void io_deinit(Input* rst input)
+void io_deinit(Input* restrict input)
 {
     if (input && input->history.file && input->history.entries) {
         history_save(&input->history);
     }
+}
+
+void io_cursor_restore([[maybe_unused]] Input* restrict input)
+{
+    // TODO: fix end of screen cursor restore
+    term_send(&tcaps.cursor_restore);
 }
 
 int io_error([[maybe_unused]] Input* restrict input)
@@ -75,6 +81,7 @@ int io_error([[maybe_unused]] Input* restrict input)
 }
 
 int io_putchar(Input* restrict input);
+
 int io_char(Input* restrict input)
 {
     if (input->pos == NCSH_MAX_INPUT - 1) {
@@ -113,7 +120,7 @@ enum Line_Adjustment : uint8_t {
  * Returns: true if at end of current line.
  */
 [[nodiscard]]
-bool io_is_end_of_line(Input* rst input)
+bool io_is_end_of_line(Input* restrict input)
 {
     if (input->lines_y == 0) {
         input->lines_x[0] = input->pos;
@@ -137,7 +144,7 @@ bool io_is_end_of_line(Input* rst input)
  * previous line, decrease lines_y and current_y. Returns: enum Line_Adjustment, a value that indicates whether any line
  * change has happened or not
  */
-enum Line_Adjustment io_adjust_line_if_needed(Input* rst input)
+enum Line_Adjustment io_adjust_line_if_needed(Input* restrict input)
 {
     if (!input->pos || input->pos < term.size.x) {
         return L_NONE;
@@ -165,7 +172,7 @@ enum Line_Adjustment io_adjust_line_if_needed(Input* rst input)
 }
 
 [[nodiscard]]
-int io_word_delete(Input* rst input)
+int io_word_delete(Input* restrict input)
 {
     if (!input->pos && !input->max_pos) {
         return EXIT_SUCCESS;
@@ -195,13 +202,13 @@ int io_word_delete(Input* rst input)
 }
 
 [[nodiscard]]
-int io_line_delete(Input* rst input)
+int io_line_delete(Input* restrict input)
 {
     if (!input->pos && !input->max_pos) {
         return EXIT_SUCCESS;
     }
 
-    term_send(&tcaps.cursor_restore);
+    io_cursor_restore(input);
     term_send(&tcaps.scr_clr_to_eos);
 
     memset(input->buffer, '\0', input->max_pos + 1);
@@ -213,7 +220,7 @@ int io_line_delete(Input* rst input)
 }
 
 [[nodiscard]]
-int io_putchar(Input* rst input)
+int io_putchar(Input* restrict input)
 {
     char character = input->c;
     char temp_character;
@@ -296,8 +303,8 @@ char io_read()
 
         break;
     }
-    case '\n':
-    case '\r': {
+    case KEY_NEWLINE:
+    case KEY_CARRIAGE_RETURN: {
         return character;
     }
     }
@@ -306,7 +313,7 @@ char io_read()
 }
 
 [[nodiscard]]
-int io_autocompletions_select_from(Input* rst input)
+int io_autocompletions_select_from(Input* restrict input)
 {
     term_send(&tcaps.line_clr_to_eol);
     term_send(&tcaps.newline);
@@ -381,7 +388,7 @@ int io_autocompletions_select_from(Input* rst input)
     term_send_n(&tcaps.cursor_down, ac_matches_count + 1 - position);
     if (input->buffer && exit == EXIT_SUCCESS_EXECUTE) {
         term_color_set(AUTOCOMPLETE_YELLOW);
-        term_println(input->buffer);
+        term_println("%s", input->buffer);
         term_color_reset();
     }
 
@@ -407,7 +414,7 @@ int io_autocompletions_select(Input* restrict input)
  * Adjusts buffer and buffer position which holds user input.
  */
 [[nodiscard]]
-int io_backspace(Input* rst input)
+int io_backspace(Input* restrict input)
 {
     if (!input->pos) {
         return EXIT_SUCCESS;
@@ -428,9 +435,9 @@ int io_backspace(Input* rst input)
     input->buffer[input->max_pos] = '\0';
 
     while (input->buffer[input->pos] != '\0') {
-        term_write(&input->buffer[input->pos], 1);
         ++input->pos;
     }
+    term_write(&input->buffer[input->start_pos], input->pos - input->start_pos);
 
     while (input->pos > input->start_pos) {
         if (!input->pos || !input->buffer[input->pos - 1]) {
@@ -471,9 +478,9 @@ int io_eol(Input* restrict input)
  * render the current autocompletion.
  */
 [[nodiscard]]
-int io_autocompletion_render(Input* rst input)
+int io_autocompletion_render(Input* restrict input)
 {
-    term_print(input->current_autocompletion);
+    term_print("%s", input->current_autocompletion);
     for (size_t i = 0; input->current_autocompletion[i] != '\0'; i++) {
         input->buffer[input->pos] = input->current_autocompletion[i];
         ++input->pos;
@@ -489,7 +496,7 @@ int io_autocompletion_render(Input* rst input)
 }
 
 [[nodiscard]]
-int io_cursor_right(Input* rst input)
+int io_cursor_right(Input* restrict input)
 {
     if (input->pos == NCSH_MAX_INPUT - 1 || (!input->buffer[input->pos] && !input->buffer[input->pos + 1])) {
         return EXIT_SUCCESS;
@@ -510,7 +517,7 @@ int io_cursor_right(Input* rst input)
  * Move cursor right if not.
  */
 [[nodiscard]]
-int io_right_arrow(Input* rst input)
+int io_right_arrow(Input* restrict input)
 {
     if (!input->pos && !input->max_pos) {
             return EXIT_CONTINUE;
@@ -534,7 +541,7 @@ int io_right_arrow(Input* rst input)
  * Move cursor left.
  */
 [[nodiscard]]
-int io_left_arrow_cursor(Input* rst input)
+int io_left_arrow_cursor(Input* restrict input)
 {
     if (!input->pos || (!input->buffer[input->pos] && !input->buffer[input->pos - 1])) {
         return EXIT_CONTINUE;
@@ -546,12 +553,12 @@ int io_left_arrow_cursor(Input* rst input)
 }
 
 [[nodiscard]]
-int io_up_arrow_history(Input* rst input)
+int io_up_arrow_history(Input* restrict input)
 {
     input->history_entry = history_get(input->history_position, &input->history);
     if (input->history_entry.length > 0) {
         ++input->history_position;
-        term_send(&tcaps.cursor_restore);
+        io_cursor_restore(input);
         term_send(&tcaps.line_clr_to_eol);
 
         input->pos = input->history_entry.length - 1;
@@ -566,11 +573,11 @@ int io_up_arrow_history(Input* rst input)
 }
 
 [[nodiscard]]
-int io_down_arrow_history(Input* rst input)
+int io_down_arrow_history(Input* restrict input)
 {
     input->history_entry = history_get(input->history_position - 2, &input->history);
 
-    term_send(&tcaps.cursor_restore);
+    io_cursor_restore(input);
     term_send(&tcaps.line_clr_to_eol);
 
     if (input->history_entry.length > 0) {
@@ -598,16 +605,16 @@ int io_down_arrow_history(Input* rst input)
  * Returns: EXIT_SUCCESS OR EXIT_FAILURE
  */
 [[nodiscard]]
-int io_delete(Input* rst input)
+int io_delete(Input* restrict input)
 {
     if (read(STDIN_FILENO, &input->c, 1) < 0) {
         term_perror(NCSH_ERROR_STDIN);
         return EXIT_FAILURE;
     }
-
     if (input->c != DELETE_KEY) {
         return EXIT_CONTINUE;
     }
+
     term_send(&tcaps.del);
     term_send(&tcaps.line_clr_to_eol);
 
@@ -619,9 +626,9 @@ int io_delete(Input* rst input)
     }
 
     while (input->pos < input->max_pos && input->buffer[input->pos]) {
-        term_write(&input->buffer[input->pos], 1);
         ++input->pos;
     }
+    term_write(&input->buffer[input->start_pos], input->pos - input->start_pos);
 
     if (!input->pos) {
         return EXIT_SUCCESS;
@@ -640,20 +647,20 @@ int io_delete(Input* rst input)
 }
 
 [[nodiscard]]
-int io_cursor_home(Input* rst input)
+int io_cursor_home(Input* restrict input)
 {
     if (!input->pos) {
         return EXIT_CONTINUE;
     }
 
-    term_send(&tcaps.cursor_restore);
+    io_cursor_restore(input);
     input->pos = 0;
     input->current_y = 0;
     return EXIT_SUCCESS;
 }
 
 [[nodiscard]]
-int io_cursor_end(Input* rst input)
+int io_cursor_end(Input* restrict input)
 {
     if (input->pos == input->max_pos) {
         return EXIT_CONTINUE;
@@ -692,9 +699,7 @@ enum io_Type : uint_fast8_t {
     IO_CARRIAGE_RETURN,
     IO_NEWLINE,
     IO_TYPE_END
-
 };
-typedef int (*io_func)(Input* restrict);
 
 enum io_Escaped_Type : uint_fast8_t {
     IO_RIGHT_ARROW = IO_TYPE_END,
@@ -706,6 +711,7 @@ enum io_Escaped_Type : uint_fast8_t {
     IO_END
 };
 
+typedef int (*io_func)(Input* restrict);
 int io_next_escaped(Input* restrict input);
 
 io_func io_funcs[] = {
@@ -774,7 +780,7 @@ int io_next(Input* restrict input)
     }
 }
 
-int io_resize(Input* rst input)
+int io_resize(Input* restrict input)
 {
     // need to reset saved cursor position as well on resize, use previous size
 
@@ -794,7 +800,7 @@ int io_resize(Input* rst input)
     return EXIT_SUCCESS;
 }
 
-void io_autocomplete(Input* rst input)
+void io_autocomplete(Input* restrict input)
 {
     if (!input->buffer[0] || input->buffer[input->pos] != '\0') {
         return;
@@ -831,7 +837,7 @@ void io_autocomplete(Input* rst input)
 
     term_send(&tcaps.line_clr_to_eol);
     term_color_set(AUTOCOMPLETE_DIM);
-    term_print(input->current_autocompletion);
+    term_print("%s", input->current_autocompletion);
     term_color_reset();
     term_send_n(&tcaps.cursor_left, input->current_autocompletion_len);
 }

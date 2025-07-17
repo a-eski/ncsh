@@ -731,7 +731,7 @@ void z_crashing_input_test()
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-int main()
+void z_tests()
 {
     term_init();
     etest_start();
@@ -769,6 +769,13 @@ int main()
     term_reset();
 
     remove(Z_DATABASE_FILE);
-
-    return 0;
 }
+
+#ifndef TEST_ALL
+int main()
+{
+    z_tests();
+
+    return EXIT_SUCCESS;
+}
+#endif /* ifndef TEST_ALL */

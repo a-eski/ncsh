@@ -543,7 +543,7 @@ void ac_first_no_matches_test()
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-int main()
+void ac_tests()
 {
     etest_start();
 
@@ -569,6 +569,13 @@ int main()
     etest_run(ac_first_no_matches_test);
 
     etest_finish();
+}
+
+#ifndef TEST_ALL
+int main()
+{
+    ac_tests();
 
     return EXIT_SUCCESS;
 }
+#endif /* ifndef TEST_ALL */

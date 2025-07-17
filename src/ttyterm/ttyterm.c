@@ -31,6 +31,7 @@ static struct termios otios;
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wformat-nonliteral"
+
 void fatal__(const char* fmt, ...)
 {
     va_list args;
@@ -266,7 +267,7 @@ int term_perror(const char* restrict msg)
     term_color_set(TERM_RED_ERROR);
     int printed = term_fprint(stderr, "%s: ", msg);
     term_color_reset();
-    printed += term_fprint(stderr, err_str);
+    printed += term_fprint(stderr, "%s", err_str);
 
     term_size_update__(printed);
     term_fsend(&tcaps.newline, stderr);

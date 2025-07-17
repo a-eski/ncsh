@@ -37,6 +37,8 @@ void running_vm_tests()
 
 void vm_tests()
 {
+    term_init();
+
     etest_start();
 
     etest_run(running_vm_tests);
@@ -85,13 +87,14 @@ void vm_tests()
     etest_run_tester("if_else_not_lt_test", vm_tester("if [ 2 -lt 1 ]; then echo hello; else echo hi; fi"));*/
 
     etest_finish();
-}
-
-int main()
-{
-    term_init();
-    vm_tests();
 
     remove("t.txt");
     term_reset();
 }
+
+#ifndef TEST_ALL
+int main()
+{
+    vm_tests();
+}
+#endif /* ifndef TEST_ALL */

@@ -66,6 +66,7 @@ static void etest_run_internal(char* function_name, void (*function)(void))
     }
 }
 
+[[maybe_unused]]
 static void etest_failed_internal(void)
 {
     test_failed = true;

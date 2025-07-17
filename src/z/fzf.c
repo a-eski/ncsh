@@ -1089,9 +1089,9 @@ int32_t fzf_get_score(const char* text, size_t text_len, fzf_pattern_t* pattern,
         int final = 0;
         for (size_t i = 0; i < pattern->size; i++) {
             fzf_term_set_t* term_set = pattern->ptr[i];
-            fzf_term_t* term = &term_set->ptr[0];
+            fzf_term_t* fzf_term = &term_set->ptr[0];
 
-            final += CALL_ALG(term, input, NULL, slab, scratch_arena).score;
+            final += CALL_ALG(fzf_term, input, NULL, slab, scratch_arena).score;
         }
         return (final > 0) ? 0 : 1;
     }
@@ -1102,10 +1102,10 @@ int32_t fzf_get_score(const char* text, size_t text_len, fzf_pattern_t* pattern,
         int32_t current_score = 0;
         bool matched = false;
         for (size_t j = 0; j < term_set->size; j++) {
-            fzf_term_t* term = &term_set->ptr[j];
-            fzf_result_t res = CALL_ALG(term, input, NULL, slab, scratch_arena);
+            fzf_term_t* fzf_term = &term_set->ptr[j];
+            fzf_result_t res = CALL_ALG(fzf_term, input, NULL, slab, scratch_arena);
             if (res.start >= 0) {
-                if (term->inv) {
+                if (fzf_term->inv) {
                     continue;
                 }
                 current_score = res.score;
@@ -1113,7 +1113,7 @@ int32_t fzf_get_score(const char* text, size_t text_len, fzf_pattern_t* pattern,
                 break;
             }
 
-            if (term->inv) {
+            if (fzf_term->inv) {
                 current_score = 0;
                 matched = true;
             }
@@ -1145,18 +1145,18 @@ fzf_position_t* fzf_get_positions(const char* text, fzf_pattern_t* pattern, fzf_
         fzf_term_set_t* term_set = pattern->ptr[i];
         bool matched = false;
         for (size_t j = 0; j < term_set->size; j++) {
-            fzf_term_t* term = &term_set->ptr[j];
-            if (term->inv) {
+            fzf_term_t* fzf_term = &term_set->ptr[j];
+            if (fzf_term->inv) {
                 // If we have an inverse term we need to check if we have a match, but
                 // we are not interested in the positions (for highlights) so to speed
                 // this up we can pass in NULL here and don't calculate the positions
-                fzf_result_t res = CALL_ALG(term, input, NULL, slab, scratch_arena);
+                fzf_result_t res = CALL_ALG(fzf_term, input, NULL, slab, scratch_arena);
                 if (res.start < 0) {
                     matched = true;
                 }
                 continue;
             }
-            fzf_result_t res = CALL_ALG(term, input, all_pos, slab, scratch_arena);
+            fzf_result_t res = CALL_ALG(fzf_term, input, all_pos, slab, scratch_arena);
             if (res.start >= 0) {
                 matched = true;
                 break;

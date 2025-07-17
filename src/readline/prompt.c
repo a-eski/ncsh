@@ -49,7 +49,7 @@ size_t prompt_short_directory_get(char* rst cwd, char* rst output)
     }
 
     memcpy(output, cwd + last_slash_pos - 1, i - last_slash_pos + 1); // has 2 slashes
-    return i - last_slash_pos + 1;                                    // null termination included in len
+    return i - last_slash_pos + 1;                                    // null termination not included in len
 }
 
 /* prompt_short_directory_print
@@ -71,7 +71,7 @@ int prompt_short_directory_print(Input* rst input)
     int printed = 0;
     if (prompt_data.show_user) {
         term_color_set(USER_COLOR);
-        printed += term_print(input->user.value);
+        printed += term_write(input->user.value, input->user.length);
         printed += term_putc(' ');
         term_color_set(DIRECTORY_COLOR);
         printed += term_write(directory, dir_len);
@@ -86,9 +86,9 @@ int prompt_short_directory_print(Input* rst input)
     }
     else {
         term_color_set(DIRECTORY_COLOR);
-        printed = term_print(directory);
+        printed += term_write(directory, dir_len);
         term_send(&tcaps.color_reset);
-        printed = term_print(NCSH_PROMPT_ENDING_STRING);
+        printed += term_print(NCSH_PROMPT_ENDING_STRING);
         // printf(ncsh_CYAN "%s" WHITE_BRIGHT NCSH_PROMPT_ENDING_STRING, directory);
         assert(printed > 0);
         input->prompt_len = (size_t)printed;
@@ -110,10 +110,10 @@ int prompt_directory_print(Input* rst input)
     int printed = 0;
     if (prompt_data.show_user) {
         term_color_set(USER_COLOR);
-        printed += term_print(input->user.value);
+        printed += term_write(input->user.value, input->user.length);
         printed += term_putc(' ');
         term_color_set(DIRECTORY_COLOR);
-        printed += term_print(cwd);
+        printed += term_print("%s", cwd);
         term_send(&tcaps.color_reset);
         printed += term_print(NCSH_PROMPT_ENDING_STRING);
 
@@ -125,7 +125,7 @@ int prompt_directory_print(Input* rst input)
     }
     else {
         term_color_set(DIRECTORY_COLOR);
-        printed += term_print(cwd);
+        printed += term_print("%s", cwd);
         term_send(&tcaps.color_reset);
         printed += term_print(NCSH_PROMPT_ENDING_STRING);
         // printf(ncsh_CYAN "%s" WHITE_BRIGHT NCSH_PROMPT_ENDING_STRING, cwd);
@@ -145,7 +145,7 @@ int prompt_no_directory_print(Input* rst input)
     int printed = 0;
     if (prompt_data.show_user) {
         term_color_set(USER_COLOR);
-        printed += term_print(input->user.value);
+        printed += term_write(input->user.value, input->user.length);
         term_send(&tcaps.color_reset);
         printed += term_print(NCSH_PROMPT_ENDING_STRING);
         // printf(ncsh_GREEN "%s" WHITE_BRIGHT NCSH_PROMPT_ENDING_STRING, input->user.value);

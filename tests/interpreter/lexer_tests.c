@@ -881,7 +881,7 @@ void lexer_lex_comment_test()
 // forward declaration: implementation put at the end because it messes with clangd lsp
 void lexer_lex_bad_input_shouldnt_crash();
 
-int main()
+void lexer_tests()
 {
     etest_start();
 
@@ -920,9 +920,16 @@ int main()
     etest_run(lexer_lex_comment_test);
 
     etest_finish();
+}
+
+#ifndef TEST_ALL
+int main()
+{
+    lexer_tests();
 
     return EXIT_SUCCESS;
 }
+#endif /* ifndef TEST_ALL */
 
 // put at the end because line messes with clangd lsp
 void lexer_lex_bad_input_shouldnt_crash()

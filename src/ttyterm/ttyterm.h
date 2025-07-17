@@ -33,18 +33,28 @@ void term_reset();
 
 /* Output, tracks pos of cursor for you and stores in term */
 int term_putc(const char c);
+
 int term_write(const char* restrict buf, const size_t n);
 int term_writeln(const char* restrict buf, const size_t n);
 int term_fwrite(const int fd, const char* restrict buf, const size_t n);
 int term_fwriteln(const int fd, const char* restrict buf, const size_t n);
+
 int term_puts(const char* restrict str);
 int term_fputs(const char* restrict str, FILE* restrict file);
-int term_print(const char* restrict fmt, ...);
-int term_println(const char* restrict fmt, ...);
-int term_fprint(FILE* restrict file, const char* restrict fmt, ...);
-int term_fprintln(FILE* restrict file, const char* restrict fmt, ...);
-int term_dprint(const int fd, const char* restrict fmt, ...);
-int term_dprintln(const int fd, const char* restrict fmt, ...);
+
+int term_print(const char* restrict fmt, ...)
+    __attribute__ ((__format__ (__printf__, 1, 2)));
+int term_println(const char* restrict fmt, ...)
+    __attribute__ ((__format__ (__printf__, 1, 2)));
+int term_fprint(FILE* restrict file, const char* restrict fmt, ...)
+    __attribute__ ((__format__ (__printf__, 2, 3)));
+int term_fprintln(FILE* restrict file, const char* restrict fmt, ...)
+    __attribute__ ((__format__ (__printf__, 2, 3)));
+int term_dprint(const int fd, const char* restrict fmt, ...)
+    __attribute__ ((__format__ (__printf__, 2, 3)));
+int term_dprintln(const int fd, const char* restrict fmt, ...)
+    __attribute__ ((__format__ (__printf__, 2, 3)));
+
 int term_perror(const char* restrict msg);
 
 /* Output using tcaps, fallsback to ASCII control characters if cap not found */

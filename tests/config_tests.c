@@ -21,13 +21,20 @@ void config_init_test()
     ARENA_TEST_TEARDOWN;
 }
 
-int main()
+void config_tests()
 {
     etest_start();
 
     etest_run(config_init_test);
 
     etest_finish();
+}
+
+#ifndef TEST_ALL
+int main()
+{
+    config_tests();
 
     return EXIT_SUCCESS;
 }
+#endif /* ifndef TEST_ALL */

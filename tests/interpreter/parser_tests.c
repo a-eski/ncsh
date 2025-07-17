@@ -1606,7 +1606,7 @@ void parser_parse_if_elif_test()
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-int main()
+void parser_tests()
 {
     etest_start();
 
@@ -1663,6 +1663,13 @@ int main()
     etest_run(parser_parse_if_elif_test);
 
     etest_finish();
+}
+
+#ifndef TEST_ALL
+int main()
+{
+    parser_tests();
 
     return EXIT_SUCCESS;
 }
+#endif /* ifndef TEST_ALL */

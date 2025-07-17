@@ -36,7 +36,7 @@
 #include "readline/ac.c"
 #include "readline/hashset.c"
 #include "readline/history.c"
-#include "readline/ncreadline.c"
+#include "readline/io.c"
 #include "readline/prompt.c"
 
 #include "interpreter/semantic_analyzer.c"
