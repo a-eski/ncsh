@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "ncreadline.h"
+#include "io.h"
 
 enum Dir_Type {
     DIR_NORMAL,

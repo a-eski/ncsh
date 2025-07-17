@@ -50,7 +50,7 @@ static int signal_forward(int signum)
     act.sa_flags = SA_SIGINFO | SA_RESTART;
 
     if (sigaction(signum, &act, NULL)) {
-        perror("ncsh: couldn't set up signal handler");
+        perror("ncsh: couldn't set up signal handler(s)");
         return errno;
     }
 

@@ -36,3 +36,18 @@ Str env_path_get()
     path.length = strlen(path.value) + 1;
     return path;
 }
+
+[[nodiscard]]
+Str env_user_get()
+{
+    Str usr;
+    usr.value = getenv("USER");
+    if (!usr.value) {
+        usr.value = (char*)"";
+        usr.length = 1;
+        return usr;
+    }
+
+    usr.length = strlen(usr.value) + 1;
+    return usr;
+}

@@ -4,6 +4,9 @@
 #pragma once
 
 // input definitions
+#define KEY_NEWLINE '\n'
+#define KEY_CARRIAGE_RETURN '\r'
+
 #define ESCAPE_CHARACTER 27 // "\033" or "^["
 #define DOUBLE_QUOTE_KEY '\"'
 #define BACKSPACE_KEY 127

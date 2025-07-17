@@ -1,5 +1,5 @@
 /* Copyright ncsh (C) by Alex Eski 2025 */
-/* ncreadline.h: read input, handle prompts, history, and autocompletions */
+/* io.h: read input, handle prompts, history, and autocompletions */
 
 #pragma once
 
@@ -21,6 +21,7 @@ typedef struct {
     Str user;
 
     // values related to the line buffer
+    char c;
     size_t start_pos;
     size_t pos;
     size_t max_pos;
@@ -40,22 +41,23 @@ typedef struct {
     size_t current_autocompletion_len;
     char* current_autocompletion;
     Autocompletion_Node* autocompletions_tree;
+    Arena* scratch;
 } Input;
 
-/* ncreadline_init
- * Allocates memory using the arena that lives for the lifetime of the shell and is used by readline to process user
+/* io_init
+ * Loads history and autocompletions.
  * input. Returns: exit status, EXIT_SUCCESS, EXIT_FAILURE, or value in defines.h (EXIT_...)
  */
-int ncreadline_init(Config* rst config, Input* rst input, Arena* rst arena);
+int io_init(Config* rst config, Input* rst input, Arena* rst arena);
 
-/* ncreadline
+/* io_readline
  * Read user input while supporting different operations like backspace, delete, history, autocompletions, home/end, and
  * other inputs. Accepts a pointer to the scratch arena, but it passes a copy (by value) to autocompletion logic when it
- * is needed to be used. Returns: exit status, EXIT_SUCCESS, EXIT_FAILURE, or value in defines.h (EXIT_...)
+ * is needed to be used. Returns: exit status( EXIT_SUCCESS, EXIT_FAILURE, or value in defines.h (EXIT_...))
  */
-int ncreadline(Input* rst input, Arena* rst scratch_arena);
+int io_readline(Input* rst input, Arena* rst scratch_arena);
 
-/* ncreadline_exit
- * Saves history changes and restores the terminal settings from before the shell was started.
+/* io_deinit
+ * Saves history changes
  */
-void ncreadline_exit(Input* rst input);
+void io_deinit(Input* rst input);

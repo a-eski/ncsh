@@ -11,7 +11,7 @@ release_flags = -Wall -Wextra -Werror -pedantic-errors -Wsign-conversion -Wforma
 
 fuzz_flags = -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,leak,fuzzer -DNDEBUG -g
 
-objects = obj/main.o obj/arena.o obj/noninteractive.o obj/ncreadline.o obj/pipe.o obj/redirection.o obj/vm.o obj/semantic_analyzer.o obj/interpreter.o obj/parser.o obj/prompt.o obj/efile.o obj/hashset.o obj/vars.o obj/lexer.o obj/lexemes.o obj/expansions.o obj/statements.o obj/builtins.o obj/history.o obj/ac.o obj/env.o obj/alias.o obj/config.o obj/fzf.o obj/z.o obj/ttyterm.o obj/tcaps.o obj/unibilium.o obj/uninames.o obj/uniutil.o
+objects = obj/main.o obj/arena.o obj/noninteractive.o obj/io.o obj/pipe.o obj/redirection.o obj/vm.o obj/semantic_analyzer.o obj/interpreter.o obj/parser.o obj/prompt.o obj/efile.o obj/hashset.o obj/vars.o obj/lexer.o obj/lexemes.o obj/expansions.o obj/statements.o obj/builtins.o obj/history.o obj/ac.o obj/env.o obj/alias.o obj/config.o obj/fzf.o obj/z.o obj/ttyterm.o obj/tcaps.o obj/unibilium.o obj/uninames.o obj/uniutil.o
 
 target = ./bin/ncsh
 

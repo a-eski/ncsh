@@ -162,6 +162,7 @@ enum eresult history_init(Str config_location, History* rst history, Arena* rst 
 
     history_file_set(config_location, history, arena);
     if (!history->file) {
+        term_fprint(stderr, "ncsh: Could not load history file path.");
         return E_FAILURE;
     }
 
@@ -237,7 +238,7 @@ enum eresult history_save(History* rst history)
     debugf("history->count %d\n", history->count);
     debugf("history pos %d\n", pos);
 
-    // history file is full.. ask user if they would like to remove duplicates before saving to condense size of history
+    // TODO: history file is full.. ask user if they would like to remove duplicates before saving to condense size of history
     // file removing duplicates saves entries for future autocompletions, but decreases size of overall history file
     // when lots of duplicates exists
 
@@ -368,6 +369,7 @@ void history_remove_entries_shift(size_t offset, History* rst history)
         return;
     }
 
+    // TODO: memmove?
     for (size_t i = offset; i < history->count - 1; ++i) {
         history->entries[i] = history->entries[i + 1];
     }
@@ -385,6 +387,7 @@ int history_command_remove(char* rst value, size_t value_len, History* rst histo
         return EXIT_FAILURE_CONTINUE;
     }
 
+    // TODO: is this even needed? didn't we reload history in history clean?
     for (size_t i = 0; i < history->count; ++i) {
         if (estrcmp(history->entries[i].value, history->entries[i].length, value, value_len)) {
             history->entries[i].value = NULL;

@@ -6,7 +6,7 @@
 #include <unistd.h>
 
 #include "../configurables.h"
-#include "ncreadline.h"
+#include "io.h"
 #include "prompt.h"
 #include "../ttyterm/ttyterm.h"
 
@@ -160,7 +160,6 @@ int prompt_no_directory_print(Input* rst input)
         assert(printed > 0);
         input->prompt_len = (size_t)printed;
     }
-
 
     // save cursor position so we can reset cursor when loading history entries
     term_send(&tcaps.cursor_save);

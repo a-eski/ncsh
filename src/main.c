@@ -16,7 +16,7 @@
 #include "interpreter/interpreter.h"
 #include "noninteractive.h"
 #include "readline/ac.h"
-#include "readline/ncreadline.h"
+#include "readline/io.h"
 #include "signals.h"
 #include "ttyterm/ttyterm.h"
 
@@ -72,7 +72,7 @@ char* init(Shell* rst shell)
         return NULL;
     }
 
-    if (ncreadline_init(&shell->config, &shell->input, &shell->arena) != EXIT_SUCCESS) {
+    if (io_init(&shell->config, &shell->input, &shell->arena) != EXIT_SUCCESS) {
         return NULL;
     }
 
@@ -99,12 +99,36 @@ void cleanup(char* rst shell_memory, Shell* rst shell)
         return;
     }
     if (shell->input.buffer) {
-        ncreadline_exit(&shell->input);
+        io_deinit(&shell->input);
     }
     if (shell->z_db.database_file) {
         z_exit(&shell->z_db);
     }
     free(shell_memory);
+}
+
+clock_t start;
+void welcome()
+{
+#ifdef NCSH_START_TIME
+    start = clock();
+#endif
+
+#ifdef NCSH_CLEAR_SCREEN_ON_STARTUP
+    term_send(&tcaps.scr_clr);
+    term_send(&tcaps.cursor_home);
+#endif
+
+    term_puts(NCSH " version: " NCSH_VERSION);
+}
+
+void startup_time()
+{
+#ifdef NCSH_START_TIME
+    clock_t end = clock();
+    double elapsed_ms = ((double)(end - start)) / CLOCKS_PER_SEC * 1000;
+    term_println("ncsh startup time: %.2f milliseconds", elapsed_ms);
+#endif
 }
 
 /* main
@@ -121,45 +145,33 @@ int main(int argc, char** argv)
 {
     term_init();
 
+    int rv;
     if (argc > 1 || !isatty(STDIN_FILENO)) {
-        return (int)noninteractive(argc, argv);
+        rv = noninteractive(argc, argv);
+        term_reset();
+        return rv;
     }
 
-#ifdef NCSH_START_TIME
-    clock_t start = clock();
-#endif
-
-#ifdef NCSH_CLEAR_SCREEN_ON_STARTUP
-    term_send(&tcaps.scr_clr);
-    term_send(&tcaps.cursor_home);
-#endif
-
-    term_puts(NCSH " version: " NCSH_VERSION);
+    welcome();
 
     Shell shell = {0};
-
     char* memory = init(&shell);
     if (!memory) {
         return EXIT_FAILURE;
     }
 
-    int exit_code = EXIT_SUCCESS;
-
     if (setjmp(env)) {
         goto exit;
     }
 
-#ifdef NCSH_START_TIME
-    clock_t end = clock();
-    double elapsed_ms = ((double)(end - start)) / CLOCKS_PER_SEC * 1000;
-    term_println("ncsh startup time: %.2f milliseconds", elapsed_ms);
-#endif
+    rv = EXIT_SUCCESS;
+    startup_time();
 
     while (1) {
-        int input_result = ncreadline(&shell.input, &shell.scratch_arena);
+        int input_result = io_readline(&shell.input, &shell.scratch_arena);
         switch (input_result) {
         case EXIT_FAILURE: {
-            exit_code = EXIT_FAILURE;
+            rv = EXIT_FAILURE;
             goto exit;
         }
         case EXIT_SUCCESS_END: {
@@ -172,7 +184,7 @@ int main(int argc, char** argv)
 
         int command_result = interpreter_run(&shell, shell.scratch_arena);
         if (command_result == EXIT_FAILURE) {
-            exit_code = EXIT_FAILURE;
+            rv = EXIT_FAILURE;
             break;
         }
         else if (command_result == EXIT_SUCCESS_END) {
@@ -190,6 +202,7 @@ int main(int argc, char** argv)
 exit:
     term_println("exit");
     cleanup(memory, &shell);
+    term_reset();
 
-    return (int)exit_code;
+    return rv;
 }
