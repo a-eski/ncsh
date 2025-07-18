@@ -3,22 +3,20 @@ CC ?= gcc
 DESTDIR ?= /bin
 RELEASE ?= 1
 
-debug_flags = -Wall -Wextra -Werror -pedantic -pedantic-errors -Wsign-conversion -Wformat=2 -Wshadow -Wvla -fstack-protector-all -Wundef -Wbad-function-cast -Wcast-align -Wstrict-prototypes -Wnested-externs -Winline -Wdisabled-optimization -fsanitize=address,undefined,leak -g
+main_flags = -Wall -Wextra -Werror -pedantic -pedantic-errors -Wsign-conversion -Wformat=2 -Wshadow -Wvla -fstack-protector-all -Wundef -Wbad-function-cast -Wcast-align -Wstrict-prototypes -Wnested-externs -Winline -Wdisabled-optimization -Wunreachable-code -Wchar-subscripts
+
+debug_flags = $(main_flags) -D_FORTIFY_SOURCE=2 -fsanitize=address,undefined,leak -g
 # -fprofile-arcs -ftest-coverage
 
-test_flags = -Wall -Wextra -Werror -pedantic -pedantic-errors -Wsign-conversion -Wformat=2 -Wshadow -Wvla -fstack-protector-all -Wundef -Wbad-function-cast -Wcast-align -Wstrict-prototypes -Wnested-externs -Winline -Wdisabled-optimization -fsanitize=address,undefined,leak -g
+test_flags =  $(debug_flags)
 
-release_flags = -Wall -Wextra -Werror -pedantic-errors -Wsign-conversion -Wformat=2 -Wshadow -Wvla -flto -O3 -ffast-math -march=native -DNDEBUG
+release_flags = $(main_flags) -flto=6 -s -O3 -ffast-math -march=native -DNDEBUG
 
-fuzz_flags = -Wall -Wextra -Werror -pedantic -pedantic-errors -Wsign-conversion -Wformat=2 -Wshadow -Wvla -fstack-protector-all -Wundef -Wbad-function-cast -Wcast-align -Wstrict-prototypes -Wnested-externs -Winline -Wdisabled-optimization -fsanitize=address,undefined,leak -g
+fuzz_flags = $(debug_flags)
 
 objects = obj/main.o obj/arena.o obj/noninteractive.o obj/io.o obj/pipe.o obj/redirection.o obj/vm.o obj/semantic_analyzer.o obj/interpreter.o obj/parser.o obj/prompt.o obj/efile.o obj/hashset.o obj/vars.o obj/lexer.o obj/lexemes.o obj/expansions.o obj/statements.o obj/builtins.o obj/history.o obj/ac.o obj/env.o obj/alias.o obj/config.o obj/fzf.o obj/z.o obj/ttyterm.o obj/tcaps.o obj/unibilium.o obj/uninames.o obj/uniutil.o
 
 target = ./bin/ncsh
-
-ifeq ($(CC), gcc)
-	release_flags += -s
-endif
 
 ifeq ($(RELEASE), 1)
 	CFLAGS ?= $(release_flags)
@@ -104,7 +102,7 @@ in_place_release :
 # Install locally to DESTDIR (default /usr/bin/)
 .PHONY: install
 install : $(target)
-	strip $(target)
+	strip --strip-all $(target)
 	install -C $(target) $(DESTDIR)
 
 # Run the tests that get ran in CI
