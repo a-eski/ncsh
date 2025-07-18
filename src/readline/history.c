@@ -26,11 +26,6 @@ void history_file_set(Str config_file, History* rst history, Arena* rst arena)
     return;
 #endif /* ifdef NCSH_HISTORY_TEST */
 
-    if (!config_file.value || !config_file.length) {
-        history->file = NCSH_HISTORY_FILE;
-        return;
-    }
-
     if (config_file.length + history_file_len > NCSH_MAX_INPUT) {
         history->file = NULL;
         return;
