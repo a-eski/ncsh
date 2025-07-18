@@ -120,7 +120,6 @@ check :
 	make test_lexer
 	make test_parser
 	make test_vars
-	make test_vm
 	make test_vm_next
 	make test_expansions
 .PHONY: c
@@ -141,6 +140,7 @@ at :
 check_local :
 	set -e
 	make check
+	make test_vm
 	make test_env
 	make test_config
 	make test_z
