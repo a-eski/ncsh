@@ -42,7 +42,9 @@ void ac_add(char* rst string, size_t length, Autocompletion_Node* rst tree, Aren
             continue;
         }
 
-        // ++tree->nodes[index]->weight;
+#ifdef  NCSH_AC_CHARACTER_WEIGHTING
+        ++tree->nodes[index]->weight;
+#endif  /* AC_CHARACTER_WEIGHTING */
         tree = tree->nodes[index];
     }
 

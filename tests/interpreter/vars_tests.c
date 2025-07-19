@@ -96,7 +96,7 @@ void vars_add_duplicate_test()
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-int main()
+void vars_tests()
 {
     etest_start();
 
@@ -106,6 +106,13 @@ int main()
     etest_run(vars_add_duplicate_test);
 
     etest_finish();
+}
+
+#ifndef TEST_ALL
+int main()
+{
+    vars_tests();
 
     return EXIT_SUCCESS;
 }
+#endif /* ifndef TEST_ALL */

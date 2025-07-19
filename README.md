@@ -7,7 +7,7 @@ The goal is to build a shell with modern features and experience and as close to
 ## Features
 
 * Autocompletions as you type: autocompletions based on history and weight.
-* Tab shows all autocompletions: view available options by pressing tab and cycle through with up/down keys and select with enter.
+* Ctrl+A or Tab shows all autocompletions: view available options by pressing tab and cycle through with up/down keys and select with enter.
 * History: command history tracked and can be cycled through using up/down keys.
 * Manipulate input: home, end, CTRL+W to delete word, CTRL+U to delete line, etc.
 * z: a native autojump/z-oxide/z command builtin.
@@ -169,7 +169,7 @@ sudo usermod -s /bin/ncsh <username>
 * sudo make install ONLY calls the install command to add the ELF executable to /usr/local.
 * Install directory is by default /usr/local.
 * Pass in DESTDIR if you want to install it somewhere else.
-* History file .ncsh_history, .ncshrc, and z database files try to use XDG_CONFIG_HOME if available, or else use environment variable HOME.
+* History file ncsh_history, ncshrc, and z database files try to use XDG_CONFIG_HOME if available, or else use environment variable HOME. Stored at {home}/.config/ncsh
 
 ## Running tests
 
@@ -179,7 +179,7 @@ Please see COMPILE.md.
 
 ### Short-term
 
-* Fix noninteractive mode after v4.0
+* Fix noninteractive mode after v0.0.4
 * Alias expansion (aliases with spaces not expanded correctly)
 * Variable expansion (want to make it a bit different than how bash works)
 * Have .ncshrc utilize builtins instead of DSL

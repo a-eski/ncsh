@@ -95,7 +95,7 @@ void alias_add_then_delete_test()
     eassert(result.value == NULL);
 }
 
-int main()
+void alias_tests()
 {
     ARENA_TEST_SETUP;
     test_arena = &arena;
@@ -113,6 +113,13 @@ int main()
     etest_finish();
 
     ARENA_TEST_TEARDOWN;
+}
+
+#ifndef TEST_ALL
+int main()
+{
+    alias_tests();
 
     return EXIT_SUCCESS;
 }
+#endif /* ifndef TEST_ALL */

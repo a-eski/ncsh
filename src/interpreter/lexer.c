@@ -154,8 +154,6 @@ enum Ops lexer_op_check_len_four(char* rst line)
             return OP_ELSE;
         else if (!memcmp(line, ELIF, sizeof(ELIF) - 1))
             return OP_ELIF;
-
-        // FALLTHROUGH
     }
     }
     return OP_CONSTANT;
@@ -389,7 +387,6 @@ void lexer_lex(char* rst line, size_t length, Lexemes* lexemes, Arena* rst scrat
             }
 
             if (lex_state & IN_SINGLE_QUOTES || lex_state & IN_DOUBLE_QUOTES || lex_state & IN_BACKTICK_QUOTES) {
-
                 lex_buf[lex_buf_pos++] = line[pos];
                 continue;
             }

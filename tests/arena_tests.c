@@ -85,7 +85,7 @@ void arena_realloc_non_char_test()
     ARENA_TEST_TEARDOWN;
 }
 
-int main()
+void arena_tests()
 {
     etest_start();
 
@@ -95,6 +95,13 @@ int main()
     etest_run(arena_realloc_non_char_test);
 
     etest_finish();
+}
+
+#ifndef TEST_ALL
+int main()
+{
+    arena_tests();
 
     return EXIT_SUCCESS;
 }
+#endif /* ifndef TEST_ALL */

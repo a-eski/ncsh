@@ -79,7 +79,7 @@ def stderr_redirection_append_test(row)
 end
 
 def stderr_redirection_tests(row)
-  starting_tests('sterr redirection')
+  starting_tests('stderr redirection')
 
   row = basic_stderr_redirection_test row
   stderr_redirection_append_test row
@@ -116,7 +116,7 @@ def basic_stdout_and_stderr_redirection_stdout_test(row)
 end
 
 def stdout_and_stderr_redirection_tests(row)
-  starting_tests('stdout and sterr redirection')
+  starting_tests('stdout and stderr redirection')
 
   row = basic_stdout_and_stderr_redirection_stderr_test row
   basic_stdout_and_stderr_redirection_stdout_test row

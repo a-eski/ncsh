@@ -4,9 +4,11 @@
 
 #include <stdbool.h>
 #include <stdio.h>
-#include <stdlib.h>
 
-#include "ecolors.h"
+#define RESET "\033[0m"
+#define RED "\033[31m"
+#define GREEN "\033[32m"
+#define YELLOW_BRIGHT "\033[93m"
 
 #define eassert(condition)                                                                                             \
     if (!(condition)) {                                                                                                \
@@ -64,6 +66,7 @@ static void etest_run_internal(char* function_name, void (*function)(void))
     }
 }
 
+[[maybe_unused]]
 static void etest_failed_internal(void)
 {
     test_failed = true;

@@ -8,6 +8,7 @@
 #include "../../../src/interpreter/parser.h"
 #include "../../../src/interpreter/semantic_analyzer.h"
 #include "../../../src/interpreter/vm/vm.h"
+#include "../../../src/ttyterm/ttyterm.h"
 #include "../../lib/arena_test_helper.h"
 
 sig_atomic_t vm_child_pid;
@@ -36,6 +37,8 @@ void running_vm_tests()
 
 void vm_tests()
 {
+    term_init();
+
     etest_start();
 
     etest_run(running_vm_tests);
@@ -84,11 +87,14 @@ void vm_tests()
     etest_run_tester("if_else_not_lt_test", vm_tester("if [ 2 -lt 1 ]; then echo hello; else echo hi; fi"));*/
 
     etest_finish();
+
+    remove("t.txt");
+    term_reset();
 }
 
+#ifndef TEST_ALL
 int main()
 {
     vm_tests();
-
-    remove("t.txt");
 }
+#endif /* ifndef TEST_ALL */

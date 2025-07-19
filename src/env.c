@@ -30,8 +30,24 @@ Str env_path_get()
 {
     Str path;
     path.value = getenv(NCSH_PATH_VAL);
-    if (!path.value)
+    if (!path.value) {
         return Str_Empty;
+    }
     path.length = strlen(path.value) + 1;
     return path;
+}
+
+[[nodiscard]]
+Str env_user_get()
+{
+    Str usr;
+    usr.value = getenv("USER");
+    if (!usr.value) {
+        usr.value = (char*)"";
+        usr.length = 1;
+        return usr;
+    }
+
+    usr.length = strlen(usr.value) + 1;
+    return usr;
 }

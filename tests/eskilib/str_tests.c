@@ -82,7 +82,7 @@ void estrcmp_partial_comparison_false_test()
     eassert(!result);
 }
 
-int main()
+void str_tests()
 {
     etest_start();
 
@@ -97,6 +97,13 @@ int main()
     etest_run(estrcmp_partial_comparison_false_test);
 
     etest_finish();
+}
+
+#ifndef TEST_ALL
+int main()
+{
+    str_tests();
 
     return EXIT_SUCCESS;
 }
+#endif /* ifndef TEST_ALL */

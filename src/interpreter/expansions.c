@@ -6,14 +6,16 @@
 #include <stdlib.h>
 
 #include "../alias.h"
+#include "../debug.h"
 #include "../env.h"
+#include "../ttyterm/ttyterm.h"
 #include "lexemes.h"
 #include "ops.h"
 #include "statements.h"
 #include "vars.h"
 // #include "lexer.h"
 // #include "parser.h"
-#include "../types.h"
+#include "../shell.h"
 
 void expansion_home(Lexemes* rst lexemes, size_t pos, Arena* rst scratch)
 {
@@ -120,12 +122,12 @@ void expansion_assignment(Lexemes* lexeme, size_t pos, Vars* rst vars, Arena* rs
 void expansion_variable(char* rst in, size_t len, Commands* rst cmds, /*Statements* stmts,*/ Shell* rst shell, Arena* rst scratch)
 {
     Str var;
+    // TODO: store a hashtable of environment vars that we can do lookups on instead of hardcoding each env val.
     if (estrcmp(in, len, NCSH_PATH_VAR, sizeof(NCSH_PATH_VAR))) {
-
         debug("replacing variable $PATH\n");
         var = env_path_get();
         if (!var.value || !*var.value) {
-            puts("ncsh: could not load path to replace $PATH variable.");
+            term_puts("ncsh: could not load path to replace $PATH variable.");
             return;
         }
 
@@ -137,11 +139,10 @@ void expansion_variable(char* rst in, size_t len, Commands* rst cmds, /*Statemen
         return;
     }
     else if (estrcmp(in, len, NCSH_HOME_VAR, sizeof(NCSH_HOME_VAR))) {
-
         debug("replacing variable $HOME\n");
         env_home_get(&var, scratch);
         if (!var.value || !*var.value) {
-            puts("ncsh: could not load home to replace $HOME variable.");
+            term_puts("ncsh: could not load home to replace $HOME variable.");
             return;
         }
         cmds->vals[cmds->pos] = arena_malloc(scratch, var.length, char);

@@ -22,5 +22,3 @@ typedef struct {
 } Config;
 
 enum eresult config_init(Config* rst config, Arena* rst arena, Arena scratch_arena);
-
-Str config_alias_check(char* rst buffer, size_t buf_len);

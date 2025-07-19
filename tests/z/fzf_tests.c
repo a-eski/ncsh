@@ -829,11 +829,18 @@ TEST(PosIntegration, complexTerm)
     pos_wrapper(".lua$ 'previewer !'term", input, expected);
 }
 
-int main(int argc, char** argv)
+int fzf_tests(int argc, char** argv)
 {
     exam_init(argc, argv);
     return exam_run();
 }
+
+#ifndef TEST_ALL
+int main(int argc, char** argv)
+{
+    return fzf_tests(argc, argv);
+}
+#endif /* ifndef TEST_ALL */
 
 #pragma GCC diagnostic pop
 #pragma GCC diagnostic pop

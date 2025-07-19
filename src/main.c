@@ -1,23 +1,24 @@
 /* Copyright ncsh by Alex Eski 2024 */
 
+#ifndef _POXIC_C_SOURCE
 #define _POSIX_C_SOURCE 200809L
+#endif /* ifndef _POXIC_C_SOURCE */
 
 #include <assert.h>
 #include <setjmp.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
 
 #include "config.h"
 #include "defines.h"
-#include "eskilib/ecolors.h"
 #include "eskilib/eresult.h"
 #include "interpreter/interpreter.h"
 #include "noninteractive.h"
 #include "readline/ac.h"
-#include "readline/ncreadline.h"
+#include "readline/io.h"
 #include "signals.h"
+#include "ttyterm/ttyterm.h"
 
 /* Global Variables
  * Globals should be minimized as much as possible.
@@ -61,7 +62,9 @@ char* init(Shell* rst shell)
 {
     char* memory = arena_init(shell);
     if (!memory) {
-        puts(RED "ncsh: could not start up, not enough memory available." RESET);
+        term_color_set(TERM_RED_ERROR);
+        term_puts("ncsh: could not start up, not enough memory available.");
+        term_color_reset();
         return NULL;
     }
 
@@ -69,7 +72,7 @@ char* init(Shell* rst shell)
         return NULL;
     }
 
-    if (ncreadline_init(&shell->config, &shell->input, &shell->arena) != EXIT_SUCCESS) {
+    if (io_init(&shell->config, &shell->input, &shell->arena) != EXIT_SUCCESS) {
         return NULL;
     }
 
@@ -82,7 +85,7 @@ char* init(Shell* rst shell)
 
     signal_init();
     if (signal_forward(SIGINT) || signal_forward(SIGWINCH)) {
-        perror("ncsh: Error setting up signal handlers");
+        term_perror("ncsh: Error setting up signal handlers");
         return NULL;
     }
 
@@ -96,12 +99,36 @@ void cleanup(char* rst shell_memory, Shell* rst shell)
         return;
     }
     if (shell->input.buffer) {
-        ncreadline_exit(&shell->input);
+        io_deinit(&shell->input);
     }
     if (shell->z_db.database_file) {
         z_exit(&shell->z_db);
     }
     free(shell_memory);
+}
+
+clock_t start;
+void welcome()
+{
+#ifdef NCSH_START_TIME
+    start = clock();
+#endif
+
+#ifdef NCSH_CLEAR_SCREEN_ON_STARTUP
+    term_send(&tcaps.scr_clr);
+    term_send(&tcaps.cursor_home);
+#endif
+
+    term_puts(NCSH " version: " NCSH_VERSION);
+}
+
+void startup_time()
+{
+#ifdef NCSH_START_TIME
+    clock_t end = clock();
+    double elapsed_ms = ((double)(end - start)) / CLOCKS_PER_SEC * 1000;
+    term_println("ncsh startup time: %.2f milliseconds", elapsed_ms);
+#endif
 }
 
 /* main
@@ -116,46 +143,35 @@ void cleanup(char* rst shell_memory, Shell* rst shell)
 [[nodiscard]]
 int main(int argc, char** argv)
 {
+    term_init();
+
+    int rv;
     if (argc > 1 || !isatty(STDIN_FILENO)) {
-        return (int)noninteractive(argc, argv);
+        rv = noninteractive(argc, argv);
+        term_reset();
+        return rv;
     }
 
-#ifdef NCSH_START_TIME
-    clock_t start = clock();
-#endif
-
-#ifdef NCSH_CLEAR_SCREEN_ON_STARTUP
-    constexpr size_t clear_screen_len = sizeof(CLEAR_SCREEN MOVE_CURSOR_HOME) - 1;
-    if (write(STDOUT_FILENO, CLEAR_SCREEN MOVE_CURSOR_HOME, clear_screen_len) == -1) {
-        return EXIT_FAILURE;
-    }
-#endif
-    puts(NCSH " version: " NCSH_VERSION);
+    welcome();
 
     Shell shell = {0};
-
     char* memory = init(&shell);
     if (!memory) {
         return EXIT_FAILURE;
     }
 
-    int exit_code = EXIT_SUCCESS;
-
     if (setjmp(env)) {
         goto exit;
     }
 
-#ifdef NCSH_START_TIME
-    clock_t end = clock();
-    double elapsed_ms = ((double)(end - start)) / CLOCKS_PER_SEC * 1000;
-    printf("ncsh startup time: %.2f milliseconds\n", elapsed_ms);
-#endif
+    rv = EXIT_SUCCESS;
+    startup_time();
 
     while (1) {
-        int input_result = ncreadline(&shell.input, &shell.scratch_arena);
+        int input_result = io_readline(&shell.input, &shell.scratch_arena);
         switch (input_result) {
         case EXIT_FAILURE: {
-            exit_code = EXIT_FAILURE;
+            rv = EXIT_FAILURE;
             goto exit;
         }
         case EXIT_SUCCESS_END: {
@@ -168,7 +184,7 @@ int main(int argc, char** argv)
 
         int command_result = interpreter_run(&shell, shell.scratch_arena);
         if (command_result == EXIT_FAILURE) {
-            exit_code = EXIT_FAILURE;
+            rv = EXIT_FAILURE;
             break;
         }
         else if (command_result == EXIT_SUCCESS_END) {
@@ -184,8 +200,9 @@ int main(int argc, char** argv)
         shell.input.max_pos = 0;
     }
 exit:
+    term_println("exit");
     cleanup(memory, &shell);
-    ncsh_write_literal("exit\n");
+    term_reset();
 
-    return (int)exit_code;
+    return rv;
 }

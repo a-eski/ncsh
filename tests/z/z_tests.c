@@ -7,6 +7,7 @@
 
 #include "../../src/eskilib/etest.h"
 #include "../../src/z/z.h"
+#include "../../src/ttyterm/ttyterm.h"
 #include "../lib/arena_test_helper.h"
 
 #define CWD_LENGTH 528
@@ -730,8 +731,9 @@ void z_crashing_input_test()
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-int main()
+void z_tests()
 {
+    term_init();
     etest_start();
 
     etest_run(z_read_empty_database_file_test);
@@ -764,8 +766,16 @@ int main()
     etest_run(z_crashing_input_test);
 
     etest_finish();
+    term_reset();
 
     remove(Z_DATABASE_FILE);
-
-    return 0;
 }
+
+#ifndef TEST_ALL
+int main()
+{
+    z_tests();
+
+    return EXIT_SUCCESS;
+}
+#endif /* ifndef TEST_ALL */

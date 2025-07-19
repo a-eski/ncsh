@@ -2,6 +2,19 @@
 
 #pragma once
 
-#include "ncreadline.h"
+#include "io.h"
+
+enum Dir_Type {
+    DIR_NORMAL,
+    DIR_SHORT,
+    DIR_NONE
+};
+
+typedef struct {
+    bool show_user;
+    enum Dir_Type dir_type;
+} Prompt_Data;
+
+void prompt_init(bool showUser, enum Dir_Type dir_type);
 
 int prompt_if_needed(Input* rst input);

@@ -1,7 +1,7 @@
 #include <stdlib.h>
 
 #include "../../src/eskilib/etest.h"
-#include "../../src/readline/ncreadline.h" // NOTE: is used for macro
+#include "../../src/readline/io.h" // NOTE: is used for macro
 
 volatile int sigwinch_caught;
 
@@ -38,7 +38,7 @@ void prompt_size_all_test()
     eassert(result == NCSH_PROMPT_ENDING_STRING_LENGTH + sizeof(user) - 1 + sizeof(dir));
 }
 
-int main()
+void prompt_tests()
 {
     etest_start();
 
@@ -48,6 +48,13 @@ int main()
     etest_run(prompt_size_all_test);
 
     etest_finish();
+}
+
+#ifndef TEST_ALL
+int main()
+{
+    prompt_tests();
 
     return EXIT_SUCCESS;
 }
+#endif /* ifndef TEST_ALL */

@@ -23,7 +23,8 @@ enum Vm_State {
     VS_NORMAL = 0,
     VS_IN_CONDITIONS,
     VS_IN_IF_STATEMENTS,
-    VS_IN_ELSE_STATEMENTS
+    VS_IN_ELSE_STATEMENTS,
+    VS_IN_ELIF_STATEMENTS
 };
 
 /* Output_Redirect_IO

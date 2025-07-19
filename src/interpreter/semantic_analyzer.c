@@ -5,15 +5,14 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "../ttyterm/ttyterm.h"
 #include "lexemes.h"
 #include "ops.h"
 
 [[nodiscard]]
 int semantic_analyzer_error_write(char* rst message, size_t message_length)
 {
-    if (write(STDERR_FILENO, message, message_length) == -1) {
-        return EXIT_FAILURE;
-    }
+    term_fwriteln(STDERR_FILENO, message, message_length);
 
     return EXIT_SYNTAX_ERROR;
 }
@@ -22,80 +21,80 @@ int semantic_analyzer_error_write(char* rst message, size_t message_length)
 
 #define INVALID_SYNTAX_PIPE_FIRST_ARG                                                                                  \
     "ncsh: Invalid syntax: found pipe operator ('|') as first argument. Correct usage of pipe operator is 'program1 "  \
-    "| program2'.\n"
+    "| program2'."
 #define INVALID_SYNTAX_PIPE_LAST_ARG                                                                                   \
     "ncsh: Invalid syntax: found pipe operator ('|') as last argument. Correct usage of pipe operator is 'program1 | " \
-    "program2'.\n"
+    "program2'."
 
 #define INVALID_SYNTAX_STDOUT_REDIR_FIRST_ARG                                                                          \
     "ncsh: Invalid syntax: found output redirection operator ('>') as first argument. Correct usage of output "        \
-    "redirection operator is 'program > file'.\n"
+    "redirection operator is 'program > file'."
 #define INVALID_SYNTAX_STDOUT_REDIR_LAST_ARG                                                                           \
     "ncsh: Invalid syntax: found no filename after output redirect operator ('>'). Correct usage of output "           \
-    "redirection operator is 'program > file'.\n"
+    "redirection operator is 'program > file'."
 
 #define INVALID_SYNTAX_STDOUT_REDIR_APPEND_FIRST_ARG                                                                   \
     "ncsh: Invalid syntax: found output redirection append operator ('>>') as first argument. Correct usage of "       \
-    "output redirection append operator is 'program >> file'.\n"
+    "output redirection append operator is 'program >> file'."
 #define INVALID_SYNTAX_STDOUT_REDIR_APPEND_LAST_ARG                                                                    \
     "ncsh: Invalid syntax: found no filename after output redirect append operator ('>>'). Correct usage of output "   \
-    "redirection operator is 'program >> file'.\n"
+    "redirection operator is 'program >> file'."
 
 #define INVALID_SYNTAX_STDIN_REDIR_FIRST_ARG                                                                           \
     "ncsh: Invalid syntax: found input redirection operator ('<') as first argument. Correct usage of input "          \
-    "redirection operator is 'program < file'.\n"
+    "redirection operator is 'program < file'."
 #define INVALID_SYNTAX_STDIN_REDIR_LAST_ARG                                                                            \
     "ncsh: Invalid syntax: found input redirection operator ('<') as last argument. Correct usage of input "           \
-    "redirection operator is 'program < file'.\n"
+    "redirection operator is 'program < file'."
 
 #define INVALID_SYNTAX_STDERR_REDIR_FIRST_ARG                                                                          \
     "ncsh: Invalid syntax: found error redirection operator ('2>') as first argument. Correct usage of error "         \
-    "redirection is 'program 2> file'.\n"
+    "redirection is 'program 2> file'."
 #define INVALID_SYNTAX_STDERR_REDIR_LAST_ARG                                                                           \
     "ncsh: Invalid syntax: found error redirection operator ('2>') as last argument. Correct usage of error "          \
-    "redirection is 'program 2> file'.\n"
+    "redirection is 'program 2> file'."
 
 #define INVALID_SYNTAX_STDERR_REDIR_APPEND_FIRST_ARG                                                                   \
     "ncsh: Invalid syntax: found error redirection append operator ('2>>') as first argument. Correct usage of error " \
-    "redirection is 'program 2>> file'.\n"
+    "redirection is 'program 2>> file'."
 #define INVALID_SYNTAX_STDERR_REDIR_APPEND_LAST_ARG                                                                    \
     "ncsh: Invalid syntax: found error redirection operator ('2>>') as last argument. Correct usage of error "         \
-    "redirection is 'program 2>> file'.\n"
+    "redirection is 'program 2>> file'."
 
 #define INVALID_SYNTAX_STDOUT_AND_STDERR_REDIR_FIRST_ARG                                                               \
     "ncsh: Invalid syntax: found output & error redirection operator ('&>') as first argument. Correct usage of "      \
-    "output & error redirection is 'program &> file'.\n"
+    "output & error redirection is 'program &> file'."
 #define INVALID_SYNTAX_STDOUT_AND_STDERR_REDIR_LAST_ARG                                                                \
     "ncsh: Invalid syntax: found output & error redirection operator ('&>') as last argument. Correct usage of "       \
-    "output & error redirection is 'program &> file'.\n"
+    "output & error redirection is 'program &> file'."
 
 #define INVALID_SYNTAX_STDOUT_AND_STDERR_REDIR_APPEND_FIRST_ARG                                                        \
     "ncsh: Invalid syntax: found output & error redirection operator ('&>>') as first argument. Correct usage of "     \
-    "output & error redirection is 'program &>> file'.\n"
+    "output & error redirection is 'program &>> file'."
 #define INVALID_SYNTAX_STDOUT_AND_STDERR_REDIR_APPEND_LAST_ARG                                                         \
     "ncsh: Invalid syntax: found output & error redirection operator ('&>>') as last argument. Correct usage of "      \
-    "output & error redirection is 'program &>> file'.\n"
+    "output & error redirection is 'program &>> file'."
 
 #define INVALID_SYNTAX_BACKGROUND_JOB_FIRST_ARG                                                                        \
     "ncsh: Invalid syntax: found background job operator ('&') as first argument. Correct usage of background job "    \
-    "operator is 'program &'.\n"
+    "operator is 'program &'."
 #define INVALID_SYNTAX_BACKGROUND_JOB_NOT_LAST_ARG                                                                     \
     "ncsh: Invalid syntax: found background job operator ('&') in position other than last argument. Correct usage "   \
-    "of background job operator is 'program &'.\n"
+    "of background job operator is 'program &'."
 
 #define INVALID_SYNTAX_AND_IN_LAST_ARG                                                                                 \
     "ncsh: Invalid syntax: found and operator ('&&') as last argument. Correct usage of and operator is "              \
-    "'true && true'\n"
+    "'true && true'"
 #define INVALID_SYNTAX_AND_IN_FIRST_ARG                                                                                \
     "ncsh: Invalid syntax: found and operator ('&&') as first argument. Correct usage of and operator is "             \
-    "'true && true'\n"
+    "'true && true'"
 
 #define INVALID_SYNTAX_OR_IN_LAST_ARG                                                                                  \
     "ncsh: Invalid syntax: found or operator ('||') as last argument. Correct usage of or operator is "                \
-    "'false || true'\n"
+    "'false || true'"
 #define INVALID_SYNTAX_OR_IN_FIRST_ARG                                                                                 \
     "ncsh: Invalid syntax: found or operator ('||') as first argument. Correct usage of or operator is "               \
-    "'false || true'\n"
+    "'false || true'"
 
 /* semantic_analyzer_check_first_arg
  * Simple check to see if something is in first position that shouldn't be
@@ -184,39 +183,39 @@ int semantic_analyzer_last_arg_check(Lexemes* rst lexemes)
     }
 }
 
-#define INVALID_SYNTAX_NO_ARGS "ncsh: Invalid Syntax: no values passes to syntax validation.\n"
+#define INVALID_SYNTAX_NO_ARGS "ncsh: Invalid Syntax: no values passes to syntax validation."
 
 #define INVALID_SYNTAX_IF_NO_NEXT_ARG                                                                                  \
     "ncsh: Invalid syntax: found 'if' with no value after. "                                                           \
-    "Correct usage of 'if' is 'if [ (CONDITION) ]; then [STATEMENT]; [else [STATEMENT];] fi'.\n"
+    "Correct usage of 'if' is 'if [ (CONDITION) ]; then [STATEMENT]; [else [STATEMENT];] fi'."
 #define INVALID_SYNTAX_IF_NO_START_CONDITION                                                                           \
     "ncsh: Invalid syntax: found 'if' with no condition after. "                                                          \
-    "Correct usage of 'if' is 'if [ (CONDITION) ]; then [STATEMENT]; [else [ STATEMENT ];] fi'.\n"
+    "Correct usage of 'if' is 'if [ (CONDITION) ]; then [STATEMENT]; [else [ STATEMENT ];] fi'."
 
 #define INVALID_SYNTAX_CONDITION_START_NO_NEXT_ARG                                                                     \
     "ncsh: Invalid Syntax: expecting expression after 'if ['. "                                                        \
-    "Correct usage of 'if' is 'if [ (CONDITION) ]; then [STATEMENT]; [else [STATEMENT];] fi'.\n"
+    "Correct usage of 'if' is 'if [ (CONDITION) ]; then [STATEMENT]; [else [STATEMENT];] fi'."
 
 #define INVALID_SYNTAX_CONDITION_END_NO_NEXT_ARG                                                                       \
     "ncsh: Invalid Syntax: expecting values after 'if [ (CONDITION) ];'. "                                               \
-    "Correct usage of 'if' is 'if [ (CONDITION) ]; then [STATEMENT]; [else [STATEMENT];] fi'.\n"
+    "Correct usage of 'if' is 'if [ (CONDITION) ]; then [STATEMENT]; [else [STATEMENT];] fi'."
 #define INVALID_SYNTAX_CONDITION_END_NO_NEXT_THEN                                                                      \
     "ncsh: Invalid Syntax: expecting 'then' after 'if [ (CONDITION) ];'. "                                               \
-    "Correct usage of 'if' is 'if [ (CONDITION) ]; then [STATEMENT]; [else [STATEMENT];] fi'.\n"
+    "Correct usage of 'if' is 'if [ (CONDITION) ]; then [STATEMENT]; [else [STATEMENT];] fi'."
 
 #define INVALID_SYNTAX_THEN_NO_NEXT_ARG                                                                                \
     "ncsh: Invalid Syntax: expecting some value after 'if [ (CONDITION) ]; then'. "                                      \
-    "Correct usage of 'if' is 'if [ (CONDITION) ]; then [STATEMENT]; [else [STATEMENT];] fi'.\n"
+    "Correct usage of 'if' is 'if [ (CONDITION) ]; then [STATEMENT]; [else [STATEMENT];] fi'."
 #define INVALID_SYNTAX_THEN_NO_NEXT_STATEMENT                                                                          \
     "ncsh: Invalid Syntax: expecting some statement after 'if [ (CONDITION) ]; then'. "                                  \
-    "Correct usage of 'if' is 'if [ (CONDITION) ]; then [STATEMENT]; [else [STATEMENT];] fi'.\n"
+    "Correct usage of 'if' is 'if [ (CONDITION) ]; then [STATEMENT]; [else [STATEMENT];] fi'."
 
 #define INVALID_SYNTAX_ELSE_NO_NEXT_ARG                                                                                \
     "ncsh: Invalid Syntax: expecting some value after 'if [ (CONDITION) ]; then (STATEMENT); else'. "                    \
-    "Correct usage of 'if' is 'if [ (CONDITION) ]; then [STATEMENT]; [else [STATEMENT];] fi'.\n"
+    "Correct usage of 'if' is 'if [ (CONDITION) ]; then [STATEMENT]; [else [STATEMENT];] fi'."
 #define INVALID_SYNTAX_ELSE_NO_NEXT_STATEMENT                                                                          \
     "ncsh: Invalid Syntax: expecting some statement after 'if [ (CONDITION) ]; then (STATEMENT); else'. "                \
-    "Correct usage of 'if' is 'if [ (CONDITION) ]; then [STATEMENT]; [else [STATEMENT];] fi'.\n"
+    "Correct usage of 'if' is 'if [ (CONDITION) ]; then [STATEMENT]; [else [STATEMENT];] fi'."
 
 int semantic_analyzer_check(Lexemes* rst lexemes)
 {

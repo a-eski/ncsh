@@ -92,20 +92,23 @@
 
 
 /* Autocompletion Settings */
+/* NCSH_AC_CHARACTER_WEIGHTING macro
+ * When enabled, every character in a command gets its weight incremented.
+ * This biases the autocompletions to shorter commands.
+ * For example, 'ls -a --color'.
+ * With this enabled, if you have a lot of ls in your history, it will bias towards
+ * 'ls', then '-a', then '--color', instead of showing the entire command.
+ */
+#ifndef NCSH_AC_CHARACTER_WEIGHTING
+// #define NCSH_AC_CHARACTER_WEIGHTING
+#endif /* !NCSH_AC_CHARACTER_WEIGHTING */
+
 /* NCSH_MAX_AUTOCOMPLETION_MATCHES Macro constant
- * Max number of matches a single autocompletion request can return. Used in tab autocomplete use case.
+ * Max number of matches a single autocompletion request can return. Used in get all autocompletions use case.
  */
 #ifndef NCSH_MAX_AUTOCOMPLETION_MATCHES
 #define    NCSH_MAX_AUTOCOMPLETION_MATCHES 32
 #endif // !NCSH_MAX_AUTOCOMPLETION_MATCHES
-
-#define NCSH_AUTOCOMPLETION_KEY_RIGHT_ARROW 0
-#define NCSH_AUTOCOMPLETION_KEY_TAB 1 // still under development
-
-#ifndef NCSH_AUTOCOMPLETION_KEY
-#define    NCSH_AUTOCOMPLETION_KEY NCSH_AUTOCOMPLETION_KEY_RIGHT_ARROW
-#endif // !NCSH_AUTOCOMPLETION_KEYf
-
 
 
 

@@ -1,6 +1,8 @@
 /* Copyright ncsh (C) by Alex Eski 2025 */
 /* vm_redirection.h: IO Redirection */
 
+#pragma once
+
 #include "../statements.h"
 #include "vm_types.h"
 

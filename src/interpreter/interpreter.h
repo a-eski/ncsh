@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "../types.h"
+#include "../shell.h"
 
 void interpreter_init(Shell* rst shell);
 

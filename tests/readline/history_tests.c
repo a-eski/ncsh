@@ -156,8 +156,8 @@ void history_save_adds_to_file()
     eassert(file != NULL);
     char buffer[MAX_INPUT];
     if (!fgets(buffer, sizeof(buffer), file)) {
-        eassert(false);
         fclose(file);
+        eassert(false);
     }
     eassert(memcmp(buffer, "ls\n", len) == 0);
     fclose(file);
@@ -288,7 +288,7 @@ void history_load_and_get_entries_then_add_entries_test()
     ARENA_TEST_TEARDOWN;
 }
 
-int main()
+void history_tests()
 {
     etest_start();
 
@@ -306,6 +306,13 @@ int main()
     etest_run(history_load_and_get_entries_then_add_entries_test);
 
     etest_finish();
+}
+
+#ifndef TEST_ALL
+int main()
+{
+    history_tests();
 
     return EXIT_SUCCESS;
 }
+#endif /* ifndef TEST_ALL */
