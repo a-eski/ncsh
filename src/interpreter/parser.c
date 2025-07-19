@@ -358,6 +358,9 @@ int parser_parse(Lexemes* rst lexemes, Statements* stmts, Shell* rst shell, Aren
             continue;
         }
         case OP_ASSIGNMENT: {
+            if (commands->pos != 0) {
+                break;
+            }
             expansion_assignment(lexemes, i, &shell->vars, scratch);
             if (i + 1 < lexemes->count && (lexemes->ops[i + 1] == OP_AND || lexemes->ops[i + 1] == OP_OR)) {
                 ++i; // skip || or && on assignment, assigment not included in commands

@@ -17,14 +17,18 @@
 #include "hashset.h"
 #include "history.h"
 
-void history_file_set(Str config_file, History* rst history, Arena* rst arena)
+void history_file_set([[maybe_unused]] Str config_file, History* rst history, Arena* rst arena)
 {
     constexpr size_t history_file_len = sizeof(NCSH_HISTORY_FILE);
 #if defined(NCSH_HISTORY_TEST) || defined(NCSH_IN_PLACE)
     history->file = arena_malloc(arena, history_file_len, char);
     memcpy(history->file, NCSH_HISTORY_FILE, history_file_len);
     return;
-#endif /* ifdef NCSH_HISTORY_TEST */
+#else
+    if (!config_file.value || !config_file.length) {
+        history->file = NCSH_HISTORY_FILE;
+        return;
+    }
 
     if (config_file.length + history_file_len > NCSH_MAX_INPUT) {
         history->file = NULL;
@@ -36,6 +40,7 @@ void history_file_set(Str config_file, History* rst history, Arena* rst arena)
     memcpy(history->file + config_file.length - 1, NCSH_HISTORY_FILE, history_file_len);
 
     debugf("history->file: %s\n", history->file);
+#endif /* ifdef NCSH_HISTORY_TEST */
 }
 
 [[nodiscard]]

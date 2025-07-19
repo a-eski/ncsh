@@ -1,6 +1,7 @@
 STD = -std=c2x
 CC ?= gcc
 DESTDIR ?= /bin
+$(info *** Using CC = $(CC))
 RELEASE ?= 1
 
 main_flags = -Wall -Wextra -Werror -pedantic -pedantic-errors -Wsign-conversion -Wformat=2 -Wshadow -Wvla -fstack-protector-all -Wundef -Wbad-function-cast -Wcast-align -Wstrict-prototypes -Wnested-externs -Winline -Wdisabled-optimization -Wunreachable-code -Wchar-subscripts

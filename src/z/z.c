@@ -17,7 +17,7 @@
 #include "fzf.h"
 #include "z.h"
 
-double z_score(z_Directory* rst directory, int fzf_score, time_t now)
+double z_score(z_Directory* restrict directory, int fzf_score, time_t now)
 {
     assert(directory);
     assert(fzf_score > 0);
@@ -38,7 +38,7 @@ double z_score(z_Directory* rst directory, int fzf_score, time_t now)
     }
 }
 
-bool z_match_exists(char* rst target, size_t target_length, z_Database* rst db)
+bool z_match_exists(char* restrict target, size_t target_length, z_Database* restrict db)
 {
     assert(db && target && target_length > 0);
 
@@ -53,8 +53,8 @@ bool z_match_exists(char* rst target, size_t target_length, z_Database* rst db)
     return false;
 }
 
-z_Directory* z_match_find(char* rst target, size_t target_length, char* rst cwd, size_t cwd_length, z_Database* rst db,
-                          Arena* rst scratch_arena)
+z_Directory* z_match_find(char* restrict target, size_t target_length, char* restrict cwd, size_t cwd_length, z_Database* restrict db,
+                          Arena* restrict scratch_arena)
 {
     assert(target && target_length && cwd && cwd_length && scratch_arena && db);
     if (!db->count || cwd_length < 2) {
@@ -97,7 +97,7 @@ z_Directory* z_match_find(char* rst target, size_t target_length, char* rst cwd,
     return current_match.dir;
 }
 
-enum z_Result z_write_entry(z_Directory* rst dir, FILE* rst file)
+enum z_Result z_write_entry(z_Directory* restrict dir, FILE* restrict file)
 {
     assert(dir && file);
 
@@ -140,7 +140,7 @@ enum z_Result z_write_entry(z_Directory* rst dir, FILE* rst file)
 
 #define Z_ERROR_WRITING_TO_DB_MESSAGE "z: Error writing to z database file"
 
-enum z_Result z_write(z_Database* rst db)
+enum z_Result z_write(z_Database* restrict db)
 {
     assert(db);
     if (!db) {
@@ -177,7 +177,7 @@ enum z_Result z_write(z_Database* rst db)
     return Z_SUCCESS;
 }
 
-enum z_Result z_read_entry(z_Directory* rst dir, FILE* rst file, Arena* rst arena)
+enum z_Result z_read_entry(z_Directory* restrict dir, FILE* restrict file, Arena* restrict arena)
 {
     assert(dir && file);
 
@@ -228,7 +228,7 @@ enum z_Result z_read_entry(z_Directory* rst dir, FILE* rst file, Arena* rst aren
     "z: couldn't find number of entries header while trying to read z database file. File is empty or "           \
     "corrupted."
 
-enum z_Result z_read(z_Database* rst db, Arena* rst arena)
+enum z_Result z_read(z_Database* restrict db, Arena* restrict arena)
 {
     FILE* file = fopen(db->database_file, "rb");
 
@@ -286,7 +286,7 @@ enum z_Result z_read(z_Database* rst db, Arena* rst arena)
     return Z_SUCCESS;
 }
 
-enum z_Result z_write_entry_new(char* rst path, size_t path_length, z_Database* rst db, Arena* rst arena)
+enum z_Result z_write_entry_new(char* restrict path, size_t path_length, z_Database* restrict db, Arena* restrict arena)
 {
     assert(path && db && path_length > 1);
     assert(path[path_length - 1] == '\0');
@@ -307,8 +307,8 @@ enum z_Result z_write_entry_new(char* rst path, size_t path_length, z_Database* 
     return Z_SUCCESS;
 }
 
-enum z_Result z_database_add(char* rst path, size_t path_length, char* rst cwd, size_t cwd_length, z_Database* rst db,
-                             Arena* rst arena)
+enum z_Result z_database_add(char* restrict path, size_t path_length, char* restrict cwd, size_t cwd_length, z_Database* restrict db,
+                             Arena* restrict arena)
 {
     assert(db && arena);
     if (!path || !path_length) {
@@ -348,15 +348,14 @@ enum z_Result z_database_add(char* rst path, size_t path_length, char* rst cwd, 
     return Z_SUCCESS;
 }
 
-enum z_Result z_database_file_set(Str* rst config_file, z_Database* rst db, Arena* rst arena)
+enum z_Result z_database_file_set([[maybe_unused]] Str* restrict config_file, z_Database* restrict db, Arena* restrict arena)
 {
     constexpr size_t z_db_file_len = sizeof(Z_DATABASE_FILE);
 #if defined(Z_TEST) || defined(NCSH_IN_PLACE)
     db->database_file = arena_malloc(arena, z_db_file_len, char);
     memcpy(db->database_file, Z_DATABASE_FILE, z_db_file_len);
     return Z_SUCCESS;
-#endif /* ifdef Z_TEST */
-
+#else
     if (!config_file->value || !config_file->length) {
         return Z_NULL_REFERENCE;
     }
@@ -375,9 +374,10 @@ enum z_Result z_database_file_set(Str* rst config_file, z_Database* rst db, Aren
 #endif /* ifdef Z_DEBUG */
 
     return Z_SUCCESS;
+#endif /* ifdef Z_TEST */
 }
 
-enum z_Result z_init(Str* rst config_file, z_Database* rst db, Arena* rst arena)
+enum z_Result z_init(Str* restrict config_file, z_Database* restrict db, Arena* restrict arena)
 {
     assert(db);
     if (!db) {
@@ -393,7 +393,7 @@ enum z_Result z_init(Str* rst config_file, z_Database* rst db, Arena* rst arena)
 }
 
 [[nodiscard]]
-bool z_is_dir(struct dirent* rst dir)
+bool z_is_dir(struct dirent* restrict dir)
 {
 #ifdef _DIRENT_HAVE_D_TYPE
     if (dir->d_type != DT_UNKNOWN) {
@@ -405,8 +405,8 @@ bool z_is_dir(struct dirent* rst dir)
     return !stat(dir->d_name, &sb) && S_ISDIR(sb.st_mode);
 }
 
-enum z_Result z_directory_match_exists(char* rst target, size_t target_length, char* rst cwd, Str* rst output,
-                                       Arena* rst scratch_arena)
+enum z_Result z_directory_match_exists(char* restrict target, size_t target_length, char* restrict cwd, Str* restrict output,
+                                       Arena* restrict scratch_arena)
 {
     assert(target && cwd && target_length > 0);
 
@@ -451,7 +451,7 @@ enum z_Result z_directory_match_exists(char* rst target, size_t target_length, c
     return Z_MATCH_NOT_FOUND;
 }
 
-void z(char* rst target, size_t target_length, char* rst cwd, z_Database* rst db, Arena* rst arena, Arena scratch_arena)
+void z(char* restrict target, size_t target_length, char* restrict cwd, z_Database* restrict db, Arena* restrict arena, Arena scratch_arena)
 {
 #ifdef Z_DEBUG
     term_println("z: %s", target);
@@ -556,7 +556,7 @@ void z(char* rst target, size_t target_length, char* rst cwd, z_Database* rst db
 #define Z_ADDED_NEW_ENTRY_MESSAGE "z: Added new entry to z database."
 #define Z_ERROR_ADDING_ENTRY_MESSAGE "z: Error adding new entry to z database."
 
-enum z_Result z_add(char* rst path, size_t path_length, z_Database* rst db, Arena* rst arena)
+enum z_Result z_add(char* restrict path, size_t path_length, z_Database* restrict db, Arena* restrict arena)
 {
     if (!path || !db) {
         term_fputs("z: Null value passed to z add.", stderr);
@@ -581,7 +581,7 @@ enum z_Result z_add(char* rst path, size_t path_length, z_Database* rst db, Aren
     return Z_CANNOT_PROCESS;
 }
 
-void z_remove_dirs_shift(size_t offset, z_Database* rst db)
+void z_remove_dirs_shift(size_t offset, z_Database* restrict db)
 {
     if (offset + 1 == db->count) {
         return;
@@ -594,7 +594,7 @@ void z_remove_dirs_shift(size_t offset, z_Database* rst db)
 
 #define Z_ENTRY_NOT_FOUND_MESSAGE "z: Entry could not be found in z database."
 #define Z_ENTRY_REMOVED_MESSAGE "z: Removed entry from z database."
-enum z_Result z_remove(char* rst path, size_t path_length, z_Database* rst db)
+enum z_Result z_remove(char* restrict path, size_t path_length, z_Database* restrict db)
 {
     assert(db);
 
@@ -624,7 +624,7 @@ enum z_Result z_remove(char* rst path, size_t path_length, z_Database* rst db)
     return Z_MATCH_NOT_FOUND;
 }
 
-enum z_Result z_exit(z_Database* rst db)
+enum z_Result z_exit(z_Database* restrict db)
 {
     assert(db);
     if (!db) {
@@ -642,7 +642,7 @@ enum z_Result z_exit(z_Database* rst db)
 
 #define Z_PRINT_MESSAGE "z: autojump/smarter cd command implementation for ncsh."
 
-void z_print(z_Database* rst db)
+void z_print(z_Database* restrict db)
 {
     term_color_set(TERM_RED_ERROR);
     term_writeln(Z_PRINT_MESSAGE, sizeof(Z_PRINT_MESSAGE) - 1);
@@ -664,7 +664,7 @@ void z_print(z_Database* rst db)
     }
 }
 
-void z_count(z_Database* rst db)
+void z_count(z_Database* restrict db)
 {
     term_println("Number of entries in the database is currently: %zu", db->count);
 }
