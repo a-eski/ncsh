@@ -173,15 +173,17 @@ int prompt_no_directory_print(Input* rst input)
 [[nodiscard]]
 int prompt(Input* rst input)
 {
-    if (prompt_data.dir_type == DIR_SHORT)
-        return prompt_short_directory_print(input);
-    if (prompt_data.dir_type == DIR_NORMAL)
-        return prompt_directory_print(input);
-    if (prompt_data.dir_type == DIR_NONE)
-        return prompt_no_directory_print(input);
-
-    unreachable();
-    return 0;
+    switch (prompt_data.dir_type) {
+        case DIR_SHORT:
+            return prompt_short_directory_print(input);
+        case DIR_NORMAL:
+            return prompt_directory_print(input);
+        case DIR_NONE:
+            return prompt_no_directory_print(input);
+        default:
+            unreachable();
+            return 0;
+    }
 }
 
 /* prompt_if_needed
