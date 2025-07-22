@@ -15,8 +15,8 @@
 #include "eskilib/eresult.h"
 #include "interpreter/interpreter.h"
 #include "noninteractive.h"
-#include "readline/ac.h"
-#include "readline/io.h"
+#include "io/ac.h"
+#include "io/io.h"
 #include "signals.h"
 #include "ttyterm/ttyterm.h"
 
@@ -135,10 +135,10 @@ void startup_time()
  * Handles initialization, exit, and the main loop of the shell.
  * Handles whether running interactively or noninteractive.
  *
- * Interactive mode several lifetimes.
+ * Interactive mode several lifetimes. Examples:
  * 1. The lifetime of the shell, managed through the arena. See init and exit.
  * 2. The lifetime of the main loop of the shell, managed through the scratch arena.
- * 3. readline has its own inner lifetime via the scratch arena.
+ * 3. io has its own inner lifetime via the scratch arena.
  */
 [[nodiscard]]
 int main(int argc, char** argv)

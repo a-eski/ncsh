@@ -5,7 +5,7 @@
 #include "arena.h"
 #include "config.h"
 #include "interpreter/vars.h"
-#include "readline/io.h"
+#include "io/io.h"
 #include "z/z.h"
 
 #define NCSH_MAX_PROCESSES 100

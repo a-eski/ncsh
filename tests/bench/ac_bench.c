@@ -1,6 +1,6 @@
 #include "../../src/defines.h" // used for macro NCSH_MAX_AUTOCOMPLETION_MATCHES
 #include "../../src/eskilib/etest.h"
-#include "../../src/readline/ac.h"
+#include "../../src/io/ac.h"
 #include "../lib/arena_test_helper.h"
 
 void ac_bench()
@@ -31,21 +31,21 @@ void ac_bench()
     ac_add("history", sizeof("history"), tree, &arena);
     ac_add("./bin/ncsh", sizeof("./bin/ncsh"), tree, &arena);
     ac_add("z ncsh2", sizeof("z ncsh2"), tree, &arena);
-    ac_add("nvim src/readline/ncsh_readline.c", sizeof("nvim src/readline/ncsh_readline.c"), tree, &arena);
+    ac_add("nvim src/io/io.c", sizeof("nvim src/io/io.c"), tree, &arena);
     ac_add("nvim .", sizeof("nvim ."), tree, &arena);
     ac_add("git diff", sizeof("git diff"), tree, &arena);
     ac_add("git restore", sizeof("git restore"), tree, &arena);
-    ac_add("git restore src/ncsh_readline.c", sizeof("git restore src/ncsh_readline.c"), tree, &arena);
-    ac_add("git restore src/readline/ncsh_readline.c", sizeof("git restore src/readline/ncsh_readline.c"), tree,
+    ac_add("git restore src/io.c", sizeof("git restore src/io.c"), tree, &arena);
+    ac_add("git restore src/io/io.c", sizeof("git restore src/io/io.c"), tree,
            &arena);
-    ac_add("nvim src/ncsh_arena.c", sizeof("nvim src/ncsh_arena.c"), tree, &arena);
+    ac_add("nvim src/arena.c", sizeof("nvim src/arena.c"), tree, &arena);
     ac_add("z print", sizeof("z print"), tree, &arena);
-    ac_add("z rm /home/alex/readline", sizeof("z rm /home/alex/readline"), tree, &arena);
-    ac_add("z rm /home/alex/readline/usr/local", sizeof("z rm /home/alex/readline/usr/local"), tree, &arena);
+    ac_add("z rm /home/alex/io", sizeof("z rm /home/alex/io"), tree, &arena);
+    ac_add("z rm /home/alex/io/usr/local", sizeof("z rm /home/alex/io/usr/local"), tree, &arena);
     ac_add("z rm /home/alex/ncsh/development/cash", sizeof("z rm /home/alex/ncsh/development/cash"), tree, &arena);
     ac_add("z rm /home/alex/ncsh/development/curses", sizeof("z rm /home/alex/ncsh/development/curses"), tree, &arena);
     ac_add("z rm /home/alex/../", sizeof("z rm /home/alex/../"), tree, &arena);
-    ac_add("z readline", sizeof("z readline"), tree, &arena);
+    ac_add("z io", sizeof("z io"), tree, &arena);
     ac_add("pwd", sizeof("pwd"), tree, &arena);
     ac_add("z", sizeof("z"), tree, &arena);
     ac_add("nvim makefile", sizeof("nvim makefile"), tree, &arena);
@@ -55,17 +55,17 @@ void ac_bench()
     ac_add("z eskilib", sizeof("z eskilib"), tree, &arena);
     ac_add("git config pull.rebase true", sizeof("git config pull.rebase true"), tree, &arena);
     ac_add("nvim src/z/z.c", sizeof("nvim src/z/z.c"), tree, &arena);
-    ac_add("nvim src/readline/ncsh_input.c", sizeof("nvim src/readline/ncsh_input.c"), tree, &arena);
+    ac_add("nvim src/io/input.c", sizeof("nvim src/io/input.c"), tree, &arena);
     ac_add("nvim src/ncsh.c", sizeof("nvim src/ncsh.c"), tree, &arena);
     ac_add("echo 'hello'", sizeof("echo 'hello'"), tree, &arena);
     ac_add("nvim src/vm", sizeof("nvim src/vm"), tree, &arena);
     ac_add("ls | sort", sizeof("ls | sort"), tree, &arena);
-    ac_add("nvim src/ncsh_defines.h", sizeof("nvim src/ncsh_defines.h"), tree, &arena);
+    ac_add("nvim src/defines.h", sizeof("nvim src/defines.h"), tree, &arena);
     ac_add("ls -a --color", sizeof("ls -a --color"), tree, &arena);
     ac_add("m l", sizeof("m l"), tree, &arena);
     ac_add("m check", sizeof("m check"), tree, &arena);
     ac_add("nvim src/z/fzf.c", sizeof("nvim src/z/fzf.c"), tree, &arena);
-    ac_add("nvim src/vm/ncsh_vm.c", sizeof("nvim src/vm/ncsh_vm.c"), tree, &arena);
+    ac_add("nvim src/vm/vm.c", sizeof("nvim src/vm/vm.c"), tree, &arena);
     ac_add("make", sizeof("make"), tree, &arena);
     ac_add("sudo make install", sizeof("sudo make install"), tree, &arena);
     ac_add("cd ncsh2", sizeof("cd ncsh2"), tree, &arena);
@@ -99,24 +99,24 @@ void ac_bench()
     ac_add("z rm /home/alex/ncsh3/ncsh2", sizeof("z rm /home/alex/ncsh3/ncsh2"), tree, &arena);
     ac_add("z rm /home/alex/ncsh2/eskilib", sizeof("z rm /home/alex/ncsh2/eskilib"), tree, &arena);
     ac_add("nvim ncsh", sizeof("nvim ncsh"), tree, &arena);
-    ac_add("nvim src/readline", sizeof("nvim src/readline"), tree, &arena);
-    ac_add("nvim src/readline/ncsh_terminal.c", sizeof("nvim src/readline/ncsh_terminal.c"), tree, &arena);
+    ac_add("nvim src/io", sizeof("nvim src/io"), tree, &arena);
+    ac_add("nvim src/io/terminal.c", sizeof("nvim src/io/terminal.c"), tree, &arena);
     ac_add(":w", sizeof(":w"), tree, &arena);
-    ac_add("git restore src/readline/ncsh_terminal.c", sizeof("git restore src/readline/ncsh_terminal.c"), tree,
+    ac_add("git restore src/io/terminal.c", sizeof("git restore src/io/terminal.c"), tree,
            &arena);
     ac_add("clear", sizeof("clear"), tree, &arena);
     ac_add("make l", sizeof("make l"), tree, &arena);
     ac_add("nvim src", sizeof("nvim src"), tree, &arena);
     ac_add("git switch -c sigwinch", sizeof("git switch -c sigwinch"), tree, &arena);
     ac_add("make fuzz_parser", sizeof("make fuzz_parser"), tree, &arena);
-    ac_add("nvim ncsh_readline.c", sizeof("nvim ncsh_readline.c"), tree, &arena);
+    ac_add("nvim io.c", sizeof("nvim io.c"), tree, &arena);
     ac_add("history rm vim", sizeof("history rm vim"), tree, &arena);
     ac_add("history rm 'vim .'", sizeof("history rm 'vim .'"), tree, &arena);
     ac_add("nvim README.md", sizeof("nvim README.md"), tree, &arena);
     ac_add("make fuzz_history", sizeof("make fuzz_history"), tree, &arena);
     ac_add("/bin/bash", sizeof("/bin/bash"), tree, &arena);
     ac_add("git push -u origin sigwinch", sizeof("git push -u origin sigwinch"), tree, &arena);
-    ac_add("nvim src/readline/ncsh_autocompletions.c", sizeof("nvim src/readline/ncsh_autocompletions.c"), tree,
+    ac_add("nvim src/io/autocompletions.c", sizeof("nvim src/io/autocompletions.c"), tree,
            &arena);
     ac_add("m ba", sizeof("m ba"), tree, &arena);
     ac_add("make tac", sizeof("make tac"), tree, &arena);
@@ -132,15 +132,15 @@ void ac_bench()
     ac_add("git rm NCSH_HISTORY_CORPUS/.gitignore", sizeof("git rm NCSH_HISTORY_CORPUS/.gitignore"), tree, &arena);
     ac_add("git rm NCSH_PARSER_CORPUS/.gitignore", sizeof("git rm NCSH_PARSER_CORPUS/.gitignore"), tree, &arena);
     ac_add("nvim", sizeof("nvim"), tree, &arena);
-    ac_add("nvim src/ncsh_noninteractive.c", sizeof("nvim src/ncsh_noninteractive.c"), tree, &arena);
+    ac_add("nvim src/noninteractive.c", sizeof("nvim src/noninteractive.c"), tree, &arena);
     ac_add("make bpv", sizeof("make bpv"), tree, &arena);
     ac_add("make thta", sizeof("make thta"), tree, &arena);
     ac_add("git restore *", sizeof("git restore *"), tree, &arena);
-    ac_add("git restore tests/ncsh_autocompletions_tests.c", sizeof("git restore tests/ncsh_ac_tests.c"), tree, &arena);
-    ac_add("git restore src/readline/ncsh_history.h", sizeof("git restore src/readline/ncsh_history.h"), tree, &arena);
+    ac_add("git restore tests/autocompletions_tests.c", sizeof("git restore tests/ac_tests.c"), tree, &arena);
+    ac_add("git restore src/io/history.h", sizeof("git restore src/io/history.h"), tree, &arena);
     ac_add("nvim src/vm/vm.c", sizeof("nvim src/vm/vm.c"), tree, &arena);
-    ac_add("nvim src/readline/ncreadlin.c", sizeof("nvim src/readline/ncreadlin.c"), tree, &arena);
-    ac_add("nvim src/readline/ncreadline.c", sizeof("nvim src/readline/ncreadline.c"), tree, &arena);
+    ac_add("nvim src/io/ncreadlin.c", sizeof("nvim src/io/ncreadlin.c"), tree, &arena);
+    ac_add("nvim src/io/ncio.c", sizeof("nvim src/io/ncio.c"), tree, &arena);
     ac_add("nvim tests", sizeof("nvim tests"), tree, &arena);
     ac_add("make at", sizeof("make at"), tree, &arena);
     ac_add("nvim acceptance_tests/tests", sizeof("nvim acceptance_tests/tests"), tree, &arena);
@@ -152,17 +152,17 @@ void ac_bench()
     ac_add("nvim .", sizeof("nvim ."), tree, &arena);
     ac_add("nvim .", sizeof("nvim ."), tree, &arena);
     ac_add("git diff", sizeof("git diff"), tree, &arena);
-    ac_add("nvim src/readline/readline.c", sizeof("nvim src/readline/readline.c"), tree, &arena);
+    ac_add("nvim src/io/io.c", sizeof("nvim src/io/io.c"), tree, &arena);
     ac_add("nvim .", sizeof("nvim ."), tree, &arena);
     ac_add("z ncsh2", sizeof("z ncsh2"), tree, &arena);
-    ac_add("nvim src/readline/readline.c", sizeof("nvim src/readline/readline.c"), tree, &arena);
+    ac_add("nvim src/io/io.c", sizeof("nvim src/io/io.c"), tree, &arena);
     ac_add("nvim src", sizeof("nvim src"), tree, &arena);
     ac_add("git stash pop", sizeof("git stash pop"), tree, &arena);
     ac_add("nvim .", sizeof("nvim ."), tree, &arena);
     ac_add("make ud", sizeof("make ud"), tree, &arena);
     ac_add("./bin/ncsh", sizeof("./bin/ncsh"), tree, &arena);
     ac_add("git diff", sizeof("git diff"), tree, &arena);
-    ac_add("nvim src/readline", sizeof("nvim src/readline"), tree, &arena);
+    ac_add("nvim src/io", sizeof("nvim src/io"), tree, &arena);
     ac_add("git stash pop", sizeof("git stash pop"), tree, &arena);
     ac_add("nvim .", sizeof("nvim ."), tree, &arena);
     ac_add("make l", sizeof("make l"), tree, &arena);

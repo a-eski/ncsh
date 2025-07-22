@@ -69,10 +69,14 @@ void io_deinit(Input* restrict input)
     }
 }
 
-void io_cursor_restore([[maybe_unused]] Input* restrict input)
+void io_cursor_restore(Input* restrict input)
 {
-    // TODO: fix end of screen cursor restore
+    size_t prev_size_y = term.size.y;
+    size_t prev_pos_y = term.pos.y;
     term_send(&tcaps.cursor_restore);
+    if (prev_pos_y == prev_size_y - 1) {
+        term_send_n(&tcaps.cursor_up, input->lines_y);
+    }
 }
 
 int io_error([[maybe_unused]] Input* restrict input)
@@ -85,8 +89,8 @@ int io_putchar(Input* restrict input);
 int io_char(Input* restrict input)
 {
     if (input->pos == NCSH_MAX_INPUT - 1) {
-        term_color_set(196);
         term_send(&tcaps.newline);
+        term_color_set(TERM_RED_ERROR);
         term_fprintln(stderr, "ncsh: Hit max input.");
         term_send(&tcaps.color_reset);
         input->buffer[0] = '\0';
@@ -115,28 +119,6 @@ enum Line_Adjustment : uint8_t {
     L_PREVIOUS
 };
 
-/* io_is_end_of_line
- * Determines if the cursor is currently at the end of the current line.
- * Returns: true if at end of current line.
- */
-[[nodiscard]]
-bool io_is_end_of_line(Input* restrict input)
-{
-    if (input->lines_y == 0) {
-        input->lines_x[0] = input->pos;
-        return input->pos + input->prompt_len >= term.size.x;
-    }
-
-    size_t current_line_pos = input->pos;
-    for (size_t i = 0; i < input->lines_y; ++i) {
-        assert(input->lines_x[i] >= current_line_pos);
-        current_line_pos -= input->lines_x[i];
-    }
-
-    input->lines_x[input->lines_y] = current_line_pos;
-    return (size_t)current_line_pos >= term.size.x;
-}
-
 /* io_adjust_line_if_needed
  * Checks if a newline needs to be inserted.
  * For moving to the next line, nothing happens except increasing lines_y and current_y, which track y position relative
@@ -150,20 +132,19 @@ enum Line_Adjustment io_adjust_line_if_needed(Input* restrict input)
         return L_NONE;
     }
 
-    if (io_is_end_of_line(input)) {
-        if (input->lines_y == 0) {
-            input->lines_x[0] -= 1;
-        }
+    // Is eol
+    if (term.pos.x >= term.size.x - 1) {
         ++input->lines_y;
         input->current_y = input->lines_y;
         return L_NEXT;
     }
 
     // is start of line?
-    if (input->lines_y > 0 && input->lines_x[input->lines_y] == 0) {
+    if (term.pos.y > 0 && term.pos.x == 0) {
         --input->lines_y;
         input->current_y = input->lines_y;
 
+        term_send(&tcaps.line_clr_to_eol);
         term_goto_prev_eol();
         return L_PREVIOUS;
     }
@@ -184,9 +165,10 @@ int io_word_delete(Input* restrict input)
     --input->pos;
 
     while (input->pos > 0) {
-        if (io_adjust_line_if_needed(input) == L_PREVIOUS) {
+        io_adjust_line_if_needed(input);
+        /*if (io_adjust_line_if_needed(input) == L_PREVIOUS) {
             term_send(&tcaps.line_clr_to_eol);
-        }
+        }*/
         if (input->buffer[input->pos] == ' ') {
             break;
         }
@@ -214,7 +196,6 @@ int io_line_delete(Input* restrict input)
     memset(input->buffer, '\0', input->max_pos + 1);
     input->max_pos = 0;
     input->pos = 0;
-    memset(input->lines_x, 0, (size_t)input->lines_y + 1);
     input->lines_y = 0;
     return EXIT_SUCCESS;
 }
@@ -672,7 +653,7 @@ int io_cursor_end(Input* restrict input)
         assert(input->current_y > 0);
         term_send_n(&tcaps.cursor_down, input->current_y);
         term_send(&tcaps.line_goto_bol);
-        term_send_n(&tcaps.cursor_right, input->lines_x[input->current_y] - 1);
+        term_send_n(&tcaps.cursor_right, term.size.x - term.pos.x - 1);
         term_send(&tcaps.cursor_show);
         input->pos = input->max_pos;
         return EXIT_SUCCESS;
@@ -782,16 +763,14 @@ int io_next(Input* restrict input)
 
 int io_resize(Input* restrict input)
 {
-    // need to reset saved cursor position as well on resize, use previous size
+    // TODO need to reset saved cursor position as well on resize
 
     input->lines_y = 0;
     size_t len = input->pos;
     while (len) {
         if (len < term.size.x) {
-            input->lines_x[input->lines_y] = len;
             break;
         }
-        input->lines_x[input->lines_y] = term.size.x;
         ++input->lines_y;
         len -= term.size.x;
     }
@@ -822,13 +801,13 @@ void io_autocomplete(Input* restrict input)
 
     input->current_autocompletion_len = strlen(input->current_autocompletion);
     if (input->current_y == 0 &&
-        input->prompt_len + (size_t)input->lines_x[input->lines_y] + input->current_autocompletion_len >
+        input->prompt_len + term.pos.x + input->current_autocompletion_len >
             term.size.x) {
         input->current_autocompletion[0] = '\0';
         input->current_autocompletion_len = 0;
         return;
     }
-    else if ((size_t)input->lines_x[input->lines_y] + input->current_autocompletion_len >
+    else if (term.pos.x + input->current_autocompletion_len >
              term.size.x) {
         input->current_autocompletion[0] = '\0';
         input->current_autocompletion_len = 0;
