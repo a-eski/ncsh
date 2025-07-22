@@ -145,7 +145,7 @@ int main(int argc, char** argv)
 {
     term_init();
 
-    int rv;
+    int rv = EXIT_SUCCESS;
     if (argc > 1 || !isatty(STDIN_FILENO)) {
         rv = noninteractive(argc, argv);
         term_reset();
