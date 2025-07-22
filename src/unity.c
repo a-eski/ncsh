@@ -33,11 +33,11 @@
 #include "interpreter/parser.c"
 #include "interpreter/statements.c"
 
-#include "readline/ac.c"
-#include "readline/hashset.c"
-#include "readline/history.c"
-#include "readline/io.c"
-#include "readline/prompt.c"
+#include "io/ac.c"
+#include "io/hashset.c"
+#include "io/history.c"
+#include "io/io.c"
+#include "io/prompt.c"
 
 #include "interpreter/semantic_analyzer.c"
 #include "interpreter/vars.c"

@@ -28,7 +28,6 @@ typedef struct {
     char* buffer;
 
     // position relative to start line of prompt
-    size_t lines_x[LINE_LIMIT];
     size_t current_y;
     size_t lines_y;
 
