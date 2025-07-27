@@ -1,6 +1,5 @@
 #pragma once
 
-#include "defines.h"
 #ifndef _POXIC_C_SOURCE
 #define _POSIX_C_SOURCE 200809L
 #endif /* ifndef _POXIC_C_SOURCE */
@@ -11,6 +10,8 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <unistd.h>
+
+#include "defines.h"
 
 extern jmp_buf env;
 extern sig_atomic_t vm_child_pid;
