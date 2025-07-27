@@ -5,10 +5,12 @@
 
 #include "lib/unibilium.h"
 #include "tcaps.h"
+#include "ttyplatform.h" // used for including stdbool in case of Apple
 
 extern termcaps tcaps;
 extern unibi_term* uterm;
 
+// Fallback macros
 #define FB_BS "\b \b" /* Keys */
 #define FB_DEL " \b"
 #define FB_NEWLINE "\n"
@@ -34,6 +36,23 @@ extern unibi_term* uterm;
 
 #define FB_COLOR_RESET "\033[0m" /* Colors */
 
+// cap aka capacity macros
+#define cap_New(s, t)                                                                                                  \
+    (cap)                                                                                                              \
+    {                                                                                                                  \
+        .val = (s), .len = strlen((s)), .type = (t)                                                                    \
+    }
+#define cap_New_Lit(s, t)                                                                                              \
+    (cap)                                                                                                              \
+    {                                                                                                                  \
+        .val = (s), .len = sizeof((s)) - 1, .type = (t)                                                                \
+    }
+#define cap_New_s(s, n, t)                                                                                             \
+    (cap)                                                                                                              \
+    {                                                                                                                  \
+        .val = (s), .len = (n), .type = (t)                                                                            \
+    }
+
 #define tcaps_set(str, cap, fb, t)                                                                                     \
 do { \
     if (!str || !*str)                                                                                                 \
@@ -44,9 +63,9 @@ do { \
 
 #define tcaps_set_no_fb(str, cap, t)                                                                                   \
     if (str && *str)                                                                                                   \
-    cap = cap_New(str, t)
+        cap = cap_New(str, t)
 
-void tcaps_init()
+void tcaps_init(void)
 {
     tcaps_init_opts(true);
 }
@@ -64,7 +83,7 @@ void tcaps_init_opts(bool init_advanced_caps)
     }
 }
 
-void tcaps_init_keys()
+void tcaps_init_keys(void)
 {
     // TODO: backspace currently only uses the fallback,
     // investigate using unibi cap.
@@ -76,10 +95,10 @@ void tcaps_init_keys()
 
     // const char* newline = unibi_get_str(uterm, unibi_newline);
     // tcaps_set(newline, tcaps.newline, FB_NEWLINE, CAP_NEWLINE);
-    tcaps_set_no_fb(FB_NEWLINE, tcaps.newline, CAP_NEWLINE);
+    tcaps.newline = cap_New_Lit(FB_NEWLINE, CAP_NEWLINE);
 }
 
-void tcaps_init_scr()
+void tcaps_init_scr(void)
 {
     const char* scr_clr = unibi_get_str(uterm, unibi_clear_screen);
     tcaps_set(scr_clr, tcaps.scr_clr, FB_CLR_SCR, CAP_SCR_CLR);
@@ -88,7 +107,7 @@ void tcaps_init_scr()
     tcaps_set(scr_clr_to_eos, tcaps.scr_clr_to_eos, FB_CLR_SCR_TO_EOS, CAP_SCR_CLR_TO_EOS);
 }
 
-void tcaps_init_cursor()
+void tcaps_init_cursor(void)
 {
     const char* home = unibi_get_str(uterm, unibi_cursor_home);
     tcaps_set(home, tcaps.cursor_home, FB_CURSOR_HOME, CAP_CURSOR_HOME);
@@ -121,7 +140,7 @@ void tcaps_init_cursor()
     tcaps_set_no_fb(cursor_pos, tcaps.cursor_pos, CAP_CURSOR_POS);
 }
 
-void tcaps_init_line()
+void tcaps_init_line(void)
 {
     const char* clr_to_eol = unibi_get_str(uterm, unibi_clr_eol);
     tcaps_set(clr_to_eol, tcaps.line_clr_to_eol, FB_CLR_TO_EOL, CAP_LINE_CLR_TO_EOL);
@@ -133,7 +152,7 @@ void tcaps_init_line()
     tcaps_set(goto_bol, tcaps.line_goto_bol, FB_GOTO_BOL, CAP_LINE_GOTO_BOL);
 }
 
-void tcaps_init_colors()
+void tcaps_init_colors(void)
 {
     tcaps.color_max = unibi_get_num(uterm, unibi_max_colors);
 
@@ -147,7 +166,7 @@ void tcaps_init_colors()
     tcaps_set_no_fb(color_bg_set, tcaps.color_bg_set, CAP_COLOR_BG_SET);
 }
 
-void tcaps_init_goto_prev_eol()
+void tcaps_init_goto_prev_eol(void)
 {
     const char* cursor_pos = unibi_get_str(uterm, unibi_cursor_address);
     if (cursor_pos && *cursor_pos) {
