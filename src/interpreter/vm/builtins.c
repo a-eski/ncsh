@@ -38,26 +38,26 @@ extern int vm_output_fd; // from vm.c, used as fd for writing to stdout
 /* Shared builtins data and functions */
 int builtins_disabled_state = 0;
 
-ssize_t builtins_write(int fd, char* buf, size_t len)
+int builtins_write(int fd, char* buf, size_t len)
 {
-    ssize_t bytes_written = term_fwrite(fd, buf, len);
+    int bytes_written = term_dwrite(fd, buf, len);
     if (bytes_written == EOF && errno == EPIPE) {
         return EOF;
     }
     else if (bytes_written == EOF) {
-        longjmp(env, -99);
+        longjmp(env, FAILURE_BUILTIN_WRITE);
     }
     return bytes_written;
 }
 
-ssize_t builtins_writeln(int fd, char* buf, size_t len)
+int builtins_writeln(int fd, char* buf, size_t len)
 {
-    ssize_t bytes_written = term_fwriteln(fd, buf, len);
+    int bytes_written = term_dwriteln(fd, buf, len);
     if (bytes_written == EOF && errno == EPIPE) {
         return EOF;
     }
     else if (bytes_written == EOF) {
-        longjmp(env, -99);
+        longjmp(env, FAILURE_BUILTIN_WRITE);
     }
     return bytes_written;
 }

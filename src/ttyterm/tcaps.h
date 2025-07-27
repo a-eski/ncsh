@@ -9,6 +9,8 @@
 #include <stddef.h>
 #include <stdio.h>
 
+#include "ttyplatform.h" // used for including stdbool in case of Apple
+
 enum caps {
     CAP_BS,
     CAP_DEL,
@@ -54,22 +56,6 @@ typedef struct {
     enum advanced_caps__ type;
 } advanced_cap__;
 
-#define cap_New(s, t)                                                                                                  \
-    (cap)                                                                                                              \
-    {                                                                                                                  \
-        .val = (s), .len = strlen((s)), .type = (t)                                                                    \
-    }
-#define cap_New_Lit(s, t)                                                                                              \
-    (cap)                                                                                                              \
-    {                                                                                                                  \
-        .val = (s), .len = sizeof((s)) - 1, .type = (t)                                                                \
-    }
-#define cap_New_s(s, n, t)                                                                                             \
-    (cap)                                                                                                              \
-    {                                                                                                                  \
-        .val = (s), .len = (n), .type = (t)                                                                            \
-    }
-
 typedef struct {
     cap bs; /* Keys */
     cap del;
@@ -101,19 +87,27 @@ typedef struct {
 
 } termcaps;
 
+#ifdef __cplusplus
+extern "C" {
+#endif // __cplusplus
+
 /* Init all caps */
-void tcaps_init();
+void tcaps_init(void);
 /* Init all caps but can exclude advanced caps like line_goto_prev_eol */
 void tcaps_init_opts(bool init_advanced_caps);
 
 /* Specific caps initialization */
-void tcaps_init_keys();
-void tcaps_init_scr();
-void tcaps_init_cursor();
-void tcaps_init_line();
-void tcaps_init_colors();
+void tcaps_init_keys(void);
+void tcaps_init_scr(void);
+void tcaps_init_cursor(void);
+void tcaps_init_line(void);
+void tcaps_init_colors(void);
 
 /* Advanced cap initiailization */
-void tcaps_init_goto_prev_eol();
+void tcaps_init_goto_prev_eol(void);
+
+#ifdef __cplusplus
+}
+#endif // __cplusplus
 
 #endif // !TCAPS_GUARD_H_

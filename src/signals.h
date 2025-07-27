@@ -1,5 +1,6 @@
 #pragma once
 
+#include "defines.h"
 #ifndef _POXIC_C_SOURCE
 #define _POSIX_C_SOURCE 200809L
 #endif /* ifndef _POXIC_C_SOURCE */
@@ -31,13 +32,13 @@ static void signal_handler(int sig, siginfo_t* info, void* context)
         if (!kill(target, sig)) {
             if (write(STDOUT_FILENO, "\n", 1) == -1) { // write is async/signal safe, do not use fflush, putchar, prinft
                 perror("ncsh: Error writing to standard output while processing a signal");
-                longjmp(env, 2);
+                longjmp(env, FAILURE_SIG_HANDLER_WRITE);
             }
         }
         vm_child_pid = 0;
     }
     else { // jump to ncsh.c label exit to save history/autocompletions & z
-        longjmp(env, 1);
+        longjmp(env, FAILURE_SIG_HANDLER);
     }
 }
 

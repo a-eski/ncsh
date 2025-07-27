@@ -143,12 +143,12 @@ void startup_time()
 [[nodiscard]]
 int main(int argc, char** argv)
 {
-    term_init();
+    term_init_caps();
 
     int rv = EXIT_SUCCESS;
     if (argc > 1 || !isatty(STDIN_FILENO)) {
         rv = noninteractive(argc, argv);
-        term_reset();
+        term_deinit_caps();
         return rv;
     }
 
@@ -202,7 +202,7 @@ int main(int argc, char** argv)
 exit:
     term_println("exit");
     cleanup(memory, &shell);
-    term_reset();
+    term_deinit_caps();
 
     return rv;
 }

@@ -733,7 +733,7 @@ void z_crashing_input_test()
 
 void z_tests()
 {
-    term_init();
+    term_init_caps();
     etest_start();
 
     etest_run(z_read_empty_database_file_test);
@@ -766,7 +766,7 @@ void z_tests()
     etest_run(z_crashing_input_test);
 
     etest_finish();
-    term_reset();
+    term_deinit_caps();
 
     remove(Z_DATABASE_FILE);
 }

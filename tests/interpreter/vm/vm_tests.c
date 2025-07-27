@@ -37,7 +37,7 @@ void running_vm_tests()
 
 void vm_tests()
 {
-    term_init();
+    term_init_caps();
 
     etest_start();
 
@@ -89,7 +89,7 @@ void vm_tests()
     etest_finish();
 
     remove("t.txt");
-    term_reset();
+    term_deinit_caps();
 }
 
 #ifndef TEST_ALL

@@ -12,7 +12,7 @@
 [[nodiscard]]
 int semantic_analyzer_error_write(char* rst message, size_t message_length)
 {
-    term_fwriteln(STDERR_FILENO, message, message_length);
+    term_dwriteln(STDERR_FILENO, message, message_length);
 
     return EXIT_SYNTAX_ERROR;
 }

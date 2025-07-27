@@ -826,6 +826,7 @@ int io_readline(Input* restrict input, Arena* restrict scratch)
     input->scratch = scratch;
     input->reprint_prompt = true;
     int rv = EXIT_SUCCESS;
+    term_init_input_mode(TTY_NONCANONICAL_MODE);
 
     while (1) {
         if (prompt_if_needed(input) != EXIT_SUCCESS) {
@@ -849,5 +850,6 @@ int io_readline(Input* restrict input, Arena* restrict scratch)
         io_autocomplete(input);
     }
 
+    term_deinit_input_mode();
     return rv;
 }
