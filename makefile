@@ -53,7 +53,7 @@ obj/%.o: src/ttyterm/lib/%.c
 obj/%.o: src/ttyterm/%.c
 	$(cc_with_flags) -c $< -o $@
 
-obj/%.o: src/readline/%.c
+obj/%.o: src/io/%.c
 	$(cc_with_flags) -c $< -o $@
 
 obj/%.o: src/interpreter/%.c
@@ -152,7 +152,7 @@ l :
 
 # Run history tests
 test_history :
-	$(CC) $(STD) $(test_flags) -DNCSH_HISTORY_TEST $(TTYTERM_DEFINES) ./src/ttyterm/lib/unibilium.c ./src/ttyterm/lib/uninames.c ./src/ttyterm/lib/uniutil.c ./src/ttyterm/tcaps.c ./src/ttyterm/ttyterm.c ./src/eskilib/efile.c ./src/readline/hashset.c ./src/arena.c ./src/readline/history.c ./tests/readline/history_tests.c -o ./bin/history_tests
+	$(CC) $(STD) $(test_flags) -DNCSH_HISTORY_TEST $(TTYTERM_DEFINES) ./src/ttyterm/lib/unibilium.c ./src/ttyterm/lib/uninames.c ./src/ttyterm/lib/uniutil.c ./src/ttyterm/tcaps.c ./src/ttyterm/ttyterm.c ./src/eskilib/efile.c ./src/io/hashset.c ./src/arena.c ./src/io/history.c ./tests/io/history_tests.c -o ./bin/history_tests
 	./bin/history_tests
 th :
 	make test_history
@@ -161,14 +161,14 @@ th :
 fuzz_history :
 	chmod +x ./create_corpus_dirs.sh
 	./create_corpus_dirs.sh
-	clang-19 $(STD) $(fuzz_flags) -DNCSH_HISTORY_TEST ./tests/fuzz/history_fuzzing.c ./src/arena.c ./src/readline/history.c ./src/eskilib/efile.c ./src/readline/hashset.c -o ./bin/history_fuzz
+	clang-19 $(STD) $(fuzz_flags) -DNCSH_HISTORY_TEST ./tests/fuzz/history_fuzzing.c ./src/arena.c ./src/io/history.c ./src/eskilib/efile.c ./src/io/hashset.c -o ./bin/history_fuzz
 	./bin/history_fuzz HISTORY_CORPUS/ -detect_leaks=0 -rss_limit_mb=4096
 fh :
 	make fuzz_history
 
 # Run autocompletion tests
 test_ac :
-	 $(CC) $(STD) $(test_flags) ./src/arena.c ./src/readline/ac.c ./tests/readline/ac_tests.c -o ./bin/ac_tests
+	 $(CC) $(STD) $(test_flags) ./src/arena.c ./src/io/ac.c ./tests/io/ac_tests.c -o ./bin/ac_tests
 	 ./bin/ac_tests
 tac :
 	make test_ac
@@ -177,26 +177,26 @@ tac :
 fuzz_ac :
 	chmod +x ./create_corpus_dirs.sh
 	./create_corpus_dirs.sh
-	clang-19 $(STD) $(fuzz_flags) ./tests/fuzz/ac_fuzzing.c ./src/arena.c ./src/readline/ac.c -o ./bin/ac_fuzz
+	clang-19 $(STD) $(fuzz_flags) ./tests/fuzz/ac_fuzzing.c ./src/arena.c ./src/io/ac.c -o ./bin/ac_fuzz
 	./bin/ac_fuzz AUTOCOMPLETIONS_CORPUS/ -detect_leaks=0 -rss_limit_mb=8192
 fac :
 	make fuzz_ac
 
 # Run autocompletions benchmarks
 bench_ac :
-	$(CC) $(STD) $(test_flags) -DNDEBUG ./src/arena.c ./src/readline/ac.c ./tests/bench/ac_bench.c -o ./bin/ac_bench
+	$(CC) $(STD) $(test_flags) -DNDEBUG ./src/arena.c ./src/io/ac.c ./tests/bench/ac_bench.c -o ./bin/ac_bench
 	hyperfine --warmup 1000 --shell=none './bin/ac_bench'
 bac :
 	make bench_ac
 
 bench_acr :
-	$(CC) $(STD) $(release_flags) -DNDEBUG ./src/arena.c ./src/readline/ac.c ./tests/bench/ac_bench.c -o ./bin/ac_bench
+	$(CC) $(STD) $(release_flags) -DNDEBUG ./src/arena.c ./src/io/ac.c ./tests/bench/ac_bench.c -o ./bin/ac_bench
 	hyperfine --warmup 1000 --shell=none './bin/ac_bench'
 bacr :
 	make bench_acr
 
 bench_ac_tests :
-	$(CC) $(STD) $(test_flags) -DNDEBUG ./src/arena.c ./src/readline/ac.c ./tests/readline/ac_tests.c -o ./bin/ac_tests
+	$(CC) $(STD) $(test_flags) -DNDEBUG ./src/arena.c ./src/io/ac.c ./tests/io/ac_tests.c -o ./bin/ac_tests
 	hyperfine --warmup 1000 --shell=none './bin/ac_tests'
 bact :
 	make bench_ac_tests
@@ -271,7 +271,7 @@ tal :
 
 # Run prompt tests
 test_prompt :
-	$(CC) $(STD) $(test_flags) -DNCSH_HISTORY_TEST ./src/arena.c ./src/readline/prompt.c ./tests/readline/prompt_tests.c -o ./bin/prompt_tests
+	$(CC) $(STD) $(test_flags) -DNCSH_HISTORY_TEST ./src/arena.c ./src/io/prompt.c ./tests/io/prompt_tests.c -o ./bin/prompt_tests
 	./bin/prompt_tests
 tpr :
 	make test_prompt
@@ -299,20 +299,20 @@ tv :
 
 # Run VM sanity tests
 test_vm :
-	$(CC) $(STD) $(test_flags) -DNCSH_VM_TEST $(TTYTERM_DEFINES) ./src/ttyterm/lib/unibilium.c ./src/ttyterm/lib/uninames.c ./src/ttyterm/lib/uniutil.c ./src/ttyterm/tcaps.c ./src/ttyterm/ttyterm.c ./src/arena.c ./src/interpreter/lexer.c ./src/eskilib/efile.c ./src/readline/hashset.c ./src/interpreter/vars.c ./src/readline/history.c ./src/z/fzf.c ./src/z/z.c ./src/env.c ./src/alias.c ./src/config.c ./src/interpreter/vm/vm.c ./src/interpreter/semantic_analyzer.c ./src/interpreter/parser.c ./src/interpreter/vm/builtins.c ./src/interpreter/lexemes.c ./src/interpreter/statements.c ./src/interpreter/expansions.c ./src/interpreter/vm/pipe.c ./src/interpreter/vm/redirection.c ./tests/interpreter/vm/vm_tests.c -o ./bin/vm_tests
+	$(CC) $(STD) $(test_flags) -DNCSH_VM_TEST $(TTYTERM_DEFINES) ./src/ttyterm/lib/unibilium.c ./src/ttyterm/lib/uninames.c ./src/ttyterm/lib/uniutil.c ./src/ttyterm/tcaps.c ./src/ttyterm/ttyterm.c ./src/arena.c ./src/interpreter/lexer.c ./src/eskilib/efile.c ./src/io/hashset.c ./src/interpreter/vars.c ./src/io/history.c ./src/z/fzf.c ./src/z/z.c ./src/env.c ./src/alias.c ./src/config.c ./src/interpreter/vm/vm.c ./src/interpreter/semantic_analyzer.c ./src/interpreter/parser.c ./src/interpreter/vm/builtins.c ./src/interpreter/lexemes.c ./src/interpreter/statements.c ./src/interpreter/expansions.c ./src/interpreter/vm/pipe.c ./src/interpreter/vm/redirection.c ./tests/interpreter/vm/vm_tests.c -o ./bin/vm_tests
 	./bin/vm_tests
 tvm :
 	make test_vm
 
 test_vm_next :
-	$(CC) $(STD) $(test_flags) -DNCSH_VM_TEST $(TTYTERM_DEFINES) ./src/ttyterm/lib/unibilium.c ./src/ttyterm/lib/uninames.c ./src/ttyterm/lib/uniutil.c ./src/ttyterm/tcaps.c ./src/ttyterm/ttyterm.c ./src/arena.c ./src/interpreter/lexer.c ./src/eskilib/efile.c ./src/readline/hashset.c ./src/interpreter/vars.c ./src/readline/history.c ./src/z/fzf.c ./src/z/z.c ./src/env.c ./src/alias.c ./src/config.c ./src/interpreter/vm/vm.c ./src/interpreter/semantic_analyzer.c ./src/interpreter/parser.c ./src/interpreter/vm/builtins.c ./src/interpreter/lexemes.c ./src/interpreter/statements.c ./src/interpreter/expansions.c ./src/interpreter/vm/pipe.c ./src/interpreter/vm/redirection.c ./tests/interpreter/vm/vm_next_tests.c -o ./bin/vm_next_tests
+	$(CC) $(STD) $(test_flags) -DNCSH_VM_TEST $(TTYTERM_DEFINES) ./src/ttyterm/lib/unibilium.c ./src/ttyterm/lib/uninames.c ./src/ttyterm/lib/uniutil.c ./src/ttyterm/tcaps.c ./src/ttyterm/ttyterm.c ./src/arena.c ./src/interpreter/lexer.c ./src/eskilib/efile.c ./src/io/hashset.c ./src/interpreter/vars.c ./src/io/history.c ./src/z/fzf.c ./src/z/z.c ./src/env.c ./src/alias.c ./src/config.c ./src/interpreter/vm/vm.c ./src/interpreter/semantic_analyzer.c ./src/interpreter/parser.c ./src/interpreter/vm/builtins.c ./src/interpreter/lexemes.c ./src/interpreter/statements.c ./src/interpreter/expansions.c ./src/interpreter/vm/pipe.c ./src/interpreter/vm/redirection.c ./tests/interpreter/vm/vm_next_tests.c -o ./bin/vm_next_tests
 	./bin/vm_next_tests
 tvmn:
 	make test_vm_next
 
 # Run hashset tests
 test_hashset :
-	$(CC) $(STD) $(test_flags) -DNCSH_VM_TEST ./src/arena.c ./src/readline/hashset.c ./tests/readline/hashset_tests.c -o ./bin/hashset_tests
+	$(CC) $(STD) $(test_flags) -DNCSH_VM_TEST ./src/arena.c ./src/io/hashset.c ./tests/io/hashset_tests.c -o ./bin/hashset_tests
 	./bin/hashset_tests
 ths :
 	make test_hashset

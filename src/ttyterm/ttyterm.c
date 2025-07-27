@@ -428,7 +428,7 @@ int term_color_reset()
 
 int term_goto_prev_eol()
 {
-    if (tcaps.line_goto_prev_eol.fallback == FB_NONE) {
+    /*if (tcaps.line_goto_prev_eol.fallback == FB_NONE) {
         constexpr size_t size = 64;
         char buf[size] = {0};
         assert(term.pos.y > 0);
@@ -445,8 +445,9 @@ int term_goto_prev_eol()
         term.pos.x = term.size.x - term.pos.x - 1;
         --term.pos.y;
         return 0;
-    }
-    if (tcaps.line_goto_prev_eol.fallback >= FB_FIRST) {
+    }*/
+    if (tcaps.line_goto_prev_eol.fallback >= FB_NONE) {
+    // if (tcaps.line_goto_prev_eol.fallback >= FB_FIRST) {
         term_send(&tcaps.cursor_up);
         term_send_n(&tcaps.cursor_right, term.size.x - term.pos.x - 1);
         fflush(stdout);

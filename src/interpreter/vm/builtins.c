@@ -25,7 +25,7 @@
 #include "../../alias.h"
 #include "../../arena.h"
 #include "../../defines.h"
-#include "../../readline/history.h"
+#include "../../io/history.h"
 #include "../../ttyterm/ttyterm.h"
 #include "../../shell.h"
 #include "../../z/z.h"
@@ -595,8 +595,6 @@ int builtins_help([[maybe_unused]] char** rst buffer,
     // controls
     // HELP_WRITE(HELP_BASIC_CONTROLS);
     // CTRL + W, CTRL + U, etc.
-    // HELP_WRITE(HELP_READLINE_INFO);
-    // HELP_WRITE(HELP_READLINE_MORE_INFO);
     // autocomplete
     // HELP_WRITE(HELP_AUTOCOMPLETIONS);
     // HELP_WRITE(HELP_TAB_AUTOCOMPLETIONS);

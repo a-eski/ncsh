@@ -5,7 +5,7 @@
 #pragma once
 
 #include <stdint.h>
-#include <sys/cdefs.h> // for __attribute_malloc
+#include <sys/cdefs.h> // for __attribute_malloc__
 
 #include "defines.h"
 
