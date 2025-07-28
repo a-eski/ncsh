@@ -7,7 +7,7 @@
 
 #include "hashset.h"
 
-void hashset_malloc(size_t capacity, Arena* rst arena, Hashset* rst hset)
+void hashset_malloc(size_t capacity, Arena* restrict arena, Hashset* restrict hset)
 {
     hset->size = 0;
     hset->capacity = capacity == 0 ? HASHSET_DEFAULT_CAPACITY : capacity;
@@ -19,7 +19,7 @@ void hashset_malloc(size_t capacity, Arena* rst arena, Hashset* rst hset)
 #define ESKILIB_FNV_PRIME 16777619
 
 // 64-bit FNV-1a hash
-uint64_t hashset_key(char* rst str)
+uint64_t hashset_key(char* restrict str)
 {
     register uint64_t i;
 
@@ -31,7 +31,7 @@ uint64_t hashset_key(char* rst str)
     return i;
 }
 
-Str hashset_get(char* rst key, Hashset* rst hset)
+Str hashset_get(char* restrict key, Hashset* restrict hset)
 {
     uint64_t hash = hashset_key(key);
     size_t index = (size_t)(hash & (uint64_t)(hset->capacity - 1));
@@ -50,7 +50,7 @@ Str hashset_get(char* rst key, Hashset* rst hset)
     return Str_Empty;
 }
 
-bool hashset_exists(char* rst key, Hashset* rst hset)
+bool hashset_exists(char* restrict key, Hashset* restrict hset)
 {
     uint64_t hash = hashset_key(key);
     size_t index = (size_t)(hash & (uint64_t)(hset->capacity - 1));
@@ -69,7 +69,7 @@ bool hashset_exists(char* rst key, Hashset* rst hset)
     return false;
 }
 
-char* hashset_set_entry(Hashset_Entry* rst entries, size_t capacity, Str val, size_t* plength)
+char* hashset_set_entry(Hashset_Entry* restrict entries, size_t capacity, Str val, size_t* plength)
 {
     uint64_t hash = hashset_key(val.value);
     size_t index = (size_t)(hash & (uint64_t)(capacity - 1));
@@ -95,7 +95,7 @@ char* hashset_set_entry(Hashset_Entry* rst entries, size_t capacity, Str val, si
     return val.value;
 }
 
-bool hashset_expand(Arena* rst arena, Hashset* rst hset)
+bool hashset_expand(Arena* restrict arena, Hashset* restrict hset)
 {
     size_t new_capacity = hset->capacity * 2;
     if (new_capacity < hset->capacity) {
@@ -117,7 +117,7 @@ bool hashset_expand(Arena* rst arena, Hashset* rst hset)
     return true;
 }
 
-char* hashset_set(Str val, Arena* rst arena, Hashset* rst hset)
+char* hashset_set(Str val, Arena* restrict arena, Hashset* restrict hset)
 {
     assert(val.value && val.length);
     if (!val.value || !val.length) {

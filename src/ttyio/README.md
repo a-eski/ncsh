@@ -1,4 +1,4 @@
-# ttyterm
+# ttyio
 
 A lightweight wrapper library for unibilium.
 
@@ -84,9 +84,7 @@ make release
 
 ## Code Definitions
 
-The API for ttyterm contains some abbreviations which are fairly common.
-
-Some of these are obvious, but put here just in case they aren't!
+ttyio contains some shorthands/abbreviations in code and in the API:
 
 * scr: screen
 * clr: clear
@@ -103,7 +101,7 @@ Some of these are obvious, but put here just in case they aren't!
 
 ## API
 
-ttyterm provides a set of functions to interact with the terminal and terminal capabilities.
+ttyio provides a set of functions to interact with the terminal and terminal capabilities.
 
 ### Understanding the APIs
 
@@ -115,14 +113,14 @@ The functions mostly follow the same pattern:
 * There is usually a version which defaults to stdout, a version which accepts a file pointer, and a version which accepts a file descriptor.
 * Functions or objects ending in '__' are internal.
 
-For example, there is term_print which defaults to stdout and prints your output formatted.
-Then, term_fprint has similar semantics but prints the formatted output to the specified file pointer (FILE* restrict file).
-Lastly, there is term_dprint which has similar semantics but prints the formatted output to the specified file descriptor (int fd).
-All have a version which handles newline for you as well, term_println, term_fprintln, and term_dprintln.
+For example, there is tty_print which defaults to stdout and prints your output formatted.
+Then, tty_fprint has similar semantics but prints the formatted output to the specified file pointer (FILE* restrict file).
+Lastly, there is tty_dprint which has similar semantics but prints the formatted output to the specified file descriptor (int fd).
+All have a version which handles newline for you as well, tty_println, tty_fprintln, and tty_dprintln.
 
 ### Input modes
 
-ttyterm provides 2 input modes. It itializes the terminal with these input modes when necessary.
+ttyio provides 2 input modes. It itializes the terminal with these input modes when necessary.
 The input modes are optional.
 
  * Canonical: read line by line, only get the line after user presses enter. a lot of programs work this way.
@@ -130,33 +128,33 @@ The input modes are optional.
 
 ### Output Functions
 
-* term_putc: similar to putchar
-* term_fputc: similar to term_putc, but accepts a file pointer
-* term_dputc: similar to term_dputc, but accepts a file descriptor
+* tty_putc: similar to putchar
+* tty_fputc: similar to tty_putc, but accepts a file pointer
+* tty_dputc: similar to tty_dputc, but accepts a file descriptor
 
-* term_write: similar to stdlib's write, but defaults to using stdout
-* term_writeln: same as term_write, but adds a newline for you
-* term_fwrite: similar to term_write, but accepts a file descriptor instead of using stdout
-* term_fwriteln: similar to term_fwrite, but adds a newline for you
+* tty_write: similar to stdlib's write, but defaults to using stdout
+* tty_writeln: same as tty_write, but adds a newline for you
+* tty_fwrite: similar to tty_write, but accepts a file descriptor instead of using stdout
+* tty_fwriteln: similar to tty_fwrite, but adds a newline for you
 
-* term_puts: similar to puts, same semantics as puts
-* term_fputs: similar to fputs, same semantics as fputs
+* tty_puts: similar to puts, same semantics as puts
+* tty_fputs: similar to fputs, same semantics as fputs
 
-* term_print: similar to printf, same semantics as printf
-* term_println: similar to term_print, but adds a newline for you
-* term_fprint: similar to term_print, but accepts a file descriptor. This is inconsistent with other methods like term_d*, which accept file descriptors, because this is how fprintf works.
-* term_fprintln: similar to term_fprint, but adds a newline for you.
-* term_dprint(const int fd, const char* restrict fmt, ...)
-* term_dprintln(const int fd, const char* restrict fmt, ...)
+* tty_print: similar to printf, same semantics as printf
+* tty_println: similar to tty_print, but adds a newline for you
+* tty_fprint: similar to tty_print, but accepts a file descriptor. This is inconsistent with other methods like tty_d*, which accept file descriptors, because this is how fprintf works.
+* tty_fprintln: similar to tty_fprint, but adds a newline for you.
+* tty_dprint(const int fd, const char* restrict fmt, ...)
+* tty_dprintln(const int fd, const char* restrict fmt, ...)
 
-* term_perror: similar to perror, same semantics as perror: adds a red color to the passed in message, then prints ": " and the corresponding errno string.
+* tty_perror: similar to perror, same semantics as perror: adds a red color to the passed in message, then prints ": " and the corresponding errno string.
 
-* term_send: send the terminal capability to stdout
-* term_dsend: send the terminal capability to the passed in file descriptor
-* term_fsend: send the terminal capability to the passed in file pointer
-* term_send_n: call term_send n times
-* term_dsend_n: call term_dsend n times
-* term_fsend_n: call term_fsend n times
+* tty_send: send the terminal capability to stdout
+* tty_dsend: send the terminal capability to the passed in file descriptor
+* tty_fsend: send the terminal capability to the passed in file pointer
+* tty_send_n: call tty_send n times
+* tty_dsend_n: call tty_dsend n times
+* tty_fsend_n: call tty_fsend n times
 
 ## Unibilium
 

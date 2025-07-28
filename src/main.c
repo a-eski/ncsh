@@ -18,7 +18,7 @@
 #include "io/ac.h"
 #include "io/io.h"
 #include "signals.h"
-#include "ttyterm/ttyterm.h"
+#include "ttyio/ttyio.h"
 
 /* Global Variables
  * Globals should be minimized as much as possible.
@@ -34,7 +34,7 @@ volatile int sigwinch_caught;
  * Returns: pointer to start of the memory block allocated.
  */
 [[nodiscard]]
-char* arena_init(Shell* rst shell)
+char* arena_init(Shell* restrict shell)
 {
     constexpr int arena_capacity = 1 << 24;
     constexpr int scratch_arena_capacity = 1 << 20;
@@ -58,13 +58,13 @@ char* arena_init(Shell* rst shell)
  * Returns: exit result, EXIT_SUCCESS or EXIT_FAILURE
  */
 [[nodiscard]]
-char* init(Shell* rst shell)
+char* init(Shell* restrict shell)
 {
     char* memory = arena_init(shell);
     if (!memory) {
-        term_color_set(TERM_RED_ERROR);
-        term_puts("ncsh: could not start up, not enough memory available.");
-        term_color_reset();
+        tty_color_set(TTYIO_RED_ERROR);
+        tty_puts("ncsh: could not start up, not enough memory available.");
+        tty_color_reset();
         return NULL;
     }
 
@@ -85,14 +85,14 @@ char* init(Shell* rst shell)
 
     signal_init();
     if (signal_forward(SIGINT) || signal_forward(SIGWINCH)) {
-        term_perror("ncsh: Error setting up signal handlers");
+        tty_perror("ncsh: Error setting up signal handlers");
         return NULL;
     }
 
     return memory;
 }
 
-void cleanup(char* rst shell_memory, Shell* rst shell)
+void cleanup(char* restrict shell_memory, Shell* restrict shell)
 {
     // don't bother cleaning up if no shell memory allocated
     if (!shell_memory) {
@@ -115,11 +115,11 @@ void welcome()
 #endif
 
 #ifdef NCSH_CLEAR_SCREEN_ON_STARTUP
-    term_send(&tcaps.scr_clr);
-    term_send(&tcaps.cursor_home);
+    tty_send(&tcaps.scr_clr);
+    tty_send(&tcaps.cursor_home);
 #endif
 
-    term_puts(NCSH " version: " NCSH_VERSION);
+    tty_puts(NCSH " version: " NCSH_VERSION);
 }
 
 void startup_time()
@@ -127,7 +127,7 @@ void startup_time()
 #ifdef NCSH_START_TIME
     clock_t end = clock();
     double elapsed_ms = ((double)(end - start)) / CLOCKS_PER_SEC * 1000;
-    term_println("ncsh startup time: %.2f milliseconds", elapsed_ms);
+    tty_println("ncsh startup time: %.2f milliseconds", elapsed_ms);
 #endif
 }
 
@@ -143,15 +143,14 @@ void startup_time()
 [[nodiscard]]
 int main(int argc, char** argv)
 {
-    term_init_caps();
 
     int rv = EXIT_SUCCESS;
     if (argc > 1 || !isatty(STDIN_FILENO)) {
         rv = noninteractive(argc, argv);
-        term_deinit_caps();
         return rv;
     }
 
+    tty_init_caps();
     welcome();
 
     Shell shell = {0};
@@ -200,9 +199,9 @@ int main(int argc, char** argv)
         shell.input.max_pos = 0;
     }
 exit:
-    term_println("exit");
+    tty_println("exit");
     cleanup(memory, &shell);
-    term_deinit_caps();
+    tty_deinit_caps();
 
     return rv;
 }

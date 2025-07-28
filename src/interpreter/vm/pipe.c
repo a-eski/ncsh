@@ -8,25 +8,25 @@
 #include <unistd.h>
 
 #include "vm_types.h"
-#include "../../ttyterm/ttyterm.h"
+#include "../../ttyio/ttyio.h"
 
 extern int vm_output_fd;
 
 [[nodiscard]]
-int pipe_start(size_t command_position, Pipe_IO* rst pipes)
+int pipe_start(size_t command_position, Pipe_IO* restrict pipes)
 {
     assert(pipes);
 
     if (command_position % 2 != 0) {
         if (pipe(pipes->fd_one) != 0) {
-            term_perror("ncsh: Error when piping process");
+            tty_perror("ncsh: Error when piping process");
             return EXIT_FAILURE;
         }
         vm_output_fd = pipes->fd_one[1];
     }
     else {
         if (pipe(pipes->fd_two) != 0) {
-            term_perror("ncsh: Error when piping process");
+            tty_perror("ncsh: Error when piping process");
             return EXIT_FAILURE;
         }
         vm_output_fd = pipes->fd_two[1];
@@ -35,7 +35,7 @@ int pipe_start(size_t command_position, Pipe_IO* rst pipes)
     return EXIT_SUCCESS;
 }
 
-void pipe_connect(size_t command_position, size_t number_of_commands, Pipe_IO* rst pipes)
+void pipe_connect(size_t command_position, size_t number_of_commands, Pipe_IO* restrict pipes)
 {
     assert(pipes);
 
@@ -64,7 +64,7 @@ void pipe_connect(size_t command_position, size_t number_of_commands, Pipe_IO* r
     }
 }
 
-void pipe_stop(size_t command_position, size_t number_of_commands, Pipe_IO* rst pipes)
+void pipe_stop(size_t command_position, size_t number_of_commands, Pipe_IO* restrict pipes)
 {
     assert(pipes);
 

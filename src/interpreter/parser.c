@@ -7,9 +7,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "../defines.h"
 #include "../debug.h"
-#include "../ttyterm/ttyterm.h"
+#include "../ttyio/ttyio.h"
 #include "expansions.h"
 #include "lexemes.h"
 #include "ops.h"
@@ -20,7 +19,7 @@
 Commands* commands;
 Shell* shell_ptr;
 
-bool parser_consume(Lexemes* rst lexemes, size_t* rst n, enum Ops expected)
+bool parser_consume(Lexemes* restrict lexemes, size_t* restrict n, enum Ops expected)
 {
     assert(*n < lexemes->count);
     if (*n < lexemes->count && lexemes->ops[*n] == expected) {
@@ -33,7 +32,7 @@ bool parser_consume(Lexemes* rst lexemes, size_t* rst n, enum Ops expected)
     }
 }
 
-enum Ops parser_peek(Lexemes* rst lexemes, size_t n)
+enum Ops parser_peek(Lexemes* restrict lexemes, size_t n)
 {
     if (n >= lexemes->count) {
         return OP_NONE;
@@ -62,10 +61,10 @@ bool parser_is_valid_statement(enum Ops op)
     }
 }
 
-int parser_commands_process(Lexemes* rst lexemes, size_t* rst n, Statements* rst stmts, Arena* rst scratch)
+int parser_commands_process(Lexemes* restrict lexemes, size_t* restrict n, Statements* restrict stmts, Arena* restrict scratch)
 {
     if (!parser_is_valid_statement(parser_peek(lexemes, *n))) {
-        term_puts("ncsh parser: no valid statement.");
+        tty_puts("ncsh parser: no valid statement.");
         return EXIT_FAILURE;
     }
 
@@ -140,7 +139,7 @@ int parser_commands_process(Lexemes* rst lexemes, size_t* rst n, Statements* rst
     return EXIT_SUCCESS;
 }
 
-int parser_conditions(Lexemes* rst lexemes, size_t* rst n, enum Logic_Type type, Statements* rst stmts, Arena* rst scratch)
+int parser_conditions(Lexemes* restrict lexemes, size_t* restrict n, enum Logic_Type type, Statements* restrict stmts, Arena* restrict scratch)
 {
     if (!parser_consume(lexemes, n, OP_CONDITION_START)) {
         debug("no OP_CONDITION_START");
@@ -166,7 +165,7 @@ int parser_conditions(Lexemes* rst lexemes, size_t* rst n, enum Logic_Type type,
     return EXIT_SUCCESS;
 }
 
-int parser_if_statements(Lexemes* rst lexemes, size_t* rst n, Statements* rst stmts, Arena* rst scratch)
+int parser_if_statements(Lexemes* restrict lexemes, size_t* restrict n, Statements* restrict stmts, Arena* restrict scratch)
 {
     debug("processing if statements");
     int res = parser_commands_process(lexemes, n, stmts, scratch);
@@ -177,7 +176,7 @@ int parser_if_statements(Lexemes* rst lexemes, size_t* rst n, Statements* rst st
     return res;
 }
 
-int parser_else_statements(Lexemes* rst lexemes, size_t* rst n, Statements* rst stmts, Arena* rst scratch)
+int parser_else_statements(Lexemes* restrict lexemes, size_t* restrict n, Statements* restrict stmts, Arena* restrict scratch)
 {
     debug("processing else");
     if (!parser_consume(lexemes, n, OP_ELSE)) {
@@ -193,7 +192,7 @@ int parser_else_statements(Lexemes* rst lexemes, size_t* rst n, Statements* rst 
     return EXIT_SUCCESS;
 }
 
-int parser_elif_statements(Lexemes* rst lexemes, size_t* rst n, Statements* rst stmts, Arena* rst scratch)
+int parser_elif_statements(Lexemes* restrict lexemes, size_t* restrict n, Statements* restrict stmts, Arena* restrict scratch)
 {
     debug("processing elif");
     if (!parser_consume(lexemes, n, OP_ELIF)) {
@@ -226,7 +225,7 @@ int parser_elif_statements(Lexemes* rst lexemes, size_t* rst n, Statements* rst 
 }
 
 [[nodiscard]]
-int parser_if(Lexemes* rst lexemes, size_t* rst n, Statements* rst stmts, Arena* rst scratch)
+int parser_if(Lexemes* restrict lexemes, size_t* restrict n, Statements* restrict stmts, Arena* restrict scratch)
 {
     debug("processing if");
     if (!parser_consume(lexemes, n, OP_IF)) {
@@ -291,7 +290,7 @@ int parser_if(Lexemes* rst lexemes, size_t* rst n, Statements* rst stmts, Arena*
 }
 
 [[nodiscard]]
-int parser_parse(Lexemes* rst lexemes, Statements* stmts, Shell* rst shell, Arena* rst scratch)
+int parser_parse(Lexemes* restrict lexemes, Statements* stmts, Shell* restrict shell, Arena* restrict scratch)
 {
     assert(stmts);
     assert(scratch);

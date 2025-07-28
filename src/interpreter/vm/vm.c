@@ -17,7 +17,7 @@
 #include "../../defines.h"
 #include "../../shell.h"
 #include "../../debug.h"
-#include "../../ttyterm/ttyterm.h"
+#include "../../ttyio/ttyio.h"
 #include "builtins.h"
 #include "pipe.h"
 #include "redirection.h"
@@ -38,7 +38,7 @@ int vm_output_fd;
 
 /* Failure Handling */
 [[nodiscard]]
-int vm_fork_failure(size_t command_position, size_t number_of_commands, Pipe_IO* rst pipes)
+int vm_fork_failure(size_t command_position, size_t number_of_commands, Pipe_IO* restrict pipes)
 {
     assert(pipes);
 
@@ -51,36 +51,36 @@ int vm_fork_failure(size_t command_position, size_t number_of_commands, Pipe_IO*
         }
     }
 
-    term_perror("ncsh: Error when forking process");
+    tty_perror("ncsh: Error when forking process");
     return EXIT_FAILURE;
 }
 
 /* VM */
 #define VM_COMMAND_DIED_MESSAGE "ncsh: Command child process died, cause unknown."
-void vm_status_check(Vm_Data* rst vm)
+void vm_status_check(Vm_Data* restrict vm)
 {
     if (WIFEXITED(vm->status)) {
         if ((vm->status = WEXITSTATUS(vm->status))) {
-            term_fprintln(stderr, "ncsh: Command child process failed with status %d", WEXITSTATUS(vm->status));
+            tty_fprintln(stderr, "ncsh: Command child process failed with status %d", WEXITSTATUS(vm->status));
         }
 #ifdef NCSH_DEBUG
         else {
-            term_fprintln(stderr, "ncsh: Command child process exited successfully.");
+            tty_fprintln(stderr, "ncsh: Command child process exited successfully.");
         }
 #endif /* NCSH_DEBUG */
         // return EXIT_SUCCESS;
     }
 #ifdef NCSH_DEBUG
     else if (WIFSIGNALED(vm->status)) {
-        term_fprintln(stderr, "ncsh: Command child process died from signal %d", WTERMSIG(vm->status));
+        tty_fprintln(stderr, "ncsh: Command child process died from signal %d", WTERMSIG(vm->status));
     }
     else {
-        term_writeln(VM_COMMAND_DIED_MESSAGE, sizeof(VM_COMMAND_DIED_MESSAGE) - 1);
+        tty_writeln(VM_COMMAND_DIED_MESSAGE, sizeof(VM_COMMAND_DIED_MESSAGE) - 1);
     }
 #endif /* NCSH_DEBUG */
 }
 
-void vm_status_set(int pid, Vm_Data* rst vm)
+void vm_status_set(int pid, Vm_Data* restrict vm)
 {
     pid_t waitpid_result;
     while (1) {
@@ -94,7 +94,7 @@ void vm_status_set(int pid, Vm_Data* rst vm)
                 continue;
             }
 
-            term_perror("ncsh: Error waiting for child process to exit");
+            tty_perror("ncsh: Error waiting for child process to exit");
             vm->status = EXIT_FAILURE;
             break;
         }
@@ -108,7 +108,7 @@ void vm_status_set(int pid, Vm_Data* rst vm)
 }
 
 [[nodiscard]]
-int vm_status_aggregate(Vm_Data* rst vm)
+int vm_status_aggregate(Vm_Data* restrict vm)
 {
     if (vm->exec_result == EXECVP_FAILED) {
         debug("execvp failed");
@@ -121,7 +121,7 @@ int vm_status_aggregate(Vm_Data* rst vm)
 }
 
 [[nodiscard]]
-int vm_math_process(Vm_Data* rst vm)
+int vm_math_process(Vm_Data* restrict vm)
 {
     debug("evaluating math conditions");
     char* c1 = vm->buffer[0];
@@ -143,7 +143,7 @@ int vm_math_process(Vm_Data* rst vm)
         break;
     }
     default: {
-        term_fprintln(stderr, "ncsh: while trying to process 'if' logic, found unsupported operation '%d'.", vm->op_current);
+        tty_fprintln(stderr, "ncsh: while trying to process 'if' logic, found unsupported operation '%d'.", vm->op_current);
         result = false;
         break;
     }
@@ -153,7 +153,7 @@ int vm_math_process(Vm_Data* rst vm)
 }
 
 [[nodiscard]]
-Commands* vm_command_next(Statements* rst stmts, Commands* rst cmds, Vm_Data* rst vm)
+Commands* vm_command_next(Statements* restrict stmts, Commands* restrict cmds, Vm_Data* restrict vm)
 {
     if (!cmds->next || !cmds->next->vals[0]) {
         ++stmts->pos;
@@ -186,7 +186,7 @@ Commands* vm_command_next(Statements* rst stmts, Commands* rst cmds, Vm_Data* rs
 }
 
 [[nodiscard]]
-Commands* vm_command_set(Statements* rst stmts, Commands* rst cmds, Vm_Data* rst vm, enum Vm_State state)
+Commands* vm_command_set(Statements* restrict stmts, Commands* restrict cmds, Vm_Data* restrict vm, enum Vm_State state)
 {
     vm->buffer = cmds->vals;
     vm->buffer_lens = cmds->lens;
@@ -195,7 +195,7 @@ Commands* vm_command_set(Statements* rst stmts, Commands* rst cmds, Vm_Data* rst
     return vm_command_next(stmts, cmds, vm);
 }
 
-Commands* vm_next_if_statement(Statements* rst stmts, Vm_Data* rst vm)
+Commands* vm_next_if_statement(Statements* restrict stmts, Vm_Data* restrict vm)
 {
     do {
         ++stmts->pos;
@@ -210,7 +210,7 @@ Commands* vm_next_if_statement(Statements* rst stmts, Vm_Data* rst vm)
     return stmts->statements[stmts->pos].commands;
 }
 
-Commands* vm_next_else_statement(Statements* rst stmts, Vm_Data* rst vm)
+Commands* vm_next_else_statement(Statements* restrict stmts, Vm_Data* restrict vm)
 {
     do {
         ++stmts->pos;
@@ -225,7 +225,7 @@ Commands* vm_next_else_statement(Statements* rst stmts, Vm_Data* rst vm)
     return stmts->statements[stmts->pos].commands;
 }
 
-Commands* vm_next_elif_condition(Statements* rst stmts, Vm_Data* rst vm)
+Commands* vm_next_elif_condition(Statements* restrict stmts, Vm_Data* restrict vm)
 {
     do {
         ++stmts->pos;
@@ -240,7 +240,7 @@ Commands* vm_next_elif_condition(Statements* rst stmts, Vm_Data* rst vm)
     return stmts->statements[stmts->pos].commands;
 }
 
-Commands* vm_next_elif_statement(Statements* rst stmts, Vm_Data* rst vm)
+Commands* vm_next_elif_statement(Statements* restrict stmts, Vm_Data* restrict vm)
 {
     do {
         ++stmts->pos;
@@ -256,7 +256,7 @@ Commands* vm_next_elif_statement(Statements* rst stmts, Vm_Data* rst vm)
 }
 
 [[nodiscard]]
-Commands* vm_next_if(Statements* rst stmts, Commands* rst cmds, Vm_Data* rst vm)
+Commands* vm_next_if(Statements* restrict stmts, Commands* restrict cmds, Vm_Data* restrict vm)
 {
     if (stmts->statements[stmts->pos].type == LT_IF_CONDITIONS) {
         if (vm->state != VS_IN_CONDITIONS) {
@@ -462,7 +462,7 @@ Commands* vm_next_if(Statements* rst stmts, Commands* rst cmds, Vm_Data* rst vm)
     return NULL;
 }
 
-Commands* vm_next_normal(Statements* rst stmts, Commands* rst cmds, Vm_Data* rst vm)
+Commands* vm_next_normal(Statements* restrict stmts, Commands* restrict cmds, Vm_Data* restrict vm)
 {
     if (cmds && cmds->prev_op == OP_AND && vm->status != EXIT_SUCCESS) {
         debug("breaking out of VM loop, short circuiting on AND.");
@@ -492,7 +492,7 @@ Commands* vm_next_normal(Statements* rst stmts, Commands* rst cmds, Vm_Data* rst
     return cmds;
 }
 
-Commands* vm_next(Statements* rst stmts, Commands* cmds, Vm_Data* rst vm)
+Commands* vm_next(Statements* restrict stmts, Commands* cmds, Vm_Data* restrict vm)
 {
     assert(stmts);
     assert(vm);
@@ -519,7 +519,7 @@ Commands* vm_next(Statements* rst stmts, Commands* cmds, Vm_Data* rst vm)
 }
 
 [[nodiscard]]
-int vm_run(Statements* rst stmts, Shell* rst shell, Arena* rst scratch)
+int vm_run(Statements* restrict stmts, Shell* restrict shell, Arena* restrict scratch)
 {
     Vm_Data vm = {0};
 
@@ -566,7 +566,7 @@ int vm_run(Statements* rst stmts, Shell* rst shell, Arena* rst scratch)
 
                 if ((vm.exec_result = execvp(vm.buffer[0], vm.buffer)) == EXECVP_FAILED) {
                     vm.end = true;
-                    term_perror("ncsh: Could not run command");
+                    tty_perror("ncsh: Could not run command");
                     kill(getpid(), SIGTERM);
                 }
             }
@@ -592,7 +592,7 @@ int vm_run(Statements* rst stmts, Shell* rst shell, Arena* rst scratch)
  * Executes the VM in interactive mode.
  */
 [[nodiscard]]
-int vm_execute(Statements* rst stmts, Shell* rst shell, Arena* rst scratch)
+int vm_execute(Statements* restrict stmts, Shell* restrict shell, Arena* restrict scratch)
 {
     assert(shell);
     assert(stmts);
@@ -618,7 +618,7 @@ int vm_execute(Statements* rst stmts, Shell* rst shell, Arena* rst scratch)
  * Please note that shell->arena is used for both perm & scratch arenas in noninteractive mode.
  */
 [[nodiscard]]
-int vm_execute_noninteractive(Statements* rst stmts, Shell* rst shell)
+int vm_execute_noninteractive(Statements* restrict stmts, Shell* restrict shell)
 {
     assert(stmts);
     if (!stmts || !stmts->count) {

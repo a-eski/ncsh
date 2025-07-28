@@ -1,7 +1,7 @@
 #include "../../src/arena.h"
 #include "../../src/shell.h"
 
-static inline void shell_init(Shell* rst shell, Arena* scratch)
+static inline void shell_init(Shell* restrict shell, Arena* scratch)
 {
     shell->arena = *scratch;
     shell->scratch_arena = *scratch;

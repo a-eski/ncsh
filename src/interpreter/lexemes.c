@@ -5,7 +5,7 @@
 
 #include "lexemes.h"
 
-void lexemes_init(Lexemes* rst lexemes, Arena* rst scratch)
+void lexemes_init(Lexemes* restrict lexemes, Arena* restrict scratch)
 {
     assert(lexemes);
 
@@ -14,7 +14,7 @@ void lexemes_init(Lexemes* rst lexemes, Arena* rst scratch)
     lexemes->vals = arena_malloc(scratch, LEXER_TOKENS_LIMIT, char*);
 }
 
-void lexemes_init_n(Lexemes* rst lexemes, size_t n, Arena* rst scratch)
+void lexemes_init_n(Lexemes* restrict lexemes, size_t n, Arena* restrict scratch)
 {
     assert(lexemes);
     assert(n);
@@ -29,7 +29,7 @@ void lexemes_init_n(Lexemes* rst lexemes, size_t n, Arena* rst scratch)
     vals = arena_malloc(scratch, LEXER_TOKENS_LIMIT, char*);
 }
 
-/*Lexemes* lexemes_alloc(Arena* rst scratch)
+/*Lexemes* lexemes_alloc(Arena* restrict scratch)
 {
     Lexemes* lexemes = arena_malloc(scratch, 1, Lexemes);
     lexemes->count = 0;

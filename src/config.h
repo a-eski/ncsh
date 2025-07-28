@@ -4,7 +4,6 @@
 #pragma once
 
 #include "arena.h"
-#include "defines.h"
 #include "eskilib/eresult.h"
 #include "eskilib/str.h"
 
@@ -21,4 +20,4 @@ typedef struct {
     Str config_file;
 } Config;
 
-enum eresult config_init(Config* rst config, Arena* rst arena, Arena scratch_arena);
+enum eresult config_init(Config* restrict config, Arena* restrict arena, Arena scratch_arena);

@@ -8,7 +8,7 @@
 #include "../../debug.h"
 #include "../../defines.h"
 #include "../statements.h"
-#include "../../ttyterm/ttyterm.h"
+#include "../../ttyio/ttyio.h"
 #include "vm_types.h"
 
 [[nodiscard]]
@@ -17,15 +17,15 @@ static inline int output_redirection_oflags_get(bool append)
     return append ? O_WRONLY | O_CREAT | O_APPEND : O_WRONLY | O_CREAT | O_TRUNC;
 }
 
-void stdout_redirection_start(char* rst file, bool append, Output_Redirect_IO* rst io)
+void stdout_redirection_start(char* restrict file, bool append, Output_Redirect_IO* restrict io)
 {
     assert(file);
     assert(io);
 
     io->fd_stdout = open(file, output_redirection_oflags_get(append), 0644);
     if (io->fd_stdout == -1) {
-        term_fprintln(stderr, "ncsh: Invalid file handle '%s': could not open file for output redirection.", file);
-        term_perror("ncsh: file error");
+        tty_fprintln(stderr, "ncsh: Invalid file handle '%s': could not open file for output redirection.", file);
+        tty_perror("ncsh: file error");
         return;
     }
 
@@ -43,15 +43,15 @@ void stdout_redirection_stop(int original_stdout)
     dup2(original_stdout, STDOUT_FILENO);
 }
 
-void stdin_redirection_start(char* rst file, Input_Redirect_IO* rst io)
+void stdin_redirection_start(char* restrict file, Input_Redirect_IO* restrict io)
 {
     assert(file);
     assert(io);
 
     io->fd = open(file, O_RDONLY);
     if (io->fd == -1) {
-        term_fprintln(stderr, "ncsh: Invalid file handle '%s': could not open file for input redirection.", file);
-        term_perror("ncsh: file error");
+        tty_fprintln(stderr, "ncsh: Invalid file handle '%s': could not open file for input redirection.", file);
+        tty_perror("ncsh: file error");
         return;
     }
 
@@ -66,15 +66,15 @@ void stdin_redirection_stop(int original_stdin)
     dup2(original_stdin, STDIN_FILENO);
 }
 
-void stderr_redirection_start(char* rst file, bool append, Output_Redirect_IO* rst io)
+void stderr_redirection_start(char* restrict file, bool append, Output_Redirect_IO* restrict io)
 {
     assert(file);
     assert(io);
 
     io->fd_stderr = open(file, output_redirection_oflags_get(append), 0644);
     if (io->fd_stderr == -1) {
-        term_fprintln(stderr, "ncsh: Invalid file handle '%s': could not open file for error redirection.", file);
-        term_perror("ncsh: file error");
+        tty_fprintln(stderr, "ncsh: Invalid file handle '%s': could not open file for error redirection.", file);
+        tty_perror("ncsh: file error");
         return;
     }
 
@@ -92,7 +92,7 @@ void stderr_redirection_stop(int original_stderr)
     dup2(original_stderr, STDERR_FILENO);
 }
 
-void stdout_and_stderr_redirection_start(char* rst file, bool append, Output_Redirect_IO* rst io)
+void stdout_and_stderr_redirection_start(char* restrict file, bool append, Output_Redirect_IO* restrict io)
 {
     assert(file);
     assert(io);
@@ -101,8 +101,8 @@ void stdout_and_stderr_redirection_start(char* rst file, bool append, Output_Red
     if (file_descriptor == -1) {
         io->fd_stdout = -1;
         io->fd_stderr = -1;
-        term_fprintln(stderr, "ncsh: Invalid file handle '%s': could not open file for ouput & error redirection.", file);
-        term_perror("ncsh: file error");
+        tty_fprintln(stderr, "ncsh: Invalid file handle '%s': could not open file for ouput & error redirection.", file);
+        tty_perror("ncsh: file error");
         return;
     }
     io->fd_stdout = file_descriptor;
@@ -116,7 +116,7 @@ void stdout_and_stderr_redirection_start(char* rst file, bool append, Output_Red
     close(file_descriptor);
 }
 
-void stdout_and_stderr_redirection_stop(Output_Redirect_IO* rst io)
+void stdout_and_stderr_redirection_stop(Output_Redirect_IO* restrict io)
 {
     assert(io);
 
@@ -125,7 +125,7 @@ void stdout_and_stderr_redirection_stop(Output_Redirect_IO* rst io)
 }
 
 [[nodiscard]]
-int redirection_start_if_needed(Statements* rst stmts, Vm_Data* rst vm)
+int redirection_start_if_needed(Statements* restrict stmts, Vm_Data* restrict vm)
 {
     assert(stmts);
     assert(vm);
@@ -179,7 +179,7 @@ int redirection_start_if_needed(Statements* rst stmts, Vm_Data* rst vm)
     return EXIT_SUCCESS;
 }
 
-void redirection_stop_if_needed(Vm_Data* rst vm)
+void redirection_stop_if_needed(Vm_Data* restrict vm)
 {
     assert(vm);
 

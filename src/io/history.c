@@ -13,11 +13,11 @@
 #include "../eskilib/efile.h"
 #include "../eskilib/eresult.h"
 #include "../eskilib/str.h"
-#include "../ttyterm/ttyterm.h"
+#include "../ttyio/ttyio.h"
 #include "hashset.h"
 #include "history.h"
 
-void history_file_set([[maybe_unused]] Str config_file, History* rst history, Arena* rst arena)
+void history_file_set([[maybe_unused]] Str config_file, History* restrict history, Arena* restrict arena)
 {
     constexpr size_t history_file_len = sizeof(NCSH_HISTORY_FILE);
 #if defined(NCSH_HISTORY_TEST) || defined(NCSH_IN_PLACE)
@@ -44,7 +44,7 @@ void history_file_set([[maybe_unused]] Str config_file, History* rst history, Ar
 }
 
 [[nodiscard]]
-enum eresult history_alloc(History* rst history, Arena* rst arena)
+enum eresult history_alloc(History* restrict history, Arena* restrict arena)
 {
     assert(history);
     if (!history) {
@@ -58,18 +58,18 @@ enum eresult history_alloc(History* rst history, Arena* rst arena)
 }
 
 [[nodiscard]]
-enum eresult history_load(History* rst history, Arena* rst arena)
+enum eresult history_load(History* restrict history, Arena* restrict arena)
 {
     assert(history && history->file && arena);
 
     FILE* file = fopen(history->file, "r");
     if (!file || feof(file) || ferror(file)) {
-        /*term_print("ncsh: would you like to create a history file %s? [Y/n]: ", history->file);
+        /*tty_print("ncsh: would you like to create a history file %s? [Y/n]: ", history->file);
             fflush(stdout);
 
         char character;
         if (!read(STDIN_FILENO, &character, 1)) {
-                term_perror(NCSH_ERROR_STDIN);
+                tty_perror(NCSH_ERROR_STDIN);
                 return E_FAILURE;
             }
 
@@ -80,7 +80,7 @@ enum eresult history_load(History* rst history, Arena* rst arena)
         if (!file || ferror(file)) {
             if (file)
                 fclose(file);
-            term_perror("ncsh: Could not load or create history file");
+            tty_perror("ncsh: Could not load or create history file");
             return E_FAILURE_FILE_OP;
         }
         fclose(file);
@@ -107,7 +107,7 @@ enum eresult history_load(History* rst history, Arena* rst arena)
 }
 
 [[nodiscard]]
-enum eresult history_reload(History* rst history, Arena* rst arena)
+enum eresult history_reload(History* restrict history, Arena* restrict arena)
 {
     assert(history && history->file && arena);
 
@@ -117,7 +117,7 @@ enum eresult history_reload(History* rst history, Arena* rst arena)
     if (!file || ferror(file) || feof(file)) {
         file = fopen(history->file, "w");
         if (!file || ferror(file) || feof(file)) {
-            term_perror("ncsh: Could not load or create history file");
+            tty_perror("ncsh: Could not load or create history file");
             return E_FAILURE_FILE_OP;
         }
         fclose(file);
@@ -150,24 +150,24 @@ enum eresult history_reload(History* rst history, Arena* rst arena)
 }
 
 [[nodiscard]]
-enum eresult history_init(Str config_location, History* rst history, Arena* rst arena)
+enum eresult history_init(Str config_location, History* restrict history, Arena* restrict arena)
 {
     assert(history && arena);
 
     enum eresult result;
     if ((result = history_alloc(history, arena)) != E_SUCCESS) {
-        term_perror("ncsh: Error when allocating memory for history");
+        tty_perror("ncsh: Error when allocating memory for history");
         return result;
     }
 
     history_file_set(config_location, history, arena);
     if (!history->file) {
-        term_fprint(stderr, "ncsh: Could not load history file path.");
+        tty_fprint(stderr, "ncsh: Could not load history file path.");
         return E_FAILURE;
     }
 
     if ((result = history_load(history, arena)) != E_SUCCESS) {
-        term_perror("ncsh: Error when loading data from history file");
+        tty_perror("ncsh: Error when loading data from history file");
         return result;
     }
 
@@ -175,21 +175,21 @@ enum eresult history_init(Str config_location, History* rst history, Arena* rst 
 }
 
 [[nodiscard]]
-enum eresult history_clean(History* rst history, Arena* rst arena, Arena scratch_arena)
+enum eresult history_clean(History* restrict history, Arena* restrict arena, Arena scratch_arena)
 {
     assert(history && arena && scratch_arena.start);
     if (!history->count || !history->entries[0].value) {
         return E_FAILURE_NULL_REFERENCE;
     }
 
-    term_print("ncsh history: starting to clean history with %zu entries.\n", history->count);
+    tty_print("ncsh history: starting to clean history with %zu entries.\n", history->count);
 
     Hashset hset = {0};
     hashset_malloc(0, &scratch_arena, &hset);
 
     FILE* file = fopen(history->file, "w");
     if (!file) {
-        term_perror("ncsh: Could not open .ncsh_history file to clean history");
+        tty_perror("ncsh: Could not open .ncsh_history file to clean history");
         return E_FAILURE_FILE_OP;
     }
 
@@ -202,12 +202,12 @@ enum eresult history_clean(History* rst history, Arena* rst arena, Arena scratch
             hashset_set(history->entries[i], &scratch_arena, &hset);
 
             if (!fputs(history->entries[i].value, file)) {
-                term_perror("ncsh history: Error writing to file");
+                tty_perror("ncsh history: Error writing to file");
                 fclose(file);
                 return E_FAILURE_FILE_OP;
             }
             if (!fputc('\n', file)) {
-                term_perror("ncsh history: Error writing to file");
+                tty_perror("ncsh history: Error writing to file");
                 fclose(file);
                 return E_FAILURE_FILE_OP;
             }
@@ -218,16 +218,16 @@ enum eresult history_clean(History* rst history, Arena* rst arena, Arena scratch
 
     enum eresult result;
     if ((result = history_reload(history, arena)) != E_SUCCESS) {
-        term_perror("ncsh history: Error when reloading data from history file");
+        tty_perror("ncsh history: Error when reloading data from history file");
         return result;
     }
 
-    term_print("ncsh history: finished cleaning history, history now has %zu entries.\n", history->count);
+    tty_print("ncsh history: finished cleaning history, history now has %zu entries.\n", history->count);
 
     return E_SUCCESS;
 }
 
-enum eresult history_save(History* rst history)
+enum eresult history_save(History* restrict history)
 {
     if (!history || !history->count || !history->entries || !history->entries[0].value) {
         return E_FAILURE_NULL_REFERENCE;
@@ -244,7 +244,7 @@ enum eresult history_save(History* rst history)
 
     FILE* file = fopen(history->file, "w"); // write over entire file each time for now
     if (!file) {
-        term_perror("ncsh: Could not open .ncsh_history file to save history");
+        tty_perror("ncsh: Could not open .ncsh_history file to save history");
         return E_FAILURE_FILE_OP;
     }
 
@@ -254,12 +254,12 @@ enum eresult history_save(History* rst history)
         }
 
         if (!fputs(history->entries[i].value, file)) {
-            term_perror("ncsh: Error writing to file");
+            tty_perror("ncsh: Error writing to file");
             fclose(file);
             return E_FAILURE_FILE_OP;
         }
         if (!fputc('\n', file)) {
-            term_perror("ncsh: Error writing to file");
+            tty_perror("ncsh: Error writing to file");
             fclose(file);
             return E_FAILURE_FILE_OP;
         }
@@ -269,7 +269,7 @@ enum eresult history_save(History* rst history)
     return E_SUCCESS;
 }
 
-enum eresult history_add(char* rst line, size_t length, History* rst history, Arena* rst arena)
+enum eresult history_add(char* restrict line, size_t length, History* restrict history, Arena* restrict arena)
 {
     assert(history);
     assert(line);
@@ -305,7 +305,7 @@ enum eresult history_add(char* rst line, size_t length, History* rst history, Ar
 }
 
 [[nodiscard]]
-Str history_get(size_t position, History* rst history)
+Str history_get(size_t position, History* restrict history)
 {
     assert(history);
 
@@ -326,7 +326,7 @@ Str history_get(size_t position, History* rst history)
 }
 
 [[nodiscard]]
-int history_command_display(History* rst history)
+int history_command_display(History* restrict history)
 {
     assert(history);
     if (!history || !history->count) {
@@ -334,21 +334,21 @@ int history_command_display(History* rst history)
     }
 
     for (size_t i = 0; i < history->count; ++i) {
-        term_print("%zu %s\n", i + 1, history->entries[i].value);
+        tty_print("%zu %s\n", i + 1, history->entries[i].value);
     }
     return EXIT_SUCCESS;
 }
 
 [[nodiscard]]
-int history_command_count(History* rst history)
+int history_command_count(History* restrict history)
 {
     assert(history);
-    term_print("history count: %zu\n", history->count);
+    tty_print("history count: %zu\n", history->count);
     return EXIT_SUCCESS;
 }
 
 [[nodiscard]]
-int history_command_clean(History* rst history, Arena* rst arena, Arena* rst scratch_arena)
+int history_command_clean(History* restrict history, Arena* restrict arena, Arena* restrict scratch_arena)
 {
     if (history_clean(history, arena, *scratch_arena) != E_SUCCESS) {
         return EXIT_FAILURE_CONTINUE;
@@ -358,12 +358,12 @@ int history_command_clean(History* rst history, Arena* rst arena, Arena* rst scr
 }
 
 [[nodiscard]]
-int history_command_add(char* rst value, size_t value_len, History* rst history, Arena* rst arena)
+int history_command_add(char* restrict value, size_t value_len, History* restrict history, Arena* restrict arena)
 {
     return history_add(value, value_len, history, arena);
 }
 
-void history_remove_entries_shift(size_t offset, History* rst history)
+void history_remove_entries_shift(size_t offset, History* restrict history)
 {
     if (offset + 1 == history->count) {
         return;
@@ -376,8 +376,8 @@ void history_remove_entries_shift(size_t offset, History* rst history)
 }
 
 [[nodiscard]]
-int history_command_remove(char* rst value, size_t value_len, History* rst history, Arena* rst arena,
-                           Arena* rst scratch_arena)
+int history_command_remove(char* restrict value, size_t value_len, History* restrict history, Arena* restrict arena,
+                           Arena* restrict scratch_arena)
 {
     assert(value);
     assert(value_len > 0);
@@ -394,7 +394,7 @@ int history_command_remove(char* rst value, size_t value_len, History* rst histo
             history->entries[i].length = 0;
             history_remove_entries_shift(i, history);
             --history->count;
-            term_print("ncsh history: removed entry: %s\n", value);
+            tty_print("ncsh history: removed entry: %s\n", value);
             return EXIT_SUCCESS;
         }
     }

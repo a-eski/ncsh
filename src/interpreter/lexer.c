@@ -21,7 +21,7 @@
  * Size of the array is stored as constant expression in ops_2char_len
  * Bytecodes (opcodes) equivalents are stored in the array of enum Ops, ops_2char
  */
-const char* const rst ops_2char_str[] = {STDIN_REDIRECTION_APPEND,
+const char* const restrict ops_2char_str[] = {STDIN_REDIRECTION_APPEND,
                                          STDOUT_REDIRECTION_APPEND,
                                          STDERR_REDIRECTION,
                                          STDOUT_AND_STDERR_REDIRECTION,
@@ -52,7 +52,7 @@ const enum Ops ops_2char[] = {OP_STDIN_REDIRECTION_APPEND,
  * Size of the array is stored as constant expression in ops_3char_len
  * Bytecodes (opcodes) equivalents are stored in the array of enum Ops, ops_3char
  */
-const char* const rst ops_3char_str[] = {STDERR_REDIRECTION_APPEND, STDOUT_AND_STDERR_REDIRECTION_APPEND, EQUALS,
+const char* const restrict ops_3char_str[] = {STDERR_REDIRECTION_APPEND, STDOUT_AND_STDERR_REDIRECTION_APPEND, EQUALS,
                                          LESS_THAN, GREATER_THAN};
 
 constexpr size_t ops_3char_len = sizeof(ops_3char_str) / sizeof(char*);
@@ -67,7 +67,7 @@ bool lexer_op_check_var(char* line, size_t len)
 }
 
 [[nodiscard]]
-enum Ops lexer_op_check_len_one(char* rst line)
+enum Ops lexer_op_check_len_one(char* restrict line)
 {
     assert(line);
     switch (line[0]) {
@@ -114,7 +114,7 @@ enum Ops lexer_op_check_len_one(char* rst line)
 }
 
 [[nodiscard]]
-enum Ops lexer_op_check_len_two(char* rst line)
+enum Ops lexer_op_check_len_two(char* restrict line)
 {
     for (size_t i = 0; i < ops_2char_len; ++i) {
         if (CMP_2(line, ops_2char_str[i])) {
@@ -126,7 +126,7 @@ enum Ops lexer_op_check_len_two(char* rst line)
 }
 
 [[nodiscard]]
-enum Ops lexer_op_check_len_three(char* rst line)
+enum Ops lexer_op_check_len_three(char* restrict line)
 {
     for (size_t i = 0; i < ops_3char_len; ++i) {
         if (CMP_3(line, ops_3char_str[i])) {
@@ -138,7 +138,7 @@ enum Ops lexer_op_check_len_three(char* rst line)
 }
 
 [[nodiscard]]
-enum Ops lexer_op_check_len_four(char* rst line)
+enum Ops lexer_op_check_len_four(char* restrict line)
 {
     switch (line[0]) {
     case 't': {
@@ -160,7 +160,7 @@ enum Ops lexer_op_check_len_four(char* rst line)
 }
 
 [[nodiscard]]
-enum Ops lexer_op_check_len_five(char* rst line)
+enum Ops lexer_op_check_len_five(char* restrict line)
 {
     return (STRCMP(line, BOOL_FALSE)) ? OP_FALSE : OP_CONSTANT;
 }
@@ -170,7 +170,7 @@ enum Ops lexer_op_check_len_five(char* rst line)
  * Returns: a value from enum Ops, the bytecode relevant to the input
  */
 [[nodiscard]]
-enum Ops lexer_op_get(char* rst line, size_t len)
+enum Ops lexer_op_get(char* restrict line, size_t len)
 {
     assert(line);
 
@@ -232,7 +232,7 @@ enum Lexer_State: size_t {
  * and should not be accessed anywhere else in the shell.
  * They were put here because they increased speed of the lexer in benchmarks.
  */
-char* rst lex_buf;
+char* restrict lex_buf;
 size_t lex_state;
 size_t lex_buf_pos;
 size_t lexeme_pos;
@@ -261,7 +261,7 @@ uint8_t lexer_op_process()
 /* lexer_lex
  * Turns the inputted line into values, lengths, and bytecodes that the VM can work with.
  */
-void lexer_lex(char* rst line, size_t length, Lexemes* lexemes, Arena* rst scratch)
+void lexer_lex(char* restrict line, size_t length, Lexemes* lexemes, Arena* restrict scratch)
 {
     assert(line && scratch);
     assert(!line[length - 1] && (length <= 2 || line[length - 2]));
@@ -429,7 +429,7 @@ void lexer_lex(char* rst line, size_t length, Lexemes* lexemes, Arena* rst scrat
  * Allocates memory that is freed by lexer_free_values at the end of each main loop of the shell.
  * Used for noninteractive mode.
  */
-void lexer_lex_noninteractive(char** rst inputs, size_t inputs_count, Lexemes* lexemes, Arena* rst scratch)
+void lexer_lex_noninteractive(char** restrict inputs, size_t inputs_count, Lexemes* lexemes, Arena* restrict scratch)
 {
     assert(inputs && inputs_count && scratch);
 

@@ -11,13 +11,13 @@
 #include "vars.h"
 #include "vm/vm.h"
 
-void interpreter_init(Shell* rst shell)
+void interpreter_init(Shell* restrict shell)
 {
     vars_malloc(&shell->arena, &shell->vars);
 }
 
 [[nodiscard]]
-int interpreter_run(Shell* rst shell, Arena scratch)
+int interpreter_run(Shell* restrict shell, Arena scratch)
 {
     Lexemes lexemes = {0};
     lexer_lex(shell->input.buffer, shell->input.pos, &lexemes, &scratch);
@@ -35,7 +35,7 @@ int interpreter_run(Shell* rst shell, Arena scratch)
 }
 
 [[nodiscard]]
-int interpreter_run_noninteractive(char** rst argv, size_t argc, Shell* rst shell)
+int interpreter_run_noninteractive(char** restrict argv, size_t argc, Shell* restrict shell)
 {
     Lexemes lexemes = {0};
     lexer_lex_noninteractive(argv, argc, &lexemes, &shell->arena);

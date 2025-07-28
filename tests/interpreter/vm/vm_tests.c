@@ -8,7 +8,7 @@
 #include "../../../src/interpreter/parser.h"
 #include "../../../src/interpreter/semantic_analyzer.h"
 #include "../../../src/interpreter/vm/vm.h"
-#include "../../../src/ttyterm/ttyterm.h"
+#include "../../../src/ttyio/ttyio.h"
 #include "../../lib/arena_test_helper.h"
 
 sig_atomic_t vm_child_pid;
@@ -37,7 +37,7 @@ void running_vm_tests()
 
 void vm_tests()
 {
-    term_init_caps();
+    tty_init_caps();
 
     etest_start();
 
@@ -89,7 +89,7 @@ void vm_tests()
     etest_finish();
 
     remove("t.txt");
-    term_deinit_caps();
+    tty_deinit_caps();
 }
 
 #ifndef TEST_ALL

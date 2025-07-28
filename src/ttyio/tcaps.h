@@ -1,4 +1,4 @@
-/* Copyright ttyterm (C) by Alex Eski 2025 */
+/* Copyright ttyio (C) by Alex Eski 2025 */
 /* Licensed under GPLv3, see LICENSE for more information. */
 
 #pragma once
@@ -9,7 +9,11 @@
 #include <stddef.h>
 #include <stdio.h>
 
-#include "ttyplatform.h" // used for including stdbool in case of Apple
+#include "ttyplatform.h" // used for including stdbool in cases its needed
+
+#ifdef __cplusplus
+extern "C" {
+#endif // __cplusplus
 
 enum caps {
     CAP_BS,
@@ -50,7 +54,7 @@ typedef struct {
     const char* val;
 } cap;
 
-// Advanced caps can use multiple fallbacks that must be handled by functions in ttyterm.
+// Advanced caps can use multiple fallbacks that must be handled by functions in ttyio.
 typedef struct {
     enum { FB_NONE, FB_FIRST, FB_SECOND } fallback;
     enum advanced_caps__ type;
@@ -86,10 +90,6 @@ typedef struct {
     cap color_bg_set;
 
 } termcaps;
-
-#ifdef __cplusplus
-extern "C" {
-#endif // __cplusplus
 
 /* Init all caps */
 void tcaps_init(void);

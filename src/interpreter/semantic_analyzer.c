@@ -5,14 +5,15 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "../ttyterm/ttyterm.h"
+#include "../ttyio/ttyio.h"
+#include "../defines.h"
 #include "lexemes.h"
 #include "ops.h"
 
 [[nodiscard]]
-int semantic_analyzer_error_write(char* rst message, size_t message_length)
+int semantic_analyzer_error_write(char* restrict message, size_t message_length)
 {
-    term_dwriteln(STDERR_FILENO, message, message_length);
+    tty_dwriteln(STDERR_FILENO, message, message_length);
 
     return EXIT_SYNTAX_ERROR;
 }
@@ -144,7 +145,7 @@ int syntax_validatator_first_arg_check(uint8_t op)
 /* semantic_analyzer_check_last_arg
  * Simple check to see if something is in last position that shouldn't be
  */
-int semantic_analyzer_last_arg_check(Lexemes* rst lexemes)
+int semantic_analyzer_last_arg_check(Lexemes* restrict lexemes)
 {
     switch (lexemes->ops[lexemes->count - 1]) {
     case OP_PIPE: {
@@ -217,7 +218,7 @@ int semantic_analyzer_last_arg_check(Lexemes* rst lexemes)
     "ncsh: Invalid Syntax: expecting some statement after 'if [ (CONDITION) ]; then (STATEMENT); else'. "                \
     "Correct usage of 'if' is 'if [ (CONDITION) ]; then [STATEMENT]; [else [STATEMENT];] fi'."
 
-int semantic_analyzer_check(Lexemes* rst lexemes)
+int semantic_analyzer_check(Lexemes* restrict lexemes)
 {
     if (!lexemes) {
         return INVALID_SYNTAX(INVALID_SYNTAX_NO_ARGS);
@@ -295,7 +296,7 @@ int semantic_analyzer_check(Lexemes* rst lexemes)
 }
 
 [[nodiscard]]
-int semantic_analyzer_analyze(Lexemes* rst lexemes)
+int semantic_analyzer_analyze(Lexemes* restrict lexemes)
 {
     assert(lexemes);
 

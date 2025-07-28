@@ -22,6 +22,6 @@ typedef struct {
     char** vals;
 } Lexemes;
 
-void lexemes_init(Lexemes* rst lexemes, Arena* rst scratch);
+void lexemes_init(Lexemes* restrict lexemes, Arena* restrict scratch);
 
-void lexemes_init_n(Lexemes* rst lexemes, size_t n, Arena* rst scratch);
+void lexemes_init_n(Lexemes* restrict lexemes, size_t n, Arena* restrict scratch);

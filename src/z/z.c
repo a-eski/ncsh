@@ -12,8 +12,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "../defines.h"
-#include "../ttyterm/ttyterm.h"
+#include "../defines.h" // used for NCSH_MAX_INPUT
+#include "../ttyio/ttyio.h"
 #include "fzf.h"
 #include "z.h"
 
@@ -66,7 +66,7 @@ z_Directory* z_match_find(char* restrict target, size_t target_length, char* res
     z_Match current_match = {0};
     time_t now = time(NULL);
 #ifdef Z_DEBUG
-    term_println("cwd %s, len %zu", cwd, cwd_length);
+    tty_println("cwd %s, len %zu", cwd, cwd_length);
 #endif
 
     for (size_t i = 0; i < db->count; ++i) {
@@ -78,9 +78,9 @@ z_Directory* z_match_find(char* restrict target, size_t target_length, char* res
 
             double potential_match_z_score = z_score((db->dirs + i), fzf_score, now);
 #ifdef Z_DEBUG
-            term_println("%zu %s len: %zu", i, (db->dirs + i)->path, (db->dirs + i)->path_length);
-            term_println("%s fzf_score %d", (db->dirs + i)->path, fzf_score);
-            term_println("%s z_score %f", (db->dirs + i)->path, potential_match_z_score);
+            tty_println("%zu %s len: %zu", i, (db->dirs + i)->path, (db->dirs + i)->path_length);
+            tty_println("%s fzf_score %d", (db->dirs + i)->path, fzf_score);
+            tty_println("%s z_score %f", (db->dirs + i)->path, potential_match_z_score);
 #endif /* ifdef Z_DEBUG */
 
             if (!current_match.dir || current_match.z_score < potential_match_z_score) {
@@ -91,7 +91,7 @@ z_Directory* z_match_find(char* restrict target, size_t target_length, char* res
     }
 
 #ifdef Z_DEBUG
-    term_println("match %s", current_match.dir->path);
+    tty_println("match %s", current_match.dir->path);
 #endif /* ifdef Z_DEBUG */
 
     return current_match.dir;
@@ -152,7 +152,7 @@ enum z_Result z_write(z_Database* restrict db)
 
     FILE* file = fopen(db->database_file, "wb");
     if (!file || feof(file) || ferror(file)) {
-        term_perror(Z_ERROR_WRITING_TO_DB_MESSAGE);
+        tty_perror(Z_ERROR_WRITING_TO_DB_MESSAGE);
         if (file) {
             fclose(file);
         }
@@ -160,7 +160,7 @@ enum z_Result z_write(z_Database* restrict db)
     }
 
     if (!fwrite(&db->count, sizeof(uint32_t), 1, file) || feof(file) || ferror(file)) {
-        term_perror("Error writing number of entries to z database file, could not write to database file");
+        tty_perror("Error writing number of entries to z database file, could not write to database file");
         fclose(file);
         return Z_FILE_ERROR;
     }
@@ -233,19 +233,19 @@ enum z_Result z_read(z_Database* restrict db, Arena* restrict arena)
     FILE* file = fopen(db->database_file, "rb");
 
     if (!file || feof(file) || ferror(file)) {
-        term_perror("z: z database file could not be found or opened");
-        term_writeln(Z_CREATING_DB_FILE_MESSAGE, sizeof(Z_CREATING_DB_FILE_MESSAGE) - 1);
+        tty_perror("z: z database file could not be found or opened");
+        tty_writeln(Z_CREATING_DB_FILE_MESSAGE, sizeof(Z_CREATING_DB_FILE_MESSAGE) - 1);
 
         file = fopen(db->database_file, "wb");
 
         if (!file || ferror(file)) {
-            term_perror("z: error creating z database file");
+            tty_perror("z: error creating z database file");
             if (file) {
                 fclose(file);
             }
         }
         else {
-            term_writeln(Z_CREATED_DB_FILE, sizeof(Z_CREATED_DB_FILE) - 1);
+            tty_writeln(Z_CREATED_DB_FILE, sizeof(Z_CREATED_DB_FILE) - 1);
         }
 
         if (file) {
@@ -257,12 +257,12 @@ enum z_Result z_read(z_Database* restrict db, Arena* restrict arena)
     uint32_t number_of_entries = 0;
     size_t bytes_read = fread(&number_of_entries, sizeof(uint32_t), 1, file);
     if (!number_of_entries) {
-        term_writeln(Z_NO_COUNT_HEADER, sizeof(Z_NO_COUNT_HEADER) - 1);
+        tty_writeln(Z_NO_COUNT_HEADER, sizeof(Z_NO_COUNT_HEADER) - 1);
         fclose(file);
         return Z_SUCCESS;
     }
     else if (!bytes_read || ferror(file) || feof(file)) {
-        term_writeln(Z_NO_COUNT_HEADER, sizeof(Z_NO_COUNT_HEADER) - 1);
+        tty_writeln(Z_NO_COUNT_HEADER, sizeof(Z_NO_COUNT_HEADER) - 1);
         fclose(file);
         return Z_SUCCESS;
     }
@@ -274,9 +274,9 @@ enum z_Result z_read(z_Database* restrict db, Arena* restrict arena)
             return result;
         }
 #ifdef Z_DEBUG
-        term_println("Rank: %f", (db->dirs + i)->rank);
-        term_println("Last accessed: %ld", (db->dirs + i)->last_accessed);
-        term_println("Path: %s", (db->dirs + i)->path);
+        tty_println("Rank: %f", (db->dirs + i)->rank);
+        tty_println("Last accessed: %ld", (db->dirs + i)->last_accessed);
+        tty_println("Path: %s", (db->dirs + i)->path);
 #endif /* ifdef Z_DEBUG */
     }
 
@@ -337,7 +337,7 @@ enum z_Result z_database_add(char* restrict path, size_t path_length, char* rest
     assert(db->dirs[db->count].path[total_length - 1] == '\0');
 
 #ifdef Z_DEBUG
-    term_println("adding new value to db after memcpys %s", db->dirs[db->count].path);
+    tty_println("adding new value to db after memcpys %s", db->dirs[db->count].path);
 #endif /* ifdef Z_DEBUG */
 
     db->dirs[db->count].path_length = total_length;
@@ -370,7 +370,7 @@ enum z_Result z_database_file_set([[maybe_unused]] Str* restrict config_file, z_
     memcpy(db->database_file + config_file->length - 1, Z_DATABASE_FILE, z_db_file_len);
 
 #ifdef Z_DEBUG
-    term_println("db->database_file :%s", db->database_file);
+    tty_println("db->database_file :%s", db->database_file);
 #endif /* ifdef Z_DEBUG */
 
     return Z_SUCCESS;
@@ -413,7 +413,7 @@ enum z_Result z_directory_match_exists(char* restrict target, size_t target_leng
     struct dirent* dir;
     DIR* current_dir = opendir(cwd);
     if (!current_dir) {
-        term_perror("z: could not open directory");
+        tty_perror("z: could not open directory");
         return Z_FAILURE;
     }
 
@@ -435,7 +435,7 @@ enum z_Result z_directory_match_exists(char* restrict target, size_t target_leng
             memcpy(output->value, dir->d_name, dir_len);
 
             if ((closedir(current_dir)) == -1) {
-                term_perror("z: could not close directory");
+                tty_perror("z: could not close directory");
                 return Z_FAILURE;
             }
 
@@ -444,7 +444,7 @@ enum z_Result z_directory_match_exists(char* restrict target, size_t target_leng
     }
 
     if ((closedir(current_dir)) == -1) {
-        term_perror("z: could not close directory");
+        tty_perror("z: could not close directory");
         return Z_FAILURE;
     }
 
@@ -454,18 +454,18 @@ enum z_Result z_directory_match_exists(char* restrict target, size_t target_leng
 void z(char* restrict target, size_t target_length, char* restrict cwd, z_Database* restrict db, Arena* restrict arena, Arena scratch_arena)
 {
 #ifdef Z_DEBUG
-    term_println("z: %s", target);
+    tty_println("z: %s", target);
 #endif /* ifdef Z_DEBUG */
 
     char* home = getenv("HOME");
     if (!home) {
-        term_perror("z: couldn't get HOME from environment");
+        tty_perror("z: couldn't get HOME from environment");
     }
 
     if (!target) {
         if (home) {
             if (chdir(home) == -1) {
-                term_perror("z: couldn't change directory to home");
+                tty_perror("z: couldn't change directory to home");
             }
         }
 
@@ -483,7 +483,7 @@ void z(char* restrict target, size_t target_length, char* restrict cwd, z_Databa
 
     if (estrcmp(target, target_length, home, strlen(home) + 1)) {
         if (chdir(home) == -1) {
-            term_perror("z: couldn't change directory to home");
+            tty_perror("z: couldn't change directory to home");
         }
 
         return;
@@ -492,7 +492,7 @@ void z(char* restrict target, size_t target_length, char* restrict cwd, z_Databa
     // handle z .
     if (target_length == 2 && target[0] == '.') {
         if (chdir(target) == -1) {
-            term_perror("z: couldn't change directory (1)");
+            tty_perror("z: couldn't change directory (1)");
         }
 
         return;
@@ -500,7 +500,7 @@ void z(char* restrict target, size_t target_length, char* restrict cwd, z_Databa
     // handle z ..
     else if (target_length == 3 && target[0] == '.' && target[1] == '.') {
         if (chdir(target) == -1) {
-            term_perror("z: couldn't change directory (2)");
+            tty_perror("z: couldn't change directory (2)");
         }
 
         return;
@@ -512,12 +512,12 @@ void z(char* restrict target, size_t target_length, char* restrict cwd, z_Databa
 
     if (z_directory_match_exists(target, target_length, cwd, &output, &scratch_arena) == Z_SUCCESS) {
 #ifdef Z_DEBUG
-        term_println("dir matches %s", output.value);
+        tty_println("dir matches %s", output.value);
 #endif /* ifdef Z_DEBUG */
 
         if (chdir(output.value) == -1) {
             if (!match) {
-                term_perror("z: couldn't change directory (3)");
+                tty_perror("z: couldn't change directory (3)");
                 return;
             }
         }
@@ -532,7 +532,7 @@ void z(char* restrict target, size_t target_length, char* restrict cwd, z_Databa
         // try to change to the match first, if that doesn't work try target
         if (chdir(match->path) == -1) {
             if (chdir(target) == -1) {
-                term_perror("z: couldn't change directory (4)");
+                tty_perror("z: couldn't change directory (4)");
                 return;
             }
             z_database_add(target, target_length, cwd, cwd_length, db, arena);
@@ -545,7 +545,7 @@ void z(char* restrict target, size_t target_length, char* restrict cwd, z_Databa
     }
 
     if (chdir(target) == -1) {
-        term_perror("z: couldn't change directory");
+        tty_perror("z: couldn't change directory");
         return;
     }
 
@@ -559,25 +559,25 @@ void z(char* restrict target, size_t target_length, char* restrict cwd, z_Databa
 enum z_Result z_add(char* restrict path, size_t path_length, z_Database* restrict db, Arena* restrict arena)
 {
     if (!path || !db) {
-        term_fputs("z: Null value passed to z add.", stderr);
+        tty_fputs("z: Null value passed to z add.", stderr);
         return Z_NULL_REFERENCE;
     }
     if (path_length < 2 || path[path_length - 1] != '\0') {
-        term_fputs("z: Bad string passed to z add.", stderr);
+        tty_fputs("z: Bad string passed to z add.", stderr);
         return Z_BAD_STRING;
     }
 
     if (z_match_exists(path, path_length, db)) {
-        term_writeln(Z_ENTRY_EXISTS_MESSAGE, sizeof(Z_ENTRY_EXISTS_MESSAGE) - 1);
+        tty_writeln(Z_ENTRY_EXISTS_MESSAGE, sizeof(Z_ENTRY_EXISTS_MESSAGE) - 1);
         return Z_SUCCESS;
     }
 
     if (z_write_entry_new(path, path_length, db, arena) == Z_SUCCESS) {
-        term_writeln(Z_ADDED_NEW_ENTRY_MESSAGE, sizeof(Z_ADDED_NEW_ENTRY_MESSAGE) - 1);
+        tty_writeln(Z_ADDED_NEW_ENTRY_MESSAGE, sizeof(Z_ADDED_NEW_ENTRY_MESSAGE) - 1);
         return Z_SUCCESS;
     }
 
-    term_writeln(Z_ERROR_ADDING_ENTRY_MESSAGE, sizeof(Z_ERROR_ADDING_ENTRY_MESSAGE) - 1);
+    tty_writeln(Z_ERROR_ADDING_ENTRY_MESSAGE, sizeof(Z_ERROR_ADDING_ENTRY_MESSAGE) - 1);
     return Z_CANNOT_PROCESS;
 }
 
@@ -599,11 +599,11 @@ enum z_Result z_remove(char* restrict path, size_t path_length, z_Database* rest
     assert(db);
 
     if (!path) {
-        term_fputs("z: Null value passed to z rm/remove.", stderr);
+        tty_fputs("z: Null value passed to z rm/remove.", stderr);
         return Z_NULL_REFERENCE;
     }
     if (path_length < 2 || path[path_length - 1] != '\0') {
-        term_fputs("z: Bad string passed to z rm/remove.", stderr);
+        tty_fputs("z: Bad string passed to z rm/remove.", stderr);
         return Z_BAD_STRING;
     }
 
@@ -615,12 +615,12 @@ enum z_Result z_remove(char* restrict path, size_t path_length, z_Database* rest
             (db->dirs + i)->rank = 0;
             z_remove_dirs_shift(i, db);
             --db->count;
-            term_writeln(Z_ENTRY_REMOVED_MESSAGE, sizeof(Z_ENTRY_REMOVED_MESSAGE) - 1);
+            tty_writeln(Z_ENTRY_REMOVED_MESSAGE, sizeof(Z_ENTRY_REMOVED_MESSAGE) - 1);
             return Z_SUCCESS;
         }
     }
 
-    term_writeln(Z_ENTRY_NOT_FOUND_MESSAGE, sizeof(Z_ENTRY_NOT_FOUND_MESSAGE) - 1);
+    tty_writeln(Z_ENTRY_NOT_FOUND_MESSAGE, sizeof(Z_ENTRY_NOT_FOUND_MESSAGE) - 1);
     return Z_MATCH_NOT_FOUND;
 }
 
@@ -633,7 +633,7 @@ enum z_Result z_exit(z_Database* restrict db)
 
     enum z_Result result;
     if ((result = z_write(db)) != Z_SUCCESS) {
-        term_writeln(Z_ERROR_WRITING_TO_DB_MESSAGE, sizeof(Z_ERROR_WRITING_TO_DB_MESSAGE) - 1);
+        tty_writeln(Z_ERROR_WRITING_TO_DB_MESSAGE, sizeof(Z_ERROR_WRITING_TO_DB_MESSAGE) - 1);
         return result;
     }
 
@@ -644,27 +644,27 @@ enum z_Result z_exit(z_Database* restrict db)
 
 void z_print(z_Database* restrict db)
 {
-    term_color_set(TERM_RED_ERROR);
-    term_writeln(Z_PRINT_MESSAGE, sizeof(Z_PRINT_MESSAGE) - 1);
-    term_color_reset();
-    term_send(&tcaps.newline);
+    tty_color_set(TTYIO_RED_ERROR);
+    tty_writeln(Z_PRINT_MESSAGE, sizeof(Z_PRINT_MESSAGE) - 1);
+    tty_color_reset();
+    tty_send(&tcaps.newline);
 
-    term_println("Number of entries in the database is currently: %zu", db->count);
-    term_send(&tcaps.newline);
+    tty_println("Number of entries in the database is currently: %zu", db->count);
+    tty_send(&tcaps.newline);
     if (!db->count) {
         return;
     }
 
     for (size_t i = 0; i < db->count; ++i) {
-        term_println("z[%zu].path: %s", i, db->dirs[i].path);
-        term_println("z[%zu].path_length: %zu", i, db->dirs[i].path_length);
-        term_println("z[%zu].last_accessed: %zu", i, db->dirs[i].last_accessed);
-        term_println("z[%zu].rank: %f", i, db->dirs[i].rank);
-        term_send(&tcaps.newline);
+        tty_println("z[%zu].path: %s", i, db->dirs[i].path);
+        tty_println("z[%zu].path_length: %zu", i, db->dirs[i].path_length);
+        tty_println("z[%zu].last_accessed: %zu", i, db->dirs[i].last_accessed);
+        tty_println("z[%zu].rank: %f", i, db->dirs[i].rank);
+        tty_send(&tcaps.newline);
     }
 }
 
 void z_count(z_Database* restrict db)
 {
-    term_println("Number of entries in the database is currently: %zu", db->count);
+    tty_println("Number of entries in the database is currently: %zu", db->count);
 }

@@ -36,7 +36,7 @@ typedef struct {
 /* estrcmp
  * A simple wrapper for memcmp that checks if lengths match before calling memcmp.
  */
-enodiscard static inline bool estrcmp(char* rst str, size_t str_len, char* rst str_two, size_t str_two_len)
+enodiscard static inline bool estrcmp(char* restrict str, size_t str_len, char* restrict str_two, size_t str_two_len)
 {
     if (str_len != str_two_len || !str_len) {
         return false;

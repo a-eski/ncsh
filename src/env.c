@@ -9,7 +9,7 @@
 #include "env.h"
 #include "eskilib/str.h"
 
-void env_home_get(Str* output, Arena* rst arena)
+void env_home_get(Str* output, Arena* restrict arena)
 {
     char* home = getenv(NCSH_XDG_CONFIG_HOME_VAL);
     if (!home) {

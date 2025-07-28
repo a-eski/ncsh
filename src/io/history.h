@@ -4,7 +4,6 @@
 #pragma once
 
 #include "../arena.h"
-// #include "../configurables.h"
 #include "../eskilib/eresult.h"
 #include "../eskilib/str.h"
 
@@ -24,24 +23,24 @@ typedef struct {
 } History;
 
 /* History Setup and Manipulation */
-enum eresult history_init(Str config_location, History* rst history, Arena* rst arena);
+enum eresult history_init(Str config_location, History* restrict history, Arena* restrict arena);
 
-enum eresult history_save(History* rst history);
+enum eresult history_save(History* restrict history);
 
-enum eresult history_add(char* rst line, size_t length, History* rst history, Arena* rst arena);
+enum eresult history_add(char* restrict line, size_t length, History* restrict history, Arena* restrict arena);
 
-Str history_get(size_t position, History* rst history);
+Str history_get(size_t position, History* restrict history);
 
 /* history_command_...
  * History Commands called from builtins when user enters commands like 'history',
  * 'history count', 'history clean', 'history add {directory}', 'history remove {directory}'. */
-int history_command_display(History* rst history);
+int history_command_display(History* restrict history);
 
-int history_command_count(History* rst history);
+int history_command_count(History* restrict history);
 
-int history_command_clean(History* rst history, Arena* rst arena, Arena* rst scratch_arena);
+int history_command_clean(History* restrict history, Arena* restrict arena, Arena* restrict scratch_arena);
 
-int history_command_add(char* rst value, size_t value_len, History* rst history, Arena* rst arena);
+int history_command_add(char* restrict value, size_t value_len, History* restrict history, Arena* restrict arena);
 
-int history_command_remove(char* rst value, size_t value_len, History* rst history, Arena* rst arena,
-                           Arena* rst scratch_arena);
+int history_command_remove(char* restrict value, size_t value_len, History* restrict history, Arena* restrict arena,
+                           Arena* restrict scratch_arena);

@@ -2,6 +2,4 @@
 
 #pragma once
 
-#include "defines.h"
-
-int noninteractive(int argc, char** rst argv);
+int noninteractive(int argc, char** restrict argv);

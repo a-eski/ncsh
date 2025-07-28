@@ -47,16 +47,16 @@ typedef struct {
  * Loads history and autocompletions.
  * input. Returns: exit status, EXIT_SUCCESS, EXIT_FAILURE, or value in defines.h (EXIT_...)
  */
-int io_init(Config* rst config, Input* rst input, Arena* rst arena);
+int io_init(Config* restrict config, Input* restrict input, Arena* restrict arena);
 
 /* io_readline
  * Read user input while supporting different operations like backspace, delete, history, autocompletions, home/end, and
  * other inputs. Accepts a pointer to the scratch arena, but it passes a copy (by value) to autocompletion logic when it
  * is needed to be used. Returns: exit status( EXIT_SUCCESS, EXIT_FAILURE, or value in defines.h (EXIT_...))
  */
-int io_readline(Input* rst input, Arena* rst scratch_arena);
+int io_readline(Input* restrict input, Arena* restrict scratch_arena);
 
 /* io_deinit
  * Saves history changes
  */
-void io_deinit(Input* rst input);
+void io_deinit(Input* restrict input);

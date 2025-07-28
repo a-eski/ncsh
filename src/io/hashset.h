@@ -21,10 +21,10 @@ typedef struct {
     Hashset_Entry* entries;
 } Hashset;
 
-void hashset_malloc(size_t capacity, Arena* rst arena, Hashset* rst hset);
+void hashset_malloc(size_t capacity, Arena* restrict arena, Hashset* restrict hset);
 
-Str hashset_get(char* rst key, Hashset* rst hset);
+Str hashset_get(char* restrict key, Hashset* restrict hset);
 
-bool hashset_exists(char* rst key, Hashset* rst hset);
+bool hashset_exists(char* restrict key, Hashset* restrict hset);
 
-char* hashset_set(Str val, Arena* rst arena, Hashset* rst hset);
+char* hashset_set(Str val, Arena* restrict arena, Hashset* restrict hset);

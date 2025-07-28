@@ -11,7 +11,7 @@
 #include "arena.h"
 #include "debug.h"
 #include "eskilib/str.h"
-#include "ttyterm/ttyterm.h"
+#include "ttyio/ttyio.h"
 
 #define NCSH_DEFAULT_ALIASES 10
 #define NCSH_MAX_ALIASES 100
@@ -24,7 +24,7 @@ Alias* aliases;
  * Returns: the actual command as a Str, a char* value and a size_t length.
  */
 [[nodiscard]]
-Str alias_check(char* rst buffer, size_t len)
+Str alias_check(char* restrict buffer, size_t len)
 {
     if (!buffer || len < 2) {
         return Str_Empty;
@@ -41,7 +41,7 @@ Str alias_check(char* rst buffer, size_t len)
     return Str_Empty;
 }
 
-void alias_add(char* rst val, size_t len, Arena* rst arena)
+void alias_add(char* restrict val, size_t len, Arena* restrict arena)
 {
     assert(val);
     assert(len > 0);
@@ -58,7 +58,7 @@ void alias_add(char* rst val, size_t len, Arena* rst arena)
     }
 
     if (!i || i == len - 1) {
-        term_fprintln(stderr, "ncsh: Could not process alias while reading rc file: %s", val);
+        tty_fprintln(stderr, "ncsh: Could not process alias while reading rc file: %s", val);
         return;
     }
 
@@ -104,7 +104,7 @@ void alias_add(char* rst val, size_t len, Arena* rst arena)
     ++aliases_count;
 }
 
-void alias_add_new(char* rst alias, size_t a_len, char* rst command, size_t c_len, Arena* rst arena)
+void alias_add_new(char* restrict alias, size_t a_len, char* restrict command, size_t c_len, Arena* restrict arena)
 {
     if (!aliases) {
         aliases_count = 0;
@@ -136,7 +136,7 @@ void alias_add_new(char* rst alias, size_t a_len, char* rst command, size_t c_le
     ++aliases_count;
 }
 
-void alias_remove(char* rst val, size_t len)
+void alias_remove(char* restrict val, size_t len)
 {
     assert(val);
     assert(len);
@@ -163,7 +163,7 @@ void alias_remove(char* rst val, size_t len)
     }
 
     // else have to do a memmove
-    assert((ssize_t)(aliases_count - i - 1) > 0);
+    assert((ssize_t)((ssize_t)aliases_count - (ssize_t)i - 1) > 0);
     size_t bytes = (aliases_count - i - 1) * sizeof(Alias);
     memmove(aliases + i, aliases + i + 1, bytes);
 
@@ -184,6 +184,6 @@ void alias_delete()
 void alias_print(int fd)
 {
     for (size_t i = 0; i < aliases_count; ++i) {
-        term_dprintln(fd, "alias %s=%s", aliases[i].alias->value, aliases[i].actual_command->value);
+        tty_dprintln(fd, "alias %s=%s", aliases[i].alias->value, aliases[i].actual_command->value);
     }
 }

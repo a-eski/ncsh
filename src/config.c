@@ -25,10 +25,10 @@
 #include "eskilib/efile.h"
 #include "eskilib/eresult.h"
 #include "eskilib/str.h"
-#include "ttyterm/ttyterm.h"
+#include "ttyio/ttyio.h"
 
 [[nodiscard]]
-enum eresult config_home_init(Config* rst config, Arena* rst arena)
+enum eresult config_home_init(Config* restrict config, Arena* restrict arena)
 {
     if (!config) {
         return E_FAILURE_NULL_REFERENCE;
@@ -46,7 +46,7 @@ enum eresult config_home_init(Config* rst config, Arena* rst arena)
 }
 
 [[nodiscard]]
-enum eresult config_location_init(Config* rst config, Arena* rst arena)
+enum eresult config_location_init(Config* restrict config, Arena* restrict arena)
 {
     if (!config) {
         return E_FAILURE_NULL_REFERENCE;
@@ -84,7 +84,7 @@ enum eresult config_location_init(Config* rst config, Arena* rst arena)
 }
 
 [[nodiscard]]
-enum eresult config_file_set(Config* rst config, Arena* rst arena)
+enum eresult config_file_set(Config* restrict config, Arena* restrict arena)
 {
     constexpr size_t rc_len = sizeof(RC_FILE);
     constexpr size_t rc_len_nt = rc_len - 1;
@@ -128,7 +128,7 @@ enum eresult config_file_set(Config* rst config, Arena* rst arena)
 #define PATH_ADD "PATH+="
 
 [[nodiscard]]
-Str config_path_add(Str path, char* rst val, int len, Arena* rst scratch_arena)
+Str config_path_add(Str path, char* restrict val, int len, Arena* restrict scratch_arena)
 {
     assert(val);
     assert(len > 0);
@@ -153,7 +153,7 @@ Str config_path_add(Str path, char* rst val, int len, Arena* rst scratch_arena)
  */
 #define PATH_ADD "PATH+="
 #define ALIAS_ADD "ALIAS "
-void config_process(FILE* rst file, Arena* rst arena, Arena* rst scratch_arena)
+void config_process(FILE* restrict file, Arena* restrict arena, Arena* restrict scratch_arena)
 {
     int buffer_length;
     char buffer[NCSH_MAX_INPUT] = {0};
@@ -187,15 +187,15 @@ void config_process(FILE* rst file, Arena* rst arena, Arena* rst scratch_arena)
  * Returns: enum eresult, E_SUCCESS if config file loaded or user doesn't want one.
  */
 [[nodiscard]]
-enum eresult config_file_load(Config* rst config, Arena* rst arena, Arena* rst scratch_arena)
+enum eresult config_file_load(Config* restrict config, Arena* restrict arena, Arena* restrict scratch_arena)
 {
     FILE* file = fopen(config->config_file.value, "r");
     if (!file || ferror(file) || feof(file)) {
-        term_print("ncsh: would you like to create a config file '%s'? [Y/n]: ", config->config_file.value);
+        tty_print("ncsh: would you like to create a config file '%s'? [Y/n]: ", config->config_file.value);
 
         char character;
         if (!read(STDIN_FILENO, &character, 1)) {
-            term_perror(NCSH_ERROR_STDIN);
+            tty_perror(NCSH_ERROR_STDIN);
             return E_FAILURE;
         }
 
@@ -208,14 +208,14 @@ enum eresult config_file_load(Config* rst config, Arena* rst arena, Arena* rst s
 
         file = fopen(config->config_file.value, "w");
         if (!file || ferror(file) || feof(file)) {
-            term_perror("ncsh: Could not load or create config file");
+            tty_perror("ncsh: Could not load or create config file");
             if (file) {
                 fclose(file);
             }
             return E_FAILURE_FILE_OP;
         }
-        term_send(&tcaps.newline);
-        term_puts("Created " RC_FILE " config file.");
+        tty_send(&tcaps.newline);
+        tty_puts("Created " RC_FILE " config file.");
         fclose(file);
         return E_SUCCESS;
     }
@@ -232,7 +232,7 @@ enum eresult config_file_load(Config* rst config, Arena* rst arena, Arena* rst s
  * Returns: enum eresult, E_SUCCESS is successful
  */
 [[nodiscard]]
-enum eresult config_init(Config* rst config, Arena* rst arena, Arena scratch_arena)
+enum eresult config_init(Config* restrict config, Arena* restrict arena, Arena scratch_arena)
 {
     assert(arena);
 

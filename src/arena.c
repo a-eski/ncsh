@@ -22,7 +22,7 @@ void arena_abort_internal()
 [[nodiscard]]
 __attribute_malloc__
 __attribute_alloc_align__((4))
-void* arena_malloc_internal(Arena* rst arena, uintptr_t count, uintptr_t size,
+void* arena_malloc_internal(Arena* restrict arena, uintptr_t count, uintptr_t size,
                             uintptr_t alignment)
 {
     assert(arena && count && size && alignment);
@@ -40,7 +40,7 @@ void* arena_malloc_internal(Arena* rst arena, uintptr_t count, uintptr_t size,
 [[nodiscard]]
 __attribute_malloc__
 __attribute_alloc_align__((4))
-void* arena_realloc_internal(Arena* rst arena, uintptr_t count, uintptr_t size,
+void* arena_realloc_internal(Arena* restrict arena, uintptr_t count, uintptr_t size,
                                                   uintptr_t alignment, void* old_ptr, uintptr_t old_count)
 {
     assert(arena);

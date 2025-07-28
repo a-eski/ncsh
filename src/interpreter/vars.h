@@ -21,10 +21,10 @@ typedef struct {
     Vars_Entry* entries;
 } Vars;
 
-void vars_malloc(Arena* rst arena, Vars* rst vars);
+void vars_malloc(Arena* restrict arena, Vars* restrict vars);
 
-Str* vars_get(char* rst key, Vars* rst vars);
+Str* vars_get(char* restrict key, Vars* restrict vars);
 
-bool vars_exists(char* rst key, Vars* rst vars);
+bool vars_exists(char* restrict key, Vars* restrict vars);
 
-char* vars_set(char* rst key, Str* rst val, Arena* rst arena, Vars* rst vars);
+char* vars_set(char* restrict key, Str* restrict val, Arena* restrict arena, Vars* restrict vars);

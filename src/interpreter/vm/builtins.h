@@ -7,4 +7,4 @@
 #include "../../shell.h"
 #include "vm_types.h"
 
-bool builtins_check_and_run(Vm_Data* rst vm, Shell* rst shell, Arena* rst scratch_arena);
+bool builtins_check_and_run(Vm_Data* restrict vm, Shell* restrict shell, Arena* restrict scratch_arena);

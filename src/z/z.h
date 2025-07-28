@@ -55,18 +55,19 @@ enum z_Result {
     Z_SUCCESS = 1
 };
 
-enum z_Result z_init(Str* rst config_location, z_Database* rst database, Arena* rst arena);
+enum z_Result z_init(Str* restrict config_location, z_Database* restrict database, Arena* restrict arena);
 
-void z(char* rst target, size_t target_length, char* rst cwd, z_Database* rst db, Arena* rst arena,
+void z(char* restrict target, size_t target_length, char* restrict cwd, z_Database* restrict db, Arena* restrict arena,
        Arena scratch_arena);
 
-enum z_Result z_add(char* rst path, size_t path_length, z_Database* rst db, Arena* rst arena);
+enum z_Result z_add(char* restrict path, size_t path_length, z_Database* restrict db, Arena* restrict arena);
 
-enum z_Result z_remove(char* rst path, size_t path_length, z_Database* rst db);
+enum z_Result z_remove(char* restrict path, size_t path_length, z_Database* restrict db);
 
-enum z_Result z_exit(z_Database* rst db);
+enum z_Result z_exit(z_Database* restrict db);
 
-void z_print(z_Database* rst db);
+void z_print(z_Database* restrict db);
 
-void z_count(z_Database* rst db);
+void z_count(z_Database* restrict db);
+
 #endif // !Z_H_

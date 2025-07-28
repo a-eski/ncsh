@@ -6,7 +6,6 @@
 #pragma once
 
 #include "../arena.h"
-#include "../defines.h"
 #include "../eskilib/str.h"
 
 #define NCSH_LETTERS 96 // ascii printable characters 32-127
@@ -42,24 +41,24 @@ static inline char index_to_char(int index)
  * Allocates the root of the trie using the passed in arena.
  * Returns: the root of the trie
  */
-Autocompletion_Node* ac_alloc(Arena* rst arena);
+Autocompletion_Node* ac_alloc(Arena* restrict arena);
 
-void ac_add(char* rst string, size_t length, Autocompletion_Node* rst tree, Arena* rst arena);
+void ac_add(char* restrict string, size_t length, Autocompletion_Node* restrict tree, Arena* restrict arena);
 
-void ac_add_multiple(Str* rst strings, int count, Autocompletion_Node* rst tree, Arena* rst arena);
+void ac_add_multiple(Str* restrict strings, int count, Autocompletion_Node* restrict tree, Arena* restrict arena);
 
-Autocompletion_Node* ac_find(char* rst str, Autocompletion_Node* rst tree);
+Autocompletion_Node* ac_find(char* restrict str, Autocompletion_Node* restrict tree);
 
 /* ac_get
  * Gets all matches based on traversing the trie.
  * Populates matches into variable matches.
  * Returns: number of matches (0 if no matches)
  */
-uint8_t ac_get(char* rst search, Autocompletion* rst matches, Autocompletion_Node* rst tree, Arena scratch);
+uint8_t ac_get(char* restrict search, Autocompletion* restrict matches, Autocompletion_Node* restrict tree, Arena scratch);
 
 /* ac_first
  * Gets highest weighted match based on traversing the tree.
  * Populates match into variable match
  * Returns: 0 if no matches, 1 if any matches
  */
-uint8_t ac_first(char* rst search, char* rst match, Autocompletion_Node* rst tree, Arena scratch);
+uint8_t ac_first(char* restrict search, char* restrict match, Autocompletion_Node* restrict tree, Arena scratch);

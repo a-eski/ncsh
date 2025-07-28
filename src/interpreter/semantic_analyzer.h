@@ -4,4 +4,4 @@
 
 #include "lexemes.h"
 
-int semantic_analyzer_analyze(Lexemes* rst lexemes);
+int semantic_analyzer_analyze(Lexemes* restrict lexemes);

@@ -26,7 +26,7 @@
 #include "../../arena.h"
 #include "../../defines.h"
 #include "../../io/history.h"
-#include "../../ttyterm/ttyterm.h"
+#include "../../ttyio/ttyio.h"
 #include "../../shell.h"
 #include "../../z/z.h"
 #include "vm_types.h"
@@ -40,7 +40,7 @@ int builtins_disabled_state = 0;
 
 int builtins_write(int fd, char* buf, size_t len)
 {
-    int bytes_written = term_dwrite(fd, buf, len);
+    int bytes_written = tty_dwrite(fd, buf, len);
     if (bytes_written == EOF && errno == EPIPE) {
         return EOF;
     }
@@ -52,7 +52,7 @@ int builtins_write(int fd, char* buf, size_t len)
 
 int builtins_writeln(int fd, char* buf, size_t len)
 {
-    int bytes_written = term_dwriteln(fd, buf, len);
+    int bytes_written = tty_dwriteln(fd, buf, len);
     if (bytes_written == EOF && errno == EPIPE) {
         return EOF;
     }
@@ -69,7 +69,7 @@ int builtins_writeln(int fd, char* buf, size_t len)
 #define Z_REMOVE "remove" // alias for rm
 #define Z_PRINT "print"
 #define Z_COUNT "count"
-int builtins_z(z_Database* rst z_db, char** rst buffer, size_t* rst buf_lens, Arena* arena, Arena* rst scratch);
+int builtins_z(z_Database* restrict z_db, char** restrict buffer, size_t* restrict buf_lens, Arena* arena, Arena* restrict scratch);
 
 #define NCSH_HISTORY "history" // the base command, displays history
 #define NCSH_HISTORY_COUNT "count"
@@ -77,8 +77,8 @@ int builtins_z(z_Database* rst z_db, char** rst buffer, size_t* rst buf_lens, Ar
 #define NCSH_HISTORY_ADD "add"
 #define NCSH_HISTORY_RM "rm" // alias for rm
 #define NCSH_HISTORY_REMOVE "remove"
-int builtins_history(History* rst history, char** rst buffer, size_t* rst buf_lens, Arena* rst arena,
-                     Arena* rst scratch);
+int builtins_history(History* restrict history, char** restrict buffer, size_t* restrict buf_lens, Arena* restrict arena,
+                     Arena* restrict scratch);
 
 #define NCSH_ALIAS "alias"
 #define NCSH_ALIAS_PRINT "-p"
@@ -87,68 +87,68 @@ int builtins_history(History* rst history, char** rst buffer, size_t* rst buf_le
 #define NCSH_ALIAS_RM "rm"
 #define NCSH_ALIAS_REMOVE "remove"
 #define NCSH_ALIAS_DELETE "delete"
-int builtins_alias(char** rst buffer, size_t* rst buf_lens, Arena* rst arena);
+int builtins_alias(char** restrict buffer, size_t* restrict buf_lens, Arena* restrict arena);
 
 #define NCSH_UNALIAS "unalias"
 #define NCSH_UNALIAS_DELETE "-a"
 #define NCSH_UNALIAS_DELETE_ALIAS "delete"
-int builtins_unalias(char** rst buffer, size_t* rst buf_lens);
+int builtins_unalias(char** restrict buffer, size_t* restrict buf_lens);
 
 #define NCSH_EXIT "exit" // the base command
 #define NCSH_QUIT "quit" // alias for exit
 #define NCSH_Q "q"       // alias for exit
-int builtins_exit(char** rst buffer, size_t* rst buf_lens);
+int builtins_exit(char** restrict buffer, size_t* restrict buf_lens);
 
 #define NCSH_ECHO "echo"
 #define NCSH_ECHO_NO_NEWLINE "-n"
-int builtins_echo(char** rst buffer, size_t* rst buf_lens);
+int builtins_echo(char** restrict buffer, size_t* restrict buf_lens);
 
 #define NCSH_HELP "help"
-int builtins_help(char** rst buffer, size_t* rst buf_lens);
+int builtins_help(char** restrict buffer, size_t* restrict buf_lens);
 
 #define NCSH_CD "cd"
-int builtins_cd(char** rst buffer, size_t* rst buf_lens);
+int builtins_cd(char** restrict buffer, size_t* restrict buf_lens);
 
 #define NCSH_PWD "pwd"
-int builtins_pwd(char** rst buffer, size_t* rst buf_lens);
+int builtins_pwd(char** restrict buffer, size_t* restrict buf_lens);
 
 #define NCSH_KILL "kill"
-int builtins_kill(char** rst buffer, size_t* rst buf_lens);
+int builtins_kill(char** restrict buffer, size_t* restrict buf_lens);
 
 #define NCSH_VERSION_CMD "version"
-int builtins_version(char** rst buffer, size_t* rst buf_lens);
+int builtins_version(char** restrict buffer, size_t* restrict buf_lens);
 
 #define NCSH_TRUE "true"
-int builtins_true(char** rst buffer, size_t* rst buf_lens);
+int builtins_true(char** restrict buffer, size_t* restrict buf_lens);
 
 #define NCSH_FALSE "false"
-int builtins_false(char** rst buffer, size_t* rst buf_lens);
+int builtins_false(char** restrict buffer, size_t* restrict buf_lens);
 
 /*#define NCSH_TRUE "true"
-int builtins_true(char** rst buffer, size_t* rst buf_lens);
+int builtins_true(char** restrict buffer, size_t* restrict buf_lens);
 
 #define NCSH_FALSE "false"
-int builtins_false(char** rst buffer, size_t* rst buf_lens);*/
+int builtins_false(char** restrict buffer, size_t* restrict buf_lens);*/
 
 // TODO: finish implementation
 #define NCSH_ENABLE "enable"
-int builtins_enable(char** rst buffer, size_t* rst buf_lens);
+int builtins_enable(char** restrict buffer, size_t* restrict buf_lens);
 
 // TODO: finish implementation
 #define NCSH_DISABLE "disable"
-int builtins_disable(char** rst buffer, size_t* rst buf_lens);
+int builtins_disable(char** restrict buffer, size_t* restrict buf_lens);
 
 // TODO: finish implementation
 // #define NCSH_EXPORT "export"
-// int builtins_export(Statements* rst toks, size_t* rst buf_lens);
+// int builtins_export(Statements* restrict toks, size_t* restrict buf_lens);
 //
 // TODO: finish implementation
 // #define NCSH_SET "set"
-// int builtins_set(Statements* rst toks, size_t* rst buf_lens);
+// int builtins_set(Statements* restrict toks, size_t* restrict buf_lens);
 //
 // TODO: finish implementation
 // #define NCSH_UNSET "unset"
-// int builtins_unset(Statements* rst toks, size_t* rst buf_lens);
+// int builtins_unset(Statements* restrict toks, size_t* restrict buf_lens);
 
 /* Types */
 // clang-format off
@@ -177,7 +177,7 @@ typedef struct {
     enum Builtins_Disabled flag;
     size_t length;
     char* value;
-    int (*func)(char** rst r, size_t* rst l);
+    int (*func)(char** restrict r, size_t* restrict l);
 } Builtin;
 
 static const Builtin builtins[] = {
@@ -206,7 +206,7 @@ static constexpr size_t builtins_count = sizeof(builtins) / sizeof(Builtin);
 #define Z_COMMAND_NOT_FOUND_MESSAGE "ncsh z: command not found, options not supported."
 
 [[nodiscard]]
-int builtins_z(z_Database* rst z_db, char** rst buffer, size_t* rst buf_lens, Arena* rst arena, Arena* rst scratch)
+int builtins_z(z_Database* restrict z_db, char** restrict buffer, size_t* restrict buf_lens, Arena* restrict arena, Arena* restrict scratch)
 {
     assert(z_db);
     assert(buffer && *buffer);
@@ -239,7 +239,7 @@ int builtins_z(z_Database* rst z_db, char** rst buffer, size_t* rst buf_lens, Ar
         // z
         char cwd[PATH_MAX] = {0};
         if (!getcwd(cwd, PATH_MAX)) {
-            term_perror("ncsh z: Could not load cwd information");
+            tty_perror("ncsh z: Could not load cwd information");
             return EXIT_FAILURE;
         }
 
@@ -279,8 +279,8 @@ int builtins_z(z_Database* rst z_db, char** rst buffer, size_t* rst buf_lens, Ar
 #define HISTORY_COMMAND_NOT_FOUND_MESSAGE "ncsh history: command not found."
 
 [[nodiscard]]
-int builtins_history(History* rst history, char** rst buffer, size_t* rst buf_lens, Arena* rst arena,
-                     Arena* rst scratch)
+int builtins_history(History* restrict history, char** restrict buffer, size_t* restrict buf_lens, Arena* restrict arena,
+                     Arena* restrict scratch)
 {
     if (!buffer || !buffer[1]) {
         return history_command_display(history);
@@ -348,7 +348,7 @@ int builtins_history(History* rst history, char** rst buffer, size_t* rst buf_le
     "alias delete to delete all aliases."
 
 [[nodiscard]]
-int builtins_alias(char** rst buffer, [[maybe_unused]] size_t* rst buf_lens, Arena* rst arena)
+int builtins_alias(char** restrict buffer, [[maybe_unused]] size_t* restrict buf_lens, Arena* restrict arena)
 {
     assert(buffer && *buffer);
 
@@ -417,7 +417,7 @@ int builtins_alias(char** rst buffer, [[maybe_unused]] size_t* rst buf_lens, Are
     "alias(es)."
 
 [[nodiscard]]
-int builtins_unalias(char** rst buffer, [[maybe_unused]] size_t* rst buf_lens)
+int builtins_unalias(char** restrict buffer, [[maybe_unused]] size_t* restrict buf_lens)
 {
     assert(buffer && *buffer);
 
@@ -452,19 +452,19 @@ int builtins_unalias(char** rst buffer, [[maybe_unused]] size_t* rst buf_lens)
 }
 
 [[nodiscard]]
-int builtins_exit([[maybe_unused]] char** rst buffer, [[maybe_unused]] size_t* rst buf_lens)
+int builtins_exit([[maybe_unused]] char** restrict buffer, [[maybe_unused]] size_t* restrict buf_lens)
 {
     return EXIT_SUCCESS_END;
 }
 
 [[nodiscard]]
-int builtins_echo(char** rst buffer, size_t* rst buf_lens)
+int builtins_echo(char** restrict buffer, size_t* restrict buf_lens)
 {
     assert(buffer && *buffer);
     char** arg = buffer + 1;
     size_t* arg_lens = buf_lens + 1;
     if (!arg || !*arg) {
-        term_send(&tcaps.newline);
+        tty_send(&tcaps.newline);
         return EXIT_SUCCESS;
     }
 
@@ -492,14 +492,14 @@ int builtins_echo(char** rst buffer, size_t* rst buf_lens)
             break;
         }
 
-        term_dprint(vm_output_fd, "%s ", prev);
+        tty_dprint(vm_output_fd, "%s ", prev);
     }
     if (prev) {
-        term_dprint(vm_output_fd, "%s", prev);
+        tty_dprint(vm_output_fd, "%s", prev);
     }
 
     if (echo_add_newline) {
-        term_send(&tcaps.newline);
+        tty_send(&tcaps.newline);
     }
 
     return EXIT_SUCCESS;
@@ -548,26 +548,26 @@ int builtins_echo(char** rst buffer, size_t* rst buf_lens)
 #define HELP_WRITE(str)                                                                                                \
     constexpr size_t str##_len = sizeof(str) - 1;                                                                      \
     if (builtins_writeln(vm_output_fd, str, str##_len) == -1) {                                                          \
-        term_perror(NCSH_ERROR_STDOUT);                                                                           \
+        tty_perror(NCSH_ERROR_STDOUT);                                                                           \
         return EXIT_FAILURE;                                                                                           \
     }
 
 #define HELP_WRITELN(str)                                                                                                \
     constexpr size_t str##_len = sizeof(str) - 1;                                                                      \
     if (builtins_writeln(vm_output_fd, str, str##_len) == -1) {                                                          \
-        term_perror(NCSH_ERROR_STDOUT);                                                                           \
+        tty_perror(NCSH_ERROR_STDOUT);                                                                           \
         return EXIT_FAILURE;                                                                                           \
     } \
-    term_dsend(vm_output_fd, &tcaps.newline);
+    tty_dsend(vm_output_fd, &tcaps.newline);
 
 
 [[nodiscard]]
-int builtins_help([[maybe_unused]] char** rst buffer,
-                  [[maybe_unused]] size_t* rst buf_lens)
+int builtins_help([[maybe_unused]] char** restrict buffer,
+                  [[maybe_unused]] size_t* restrict buf_lens)
 {
     constexpr size_t len = sizeof(NCSH_TITLE) - 1;
     if (builtins_writeln(vm_output_fd, NCSH_TITLE, len) == -1) {
-        term_perror(NCSH_ERROR_STDOUT);
+        tty_perror(NCSH_ERROR_STDOUT);
         return EXIT_FAILURE;
     }
 
@@ -607,7 +607,7 @@ int builtins_help([[maybe_unused]] char** rst buffer,
 #define NCSH_COULD_NOT_CD_MESSAGE "ncsh cd: could not change directory."
 
 [[nodiscard]]
-int builtins_cd(char** rst buffer, [[maybe_unused]] size_t* rst buf_lens)
+int builtins_cd(char** restrict buffer, [[maybe_unused]] size_t* restrict buf_lens)
 {
     assert(buffer && *buffer);
 
@@ -620,7 +620,7 @@ int builtins_cd(char** rst buffer, [[maybe_unused]] size_t* rst buf_lens)
                 return EXIT_FAILURE;
         }
         else if (chdir(home)) {
-            term_perror("ncsh: could not change directory");
+            tty_perror("ncsh: could not change directory");
         }
 
         return EXIT_SUCCESS;
@@ -635,15 +635,15 @@ int builtins_cd(char** rst buffer, [[maybe_unused]] size_t* rst buf_lens)
 }
 
 [[nodiscard]]
-int builtins_pwd([[maybe_unused]] char** rst buffer, [[maybe_unused]] size_t* rst buf_lens)
+int builtins_pwd([[maybe_unused]] char** restrict buffer, [[maybe_unused]] size_t* restrict buf_lens)
 {
     char path[PATH_MAX];
     if (!getcwd(path, sizeof(path))) {
-        term_perror("ncsh pwd: Error when getting current directory");
+        tty_perror("ncsh pwd: Error when getting current directory");
         return EXIT_FAILURE;
     }
 
-    term_puts(path);
+    tty_puts(path);
     return EXIT_SUCCESS;
 }
 
@@ -651,7 +651,7 @@ int builtins_pwd([[maybe_unused]] char** rst buffer, [[maybe_unused]] size_t* rs
 #define KILL_COULDNT_PARSE_PID_MESSAGE "ncsh kill: could not parse process ID (PID) from arguments."
 
 [[nodiscard]]
-int builtins_kill(char** rst buffer, [[maybe_unused]] size_t* rst buf_lens)
+int builtins_kill(char** restrict buffer, [[maybe_unused]] size_t* restrict buf_lens)
 {
     assert(buffer && *buffer && buffer + 1);
     if (!buffer) {
@@ -684,7 +684,7 @@ int builtins_kill(char** rst buffer, [[maybe_unused]] size_t* rst buf_lens)
     }
 
     if (kill(pid, SIGTERM) != 0) {
-        term_println("ncsh kill: could not kill process with process ID (PID): %d", pid);
+        tty_println("ncsh kill: could not kill process with process ID (PID): %d", pid);
         return EXIT_FAILURE_CONTINUE;
     }
 
@@ -692,20 +692,20 @@ int builtins_kill(char** rst buffer, [[maybe_unused]] size_t* rst buf_lens)
 }
 
 [[nodiscard]]
-int builtins_version([[maybe_unused]] char** rst buffer, [[maybe_unused]] size_t* rst buf_lens)
+int builtins_version([[maybe_unused]] char** restrict buffer, [[maybe_unused]] size_t* restrict buf_lens)
 {
     builtins_writeln(vm_output_fd, NCSH_TITLE, sizeof(NCSH_TITLE) - 1);
     return EXIT_SUCCESS;
 }
 
 [[nodiscard]]
-int builtins_true([[maybe_unused]] char** rst buffer, [[maybe_unused]] size_t* rst buf_lens)
+int builtins_true([[maybe_unused]] char** restrict buffer, [[maybe_unused]] size_t* restrict buf_lens)
 {
     return EXIT_SUCCESS;
 }
 
 [[nodiscard]]
-int builtins_false([[maybe_unused]] char** rst buffer, [[maybe_unused]] size_t* rst buf_lens)
+int builtins_false([[maybe_unused]] char** restrict buffer, [[maybe_unused]] size_t* restrict buf_lens)
 {
     return EXIT_FAILURE;
 }
@@ -713,7 +713,7 @@ int builtins_false([[maybe_unused]] char** rst buffer, [[maybe_unused]] size_t* 
 void builtins_print()
 {
     for (size_t i = 0; i < builtins_count; ++i) {
-        term_println("%s", builtins[i].value);
+        tty_println("%s", builtins[i].value);
     }
 }
 
@@ -721,16 +721,16 @@ void builtins_print_enabled()
 {
     if (!builtins_disabled_state) {
         for (size_t i = 0; i < builtins_count; ++i) {
-            term_println("%s: enabled", builtins[i].value);
+            tty_println("%s: enabled", builtins[i].value);
         }
     }
     else {
         for (size_t i = 0; i < builtins_count; ++i) {
             if ((builtins_disabled_state & builtins[i].flag)) {
-                term_println("%s: disabled", builtins[i].value);
+                tty_println("%s: disabled", builtins[i].value);
             }
             else {
-                term_println("%s: enabled", builtins[i].value);
+                tty_println("%s: enabled", builtins[i].value);
             }
         }
     }
@@ -738,7 +738,7 @@ void builtins_print_enabled()
 
 // TODO: finish enable & disable implementation
 [[nodiscard]]
-int builtins_disable(char** rst buffer, size_t* rst buf_lens)
+int builtins_disable(char** restrict buffer, size_t* restrict buf_lens)
 {
     assert(buffer && *buffer);
 
@@ -762,7 +762,7 @@ int builtins_disable(char** rst buffer, size_t* rst buf_lens)
             if (estrcmp(*arg, *arg_lens, builtins[j].value, builtins[j].length)) {
                 if (!(builtins_disabled_state & builtins[j].flag)) {
                     builtins_disabled_state |= builtins[j].flag;
-                    term_println("ncsh disable: disabled builtin %s.", builtins[j].value);
+                    tty_println("ncsh disable: disabled builtin %s.", builtins[j].value);
                 }
             }
             ++arg;
@@ -776,7 +776,7 @@ int builtins_disable(char** rst buffer, size_t* rst buf_lens)
 #define ENABLE_OPTION_NOT_SUPPORTED_MESSAGE "ncsh enable: command not found, options entered not supported."
 
 [[nodiscard]]
-int builtins_enable(char** rst buffer, size_t* rst buf_lens)
+int builtins_enable(char** restrict buffer, size_t* restrict buf_lens)
 {
     assert(buffer && *buffer);
 
@@ -811,7 +811,7 @@ int builtins_enable(char** rst buffer, size_t* rst buf_lens)
 //     "ncsh export: please pass in at least once argument. export currently supports modifying $PATH and $HOME."
 //
 // [[nodiscard]]
-// int builtins_export(Tokens* rst toks, size_t* rst buf_lens)
+// int builtins_export(Tokens* restrict toks, size_t* restrict buf_lens)
 // {
 //     (void)buf_lens;
 //     assert(toks && toks->head && toks->head->next);
@@ -856,7 +856,7 @@ int builtins_enable(char** rst buffer, size_t* rst buf_lens)
 // #define SET_NOTHING_TO_SET_MESSAGE "ncsh set: nothing to set, please pass in a value to set (i.e. '-e', '-c')"
 // #define SET_VALID_OPERATIONS_MESSAGE "ncsh set: valid set operations are in the form '-e', '-c', etc."
 // [[nodiscard]]
-// int builtins_set(Tokens* rst toks, size_t* rst buf_lens)
+// int builtins_set(Tokens* restrict toks, size_t* restrict buf_lens)
 // {
 //     (void)buf_lens;
 //     assert(toks && toks->head && toks->head->next);
@@ -895,7 +895,7 @@ int builtins_enable(char** rst buffer, size_t* rst buf_lens)
 // // not implemented
 // #define UNSET_NOTHING_TO_UNSET_MESSAGE "ncsh unset: nothing to unset, please pass in a value to unset."
 // [[nodiscard]]
-// int builtins_unset(Tokens* rst toks, size_t* rst buf_lens)
+// int builtins_unset(Tokens* restrict toks, size_t* restrict buf_lens)
 // {
 //     (void)buf_lens;
 //     assert(toks && toks->head && toks->head->next);
@@ -926,7 +926,7 @@ int builtins_enable(char** rst buffer, size_t* rst buf_lens)
  * Checks current command against builtins, and if matches runs the builtin.
  */
 [[nodiscard]]
-bool builtins_check_and_run(Vm_Data* rst vm, Shell* rst shell, Arena* rst scratch)
+bool builtins_check_and_run(Vm_Data* restrict vm, Shell* restrict shell, Arena* restrict scratch)
 {
     if (shell) {
         if (estrcmp(vm->buffer[0], vm->buffer_lens[0], Z, sizeof(Z))) {
