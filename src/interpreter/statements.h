@@ -4,7 +4,6 @@
 #include <unistd.h>
 
 #include "../arena.h"
-#include "../defines.h"
 #include "ops.h"
 
 enum Redirect_Type : uint8_t {
@@ -69,14 +68,14 @@ typedef struct {
     Statement* statements;
 } Statements;
 
-Commands* commands_alloc(Arena* rst scratch);
+Commands* commands_alloc(Arena* restrict scratch);
 
-void command_realloc(Commands* rst cmds, Arena* rst scratch);
-void commands_realloc(Statements* rst stmts, Arena* rst scratch);
+void command_realloc(Commands* restrict cmds, Arena* restrict scratch);
+void commands_realloc(Statements* restrict stmts, Arena* restrict scratch);
 
-Commands* command_next(Commands* rst cmds, Arena* rst scratch);
-Commands* command_statement_next(Statements* rst stmts, Commands* cmds, enum Logic_Type type, Arena* rst scratch);
+Commands* command_next(Commands* restrict cmds, Arena* restrict scratch);
+Commands* command_statement_next(Statements* restrict stmts, Commands* cmds, enum Logic_Type type, Arena* restrict scratch);
 
-void statements_init(Statements* rst stmts, Arena* rst scratch);
+void statements_init(Statements* restrict stmts, Arena* restrict scratch);
 
-void statement_next(Statements* rst stmts, enum Logic_Type type, Arena* rst scratch);
+void statement_next(Statements* restrict stmts, enum Logic_Type type, Arena* restrict scratch);

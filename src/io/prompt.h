@@ -17,4 +17,4 @@ typedef struct {
 
 void prompt_init(bool showUser, enum Dir_Type dir_type);
 
-int prompt_if_needed(Input* rst input);
+int prompt_if_needed(Input* restrict input);

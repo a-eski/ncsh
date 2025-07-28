@@ -6,11 +6,11 @@
  * Mainly includes Macro constants, but contains some Macro functions as well
  */
 
-#include "configurables.h" // used for macros
+#include "configurables.h" // used for macros in other files defines is included in
 
 // clang-format off
 
-#define NCSH_VERSION "0.0.5.2"
+#define NCSH_VERSION "0.0.5.3"
 
 /* EXIT_* Constants
  * Exit values used by a multitude of functions and areas in the shell.
@@ -48,7 +48,5 @@
 #define FAILURE_SIG_HANDLER_WRITE 2
 #define FAILURE_BUILTIN_WRITE 3
 #define FAILURE_BUILTIN_FILE 4
-
-#define rst restrict
 
 // clang-format on

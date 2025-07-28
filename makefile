@@ -15,7 +15,7 @@ release_flags = $(main_flags) -flto -O3 -ffast-math -march=native -DNDEBUG
 
 fuzz_flags = $(debug_flags)
 
-objects = obj/main.o obj/arena.o obj/noninteractive.o obj/io.o obj/pipe.o obj/redirection.o obj/vm.o obj/semantic_analyzer.o obj/interpreter.o obj/parser.o obj/prompt.o obj/efile.o obj/hashset.o obj/vars.o obj/lexer.o obj/lexemes.o obj/expansions.o obj/statements.o obj/builtins.o obj/history.o obj/ac.o obj/env.o obj/alias.o obj/config.o obj/fzf.o obj/z.o obj/ttyterm.o obj/tcaps.o obj/terminfo.o obj/unibilium.o obj/uninames.o obj/uniutil.o
+objects = obj/main.o obj/arena.o obj/noninteractive.o obj/io.o obj/pipe.o obj/redirection.o obj/vm.o obj/semantic_analyzer.o obj/interpreter.o obj/parser.o obj/prompt.o obj/efile.o obj/hashset.o obj/vars.o obj/lexer.o obj/lexemes.o obj/expansions.o obj/statements.o obj/builtins.o obj/history.o obj/ac.o obj/env.o obj/alias.o obj/config.o obj/fzf.o obj/z.o obj/ttyio.o obj/tcaps.o obj/terminfo.o obj/unibilium.o obj/uninames.o obj/uniutil.o
 
 target = ./bin/ncsh
 
@@ -42,17 +42,17 @@ else
   	TERMINFO_DIRS=""
   	TERMINFO=""
 endif
-TTYTERM_DEFINES ?= -DTERMINFO='$(TERMINFO)' -DTERMINFO_DIRS='$(TERMINFO_DIRS)'
-TTYTERM_FILES = ./src/ttyterm/lib/unibilium.c ./src/ttyterm/lib/uninames.c ./src/ttyterm/lib/uniutil.c ./src/ttyterm/tcaps.c ./src/ttyterm/terminfo.c ./src/ttyterm/ttyterm.c
-TTYTERM_IN = $(TTYTERM_DEFINES) $(TTYTERM_FILES)
+TTYIO_DEFINES ?= -DTERMINFO='$(TERMINFO)' -DTERMINFO_DIRS='$(TERMINFO_DIRS)'
+TTYIO_FILES = ./src/ttyio/lib/unibilium.c ./src/ttyio/lib/uninames.c ./src/ttyio/lib/uniutil.c ./src/ttyio/tcaps.c ./src/ttyio/terminfo.c ./src/ttyio/ttyio.c
+TTYIO_IN = $(TTYIO_DEFINES) $(TTYIO_FILES)
 
 $(target) : $(objects)
 	$(cc_with_flags) -o $(target) $(objects)
 
-obj/%.o: src/ttyterm/lib/%.c
-	$(cc_with_flags) $(TTYTERM_DEFINES) -c $< -o $@
+obj/%.o: src/ttyio/lib/%.c
+	$(cc_with_flags) $(TTYIO_DEFINES) -c $< -o $@
 
-obj/%.o: src/ttyterm/%.c
+obj/%.o: src/ttyio/%.c
 	$(cc_with_flags) -c $< -o $@
 
 obj/%.o: src/io/%.c
@@ -154,7 +154,7 @@ l :
 
 # Run history tests
 test_history :
-	$(CC) $(STD) $(test_flags) -DNCSH_HISTORY_TEST $(TTYTERM_IN) ./src/eskilib/efile.c ./src/io/hashset.c ./src/arena.c ./src/io/history.c ./tests/io/history_tests.c -o ./bin/history_tests
+	$(CC) $(STD) $(test_flags) -DNCSH_HISTORY_TEST $(TTYIO_IN) ./src/eskilib/efile.c ./src/io/hashset.c ./src/arena.c ./src/io/history.c ./tests/io/history_tests.c -o ./bin/history_tests
 	./bin/history_tests
 th :
 	make test_history
@@ -221,20 +221,20 @@ fp :
 
 # Run parser tests
 test_parser :
-	$(CC) $(STD) $(test_flags) $(TTYTERM_IN) ./src/arena.c ./src/alias.c ./src/env.c ./src/interpreter/expansions.c ./src/interpreter/vars.c ./src/interpreter/lexer.c ./src/interpreter/lexemes.c ./src/interpreter/statements.c ./src/interpreter/parser.c ./tests/interpreter/parser_tests.c -o ./bin/parser_tests
+	$(CC) $(STD) $(test_flags) $(TTYIO_IN) ./src/arena.c ./src/alias.c ./src/env.c ./src/interpreter/expansions.c ./src/interpreter/vars.c ./src/interpreter/lexer.c ./src/interpreter/lexemes.c ./src/interpreter/statements.c ./src/interpreter/parser.c ./tests/interpreter/parser_tests.c -o ./bin/parser_tests
 	./bin/parser_tests
 tp :
 	make test_parser
 
 bench_parser :
-	$(CC) $(STD) $(test_flags) $(TTYTERM_IN) ./src/arena.c ./src/alias.c ./src/env.c ./src/interpreter/lexer.c ./src/interpreter/vars.c ./src/interpreter/parser.c ./tests/interpreter/parser_tests.c -o ./bin/parser_tests
+	$(CC) $(STD) $(test_flags) $(TTYIO_IN) ./src/arena.c ./src/alias.c ./src/env.c ./src/interpreter/lexer.c ./src/interpreter/vars.c ./src/interpreter/parser.c ./tests/interpreter/parser_tests.c -o ./bin/parser_tests
 	hyperfine --warmup 1000 --shell=none './bin/parser_tests'
 bp :
 	make bench_parser
 
 # Run z tests
 test_z :
-	$(CC) $(STD) $(test_flags) -DZ_TEST $(TTYTERM_IN) ./src/arena.c ./src/z/fzf.c ./src/z/z.c ./tests/z/z_tests.c -o ./bin/z_tests
+	$(CC) $(STD) $(test_flags) -DZ_TEST $(TTYIO_IN) ./src/arena.c ./src/z/fzf.c ./src/z/z.c ./tests/z/z_tests.c -o ./bin/z_tests
 	./bin/z_tests
 tz :
 	make test_z
@@ -266,7 +266,7 @@ tf :
 
 # Run alias tests
 test_alias :
-	$(CC) $(STD) $(test_flags) -DNCSH_HISTORY_TEST $(TTYTERM_IN) ./src/arena.c ./src/alias.c ./tests/alias_tests.c -o ./bin/alias_tests
+	$(CC) $(STD) $(test_flags) -DNCSH_HISTORY_TEST $(TTYIO_IN) ./src/arena.c ./src/alias.c ./tests/alias_tests.c -o ./bin/alias_tests
 	./bin/alias_tests
 tal :
 	make test_alias
@@ -301,13 +301,13 @@ tv :
 
 # Run VM sanity tests
 test_vm :
-	$(CC) $(STD) $(test_flags) -DNCSH_VM_TEST $(TTYTERM_IN) ./src/arena.c ./src/interpreter/lexer.c ./src/eskilib/efile.c ./src/io/hashset.c ./src/interpreter/vars.c ./src/io/history.c ./src/z/fzf.c ./src/z/z.c ./src/env.c ./src/alias.c ./src/config.c ./src/interpreter/vm/vm.c ./src/interpreter/semantic_analyzer.c ./src/interpreter/parser.c ./src/interpreter/vm/builtins.c ./src/interpreter/lexemes.c ./src/interpreter/statements.c ./src/interpreter/expansions.c ./src/interpreter/vm/pipe.c ./src/interpreter/vm/redirection.c ./tests/interpreter/vm/vm_tests.c -o ./bin/vm_tests
+	$(CC) $(STD) $(test_flags) -DNCSH_VM_TEST $(TTYIO_IN) ./src/arena.c ./src/interpreter/lexer.c ./src/eskilib/efile.c ./src/io/hashset.c ./src/interpreter/vars.c ./src/io/history.c ./src/z/fzf.c ./src/z/z.c ./src/env.c ./src/alias.c ./src/config.c ./src/interpreter/vm/vm.c ./src/interpreter/semantic_analyzer.c ./src/interpreter/parser.c ./src/interpreter/vm/builtins.c ./src/interpreter/lexemes.c ./src/interpreter/statements.c ./src/interpreter/expansions.c ./src/interpreter/vm/pipe.c ./src/interpreter/vm/redirection.c ./tests/interpreter/vm/vm_tests.c -o ./bin/vm_tests
 	./bin/vm_tests
 tvm :
 	make test_vm
 
 test_vm_next :
-	$(CC) $(STD) $(test_flags) -DNCSH_VM_TEST $(TTYTERM_IN) ./src/arena.c ./src/interpreter/lexer.c ./src/eskilib/efile.c ./src/io/hashset.c ./src/interpreter/vars.c ./src/io/history.c ./src/z/fzf.c ./src/z/z.c ./src/env.c ./src/alias.c ./src/config.c ./src/interpreter/vm/vm.c ./src/interpreter/semantic_analyzer.c ./src/interpreter/parser.c ./src/interpreter/vm/builtins.c ./src/interpreter/lexemes.c ./src/interpreter/statements.c ./src/interpreter/expansions.c ./src/interpreter/vm/pipe.c ./src/interpreter/vm/redirection.c ./tests/interpreter/vm/vm_next_tests.c -o ./bin/vm_next_tests
+	$(CC) $(STD) $(test_flags) -DNCSH_VM_TEST $(TTYIO_IN) ./src/arena.c ./src/interpreter/lexer.c ./src/eskilib/efile.c ./src/io/hashset.c ./src/interpreter/vars.c ./src/io/history.c ./src/z/fzf.c ./src/z/z.c ./src/env.c ./src/alias.c ./src/config.c ./src/interpreter/vm/vm.c ./src/interpreter/semantic_analyzer.c ./src/interpreter/parser.c ./src/interpreter/vm/builtins.c ./src/interpreter/lexemes.c ./src/interpreter/statements.c ./src/interpreter/expansions.c ./src/interpreter/vm/pipe.c ./src/interpreter/vm/redirection.c ./tests/interpreter/vm/vm_next_tests.c -o ./bin/vm_next_tests
 	./bin/vm_next_tests
 tvmn:
 	make test_vm_next
@@ -321,7 +321,7 @@ ths :
 
 # Run expansions tests
 test_expansions :
-	$(CC) $(STD) $(test_flags) $(TTYTERM_IN) ./src/arena.c ./src/alias.c ./src/env.c ./src/interpreter/lexemes.c ./src/interpreter/statements.c ./src/interpreter/vars.c ./src/interpreter/expansions.c ./tests/interpreter/expansions_tests.c -o ./bin/expansions_tests
+	$(CC) $(STD) $(test_flags) $(TTYIO_IN) ./src/arena.c ./src/alias.c ./src/env.c ./src/interpreter/lexemes.c ./src/interpreter/statements.c ./src/interpreter/vars.c ./src/interpreter/expansions.c ./tests/interpreter/expansions_tests.c -o ./bin/expansions_tests
 	./bin/expansions_tests
 te :
 	make test_expansions
@@ -335,7 +335,7 @@ ten :
 
 # Run config tests
 test_config :
-	$(CC) $(STD) $(test_flags) $(TTYTERM_IN) ./src/arena.c ./src/alias.c ./src/env.c ./src/config.c ./src/eskilib/efile.c ./tests/config_tests.c -o ./bin/config_tests
+	$(CC) $(STD) $(test_flags) $(TTYIO_IN) ./src/arena.c ./src/alias.c ./src/env.c ./src/config.c ./src/eskilib/efile.c ./tests/config_tests.c -o ./bin/config_tests
 	./bin/config_tests
 tc :
 	make test_config

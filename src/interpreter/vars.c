@@ -9,7 +9,7 @@
 #include "../arena.h"
 #include "vars.h"
 
-void vars_malloc(Arena* rst arena, Vars* rst vars)
+void vars_malloc(Arena* restrict arena, Vars* restrict vars)
 {
     vars->size = 0;
     vars->capacity = VARS_DEFAULT_CAPACITY;
@@ -21,7 +21,7 @@ void vars_malloc(Arena* rst arena, Vars* rst vars)
 
 // 64-bit FNV-1a hash
 [[nodiscard]]
-uint64_t vars_key(char* rst str)
+uint64_t vars_key(char* restrict str)
 {
     register uint64_t i;
 
@@ -34,7 +34,7 @@ uint64_t vars_key(char* rst str)
 }
 
 [[nodiscard]]
-Str* vars_get(char* rst key, Vars* rst vars)
+Str* vars_get(char* restrict key, Vars* restrict vars)
 {
     uint64_t hash = vars_key(key);
     size_t index = (size_t)(hash & (uint64_t)(vars->capacity - 1));
@@ -54,7 +54,7 @@ Str* vars_get(char* rst key, Vars* rst vars)
 }
 
 [[nodiscard]]
-bool vars_exists(char* rst key, Vars* rst vars)
+bool vars_exists(char* restrict key, Vars* restrict vars)
 {
     uint64_t hash = vars_key(key);
     size_t index = (size_t)(hash & (uint64_t)(vars->capacity - 1));
@@ -74,7 +74,7 @@ bool vars_exists(char* rst key, Vars* rst vars)
 }
 
 [[nodiscard]]
-char* vars_set_entry(Vars_Entry* rst entries, size_t capacity, char* rst key, Str* rst val, size_t* rst plength)
+char* vars_set_entry(Vars_Entry* restrict entries, size_t capacity, char* restrict key, Str* restrict val, size_t* restrict plength)
 {
     uint64_t hash = vars_key(key);
     size_t index = (size_t)(hash & (uint64_t)(capacity - 1));
@@ -101,7 +101,7 @@ char* vars_set_entry(Vars_Entry* rst entries, size_t capacity, char* rst key, St
 }
 
 [[nodiscard]]
-bool vars_expand(char* rst key, Arena* rst arena, Vars* rst vars)
+bool vars_expand(char* restrict key, Arena* restrict arena, Vars* restrict vars)
 {
     size_t new_capacity = vars->capacity * 2;
     if (new_capacity < vars->capacity) {
@@ -125,7 +125,7 @@ bool vars_expand(char* rst key, Arena* rst arena, Vars* rst vars)
 }
 
 [[nodiscard]]
-char* vars_set(char* rst key, Str* rst val, Arena* rst arena, Vars* rst vars)
+char* vars_set(char* restrict key, Str* restrict val, Arena* restrict arena, Vars* restrict vars)
 {
     assert(val->value && val->length);
     if (!val->value || !val->length) {

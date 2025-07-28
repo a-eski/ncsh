@@ -7,21 +7,21 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../defines.h" // used for NCSH_MAX_INPUT macro
+#include "../defines.h" // used for NCSH_MAX_INPUT
 #include "../eskilib/str.h"
 #include "ac.h"
 
 static inline int char_to_index(char character);
 static inline char index_to_char(int index);
 
-Autocompletion_Node* ac_alloc(Arena* rst arena)
+Autocompletion_Node* ac_alloc(Arena* restrict arena)
 {
     Autocompletion_Node* tree = arena_malloc(arena, 1, Autocompletion_Node);
     tree->is_end_of_a_word = false;
     return tree;
 }
 
-void ac_add(char* rst string, size_t length, Autocompletion_Node* rst tree, Arena* rst arena)
+void ac_add(char* restrict string, size_t length, Autocompletion_Node* restrict tree, Arena* restrict arena)
 {
     assert(string && length && tree && arena);
     if (!string || !length || length > NCSH_MAX_INPUT) {
@@ -52,7 +52,7 @@ void ac_add(char* rst string, size_t length, Autocompletion_Node* rst tree, Aren
     tree->is_end_of_a_word = true;
 }
 
-void ac_add_multiple(Str* rst strings, int count, Autocompletion_Node* rst tree, Arena* rst arena)
+void ac_add_multiple(Str* restrict strings, int count, Autocompletion_Node* restrict tree, Arena* restrict arena)
 {
     assert(strings && tree && arena);
     if (count <= 0) {
@@ -65,10 +65,10 @@ void ac_add_multiple(Str* rst strings, int count, Autocompletion_Node* rst tree,
 }
 
 /* ac_find
- * char* p: the prefix, Autocompletion_Node* rst t: the trie
+ * char* p: the prefix, Autocompletion_Node* restrict t: the trie
  * Walk the trie to find the prefix. Return null if prefix not found.
  */
-Autocompletion_Node* ac_find(char* rst p, Autocompletion_Node* rst t)
+Autocompletion_Node* ac_find(char* restrict p, Autocompletion_Node* restrict t)
 {
     while (p && *p) {
         if (!t)
@@ -89,7 +89,7 @@ static uint8_t ac_match_pos;
 char ac_buffer[NCSH_MAX_INPUT];
 size_t ac_buffer_len;
 
-void ac_match(Autocompletion* rst matches, Autocompletion_Node* rst tree, Arena* rst scratch)
+void ac_match(Autocompletion* restrict matches, Autocompletion_Node* restrict tree, Arena* restrict scratch)
 {
     if (!tree || ac_match_pos + 1 >= NCSH_MAX_AUTOCOMPLETION_MATCHES) {
         return;
@@ -125,7 +125,7 @@ void ac_match(Autocompletion* rst matches, Autocompletion_Node* rst tree, Arena*
     }
 }
 
-uint8_t ac_matches(Autocompletion* rst matches, Autocompletion_Node* rst prefix, Arena* rst scratch)
+uint8_t ac_matches(Autocompletion* restrict matches, Autocompletion_Node* restrict prefix, Arena* restrict scratch)
 {
     ac_str_pos = 0;
     ac_match_pos = 0;
@@ -137,7 +137,7 @@ uint8_t ac_matches(Autocompletion* rst matches, Autocompletion_Node* rst prefix,
     return ac_match_pos;
 }
 
-uint8_t ac_get(char* rst search, Autocompletion* rst matches, Autocompletion_Node* rst tree, Arena scratch)
+uint8_t ac_get(char* restrict search, Autocompletion* restrict matches, Autocompletion_Node* restrict tree, Arena scratch)
 {
     assert(search);
 
@@ -152,7 +152,7 @@ uint8_t ac_get(char* rst search, Autocompletion* rst matches, Autocompletion_Nod
     return match_count;
 }
 
-uint8_t ac_first(char* rst search, char* rst match, Autocompletion_Node* rst tree, Arena scratch)
+uint8_t ac_first(char* restrict search, char* restrict match, Autocompletion_Node* restrict tree, Arena scratch)
 {
     assert(search);
 

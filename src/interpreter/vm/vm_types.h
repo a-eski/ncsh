@@ -4,8 +4,8 @@
 #pragma once
 
 #include <stdint.h>
+#include <stddef.h>
 
-#include "../../eskilib/str.h"
 #include "../ops.h"
 
 /****** MACROS ******/

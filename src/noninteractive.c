@@ -9,11 +9,10 @@
 #include <unistd.h>
 
 #include "config.h"
-#include "defines.h"
 #include "eskilib/eresult.h"
 #include "interpreter/interpreter.h"
 #include "noninteractive.h"
-#include "ttyterm/ttyterm.h"
+#include "ttyio/ttyio.h"
 #include "shell.h"
 #include "debug.h"
 
@@ -24,7 +23,7 @@
  * Returns: exit status, see defines.h (EXIT_...)
  */
 [[nodiscard]]
-int noninteractive(int argc, char** rst argv)
+int noninteractive(int argc, char** restrict argv)
 {
     assert(argc > 1); // 1 because first arg is ncsh
     assert(argv);
@@ -41,9 +40,9 @@ int noninteractive(int argc, char** rst argv)
     constexpr int arena_capacity = 1 << 16;
     char* memory = malloc(arena_capacity);
     if (!memory) {
-        term_color_set(TERM_RED_ERROR);
-        term_puts("ncsh: could not start up, not enough memory available.");
-        term_color_reset();
+        tty_color_set(TTYIO_RED_ERROR);
+        tty_puts("ncsh: could not start up, not enough memory available.");
+        tty_color_reset();
         return EXIT_FAILURE;
     }
 

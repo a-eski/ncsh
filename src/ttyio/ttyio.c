@@ -1,6 +1,6 @@
-/* Copyright ttyterm (C) by Alex Eski 2025 */
+/* Copyright ttyio (C) by Alex Eski 2025 */
 /* Licensed under GPLv3, see LICENSE for more information. */
-/* ttyterm.h: public interface implementation for the ttyterm library */
+/* ttyio.h: implementation of public interfaces of the ttyio library */
 
 #ifndef _POXIC_C_SOURCE
 #define _POSIX_C_SOURCE 200809L
@@ -15,12 +15,10 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "terminfo.h"
-#include "ttyterm.h"
-
 #include "lib/unibilium.h"
+#include "terminfo.h"
 #include "tcaps.h"
-#include "ttyterm.h"
+#include "ttyio.h"
 #include "ttyplatform.h" // used for macros
 
 unibi_term* uterm;
@@ -80,7 +78,7 @@ void fatal__(const char* restrict fmt, ...)
 {
     va_list args;
     va_start(args, fmt);
-    // WARN: Don't use term_fprint here, if term size not set can cause infinite recursion.
+    // WARN: Don't use tty_fprint here, if term size not set can cause infinite recursion.
     fprintf(stderr, fmt, args);
     va_end(args);
     fflush(stderr);
@@ -89,7 +87,7 @@ void fatal__(const char* restrict fmt, ...)
 }
 #pragma GCC diagnostic pop
 
-Coordinates term_size_get__(void)
+Coordinates tty_size_get__(void)
 {
 #if !defined(_WIN32) && !defined(_WIN64)
     struct winsize window;
@@ -114,10 +112,10 @@ Coordinates term_size_get__(void)
 #endif
 }
 
-void term_init_caps(void)
+void tty_init_caps(void)
 {
     term = (Terminal){0};
-    term.size = term_size_get__();
+    term.size = tty_size_get__();
     assert(term.size.x && term.size.y);
 
     char* term_name = getenv("TERM");
@@ -138,7 +136,7 @@ void term_init_caps(void)
     tcaps_init();
 }
 
-void term_init_input_mode(enum input_type input_type)
+void tty_init_input_mode(enum input_type input_type)
 {
     tty_input_mode__ = input_type;
     if (input_type == TTY_CANONICAL_MODE) {
@@ -147,7 +145,7 @@ void term_init_input_mode(enum input_type input_type)
 
 #if !defined(_WIN32) && !defined(_WIN64)
     if (!isatty(STDIN_FILENO)) {
-        term_fprint(stderr, "Not running in a terminal.\n");
+        tty_fprint(stderr, "Not running in a terminal.\n");
         exit(EXIT_FAILURE);
     }
 
@@ -192,30 +190,30 @@ void term_init_input_mode(enum input_type input_type)
 #endif
 }
 
-void term_init(enum input_type input_type)
+void tty_init(enum input_type input_type)
 {
-    term_init_caps();
-    term_init_input_mode(input_type);
+    tty_init_caps();
+    tty_init_input_mode(input_type);
 }
 
-/* term_reinit__ *internal*
+/* tty_reinit__ *internal*
  * Just reinits the term variable, doesn't free memory from unibilium or touch tcaps.
  * Useful for testing.
  */
-void term_reinit__(void)
+void tty_reinit__(void)
 {
     term = (Terminal){0};
-    term.size = term_size_get__();
+    term.size = tty_size_get__();
     assert(term.size.x && term.size.y);
 }
 
-void term_deinit_caps(void)
+void tty_deinit_caps(void)
 {
     fflush(stdout);
     unibi_destroy(uterm);
 }
 
-void term_deinit_input_mode(void)
+void tty_deinit_input_mode(void)
 {
     if (tty_input_mode__ == TTY_CANONICAL_MODE) {
         return;
@@ -231,13 +229,13 @@ void term_deinit_input_mode(void)
 #endif /* if !defined(_WIN32) && !defined(_WIN64) */
 }
 
-void term_deinit(void)
+void tty_deinit(void)
 {
-    term_deinit_caps();
-    term_deinit_input_mode();
+    tty_deinit_caps();
+    tty_deinit_input_mode();
 }
 
-void term_y_update__(const int printed)
+void tty_y_update__(const int printed)
 {
     if (term.pos.y < term.size.y - 1) {
         if (!printed)  {
@@ -260,7 +258,7 @@ void term_y_update__(const int printed)
     assert(term.pos.y < term.size.y);
 }
 
-void term_size_update__(const int printed)
+void tty_size_update__(const int printed)
 {
     assert(printed != EOF);
 #ifndef NDEBUG
@@ -273,7 +271,7 @@ void term_size_update__(const int printed)
     }
 
     if (printed + term.pos.x > term.size.x - 1) {
-        term_y_update__(printed);
+        tty_y_update__(printed);
         term.pos.x = printed == 1 ? 0 : (printed % term.size.x);
     }
     else {
@@ -282,99 +280,99 @@ void term_size_update__(const int printed)
     assert(term.pos.x < term.size.x);
 }
 
-int term_putc(char c)
+int tty_putc(char c)
 {
     _MAYBE_UNUSED_ int printed = write(STDOUT_FILENO, &c, 1);
     assert(printed != EOF && printed == 1);
-    term_size_update__(1);
+    tty_size_update__(1);
     return 1;
 }
 
-int term_fputc(FILE* restrict file, char c)
+int tty_fputc(FILE* restrict file, char c)
 {
     _MAYBE_UNUSED_ int printed = write(fileno(file), &c, 1);
     assert(printed != EOF && printed == 1);
-    term_size_update__(1);
+    tty_size_update__(1);
     return 1;
 }
 
-int term_dputc(int fd, char c)
+int tty_dputc(int fd, char c)
 {
     _MAYBE_UNUSED_ int printed = write(fd, &c, 1);
     assert(printed != EOF && printed == 1);
-    term_size_update__(1);
+    tty_size_update__(1);
     return 1;
 }
 
-int term_write(const char* restrict buf, size_t n)
+int tty_write(const char* restrict buf, size_t n)
 {
     int printed = write(STDOUT_FILENO, buf, n);
     assert(printed != EOF && (size_t)printed == n);
-    term_size_update__(printed);
+    tty_size_update__(printed);
     return printed;
 }
 
-int term_writeln(const char* restrict buf, size_t n)
+int tty_writeln(const char* restrict buf, size_t n)
 {
     int printed = write(STDOUT_FILENO, buf, n);
     assert(printed != EOF && (size_t)printed == n);
-    term_size_update__(printed);
-    term_send(&tcaps.newline);
+    tty_size_update__(printed);
+    tty_send(&tcaps.newline);
     return printed;
 }
 
-int term_fwrite(FILE* restrict file, const char* restrict buf, size_t n)
+int tty_fwrite(FILE* restrict file, const char* restrict buf, size_t n)
 {
     int printed = write(fileno(file), buf, n);
     assert(printed != EOF && (size_t)printed == n);
-    term_size_update__(printed);
+    tty_size_update__(printed);
     return printed;
 }
 
-int term_fwriteln(FILE* restrict file, const char* restrict buf, size_t n)
+int tty_fwriteln(FILE* restrict file, const char* restrict buf, size_t n)
 {
     int fd = fileno(file);
     int printed = write(fd, buf, n);
     assert(printed != EOF && (size_t)printed == n);
-    term_size_update__(printed);
-    term_dsend(fd, &tcaps.newline);
+    tty_size_update__(printed);
+    tty_dsend(fd, &tcaps.newline);
     return printed;
 }
 
-int term_dwrite(int fd, const char* restrict buf, size_t n)
+int tty_dwrite(int fd, const char* restrict buf, size_t n)
 {
     int printed = write(fd, buf, n);
     assert(printed != EOF && (size_t)printed == n);
-    term_size_update__(printed);
+    tty_size_update__(printed);
     return printed;
 }
 
-int term_dwriteln(int fd, const char* restrict buf, size_t n)
+int tty_dwriteln(int fd, const char* restrict buf, size_t n)
 {
     int printed = write(fd, buf, n);
     assert(printed != EOF && (size_t)printed == n);
-    term_size_update__(printed);
-    term_dsend(fd, &tcaps.newline);
+    tty_size_update__(printed);
+    tty_dsend(fd, &tcaps.newline);
     return printed;
 }
 
-int term_puts(const char* restrict str)
+int tty_puts(const char* restrict str)
 {
     int printed = puts(str);
     term.pos.x = 0;
-    term_y_update__(0);
+    tty_y_update__(0);
     return printed;
 }
 
-int term_fputs(const char* restrict str, FILE* restrict file)
+int tty_fputs(const char* restrict str, FILE* restrict file)
 {
     int printed = fputs(str, file);
     term.pos.x = 0;
-    term_send(&tcaps.newline);
+    tty_send(&tcaps.newline);
     return printed;
 }
 
-int term_print(const char* restrict fmt, ...)
+int tty_print(const char* restrict fmt, ...)
 {
     int printed;
     va_list args;
@@ -383,11 +381,11 @@ int term_print(const char* restrict fmt, ...)
     va_end(args);
     fflush(stdout);
 
-    term_size_update__(printed);
+    tty_size_update__(printed);
     return printed;
 }
 
-int term_println(const char* restrict fmt, ...)
+int tty_println(const char* restrict fmt, ...)
 {
     int printed;
     va_list args;
@@ -396,12 +394,12 @@ int term_println(const char* restrict fmt, ...)
     va_end(args);
     fflush(stdout);
 
-    term_size_update__(printed);
-    term_send(&tcaps.newline);
+    tty_size_update__(printed);
+    tty_send(&tcaps.newline);
     return printed;
 }
 
-int term_fprint(FILE* restrict file, const char* restrict fmt, ...)
+int tty_fprint(FILE* restrict file, const char* restrict fmt, ...)
 {
     int printed;
     va_list args;
@@ -410,11 +408,11 @@ int term_fprint(FILE* restrict file, const char* restrict fmt, ...)
     va_end(args);
     fflush(stdout);
 
-    term_size_update__(printed);
+    tty_size_update__(printed);
     return printed;
 }
 
-int term_fprintln(FILE* restrict file, const char* restrict fmt, ...)
+int tty_fprintln(FILE* restrict file, const char* restrict fmt, ...)
 {
     int printed;
     va_list args;
@@ -423,11 +421,11 @@ int term_fprintln(FILE* restrict file, const char* restrict fmt, ...)
     va_end(args);
     fflush(stdout);
 
-    term_size_update__(printed);
+    tty_size_update__(printed);
     return printed;
 }
 
-int term_dprint(int fd, const char* restrict fmt, ...)
+int tty_dprint(int fd, const char* restrict fmt, ...)
 {
     int printed;
     va_list args;
@@ -436,11 +434,11 @@ int term_dprint(int fd, const char* restrict fmt, ...)
     va_end(args);
     fflush(stdout);
 
-    term_size_update__(printed);
+    tty_size_update__(printed);
     return printed;
 }
 
-int term_dprintln(int fd, const char* restrict fmt, ...)
+int tty_dprintln(int fd, const char* restrict fmt, ...)
 {
     int printed;
     va_list args;
@@ -449,26 +447,26 @@ int term_dprintln(int fd, const char* restrict fmt, ...)
     va_end(args);
     fflush(stdout);
 
-    term_size_update__(printed);
-    term_send(&tcaps.newline);
+    tty_size_update__(printed);
+    tty_send(&tcaps.newline);
     return printed;
 }
 
-int term_perror(const char* restrict msg)
+int tty_perror(const char* restrict msg)
 {
     char* err_str = strerror(errno);
-    term_color_set(TERM_RED_ERROR);
-    int printed = term_fprint(stderr, "%s: ", msg);
-    term_color_reset();
-    printed += term_fprint(stderr, "%s", err_str);
+    tty_color_set(TTYIO_RED_ERROR);
+    int printed = tty_fprint(stderr, "%s: ", msg);
+    tty_color_reset();
+    printed += tty_fprint(stderr, "%s", err_str);
 
-    term_size_update__(printed);
-    term_fsend(&tcaps.newline, stderr);
+    tty_size_update__(printed);
+    tty_fsend(&tcaps.newline, stderr);
     return printed;
 }
 
-void term_send_update__(cap* restrict c);
-inline void term_send_update__(cap* restrict c)
+void tty_send_update__(cap* restrict c);
+inline void tty_send_update__(cap* restrict c)
 {
     switch (c->type) {
     case CAP_BS:
@@ -501,7 +499,7 @@ inline void term_send_update__(cap* restrict c)
         break;
     case CAP_NEWLINE:
         term.pos.x = 0;
-        term_y_update__(0);
+        tty_y_update__(0);
         break;
     case CAP_LINE_GOTO_BOL:
         term.pos.x = 0;
@@ -515,67 +513,67 @@ inline void term_send_update__(cap* restrict c)
     }
 }
 
-int term_send(cap* restrict c)
+int tty_send(cap* restrict c)
 {
     assert(c && c->len);
     if (write(STDOUT_FILENO, c->val, c->len) == -1)
         return 1;
     fflush(stdout);
 
-    term_send_update__(c);
+    tty_send_update__(c);
     assert(term.pos.y <= term.size.y);
     assert(term.pos.x <= term.size.x);
     return 0;
 }
 
-int term_fsend(cap* restrict c, FILE* restrict file)
+int tty_fsend(cap* restrict c, FILE* restrict file)
 {
     assert(c && c->len);
     fwrite(c->val, sizeof(char), c->len, file);
     fflush(file);
 
-    term_send_update__(c);
+    tty_send_update__(c);
 
     assert(term.pos.y < term.size.y);
     assert(term.pos.x < term.size.x);
     return 0;
 }
 
-int term_dsend(int fd, cap* restrict c)
+int tty_dsend(int fd, cap* restrict c)
 {
     assert(c && c->len);
     if (write(fd, c->val, c->len) == -1)
         return 1;
     fflush(stdout);
 
-    term_send_update__(c);
+    tty_send_update__(c);
 
     return 0;
 }
 
-void term_send_n(cap* restrict c, size_t n)
+void tty_send_n(cap* restrict c, size_t n)
 {
     for (size_t i = 0; i < n; ++i) {
-        term_send(c);
+        tty_send(c);
     }
 }
 
-void term_fsend_n(cap* restrict c, size_t n, FILE* restrict file)
+void tty_fsend_n(cap* restrict c, size_t n, FILE* restrict file)
 {
     for (size_t i = 0; i < n; ++i) {
-        term_fsend(c, file);
+        tty_fsend(c, file);
     }
 }
 
-void term_dsend_n(int fd, cap* restrict c, size_t n)
+void tty_dsend_n(int fd, cap* restrict c, size_t n)
 {
     for (size_t i = 0; i < n; ++i) {
-        term_dsend(fd, c);
+        tty_dsend(fd, c);
     }
 }
 
 #define TTY_BUF_SIZE 64
-int term_color_set(int color)
+int tty_color_set(int color)
 {
     if (!tcaps.color_max)
         return 0;
@@ -589,7 +587,7 @@ int term_color_set(int color)
     return 0;
 }
 
-int term_color_bg_set(int color)
+int tty_color_bg_set(int color)
 {
     if (!tcaps.color_max)
         return 0;
@@ -603,7 +601,7 @@ int term_color_bg_set(int color)
     return 0;
 }
 
-int term_goto_prev_eol(void)
+int tty_goto_prev_eol(void)
 {
     if (tcaps.line_goto_prev_eol.fallback == FB_NONE) {
         char buf[TTY_BUF_SIZE] = {0};
@@ -627,8 +625,8 @@ int term_goto_prev_eol(void)
         return 0;
     }
     if (tcaps.line_goto_prev_eol.fallback >= FB_NONE) {
-        term_send(&tcaps.cursor_up);
-        term_send_n(&tcaps.cursor_right, term.size.x - term.pos.x - 1);
+        tty_send(&tcaps.cursor_up);
+        tty_send_n(&tcaps.cursor_right, term.size.x - term.pos.x - 1);
         fflush(stdout);
         term.pos.x = term.size.x - 1;
         --term.pos.y;

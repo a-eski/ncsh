@@ -5,7 +5,7 @@
 
 #include "terminfo_defs.h"
 #include "lib/unibilium.h"
-#include "ttyplatform.h" // used for including stdbool in case of Apple
+#include "ttyplatform.h" // used for including stdbool in cases its needed, defining strdup
 
 bool terminfo_is_term_family(const char *term, const char *family)
 {

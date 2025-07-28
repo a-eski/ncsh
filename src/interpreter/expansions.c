@@ -8,7 +8,7 @@
 #include "../alias.h"
 #include "../debug.h"
 #include "../env.h"
-#include "../ttyterm/ttyterm.h"
+#include "../ttyio/ttyio.h"
 #include "lexemes.h"
 #include "ops.h"
 #include "statements.h"
@@ -17,7 +17,7 @@
 // #include "parser.h"
 #include "../shell.h"
 
-void expansion_home(Lexemes* rst lexemes, size_t pos, Arena* rst scratch)
+void expansion_home(Lexemes* restrict lexemes, size_t pos, Arena* restrict scratch)
 {
     assert(lexemes);
 
@@ -51,7 +51,7 @@ void expansion_home(Lexemes* rst lexemes, size_t pos, Arena* rst scratch)
     lexemes->lens[pos] = len;
 }
 
-void expansion_glob(char* rst in, Commands* rst cmds, Arena* rst scratch)
+void expansion_glob(char* restrict in, Commands* restrict cmds, Arena* restrict scratch)
 {
     assert(in);
     assert(cmds);
@@ -84,7 +84,7 @@ void expansion_glob(char* rst in, Commands* rst cmds, Arena* rst scratch)
     globfree(&glob_buf);
 }
 
-void expansion_assignment(Lexemes* lexeme, size_t pos, Vars* rst vars, Arena* rst arena)
+void expansion_assignment(Lexemes* lexeme, size_t pos, Vars* restrict vars, Arena* restrict arena)
 {
     assert(lexeme);
     assert(vars);
@@ -119,7 +119,7 @@ void expansion_assignment(Lexemes* lexeme, size_t pos, Vars* rst vars, Arena* rs
     debugf("set key %s with val %s\n", key, val->value);
 }
 
-void expansion_variable(char* rst in, size_t len, Commands* rst cmds, /*Statements* stmts,*/ Shell* rst shell, Arena* rst scratch)
+void expansion_variable(char* restrict in, size_t len, Commands* restrict cmds, /*Statements* stmts,*/ Shell* restrict shell, Arena* restrict scratch)
 {
     Str var;
     // TODO: store a hashtable of environment vars that we can do lookups on instead of hardcoding each env val.
@@ -127,7 +127,7 @@ void expansion_variable(char* rst in, size_t len, Commands* rst cmds, /*Statemen
         debug("replacing variable $PATH\n");
         var = env_path_get();
         if (!var.value || !*var.value) {
-            term_puts("ncsh: could not load path to replace $PATH variable.");
+            tty_puts("ncsh: could not load path to replace $PATH variable.");
             return;
         }
 
@@ -142,7 +142,7 @@ void expansion_variable(char* rst in, size_t len, Commands* rst cmds, /*Statemen
         debug("replacing variable $HOME\n");
         env_home_get(&var, scratch);
         if (!var.value || !*var.value) {
-            term_puts("ncsh: could not load home to replace $HOME variable.");
+            tty_puts("ncsh: could not load home to replace $HOME variable.");
             return;
         }
         cmds->vals[cmds->pos] = arena_malloc(scratch, var.length, char);
@@ -196,7 +196,7 @@ void expansion_variable(char* rst in, size_t len, Commands* rst cmds, /*Statemen
 /* expansion_alias
  * Replaces aliases with their aliased commands before executing
  */
-void expansion_alias(Lexemes* rst lexemes, size_t n, Arena* rst scratch)
+void expansion_alias(Lexemes* restrict lexemes, size_t n, Arena* restrict scratch)
 {
     // TODO: alias expansion. Aliases with " " are not expaneded into multiple commands.
     Str alias = alias_check(lexemes->vals[n], lexemes->lens[n]);

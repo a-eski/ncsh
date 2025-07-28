@@ -2,8 +2,9 @@
 #include <stdint.h>
 #include <unistd.h>
 
+#include "../defines.h"
 #include "../env.h"
-#include "../ttyterm/ttyterm.h"
+#include "../ttyio/ttyio.h"
 #include "prompt.h"
 #include "input.h"
 
@@ -48,7 +49,7 @@ int io_init(Config* restrict config, Input* restrict input, Arena* restrict aren
     input->buffer = arena_malloc(arena, NCSH_MAX_INPUT, char);
 
     if (history_init(config->config_location, &input->history, arena) != E_SUCCESS) {
-        term_perror("ncsh: Error when allocating data for and setting up history");
+        tty_perror("ncsh: Error when allocating data for and setting up history");
         return EXIT_FAILURE;
     }
 
@@ -73,9 +74,9 @@ void io_cursor_restore(Input* restrict input)
 {
     size_t prev_size_y = term.size.y;
     size_t prev_pos_y = term.pos.y;
-    term_send(&tcaps.cursor_restore);
+    tty_send(&tcaps.cursor_restore);
     if (prev_pos_y == prev_size_y - 1) {
-        term_send_n(&tcaps.cursor_up, input->lines_y);
+        tty_send_n(&tcaps.cursor_up, input->lines_y);
     }
 }
 
@@ -89,10 +90,10 @@ int io_putchar(Input* restrict input);
 int io_char(Input* restrict input)
 {
     if (input->pos == NCSH_MAX_INPUT - 1) {
-        term_send(&tcaps.newline);
-        term_color_set(TERM_RED_ERROR);
-        term_fprintln(stderr, "ncsh: Hit max input.");
-        term_send(&tcaps.color_reset);
+        tty_send(&tcaps.newline);
+        tty_color_set(TTYIO_RED_ERROR);
+        tty_fprintln(stderr, "ncsh: Hit max input.");
+        tty_send(&tcaps.color_reset);
         input->buffer[0] = '\0';
         input->pos = 0;
         input->max_pos = 0;
@@ -104,8 +105,8 @@ int io_char(Input* restrict input)
 
 int io_exit([[maybe_unused]] Input* restrict input)
 {
-    term_send(&tcaps.line_clr_to_eol);
-    term_send(&tcaps.newline);
+    tty_send(&tcaps.line_clr_to_eol);
+    tty_send(&tcaps.newline);
     return EXIT_SUCCESS_END;
 }
 
@@ -144,8 +145,8 @@ enum Line_Adjustment io_adjust_line_if_needed(Input* restrict input)
         --input->lines_y;
         input->current_y = input->lines_y;
 
-        term_send(&tcaps.line_clr_to_eol);
-        term_goto_prev_eol();
+        tty_send(&tcaps.line_clr_to_eol);
+        tty_goto_prev_eol();
         return L_PREVIOUS;
     }
 
@@ -159,21 +160,21 @@ int io_word_delete(Input* restrict input)
         return EXIT_SUCCESS;
     }
 
-    term_send(&tcaps.bs);
-    term_send(&tcaps.line_clr_to_eol);
+    tty_send(&tcaps.bs);
+    tty_send(&tcaps.line_clr_to_eol);
     input->buffer[input->pos] = '\0';
     --input->pos;
 
     while (input->pos > 0) {
         io_adjust_line_if_needed(input);
         /*if (io_adjust_line_if_needed(input) == L_PREVIOUS) {
-            term_send(&tcaps.line_clr_to_eol);
+            tty_send(&tcaps.line_clr_to_eol);
         }*/
         if (input->buffer[input->pos] == ' ') {
             break;
         }
 
-        term_send(&tcaps.bs);
+        tty_send(&tcaps.bs);
         input->buffer[input->pos] = '\0';
         --input->pos;
     }
@@ -191,7 +192,7 @@ int io_line_delete(Input* restrict input)
     }
 
     io_cursor_restore(input);
-    term_send(&tcaps.scr_clr_to_eos);
+    tty_send(&tcaps.scr_clr_to_eos);
 
     memset(input->buffer, '\0', input->max_pos + 1);
     input->max_pos = 0;
@@ -213,7 +214,7 @@ int io_putchar(Input* restrict input)
         if (!input->pos) {
             temp_character = input->buffer[0];
             input->buffer[0] = character;
-            term_putc(character);
+            tty_putc(character);
             character = temp_character;
             ++input->pos;
         }
@@ -222,7 +223,7 @@ int io_putchar(Input* restrict input)
             temp_character = character;
             character = input->buffer[i + 1];
             input->buffer[i + 1] = temp_character;
-            term_putc(temp_character);
+            tty_putc(temp_character);
             ++input->pos;
         }
 
@@ -239,12 +240,12 @@ int io_putchar(Input* restrict input)
         }
 
         while (input->pos > input->start_pos + 1) {
-            term_send(&tcaps.cursor_left);
+            tty_send(&tcaps.cursor_left);
             --input->pos;
         }
     }
     else { // end of line insertions
-        term_putc(character);
+        tty_putc(character);
         input->buffer[input->pos++] = character;
 
         if (input->pos >= input->max_pos) {
@@ -262,20 +263,20 @@ char io_read()
 {
     char character = 0;
     if (read(STDIN_FILENO, &character, 1) < 0) {
-        term_perror(NCSH_ERROR_STDIN);
+        tty_perror(NCSH_ERROR_STDIN);
         return EXIT_IO_FAILURE;
     }
 
     switch (character) {
     case ESCAPE_CHARACTER: {
         if (read(STDIN_FILENO, &character, 1) < 0) {
-            term_perror(NCSH_ERROR_STDIN);
+            tty_perror(NCSH_ERROR_STDIN);
             return EXIT_IO_FAILURE;
         }
 
         if (character == '[') {
             if (read(STDIN_FILENO, &character, 1) < 0) {
-                term_perror(NCSH_ERROR_STDIN);
+                tty_perror(NCSH_ERROR_STDIN);
                 return EXIT_IO_FAILURE;
             }
 
@@ -296,8 +297,8 @@ char io_read()
 [[nodiscard]]
 int io_autocompletions_select_from(Input* restrict input)
 {
-    term_send(&tcaps.line_clr_to_eol);
-    term_send(&tcaps.newline);
+    tty_send(&tcaps.line_clr_to_eol);
+    tty_send(&tcaps.newline);
 
     Autocompletion autocompletion_matches[NCSH_MAX_AUTOCOMPLETION_MATCHES] = {0};
     uint8_t ac_matches_count = ac_get(input->buffer, autocompletion_matches, input->autocompletions_tree, *input->scratch);
@@ -308,16 +309,16 @@ int io_autocompletions_select_from(Input* restrict input)
 
     if (input->buffer) {
         for (int i = 0; i < ac_matches_count; ++i) {
-            term_println("%s%s", input->buffer, autocompletion_matches[i].value);
+            tty_println("%s%s", input->buffer, autocompletion_matches[i].value);
         }
     }
     else {
         for (int i = 0; i < ac_matches_count; ++i) {
-            term_println("%s", autocompletion_matches[i].value);
+            tty_println("%s", autocompletion_matches[i].value);
         }
     }
 
-    term_send_n(&tcaps.cursor_up, ac_matches_count);
+    tty_send_n(&tcaps.cursor_up, ac_matches_count);
 
     size_t position = 0;
     char character;
@@ -333,7 +334,7 @@ int io_autocompletions_select_from(Input* restrict input)
             if (!position) {
                 break;
             }
-            term_send(&tcaps.cursor_up);
+            tty_send(&tcaps.cursor_up);
             --position;
             break;
         }
@@ -341,7 +342,7 @@ int io_autocompletions_select_from(Input* restrict input)
             if (position == (size_t)(ac_matches_count - 1)) {
                 break;
             }
-            term_send(&tcaps.cursor_down);
+            tty_send(&tcaps.cursor_down);
             ++position;
             break;
         }
@@ -366,11 +367,11 @@ int io_autocompletions_select_from(Input* restrict input)
         }
     }
 
-    term_send_n(&tcaps.cursor_down, ac_matches_count + 1 - position);
+    tty_send_n(&tcaps.cursor_down, ac_matches_count + 1 - position);
     if (input->buffer && exit == EXIT_SUCCESS_EXECUTE) {
-        term_color_set(AUTOCOMPLETE_YELLOW);
-        term_println("%s", input->buffer);
-        term_color_reset();
+        tty_color_set(AUTOCOMPLETE_YELLOW);
+        tty_println("%s", input->buffer);
+        tty_color_reset();
     }
 
     return exit;
@@ -408,8 +409,8 @@ int io_backspace(Input* restrict input)
         --input->max_pos;
     }
 
-    term_send(&tcaps.bs);
-    term_send(&tcaps.line_clr_to_eol);
+    tty_send(&tcaps.bs);
+    tty_send(&tcaps.line_clr_to_eol);
 
     input->start_pos = input->pos;
     memmove(input->buffer + input->pos, input->buffer + input->pos + 1, input->max_pos);
@@ -418,14 +419,14 @@ int io_backspace(Input* restrict input)
     while (input->buffer[input->pos] != '\0') {
         ++input->pos;
     }
-    term_write(&input->buffer[input->start_pos], input->pos - input->start_pos);
+    tty_write(&input->buffer[input->start_pos], input->pos - input->start_pos);
 
     while (input->pos > input->start_pos) {
         if (!input->pos || !input->buffer[input->pos - 1]) {
             break;
         }
 
-        term_send(&tcaps.cursor_left);
+        tty_send(&tcaps.cursor_left);
         --input->pos;
     }
 
@@ -436,13 +437,13 @@ int io_eol(Input* restrict input)
 {
     if (!input->pos && !input->buffer[input->pos]) {
         input->reprint_prompt = true;
-        term_send(&tcaps.newline);
+        tty_send(&tcaps.newline);
         return EXIT_CONTINUE;
     }
 
     while (input->pos < input->max_pos && input->buffer[input->pos]) {
         ++input->pos;
-        term_send(&tcaps.cursor_right);
+        tty_send(&tcaps.cursor_right);
     }
 
     while (input->pos > 1 && input->buffer[input->pos - 1] == ' ') {
@@ -450,8 +451,8 @@ int io_eol(Input* restrict input)
     }
     ++input->pos;
 
-    term_send(&tcaps.line_clr_to_eol);
-    term_send(&tcaps.newline);
+    tty_send(&tcaps.line_clr_to_eol);
+    tty_send(&tcaps.newline);
     return EXIT_SUCCESS_EXECUTE;
 }
 
@@ -461,7 +462,7 @@ int io_eol(Input* restrict input)
 [[nodiscard]]
 int io_autocompletion_render(Input* restrict input)
 {
-    term_print("%s", input->current_autocompletion);
+    tty_print("%s", input->current_autocompletion);
     for (size_t i = 0; input->current_autocompletion[i] != '\0'; i++) {
         input->buffer[input->pos] = input->current_autocompletion[i];
         ++input->pos;
@@ -483,7 +484,7 @@ int io_cursor_right(Input* restrict input)
         return EXIT_SUCCESS;
     }
 
-    term_send(&tcaps.cursor_right);
+    tty_send(&tcaps.cursor_right);
 
     ++input->pos;
     if (input->pos > input->max_pos) {
@@ -528,7 +529,7 @@ int io_left_arrow_cursor(Input* restrict input)
         return EXIT_CONTINUE;
     }
 
-    term_send(&tcaps.cursor_left);
+    tty_send(&tcaps.cursor_left);
     --input->pos;
     return EXIT_SUCCESS;
 }
@@ -540,13 +541,13 @@ int io_up_arrow_history(Input* restrict input)
     if (input->history_entry.length > 0) {
         ++input->history_position;
         io_cursor_restore(input);
-        term_send(&tcaps.line_clr_to_eol);
+        tty_send(&tcaps.line_clr_to_eol);
 
         input->pos = input->history_entry.length - 1;
         input->max_pos = input->history_entry.length - 1;
         memcpy(input->buffer, input->history_entry.value, input->pos);
 
-        term_write(input->buffer, input->pos);
+        tty_write(input->buffer, input->pos);
         io_adjust_line_if_needed(input);
     }
 
@@ -559,7 +560,7 @@ int io_down_arrow_history(Input* restrict input)
     input->history_entry = history_get(input->history_position - 2, &input->history);
 
     io_cursor_restore(input);
-    term_send(&tcaps.line_clr_to_eol);
+    tty_send(&tcaps.line_clr_to_eol);
 
     if (input->history_entry.length > 0) {
         --input->history_position;
@@ -567,7 +568,7 @@ int io_down_arrow_history(Input* restrict input)
         input->max_pos = input->history_entry.length - 1;
         memcpy(input->buffer, input->history_entry.value, input->pos);
 
-        term_write(input->buffer, input->pos);
+        tty_write(input->buffer, input->pos);
     }
     else {
         input->buffer[0] = '\0';
@@ -589,15 +590,15 @@ int io_down_arrow_history(Input* restrict input)
 int io_delete(Input* restrict input)
 {
     if (read(STDIN_FILENO, &input->c, 1) < 0) {
-        term_perror(NCSH_ERROR_STDIN);
+        tty_perror(NCSH_ERROR_STDIN);
         return EXIT_FAILURE;
     }
     if (input->c != DELETE_KEY) {
         return EXIT_CONTINUE;
     }
 
-    term_send(&tcaps.del);
-    term_send(&tcaps.line_clr_to_eol);
+    tty_send(&tcaps.del);
+    tty_send(&tcaps.line_clr_to_eol);
 
     input->start_pos = input->pos;
     memmove(input->buffer + input->pos, input->buffer + input->pos + 1, input->max_pos);
@@ -609,14 +610,14 @@ int io_delete(Input* restrict input)
     while (input->pos < input->max_pos && input->buffer[input->pos]) {
         ++input->pos;
     }
-    term_write(&input->buffer[input->start_pos], input->pos - input->start_pos);
+    tty_write(&input->buffer[input->start_pos], input->pos - input->start_pos);
 
     if (!input->pos) {
         return EXIT_SUCCESS;
     }
 
     while (input->pos > input->start_pos && input->pos != 0 && input->buffer[input->pos - 1]) {
-        term_send(&tcaps.cursor_left);
+        tty_send(&tcaps.cursor_left);
         --input->pos;
     }
 
@@ -648,19 +649,19 @@ int io_cursor_end(Input* restrict input)
     }
 
     if (input->lines_y > input->current_y) {
-        term_send(&tcaps.cursor_hide);
+        tty_send(&tcaps.cursor_hide);
         input->current_y = input->lines_y - input->current_y;
         assert(input->current_y > 0);
-        term_send_n(&tcaps.cursor_down, input->current_y);
-        term_send(&tcaps.line_goto_bol);
-        term_send_n(&tcaps.cursor_right, term.size.x - term.pos.x - 1);
-        term_send(&tcaps.cursor_show);
+        tty_send_n(&tcaps.cursor_down, input->current_y);
+        tty_send(&tcaps.line_goto_bol);
+        tty_send_n(&tcaps.cursor_right, term.size.x - term.pos.x - 1);
+        tty_send(&tcaps.cursor_show);
         input->pos = input->max_pos;
         return EXIT_SUCCESS;
     }
 
     while (input->buffer[input->pos]) {
-        term_send(&tcaps.cursor_right);
+        tty_send(&tcaps.cursor_right);
         ++input->pos;
     }
 
@@ -719,13 +720,13 @@ io_func io_funcs[] = {
 int io_next_escaped(Input* restrict input)
 {
     if (read(STDIN_FILENO, &input->c, 1) < 0) {
-        term_perror(NCSH_ERROR_STDIN);
+        tty_perror(NCSH_ERROR_STDIN);
         return EXIT_FAILURE;
     }
     // Expected after escape character for currently handled cases
     if (input->c != '[') { return EXIT_SUCCESS; }
     if (read(STDIN_FILENO, &input->c, 1) < 0) {
-        term_perror(NCSH_ERROR_STDIN);
+        tty_perror(NCSH_ERROR_STDIN);
         return EXIT_FAILURE;
     }
 
@@ -744,7 +745,7 @@ int io_next_escaped(Input* restrict input)
 int io_next(Input* restrict input)
 {
     if (read(STDIN_FILENO, &input->c, 1) < 0) {
-        term_perror(NCSH_ERROR_STDIN);
+        tty_perror(NCSH_ERROR_STDIN);
     }
 
     switch (input->c) {
@@ -793,7 +794,7 @@ void io_autocomplete(Input* restrict input)
             return;
         }
 
-        term_send(&tcaps.line_clr_to_eol);
+        tty_send(&tcaps.line_clr_to_eol);
         input->current_autocompletion[0] = '\0';
         input->current_autocompletion_len = 0;
         return;
@@ -814,11 +815,11 @@ void io_autocomplete(Input* restrict input)
         return;
     }
 
-    term_send(&tcaps.line_clr_to_eol);
-    term_color_set(AUTOCOMPLETE_DIM);
-    term_print("%s", input->current_autocompletion);
-    term_color_reset();
-    term_send_n(&tcaps.cursor_left, input->current_autocompletion_len);
+    tty_send(&tcaps.line_clr_to_eol);
+    tty_color_set(AUTOCOMPLETE_DIM);
+    tty_print("%s", input->current_autocompletion);
+    tty_color_reset();
+    tty_send_n(&tcaps.cursor_left, input->current_autocompletion_len);
 }
 
 int io_readline(Input* restrict input, Arena* restrict scratch)
@@ -826,7 +827,7 @@ int io_readline(Input* restrict input, Arena* restrict scratch)
     input->scratch = scratch;
     input->reprint_prompt = true;
     int rv = EXIT_SUCCESS;
-    term_init_input_mode(TTY_NONCANONICAL_MODE);
+    tty_init_input_mode(TTY_NONCANONICAL_MODE);
 
     while (1) {
         if (prompt_if_needed(input) != EXIT_SUCCESS) {
@@ -850,6 +851,6 @@ int io_readline(Input* restrict input, Arena* restrict scratch)
         io_autocomplete(input);
     }
 
-    term_deinit_input_mode();
+    tty_deinit_input_mode();
     return rv;
 }

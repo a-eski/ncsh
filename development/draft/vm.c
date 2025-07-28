@@ -2,8 +2,8 @@
 /* Background Jobs */
 // Implementation not working, still experimenting...
 /*[[nodiscard]]
-int vm_background_job_run(Args* rst args, Processes* rst processes,
-                          Tokens* rst tokens)
+int vm_background_job_run(Args* restrict args, Processes* restrict processes,
+                          Tokens* restrict tokens)
 {
     assert(processes);
     (void)tokens;
@@ -51,7 +51,7 @@ int vm_background_job_run(Args* rst args, Processes* rst processes,
     return NCSH_COMMAND_SUCCESS_CONTINUE;
 }*/
 
-/*void vm_background_jobs_check(Processes* rst processes)
+/*void vm_background_jobs_check(Processes* restrict processes)
 {
     assert(processes);
     (void)processes;

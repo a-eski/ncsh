@@ -5,7 +5,7 @@
 
 #include "../shell.h"
 
-void interpreter_init(Shell* rst shell);
+void interpreter_init(Shell* restrict shell);
 
 /* interpreter_run
  * Lex, parse, perform semantic analysis, and execute.
@@ -13,10 +13,10 @@ void interpreter_init(Shell* rst shell);
  * The scratch arena needs to be valid for scope of interpreter_run, since values are stored in the scratch arena.
  * Do not change scratch arena to Arena*.
  */
-int interpreter_run(Shell* rst shell, Arena scratch);
+int interpreter_run(Shell* restrict shell, Arena scratch);
 
 /* interpreter_run_noninteractive
  * Lex, parse, perform semantic analysis, and execute.
  * Does not need the scratch arena, since noninteractive has very straghtforward liftime.
  */
-int interpreter_run_noninteractive(char** rst argv, size_t argc, Shell* rst shell);
+int interpreter_run_noninteractive(char** restrict argv, size_t argc, Shell* restrict shell);

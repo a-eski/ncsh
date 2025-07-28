@@ -17,11 +17,11 @@
 #define TERMINFO_DIRS "" // this is defined at compile time.
 #endif /* ifndef TERMINFO_DIRS */
 
-#include "ttyterm/lib/uniutil.c"
-#include "ttyterm/lib/uninames.c"
-#include "ttyterm/lib/unibilium.c"
-#include "ttyterm/tcaps.c"
-#include "ttyterm/ttyterm.c"
+#include "ttyio/lib/uniutil.c"
+#include "ttyio/lib/uninames.c"
+#include "ttyio/lib/unibilium.c"
+#include "ttyio/tcaps.c"
+#include "ttyio/ttyio.c"
 
 #include "z/fzf.c"
 #include "z/z.c"

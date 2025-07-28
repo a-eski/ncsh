@@ -1,11 +1,11 @@
-/* Copyright ttyterm (C) by Alex Eski 2025 */
+/* Copyright ttyio (C) by Alex Eski 2025 */
 /* Licensed under GPLv3, see LICENSE for more information. */
 
 #include <string.h> // used by macros cap_New && cap_New_Lit
 
 #include "lib/unibilium.h"
 #include "tcaps.h"
-#include "ttyplatform.h" // used for including stdbool in case of Apple
+#include "ttyplatform.h" // used for including stdbool in cases its needed
 
 extern termcaps tcaps;
 extern unibi_term* uterm;

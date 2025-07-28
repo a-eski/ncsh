@@ -14,7 +14,7 @@
 __sig_atomic_t vm_child_pid;
 jmp_buf env;
 
-Commands* vm_next(Statements* rst stmts, Commands* cmds, Vm_Data* rst vm);
+Commands* vm_next(Statements* restrict stmts, Commands* cmds, Vm_Data* restrict vm);
 
 void vm_next_simple_test()
 {

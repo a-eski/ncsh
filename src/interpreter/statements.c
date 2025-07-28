@@ -2,13 +2,12 @@
 #include <stdint.h>
 
 #include "../arena.h"
-#include "../defines.h"
 #include "statements.h"
 
 #define DEFAULT_N 10
 #define MAX_N 40
 
-Commands* commands_alloc(Arena* rst scratch)
+Commands* commands_alloc(Arena* restrict scratch)
 {
     Commands* c = arena_malloc(scratch, 1, Commands);
     c->count = 0;
@@ -22,7 +21,7 @@ Commands* commands_alloc(Arena* rst scratch)
     return c;
 }
 
-void command_realloc(Commands* rst cmds, Arena* rst scratch)
+void command_realloc(Commands* restrict cmds, Arena* restrict scratch)
 {
     size_t c = cmds->cap;
     size_t new_cap = c *= 2;
@@ -35,7 +34,7 @@ void command_realloc(Commands* rst cmds, Arena* rst scratch)
         arena_realloc(scratch, new_cap, enum Ops, cmds->ops, c);
 }
 
-void commands_realloc(Statements* rst stmts, Arena* rst scratch)
+void commands_realloc(Statements* restrict stmts, Arena* restrict scratch)
 {
     size_t c = stmts->statements[stmts->count].commands->cap;
     size_t new_cap = c *= 2;
@@ -48,7 +47,7 @@ void commands_realloc(Statements* rst stmts, Arena* rst scratch)
         arena_realloc(scratch, new_cap, enum Ops, stmts->statements[stmts->count].commands->ops, c);
 }
 
-Commands* command_next(Commands* rst cmds, Arena* rst scratch)
+Commands* command_next(Commands* restrict cmds, Arena* restrict scratch)
 {
     if (!cmds->pos) {
         cmds->count = 1;
@@ -67,7 +66,7 @@ Commands* command_next(Commands* rst cmds, Arena* rst scratch)
     return cmds;
 }
 
-Commands* command_statement_next(Statements* rst stmts, Commands* cmds, enum Logic_Type type, Arena* rst scratch)
+Commands* command_statement_next(Statements* restrict stmts, Commands* cmds, enum Logic_Type type, Arena* restrict scratch)
 {
     cmds->count = cmds->pos == 0 ? 1 : cmds->pos; // update last commands count
 
@@ -76,7 +75,7 @@ Commands* command_statement_next(Statements* rst stmts, Commands* cmds, enum Log
     return stmts->statements[stmts->pos].commands;
 }
 
-void statements_init(Statements* rst stmts, Arena* rst scratch)
+void statements_init(Statements* restrict stmts, Arena* restrict scratch)
 {
     assert(stmts);
     stmts->statements = arena_malloc(scratch, DEFAULT_N, Statement);
@@ -87,12 +86,12 @@ void statements_init(Statements* rst stmts, Arena* rst scratch)
 }
 
 // TODO: implement?
-/*void statements_realloc(Statements* rst statements, Arena* rst scratch)
+/*void statements_realloc(Statements* restrict statements, Arena* restrict scratch)
 {
 
 }*/
 
-void statement_next(Statements* rst stmts, enum Logic_Type type, Arena* rst scratch)
+void statement_next(Statements* restrict stmts, enum Logic_Type type, Arena* restrict scratch)
 {
     stmts->statements[stmts->pos].type = type;
     ++stmts->statements[stmts->pos].count;

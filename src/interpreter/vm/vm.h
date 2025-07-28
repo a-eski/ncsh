@@ -7,6 +7,6 @@
 #include "../../shell.h"
 #include "../statements.h"
 
-int vm_execute(Statements* rst stmts, Shell* rst shell, Arena* rst scratch);
+int vm_execute(Statements* restrict stmts, Shell* restrict shell, Arena* restrict scratch);
 
-int vm_execute_noninteractive(Statements* rst stmts, Shell* rst shell);
+int vm_execute_noninteractive(Statements* restrict stmts, Shell* restrict shell);

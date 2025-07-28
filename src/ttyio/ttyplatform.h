@@ -1,6 +1,6 @@
-/* Copyright ttyterm (C) by Alex Eski 2025 */
+/* Copyright ttyio (C) by Alex Eski 2025 */
 /* Licensed under GPLv3, see LICENSE for more information. */
-/* ttyplatform.h: platform layer for the ttyterm library */
+/* ttyplatform.h: platform layer for the ttyio library */
 
 #ifndef TTYPLATFORM_GUARD_H_
 #define TTYPLATFORM_GUARD_H_
@@ -33,11 +33,11 @@
 #   if defined(__GNUC__) || defined(__clang__)
 #       ifndef unreachable
 #           define unreachable() __builtin_unreachable()
-#       endif
+#       endif /* ifndef unreachable */
 #   elif defined(_MSY_VER)
 #       ifndef unreachable
 #           define unreachable() __assume(0)
-#       endif
+#       endif /* ifndef unreachable */
 #   else
 #       ifndef unreachable
 #           define unreachable() assert(0 && "unreachable");

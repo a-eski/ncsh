@@ -16,7 +16,7 @@
 #define NCSH_USER_VAL "USER"
 #define NCSH_USER_VAR "$USER"
 
-void env_home_get(Str* rst output, Arena* rst arena);
+void env_home_get(Str* restrict output, Arena* restrict arena);
 
 Str env_path_get();
 
