@@ -15,9 +15,9 @@
 
 #define NCSH_DEFAULT_ALIASES 10
 #define NCSH_MAX_ALIASES 100
-size_t aliases_count;
-size_t aliases_cap;
-Alias* aliases;
+static size_t aliases_count;
+static size_t aliases_cap;
+static Alias* aliases;
 
 /* alias_check
  * Checks if the input matches to any of the user defined aliases for commands.

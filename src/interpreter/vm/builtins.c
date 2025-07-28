@@ -36,7 +36,7 @@ extern jmp_buf env;      // from main.c, used on unrecoverable failures
 extern int vm_output_fd; // from vm.c, used as fd for writing to stdout
 
 /* Shared builtins data and functions */
-int builtins_disabled_state = 0;
+static int builtins_disabled_state = 0;
 
 int builtins_write(int fd, char* buf, size_t len)
 {
@@ -124,12 +124,6 @@ int builtins_true(char** restrict buffer, size_t* restrict buf_lens);
 #define NCSH_FALSE "false"
 int builtins_false(char** restrict buffer, size_t* restrict buf_lens);
 
-/*#define NCSH_TRUE "true"
-int builtins_true(char** restrict buffer, size_t* restrict buf_lens);
-
-#define NCSH_FALSE "false"
-int builtins_false(char** restrict buffer, size_t* restrict buf_lens);*/
-
 // TODO: finish implementation
 #define NCSH_ENABLE "enable"
 int builtins_enable(char** restrict buffer, size_t* restrict buf_lens);
@@ -200,7 +194,7 @@ static const Builtin builtins[] = {
     {.flag = BF_UNSET, .length = sizeof(NCSH_UNSET), .value = NCSH_UNSET, .func = &builtins_unset},*/
 };
 
-static constexpr size_t builtins_count = sizeof(builtins) / sizeof(Builtin);
+static constexpr size_t builtins_count = sizeof(builtins) / sizeof(builtins[0]);
 
 /* Implementations */
 #define Z_COMMAND_NOT_FOUND_MESSAGE "ncsh z: command not found, options not supported."

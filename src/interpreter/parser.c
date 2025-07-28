@@ -15,9 +15,9 @@
 #include "parser.h"
 #include "statements.h"
 
-// TODO: get rid of globals
-Commands* commands;
-Shell* shell_ptr;
+// TODO: incorporate into structs
+static Commands* commands;
+static Shell* shell_ptr;
 
 bool parser_consume(Lexemes* restrict lexemes, size_t* restrict n, enum Ops expected)
 {

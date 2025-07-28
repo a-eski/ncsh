@@ -21,7 +21,7 @@
  * Size of the array is stored as constant expression in ops_2char_len
  * Bytecodes (opcodes) equivalents are stored in the array of enum Ops, ops_2char
  */
-const char* const restrict ops_2char_str[] = {STDIN_REDIRECTION_APPEND,
+static constexpr char ops_2char_str[11][2] = {STDIN_REDIRECTION_APPEND,
                                          STDOUT_REDIRECTION_APPEND,
                                          STDERR_REDIRECTION,
                                          STDOUT_AND_STDERR_REDIRECTION,
@@ -33,9 +33,9 @@ const char* const restrict ops_2char_str[] = {STDIN_REDIRECTION_APPEND,
                                          FI,
                                          CONDITION_END};
 
-constexpr size_t ops_2char_len = sizeof(ops_2char_str) / sizeof(char*);
+static constexpr size_t ops_2char_len = sizeof(ops_2char_str) / sizeof(ops_2char_str[0]);
 
-const enum Ops ops_2char[] = {OP_STDIN_REDIRECTION_APPEND,
+static constexpr enum Ops ops_2char[] = {OP_STDIN_REDIRECTION_APPEND,
                               OP_STDOUT_REDIRECTION_APPEND,
                               OP_STDERR_REDIRECTION,
                               OP_STDOUT_AND_STDERR_REDIRECTION,
@@ -52,12 +52,12 @@ const enum Ops ops_2char[] = {OP_STDIN_REDIRECTION_APPEND,
  * Size of the array is stored as constant expression in ops_3char_len
  * Bytecodes (opcodes) equivalents are stored in the array of enum Ops, ops_3char
  */
-const char* const restrict ops_3char_str[] = {STDERR_REDIRECTION_APPEND, STDOUT_AND_STDERR_REDIRECTION_APPEND, EQUALS,
+static constexpr char ops_3char_str[5][3] = {STDERR_REDIRECTION_APPEND, STDOUT_AND_STDERR_REDIRECTION_APPEND, EQUALS,
                                          LESS_THAN, GREATER_THAN};
 
-constexpr size_t ops_3char_len = sizeof(ops_3char_str) / sizeof(char*);
+static constexpr size_t ops_3char_len = sizeof(ops_3char_str) / sizeof(ops_3char_str[0]);
 
-const enum Ops ops_3char[] = {OP_STDERR_REDIRECTION_APPEND, OP_STDOUT_AND_STDERR_REDIRECTION_APPEND, OP_EQUALS,
+static constexpr enum Ops ops_3char[] = {OP_STDERR_REDIRECTION_APPEND, OP_STDOUT_AND_STDERR_REDIRECTION_APPEND, OP_EQUALS,
                               OP_LESS_THAN, OP_GREATER_THAN};
 
 [[nodiscard]]
@@ -228,14 +228,9 @@ enum Lexer_State: size_t {
 // clang-format on
 
 /* Lexer Internal Variables */
-/* These variables used in lexer_lex, they are not accessed anywhere else within the shell,
- * and should not be accessed anywhere else in the shell.
- * They were put here because they increased speed of the lexer in benchmarks.
- */
-char* restrict lex_buf;
-size_t lex_state;
-size_t lex_buf_pos;
-size_t lexeme_pos;
+static char* restrict lex_buf;
+static size_t lex_state;
+static size_t lex_buf_pos;
 
 [[nodiscard]]
 uint8_t lexer_op_process()
