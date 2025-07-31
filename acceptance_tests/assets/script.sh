@@ -1,4 +1,4 @@
-# /bin/ncsh
+#!/bin/env bash
 
 STR=hello
 echo $STR
@@ -13,6 +13,7 @@ ls > t.txt
 ls | sort > t.txt
 sort < t.txt
 ls >> t.txt
+rm t.txt
 
 # comment is ignored
 

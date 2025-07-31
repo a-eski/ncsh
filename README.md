@@ -142,12 +142,15 @@ Developed on Debian, so hopefully there are not issues with GLIBC, but please su
 For more details on compilation, see COMPILE.md
 
 ``` sh
+git submodule add https://github.com/a-eski/ttyio.git src/ttyio
 make
 
 # you can also build with clang. Requires clang 19+.
+git submodule add https://github.com/a-eski/ttyio.git src/ttyio
 make CC=clang
 
 # on ubuntu/debian, you may have to install and use clang-19 explicitly.
+git submodule add https://github.com/a-eski/ttyio.git src/ttyio
 make CC=clang-19
 ```
 

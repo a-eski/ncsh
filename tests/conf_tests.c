@@ -2,7 +2,7 @@
 #include <stdlib.h>
 
 #include "../src/eskilib/etest.h"
-#include "../src/config.h"
+#include "../src/conf.h"
 #include "lib/arena_test_helper.h"
 
 void config_init_test()

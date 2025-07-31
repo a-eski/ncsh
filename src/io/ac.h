@@ -16,7 +16,7 @@
  */
 typedef struct Autocompletion_Node_ {
     bool is_end_of_a_word;
-    uint8_t weight;
+    uint16_t weight;
     struct Autocompletion_Node_* nodes[NCSH_LETTERS];
 } Autocompletion_Node;
 
@@ -24,7 +24,7 @@ typedef struct Autocompletion_Node_ {
  * Used for storing results of autocompletion matching
  */
 typedef struct {
-    uint8_t weight;
+    uint16_t weight;
     char* value;
 } Autocompletion;
 

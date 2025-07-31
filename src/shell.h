@@ -3,7 +3,7 @@
 #pragma once
 
 #include "arena.h"
-#include "config.h"
+#include "conf.h"
 #include "interpreter/vars.h"
 #include "io/io.h"
 #include "z/z.h"
