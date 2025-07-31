@@ -42,7 +42,7 @@ else
   	TERMINFO_DIRS=""
   	TERMINFO=""
 endif
-TTYIO_DEFINES ?= -DTERMINFO='$(TERMINFO)' -DTERMINFO_DIRS='$(TERMINFO_DIRS)' -DTTY_USE_NEWLINE_FB
+TTYIO_DEFINES ?= -DTERMINFO='$(TERMINFO)' -DTERMINFO_DIRS='$(TERMINFO_DIRS)'
 TTYIO_FILES = ./src/ttyio/lib/unibilium.c ./src/ttyio/lib/uninames.c ./src/ttyio/lib/uniutil.c ./src/ttyio/tcaps.c ./src/ttyio/terminfo.c ./src/ttyio/ttyio.c
 TTYIO_IN = $(TTYIO_DEFINES) $(TTYIO_FILES)
 
@@ -53,7 +53,7 @@ obj/%.o: src/ttyio/lib/%.c
 	$(cc_with_flags) $(TTYIO_DEFINES) -c $< -o $@
 
 obj/%.o: src/ttyio/%.c
-	$(cc_with_flags) -c $< -o $@
+	$(cc_with_flags) -DTTY_USE_NEWLINE_FB -c $< -o $@
 
 obj/%.o: src/io/%.c
 	$(cc_with_flags) -c $< -o $@
