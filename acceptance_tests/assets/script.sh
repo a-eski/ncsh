@@ -1,5 +1,3 @@
-#!/bin/env bash
-
 STR=hello
 echo $STR
 STR2=there

@@ -177,37 +177,18 @@ uint8_t ac_first(char* restrict search, char* restrict match, Autocompletion_Nod
     return 1;
 }
 
-/*void ac_dump_dot(Autocompletion_Node* restrict node, size_t* restrict id, FILE* restrict file)
-{
-    size_t node_id = *id;
-    ++*id;
-    char c = index_to_char(node_id % NCSH_LETTERS);
-    if (c == '"')
-        fprintf(file, " node%zu [label=\"%s%s\"]\n", node_id, "\\\"", node->is_end_of_a_word ? "*" : "");
-    else
-        fprintf(file, " node%zu [label=\"%c%s\"]\n", node_id, c, node->is_end_of_a_word ? "*" : "");
-
-    for (size_t i = 0; i < NCSH_LETTERS; ++i) {
-        if (node->nodes[i]) {
-            size_t child_id = *id;
-            ac_dump_dot(node->nodes[i], id, file);
-            fprintf(file, "  node%zu -> node%zu\n", node_id, child_id);
-        }
-    }
-}*/
-
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wsign-conversion"
-static Autocompletion_Node* node_root;
-void dump_dot(FILE *sink, Autocompletion_Node *root)
+static Autocompletion_Node* dumpdot_node_root;
+void ac_dump_dot(FILE *sink, Autocompletion_Node *root)
 {
-    size_t index = root - node_root;
+    size_t index = root - dumpdot_node_root;
     for (size_t i = 0; i < NCSH_LETTERS; ++i) {
         if (root->nodes[i] != NULL) {
-            size_t child_index = root->nodes[i] - node_root;
+            size_t child_index = root->nodes[i] - dumpdot_node_root;
             fprintf(sink, "    Node_%zu [label=\"%c\"]\n", child_index, index_to_char(i));
             fprintf(sink, "    Node_%zu -> Node_%zu [label=\"%c\"]\n", index, child_index, index_to_char(i));
-            dump_dot(sink, root->nodes[i]);
+            ac_dump_dot(sink, root->nodes[i]);
         }
     }
 }
@@ -220,14 +201,14 @@ void ac_export_dot(Autocompletion_Node* restrict tree, char* restrict file_path)
         perror("Could not open file");
     }
 
-    node_root = tree;
+    dumpdot_node_root = tree;
     printf("[INFO] Starting export of dot file to %s\n", file_path);
 
     // fprintf(file, "digraph Trie {\n  node [shape=circle];\n");
     fprintf(file, "digraph Trie {\n");
     // size_t id = 0;
     // ac_dump_dot(tree, &id, file);
-    dump_dot(file, tree);
+    ac_dump_dot(file, tree);
     fprintf(file, "}\n");
 
     printf("[INFO] Finished export of dot file to %s\n", file_path);
