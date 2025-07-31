@@ -10,7 +10,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "config.h"
+#include "conf.h"
 #include "defines.h"
 #include "eskilib/eresult.h"
 #include "interpreter/interpreter.h"

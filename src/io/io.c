@@ -49,7 +49,7 @@ int io_init(Config* restrict config, Input* restrict input, Arena* restrict aren
     input->buffer = arena_malloc(arena, NCSH_MAX_INPUT, char);
 
     if (history_init(config->config_location, &input->history, arena) != E_SUCCESS) {
-        tty_perror("ncsh: Error when allocating data for and setting up history");
+        tty_perror("ncsh: Error occurred while setting up history");
         return EXIT_FAILURE;
     }
 

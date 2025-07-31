@@ -1,0 +1,3 @@
+[submodule "src/ttyio"]
+	path = src/ttyio
+	url = https://github.com/a-eski/ttyio.git

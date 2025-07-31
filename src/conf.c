@@ -18,14 +18,14 @@
 
 #include "alias.h"
 #include "arena.h"
-#include "config.h"
+#include "conf.h"
 #include "debug.h"
-#include "defines.h"
+#include "defines.h" // used for macro NCSH_MAX_INPUT
 #include "env.h"
 #include "eskilib/efile.h"
 #include "eskilib/eresult.h"
 #include "eskilib/str.h"
-#include "ttyio/ttyio.h"
+// #include "ttyio/ttyio.h"
 
 [[nodiscard]]
 enum eresult config_home_init(Config* restrict config, Arena* restrict arena)
@@ -191,7 +191,7 @@ enum eresult config_file_load(Config* restrict config, Arena* restrict arena, Ar
 {
     FILE* file = fopen(config->config_file.value, "r");
     if (!file || ferror(file) || feof(file)) {
-        tty_print("ncsh: would you like to create a config file '%s'? [Y/n]: ", config->config_file.value);
+        /*tty_print("ncsh: would you like to create a config file '%s'? [Y/n]: ", config->config_file.value);
 
         char character;
         if (!read(STDIN_FILENO, &character, 1)) {
@@ -204,18 +204,18 @@ enum eresult config_file_load(Config* restrict config, Arena* restrict arena, Ar
                 fclose(file);
             }
             return E_SUCCESS;
-        }
+        }*/
 
         file = fopen(config->config_file.value, "w");
         if (!file || ferror(file) || feof(file)) {
-            tty_perror("ncsh: Could not load or create config file");
+            // tty_perror("ncsh: Could not load or create config file");
             if (file) {
                 fclose(file);
             }
             return E_FAILURE_FILE_OP;
         }
-        tty_send(&tcaps.newline);
-        tty_puts("Created " RC_FILE " config file.");
+        // tty_send(&tcaps.newline);
+        // tty_puts("ncsh: Created " RC_FILE " config file.");
         fclose(file);
         return E_SUCCESS;
     }

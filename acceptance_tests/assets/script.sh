@@ -1,5 +1,3 @@
-# /bin/ncsh
-
 STR=hello
 echo $STR
 STR2=there
@@ -13,6 +11,7 @@ ls > t.txt
 ls | sort > t.txt
 sort < t.txt
 ls >> t.txt
+rm t.txt
 
 # comment is ignored
 

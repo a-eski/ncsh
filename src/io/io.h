@@ -5,7 +5,7 @@
 
 #include <stddef.h>
 
-#include "../config.h"
+#include "../conf.h"
 #include "ac.h"
 #include "history.h"
 

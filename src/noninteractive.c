@@ -8,7 +8,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "config.h"
+#include "conf.h"
 #include "eskilib/eresult.h"
 #include "interpreter/interpreter.h"
 #include "noninteractive.h"
@@ -37,27 +37,33 @@ int noninteractive(int argc, char** restrict argv)
     debug("ncsh running in noninteractive mode.");
     debug_argsv(argc, argv);
 
+    tty_init_caps();
+
     constexpr int arena_capacity = 1 << 16;
     char* memory = malloc(arena_capacity);
     if (!memory) {
         tty_color_set(TTYIO_RED_ERROR);
         tty_puts("ncsh: could not start up, not enough memory available.");
         tty_color_reset();
+        tty_deinit_caps();
         return EXIT_FAILURE;
     }
 
     Shell shell = {0};
     shell.arena = (Arena){.start = memory, .end = memory + (arena_capacity)};
 
+    int rv = EXIT_SUCCESS;
     if (config_init(&shell.config, &shell.arena, shell.arena) != E_SUCCESS) {
-        return EXIT_FAILURE;
+        rv = EXIT_FAILURE;
+        goto exit;
     }
 
     interpreter_init(&shell);
 
-    int exit_code = interpreter_run_noninteractive(argv + 1, (size_t)argc - 1, &shell);
+    rv = interpreter_run_noninteractive(argv + 1, (size_t)argc - 1, &shell);
 
+exit:
+    tty_deinit_caps();
     free(memory);
-
-    return exit_code;
+    return rv;
 }
