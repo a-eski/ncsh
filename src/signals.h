@@ -18,10 +18,8 @@ extern sig_atomic_t vm_child_pid;
 extern volatile int sigwinch_caught;
 
 /* Signal Handling */
-static void signal_handler(int sig, siginfo_t* info, void* context)
+static void signal_handler(int sig, siginfo_t* info, [[maybe_unused]] void* context)
 {
-    (void)context;
-
     if (sig == SIGWINCH) {
         sigwinch_caught = 1;
         return;

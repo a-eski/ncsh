@@ -7,7 +7,7 @@ require './acceptance_tests/tests/common'
 def z_add_entry_checked(row)
   @tty.send_line('z add ~/.config')
   row += 1
-  @tty.assert_row_ends_with(row, %(z: Added new entry to z database.))
+  @tty.assert_row_ends_with(row, 'z: Added new entry to z database.')
   row += 1
   row
 end

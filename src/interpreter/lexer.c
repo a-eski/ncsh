@@ -258,16 +258,21 @@ uint8_t lexer_op_process()
  */
 void lexer_lex(char* restrict line, size_t length, Lexemes* lexemes, Arena* restrict scratch)
 {
-    assert(line && scratch);
-    assert(!line[length - 1] && (length <= 2 || line[length - 2]));
+    if (!lexemes) {
+        return;
+    }
     assert(lexemes);
     lexemes_init(lexemes, scratch);
+    assert(line && scratch);
+    if (!line || !*line || !length) {
+        lexemes->count = 0;
+        return;
+    }
     if (length < 2 || length > NCSH_MAX_INPUT) {
         lexemes->count = 0;
         return;
     }
-
-    assert(length >= 2);
+    assert(!line[length - 1] && length >= 2);
 
     debug_lexer_input(line, length);
 

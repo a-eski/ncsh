@@ -13,7 +13,7 @@ test_flags =  $(debug_flags)
 
 release_flags = $(main_flags) -flto -O3 -ffast-math -march=native -DNDEBUG
 
-fuzz_flags = $(debug_flags)
+fuzz_flags = $(debug_flags) -fsanitize=fuzzer -DNDEBUG
 
 objects = obj/main.o obj/arena.o obj/noninteractive.o obj/io.o obj/pipe.o obj/redirection.o obj/vm.o obj/semantic_analyzer.o obj/interpreter.o obj/parser.o obj/prompt.o obj/efile.o obj/hashset.o obj/vars.o obj/lexer.o obj/lexemes.o obj/expansions.o obj/statements.o obj/builtins.o obj/history.o obj/ac.o obj/env.o obj/alias.o obj/conf.o obj/fzf.o obj/z.o obj/ttyio.o obj/tcaps.o obj/terminfo.o obj/unibilium.o obj/uninames.o obj/uniutil.o
 
@@ -214,7 +214,7 @@ tlx:
 fuzz_lexer:
 	chmod +x ./create_corpus_dirs.sh
 	./create_corpus_dirs.sh
-	clang-19 $(STD) $(fuzz_flags) ./tests/fuzz/lexer_fuzzing.c ./src/arena.c ./src/interpreter/lexer.c -o ./bin/lexer_fuzz
+	clang-19 $(STD) $(fuzz_flags) ./tests/fuzz/lexer_fuzzing.c ./src/interpreter/lexemes.c ./src/arena.c ./src/interpreter/lexer.c -o ./bin/lexer_fuzz
 	./bin/lexer_fuzz LEXER_CORPUS/ -detect_leaks=0 -rss_limit_mb=4096
 fp:
 	make fuzz_lexer

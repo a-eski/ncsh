@@ -17,7 +17,7 @@ end
 
 def basic_bad_command_test(row)
   assert_check_new_row(row)
-  @tty.send_keys_one_at_a_time(%(lss)) # send a bad command
+  @tty.send_keys_one_at_a_time('lss') # send a bad command
   @tty.assert_cursor_position(@start_column + 3, row)
   @tty.send_newline
   @tty.assert_row_ends_with(row, 'lss')

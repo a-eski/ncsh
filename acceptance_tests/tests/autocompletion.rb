@@ -2,10 +2,10 @@
 
 def tab_out_autocompletion_test(row)
   assert_check_new_row(row)
-  @tty.send_keys_one_at_a_time(%(ls))
+  @tty.send_keys_one_at_a_time('ls')
   @tty.send_keys(TTYtest::TAB)
   row += 1
-  @tty.assert_row_ends_with(row, %(ls > t.txt))
+  @tty.assert_row_ends_with(row, 'ls > t.txt')
   @tty.send_keys(TTYtest::TAB)
   row += TAB_AUTOCOMPLETE_ROWS
   assert_check_new_row(row)
@@ -16,7 +16,7 @@ end
 
 def arrows_move_tab_autocompletion_test(row)
   assert_check_new_row(row)
-  @tty.send_keys_one_at_a_time(%(ls))
+  @tty.send_keys_one_at_a_time('ls')
   @tty.send_keys(TTYtest::TAB)
   row += 1
   cursor_x_before = @tty.cursor_x
@@ -36,7 +36,7 @@ end
 
 def select_tab_autocompletion_test(row)
   assert_check_new_row(row)
-  @tty.send_keys_one_at_a_time(%(ls))
+  @tty.send_keys_one_at_a_time('ls')
   @tty.send_keys(TTYtest::TAB)
   row += 1
   @tty.send_down_arrows(5)
@@ -59,9 +59,9 @@ end
 
 def basic_autocompletion_test(row)
   assert_check_new_row(row)
-  @tty.send_keys_one_at_a_time(%(l))
+  @tty.send_keys_one_at_a_time('l')
   @tty.send_right_arrow
-  @tty.assert_row_ends_with(row, %(ls > t.txt))
+  @tty.assert_row_ends_with(row, 'ls > t.txt')
   @tty.send_keys_exact(TTYtest::CTRLU)
 
   test_passed('Basic autocompletion test')
@@ -70,16 +70,16 @@ end
 
 def backspace_and_delete_autocompletion_test(row)
   assert_check_new_row(row)
-  @tty.send_keys_one_at_a_time(%(ls > ))
+  @tty.send_keys_one_at_a_time('ls > ')
   @tty.send_backspaces(1)
   @tty.send_right_arrow
-  @tty.assert_row_ends_with(row, %(ls > t.txt))
+  @tty.assert_row_ends_with(row, 'ls > t.txt')
 
   @tty.send_left_arrows(8)
   @tty.send_deletes(8)
-  @tty.send_keys_one_at_a_time(%( |))
+  @tty.send_keys_one_at_a_time(' |')
   @tty.send_right_arrow
-  @tty.assert_row_ends_with(row, %(ls | sort | wc -c > t3.txt))
+  @tty.assert_row_ends_with(row, 'ls | sort | wc -c > t3.txt')
   @tty.send_newline
   row += 1
   @tty.assert_row(row, WC_C_LENGTH)
