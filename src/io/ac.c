@@ -199,15 +199,13 @@ void ac_export_dot(Autocompletion_Node* restrict tree, char* restrict file_path)
     FILE* file = fopen(file_path, "w");
     if (!file || ferror(file)) {
         perror("Could not open file");
+        return;
     }
 
     dumpdot_node_root = tree;
     printf("[INFO] Starting export of dot file to %s\n", file_path);
 
-    // fprintf(file, "digraph Trie {\n  node [shape=circle];\n");
     fprintf(file, "digraph Trie {\n");
-    // size_t id = 0;
-    // ac_dump_dot(tree, &id, file);
     ac_dump_dot(file, tree);
     fprintf(file, "}\n");
 

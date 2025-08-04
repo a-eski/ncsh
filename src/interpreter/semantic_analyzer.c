@@ -299,6 +299,8 @@ int semantic_analyzer_check(Lexemes* restrict lexemes)
 int semantic_analyzer_analyze(Lexemes* restrict lexemes)
 {
     assert(lexemes);
+    if (!lexemes || !lexemes->count)
+        return EXIT_FAILURE_CONTINUE;
 
     int result = syntax_validatator_first_arg_check(lexemes->ops[0]);
     if (result != EXIT_SUCCESS)

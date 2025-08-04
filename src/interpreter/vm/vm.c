@@ -571,13 +571,13 @@ int vm_run(Statements* restrict stmts, Shell* restrict shell, Arena* restrict sc
                 }
             }
 
+            vm_child_pid = vm_pid;
             if (vm.op_current == OP_PIPE)
                 pipe_stop(vm.command_position, stmts->pipes_count, &vm.pipes_io);
 
             if (vm.exec_result == EXECVP_FAILED)
                 break;
 
-            vm_child_pid = vm_pid;
             vm_status_set(vm_pid, &vm);
         }
 

@@ -34,7 +34,7 @@ end
 
 def basic_echo_test(row)
   assert_check_new_row(row)
-  @tty.send_keys_one_at_a_time(%(echo hello))
+  @tty.send_keys_one_at_a_time('echo hello')
   @tty.assert_cursor_position(@start_column + 10, row)
   @tty.send_newline
   @tty.assert_row_ends_with(row, 'echo hello')

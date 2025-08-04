@@ -84,11 +84,11 @@ end
 def piped_stdout_redirection_test(row)
   assert_check_new_row_noninteractive(row)
   @tty.send_line_then_sleep('./bin/ncsh "ls | sort -r > t2.txt"', SLEEP_TIME)
-  @tty.assert_row_ends_with(row, %("ls | sort -r > t2.txt"))
+  @tty.assert_row_ends_with(row, '"ls | sort -r > t2.txt"')
   row += 1
   assert_check_new_row_noninteractive(row)
   @tty.send_line_then_sleep('./bin/ncsh "head -1 t2.txt"', SLEEP_TIME)
-  @tty.assert_row_ends_with(row, %("head -1 t2.txt"))
+  @tty.assert_row_ends_with(row, '"head -1 t2.txt"')
   row += 1
   @tty.assert_row_starts_with(row, HEAD_ONE_ITEM)
   row += 1
@@ -103,11 +103,11 @@ end
 def multiple_piped_stdout_redirection_test(row)
   assert_check_new_row_noninteractive(row)
   @tty.send_line_then_sleep('./bin/ncsh ls | sort | wc -c > t3.txt', SLEEP_TIME)
-  @tty.assert_row_ends_with(row, %(ls | sort | wc -c > t3.txt))
+  @tty.assert_row_ends_with(row, 'ls | sort | wc -c > t3.txt')
   row += 1
   assert_check_new_row_noninteractive(row)
   @tty.send_line_then_sleep('./bin/ncsh "head -1 t3.txt"', SLEEP_TIME)
-  @tty.assert_row_ends_with(row, %("head -1 t3.txt"))
+  @tty.assert_row_ends_with(row, '"head -1 t3.txt"')
   row += 1
   @tty.assert_row(row, 240.to_s)
   row += 1
@@ -170,11 +170,11 @@ end
 def piped_stdin_redirection_test(row)
   assert_check_new_row_noninteractive(row)
   @tty.send_line_then_sleep('./bin/ncsh ls > t2.txt', SLEEP_TIME)
-  @tty.assert_row_ends_with(row, %(./bin/ncsh ls > t2.txt))
+  @tty.assert_row_ends_with(row, './bin/ncsh ls > t2.txt')
   row += 1
   assert_check_new_row_noninteractive(row)
   @tty.send_line_then_sleep('./bin/ncsh sort | wc -c < t2.txt', SLEEP_TIME)
-  @tty.assert_row_ends_with(row, %(./bin/ncsh sort | wc -c < t2.txt))
+  @tty.assert_row_ends_with(row, './bin/ncsh sort | wc -c < t2.txt')
   row += 1
   @tty.assert_row(row, (WC_C_LENGTH_NO_LOCAL_FILES.to_i + 't2.txt'.length + 1).to_s)
   row += 1
@@ -189,10 +189,10 @@ end
 def multiple_piped_stdin_redirection_test(row)
   assert_check_new_row_noninteractive(row)
   @tty.send_line_then_sleep('./bin/ncsh ls > t3.txt', SLEEP_TIME)
-  @tty.assert_row_ends_with(row, %(./bin/ncsh 'ls > t3.txt'))
+  @tty.assert_row_ends_with(row, "./bin/ncsh 'ls > t3.txt'")
   row += 1
   @tty.send_line_then_sleep("./bin/ncsh 'sort | head -1 | wc -l < t3.txt'", SLEEP_TIME)
-  @tty.assert_row_ends_with(row, %(./bin/ncsh 'sort | head -1 | wc -l < t3.txt'))
+  @tty.assert_row_ends_with(row, "./bin/ncsh 'sort | head -1 | wc -l < t3.txt'")
   row += 1
   @tty.assert_row(row, '13')
   row += 1
@@ -271,7 +271,7 @@ end
 # run tests
 def run_noninteractive_acceptance_tests
   row = 0
-  @tty = TTYtest.new_terminal(%(PS1='$ ' /bin/bash), width: 180, height: 80)
+  @tty = TTYtest.new_terminal("PS1='$ ' /bin/bash", width: 180, height: 80)
   row = basic_tests(row)
   row = pipe_tests(row)
   row = stdout_redirection_tests(row)
