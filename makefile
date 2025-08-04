@@ -13,7 +13,7 @@ test_flags =  $(debug_flags)
 
 release_flags = $(main_flags) -flto -O3 -ffast-math -march=native -DNDEBUG
 
-fuzz_flags = $(debug_flags) -fsanitize=fuzzer -DNDEBUG
+fuzz_flags = $(debug_flags) -fsanitize=fuzzer -DNDEBUG -O3
 
 objects = obj/main.o obj/arena.o obj/noninteractive.o obj/io.o obj/pipe.o obj/redirection.o obj/vm.o obj/semantic_analyzer.o obj/interpreter.o obj/parser.o obj/prompt.o obj/efile.o obj/hashset.o obj/vars.o obj/lexer.o obj/lexemes.o obj/expansions.o obj/statements.o obj/builtins.o obj/history.o obj/ac.o obj/env.o obj/alias.o obj/conf.o obj/fzf.o obj/z.o obj/ttyio.o obj/tcaps.o obj/terminfo.o obj/unibilium.o obj/uninames.o obj/uniutil.o
 
@@ -243,7 +243,7 @@ tz:
 fuzz_z:
 	chmod +x ./create_corpus_dirs.sh
 	./create_corpus_dirs.sh
-	clang-19 -std=c2x -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined,fuzzer -O3 -DNDEBUG -DZ_TEST ./src/arena.c ./tests/fuzz/z_fuzzing.c ./src/z/fzf.c ./src/z/z.c -o ./bin/z_fuzz
+	clang-19 $(fuzz_flags) -DZ_TEST ./src/arena.c ./tests/fuzz/z_fuzzing.c ./src/z/fzf.c ./src/z/z.c -o ./bin/z_fuzz
 	./bin/z_fuzz Z_CORPUS/ -detect_leaks=0 -rss_limit_mb=8192
 fz:
 	make fuzz_z
@@ -252,7 +252,7 @@ fz:
 fuzz_z_add:
 	chmod +x ./create_corpus_dirs.sh
 	./create_corpus_dirs.sh
-	clang-19 -std=c2x -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined,fuzzer -O3 -DNDEBUG -DZ_TEST ./src/arena.c ./tests/fuzz/z_add_fuzzing.c ./src/z/fzf.c ./src/z/z.c -o ./bin/z_add_fuzz
+	clang-19 $(fuzz_flags) -DZ_TEST ./src/arena.c ./tests/fuzz/z_add_fuzzing.c ./src/z/fzf.c ./src/z/z.c -o ./bin/z_add_fuzz
 	./bin/z_add_fuzz Z_ADD_CORPUS/ -detect_leaks=0 -rss_limit_mb=8192
 fza:
 	make fuzz_z_add
@@ -344,7 +344,7 @@ tc:
 fuzz_interpreter:
 	chmod +x ./create_corpus_dirs.sh
 	./create_corpus_dirs.sh
-	clang-19 -std=c2x -Wall -Wextra -Werror -pedantic-errors -Wformat=2 -fsanitize=address,undefined,fuzzer -O3 -DNDEBUG -DZ_TEST $(TTYIO_IN) ./src/arena.c ./src/interpreter/lexer.c ./src/eskilib/efile.c ./src/io/hashset.c ./src/interpreter/vars.c ./src/io/history.c ./src/z/fzf.c ./src/z/z.c ./src/env.c ./src/alias.c ./src/conf.c ./src/interpreter/vm/vm.c ./src/interpreter/semantic_analyzer.c ./src/interpreter/parser.c ./src/interpreter/vm/builtins.c ./src/interpreter/lexemes.c ./src/interpreter/statements.c ./src/interpreter/expansions.c ./src/interpreter/vm/pipe.c ./src/interpreter/vm/redirection.c ./src/interpreter/interpreter.c ./tests/fuzz/interpreter_fuzzing.c -o ./bin/interpreter_fuzz
+	clang-19 $(fuzz_flags) -DZ_TEST $(TTYIO_IN) ./src/arena.c ./src/interpreter/lexer.c ./src/eskilib/efile.c ./src/io/hashset.c ./src/interpreter/vars.c ./src/io/history.c ./src/z/fzf.c ./src/z/z.c ./src/env.c ./src/alias.c ./src/conf.c ./src/interpreter/vm/vm.c ./src/interpreter/semantic_analyzer.c ./src/interpreter/parser.c ./src/interpreter/vm/builtins.c ./src/interpreter/lexemes.c ./src/interpreter/statements.c ./src/interpreter/expansions.c ./src/interpreter/vm/pipe.c ./src/interpreter/vm/redirection.c ./src/interpreter/interpreter.c ./tests/fuzz/interpreter_fuzzing.c -o ./bin/interpreter_fuzz
 	./bin/interpreter_fuzz INTERPRETER_CORPUS/ -detect_leaks=0 -rss_limit_mb=8192
 
 # Format the project

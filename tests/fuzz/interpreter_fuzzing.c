@@ -19,19 +19,6 @@ int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size)
     shell.scratch_arena = scratch_arena;
     shell.input.buffer = (char*)Data;
     shell.input.pos = Size;
-    // if (config_init(&shell.config, &shell.arena, shell.scratch_arena) != E_SUCCESS) {
-    //     return NULL;
-    // }
-    //
-    // if (io_init(&shell.config, &shell.input, &shell.arena) != EXIT_SUCCESS) {
-    //     return NULL;
-    // }
-    //
-    // enum z_Result z_result = z_init(&shell.config.config_location, &shell.z_db, &shell.arena);
-    // if (z_result != Z_SUCCESS) {
-    //     return NULL;
-    // }
-
     interpreter_init(&shell);
 
     (void)interpreter_run(&shell, scratch_arena);
