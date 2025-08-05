@@ -198,7 +198,7 @@ void expansion_variable(char* restrict in, size_t len, Commands* restrict cmds, 
  */
 void expansion_alias(Lexemes* restrict lexemes, size_t n, Arena* restrict scratch)
 {
-    // TODO: alias expansion. Aliases with " " are not expaneded into multiple commands.
+    // TODO: alias expansion. Aliases with " " are not expanded into multiple commands.
     Str alias = alias_check(lexemes->vals[n], lexemes->lens[n]);
     if (!alias.length) {
         return;

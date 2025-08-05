@@ -1,3 +1,4 @@
+#include "io.h"
 #include <assert.h>
 #include <stdint.h>
 #include <unistd.h>
@@ -63,10 +64,10 @@ int io_init(Config* restrict config, Input* restrict input, Arena* restrict aren
 /* io_exit
  * Saves history changes and restores the terminal settings from before the shell was started.
  */
-void io_deinit(Input* restrict input)
+void io_deinit(Input* restrict input, Arena scratch)
 {
     if (input && input->history.file && input->history.entries) {
-        history_save(&input->history);
+        history_save(&input->history, &scratch);
     }
 }
 
@@ -535,7 +536,7 @@ int io_left_arrow_cursor(Input* restrict input)
 }
 
 [[nodiscard]]
-int io_up_arrow_history(Input* restrict input)
+int io_history_prev(Input* restrict input)
 {
     input->history_entry = history_get(input->history_position, &input->history);
     if (input->history_entry.length > 0) {
@@ -555,7 +556,7 @@ int io_up_arrow_history(Input* restrict input)
 }
 
 [[nodiscard]]
-int io_down_arrow_history(Input* restrict input)
+int io_history_next(Input* restrict input)
 {
     input->history_entry = history_get(input->history_position - 2, &input->history);
 
@@ -629,6 +630,16 @@ int io_delete(Input* restrict input)
 }
 
 [[nodiscard]]
+int io_exit_if_empty_or_del(Input* restrict input)
+{
+    if (!input->pos) {
+        return io_exit(input);
+    }
+
+    return io_delete(input);
+}
+
+[[nodiscard]]
 int io_cursor_home(Input* restrict input)
 {
     if (!input->pos) {
@@ -668,14 +679,74 @@ int io_cursor_end(Input* restrict input)
     return EXIT_SUCCESS;
 }
 
+[[nodiscard]]
+int io_forwards(Input* restrict input)
+{
+    if (!input->pos && !input->max_pos) {
+        return EXIT_SUCCESS;
+    }
+
+    while (input->pos < input->max_pos) {
+        tty_send(&tcaps.cursor_right);
+        ++input->pos;
+
+        switch (input->buffer[input->pos])
+        {
+        case ' ': return EXIT_SUCCESS;
+        case '\\': return EXIT_SUCCESS;
+        case '/': return EXIT_SUCCESS;
+        }
+    }
+
+    return EXIT_SUCCESS;
+}
+
+[[nodiscard]]
+int io_backwards(Input* restrict input)
+{
+    if (!input->pos && !input->max_pos) {
+        return EXIT_SUCCESS;
+    }
+
+    while (input->pos > 0) {
+        tty_send(&tcaps.cursor_left);
+        --input->pos;
+
+        switch (input->buffer[input->pos])
+        {
+        case ' ': return EXIT_SUCCESS;
+        case '\\': return EXIT_SUCCESS;
+        case '/': return EXIT_SUCCESS;
+        }
+    }
+
+    return EXIT_SUCCESS;
+}
+
+[[nodiscard]]
+int io_clear(Input* restrict input)
+{
+    tty_send(&tcaps.scr_clr);
+    input->reprint_prompt = true;
+    return EXIT_SUCCESS;
+}
+
 enum io_Type : uint_fast8_t {
     IO_ERROR = 0,
     IO_CHAR,
-    IO_CTRL_D,
-    IO_CTRL_W,
-    IO_CTRL_U,
-    IO_CTRL_A,
-    IO_TAB,
+    IO_CTRL_A,              // home
+    IO_CTRL_B,              // backwards
+    IO_CTRL_C,              // exit
+    IO_CTRL_D,              // exit if empty, delete if not
+    IO_CTRL_E,              // end
+    IO_CTRL_F,              // forwards
+    IO_CTRL_H,              // bs
+    IO_CTRL_N,              // next history
+    IO_CTRL_P,              // previous history
+    IO_CTRL_L,              // clear
+    IO_CTRL_U,              // delete line
+    IO_CTRL_W,              // delete word
+    IO_TAB,                 // ac select
     IO_BS,
     IO_ESCAPE_CHAR,
     IO_CARRIAGE_RETURN,
@@ -699,19 +770,27 @@ int io_next_escaped(Input* restrict input);
 io_func io_funcs[] = {
     io_error,
     io_char,
-    io_exit,                   // CTRL_D
-    io_word_delete,            // CTRL_W
+    io_cursor_home,            // CTRL_A
+    io_backwards,              // CTRL_B
+    io_exit,                   // CTRL_C
+    io_exit_if_empty_or_del,   // CTRL_D
+    io_cursor_end,             // CTRL_E
+    io_forwards,               // CTRL_F
+    io_backspace,              // CTRL_H
+    io_history_next,           // CTRL_N
+    io_history_prev,           // CTRL_P
+    io_clear,                  // CTRL_L
     io_line_delete,            // CTRL_U
-    io_autocompletions_select, // CTRL_A
+    io_word_delete,            // CTRL_W
     io_autocompletions_select, // TAB
     io_backspace,              // BS
-    io_next_escaped,          // ESCAPE CHARACTER
+    io_next_escaped,           // ESCAPE CHARACTER
     io_eol,                    // \r
     io_eol,                    // \n
     io_right_arrow,            // RIGHT_ARROW
     io_left_arrow_cursor,      // LEFT_ARROW
-    io_up_arrow_history,       // UP_ARROW
-    io_down_arrow_history,     // DOWN_ARROW
+    io_history_prev,           // UP_ARROW
+    io_history_next,           // DOWN_ARROW
     io_delete,                 // DELETE
     io_cursor_home,            // HOME
     io_cursor_end,             // END
@@ -746,13 +825,22 @@ int io_next(Input* restrict input)
 {
     if (read(STDIN_FILENO, &input->c, 1) < 0) {
         tty_perror(NCSH_ERROR_STDIN);
+        return EXIT_FAILURE_CONTINUE;
     }
 
     switch (input->c) {
-        case CTRL_D: return io_funcs[IO_CTRL_D](input);
-        case CTRL_W: return io_funcs[IO_CTRL_W](input);
-        case CTRL_U: return io_funcs[IO_CTRL_U](input);
         case CTRL_A: return io_funcs[IO_CTRL_A](input);
+        case CTRL_B: return io_funcs[IO_CTRL_B](input);
+        case CTRL_C: return io_funcs[IO_CTRL_C](input);
+        case CTRL_D: return io_funcs[IO_CTRL_D](input);
+        case CTRL_E: return io_funcs[IO_END](input);
+        case CTRL_F: return io_funcs[IO_CTRL_F](input);
+        case CTRL_H: return io_funcs[IO_CTRL_H](input);
+        case CTRL_N: return io_funcs[IO_CTRL_N](input);
+        case CTRL_P: return io_funcs[IO_CTRL_P](input);
+        case CTRL_L: return io_funcs[IO_CTRL_L](input);
+        case CTRL_U: return io_funcs[IO_CTRL_U](input);
+        case CTRL_W: return io_funcs[IO_CTRL_W](input);
         case TAB_KEY: return io_funcs[IO_TAB](input);
         case BACKSPACE_KEY: return io_funcs[IO_BS](input);
         case ESCAPE_CHARACTER: return io_funcs[IO_ESCAPE_CHAR](input);

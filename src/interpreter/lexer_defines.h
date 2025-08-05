@@ -1,7 +1,5 @@
 #pragma once
 
-#define STRCMP(line, expected_lit) line[0] == expected_lit[0] && !memcmp(line, expected_lit, sizeof(expected_lit) - 1)
-
 // supported quotes
 #define SINGLE_QUOTE_KEY '\''
 #define DOUBLE_QUOTE_KEY '\"'

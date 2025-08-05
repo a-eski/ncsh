@@ -10,7 +10,7 @@
 
 // clang-format off
 
-#define NCSH_VERSION "0.0.5.4"
+#define NCSH_VERSION "0.0.5.5"
 
 /* EXIT_* Constants
  * Exit values used by a multitude of functions and areas in the shell.
@@ -40,6 +40,10 @@
 #define CMP_1(str1, str2) (str1[0] == str2[0])
 #define CMP_2(str1, str2) (str1[0] == str2[0] && str1[1] == str2[1])
 #define CMP_3(str1, str2) (str1[0] == str2[0] && str1[1] == str2[1] && str1[2] == str2[2])
+
+/* STRCMP Macro function
+ */
+#define STRCMP(line, expected_lit) line[0] == expected_lit[0] && !memcmp(line, expected_lit, sizeof(expected_lit) - 1)
 
 /* Global failures
  * Failures the system cannot recover from so the shell terminates.

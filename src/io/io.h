@@ -26,6 +26,7 @@ typedef struct {
     size_t pos;
     size_t max_pos;
     char* buffer;
+    char* yank;
 
     // position relative to start line of prompt
     size_t current_y;
@@ -59,4 +60,4 @@ int io_readline(Input* restrict input, Arena* restrict scratch_arena);
 /* io_deinit
  * Saves history changes
  */
-void io_deinit(Input* restrict input);
+void io_deinit(Input* restrict input, Arena scratch);

@@ -99,7 +99,7 @@ void cleanup(char* restrict shell_memory, Shell* restrict shell)
         return;
     }
     if (shell->input.buffer) {
-        io_deinit(&shell->input);
+        io_deinit(&shell->input, shell->scratch_arena);
     }
     if (shell->z_db.database_file) {
         z_exit(&shell->z_db);

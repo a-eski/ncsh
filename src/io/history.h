@@ -25,7 +25,7 @@ typedef struct {
 /* History Setup and Manipulation */
 enum eresult history_init(Str config_location, History* restrict history, Arena* restrict arena);
 
-enum eresult history_save(History* restrict history);
+enum eresult history_save(History* restrict history, Arena* restrict scratch);
 
 enum eresult history_add(char* restrict line, size_t length, History* restrict history, Arena* restrict arena);
 

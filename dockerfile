@@ -11,4 +11,4 @@ WORKDIR /ncsh
 COPY . /ncsh
 ENTRYPOINT [ "/bin/bash", "-l", "-c" ]
 
-CMD [ "./tests_it.sh" ]
+CMD [ "./acceptance_tests.sh" ]

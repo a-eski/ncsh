@@ -175,9 +175,9 @@ enum eresult history_init(Str config_location, History* restrict history, Arena*
 }
 
 [[nodiscard]]
-enum eresult history_clean(History* restrict history, Arena* restrict arena, Arena scratch_arena)
+enum eresult history_clean__(History* restrict history, Arena* restrict scratch)
 {
-    assert(history && arena && scratch_arena.start);
+    assert(history && scratch);
     if (!history->count || !history->entries[0].value) {
         return E_FAILURE_NULL_REFERENCE;
     }
@@ -185,7 +185,7 @@ enum eresult history_clean(History* restrict history, Arena* restrict arena, Are
     tty_print("ncsh history: starting to clean history with %zu entries.\n", history->count);
 
     Hashset hset = {0};
-    hashset_malloc(0, &scratch_arena, &hset);
+    hashset_malloc(0, scratch, &hset);
 
     FILE* file = fopen(history->file, "w");
     if (!file) {
@@ -199,7 +199,7 @@ enum eresult history_clean(History* restrict history, Arena* restrict arena, Are
         }
 
         if (!hashset_exists(history->entries[i].value, &hset)) {
-            hashset_set(history->entries[i], &scratch_arena, &hset);
+            hashset_set(history->entries[i], scratch, &hset);
 
             if (!fputs(history->entries[i].value, file)) {
                 tty_perror("ncsh history: Error writing to file");
@@ -216,8 +216,21 @@ enum eresult history_clean(History* restrict history, Arena* restrict arena, Are
 
     fclose(file);
 
+    return E_SUCCESS;
+}
+
+[[nodiscard]]
+enum eresult history_clean(History* restrict history, Arena* restrict arena, Arena scratch)
+{
     enum eresult result;
-    if ((result = history_reload(history, arena)) != E_SUCCESS) {
+    result = history_clean__(history, &scratch);
+    if (result != E_SUCCESS) {
+        tty_fputs("ncsh history: Error when cleaning history data.", stderr);
+        return result;
+    }
+
+    result = history_reload(history, arena);
+    if (result != E_SUCCESS) {
         tty_perror("ncsh history: Error when reloading data from history file");
         return result;
     }
@@ -227,10 +240,14 @@ enum eresult history_clean(History* restrict history, Arena* restrict arena, Are
     return E_SUCCESS;
 }
 
-enum eresult history_save(History* restrict history)
+enum eresult history_save(History* restrict history, Arena* restrict scratch)
 {
     if (!history || !history->count || !history->entries || !history->entries[0].value) {
         return E_FAILURE_NULL_REFERENCE;
+    }
+
+    if (history->count > NCSH_MAX_HISTORY_FILE) {
+        return history_clean__(history, scratch);
     }
 
     size_t pos = history->count > NCSH_MAX_HISTORY_FILE ? history->count - NCSH_MAX_HISTORY_FILE : 0;
@@ -348,9 +365,9 @@ int history_command_count(History* restrict history)
 }
 
 [[nodiscard]]
-int history_command_clean(History* restrict history, Arena* restrict arena, Arena* restrict scratch_arena)
+int history_command_clean(History* restrict history, Arena* restrict arena, Arena* restrict scratch)
 {
-    if (history_clean(history, arena, *scratch_arena) != E_SUCCESS) {
+    if (history_clean(history, arena, *scratch) != E_SUCCESS) {
         return EXIT_FAILURE_CONTINUE;
     }
 
@@ -377,13 +394,13 @@ void history_remove_entries_shift(size_t offset, History* restrict history)
 
 [[nodiscard]]
 int history_command_remove(char* restrict value, size_t value_len, History* restrict history, Arena* restrict arena,
-                           Arena* restrict scratch_arena)
+                           Arena* restrict scratch)
 {
     assert(value);
     assert(value_len > 0);
     assert(history);
 
-    if (history_clean(history, arena, *scratch_arena) != E_SUCCESS) {
+    if (history_clean(history, arena, *scratch) != E_SUCCESS) {
         return EXIT_FAILURE_CONTINUE;
     }
 
