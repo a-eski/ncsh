@@ -20,6 +20,7 @@
 #include "ttyio/lib/uniutil.c"
 #include "ttyio/lib/uninames.c"
 #include "ttyio/lib/unibilium.c"
+#include "ttyio/terminfo.c"
 #include "ttyio/tcaps.c"
 #include "ttyio/ttyio.c"
 
@@ -48,7 +49,7 @@
 
 #include "alias.c"
 #include "arena.c"
-#include "config.c"
+#include "conf.c"
 #include "env.c"
 
 #include "main.c"

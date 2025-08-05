@@ -23,7 +23,7 @@ void history_load_file_not_exists_test()
     eassert(file != NULL);
     fclose(file);
 
-    history_save(&history);
+    history_save(&history, &arena);
     ARENA_TEST_TEARDOWN;
 }
 
@@ -40,7 +40,7 @@ void history_load_file_exists_test()
     eassert(file != NULL);
     fclose(file);
 
-    history_save(&history);
+    history_save(&history, &arena);
     ARENA_TEST_TEARDOWN;
 }
 
@@ -57,7 +57,7 @@ void history_get_empty_file_test()
     Str entry = history_get(0, &history);
     eassert(entry.length == 0);
 
-    history_save(&history);
+    history_save(&history, &arena);
     ARENA_TEST_TEARDOWN;
 }
 
@@ -89,7 +89,7 @@ void history_get_position_gt_history_count_test()
     // set history count back to avoid segv
     history.count = 0;
 
-    history_save(&history);
+    history_save(&history, &arena);
     ARENA_TEST_TEARDOWN;
 }
 
@@ -113,7 +113,7 @@ void history_get_position_equals_history_count_test()
     // set history count back to avoid segv
     history.count = 0;
 
-    history_save(&history);
+    history_save(&history, &arena);
     ARENA_TEST_TEARDOWN;
 }
 
@@ -133,7 +133,7 @@ void history_get_position_gt_max_test()
     eassert(entry.length == 0);
     eassert(entry.value == NULL);
 
-    history_save(&history);
+    history_save(&history, &arena);
     ARENA_TEST_TEARDOWN;
 }
 
@@ -150,7 +150,7 @@ void history_save_adds_to_file()
     result = history_add("ls\0", len, &history, &arena);
     eassert(result == E_SUCCESS);
 
-    history_save(&history);
+    history_save(&history, &arena);
 
     FILE* file = fopen(NCSH_HISTORY_FILE, "r");
     eassert(file != NULL);
@@ -183,7 +183,7 @@ void history_save_adds_multiple_to_file()
     result = history_add("echo hello\0", echo_hello_len, &history, &arena);
     eassert(result == E_SUCCESS);
 
-    history_save(&history);
+    history_save(&history, &arena);
 
     FILE* file = fopen(NCSH_HISTORY_FILE, "r");
     eassert(file != NULL);
@@ -223,7 +223,7 @@ void history_get_position_last_entry_test()
     eassert(entry.length != 0);
     eassert(entry.value != NULL);
 
-    history_save(&history);
+    history_save(&history, &arena);
     ARENA_TEST_TEARDOWN;
 }
 
@@ -248,7 +248,7 @@ void history_load_and_get_entries_test()
     eassert(entry.length == 3);
     eassert(memcmp(entry.value, "ls\0", entry.length) == 0);
 
-    history_save(&history);
+    history_save(&history, &arena);
     ARENA_TEST_TEARDOWN;
 }
 
@@ -284,7 +284,7 @@ void history_load_and_get_entries_then_add_entries_test()
     eassert(entry.length == 11);
     eassert(memcmp(entry.value, "echo hello\0", entry.length) == 0);
 
-    history_save(&history);
+    history_save(&history, &arena);
     ARENA_TEST_TEARDOWN;
 }
 
