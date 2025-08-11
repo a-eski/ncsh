@@ -2,6 +2,7 @@
 /* hashset.c: Simple hashset implementation */
 
 #include <assert.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -19,10 +20,9 @@ void hashset_malloc(size_t capacity, Arena* restrict arena, Hashset* restrict hs
 #define ESKILIB_FNV_PRIME 16777619
 
 // 64-bit FNV-1a hash
-uint64_t hashset_key(char* restrict str)
+uint64_t hashset_hash(char* restrict str, uint64_t seed)
 {
-    register uint64_t i;
-
+    register uint64_t i = seed;
     for (i = ESKILIB_FNV_OFFSET; *str; str++) {
         i += (i << 1) + (i << 4) + (i << 7) + (i << 8) + (i << 24);
         i ^= (uint64_t)*str;
@@ -33,7 +33,7 @@ uint64_t hashset_key(char* restrict str)
 
 Str hashset_get(char* restrict key, Hashset* restrict hset)
 {
-    uint64_t hash = hashset_key(key);
+    uint64_t hash = hashset_hash(key, (uintptr_t)hset);
     size_t index = (size_t)(hash & (uint64_t)(hset->capacity - 1));
 
     while (hset->entries[index].key) {
@@ -52,7 +52,7 @@ Str hashset_get(char* restrict key, Hashset* restrict hset)
 
 bool hashset_exists(char* restrict key, Hashset* restrict hset)
 {
-    uint64_t hash = hashset_key(key);
+    uint64_t hash = hashset_hash(key, (uintptr_t)hset);
     size_t index = (size_t)(hash & (uint64_t)(hset->capacity - 1));
 
     while (hset->entries[index].key) {
@@ -69,9 +69,9 @@ bool hashset_exists(char* restrict key, Hashset* restrict hset)
     return false;
 }
 
-char* hashset_set_entry(Hashset_Entry* restrict entries, size_t capacity, Str val, size_t* plength)
+char* hashset_set_entry(uint64_t seed, Hashset_Entry* restrict entries, size_t capacity, Str val, size_t* plength)
 {
-    uint64_t hash = hashset_key(val.value);
+    uint64_t hash = hashset_hash(val.value, seed);
     size_t index = (size_t)(hash & (uint64_t)(capacity - 1));
 
     while (entries[index].key) {
@@ -108,7 +108,7 @@ bool hashset_expand(Arena* restrict arena, Hashset* restrict hset)
     for (size_t i = 0; i < hset->capacity; i++) {
         Hashset_Entry entry = hset->entries[i];
         if (entry.key != NULL) {
-            hashset_set_entry(new_entries, new_capacity, entry.value, NULL);
+            hashset_set_entry((uintptr_t)hset, new_entries, new_capacity, entry.value, NULL);
         }
     }
 
@@ -130,5 +130,5 @@ char* hashset_set(Str val, Arena* restrict arena, Hashset* restrict hset)
         }
     }
 
-    return hashset_set_entry(hset->entries, hset->capacity, val, &hset->size);
+    return hashset_set_entry((uintptr_t)hset, hset->entries, hset->capacity, val, &hset->size);
 }

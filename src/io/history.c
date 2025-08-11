@@ -222,6 +222,8 @@ enum eresult history_clean__(History* restrict history, Arena* restrict scratch)
 [[nodiscard]]
 enum eresult history_clean(History* restrict history, Arena* restrict arena, Arena scratch)
 {
+    assert(arena);
+
     enum eresult result;
     result = history_clean__(history, &scratch);
     if (result != E_SUCCESS) {

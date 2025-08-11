@@ -3,6 +3,7 @@
 /* currently very simple implementation using FNV-1a hash and linear probing */
 
 #include <assert.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -21,9 +22,9 @@ void vars_malloc(Arena* restrict arena, Vars* restrict vars)
 
 // 64-bit FNV-1a hash
 [[nodiscard]]
-uint64_t vars_key(char* restrict str)
+uint64_t vars_hash(char* restrict str, uint64_t seed)
 {
-    register uint64_t i;
+    register uint64_t i = seed;
 
     for (i = VARS_FNV_OFFSET; *str; str++) {
         i += (i << 1) + (i << 4) + (i << 7) + (i << 8) + (i << 24);
@@ -36,7 +37,7 @@ uint64_t vars_key(char* restrict str)
 [[nodiscard]]
 Str* vars_get(char* restrict key, Vars* restrict vars)
 {
-    uint64_t hash = vars_key(key);
+    uint64_t hash = vars_hash(key, (uintptr_t)vars);
     size_t index = (size_t)(hash & (uint64_t)(vars->capacity - 1));
 
     while (vars->entries[index].key) {
@@ -56,7 +57,7 @@ Str* vars_get(char* restrict key, Vars* restrict vars)
 [[nodiscard]]
 bool vars_exists(char* restrict key, Vars* restrict vars)
 {
-    uint64_t hash = vars_key(key);
+    uint64_t hash = vars_hash(key, (uintptr_t)vars);
     size_t index = (size_t)(hash & (uint64_t)(vars->capacity - 1));
 
     while (vars->entries[index].key) {
@@ -74,9 +75,9 @@ bool vars_exists(char* restrict key, Vars* restrict vars)
 }
 
 [[nodiscard]]
-char* vars_set_entry(Vars_Entry* restrict entries, size_t capacity, char* restrict key, Str* restrict val, size_t* restrict plength)
+char* vars_set_entry(uint64_t seed, Vars_Entry* restrict entries, size_t capacity, char* restrict key, Str* restrict val, size_t* restrict plength)
 {
-    uint64_t hash = vars_key(key);
+    uint64_t hash = vars_hash(key, seed);
     size_t index = (size_t)(hash & (uint64_t)(capacity - 1));
 
     while (entries[index].key) {
@@ -114,7 +115,7 @@ bool vars_expand(char* restrict key, Arena* restrict arena, Vars* restrict vars)
     for (size_t i = 0; i < vars->capacity; i++) {
         Vars_Entry entry = vars->entries[i];
         if (entry.key != NULL) {
-            if (!vars_set_entry(new_entries, new_capacity, key, &entry.value, NULL))
+            if (!vars_set_entry((uintptr_t)vars, new_entries, new_capacity, key, &entry.value, NULL))
                 return false;
         }
     }
@@ -138,5 +139,5 @@ char* vars_set(char* restrict key, Str* restrict val, Arena* restrict arena, Var
         }
     }
 
-    return vars_set_entry(vars->entries, vars->capacity, key, val, &vars->size);
+    return vars_set_entry((uintptr_t)vars, vars->entries, vars->capacity, key, val, &vars->size);
 }

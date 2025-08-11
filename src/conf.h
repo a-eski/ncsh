@@ -4,20 +4,11 @@
 #pragma once
 
 #include "arena.h"
+#include "types.h"
 #include "eskilib/eresult.h"
-#include "eskilib/str.h"
 
 #define NCSH "ncsh"
 #define DOT_CONFIG ".config"
 #define RC_FILE "ncshrc"
 
-/* Config
- * Stores home location, config location, and full path to the config file.
- */
-typedef struct {
-    Str home_location;
-    Str config_location;
-    Str config_file;
-} Config;
-
-enum eresult config_init(Config* restrict config, Arena* restrict arena, Arena scratch_arena);
+enum eresult config_init(Shell* shell, Arena scratch_arena);

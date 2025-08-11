@@ -3,10 +3,14 @@
 
 #pragma once
 
+#include <assert.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "edefines.h"
+#include "../arena.h"
 
 #define Str_Empty ((Str){.value = NULL, .length = 0})
 
@@ -52,4 +56,72 @@ enodiscard static inline bool estrcmp_s(Str val, Str val2)
     }
 
     return !val.value || !memcmp(val.value, val2.value, val.length);
+}
+
+/* estrsplit
+ * Split a string in the form of "str_one{splitter}str_two".
+ * If the splitter is in last position, null is returned.
+ * Returns: NULL if invalid input or splitter pos or an array of Strs length 2.
+ */
+enodiscard static inline Str* estrsplit(Str val, char splitter, Arena* restrict a)
+{
+    assert(a);
+    if (!val.length) {
+        return NULL;
+    }
+
+    Str* strs = arena_malloc(a, 2, Str);
+    size_t i;
+    for (i = 0; i < val.length - 2; ++i) { // -1 for null terminator, -1 for not checking last place
+        if (val.value[i] == splitter) {
+            strs[1].length = val.length - i - 1;
+            assert(strs[1].length > 0);
+            strs[1].value = arena_malloc(a, strs[1].length, char);
+            memcpy(strs[1].value, val.value + i + 1, strs[1].length - 1);
+            break;
+        }
+    }
+    if (i == 0 || !strs[1].length) {
+        return NULL;
+    }
+    ++i;
+
+    assert(i > 0);
+    strs[0].value = arena_malloc(a, i, char);
+    memcpy(strs[0].value, val.value, i - 1);
+    strs[0].value[i] = '\0';
+    strs[0].length = i;
+
+    return strs;
+}
+
+enodiscard static inline Str* estrjoin(Str* v, Str* v2, char joiner, Arena* restrict a)
+{
+    assert(v); assert(v2); assert(a);
+    if (!v || !v2 || !v->length || !v2->length) {
+        return NULL;
+    }
+
+    Str* str = arena_malloc(a, 1, Str);
+    str->length = v->length + v2->length;
+    str->value = arena_malloc(a, str->length, char);
+    memcpy(str->value, v->value, v->length - 1);
+    str->value[v->length - 1] = joiner;
+    memcpy(str->value + v->length, v2->value, v2->length - 1);
+    return str;
+}
+
+enodiscard static inline Str* estrcat(Str* restrict v, Str* restrict v2, Arena* restrict a)
+{
+    assert(v); assert(v2); assert(a);
+    if (!v || !v2 || !v->length || !v2->length) {
+        return NULL;
+    }
+
+    Str* str = arena_malloc(a, 1, Str);
+    str->length = v->length + v2->length - 1;
+    str->value = arena_malloc(a, str->length, char);
+    memcpy(str->value, v->value, v->length - 1);
+    memcpy(str->value + v->length, v2->value, v->length - 1);
+    return str;
 }

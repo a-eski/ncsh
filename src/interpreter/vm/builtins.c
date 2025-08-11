@@ -1,6 +1,8 @@
 /* Copyright ncsh (C) by Alex Eski 2024 */
 /* builtins.h: shell builtins implementations for ncsh */
 
+/* --- this file is a mess and needs some work --- */
+
 #ifndef _DEFAULT_SOURCE
 #define _DEFAULT_SOURCE
 #endif /* ifndef _DEFAULT_SOURCE */
@@ -27,12 +29,12 @@
 #include "../../defines.h"
 #include "../../io/history.h"
 #include "../../ttyio/ttyio.h"
-#include "../../shell.h"
+#include "../../types.h"
 #include "../../z/z.h"
 #include "vm_types.h"
 
 /* External values */
-extern jmp_buf env;      // from main.c, used on unrecoverable failures
+extern jmp_buf env_jmp_buf;      // from main.c, used on unrecoverable failures
 extern int vm_output_fd; // from vm.c, used as fd for writing to stdout
 
 /* Shared builtins data and functions */
@@ -45,7 +47,7 @@ int builtins_write(int fd, char* buf, size_t len)
         return EOF;
     }
     else if (bytes_written == EOF) {
-        longjmp(env, FAILURE_BUILTIN_WRITE);
+        longjmp(env_jmp_buf, FAILURE_BUILTIN_WRITE);
     }
     return bytes_written;
 }
@@ -57,7 +59,7 @@ int builtins_writeln(int fd, char* buf, size_t len)
         return EOF;
     }
     else if (bytes_written == EOF) {
-        longjmp(env, FAILURE_BUILTIN_WRITE);
+        longjmp(env_jmp_buf, FAILURE_BUILTIN_WRITE);
     }
     return bytes_written;
 }

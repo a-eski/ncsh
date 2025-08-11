@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <unistd.h>
 
 #include "../../src/env.h"
@@ -14,12 +15,14 @@
 #define FILE "text.txt"
 #define ECHO "echo"
 
-constexpr size_t ls_len = sizeof(LS);
-constexpr size_t sort_len = sizeof(SORT);
-constexpr size_t dashl_len = sizeof(DASH_L);
-constexpr size_t job_len = sizeof(JOB);
-constexpr size_t file_len = sizeof(FILE);
-constexpr size_t echo_len = sizeof(ECHO);
+static char** envp_ptr;
+
+static constexpr size_t ls_len = sizeof(LS);
+static constexpr size_t sort_len = sizeof(SORT);
+static constexpr size_t dashl_len = sizeof(DASH_L);
+static constexpr size_t job_len = sizeof(JOB);
+static constexpr size_t file_len = sizeof(FILE);
+static constexpr size_t echo_len = sizeof(ECHO);
 
 void parser_parse_ls_test()
 {
@@ -574,7 +577,7 @@ void parser_parse_assignment_test()
     lexer_lex(line, len, &lexemes, &scratch_arena);
     Statements statements = {0};
     Shell shell = {0};
-    shell_init(&shell, &scratch_arena);
+    shell_init(&shell, &scratch_arena, envp_ptr);
     int res = parser_parse(&lexemes, &statements, &shell, &scratch_arena);
 
     eassert(!res);
@@ -595,7 +598,7 @@ void parser_parse_assignment_spaces_test()
     lexer_lex(line, len, &lexemes, &scratch_arena);
     Statements statements = {0};
     Shell shell = {0};
-    shell_init(&shell, &scratch_arena);
+    shell_init(&shell, &scratch_arena, envp_ptr);
     int res = parser_parse(&lexemes, &statements, &shell, &scratch_arena);
 
     eassert(!res);
@@ -616,7 +619,7 @@ void parser_parse_assignment_spaces_multiple_test()
     lexer_lex(line, len, &lexemes, &scratch_arena);
     Statements statements = {0};
     Shell shell = {0};
-    shell_init(&shell, &scratch_arena);
+    shell_init(&shell, &scratch_arena, envp_ptr);
     int res = parser_parse(&lexemes, &statements, &shell, &scratch_arena);
 
     eassert(!res);
@@ -628,20 +631,20 @@ void parser_parse_assignment_spaces_multiple_test()
 
 void parser_parse_variable_test()
 {
-    SCRATCH_ARENA_TEST_SETUP;
+    ARENA_TEST_SETUP;
 
     Shell shell = {0};
-    shell_init(&shell, &scratch_arena);
-    vars_malloc(&scratch_arena, &shell.vars);
-    vars_set("STR", &Str_New_Literal("hello"), &scratch_arena, &shell.vars);
+    shell_init(&shell, &arena, envp_ptr);
+    vars_malloc(&arena, &shell.vars);
+    vars_set("STR", &Str_New_Literal("hello"), &arena, &shell.vars);
 
     char* line = "echo $STR";
     size_t len = strlen(line) + 1;
 
     Lexemes lexemes = {0};
-    lexer_lex(line, len, &lexemes, &scratch_arena);
+    lexer_lex(line, len, &lexemes, &arena);
     Statements statements = {0};
-    int res = parser_parse(&lexemes, &statements, &shell, &scratch_arena);
+    int res = parser_parse(&lexemes, &statements, &shell, &arena);
 
     eassert(!res);
     eassert(statements.count == 1);
@@ -659,7 +662,7 @@ void parser_parse_variable_test()
     eassert(!statements.statements->commands->vals[2]);
     eassert(!statements.statements->commands->next);
 
-    SCRATCH_ARENA_TEST_TEARDOWN;
+    ARENA_TEST_TEARDOWN;
 }
 
 void parser_parse_variable_expansion_test()
@@ -667,7 +670,7 @@ void parser_parse_variable_expansion_test()
     SCRATCH_ARENA_TEST_SETUP;
 
     Shell shell = {0};
-    shell_init(&shell, &scratch_arena);
+    shell_init(&shell, &scratch_arena, envp_ptr);
     vars_malloc(&scratch_arena, &shell.vars);
     vars_set("STR", &Str_New_Literal("ls | sort"), &scratch_arena, &shell.vars);
 
@@ -709,7 +712,7 @@ void parser_parse_variable_and_test()
     lexer_lex(line, len, &lexemes, &scratch_arena);
     Statements statements = {0};
     Shell shell = {0};
-    shell_init(&shell, &scratch_arena);
+    shell_init(&shell, &scratch_arena, envp_ptr);
     int res = parser_parse(&lexemes, &statements, &shell, &scratch_arena);
 
     eassert(!res);
@@ -740,22 +743,23 @@ void parser_parse_variable_command_test()
 
     Lexemes lexemes = {0};
     lexer_lex(line, len, &lexemes, &scratch_arena);
+
     Statements statements = {0};
     Shell shell = {0};
-    shell_init(&shell, &scratch_arena);
+    shell_init(&shell, &scratch_arena, envp_ptr);
     int res = parser_parse(&lexemes, &statements, &shell, &scratch_arena);
 
     eassert(!res);
     eassert(statements.count == 1);
-    eassert(statements.statements->count == 3); // should be 1
-    // eassert(statements.statements->commands->count == 2);
+    eassert(statements.statements->count == 1);
+    eassert(statements.statements->commands->count == 1);
 
-    /*Commands* cmds = statements.statements->commands;
+    Commands* cmds = statements.statements->commands;
     eassert(!memcmp(cmds->vals[0], LS, ls_len - 1));
     eassert(cmds->lens[0] == ls_len);
     eassert(cmds->ops[0] == OP_CONSTANT);
 
-    eassert(!cmds->vals[1]);*/
+    eassert(!cmds->vals[1]);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -770,7 +774,9 @@ void parser_parse_home_test()
     Lexemes lexemes = {0};
     lexer_lex(line, len, &lexemes, &scratch_arena);
     Statements statements = {0};
-    int res = parser_parse(&lexemes, &statements, NULL, &scratch_arena);
+    Shell shell = {0};
+    shell_init(&shell, &scratch_arena, envp_ptr);
+    int res = parser_parse(&lexemes, &statements, &shell, &scratch_arena);
 
     eassert(!res);
     eassert(statements.count == 1);
@@ -783,8 +789,7 @@ void parser_parse_home_test()
     eassert(statements.statements->commands->ops[0] == OP_CONSTANT);
 
     // second command
-    Str home = {0};
-    env_home_get(&home, &scratch_arena);
+    Str home = Str_Get(getenv(NCSH_HOME_VAL));
     eassert(!memcmp(statements.statements->commands->vals[1], home.value, home.length - 1));
     eassert(statements.statements->commands->lens[1] == home.length);
     eassert(statements.statements->commands->ops[1] == OP_CONSTANT);
@@ -805,7 +810,9 @@ void parser_parse_home_at_start_test()
     Lexemes lexemes = {0};
     lexer_lex(line, len, &lexemes, &scratch_arena);
     Statements statements = {0};
-    int res = parser_parse(&lexemes, &statements, NULL, &scratch_arena);
+    Shell shell = {0};
+    shell_init(&shell, &scratch_arena, envp_ptr);
+    int res = parser_parse(&lexemes, &statements, &shell, &scratch_arena);
 
     eassert(!res);
     eassert(statements.count == 1);
@@ -818,8 +825,8 @@ void parser_parse_home_at_start_test()
     eassert(statements.statements->commands->ops[0] == OP_CONSTANT);
 
     // construct home expanded value from '~/snap'
-    Str home = {0};
-    env_home_get(&home, &scratch_arena);
+
+    Str home = Str_Get(getenv(NCSH_HOME_VAL));
     char* val = arena_malloc(&scratch_arena, statements.statements->commands->lens[1] + home.length - 1, char);
     memcpy(val, home.value, home.length - 1);
     memcpy(val + home.length - 1, "/snap", 5);
@@ -987,7 +994,9 @@ void parser_parse_tilde_home_shouldnt_crash()
     Lexemes lexemes = {0};
     lexer_lex(line, len, &lexemes, &scratch_arena);
     Statements statements = {0};
-    int res = parser_parse(&lexemes, &statements, NULL, &scratch_arena);
+    Shell shell = {0};
+    shell_init(&shell, &scratch_arena, envp_ptr);
+    int res = parser_parse(&lexemes, &statements, &shell, &scratch_arena);
     eassert(!res);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
@@ -1005,7 +1014,10 @@ void parser_parse_glob_question_and_tilde_home_shouldnt_crash()
     Lexemes lexemes = {0};
     lexer_lex(line, len, &lexemes, &scratch_arena);
     Statements statements = {0};
-    int res = parser_parse(&lexemes, &statements, NULL, &scratch_arena);
+    Shell shell = {0};
+    shell_init(&shell, &scratch_arena, envp_ptr);
+    int res = parser_parse(&lexemes, &statements, &shell, &scratch_arena);
+
     eassert(!res);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
@@ -1021,7 +1033,9 @@ void parser_parse_comment_test()
     Lexemes lexemes = {0};
     lexer_lex(line, len, &lexemes, &scratch_arena);
     Statements statements = {0};
-    int res = parser_parse(&lexemes, &statements, NULL, &scratch_arena);
+    Shell shell = {0};
+    shell_init(&shell, &scratch_arena, envp_ptr);
+    int res = parser_parse(&lexemes, &statements, &shell, &scratch_arena);
 
     eassert(!res);
     eassert(statements.count == 1);
@@ -1164,7 +1178,7 @@ void parser_parse_if_variable_test()
     SCRATCH_ARENA_TEST_SETUP;
 
     Shell shell = {0};
-    shell_init(&shell, &scratch_arena);
+    shell_init(&shell, &scratch_arena, envp_ptr);
     vars_malloc(&scratch_arena, &shell.vars);
     vars_set("VAL", &Str_New_Literal("1"), &scratch_arena, &shell.vars);
 
@@ -1666,8 +1680,12 @@ void parser_tests()
 }
 
 #ifndef TEST_ALL
-int main()
+int main([[maybe_unused]] int argc,
+         [[maybe_unused]] char** argv,
+         char** envp)
 {
+    envp_ptr = envp;
+
     parser_tests();
 
     return EXIT_SUCCESS;

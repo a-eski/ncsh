@@ -15,7 +15,7 @@
 #include <unistd.h>
 
 #include "../../defines.h"
-#include "../../shell.h"
+#include "../../types.h"
 #include "../../debug.h"
 #include "../../ttyio/ttyio.h"
 #include "builtins.h"
@@ -124,9 +124,14 @@ int vm_status_aggregate(Vm_Data* restrict vm)
 int vm_math_process(Vm_Data* restrict vm)
 {
     debug("evaluating math conditions");
+
+    char** buf = vm->buffer;
+    while (*buf && printf("%s\n", *buf) && ++buf);
+
     char* c1 = vm->buffer[0];
     enum Ops op = vm->op_current;
     char* c2 = vm->buffer[2];
+    assert(c1); assert(c2);
 
     bool result;
     switch (op) {

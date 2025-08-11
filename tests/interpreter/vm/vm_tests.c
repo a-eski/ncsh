@@ -12,7 +12,7 @@
 #include "../../lib/arena_test_helper.h"
 
 sig_atomic_t vm_child_pid;
-jmp_buf env;
+jmp_buf env_jmp_buf;
 
 // use a macro so line numbers are preserved
 #define vm_tester(input)                                                                                               \

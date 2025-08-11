@@ -43,10 +43,11 @@ void io_prompt_init()
  * Allocates memory that lives for the lifetime of the shell and is used by io to process user input.
  * Returns: exit status, EXIT_SUCCESS, EXIT_FAILURE, or value in defines.h (EXIT_...)
  */
-int io_init(Config* restrict config, Input* restrict input, Arena* restrict arena)
+int io_init(Config* restrict config, Env* restrict env, Input* restrict input, Arena* restrict arena)
 {
     io_prompt_init();
-    input->user = env_user_get();
+    Str user_key = Str_New_Literal(NCSH_USER_VAL);
+    input->user = env_add_or_get(env, user_key);
     input->buffer = arena_malloc(arena, NCSH_MAX_INPUT, char);
 
     if (history_init(config->config_location, &input->history, arena) != E_SUCCESS) {
@@ -186,7 +187,7 @@ int io_word_delete(Input* restrict input)
 }
 
 [[nodiscard]]
-int io_line_delete(Input* restrict input)
+int io_line_delete_forwards(Input* restrict input)
 {
     if (!input->pos && !input->max_pos) {
         return EXIT_SUCCESS;
@@ -198,6 +199,24 @@ int io_line_delete(Input* restrict input)
     memset(input->buffer, '\0', input->max_pos + 1);
     input->max_pos = 0;
     input->pos = 0;
+    input->lines_y = 0;
+    return EXIT_SUCCESS;
+}
+
+[[nodiscard]]
+int io_line_delete_backwards(Input* restrict input)
+{
+    if (!input->pos && !input->max_pos) {
+        return EXIT_SUCCESS;
+    }
+
+    tty_send_n(&tcaps.bs, input->pos);
+
+    memmove(input->buffer, input->buffer + input->pos + 1, input->max_pos - input->pos + 1);
+    input->buffer[input->pos + 1] = '\0';
+    tty_write(input->buffer, input->pos + 1);
+    tty_send(&tcaps.scr_clr_to_eos);
+    input->max_pos = input->pos;
     input->lines_y = 0;
     return EXIT_SUCCESS;
 }
@@ -549,9 +568,14 @@ int io_history_prev(Input* restrict input)
         memcpy(input->buffer, input->history_entry.value, input->pos);
 
         tty_write(input->buffer, input->pos);
-        io_adjust_line_if_needed(input);
+    }
+    else {
+        input->buffer[0] = '\0';
+        input->pos = 0;
+        input->max_pos = 0;
     }
 
+    io_adjust_line_if_needed(input);
     return EXIT_SUCCESS;
 }
 
@@ -578,7 +602,58 @@ int io_history_next(Input* restrict input)
     }
 
     io_adjust_line_if_needed(input);
+    return EXIT_SUCCESS;
+}
 
+[[nodiscard]]
+int io_history_beginning(Input* restrict input)
+{
+    input->history_position = input->history.count - 2;
+    input->history_entry = history_get(input->history_position, &input->history);
+
+    io_cursor_restore(input);
+    tty_send(&tcaps.line_clr_to_eol);
+
+    if (input->history_entry.length > 0) {
+        input->pos = input->history_entry.length - 1;
+        input->max_pos = input->history_entry.length - 1;
+        memcpy(input->buffer, input->history_entry.value, input->pos);
+
+        tty_write(input->buffer, input->pos);
+    }
+    else {
+        input->buffer[0] = '\0';
+        input->pos = 0;
+        input->max_pos = 0;
+    }
+
+    io_adjust_line_if_needed(input);
+    return EXIT_SUCCESS;
+}
+
+[[nodiscard]]
+int io_history_end(Input* restrict input)
+{
+    input->history_position = 0;
+    input->history_entry = history_get(0, &input->history);
+
+    io_cursor_restore(input);
+    tty_send(&tcaps.line_clr_to_eol);
+
+    if (input->history_entry.length > 0) {
+        input->pos = input->history_entry.length - 1;
+        input->max_pos = input->history_entry.length - 1;
+        memcpy(input->buffer, input->history_entry.value, input->pos);
+
+        tty_write(input->buffer, input->pos);
+    }
+    else {
+        input->buffer[0] = '\0';
+        input->pos = 0;
+        input->max_pos = 0;
+    }
+
+    io_adjust_line_if_needed(input);
     return EXIT_SUCCESS;
 }
 
@@ -680,6 +755,30 @@ int io_cursor_end(Input* restrict input)
 }
 
 [[nodiscard]]
+int io_cursor_forwards(Input* restrict input)
+{
+    if (input->pos == input->max_pos) {
+        return EXIT_SUCCESS;
+    }
+
+    tty_send(&tcaps.cursor_right);
+    ++input->pos;
+    return EXIT_SUCCESS;
+}
+
+[[nodiscard]]
+int io_cursor_backwards(Input* restrict input)
+{
+    if (input->pos == 0) {
+        return EXIT_SUCCESS;
+    }
+
+    tty_send(&tcaps.cursor_left);
+    --input->pos;
+    return EXIT_SUCCESS;
+}
+
+[[nodiscard]]
 int io_forwards(Input* restrict input)
 {
     if (!input->pos && !input->max_pos) {
@@ -741,10 +840,11 @@ enum io_Type : uint_fast8_t {
     IO_CTRL_E,              // end
     IO_CTRL_F,              // forwards
     IO_CTRL_H,              // bs
+    IO_CTRL_K,              // delete line backwards
     IO_CTRL_N,              // next history
     IO_CTRL_P,              // previous history
     IO_CTRL_L,              // clear
-    IO_CTRL_U,              // delete line
+    IO_CTRL_U,              // delete line forwards
     IO_CTRL_W,              // delete word
     IO_TAB,                 // ac select
     IO_BS,
@@ -761,7 +861,11 @@ enum io_Escaped_Type : uint_fast8_t {
     IO_DOWN_ARROW,
     IO_DEL,
     IO_HOME,
-    IO_END
+    IO_END,
+    IO_ALT_LT,                    // beginning of history
+    IO_ALT_GT,                    // end of history
+    IO_ALT_F,                     // move cursor forwards
+    IO_ALT_B,                     // move cursor backwards
 };
 
 typedef int (*io_func)(Input* restrict);
@@ -777,10 +881,11 @@ io_func io_funcs[] = {
     io_cursor_end,             // CTRL_E
     io_forwards,               // CTRL_F
     io_backspace,              // CTRL_H
+    io_line_delete_backwards,  // CTRL_K
     io_history_next,           // CTRL_N
     io_history_prev,           // CTRL_P
     io_clear,                  // CTRL_L
-    io_line_delete,            // CTRL_U
+    io_line_delete_forwards,   // CTRL_U
     io_word_delete,            // CTRL_W
     io_autocompletions_select, // TAB
     io_backspace,              // BS
@@ -794,6 +899,10 @@ io_func io_funcs[] = {
     io_delete,                 // DELETE
     io_cursor_home,            // HOME
     io_cursor_end,             // END
+    io_history_beginning,      // ALT-<
+    io_history_end,            // ALT->
+    io_cursor_forwards,        // ALT-f
+    io_cursor_backwards,       // ALT-b
 };
 
 int io_next_escaped(Input* restrict input)
@@ -803,7 +912,16 @@ int io_next_escaped(Input* restrict input)
         return EXIT_FAILURE;
     }
     // Expected after escape character for currently handled cases
-    if (input->c != '[') { return EXIT_SUCCESS; }
+    if (input->c != '[') {
+        // alt key combinations
+        switch (input->c) {
+            case 'b': return io_funcs[IO_ALT_B](input);
+            case 'f': return io_funcs[IO_ALT_F](input);
+            case '<': return io_funcs[IO_ALT_LT](input);
+            case '>': return io_funcs[IO_ALT_GT](input);
+            default: return EXIT_SUCCESS;
+        }
+    }
     if (read(STDIN_FILENO, &input->c, 1) < 0) {
         tty_perror(NCSH_ERROR_STDIN);
         return EXIT_FAILURE;
@@ -836,6 +954,7 @@ int io_next(Input* restrict input)
         case CTRL_E: return io_funcs[IO_END](input);
         case CTRL_F: return io_funcs[IO_CTRL_F](input);
         case CTRL_H: return io_funcs[IO_CTRL_H](input);
+        case CTRL_K: return io_funcs[IO_CTRL_K](input);
         case CTRL_N: return io_funcs[IO_CTRL_N](input);
         case CTRL_P: return io_funcs[IO_CTRL_P](input);
         case CTRL_L: return io_funcs[IO_CTRL_L](input);

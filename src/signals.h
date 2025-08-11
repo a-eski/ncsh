@@ -13,7 +13,7 @@
 
 #include "defines.h"
 
-extern jmp_buf env;
+extern jmp_buf env_jmp_buf;
 extern sig_atomic_t vm_child_pid;
 extern volatile int sigwinch_caught;
 
@@ -31,13 +31,13 @@ static void signal_handler(int sig, siginfo_t* info, [[maybe_unused]] void* cont
         if (!kill(target, sig)) {
             if (write(STDOUT_FILENO, "\n", 1) == -1) { // write is async/signal safe, do not use fflush, putchar, prinft
                 perror("ncsh: Error writing to standard output while processing a signal");
-                longjmp(env, FAILURE_SIG_HANDLER_WRITE);
+                longjmp(env_jmp_buf, FAILURE_SIG_HANDLER_WRITE);
             }
         }
         vm_child_pid = 0;
     }
     else { // jump to ncsh.c label exit to save history/autocompletions & z
-        longjmp(env, FAILURE_SIG_HANDLER);
+        longjmp(env_jmp_buf, FAILURE_SIG_HANDLER);
     }
 }
 

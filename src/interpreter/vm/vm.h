@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "../../shell.h"
+#include "../../types.h"
 #include "../statements.h"
 
 int vm_execute(Statements* restrict stmts, Shell* restrict shell, Arena* restrict scratch);

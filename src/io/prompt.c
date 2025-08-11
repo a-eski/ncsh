@@ -71,7 +71,7 @@ int prompt_short_directory_print(Input* restrict input)
     int printed = 0;
     if (prompt_data.show_user) {
         tty_color_set(USER_COLOR);
-        printed += tty_write(input->user.value, input->user.length);
+        printed += tty_write(input->user->value, input->user->length);
         printed += tty_putc(' ');
         tty_color_set(DIRECTORY_COLOR);
         printed += tty_write(directory, dir_len);
@@ -110,7 +110,7 @@ int prompt_directory_print(Input* restrict input)
     int printed = 0;
     if (prompt_data.show_user) {
         tty_color_set(USER_COLOR);
-        printed += tty_write(input->user.value, input->user.length);
+        printed += tty_write(input->user->value, input->user->length);
         printed += tty_putc(' ');
         tty_color_set(DIRECTORY_COLOR);
         printed += tty_print("%s", cwd);
@@ -145,7 +145,7 @@ int prompt_no_directory_print(Input* restrict input)
     int printed = 0;
     if (prompt_data.show_user) {
         tty_color_set(USER_COLOR);
-        printed += tty_write(input->user.value, input->user.length);
+        printed += tty_write(input->user->value, input->user->length);
         tty_send(&tcaps.color_reset);
         printed += tty_print(NCSH_PROMPT_ENDING_STRING);
         // printf(ncsh_GREEN "%s" WHITE_BRIGHT NCSH_PROMPT_ENDING_STRING, input->user.value);

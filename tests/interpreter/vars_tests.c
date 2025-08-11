@@ -26,7 +26,7 @@ void vars_add_one_test()
     vars_malloc(&scratch_arena, &vars);
 
     char* key = "hello";
-    Str val = {.value = "world", .length = 6};
+    Str val = Str_New_Literal("world");
     const char* res = vars_set(key, &val, &scratch_arena, &vars);
 
     eassert(res);
@@ -49,9 +49,9 @@ void vars_add_multiple_test()
     vars_malloc(&scratch_arena, &vars);
 
     char* key1 = "hello";
-    Str val1 = {.value = "world", .length = 6};
+    Str val1 = Str_New_Literal("world");
     char* key2 = "test";
-    Str val2 = {.value = "success", .length = 8};
+    Str val2 = Str_New_Literal("success");
 
     const char* res1 = vars_set(key1, &val1, &scratch_arena, &vars);
     const char* res2 = vars_set(key2, &val2, &scratch_arena, &vars);
@@ -85,7 +85,7 @@ void vars_add_duplicate_test()
     vars_malloc(&scratch_arena, &vars);
 
     char* key = "hello";
-    Str val = {.value = "world", .length = 6};
+    Str val = Str_New_Literal("world");
     const char* res = vars_set(key, &val, &scratch_arena, &vars);
     eassert(res);
     vars_set(key, &val, &scratch_arena, &vars);
