@@ -125,8 +125,14 @@ int vm_math_process(Vm_Data* restrict vm)
 {
     debug("evaluating math conditions");
 
+#ifdef NCSH_DEBUG
     char** buf = vm->buffer;
     while (*buf && printf("%s\n", *buf) && ++buf);
+#endif
+
+    if (!vm->buffer || !vm->buffer[0] || !vm->buffer[2]) {
+        return EXIT_FAILURE_CONTINUE;
+    }
 
     char* c1 = vm->buffer[0];
     enum Ops op = vm->op_current;
@@ -569,7 +575,8 @@ int vm_run(Statements* restrict stmts, Shell* restrict shell, Arena* restrict sc
                 if (vm.op_current == OP_PIPE)
                     pipe_connect(vm.command_position, stmts->pipes_count, &vm.pipes_io);
 
-                if ((vm.exec_result = execvp(vm.buffer[0], vm.buffer)) == EXECVP_FAILED) {
+                vm.exec_result = execvp(vm.buffer[0], vm.buffer);
+                if (vm.exec_result == EXECVP_FAILED) {
                     vm.end = true;
                     tty_perror("ncsh: Could not run command");
                     kill(getpid(), SIGTERM);

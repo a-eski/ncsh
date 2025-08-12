@@ -8,13 +8,7 @@
 #include "lexer.h"
 #include "parser.h"
 #include "semantic_analyzer.h"
-#include "vars.h"
 #include "vm/vm.h"
-
-void interpreter_init(Shell* restrict shell)
-{
-    vars_malloc(&shell->arena, &shell->vars);
-}
 
 [[nodiscard]]
 int interpreter_run(Shell* restrict shell, Arena scratch)

@@ -101,7 +101,7 @@ int parser_commands_process(Shell* shell, Lexemes* restrict lexemes, size_t* res
             commands->prev_op = OP_PIPE;
             continue;
         case OP_ASSIGNMENT:
-            expansion_assignment(lexemes, *n, &shell->vars, scratch);
+            expansion_assignment(lexemes, *n, shell);
             if (*n + 1 < lexemes->count && (lexemes->ops[*n + 1] == OP_AND || lexemes->ops[*n + 1] == OP_OR)) {
                 ++*n; // skip || or && on assignment, assigment not included in commands
             }
@@ -357,7 +357,7 @@ int parser_parse(Lexemes* restrict lexemes, Statements* stmts, Shell* restrict s
             if (commands->pos != 0) {
                 break;
             }
-            expansion_assignment(lexemes, i, &shell->vars, scratch);
+            expansion_assignment(lexemes, i, shell);
             if (i + 1 < lexemes->count && (lexemes->ops[i + 1] == OP_AND || lexemes->ops[i + 1] == OP_OR)) {
                 ++i; // skip || or && on assignment, assigment not included in commands
             }

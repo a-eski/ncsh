@@ -61,8 +61,6 @@ int noninteractive(int argc, char** restrict argv, char** restrict envp)
         goto exit;
     }
 
-    interpreter_init(&shell);
-
     rv = interpreter_run_noninteractive(argv + 1, (size_t)argc - 1, &shell);
 
 exit:

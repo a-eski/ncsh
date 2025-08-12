@@ -194,6 +194,27 @@ void expansion_variable_with_spaces_test()
     ARENA_TEST_TEARDOWN;
 }
 
+void expansion_variable_number_test()
+{
+    ARENA_TEST_SETUP;
+    Arena a = arena;
+    Shell shell = {0};
+    shell_init(&shell, &a, envp_ptr);
+    Str v = Str_New_Literal("1");
+    vars_set("VAL", &v, &a, &shell.vars);
+
+    Commands* cmds = commands_alloc(&a);
+
+    expansion_variable("$VAL", sizeof("$VAL"), cmds, &shell, &a);
+
+    eassert(!memcmp(cmds->vals[0], v.value, v.length - 1));
+    cmds->lens[0] = v.length;
+    cmds->ops[0] = OP_CONSTANT;
+    eassert(cmds->pos == 1);
+
+    ARENA_TEST_TEARDOWN;
+}
+
 void expansion_tests()
 {
     etest_start();
@@ -206,6 +227,7 @@ void expansion_tests()
     etest_run(expansion_variable_test);
     etest_run(expansion_variable_with_spaces_test);
     etest_run(expansion_variable_no_dollar_sign_test);
+    etest_run(expansion_variable_number_test);
 
     etest_finish();
 }

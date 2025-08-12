@@ -635,8 +635,7 @@ void parser_parse_variable_test()
 
     Shell shell = {0};
     shell_init(&shell, &arena, envp_ptr);
-    vars_malloc(&arena, &shell.vars);
-    vars_set("STR", &Str_New_Literal("hello"), &arena, &shell.vars);
+    *env_add_or_get(shell.env, Str_New_Literal("STR")) = Str_New_Literal("hello");
 
     char* line = "echo $STR";
     size_t len = strlen(line) + 1;
@@ -671,8 +670,7 @@ void parser_parse_variable_expansion_test()
 
     Shell shell = {0};
     shell_init(&shell, &scratch_arena, envp_ptr);
-    vars_malloc(&scratch_arena, &shell.vars);
-    vars_set("STR", &Str_New_Literal("ls | sort"), &scratch_arena, &shell.vars);
+    *env_add_or_get(shell.env, Str_New_Literal("STR")) = Str_New_Literal("ls | sort");
 
     char* line = "echo $STR";
     size_t len = strlen(line) + 1;
@@ -1179,8 +1177,7 @@ void parser_parse_if_variable_test()
 
     Shell shell = {0};
     shell_init(&shell, &scratch_arena, envp_ptr);
-    vars_malloc(&scratch_arena, &shell.vars);
-    vars_set("VAL", &Str_New_Literal("1"), &scratch_arena, &shell.vars);
+    *env_add_or_get(shell.env, Str_New_Literal("VAL")) = Str_New_Literal("1");
 
     char* line = "if [ $VAL -eq 1 ]; then echo 'hi'; fi";
     size_t len = strlen(line) + 1;

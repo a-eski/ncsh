@@ -85,8 +85,6 @@ char* init(Shell* restrict shell, char** restrict envp)
         return NULL;
     }
 
-    interpreter_init(shell);
-
     signal_init();
     if (signal_forward(SIGINT) || signal_forward(SIGWINCH)) {
         tty_perror("ncsh: Error setting up signal handlers");

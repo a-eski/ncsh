@@ -12,14 +12,13 @@
 #include "lexemes.h"
 #include "ops.h"
 #include "statements.h"
-#include "vars.h"
 // #include "lexer.h"
 // #include "parser.h"
 #include "../types.h"
 
 void expansion_home(Shell* shell, Lexemes* restrict lexemes, size_t pos, Arena* scratch)
 {
-    assert(lexemes);
+    assert(shell); assert(lexemes); assert(scratch);
 
     Str* home = env_home_get(shell->env);
     assert(home->value && home->length);
@@ -54,9 +53,7 @@ void expansion_home(Shell* shell, Lexemes* restrict lexemes, size_t pos, Arena* 
 
 void expansion_glob(char* restrict in, Commands* restrict cmds, Arena* restrict scratch)
 {
-    assert(in);
-    assert(cmds);
-    assert(scratch);
+    assert(in); assert(cmds); assert(scratch);
 
     glob_t glob_buf = {0};
     size_t glob_len;
@@ -85,47 +82,34 @@ void expansion_glob(char* restrict in, Commands* restrict cmds, Arena* restrict 
     globfree(&glob_buf);
 }
 
-void expansion_assignment(Lexemes* lexeme, size_t pos, Vars* restrict vars, Arena* restrict arena)
+void expansion_assignment(Lexemes* lexeme, size_t pos, Shell* restrict shell)
 {
-    assert(lexeme);
-    assert(vars);
-    assert(arena);
+    assert(lexeme); assert(shell);
 
-    // variable values are stored in vars hashmap.
+    // variable values are stored in env hashmap.
     // the key is the previous value, which is tagged with OP_VARIABLE.
-    // when VM comes in contact with OP_VARIABLE, it looks up value in vars.
+    // when VM comes in contact with OP_VARIABLE, it looks up value in env.
     size_t assignment_pos;
     for (assignment_pos = 0; assignment_pos < lexeme->lens[pos]; ++assignment_pos) {
         if (lexeme->vals[pos][assignment_pos] == '=')
             break;
     }
 
-    size_t key_len = assignment_pos + 1;
-    char* var_name = arena_malloc(arena, key_len, char);
-    memcpy(var_name, lexeme->vals[pos], assignment_pos);
-    var_name[assignment_pos] = '\0';
-    debugf("saving var_name %s\n", var_name);
+    Str key = {.length = assignment_pos + 1};
+    key.value = arena_malloc(&shell->arena, key.length, char);
+    memcpy(key.value, lexeme->vals[pos], assignment_pos);
 
-    Str* val = arena_malloc(arena, 1, Str);
-    val->length = lexeme->lens[pos] - assignment_pos - 1;
-    val->value = arena_malloc(arena, val->length, char);
-    memcpy(val->value, lexeme->vals[pos] + key_len, val->length);
-    debugf("var_name: %s : %s (%zu)\n", var_name, val->value, val->length);
+    Str val = {.length = lexeme->lens[pos] - assignment_pos - 1};
+    val.value = arena_malloc(&shell->arena, val.length, char);
+    memcpy(val.value, lexeme->vals[pos] + key.length, val.length);
+    debugf("setting key %s with val %s\n", key.value, val.value);
 
-    char* key = arena_malloc(arena, key_len, char);
-    memcpy(key, var_name, key_len);
-    debugf("key: %s (%zu)\n", key, key_len);
-
-    vars_set(key, val, arena, vars);
-    debugf("set key %s with val %s\n", key, val->value);
+    *env_add_or_get(shell->env, key) = val;
 }
 
 void expansion_variable(char* restrict in, size_t len, Commands* restrict cmds, /*Statements* stmts,*/ Shell* restrict shell, Arena* restrict scratch)
 {
-    assert(in);
-    assert(cmds);
-    assert(shell);
-    assert(scratch);
+    assert(in); assert(cmds); assert(shell); assert(scratch);
     if (!in || len < 2) {
         return;
     }
@@ -134,24 +118,7 @@ void expansion_variable(char* restrict in, size_t len, Commands* restrict cmds, 
     size_t key_len = in[0] == '$' ? len - 1 : len;
     debugf("key %s, key_len %zu\n", key, key_len);
     Str* val = env_add_or_get(shell->env, Str_New(key, key_len));
-    Str* var;
     if (!val || !val->value) {
-        debugf("trying to get variable %s\n", key);
-        assert(shell->vars.entries);
-        var = vars_get(key, &shell->vars);
-        if (!var || !var->value) {
-            return;
-        }
-
-        debugf("var %s\n", var->value);
-        assert(strlen(var->value) + 1 == var->length);
-        debugf("cmds->pos %zu\n", cmds->pos);
-
-        cmds->vals[cmds->pos] = arena_malloc(scratch, var->length, char);
-        memcpy(cmds->vals[cmds->pos], var->value, var->length - 1);
-        cmds->lens[cmds->pos] = var->length;
-        cmds->ops[cmds->pos] = OP_CONSTANT;
-        ++cmds->pos;
         return;
     }
 

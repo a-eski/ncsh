@@ -14,7 +14,7 @@ void conf_init_test()
     ARENA_TEST_SETUP;
 
     Shell shell = {0};
-    shell_init_no_vars(&shell, &arena, envp_ptr);
+    shell_init(&shell, &arena, envp_ptr);
     config_init(&shell, scratch_arena);
 
     eassert(shell.config.config_file.value);

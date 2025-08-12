@@ -3,7 +3,6 @@
 #pragma once
 
 #include "arena.h"
-#include "interpreter/vars.h"
 #include "z/z.h"
 #include "io/ac.h"
 #include "io/history.h"
@@ -87,6 +86,4 @@ typedef struct Shell {
     // Processes processes;
 
     z_Database z_db;
-
-    Vars vars;
 } Shell;
