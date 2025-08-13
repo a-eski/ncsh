@@ -50,7 +50,7 @@ int io_init(Config* restrict config, Env* restrict env, Input* restrict input, A
     input->user = env_add_or_get(env, user_key);
     input->buffer = arena_malloc(arena, NCSH_MAX_INPUT, char);
 
-    if (history_init(config->config_location, &input->history, arena) != E_SUCCESS) {
+    if (history_init(config->location, &input->history, arena) != E_SUCCESS) {
         tty_perror("ncsh: Error occurred while setting up history");
         return EXIT_FAILURE;
     }

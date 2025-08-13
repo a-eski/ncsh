@@ -32,8 +32,8 @@ typedef struct
  * Stores home location, config location, and full path to the config file.
  */
 typedef struct {
-    Str config_location;
-    Str config_file;
+    Str location;
+    Str file;
 } Config;
 
 /* struct Input

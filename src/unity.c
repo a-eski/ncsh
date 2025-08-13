@@ -41,7 +41,6 @@
 #include "io/prompt.c"
 
 #include "interpreter/semantic_analyzer.c"
-#include "interpreter/vars.c"
 #include "interpreter/vm/builtins.c"
 #include "interpreter/vm/pipe.c"
 #include "interpreter/vm/redirection.c"

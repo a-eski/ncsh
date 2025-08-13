@@ -3,7 +3,6 @@
 
 #pragma once
 
-#include "arena.h"
 #include "types.h"
 #include "eskilib/eresult.h"
 
@@ -11,4 +10,4 @@
 #define DOT_CONFIG ".config"
 #define RC_FILE "ncshrc"
 
-enum eresult config_init(Shell* shell, Arena scratch_arena);
+enum eresult conf_init(Shell* shell);

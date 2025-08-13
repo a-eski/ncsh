@@ -72,7 +72,7 @@ char* init(Shell* restrict shell, char** restrict envp)
 
     env_new(shell, envp, &shell->arena);
 
-    if (config_init(shell, shell->scratch_arena) != E_SUCCESS) {
+    if (conf_init(shell) != E_SUCCESS) {
         return NULL;
     }
 
@@ -80,7 +80,7 @@ char* init(Shell* restrict shell, char** restrict envp)
         return NULL;
     }
 
-    enum z_Result z_result = z_init(&shell->config.config_location, &shell->z_db, &shell->arena);
+    enum z_Result z_result = z_init(&shell->config.location, &shell->z_db, &shell->arena);
     if (z_result != Z_SUCCESS) {
         return NULL;
     }

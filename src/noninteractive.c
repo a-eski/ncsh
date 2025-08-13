@@ -56,7 +56,7 @@ int noninteractive(int argc, char** restrict argv, char** restrict envp)
     env_new(&shell, envp, &shell.arena);
 
     int rv = EXIT_SUCCESS;
-    if (config_init(&shell, shell.arena) != E_SUCCESS) {
+    if (conf_init(&shell) != E_SUCCESS) {
         rv = EXIT_FAILURE;
         goto exit;
     }
