@@ -9,11 +9,12 @@
 #include <unistd.h>
 
 #include "conf.h"
+#include "env.h"
 #include "eskilib/eresult.h"
 #include "interpreter/interpreter.h"
 #include "noninteractive.h"
 #include "ttyio/ttyio.h"
-#include "shell.h"
+#include "types.h"
 #include "debug.h"
 
 /* noninteractive
@@ -23,7 +24,7 @@
  * Returns: exit status, see defines.h (EXIT_...)
  */
 [[nodiscard]]
-int noninteractive(int argc, char** restrict argv)
+int noninteractive(int argc, char** restrict argv, char** restrict envp)
 {
     assert(argc > 1); // 1 because first arg is ncsh
     assert(argv);
@@ -52,13 +53,13 @@ int noninteractive(int argc, char** restrict argv)
     Shell shell = {0};
     shell.arena = (Arena){.start = memory, .end = memory + (arena_capacity)};
 
+    env_new(&shell, envp, &shell.arena);
+
     int rv = EXIT_SUCCESS;
-    if (config_init(&shell.config, &shell.arena, shell.arena) != E_SUCCESS) {
+    if (conf_init(&shell) != E_SUCCESS) {
         rv = EXIT_FAILURE;
         goto exit;
     }
-
-    interpreter_init(&shell);
 
     rv = interpreter_run_noninteractive(argv + 1, (size_t)argc - 1, &shell);
 

@@ -5,6 +5,7 @@
 
 #include "arena.h"
 #include "eskilib/str.h"
+#include "types.h"
 
 #define NCSH_PATH_VAL "PATH"
 #define NCSH_PATH_VAR "$PATH"
@@ -16,8 +17,8 @@
 #define NCSH_USER_VAL "USER"
 #define NCSH_USER_VAR "$USER"
 
-void env_home_get(Str* restrict output, Arena* restrict arena);
+void env_new(Shell* restrict shell, char** envp, Arena* restrict arena);
 
-Str env_path_get();
+Str* env_add_or_get(Env* env, Str key);
 
-Str env_user_get();
+Str* env_home_get(Env* env);

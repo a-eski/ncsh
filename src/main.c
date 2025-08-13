@@ -10,6 +10,7 @@
 #include <time.h>
 #include <unistd.h>
 
+#include "arena.h"
 #include "conf.h"
 #include "defines.h"
 #include "eskilib/eresult.h"
@@ -19,12 +20,13 @@
 #include "io/io.h"
 #include "signals.h"
 #include "ttyio/ttyio.h"
+#include "env.h"
 
 /* Global Variables
  * Globals should be minimized as much as possible.
  * These are only used to simplify signal handling and failure cases.
  */
-jmp_buf env;
+jmp_buf env_jmp_buf;
 sig_atomic_t vm_child_pid;
 volatile int sigwinch_caught;
 
@@ -58,7 +60,7 @@ char* arena_init(Shell* restrict shell)
  * Returns: exit result, EXIT_SUCCESS or EXIT_FAILURE
  */
 [[nodiscard]]
-char* init(Shell* restrict shell)
+char* init(Shell* restrict shell, char** restrict envp)
 {
     char* memory = arena_init(shell);
     if (!memory) {
@@ -68,20 +70,20 @@ char* init(Shell* restrict shell)
         return NULL;
     }
 
-    if (config_init(&shell->config, &shell->arena, shell->scratch_arena) != E_SUCCESS) {
+    env_new(shell, envp, &shell->arena);
+
+    if (conf_init(shell) != E_SUCCESS) {
         return NULL;
     }
 
-    if (io_init(&shell->config, &shell->input, &shell->arena) != EXIT_SUCCESS) {
+    if (io_init(&shell->config, shell->env, &shell->input, &shell->arena) != EXIT_SUCCESS) {
         return NULL;
     }
 
-    enum z_Result z_result = z_init(&shell->config.config_location, &shell->z_db, &shell->arena);
+    enum z_Result z_result = z_init(&shell->config.location, &shell->z_db, &shell->arena);
     if (z_result != Z_SUCCESS) {
         return NULL;
     }
-
-    interpreter_init(shell);
 
     signal_init();
     if (signal_forward(SIGINT) || signal_forward(SIGWINCH)) {
@@ -141,12 +143,12 @@ void startup_time()
  * 3. io has its own inner lifetime via the scratch arena.
  */
 [[nodiscard]]
-int main(int argc, char** argv)
+int main(int argc, char** argv, char** envp)
 {
 
     int rv = EXIT_SUCCESS;
     if (argc > 1 || !isatty(STDIN_FILENO)) {
-        rv = noninteractive(argc, argv);
+        rv = noninteractive(argc, argv, envp);
         return rv;
     }
 
@@ -154,12 +156,12 @@ int main(int argc, char** argv)
     welcome();
 
     Shell shell = {0};
-    char* memory = init(&shell);
+    char* memory = init(&shell, envp);
     if (!memory) {
         return EXIT_FAILURE;
     }
 
-    if (setjmp(env)) {
+    if (setjmp(env_jmp_buf)) {
         goto exit;
     }
 

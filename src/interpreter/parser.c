@@ -15,9 +15,7 @@
 #include "parser.h"
 #include "statements.h"
 
-// TODO: incorporate into structs
 static Commands* commands;
-static Shell* shell_ptr;
 
 bool parser_consume(Lexemes* restrict lexemes, size_t* restrict n, enum Ops expected)
 {
@@ -61,7 +59,7 @@ bool parser_is_valid_statement(enum Ops op)
     }
 }
 
-int parser_commands_process(Lexemes* restrict lexemes, size_t* restrict n, Statements* restrict stmts, Arena* restrict scratch)
+int parser_commands_process(Shell* shell, Lexemes* restrict lexemes, size_t* restrict n, Statements* restrict stmts, Arena* restrict scratch)
 {
     if (!parser_is_valid_statement(parser_peek(lexemes, *n))) {
         tty_puts("ncsh parser: no valid statement.");
@@ -80,7 +78,7 @@ int parser_commands_process(Lexemes* restrict lexemes, size_t* restrict n, State
 
         switch (lexemes->ops[*n]) {
         case OP_HOME_EXPANSION:
-            expansion_home(lexemes, *n, scratch);
+            expansion_home(shell, lexemes, *n, scratch);
             break;
         case OP_EQUALS:
         case OP_LESS_THAN:
@@ -90,7 +88,7 @@ int parser_commands_process(Lexemes* restrict lexemes, size_t* restrict n, State
             break;
         }
         case OP_VARIABLE:
-            expansion_variable(lexemes->vals[*n], lexemes->lens[*n], commands, /*stmts,*/ shell_ptr, scratch);
+            expansion_variable(lexemes->vals[*n], lexemes->lens[*n], commands, /*stmts,*/ shell, scratch);
             ++*n;
             continue;
         case OP_GLOB_EXPANSION:
@@ -103,7 +101,7 @@ int parser_commands_process(Lexemes* restrict lexemes, size_t* restrict n, State
             commands->prev_op = OP_PIPE;
             continue;
         case OP_ASSIGNMENT:
-            expansion_assignment(lexemes, *n, &shell_ptr->vars, scratch);
+            expansion_assignment(lexemes, *n, shell);
             if (*n + 1 < lexemes->count && (lexemes->ops[*n + 1] == OP_AND || lexemes->ops[*n + 1] == OP_OR)) {
                 ++*n; // skip || or && on assignment, assigment not included in commands
             }
@@ -139,7 +137,7 @@ int parser_commands_process(Lexemes* restrict lexemes, size_t* restrict n, State
     return EXIT_SUCCESS;
 }
 
-int parser_conditions(Lexemes* restrict lexemes, size_t* restrict n, enum Logic_Type type, Statements* restrict stmts, Arena* restrict scratch)
+int parser_conditions(Shell* shell, Lexemes* restrict lexemes, size_t* restrict n, enum Logic_Type type, Statements* restrict stmts, Arena* restrict scratch)
 {
     if (!parser_consume(lexemes, n, OP_CONDITION_START)) {
         debug("no OP_CONDITION_START");
@@ -147,7 +145,7 @@ int parser_conditions(Lexemes* restrict lexemes, size_t* restrict n, enum Logic_
     }
 
     debug("processing conditions");
-    int res = parser_commands_process(lexemes, n, stmts, scratch);
+    int res = parser_commands_process(shell, lexemes, n, stmts, scratch);
     if (res != EXIT_SUCCESS) {
         return res;
     }
@@ -165,10 +163,10 @@ int parser_conditions(Lexemes* restrict lexemes, size_t* restrict n, enum Logic_
     return EXIT_SUCCESS;
 }
 
-int parser_if_statements(Lexemes* restrict lexemes, size_t* restrict n, Statements* restrict stmts, Arena* restrict scratch)
+int parser_if_statements(Shell* shell, Lexemes* restrict lexemes, size_t* restrict n, Statements* restrict stmts, Arena* restrict scratch)
 {
     debug("processing if statements");
-    int res = parser_commands_process(lexemes, n, stmts, scratch);
+    int res = parser_commands_process(shell, lexemes, n, stmts, scratch);
     if (res != EXIT_SUCCESS) {
         return res;
     }
@@ -176,14 +174,14 @@ int parser_if_statements(Lexemes* restrict lexemes, size_t* restrict n, Statemen
     return res;
 }
 
-int parser_else_statements(Lexemes* restrict lexemes, size_t* restrict n, Statements* restrict stmts, Arena* restrict scratch)
+int parser_else_statements(Shell* shell, Lexemes* restrict lexemes, size_t* restrict n, Statements* restrict stmts, Arena* restrict scratch)
 {
     debug("processing else");
     if (!parser_consume(lexemes, n, OP_ELSE)) {
         return EXIT_FAILURE;
     }
 
-    int res = parser_commands_process(lexemes, n, stmts, scratch);
+    int res = parser_commands_process(shell, lexemes, n, stmts, scratch);
     if (res != EXIT_SUCCESS) {
         return res;
     }
@@ -192,20 +190,20 @@ int parser_else_statements(Lexemes* restrict lexemes, size_t* restrict n, Statem
     return EXIT_SUCCESS;
 }
 
-int parser_elif_statements(Lexemes* restrict lexemes, size_t* restrict n, Statements* restrict stmts, Arena* restrict scratch)
+int parser_elif_statements(Shell* shell, Lexemes* restrict lexemes, size_t* restrict n, Statements* restrict stmts, Arena* restrict scratch)
 {
     debug("processing elif");
     if (!parser_consume(lexemes, n, OP_ELIF)) {
         return EXIT_FAILURE;
     }
 
-    int res = parser_conditions(lexemes, n, LT_ELIF_CONDTIONS, stmts, scratch);
+    int res = parser_conditions(shell, lexemes, n, LT_ELIF_CONDTIONS, stmts, scratch);
     if (res != EXIT_SUCCESS) {
         debug("failed parsing elif conditions");
         return res;
     }
 
-    res = parser_commands_process(lexemes, n, stmts, scratch);
+    res = parser_commands_process(shell, lexemes, n, stmts, scratch);
     if (res != EXIT_SUCCESS) {
         debug("failed parsing elif commands");
         return EXIT_FAILURE;
@@ -214,7 +212,7 @@ int parser_elif_statements(Lexemes* restrict lexemes, size_t* restrict n, Statem
 
     if (parser_peek(lexemes, *n) == OP_ELIF) {
         debug("found another elif to process");
-        res = parser_elif_statements(lexemes, n, stmts, scratch);
+        res = parser_elif_statements(shell, lexemes, n, stmts, scratch);
         if (res != EXIT_SUCCESS) {
             debug("failed parsing another elif");
             return EXIT_FAILURE;
@@ -225,7 +223,7 @@ int parser_elif_statements(Lexemes* restrict lexemes, size_t* restrict n, Statem
 }
 
 [[nodiscard]]
-int parser_if(Lexemes* restrict lexemes, size_t* restrict n, Statements* restrict stmts, Arena* restrict scratch)
+int parser_if(Shell* shell, Lexemes* restrict lexemes, size_t* restrict n, Statements* restrict stmts, Arena* restrict scratch)
 {
     debug("processing if");
     if (!parser_consume(lexemes, n, OP_IF)) {
@@ -233,12 +231,12 @@ int parser_if(Lexemes* restrict lexemes, size_t* restrict n, Statements* restric
         return EXIT_FAILURE;
     }
 
-    int res = parser_conditions(lexemes, n, LT_IF_CONDITIONS, stmts, scratch);
+    int res = parser_conditions(shell, lexemes, n, LT_IF_CONDITIONS, stmts, scratch);
     if (res != EXIT_SUCCESS) {
         return res;
     }
 
-    res = parser_if_statements(lexemes, n, stmts, scratch);
+    res = parser_if_statements(shell, lexemes, n, stmts, scratch);
     if (res != EXIT_SUCCESS) {
         debug("can't process if statements");
         return res;
@@ -260,10 +258,10 @@ int parser_if(Lexemes* restrict lexemes, size_t* restrict n, Statements* restric
     res = EXIT_FAILURE;
     if (peeked == OP_ELSE) {
         stmts->type = ST_IF_ELSE;
-        res = parser_else_statements(lexemes, n, stmts, scratch);
+        res = parser_else_statements(shell, lexemes, n, stmts, scratch);
     }
     else if (peeked == OP_ELIF) {
-        res = parser_elif_statements(lexemes, n, stmts, scratch);
+        res = parser_elif_statements(shell, lexemes, n, stmts, scratch);
         if (res != EXIT_SUCCESS) {
             return res;
         }
@@ -271,7 +269,7 @@ int parser_if(Lexemes* restrict lexemes, size_t* restrict n, Statements* restric
         peeked = parser_peek(lexemes, *n);
         if (peeked == OP_ELSE) {
             stmts->type = ST_IF_ELIF_ELSE;
-            res = parser_else_statements(lexemes, n, stmts, scratch);
+            res = parser_else_statements(shell, lexemes, n, stmts, scratch);
         }
         else {
             stmts->type = ST_IF_ELIF;
@@ -306,7 +304,6 @@ int parser_parse(Lexemes* restrict lexemes, Statements* stmts, Shell* restrict s
     commands = stmts->statements[stmts->pos].commands;
     commands->pos = commands->count;
     assert(commands);
-    shell_ptr = shell;
 
     if (lexemes->ops[0] == OP_CONSTANT) {
         // TODO: check aliases in certain other conditions, like after && or ||.
@@ -320,7 +317,7 @@ int parser_parse(Lexemes* restrict lexemes, Statements* stmts, Shell* restrict s
 
         switch (lexemes->ops[i]) {
         case OP_HOME_EXPANSION: {
-            expansion_home(lexemes, i, scratch);
+            expansion_home(shell, lexemes, i, scratch);
             break;
         }
         case OP_EQUALS:
@@ -331,7 +328,7 @@ int parser_parse(Lexemes* restrict lexemes, Statements* stmts, Shell* restrict s
             break;
         }
         case OP_IF: {
-            res = parser_if(lexemes, &i, stmts, scratch);
+            res = parser_if(shell, lexemes, &i, stmts, scratch);
             if (res != EXIT_SUCCESS) {
                 return EXIT_FAILURE;
             }
@@ -360,7 +357,7 @@ int parser_parse(Lexemes* restrict lexemes, Statements* stmts, Shell* restrict s
             if (commands->pos != 0) {
                 break;
             }
-            expansion_assignment(lexemes, i, &shell->vars, scratch);
+            expansion_assignment(lexemes, i, shell);
             if (i + 1 < lexemes->count && (lexemes->ops[i + 1] == OP_AND || lexemes->ops[i + 1] == OP_OR)) {
                 ++i; // skip || or && on assignment, assigment not included in commands
             }

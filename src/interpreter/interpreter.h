@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "../shell.h"
+#include "../types.h"
 
 void interpreter_init(Shell* restrict shell);
 
@@ -17,6 +17,6 @@ int interpreter_run(Shell* restrict shell, Arena scratch);
 
 /* interpreter_run_noninteractive
  * Lex, parse, perform semantic analysis, and execute.
- * Does not need the scratch arena, since noninteractive has very straghtforward liftime.
+ * Does not need the scratch arena, since noninteractive shell has a very straghtforward liftime.
  */
 int interpreter_run_noninteractive(char** restrict argv, size_t argc, Shell* restrict shell);

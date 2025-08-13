@@ -188,35 +188,35 @@ int semantic_analyzer_last_arg_check(Lexemes* restrict lexemes)
 
 #define INVALID_SYNTAX_IF_NO_NEXT_ARG                                                                                  \
     "ncsh: Invalid syntax: found 'if' with no value after. "                                                           \
-    "Correct usage of 'if' is 'if [ (CONDITION) ]; then [STATEMENT]; [else [STATEMENT];] fi'."
+    "Correct usage of 'if' is 'if [ (CONDITION) ]; then (STATEMENT); [else [STATEMENT];] fi'."
 #define INVALID_SYNTAX_IF_NO_START_CONDITION                                                                           \
     "ncsh: Invalid syntax: found 'if' with no condition after. "                                                          \
-    "Correct usage of 'if' is 'if [ (CONDITION) ]; then [STATEMENT]; [else [ STATEMENT ];] fi'."
+    "Correct usage of 'if' is 'if [ (CONDITION) ]; then (STATEMENT); [else [ STATEMENT ];] fi'."
 
 #define INVALID_SYNTAX_CONDITION_START_NO_NEXT_ARG                                                                     \
     "ncsh: Invalid Syntax: expecting expression after 'if ['. "                                                        \
-    "Correct usage of 'if' is 'if [ (CONDITION) ]; then [STATEMENT]; [else [STATEMENT];] fi'."
+    "Correct usage of 'if' is 'if [ (CONDITION) ]; then (STATEMENT); [else [STATEMENT];] fi'."
 
 #define INVALID_SYNTAX_CONDITION_END_NO_NEXT_ARG                                                                       \
     "ncsh: Invalid Syntax: expecting values after 'if [ (CONDITION) ];'. "                                               \
-    "Correct usage of 'if' is 'if [ (CONDITION) ]; then [STATEMENT]; [else [STATEMENT];] fi'."
+    "Correct usage of 'if' is 'if [ (CONDITION) ]; then (STATEMENT); [else [STATEMENT];] fi'."
 #define INVALID_SYNTAX_CONDITION_END_NO_NEXT_THEN                                                                      \
     "ncsh: Invalid Syntax: expecting 'then' after 'if [ (CONDITION) ];'. "                                               \
-    "Correct usage of 'if' is 'if [ (CONDITION) ]; then [STATEMENT]; [else [STATEMENT];] fi'."
+    "Correct usage of 'if' is 'if [ (CONDITION) ]; then (STATEMENT); [else [STATEMENT];] fi'."
 
 #define INVALID_SYNTAX_THEN_NO_NEXT_ARG                                                                                \
     "ncsh: Invalid Syntax: expecting some value after 'if [ (CONDITION) ]; then'. "                                      \
-    "Correct usage of 'if' is 'if [ (CONDITION) ]; then [STATEMENT]; [else [STATEMENT];] fi'."
+    "Correct usage of 'if' is 'if [ (CONDITION) ]; then (STATEMENT); [else [STATEMENT];] fi'."
 #define INVALID_SYNTAX_THEN_NO_NEXT_STATEMENT                                                                          \
     "ncsh: Invalid Syntax: expecting some statement after 'if [ (CONDITION) ]; then'. "                                  \
-    "Correct usage of 'if' is 'if [ (CONDITION) ]; then [STATEMENT]; [else [STATEMENT];] fi'."
+    "Correct usage of 'if' is 'if [ (CONDITION) ]; then (STATEMENT); [else [STATEMENT];] fi'."
 
 #define INVALID_SYNTAX_ELSE_NO_NEXT_ARG                                                                                \
     "ncsh: Invalid Syntax: expecting some value after 'if [ (CONDITION) ]; then (STATEMENT); else'. "                    \
-    "Correct usage of 'if' is 'if [ (CONDITION) ]; then [STATEMENT]; [else [STATEMENT];] fi'."
+    "Correct usage of 'if' is 'if [ (CONDITION) ]; then (STATEMENT); [else [STATEMENT];] fi'."
 #define INVALID_SYNTAX_ELSE_NO_NEXT_STATEMENT                                                                          \
     "ncsh: Invalid Syntax: expecting some statement after 'if [ (CONDITION) ]; then (STATEMENT); else'. "                \
-    "Correct usage of 'if' is 'if [ (CONDITION) ]; then [STATEMENT]; [else [STATEMENT];] fi'."
+    "Correct usage of 'if' is 'if [ (CONDITION) ]; then (STATEMENT); [else [STATEMENT];] fi'."
 
 int semantic_analyzer_check(Lexemes* restrict lexemes)
 {

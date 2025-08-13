@@ -104,14 +104,29 @@ end
 
 def multiple_variables_test(row)
   assert_check_new_row(row)
-  @tty.send_line('STR3=`hi,`')
+  @tty.send_line('STR3=hi')
   row += 1
-  @tty.send_line('STR4=`you!`')
+  @tty.send_line('STR4=you')
   row += 1
   assert_check_new_row(row)
   @tty.send_line('echo $STR3 $STR4')
   row += 1
-  @tty.assert_row(row, 'hi, you!')
+  @tty.assert_row(row, 'hi you')
+  row += 1
+  test_passed('multiple variables test')
+  row
+end
+
+def multiple_variables_quoted_test(row)
+  assert_check_new_row(row)
+  @tty.send_line('STR3="hi"')
+  row += 1
+  @tty.send_line('STR4="you   ,   1"')
+  row += 1
+  assert_check_new_row(row)
+  @tty.send_line('echo $STR3 $STR4')
+  row += 1
+  @tty.assert_row(row, 'hi you   ,   1')
   row += 1
   test_passed('multiple variables test')
   row
@@ -129,12 +144,13 @@ def variables_tests(row)
   row = basic_variables_test(row)
   row = quoted_variables_test(row)
   row = command_variables_test(row)
+  # TODO: add support for different space delimited expansions
   # row = combined_variables_test(row)
   # row = expanded_variables_test(row)
   # row = multiple_expanded_variables_test(row)
   # row = multiple_combined_variables_test(row)
   row = and_variables_test(row)
-  # row =
-  multiple_variables_test(row)
+  row = multiple_variables_test(row)
+  multiple_variables_quoted_test(row)
   # variable_execution_test(row)
 end

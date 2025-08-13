@@ -146,8 +146,7 @@ enum Ops lexer_op_check_len_four(char* restrict line)
             return OP_TRUE;
         else if (!memcmp(line, THEN, sizeof(THEN) - 1))
             return OP_THEN;
-        else
-            return OP_CONSTANT;
+        break;
     }
     case 'e': {
         if (!memcmp(line, ELSE, sizeof(ELSE) - 1))

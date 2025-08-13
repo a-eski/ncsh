@@ -8,13 +8,7 @@
 #include "lexer.h"
 #include "parser.h"
 #include "semantic_analyzer.h"
-#include "vars.h"
 #include "vm/vm.h"
-
-void interpreter_init(Shell* restrict shell)
-{
-    vars_malloc(&shell->arena, &shell->vars);
-}
 
 [[nodiscard]]
 int interpreter_run(Shell* restrict shell, Arena scratch)
@@ -27,9 +21,10 @@ int interpreter_run(Shell* restrict shell, Arena scratch)
         return result;
 
     Statements statements = {0};
-    result = parser_parse(&lexemes, &statements, shell, &shell->arena);
-    if (result != EXIT_SUCCESS)
+    result = parser_parse(&lexemes, &statements, shell, &scratch);
+    if (result != EXIT_SUCCESS) {
         return result;
+    }
 
     return vm_execute(&statements, shell, &scratch);
 }
@@ -40,9 +35,10 @@ int interpreter_run_noninteractive(char** restrict argv, size_t argc, Shell* res
     Lexemes lexemes = {0};
     lexer_lex_noninteractive(argv, argc, &lexemes, &shell->arena);
 
-    int result;
-    if ((result = semantic_analyzer_analyze(&lexemes)) != EXIT_SUCCESS)
+    int result = semantic_analyzer_analyze(&lexemes);
+    if (result != EXIT_SUCCESS) {
         return result;
+    }
 
     Statements statements = {0};
     result = parser_parse(&lexemes, &statements, shell, &shell->arena);

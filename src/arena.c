@@ -11,7 +11,7 @@
 
 #include "arena.h"
 
-void arena_abort_internal()
+void arena_abort__()
 {
     puts("ncsh: ran out of allocated memory.");
     // TODO: implement different OOM stragety other than aborting.
@@ -19,18 +19,26 @@ void arena_abort_internal()
     abort();
 }
 
+static void (*arena_abort_fn__)() = arena_abort__;
+
+void arena_abort_set(void (*abort_func)())
+{
+    arena_abort_fn__= abort_func;
+}
+
 [[nodiscard]]
 __attribute_malloc__
 __attribute_alloc_align__((4))
-void* arena_malloc_internal(Arena* restrict arena, uintptr_t count, uintptr_t size,
+void* arena_malloc__(Arena* restrict arena, uintptr_t count, uintptr_t size,
                             uintptr_t alignment)
 {
     assert(arena && count && size && alignment);
     uintptr_t padding = -(uintptr_t)arena->start & (alignment - 1);
     uintptr_t available = (uintptr_t)arena->end - (uintptr_t)arena->start - padding;
+    // debugf("arena space avaiable %zu\n", available);
     assert(count < available / size);
     if (available == 0 || count > available / size) {
-        arena_abort_internal();
+        arena_abort_fn__();
     }
     void* val = arena->start + padding;
     arena->start += padding + count * size;
@@ -40,7 +48,7 @@ void* arena_malloc_internal(Arena* restrict arena, uintptr_t count, uintptr_t si
 [[nodiscard]]
 __attribute_malloc__
 __attribute_alloc_align__((4))
-void* arena_realloc_internal(Arena* restrict arena, uintptr_t count, uintptr_t size,
+void* arena_realloc__(Arena* restrict arena, uintptr_t count, uintptr_t size,
                                                   uintptr_t alignment, void* old_ptr, uintptr_t old_count)
 {
     assert(arena);
@@ -52,9 +60,10 @@ void* arena_realloc_internal(Arena* restrict arena, uintptr_t count, uintptr_t s
 
     uintptr_t padding = -(uintptr_t)arena->start & (alignment - 1);
     uintptr_t available = (uintptr_t)arena->end - (uintptr_t)arena->start - padding;
+    // debugf("arena space avaiable %zu\n", available);
     assert(count < available / size);
     if (available == 0 || count > available / size) {
-        arena_abort_internal();
+        arena_abort_fn__();
     }
     void* val = arena->start + padding;
     arena->start += padding + count * size;

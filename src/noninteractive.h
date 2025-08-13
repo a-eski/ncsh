@@ -2,4 +2,4 @@
 
 #pragma once
 
-int noninteractive(int argc, char** restrict argv);
+int noninteractive(int argc, char** restrict argv, char** restrict envp);

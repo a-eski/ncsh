@@ -1,9 +1,10 @@
 #include "../../src/arena.h"
-#include "../../src/shell.h"
+#include "../../src/env.h"
+#include "../../src/types.h"
 
-static inline void shell_init(Shell* restrict shell, Arena* scratch)
+static inline void shell_init(Shell* restrict shell, Arena* scratch, char** envp)
 {
     shell->arena = *scratch;
     shell->scratch_arena = *scratch;
-    vars_malloc(&shell->arena, &shell->vars);
+    env_new(shell, envp, &shell->arena);
 }

@@ -6,7 +6,7 @@
 #include "../../src/interpreter/interpreter.h"
 #include "../lib/arena_test_helper.h"
 
-jmp_buf env;
+jmp_buf env_jmp_buf;
 sig_atomic_t vm_child_pid;
 volatile int sigwinch_caught;
 

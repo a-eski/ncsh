@@ -1,8 +1,10 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "../../src/eskilib/etest.h"
 #include "../../src/eskilib/str.h"
+#include "../lib/arena_test_helper.h"
 
 void estrcmp_no_length_test()
 {
@@ -82,6 +84,150 @@ void estrcmp_partial_comparison_false_test()
     eassert(!result);
 }
 
+void estrsplit_bad_value_returns_null_test()
+{
+    SCRATCH_ARENA_TEST_SETUP;
+
+    Str* results = estrsplit(Str_Empty, '=', &s);
+
+    eassert(!results);
+
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
+void estrsplit_last_pos_splitter_returns_null_test()
+{
+    SCRATCH_ARENA_TEST_SETUP;
+
+    Str* results= estrsplit(Str_New_Literal("hello="), '=', &s);
+
+    eassert(!results);
+
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
+void estrsplit_valid_input_returns_strs_test()
+{
+    SCRATCH_ARENA_TEST_SETUP;
+
+    Str* results = estrsplit(Str_New_Literal("HOME=/home/alex"), '=', &s);
+
+    eassert(!memcmp(results[0].value, "HOME", sizeof("HOME") - 1));
+    eassert(results[0].length == sizeof("HOME"));
+
+    eassert(!memcmp(results[1].value, "/home/alex", sizeof("/home/alex") - 1));
+    eassert(results[1].length == sizeof("/home/alex"));
+
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
+void estrsplit_valid_input_alternate_splitter_returns_strs_test()
+{
+    SCRATCH_ARENA_TEST_SETUP;
+
+    Str* results = estrsplit(Str_New_Literal("HOME,/home/alex"), ',', &s);
+
+    eassert(!memcmp(results[0].value, "HOME", sizeof("HOME") - 1));
+    eassert(results[0].length == sizeof("HOME"));
+
+    eassert(!memcmp(results[1].value, "/home/alex", sizeof("/home/alex") - 1));
+    eassert(results[1].length == sizeof("/home/alex"));
+
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
+void estrjoin_bad_value_returns_null_test()
+{
+    SCRATCH_ARENA_TEST_SETUP;
+
+    Str* result = estrjoin(&Str_Empty, &Str_Empty, '=', &s);
+
+    eassert(!result);
+
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
+void estrjoin_one_bad_value_returns_null_test()
+{
+    SCRATCH_ARENA_TEST_SETUP;
+
+    Str* result = estrjoin(&Str_New_Literal("hello"), &Str_Empty, '=', &s);
+
+    eassert(!result);
+
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
+void estrjoin_other_bad_value_returns_null_test()
+{
+    SCRATCH_ARENA_TEST_SETUP;
+
+    Str* result = estrjoin(&Str_Empty, &Str_New_Literal("hello"), '=', &s);
+
+    eassert(!result);
+
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
+void estrjoin_valid_values_returns_joined_str_test()
+{
+    SCRATCH_ARENA_TEST_SETUP;
+
+    Str* result = estrjoin(&Str_New_Literal("hello"), &Str_New_Literal("world"), ' ', &s);
+
+    eassert(result);
+    eassert(!memcmp(result->value, "hello world", sizeof("hello world") - 1));
+    eassert(result->length = sizeof("hello world"));
+
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
+void estrcat_bad_value_returns_null_test()
+{
+    SCRATCH_ARENA_TEST_SETUP;
+
+    Str* result = estrcat(&Str_Empty, &Str_Empty, &s);
+
+    eassert(!result);
+
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
+void estrcat_one_bad_value_returns_null_test()
+{
+    SCRATCH_ARENA_TEST_SETUP;
+
+    Str* result = estrcat(&Str_New_Literal("hello"), &Str_Empty, &s);
+
+    eassert(!result);
+
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
+void estrcat_other_bad_value_returns_null_test()
+{
+    SCRATCH_ARENA_TEST_SETUP;
+
+    Str* result = estrcat(&Str_Empty, &Str_New_Literal("hello"), &s);
+
+    eassert(!result);
+
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
+void estrcat_valid_values_returns_concatted_str_test()
+{
+    SCRATCH_ARENA_TEST_SETUP;
+
+    Str* result = estrcat(&Str_New_Literal("hello"), &Str_New_Literal(", world"), &s);
+
+    eassert(result);
+    eassert(!memcmp(result->value, "hello, world", sizeof("hello, world") - 1));
+    eassert(result->length = sizeof("hello, world"));
+
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
 void str_tests()
 {
     etest_start();
@@ -95,6 +241,20 @@ void str_tests()
     etest_run(estrcmp_mismatched_lengths_false_test);
     etest_run(estrcmp_partial_comparison_true_test);
     etest_run(estrcmp_partial_comparison_false_test);
+
+    etest_run(estrsplit_bad_value_returns_null_test);
+    etest_run(estrsplit_last_pos_splitter_returns_null_test);
+    etest_run(estrsplit_valid_input_returns_strs_test);
+    etest_run(estrsplit_valid_input_alternate_splitter_returns_strs_test);
+
+    etest_run(estrjoin_bad_value_returns_null_test);
+    etest_run(estrjoin_one_bad_value_returns_null_test);
+    etest_run(estrjoin_other_bad_value_returns_null_test);
+    etest_run(estrjoin_valid_values_returns_joined_str_test);
+
+    etest_run(estrcat_bad_value_returns_null_test);
+    etest_run(estrcat_one_bad_value_returns_null_test);
+    etest_run(estrcat_other_bad_value_returns_null_test);
 
     etest_finish();
 }
