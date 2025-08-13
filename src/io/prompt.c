@@ -6,7 +6,6 @@
 #include <unistd.h>
 
 #include "../defines.h" // used for macros
-#include "io.h"
 #include "prompt.h"
 #include "../ttyio/ttyio.h"
 

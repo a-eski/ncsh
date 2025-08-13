@@ -14,10 +14,10 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#include "../../defines.h"
-#include "../../types.h"
-#include "../../debug.h"
-#include "../../ttyio/ttyio.h"
+#include "../defines.h"
+#include "../types.h"
+#include "../debug.h"
+#include "../ttyio/ttyio.h"
 #include "builtins.h"
 #include "pipe.h"
 #include "redirection.h"

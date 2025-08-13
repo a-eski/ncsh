@@ -8,7 +8,7 @@
 #include <unistd.h>
 
 #include "vm_types.h"
-#include "../../ttyio/ttyio.h"
+#include "../ttyio/ttyio.h"
 
 extern int vm_output_fd;
 

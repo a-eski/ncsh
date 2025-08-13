@@ -5,10 +5,10 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#include "../../debug.h"
-#include "../../defines.h"
-#include "../statements.h"
-#include "../../ttyio/ttyio.h"
+#include "../debug.h"
+#include "../defines.h"
+#include "statements.h"
+#include "../ttyio/ttyio.h"
 #include "vm_types.h"
 
 [[nodiscard]]

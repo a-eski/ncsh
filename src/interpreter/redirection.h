@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "../statements.h"
+#include "statements.h"
 #include "vm_types.h"
 
 int redirection_start_if_needed(Statements* restrict statements, Vm_Data* restrict vm);

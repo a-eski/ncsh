@@ -114,7 +114,7 @@ void expansion_variable(char* restrict in, size_t len, Commands* restrict cmds, 
         return;
     }
 
-    char* key = in[0] == '$' ? in + 1 : in; // skip first value in tok->val (the $)
+    char* key = in[0] == '$' ? in + 1 : in; // skip first value if $
     size_t key_len = in[0] == '$' ? len - 1 : len;
     debugf("key %s, key_len %zu\n", key, key_len);
     Str* val = env_add_or_get(shell->env, Str_New(key, key_len));

@@ -24,13 +24,13 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#include "../../alias.h"
-#include "../../arena.h"
-#include "../../defines.h"
-#include "../../io/history.h"
-#include "../../ttyio/ttyio.h"
-#include "../../types.h"
-#include "../../z/z.h"
+#include "../alias.h"
+#include "../arena.h"
+#include "../defines.h"
+#include "../io/history.h"
+#include "../ttyio/ttyio.h"
+#include "../types.h"
+#include "../z/z.h"
 #include "vm_types.h"
 
 /* External values */

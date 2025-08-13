@@ -6,7 +6,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#include "../ops.h"
+#include "ops.h"
 
 /****** MACROS ******/
 

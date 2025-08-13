@@ -40,11 +40,11 @@
 #include "io/io.c"
 #include "io/prompt.c"
 
-#include "interpreter/semantic_analyzer.c"
-#include "interpreter/vm/builtins.c"
-#include "interpreter/vm/pipe.c"
-#include "interpreter/vm/redirection.c"
-#include "interpreter/vm/vm.c"
+#include "interpreter/sema.c"
+#include "interpreter/builtins.c"
+#include "interpreter/pipe.c"
+#include "interpreter/redirection.c"
+#include "interpreter/vm.c"
 
 #include "alias.c"
 #include "arena.c"

@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "io.h"
+#include "../types.h"
 
 enum Dir_Type {
     DIR_NORMAL,
