@@ -87,7 +87,6 @@ void estrcmp_partial_comparison_false_test()
 void estrsplit_bad_value_returns_null_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
-    Arena s = scratch_arena;
 
     Str* results = estrsplit(Str_Empty, '=', &s);
 
@@ -99,7 +98,6 @@ void estrsplit_bad_value_returns_null_test()
 void estrsplit_last_pos_splitter_returns_null_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
-    Arena s = scratch_arena;
 
     Str* results= estrsplit(Str_New_Literal("hello="), '=', &s);
 
@@ -111,7 +109,6 @@ void estrsplit_last_pos_splitter_returns_null_test()
 void estrsplit_valid_input_returns_strs_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
-    Arena s = scratch_arena;
 
     Str* results = estrsplit(Str_New_Literal("HOME=/home/alex"), '=', &s);
 
@@ -127,7 +124,6 @@ void estrsplit_valid_input_returns_strs_test()
 void estrsplit_valid_input_alternate_splitter_returns_strs_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
-    Arena s = scratch_arena;
 
     Str* results = estrsplit(Str_New_Literal("HOME,/home/alex"), ',', &s);
 
@@ -143,7 +139,6 @@ void estrsplit_valid_input_alternate_splitter_returns_strs_test()
 void estrjoin_bad_value_returns_null_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
-    Arena s = scratch_arena;
 
     Str* result = estrjoin(&Str_Empty, &Str_Empty, '=', &s);
 
@@ -155,7 +150,6 @@ void estrjoin_bad_value_returns_null_test()
 void estrjoin_one_bad_value_returns_null_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
-    Arena s = scratch_arena;
 
     Str* result = estrjoin(&Str_New_Literal("hello"), &Str_Empty, '=', &s);
 
@@ -167,7 +161,6 @@ void estrjoin_one_bad_value_returns_null_test()
 void estrjoin_other_bad_value_returns_null_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
-    Arena s = scratch_arena;
 
     Str* result = estrjoin(&Str_Empty, &Str_New_Literal("hello"), '=', &s);
 
@@ -179,7 +172,6 @@ void estrjoin_other_bad_value_returns_null_test()
 void estrjoin_valid_values_returns_joined_str_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
-    Arena s = scratch_arena;
 
     Str* result = estrjoin(&Str_New_Literal("hello"), &Str_New_Literal("world"), ' ', &s);
 
@@ -193,7 +185,6 @@ void estrjoin_valid_values_returns_joined_str_test()
 void estrcat_bad_value_returns_null_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
-    Arena s = scratch_arena;
 
     Str* result = estrcat(&Str_Empty, &Str_Empty, &s);
 
@@ -205,7 +196,6 @@ void estrcat_bad_value_returns_null_test()
 void estrcat_one_bad_value_returns_null_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
-    Arena s = scratch_arena;
 
     Str* result = estrcat(&Str_New_Literal("hello"), &Str_Empty, &s);
 
@@ -217,7 +207,6 @@ void estrcat_one_bad_value_returns_null_test()
 void estrcat_other_bad_value_returns_null_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
-    Arena s = scratch_arena;
 
     Str* result = estrcat(&Str_Empty, &Str_New_Literal("hello"), &s);
 
@@ -229,7 +218,6 @@ void estrcat_other_bad_value_returns_null_test()
 void estrcat_valid_values_returns_concatted_str_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
-    Arena s = scratch_arena;
 
     Str* result = estrcat(&Str_New_Literal("hello"), &Str_New_Literal(", world"), &s);
 
