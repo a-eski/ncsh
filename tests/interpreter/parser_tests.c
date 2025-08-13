@@ -1198,7 +1198,7 @@ void parser_parse_if_variable_test()
     Commands* commands = statements.statements[0].commands;
     eassert(statements.statements[0].count == 1);
     eassert(statements.statements[0].type == LT_IF_CONDITIONS);
-    // eassert(commands->count == 3);
+    eassert(commands->count == 3);
 
     eassert(!memcmp(commands->vals[0], "1", 1));
     eassert(commands->lens[0] == 2);
@@ -1332,12 +1332,11 @@ void parser_parse_if_else_test()
     eassert(!memcmp(commands->vals[1], "-eq", 3));
     eassert(commands->lens[1] == 4);
     eassert(commands->ops[1] == OP_EQUALS);
-    // eassert(commands->prev_op == OP_NONE);
 
     eassert(!memcmp(commands->vals[2], "1", 1));
     eassert(commands->lens[2] == 2);
     eassert(commands->ops[2] == OP_CONSTANT);
-    // eassert(commands->prev_op == OP_NONE);
+    eassert(commands->prev_op == OP_EQUALS);
 
     eassert(!commands->vals[3]);
     eassert(!commands->next);

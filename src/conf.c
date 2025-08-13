@@ -28,7 +28,7 @@
 // #include "ttyio/ttyio.h"
 
 [[nodiscard]]
-enum eresult location_init(Shell* restrict shell)
+enum eresult conf_location_init(Shell* restrict shell)
 {
     assert(shell); assert(shell->env);
     if (!shell) {
@@ -68,7 +68,7 @@ enum eresult location_init(Shell* restrict shell)
 }
 
 [[nodiscard]]
-enum eresult file_set(Shell* restrict shell)
+enum eresult conf_file_set(Shell* restrict shell)
 {
     constexpr size_t rc_len = sizeof(RC_FILE);
     constexpr size_t rc_len_nt = rc_len - 1;
@@ -171,12 +171,12 @@ void conf_process(FILE* restrict file, Shell* shell)
     }
 }
 
-/* file_load
+/* conf_file_load
  * Loads the .ncshrc file and processes it by calling conf_process if file could be loaded.
  * Returns: enum eresult, E_SUCCESS if config file loaded or user doesn't want one.
  */
 [[nodiscard]]
-enum eresult file_load(Shell* shell)
+enum eresult conf_file_load(Shell* shell)
 {
     FILE* file = fopen(shell->config.file.value, "r");
     if (!file || ferror(file) || feof(file)) {
@@ -226,17 +226,17 @@ enum eresult conf_init(Shell* shell)
     assert(shell && shell->arena.start);
 
     enum eresult result;
-    if ((result = location_init(shell)) != E_SUCCESS) {
+    if ((result = conf_location_init(shell)) != E_SUCCESS) {
         debug("failed loading config location");
         return result;
     }
 
-    if ((result = file_set(shell)) != E_SUCCESS) {
+    if ((result = conf_file_set(shell)) != E_SUCCESS) {
         debug("failed setting config file");
         return result;
     }
 
-    if ((result = file_load(shell)) != E_SUCCESS) {
+    if ((result = conf_file_load(shell)) != E_SUCCESS) {
         debug("failed loading config file");
         return result;
     }

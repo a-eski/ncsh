@@ -217,6 +217,7 @@ void expansion_tests()
 {
     etest_start();
 
+    // TODO: fix/debug these tests
     // etest_run(expansion_home_test);
     // etest_run(expansion_home_suffix_test);
     etest_run(expansion_variable_path_test);

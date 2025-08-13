@@ -48,6 +48,9 @@ int io_init(Config* restrict config, Env* restrict env, Input* restrict input, A
     io_prompt_init();
     Str user_key = Str_New_Literal(NCSH_USER_VAL);
     input->user = env_add_or_get(env, user_key);
+    if (!input->user->value) {
+        input->user->length = 0;
+    }
     input->buffer = arena_malloc(arena, NCSH_MAX_INPUT, char);
 
     if (history_init(config->location, &input->history, arena) != E_SUCCESS) {
@@ -189,6 +192,7 @@ int io_word_delete(Input* restrict input)
 [[nodiscard]]
 int io_line_delete_forwards(Input* restrict input)
 {
+    // TODO: BUG: fix this deleting whole line instead of forwards
     if (!input->pos && !input->max_pos) {
         return EXIT_SUCCESS;
     }
@@ -911,9 +915,8 @@ int io_next_escaped(Input* restrict input)
         tty_perror(NCSH_ERROR_STDIN);
         return EXIT_FAILURE;
     }
-    // Expected after escape character for currently handled cases
+
     if (input->c != '[') {
-        // alt key combinations
         switch (input->c) {
             case 'b': return io_funcs[IO_ALT_B](input);
             case 'f': return io_funcs[IO_ALT_F](input);
@@ -922,6 +925,7 @@ int io_next_escaped(Input* restrict input)
             default: return EXIT_SUCCESS;
         }
     }
+
     if (read(STDIN_FILENO, &input->c, 1) < 0) {
         tty_perror(NCSH_ERROR_STDIN);
         return EXIT_FAILURE;

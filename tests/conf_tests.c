@@ -15,10 +15,10 @@ void conf_init_test()
 
     Shell shell = {0};
     shell_init(&shell, &arena, envp_ptr);
-    config_init(&shell, scratch_arena);
+    conf_init(&shell);
 
-    eassert(shell.config.config_file.value);
-    eassert(shell.config.config_location.value);
+    eassert(shell.config.file.value);
+    eassert(shell.config.location.value);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
     ARENA_TEST_TEARDOWN;
