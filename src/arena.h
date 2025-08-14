@@ -1,12 +1,27 @@
 /* Copyright ncsh (C) by Alex Eski 2025 */
 /* arena.h: a simple bump allocator for managing memory */
-/* Credit to skeeto and his blogs */
+/* Credit to skeeto and his blogs for inspiration */
 
 #pragma once
 
 #include <stdint.h>
 #include <sys/cdefs.h> // for __attribute_malloc__
-#include <time.h>
+
+#if defined(__GNUC__) || defined(__clang__) || defined(__attribute__malloc__)
+#   define ATTR_MALLOC __attribute_malloc__
+#elif defined(__malloc_like)
+#   define ATTR_MALLOC __malloc_like
+#else
+#   define ATTR_MALLOC
+#endif
+
+#if defined(__GNUC__) || defined(__clang__) || defined(__attribute__alloc_align__)
+#   define ATTR_ALLOC_ALIGN(pos) __attribute_alloc_align__((pos))
+#elif defined(__alloc_align)
+#   define ATTR_ALLOC_ALIGN(pos) __alloc_align((pos))
+#else
+#   define ATTR_ALLOC_ALIGN(pos)
+#endif
 
 typedef struct {
     char* start;
@@ -18,26 +33,6 @@ typedef struct {
  */
 void arena_abort_fn_set(void (*abort_func)());
 
-/* arenas_new
- * Wrap in a function which returns a char*.
- * Free the char* which is returned when the arenas are no longer needed.
- */
-#define arenas_new(arena, arena_size, scratch, scratch_size, memory)                                \
-    constexpr int arena_capacity = arena_size;                                                      \
-    constexpr int scratch_capacity = scratch_size;                                                  \
-    constexpr int total_capacity = arena_capacity + scratch_capacity;                               \
-                                                                                                    \
-    memory = malloc(total_capacity);                                                                \
-    if (!memory) {                                                                                  \
-        return NULL;                                                                                \
-    }                                                                                               \
-                                                                                                    \
-    arena = (Arena){.start = memory, .end = memory + (arena_capacity)};                             \
-    char* scratch_memory_start = memory + (arena_capacity + 1);                                     \
-    scratch =                                                                                       \
-        (Arena){.start = scratch_memory_start, .end = scratch_memory_start + (scratch_capacity)};   \
-    return memory;
-
 /* arena_malloc
  * Call to allocate in the arena.
  * Convience wrapper for arena_malloc__
@@ -46,8 +41,8 @@ void arena_abort_fn_set(void (*abort_func)());
 
 void* arena_malloc__(Arena* restrict arena, uintptr_t count, uintptr_t size,
                             uintptr_t alignment)
-    __attribute_malloc__
-    __attribute_alloc_align__((4));
+    ATTR_MALLOC
+    ATTR_ALLOC_ALIGN(4);
 
 /* arena_realloc
  * Call to reallocate in the arena.
@@ -58,5 +53,5 @@ void* arena_malloc__(Arena* restrict arena, uintptr_t count, uintptr_t size,
 
 void* arena_realloc__(Arena* restrict arena, uintptr_t count, uintptr_t size, uintptr_t alignment, void* old_ptr,
                              uintptr_t old_count)
-    __attribute_malloc__
-    __attribute_alloc_align__((4));
+    ATTR_MALLOC
+    ATTR_ALLOC_ALIGN(4);

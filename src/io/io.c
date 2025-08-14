@@ -401,6 +401,7 @@ int io_autocompletions_select_from(Input* restrict input)
     return exit;
 }
 
+[[nodiscard]]
 int io_autocompletions_select(Input* restrict input)
 {
     int rv = io_autocompletions_select_from(input);
@@ -457,6 +458,7 @@ int io_backspace(Input* restrict input)
     return EXIT_SUCCESS;
 }
 
+[[nodiscard]]
 int io_eol(Input* restrict input)
 {
     if (!input->pos && !input->buffer[input->pos]) {

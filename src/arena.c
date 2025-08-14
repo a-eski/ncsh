@@ -14,7 +14,6 @@
 void arena_abort__()
 {
     puts("ncsh: ran out of allocated memory.");
-    // TODO: implement different OOM stragety other than aborting.
     fprintf(stderr, "\nncsh: out of memory, aborting.\n");
     abort();
 }
@@ -27,8 +26,8 @@ void arena_abort_set(void (*abort_func)())
 }
 
 [[nodiscard]]
-__attribute_malloc__
-__attribute_alloc_align__((4))
+ATTR_MALLOC
+ATTR_ALLOC_ALIGN(4)
 void* arena_malloc__(Arena* restrict arena, uintptr_t count, uintptr_t size,
                             uintptr_t alignment)
 {
@@ -46,8 +45,8 @@ void* arena_malloc__(Arena* restrict arena, uintptr_t count, uintptr_t size,
 }
 
 [[nodiscard]]
-__attribute_malloc__
-__attribute_alloc_align__((4))
+ATTR_MALLOC
+ATTR_ALLOC_ALIGN(4)
 void* arena_realloc__(Arena* restrict arena, uintptr_t count, uintptr_t size,
                                                   uintptr_t alignment, void* old_ptr, uintptr_t old_count)
 {

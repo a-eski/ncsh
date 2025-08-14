@@ -384,14 +384,11 @@ int history_command_add(char* restrict value, size_t value_len, History* restric
 
 void history_remove_entries_shift(size_t offset, History* restrict history)
 {
-    if (offset + 1 == history->count) {
+    if (offset + 1 == history->count || !history->count) {
         return;
     }
 
-    // TODO: memmove?
-    for (size_t i = offset; i < history->count - 1; ++i) {
-        history->entries[i] = history->entries[i + 1];
-    }
+    memmove(history->entries, history->entries + 1, history->count - 1);
 }
 
 [[nodiscard]]

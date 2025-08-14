@@ -11,14 +11,14 @@
 #include "ops.h"
 
 [[nodiscard]]
-int semantic_analyzer_error_write(char* restrict message, size_t message_length)
+int sema_error_write(char* restrict message, size_t message_length)
 {
     tty_dwriteln(STDERR_FILENO, message, message_length);
 
     return EXIT_SYNTAX_ERROR;
 }
 
-#define INVALID_SYNTAX(message) semantic_analyzer_error_write(message, sizeof(message) - 1)
+#define INVALID_SYNTAX(message) sema_error_write(message, sizeof(message) - 1)
 
 #define INVALID_SYNTAX_PIPE_FIRST_ARG                                                                                  \
     "ncsh: Invalid syntax: found pipe operator ('|') as first argument. Correct usage of pipe operator is 'program1 "  \
@@ -97,7 +97,7 @@ int semantic_analyzer_error_write(char* restrict message, size_t message_length)
     "ncsh: Invalid syntax: found or operator ('||') as first argument. Correct usage of or operator is "               \
     "'false || true'"
 
-/* semantic_analyzer_check_first_arg
+/* sema_check_first_arg
  * Simple check to see if something is in first position that shouldn't be
  */
 int syntax_validatator_first_arg_check(uint8_t op)
@@ -142,10 +142,10 @@ int syntax_validatator_first_arg_check(uint8_t op)
     }
 }
 
-/* semantic_analyzer_check_last_arg
+/* sema_check_last_arg
  * Simple check to see if something is in last position that shouldn't be
  */
-int semantic_analyzer_last_arg_check(Lexemes* restrict lexemes)
+int sema_last_arg_check(Lexemes* restrict lexemes)
 {
     switch (lexemes->ops[lexemes->count - 1]) {
     case OP_PIPE: {
@@ -218,7 +218,7 @@ int semantic_analyzer_last_arg_check(Lexemes* restrict lexemes)
     "ncsh: Invalid Syntax: expecting some statement after 'if [ (CONDITION) ]; then (STATEMENT); else'. "                \
     "Correct usage of 'if' is 'if [ (CONDITION) ]; then (STATEMENT); [else [STATEMENT];] fi'."
 
-int semantic_analyzer_check(Lexemes* restrict lexemes)
+int sema_check(Lexemes* restrict lexemes)
 {
     if (!lexemes) {
         return INVALID_SYNTAX(INVALID_SYNTAX_NO_ARGS);
@@ -296,7 +296,7 @@ int semantic_analyzer_check(Lexemes* restrict lexemes)
 }
 
 [[nodiscard]]
-int semantic_analyzer_analyze(Lexemes* restrict lexemes)
+int sema_analyze(Lexemes* restrict lexemes)
 {
     assert(lexemes);
     if (!lexemes || !lexemes->count)
@@ -305,9 +305,9 @@ int semantic_analyzer_analyze(Lexemes* restrict lexemes)
     int result = syntax_validatator_first_arg_check(lexemes->ops[0]);
     if (result != EXIT_SUCCESS)
         return result;
-    result = semantic_analyzer_last_arg_check(lexemes);
+    result = sema_last_arg_check(lexemes);
     if (result != EXIT_SUCCESS)
         return result;
-    result = semantic_analyzer_check(lexemes);
+    result = sema_check(lexemes);
     return result;
 }
