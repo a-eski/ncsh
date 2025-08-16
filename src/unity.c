@@ -52,4 +52,3 @@
 #include "env.c"
 
 #include "main.c"
-#include "noninteractive.c"

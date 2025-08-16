@@ -13,6 +13,7 @@
 #define AUTOCOMPLETE_DIM 244
 
 extern volatile int sigwinch_caught;
+extern volatile int sigint_caught;
 
 void io_prompt_init()
 {
@@ -1059,6 +1060,9 @@ int io_readline(Input* restrict input, Arena* restrict scratch)
         if (sigwinch_caught) {
             io_resize(input);
             sigwinch_caught = 0;
+        }
+        if (sigint_caught) {
+            input->reprint_prompt = true;
         }
 
         io_autocomplete(input);

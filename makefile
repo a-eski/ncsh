@@ -15,7 +15,7 @@ release_flags = $(main_flags) -flto -O3 -ffast-math -march=native -DNDEBUG
 
 fuzz_flags = $(debug_flags) -fsanitize=fuzzer -DNDEBUG -O3
 
-objects = obj/main.o obj/arena.o obj/noninteractive.o obj/io.o obj/pipe.o obj/redirection.o obj/vm.o obj/sema.o obj/interpreter.o obj/parser.o obj/prompt.o obj/efile.o obj/hashset.o obj/lexer.o obj/lexemes.o obj/expansions.o obj/statements.o obj/builtins.o obj/history.o obj/ac.o obj/env.o obj/alias.o obj/conf.o obj/fzf.o obj/z.o obj/ttyio.o obj/tcaps.o obj/terminfo.o obj/unibilium.o obj/uninames.o obj/uniutil.o
+objects = obj/main.o obj/arena.o obj/io.o obj/pipe.o obj/redirection.o obj/vm.o obj/sema.o obj/interpreter.o obj/parser.o obj/prompt.o obj/efile.o obj/hashset.o obj/lexer.o obj/lexemes.o obj/expansions.o obj/statements.o obj/builtins.o obj/history.o obj/ac.o obj/env.o obj/alias.o obj/conf.o obj/fzf.o obj/z.o obj/ttyio.o obj/tcaps.o obj/terminfo.o obj/unibilium.o obj/uninames.o obj/uniutil.o
 
 target = ./bin/ncsh
 
@@ -73,10 +73,14 @@ obj/%.o: src/%.c
 # Normal release build
 release:
 	make RELEASE=1
+r:
+	make release
 
 # Normal debug build
 debug:
 	make -B RELEASE=0
+d:
+	make debug
 
 # Unity/jumbo release build
 unity:

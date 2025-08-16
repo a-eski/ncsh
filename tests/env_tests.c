@@ -1,6 +1,6 @@
 #include <stdlib.h>
 
-#include "../src/eskilib/etest.h"
+#include "etest.h"
 #include "../src/env.h"
 #include "lib/arena_test_helper.h"
 

@@ -1,6 +1,7 @@
 /* Copyright ncsh (C) by Alex Eski 2025 */
 /* environment.h: deal with environment variables and other things related to the environment. */
 
+#include "debug.h"
 #define _POSIX_C_SOURCE 200809L
 
 #include <stdint.h>
@@ -12,7 +13,7 @@
 
 Str* env_add_or_get(Env* env, Str key);
 
-void env_flat_to_hmap(Env* env, char** envp, Arena* restrict arena)
+static void env_flat_to_hmap(Env* env, char** envp, Arena* restrict arena)
 {
     assert(env);
     assert(envp);
@@ -37,7 +38,7 @@ void env_new(Shell* restrict shell, char** envp, Arena* restrict arena)
 #define ENV_FNV_OFFSET 2166136261
 
 [[nodiscard]]
-uint64_t env_hash(Str str, uint64_t seed)
+static uint64_t env_hash(Str str, uint64_t seed)
 {
     register uint64_t i = seed;
 
@@ -76,10 +77,10 @@ Str* env_home_get(Env* env)
     Str home_key = Str_New_Literal(NCSH_HOME_VAL);
 
     Str* home = env_add_or_get(env, xdg_config_home_key);
-    // printf("xdg config? %s\n", home->value);
+    debugf("%s? %s\n", NCSH_XDG_CONFIG_HOME_VAL, home->value);
     if (!home || !home->value) {
         home = env_add_or_get(env, home_key);
-        // printf("home? %s\n", home->value);
+        debugf("HOME? %s\n", home->value);
     }
 
     return home;

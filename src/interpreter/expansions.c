@@ -122,9 +122,7 @@ void expansion_variable(char* restrict in, size_t len, Commands* restrict cmds, 
         return;
     }
 
-    debugf("var %s\n", val->value);
-    assert(strlen(val->value) + 1 == val->length);
-    debugf("cmds->pos %zu\n", cmds->pos);
+    debugf("var %s %zu\n", val->value, val->length);
 
     cmds->vals[cmds->pos] = arena_malloc(scratch, val->length, char);
     memcpy(cmds->vals[cmds->pos], val->value, val->length - 1);
@@ -167,10 +165,16 @@ void expansion_alias(Lexemes* restrict lexemes, size_t n, Arena* restrict scratc
         return;
     }
 
-    if (alias.length > lexemes->lens[n]) {
-        lexemes->vals[n] = arena_realloc(scratch, alias.length, char, lexemes->vals[n], lexemes->lens[n]);
+    char* space = strchr(alias.value, ' ');
+    if (!space) {
+        if (alias.length > lexemes->lens[n]) {
+            lexemes->vals[n] = arena_realloc(scratch, alias.length, char, lexemes->vals[n], lexemes->lens[n]);
+        }
+
+        memcpy(lexemes->vals[n], alias.value, alias.length);
+        lexemes->lens[n] = alias.length;
+        return;
     }
 
-    memcpy(lexemes->vals[n], alias.value, alias.length);
-    lexemes->lens[n] = alias.length;
+    debug("found space in alias");
 }

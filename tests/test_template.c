@@ -1,6 +1,6 @@
 /* test_template.c: a template for creating new tests for ncsh. */
 
-#include "../src/eskilib/etest.h"
+#include "etest.h"
 
 void template_example_test()
 {
