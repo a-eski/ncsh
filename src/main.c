@@ -29,6 +29,7 @@
 jmp_buf env_jmp_buf;
 sig_atomic_t vm_child_pid;
 volatile int sigwinch_caught;
+volatile int sigint_caught;
 
 /* arena_init
  * Initialize arenas used for the lifteim of the shell.
@@ -86,10 +87,6 @@ char* init(Shell* restrict shell, char** restrict envp)
     }
 
     signal_init();
-    /*if (signal_forward(SIGINT) || signal_forward(SIGWINCH)) {
-        tty_perror("ncsh: Error setting up signal handlers");
-        return NULL;
-    }*/
 
     return memory;
 }
