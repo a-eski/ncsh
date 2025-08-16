@@ -1,7 +1,7 @@
 #include <stdlib.h>
 
 #include "../src/alias.h"
-#include "../src/eskilib/etest.h"
+#include "etest.h"
 #include "lib/arena_test_helper.h"
 
 Arena* test_arena;

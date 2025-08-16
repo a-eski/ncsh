@@ -1,5 +1,5 @@
 #include "../../src/defines.h" // used for macro NCSH_MAX_AUTOCOMPLETION_MATCHES
-#include "../../src/eskilib/etest.h"
+#include "../etest.h"
 #include "../../src/io/ac.h"
 #include "../lib/arena_test_helper.h"
 

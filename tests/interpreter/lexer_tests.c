@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../../src/eskilib/etest.h"
+#include "../etest.h"
 #include "../../src/interpreter/lexemes.h"
 #include "../../src/interpreter/lexer.h"
 #include "../../src/interpreter/ops.h"

@@ -2,7 +2,7 @@
 
 #include "../lib/arena_test_helper.h"
 #include "../lib/shell_test_helper.h"
-#include "../../src/eskilib/etest.h"
+#include "../etest.h"
 #include "../../src/env.h"
 #include "../../src/interpreter/expansions.h"
 #include "../../src/interpreter/lexemes.h"

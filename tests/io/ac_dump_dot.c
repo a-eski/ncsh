@@ -32,15 +32,15 @@ int main()
     Arena ta = {};
     char* mem = arena_init(&a, &ta);
     Config conf = {};
-    enum eresult r = config_init(&conf, &a, ta);
+    enum eresult r = conf_init(&conf, &a, ta);
     if (r != E_SUCCESS) {
         perror("ncsh: Error when setting up configurations");
         return EXIT_FAILURE;
     }
 
     History history = {};
-    r = history_init(conf.config_location, &history, &a);
-    if (history_init(conf.config_location, &history, &a) != E_SUCCESS) {
+    r = history_init(conf.location, &history, &a);
+    if (history_init(conf.location, &history, &a) != E_SUCCESS) {
         perror("ncsh: Error when setting up history");
         return EXIT_FAILURE;
     }

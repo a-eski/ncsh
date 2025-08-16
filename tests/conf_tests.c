@@ -1,7 +1,7 @@
 
 #include <stdlib.h>
 
-#include "../src/eskilib/etest.h"
+#include "etest.h"
 #include "../src/conf.h"
 #include "lib/arena_test_helper.h"
 #include "lib/shell_test_helper.h"
