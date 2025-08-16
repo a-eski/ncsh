@@ -1,5 +1,6 @@
 /* Copyright ncsh by Alex Eski 2024 */
 
+#include "debug.h"
 #ifndef _POXIC_C_SOURCE
 #define _POSIX_C_SOURCE 200809L
 #endif /* ifndef _POXIC_C_SOURCE */
@@ -15,7 +16,6 @@
 #include "defines.h"
 #include "eskilib/eresult.h"
 #include "interpreter/interpreter.h"
-#include "noninteractive.h"
 #include "io/ac.h"
 #include "io/io.h"
 #include "signals.h"
@@ -86,10 +86,10 @@ char* init(Shell* restrict shell, char** restrict envp)
     }
 
     signal_init();
-    if (signal_forward(SIGINT) || signal_forward(SIGWINCH)) {
+    /*if (signal_forward(SIGINT) || signal_forward(SIGWINCH)) {
         tty_perror("ncsh: Error setting up signal handlers");
         return NULL;
-    }
+    }*/
 
     return memory;
 }
@@ -131,6 +131,58 @@ void startup_time()
     double elapsed_ms = ((double)(end - start)) / CLOCKS_PER_SEC * 1000;
     tty_println("ncsh startup time: %.2f milliseconds", elapsed_ms);
 #endif
+}
+
+/* noninteractive
+ * Main noninteractive loop of the shell.
+ * Runs when calling shell via command-line like /bin/ncsh ls or via scripts.
+ * Much simpler than interactive loop, parses input from command-line and sends it to the VM.
+ * Returns: exit status, see defines.h (EXIT_...)
+ */
+[[nodiscard]]
+int noninteractive(int argc, char** restrict argv, char** restrict envp)
+{
+    assert(argc > 1); // 1 because first arg is ncsh
+    assert(argv);
+    assert(strstr(argv[0], "ncsh"));
+
+    // noninteractive does not support no args
+    if (argc <= 1) {
+        return EXIT_FAILURE;
+    }
+
+    debug("ncsh running in noninteractive mode.");
+    debug_argsv(argc, argv);
+
+    tty_init_caps();
+
+    constexpr int arena_capacity = 1 << 16;
+    char* memory = malloc(arena_capacity);
+    if (!memory) {
+        tty_color_set(TTYIO_RED_ERROR);
+        tty_puts("ncsh: could not start up, not enough memory available.");
+        tty_color_reset();
+        tty_deinit_caps();
+        return EXIT_FAILURE;
+    }
+
+    Shell shell = {0};
+    shell.arena = (Arena){.start = memory, .end = memory + (arena_capacity)};
+
+    env_new(&shell, envp, &shell.arena);
+
+    int rv = EXIT_SUCCESS;
+    if (conf_init(&shell) != E_SUCCESS) {
+        rv = EXIT_FAILURE;
+        goto exit;
+    }
+
+    rv = interpreter_run_noninteractive(argv + 1, (size_t)argc - 1, &shell);
+
+exit:
+    tty_deinit_caps();
+    free(memory);
+    return rv;
 }
 
 /* main
