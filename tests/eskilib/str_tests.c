@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../../src/eskilib/etest.h"
+#include "../etest.h"
 #include "../../src/eskilib/str.h"
 #include "../lib/arena_test_helper.h"
 

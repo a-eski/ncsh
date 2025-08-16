@@ -1,7 +1,7 @@
 #include <stdlib.h>
 
-#include "../../src/eskilib/etest.h"
-#include "../../src/io/io.h" // NOTE: is used for macro
+#include "../etest.h"
+#include "../../src/defines.h" // NOTE: is used for macro
 
 volatile int sigwinch_caught;
 

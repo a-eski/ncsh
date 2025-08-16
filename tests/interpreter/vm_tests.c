@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 #include "../../src/defines.h"
-#include "../../src/eskilib/etest.h"
+#include "../etest.h"
 #include "../../src/interpreter/lexer.h"
 #include "../../src/interpreter/parser.h"
 #include "../../src/interpreter/sema.h"

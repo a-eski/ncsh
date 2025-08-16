@@ -8,7 +8,7 @@
 #include "../../src/interpreter/parser.h"
 #include "../../src/interpreter/statements.h"
 #include "../../src/interpreter/vm_types.h"
-#include "../../src/eskilib/etest.h"
+#include "../etest.h"
 #include "../lib/arena_test_helper.h"
 
 __sig_atomic_t vm_child_pid;

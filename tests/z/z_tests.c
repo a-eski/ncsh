@@ -5,7 +5,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "../../src/eskilib/etest.h"
+#include "../etest.h"
 #include "../../src/z/z.h"
 #include "../../src/ttyio/ttyio.h"
 #include "../lib/arena_test_helper.h"

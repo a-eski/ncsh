@@ -12,7 +12,7 @@ int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size)
     History history = {};
     history_init(Str_Empty, &history, &arena);
     history_add((char*)Data, Size, &history, &arena);
-    history_save(&history);
+    history_save(&history, &arena);
 
     ARENA_TEST_TEARDOWN;
     return 0;
