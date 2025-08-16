@@ -95,6 +95,9 @@ enodiscard static inline Str* estrsplit(Str val, char splitter, Arena* restrict 
     return strs;
 }
 
+/* estrjoin
+ *  Join 2 strings into a new one allocated in the arena and separated by the joiner character.
+ */
 enodiscard static inline Str* estrjoin(Str* v, Str* v2, char joiner, Arena* restrict a)
 {
     assert(v); assert(v2); assert(a);
@@ -111,6 +114,9 @@ enodiscard static inline Str* estrjoin(Str* v, Str* v2, char joiner, Arena* rest
     return str;
 }
 
+/* estrcat
+ * Allocate a new string in the arena and concatenate v2 to v.
+*/
 enodiscard static inline Str* estrcat(Str* restrict v, Str* restrict v2, Arena* restrict a)
 {
     assert(v); assert(v2); assert(a);
@@ -124,4 +130,74 @@ enodiscard static inline Str* estrcat(Str* restrict v, Str* restrict v2, Arena* 
     memcpy(str->value, v->value, v->length - 1);
     memcpy(str->value + v->length, v2->value, v->length - 1);
     return str;
+}
+
+/* estridx
+ *  Return the index of the first occurence of char c in Str v.
+ */
+enodiscard static inline size_t estridx(Str* v, char c)
+{
+    assert(v); assert(v->value);
+
+    size_t idx;
+    for (idx = 0; idx < v->length; ++idx) {
+        if (v->value[idx] == c)
+            break;
+    }
+    return idx;
+}
+
+static inline void estrtrim(Str* v)
+{
+    size_t i = v->length - 2; // extra +1 to skip the null terminator
+    while (i > 0 && v->value[i] == ' ') {
+        v->value[i--] = '\0';
+    }
+    v->length = i + 2;
+}
+
+typedef struct Str_Builder {
+    size_t n;
+    size_t c;
+    Str* strs;
+} Str_Builder;
+
+enodiscard static inline Str_Builder* esb_new(Arena* restrict a)
+{
+    assert(a);
+
+    Str_Builder* sb = arena_malloc(a, 1, Str_Builder);
+    sb->strs = arena_malloc(a, 10, Str);
+    sb->n = 0;
+    sb->c = 0;
+    return sb;
+}
+
+static inline void esb_add(Str* restrict v, Str_Builder* restrict sb)
+{
+    assert(v); assert(sb);
+    // TODO: check capacity
+
+    sb->strs[sb->n++] = *v;
+}
+
+static inline Str* esb_to_str(Str_Builder* restrict sb, Arena* restrict a)
+{
+    size_t n = 0;
+    for (size_t i = 0; i < sb->n; ++i) {
+        n += sb->strs[i].length - 1;
+    }
+    ++n;
+
+    Str* rv = arena_malloc(a, 1, Str);
+    rv->length = n;
+    rv->value = arena_malloc(a, n, char);
+    memcpy(rv->value, sb->strs[0].value, sb->strs[0].length - 1);
+    size_t pos = sb->strs[0].length - 1;
+    for (size_t i = 1; i < sb->n; ++i) {
+        memcpy(rv->value + pos + 1, sb->strs[i].value, sb->strs[i].length - 1);
+        pos += sb->strs[i].length - 1;
+    }
+
+    return rv;
 }

@@ -6,20 +6,14 @@
 #include <unistd.h>
 
 #include "../arena.h"
+#include "../eskilib/str.h"
 
 #define LEXER_TOKENS_LIMIT 128
 
 typedef struct {
-    uint8_t op;
-    size_t len;
-    char* val;
-} Lexeme;
-
-typedef struct {
     size_t count;
     uint8_t* ops;
-    size_t* lens;
-    char** vals;
+    Str* strs;
 } Lexemes;
 
 void lexemes_init(Lexemes* restrict lexemes, Arena* restrict scratch);
