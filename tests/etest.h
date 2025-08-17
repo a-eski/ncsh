@@ -52,7 +52,7 @@ static int tests_passed;
 
 static bool abort_on_failed_assert;
 
-static void etest_init(bool abort_on_failed_assertion)
+[[maybe_unused]] static void etest_init(bool abort_on_failed_assertion)
 {
     abort_on_failed_assert = abort_on_failed_assertion;
 }
