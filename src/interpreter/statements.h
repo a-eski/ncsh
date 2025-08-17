@@ -4,6 +4,7 @@
 #include <unistd.h>
 
 #include "../arena.h"
+#include "../eskilib/str.h"
 #include "ops.h"
 
 enum Redirect_Type : uint8_t {
@@ -26,8 +27,7 @@ typedef struct Commands_ {
     enum Ops prev_op;
 
     enum Ops* ops;
-    size_t* lens;
-    char** vals;
+    Str* strs;
 
     struct Commands_* next;
 } Commands;

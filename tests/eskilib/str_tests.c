@@ -9,21 +9,38 @@
 void estrcmp_no_length_test()
 {
     char* val = "";
-    bool result = estrcmp(val, 0, "", 0);
+    bool result = estrcmp(Str_New(val, 0), Str_New("", 0));
+    eassert(!result);
+}
+
+void estrcmp_a_no_length_test()
+{
+    char* val = "";
+    bool result = estrcmp_a(val, 0, "", 0);
     eassert(!result);
 }
 
 void estrcmp_null_test()
 {
-    bool result = estrcmp(NULL, 0, NULL, 0);
+    bool result = estrcmp(Str_Empty, Str_Empty);
+    eassert(!result);
+}
+
+void estrcmp_a_null_test()
+{
+    bool result = estrcmp_a(NULL, 0, NULL, 0);
     eassert(!result);
 }
 
 void estrcmp_s1_null_test()
 {
-    char* val = "hello";
-    constexpr size_t len = sizeof("hello") - 1;
-    bool result = estrcmp(NULL, 0, val, len);
+    bool result = estrcmp(Str_Empty, Str_New_Literal("hello"));
+    eassert(!result);
+}
+
+void estrcmp_a_s1_null_test()
+{
+    bool result = estrcmp_a(NULL, 0, "hello", sizeof("hello"));
     eassert(!result);
 }
 
@@ -31,15 +48,30 @@ void estrcmp_empty_string_test()
 {
     Str str = Str_Empty;
     Str str2 = Str_Empty;
-    bool result = estrcmp(str.value, str.length, str2.value, str2.length);
+    bool result = estrcmp(str, str2);
+    eassert(!result);
+}
+
+void estrcmp_a_empty_string_test()
+{
+    Str str = Str_Empty;
+    Str str2 = Str_Empty;
+    bool result = estrcmp_a(str.value, str.length, str2.value, str2.length);
     eassert(!result);
 }
 
 void estrcmp_true_test()
 {
+    Str val = Str_New_Literal("hello");
+    bool result = estrcmp(val, Str_New_Literal("hello"));
+    eassert(result);
+}
+
+void estrcmp_a_true_test()
+{
     char* val = "hello";
     constexpr size_t len = sizeof("hello") - 1;
-    bool result = estrcmp(val, len, "hello", len);
+    bool result = estrcmp_a(val, len, "hello", len);
     eassert(result);
 }
 
@@ -48,19 +80,36 @@ void estrcmp_false_test()
     Str s1 = Str_New_Literal("hello hello");
     Str s2 = Str_New_Literal("hello there");
 
-    bool result = estrcmp(s1.value, s1.length, s2.value, s2.length);
+    bool result = estrcmp(s1, s2);
+
+    eassert(!result);
+}
+
+void estrcmp_a_false_test()
+{
+    Str s1 = Str_New_Literal("hello hello");
+    Str s2 = Str_New_Literal("hello there");
+
+    bool result = estrcmp_a(s1.value, s1.length, s2.value, s2.length);
 
     eassert(!result);
 }
 
 void estrcmp_mismatched_lengths_false_test()
 {
+    bool result = estrcmp(Str_New_Literal("hello"), Str_New_Literal("hello there"));
+
+    eassert(!result);
+}
+
+void estrcmp_a_mismatched_lengths_false_test()
+{
     char* val = "hello";
     constexpr size_t len = sizeof("hello");
     char* val_two = "hello there";
     constexpr size_t len_two = sizeof("hello there");
 
-    bool result = estrcmp(val, len, val_two, len_two);
+    bool result = estrcmp_a(val, len, val_two, len_two);
 
     eassert(!result);
 }
@@ -70,7 +119,16 @@ void estrcmp_partial_comparison_true_test()
     char* val = "hello";
     // only compare the first three characters, 'hel'
     constexpr size_t len = sizeof("hello") - 1 - 2;
-    bool result = estrcmp(val, len, "hello", len);
+    bool result = estrcmp(Str_New(val, len), Str_New("hello", len));
+    eassert(result);
+}
+
+void estrcmp_a_partial_comparison_true_test()
+{
+    char* val = "hello";
+    // only compare the first three characters, 'hel'
+    constexpr size_t len = sizeof("hello") - 1 - 2;
+    bool result = estrcmp_a(val, len, "hello", len);
     eassert(result);
 }
 
@@ -79,7 +137,17 @@ void estrcmp_partial_comparison_false_test()
     Str s1 = Str_New("hello hello", sizeof("hello hello") - 2);
     Str s2 = Str_New("hello there", sizeof("hello there") - 2);
 
-    bool result = estrcmp(s1.value, s1.length, s2.value, s2.length);
+    bool result = estrcmp(s1, s2);
+
+    eassert(!result);
+}
+
+void estrcmp_a_partial_comparison_false_test()
+{
+    Str s1 = Str_New("hello hello", sizeof("hello hello") - 2);
+    Str s2 = Str_New("hello there", sizeof("hello there") - 2);
+
+    bool result = estrcmp_a(s1.value, s1.length, s2.value, s2.length);
 
     eassert(!result);
 }
@@ -228,6 +296,13 @@ void estrcat_valid_values_returns_concatted_str_test()
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
+void estridx_returns_idx_test()
+{
+    size_t idx = estridx(&Str_New_Literal("vim=nvim"), '=');
+
+    eassert(idx == 3);
+}
+
 void str_tests()
 {
     etest_start();
@@ -242,6 +317,16 @@ void str_tests()
     etest_run(estrcmp_partial_comparison_true_test);
     etest_run(estrcmp_partial_comparison_false_test);
 
+    etest_run(estrcmp_a_no_length_test);
+    etest_run(estrcmp_a_null_test);
+    etest_run(estrcmp_a_s1_null_test);
+    etest_run(estrcmp_a_empty_string_test);
+    etest_run(estrcmp_a_true_test);
+    etest_run(estrcmp_a_false_test);
+    etest_run(estrcmp_a_mismatched_lengths_false_test);
+    etest_run(estrcmp_a_partial_comparison_true_test);
+    etest_run(estrcmp_a_partial_comparison_false_test);
+
     etest_run(estrsplit_bad_value_returns_null_test);
     etest_run(estrsplit_last_pos_splitter_returns_null_test);
     etest_run(estrsplit_valid_input_returns_strs_test);
@@ -255,6 +340,8 @@ void str_tests()
     etest_run(estrcat_bad_value_returns_null_test);
     etest_run(estrcat_one_bad_value_returns_null_test);
     etest_run(estrcat_other_bad_value_returns_null_test);
+
+    etest_run(estridx_returns_idx_test);
 
     etest_finish();
 }

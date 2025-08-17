@@ -410,9 +410,9 @@ void lexer_lex(char* restrict line, size_t length, Lexemes* lexemes, Arena* rest
         debugf("Current lexer state: %d\n", lex_state);
 
         lexemes->ops[n] = lexer_op_process();
-        lexemes->lens[n] = lex_buf_pos + 1;
-        lexemes->vals[n] = arena_malloc(scratch, lexemes->lens[n], char);
-        memcpy(lexemes->vals[n], lex_buf, lex_buf_pos);
+        lexemes->strs[n].length = lex_buf_pos + 1;
+        lexemes->strs[n].value = arena_malloc(scratch, lexemes->strs[n].length, char);
+        memcpy(lexemes->strs[n].value, lex_buf, lex_buf_pos);
         ++n;
 
         lex_buf[0] = '\0';

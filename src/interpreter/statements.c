@@ -12,8 +12,7 @@ Commands* commands_alloc(Arena* restrict scratch)
     Commands* c = arena_malloc(scratch, 1, Commands);
     c->count = 0;
     c->cap = DEFAULT_N;
-    c->vals = arena_malloc(scratch, DEFAULT_N, char*);
-    c->lens = arena_malloc(scratch, DEFAULT_N, size_t);
+    c->strs = arena_malloc(scratch, DEFAULT_N, Str);
     c->ops = arena_malloc(scratch, DEFAULT_N, enum Ops);
     c->next = NULL;
     c->current_op = OP_NONE;
@@ -26,10 +25,8 @@ void command_realloc(Commands* restrict cmds, Arena* restrict scratch)
     size_t c = cmds->cap;
     size_t new_cap = c *= 2;
     cmds->cap = new_cap;
-    cmds->vals =
-        arena_realloc(scratch, new_cap, char*, cmds->vals, c);
-    cmds->lens =
-        arena_realloc(scratch, new_cap, size_t, cmds->lens, c);
+    cmds->strs =
+        arena_realloc(scratch, new_cap, Str, cmds->strs, c);
     cmds->ops =
         arena_realloc(scratch, new_cap, enum Ops, cmds->ops, c);
 }
@@ -39,10 +36,8 @@ void commands_realloc(Statements* restrict stmts, Arena* restrict scratch)
     size_t c = stmts->statements[stmts->count].commands->cap;
     size_t new_cap = c *= 2;
     stmts->statements[stmts->count].commands->cap = new_cap;
-    stmts->statements[stmts->count].commands->vals =
-        arena_realloc(scratch, new_cap, char*, stmts->statements[stmts->count].commands->vals, c);
-    stmts->statements[stmts->count].commands->lens =
-        arena_realloc(scratch, new_cap, size_t, stmts->statements[stmts->count].commands->lens, c);
+    stmts->statements[stmts->count].commands->strs =
+        arena_realloc(scratch, new_cap, Str, stmts->statements[stmts->count].commands->strs, c);
     stmts->statements[stmts->count].commands->ops =
         arena_realloc(scratch, new_cap, enum Ops, stmts->statements[stmts->count].commands->ops, c);
 }
@@ -51,14 +46,14 @@ Commands* command_next(Commands* restrict cmds, Arena* restrict scratch)
 {
     if (!cmds->pos) {
         cmds->count = 1;
-        cmds->vals[1] = NULL;
+        cmds->strs[1].value = NULL;
     }
     else {
         cmds->count = cmds->pos;
     }
 
     cmds->next = commands_alloc(scratch);
-    cmds->vals[cmds->pos] = NULL;
+    cmds->strs[cmds->pos].value = NULL;
     cmds->pos = 0;
 
     cmds = cmds->next;

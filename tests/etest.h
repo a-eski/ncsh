@@ -4,6 +4,7 @@
 
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #define RESET "\033[0m"
 #define RED "\033[31m"
@@ -49,6 +50,13 @@ static bool test_failed;
 static int tests_failed;
 static int tests_passed;
 
+static bool abort_on_failed_assert;
+
+static void etest_init(bool abort_on_failed_assertion)
+{
+    abort_on_failed_assert = abort_on_failed_assertion;
+}
+
 static void etest_run_internal(char* function_name, void (*function)(void))
 {
     test_failed = false;
@@ -69,6 +77,9 @@ static void etest_run_internal(char* function_name, void (*function)(void))
 [[maybe_unused]]
 static void etest_failed_internal(void)
 {
+    if (abort_on_failed_assert) {
+        abort();
+    }
     test_failed = true;
 }
 

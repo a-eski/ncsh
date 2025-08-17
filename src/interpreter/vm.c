@@ -130,13 +130,13 @@ int vm_math_process(Vm_Data* restrict vm)
     while (*buf && printf("%s\n", *buf) && ++buf);
 #endif
 
-    if (!vm->buffer || !vm->buffer[0] || !vm->buffer[2]) {
+    if (!vm->strs || !vm->strs[0].value || !vm->strs[2].value) {
         return EXIT_FAILURE_CONTINUE;
     }
 
-    char* c1 = vm->buffer[0];
+    char* c1 = vm->strs[0].value;
     enum Ops op = vm->op_current;
-    char* c2 = vm->buffer[2];
+    char* c2 = vm->strs[2].value;
     assert(c1); assert(c2);
 
     bool result;
@@ -166,7 +166,7 @@ int vm_math_process(Vm_Data* restrict vm)
 [[nodiscard]]
 Commands* vm_command_next(Statements* restrict stmts, Commands* restrict cmds, Vm_Data* restrict vm)
 {
-    if (!cmds->next || !cmds->next->vals[0]) {
+    if (!cmds->next || !cmds->next->strs[0].value) {
         ++stmts->pos;
         if (stmts->pos >= stmts->count || stmts->pos >= stmts->cap) {
             debugf("hit stmts->count %zu or stmts->cap %zu, marking vm end\n", stmts->count, stmts->cap);
@@ -199,8 +199,8 @@ Commands* vm_command_next(Statements* restrict stmts, Commands* restrict cmds, V
 [[nodiscard]]
 Commands* vm_command_set(Statements* restrict stmts, Commands* restrict cmds, Vm_Data* restrict vm, enum Vm_State state)
 {
-    vm->buffer = cmds->vals;
-    vm->buffer_lens = cmds->lens;
+    vm->strs = cmds->strs;
+    vm->strs_n = cmds->count;
     vm->state = state;
     vm->op_current = cmds->prev_op;
     return vm_command_next(stmts, cmds, vm);
@@ -487,8 +487,8 @@ Commands* vm_next_normal(Statements* restrict stmts, Commands* restrict cmds, Vm
         return NULL;
     }
 
-    vm->buffer = cmds->vals;
-    vm->buffer_lens = cmds->lens;
+    vm->strs = cmds->strs;
+    vm->strs_n = cmds->count;
     cmds = vm_command_next(stmts, cmds, vm);
 
     if (!vm->end) {
@@ -545,7 +545,7 @@ int vm_run(Statements* restrict stmts, Shell* restrict shell, Arena* restrict sc
     while (!vm.end && cmds) {
         cmds = vm_next(stmts, cmds, &vm);
 
-        if (!vm.buffer || !vm.buffer[0]) {
+        if (!vm.strs || !vm.strs[0].value) {
             return EXIT_FAILURE_CONTINUE;
         }
 
@@ -575,7 +575,8 @@ int vm_run(Statements* restrict stmts, Shell* restrict shell, Arena* restrict sc
                 if (vm.op_current == OP_PIPE)
                     pipe_connect(vm.command_position, stmts->pipes_count, &vm.pipes_io);
 
-                vm.exec_result = execvp(vm.buffer[0], vm.buffer);
+                char** buffers = estrtoarr(vm.strs, vm.strs_n, scratch);
+                vm.exec_result = execvp(buffers[0], buffers);
                 if (vm.exec_result == EXECVP_FAILED) {
                     vm.end = true;
                     tty_perror("ncsh: Could not run command");

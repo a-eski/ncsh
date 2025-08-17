@@ -160,7 +160,7 @@ void conf_process(FILE* restrict file, Shell* shell)
         // Aliasing (aliased=alias)
         else if (buffer_length > 6 && !memcmp(buffer, ALIAS_ADD, sizeof(ALIAS_ADD) - 1)) {
             assert(buffer + 6 && *(buffer + 6));
-            alias_add(buffer + 6, (size_t)(buffer_length - 6), &shell->arena);
+            alias_add(Str_New(buffer + 6, (size_t)(buffer_length - 6)), &shell->arena);
         }
 
         memset(buffer, '\0', (size_t)buffer_length);

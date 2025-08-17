@@ -57,12 +57,12 @@ enum z_Result {
 
 enum z_Result z_init(Str* restrict config_location, z_Database* restrict database, Arena* restrict arena);
 
-void z(char* restrict target, size_t target_length, char* restrict cwd, z_Database* restrict db, Arena* restrict arena,
+void z(Str* restrict str, char* restrict cwd, z_Database* restrict db, Arena* restrict arena,
        Arena scratch_arena);
 
-enum z_Result z_add(char* restrict path, size_t path_length, z_Database* restrict db, Arena* restrict arena);
+enum z_Result z_add(Str* restrict path, z_Database* restrict db, Arena* restrict arena);
 
-enum z_Result z_remove(char* restrict path, size_t path_length, z_Database* restrict db);
+enum z_Result z_remove(Str* restrict path, z_Database* restrict db);
 
 enum z_Result z_exit(z_Database* restrict db);
 

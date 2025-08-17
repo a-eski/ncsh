@@ -68,11 +68,11 @@ int parser_commands_process(Shell* shell, Lexemes* restrict lexemes, size_t* res
 
     do {
         bool end_of_statement = false;
-        size_t len = lexemes->lens[*n];
-        if (len > 2 && lexemes->vals[*n][len - 2] == ';') {
-            debugf("replacing ; val %s, char %c\n", lexemes->vals[*n], lexemes->vals[*n][len - 2]);
-            lexemes->vals[*n][len - 2] = '\0';
-            --lexemes->lens[*n];
+        size_t len = lexemes->strs[*n].length;
+        if (len > 2 && lexemes->strs[*n].value[len - 2] == ';') {
+            debugf("replacing ; val %s, char %c\n", lexemes->strs[*n].value, lexemes->vals[*n][len - 2]);
+            lexemes->strs[*n].value[len - 2] = '\0';
+            --lexemes->strs[*n].length;
             end_of_statement = true;
         }
 
@@ -88,11 +88,11 @@ int parser_commands_process(Shell* shell, Lexemes* restrict lexemes, size_t* res
             break;
         }
         case OP_VARIABLE:
-            expansion_variable(lexemes->vals[*n], lexemes->lens[*n], commands, /*stmts,*/ shell, scratch);
+            expansion_variable(&lexemes->strs[*n], commands, /*stmts,*/ shell, scratch);
             ++*n;
             continue;
         case OP_GLOB_EXPANSION:
-            expansion_glob(lexemes->vals[*n], commands, scratch);
+            expansion_glob(lexemes->strs[*n].value, commands, scratch);
             continue;
         case OP_PIPE:
             ++stmts->pipes_count;
@@ -116,8 +116,7 @@ int parser_commands_process(Shell* shell, Lexemes* restrict lexemes, size_t* res
         }
         }
 
-        commands->vals[commands->pos] = lexemes->vals[*n];
-        commands->lens[commands->pos] = lexemes->lens[*n];
+        commands->strs[commands->pos] = lexemes->strs[*n];
         commands->ops[commands->pos] = lexemes->ops[*n];
         ++commands->pos;
         ++*n;
@@ -290,15 +289,13 @@ int parser_if(Shell* shell, Lexemes* restrict lexemes, size_t* restrict n, State
 [[nodiscard]]
 int parser_parse(Lexemes* restrict lexemes, Statements* stmts, Shell* restrict shell, Arena* restrict scratch)
 {
-    assert(stmts);
-    assert(scratch);
+    assert(lexemes); assert(stmts); assert(scratch);
 
     statements_init(stmts, scratch);
     if (!lexemes->count) {
         return EXIT_SUCCESS;
     }
-    assert(stmts->statements->commands);
-    assert(stmts->statements->commands->vals);
+    assert(stmts->statements->commands); assert(stmts->statements->commands->strs);
 
     int res;
     commands = stmts->statements[stmts->pos].commands;
@@ -310,7 +307,7 @@ int parser_parse(Lexemes* restrict lexemes, Statements* stmts, Shell* restrict s
         expansion_alias(lexemes, 0, scratch);
     }
 
-    for (size_t i = 0; i < lexemes->count && lexemes->vals[i]; ++i) {
+    for (size_t i = 0; i < lexemes->count; ++i) {
         if (commands->pos >= commands->cap - 1) {
             commands_realloc(stmts, scratch);
         }
@@ -335,11 +332,11 @@ int parser_parse(Lexemes* restrict lexemes, Statements* stmts, Shell* restrict s
             continue;
         }
         case OP_VARIABLE: {
-            expansion_variable(lexemes->vals[i], lexemes->lens[i], commands, /*stmts,*/ shell, scratch);
+            expansion_variable(&lexemes->strs[i], commands, /*stmts,*/ shell, scratch);
             continue;
         }
         case OP_GLOB_EXPANSION: {
-            expansion_glob(lexemes->vals[i], commands, scratch);
+            expansion_glob(lexemes->strs[i].value, commands, scratch);
             continue;
         }
         case OP_PIPE: {
@@ -379,14 +376,13 @@ int parser_parse(Lexemes* restrict lexemes, Statements* stmts, Shell* restrict s
         case OP_STDOUT_AND_STDERR_REDIRECTION:
         case OP_STDOUT_AND_STDERR_REDIRECTION_APPEND: {
             stmts->redirect_type = lexemes->ops[i];
-            stmts->redirect_filename = lexemes->vals[i + 1];
+            stmts->redirect_filename = lexemes->strs[i + 1].value;
             ++i; // skip filename and redirect type, not needed in commands
             continue;
         }
         }
 
-        commands->vals[commands->pos] = lexemes->vals[i];
-        commands->lens[commands->pos] = lexemes->lens[i];
+        commands->strs[commands->pos] = lexemes->strs[i];
         commands->ops[commands->pos] = lexemes->ops[i];
         ++commands->pos;
     }

@@ -377,9 +377,9 @@ int history_command_clean(History* restrict history, Arena* restrict arena, Aren
 }
 
 [[nodiscard]]
-int history_command_add(char* restrict value, size_t value_len, History* restrict history, Arena* restrict arena)
+int history_command_add(Str val, History* restrict history, Arena* restrict arena)
 {
-    return history_add(value, value_len, history, arena);
+    return history_add(val.value, val.length, history, arena);
 }
 
 void history_remove_entries_shift(size_t offset, History* restrict history)
@@ -392,12 +392,10 @@ void history_remove_entries_shift(size_t offset, History* restrict history)
 }
 
 [[nodiscard]]
-int history_command_remove(char* restrict value, size_t value_len, History* restrict history, Arena* restrict arena,
+int history_command_remove(Str val, History* restrict history, Arena* restrict arena,
                            Arena* restrict scratch)
 {
-    assert(value);
-    assert(value_len > 0);
-    assert(history);
+    assert(val.value); assert(val.length > 0); assert(history);
 
     if (history_clean(history, arena, *scratch) != E_SUCCESS) {
         return EXIT_FAILURE_CONTINUE;
@@ -405,12 +403,12 @@ int history_command_remove(char* restrict value, size_t value_len, History* rest
 
     // TODO: is this even needed? didn't we reload history in history clean?
     for (size_t i = 0; i < history->count; ++i) {
-        if (estrcmp(history->entries[i].value, history->entries[i].length, value, value_len)) {
+        if (estrcmp(history->entries[i], val)) {
             history->entries[i].value = NULL;
             history->entries[i].length = 0;
             history_remove_entries_shift(i, history);
             --history->count;
-            tty_print("ncsh history: removed entry: %s\n", value);
+            tty_print("ncsh history: removed entry: %s\n", val.value);
             return EXIT_SUCCESS;
         }
     }

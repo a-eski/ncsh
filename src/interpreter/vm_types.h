@@ -7,6 +7,7 @@
 #include <stddef.h>
 
 #include "ops.h"
+#include "../eskilib/str.h"
 
 /****** MACROS ******/
 
@@ -56,8 +57,8 @@ typedef struct {
  * Stores information related to state in the VM.
  * Used in conjunction with Args and then Tokens. */
 typedef struct {
-    char** buffer;
-    size_t* buffer_lens;
+    size_t strs_n;
+    Str* strs;
     uint8_t command_position;
     bool end;
 

@@ -40,7 +40,17 @@ typedef struct {
 /* estrcmp
  * A simple wrapper for memcmp that checks if lengths match before calling memcmp.
  */
-enodiscard static inline bool estrcmp(char* restrict str, size_t str_len, char* restrict str_two, size_t str_two_len)
+enodiscard static inline bool estrcmp(Str v, Str v2)
+{
+    if (v.length != v2.length || !v.length) {
+        return false;
+    }
+
+    return !v.value || !memcmp(v.value, v2.value, v.length);
+}
+
+
+enodiscard static inline bool estrcmp_a(char* restrict str, size_t str_len, char* restrict str_two, size_t str_two_len)
 {
     if (str_len != str_two_len || !str_len) {
         return false;
@@ -49,13 +59,13 @@ enodiscard static inline bool estrcmp(char* restrict str, size_t str_len, char* 
     return !str || !memcmp(str, str_two, str_len);
 }
 
-enodiscard static inline bool estrcmp_s(Str val, Str val2)
+enodiscard static inline bool estrcmp_s(Str v, char* restrict v2, size_t v2_len)
 {
-    if (val.length != val2.length || !val.length) {
+    if (v.length != v2_len || !v.length) {
         return false;
     }
 
-    return !val.value || !memcmp(val.value, val2.value, val.length);
+    return !v.value || !memcmp(v.value, v2, v.length);
 }
 
 /* estrsplit
@@ -145,6 +155,15 @@ enodiscard static inline size_t estridx(Str* v, char c)
             break;
     }
     return idx;
+}
+
+enodiscard static inline char** estrtoarr(Str* strs, size_t n, Arena* restrict a)
+{
+    char** buffer = arena_malloc(a, n, char*);
+    for (size_t i = 0; i < n; ++i) {
+        buffer[i] = strs[i].value;
+    }
+    return buffer;
 }
 
 static inline void estrtrim(Str* v)
