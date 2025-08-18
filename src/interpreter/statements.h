@@ -23,7 +23,6 @@ typedef struct Commands_ {
     size_t pos;
     size_t count;
     size_t cap;
-    enum Ops current_op;
     enum Ops prev_op;
 
     enum Ops* ops;

@@ -622,7 +622,7 @@ static int builtins_pwd([[maybe_unused]] Str* restrict strs)
 static int builtins_kill(Str* restrict strs)
 {
     assert(strs);
-    if (!strs || !strs->value || !strs->value[1]) {
+    if (!strs || !strs->value) {
         if (builtins_writeln(vm_output_fd, KILL_NOTHING_TO_KILL_MESSAGE, sizeof(KILL_NOTHING_TO_KILL_MESSAGE) - 1) ==
             -1) {
             return EXIT_FAILURE;
@@ -633,6 +633,14 @@ static int builtins_kill(Str* restrict strs)
 
     // skip first position since we know it is 'kill'
     Str* args = strs + 1;
+    if (!args || !args->value) {
+        if (builtins_writeln(vm_output_fd, KILL_NOTHING_TO_KILL_MESSAGE, sizeof(KILL_NOTHING_TO_KILL_MESSAGE) - 1) ==
+            -1) {
+            return EXIT_FAILURE;
+        }
+
+        return EXIT_SUCCESS;
+    }
 
     pid_t pid = atoi(args->value);
     if (!pid) {

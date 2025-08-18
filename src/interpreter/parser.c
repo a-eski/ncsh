@@ -83,7 +83,6 @@ int parser_commands_process(Shell* shell, Lexemes* restrict lexemes, size_t* res
         case OP_EQUALS:
         case OP_LESS_THAN:
         case OP_GREATER_THAN: {
-            commands->current_op = lexemes->ops[*n];
             commands->prev_op = lexemes->ops[*n];
             break;
         }
@@ -96,7 +95,6 @@ int parser_commands_process(Shell* shell, Lexemes* restrict lexemes, size_t* res
             continue;
         case OP_PIPE:
             ++stmts->pipes_count;
-            commands[commands->pos - 1].current_op = OP_PIPE;
             commands = command_next(commands, scratch);
             commands->prev_op = OP_PIPE;
             continue;
@@ -108,7 +106,6 @@ int parser_commands_process(Shell* shell, Lexemes* restrict lexemes, size_t* res
             continue;
         case OP_AND:
         case OP_OR: {
-            commands->current_op = lexemes->ops[*n];
             commands = command_next(commands, scratch);
             commands->prev_op = lexemes->ops[*n];
             ++*n;
@@ -320,7 +317,6 @@ int parser_parse(Lexemes* restrict lexemes, Statements* stmts, Shell* restrict s
         case OP_EQUALS:
         case OP_LESS_THAN:
         case OP_GREATER_THAN: {
-            commands->current_op = lexemes->ops[i];
             commands->prev_op = lexemes->ops[i];
             break;
         }
@@ -341,7 +337,6 @@ int parser_parse(Lexemes* restrict lexemes, Statements* stmts, Shell* restrict s
         }
         case OP_PIPE: {
             ++stmts->pipes_count;
-            commands[commands->pos - 1].current_op = OP_PIPE;
             commands = command_next(commands, scratch);
             commands->prev_op = OP_PIPE;
             continue;
@@ -362,7 +357,6 @@ int parser_parse(Lexemes* restrict lexemes, Statements* stmts, Shell* restrict s
         }
         case OP_AND:
         case OP_OR: {
-            commands->current_op = lexemes->ops[i];
             commands = command_next(commands, scratch);
             commands->prev_op = lexemes->ops[i];
             continue;
@@ -383,6 +377,7 @@ int parser_parse(Lexemes* restrict lexemes, Statements* stmts, Shell* restrict s
         }
 
         commands->strs[commands->pos] = lexemes->strs[i];
+        // commands->strs[commands->pos] = *estrdup(&lexemes->strs[i], scratch);
         commands->ops[commands->pos] = lexemes->ops[i];
         ++commands->pos;
     }

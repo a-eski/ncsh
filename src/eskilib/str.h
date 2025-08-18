@@ -14,8 +14,7 @@
 
 #define Str_Empty ((Str){.value = NULL, .length = 0})
 
-// WARN: currently all string functions using this code incorporate null terminator in length
-// TODO: fix this, use length everywhere without null terminator... .length = sizeof(str) - 1
+// WARN: currently all string functions using this code incorporate null terminator in length. All Str are null-terminated.
 #define Str_New_Literal(str)                                                                                           \
     (Str)                                                                                                              \
     {                                                                                                                  \
@@ -121,6 +120,10 @@ enodiscard static inline Str* estrjoin(Str* v, Str* v2, char joiner, Arena* rest
     memcpy(str->value, v->value, v->length - 1);
     str->value[v->length - 1] = joiner;
     memcpy(str->value + v->length, v2->value, v2->length - 1);
+
+    assert(strlen(str->value) + 1 == str->length);
+    assert(str->value[str->length - 1] == '\0');
+
     return str;
 }
 
@@ -160,9 +163,11 @@ enodiscard static inline size_t estridx(Str* v, char c)
 enodiscard static inline char** estrtoarr(Str* strs, size_t n, Arena* restrict a)
 {
     char** buffer = arena_malloc(a, n, char*);
-    for (size_t i = 0; i < n; ++i) {
+    size_t i;
+    for (i = 0; i < n; ++i) {
         buffer[i] = strs[i].value;
     }
+    buffer[i] = NULL;
     return buffer;
 }
 
@@ -175,32 +180,57 @@ static inline void estrtrim(Str* v)
     v->length = i + 2;
 }
 
+enodiscard static inline Str* estrdup(Str* v, Arena* restrict a)
+{
+    Str* rv = arena_malloc(a, 1, Str);
+    rv->value = arena_malloc(a, v->length, char);
+    memcpy(rv->value, v->value, v->length - 1);
+    rv->length = v->length;
+
+    assert(rv->value[rv->length - 1] == '\0');
+
+    return rv;
+}
+
+enodiscard static inline Str* estralloc(char* restrict v, size_t n, Arena* restrict a)
+{
+    Str* rv = arena_malloc(a, 1, Str);
+    rv->value = v;
+    rv->length = n;
+    return rv;
+}
+
 typedef struct Str_Builder {
     size_t n;
     size_t c;
     Str* strs;
 } Str_Builder;
 
-enodiscard static inline Str_Builder* esb_new(Arena* restrict a)
-{
-    assert(a);
+#ifndef SB_START_N
+#   define SB_START_N 10
+#endif
 
+enodiscard static inline Str_Builder* sb_new(Arena* restrict a)
+{
     Str_Builder* sb = arena_malloc(a, 1, Str_Builder);
-    sb->strs = arena_malloc(a, 10, Str);
+    sb->strs = arena_malloc(a, SB_START_N, Str);
     sb->n = 0;
-    sb->c = 0;
+    sb->c = SB_START_N;
     return sb;
 }
 
-static inline void esb_add(Str* restrict v, Str_Builder* restrict sb)
+static inline void sb_add(Str* restrict v, Str_Builder* restrict sb, Arena* restrict a)
 {
-    assert(v); assert(sb);
-    // TODO: check capacity
+    if (sb->n >= sb->c - 1) {
+        size_t new_c = sb->c * 2;
+        sb->strs = arena_realloc(a, new_c, Str, sb->strs, sb->c);
+        sb->c = new_c;
+    }
 
     sb->strs[sb->n++] = *v;
 }
 
-static inline Str* esb_to_str(Str_Builder* restrict sb, Arena* restrict a)
+enodiscard static inline Str* sb_to_str(Str_Builder* restrict sb, Arena* restrict a)
 {
     size_t n = 0;
     for (size_t i = 0; i < sb->n; ++i) {
@@ -211,10 +241,9 @@ static inline Str* esb_to_str(Str_Builder* restrict sb, Arena* restrict a)
     Str* rv = arena_malloc(a, 1, Str);
     rv->length = n;
     rv->value = arena_malloc(a, n, char);
-    memcpy(rv->value, sb->strs[0].value, sb->strs[0].length - 1);
-    size_t pos = sb->strs[0].length - 1;
-    for (size_t i = 1; i < sb->n; ++i) {
-        memcpy(rv->value + pos + 1, sb->strs[i].value, sb->strs[i].length - 1);
+    size_t pos = 0;
+    for (size_t i = 0; i < sb->n; ++i) {
+        memcpy(rv->value + pos, sb->strs[i].value, sb->strs[i].length - 1);
         pos += sb->strs[i].length - 1;
     }
 

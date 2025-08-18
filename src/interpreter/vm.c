@@ -492,7 +492,8 @@ Commands* vm_next_normal(Statements* restrict stmts, Commands* restrict cmds, Vm
     cmds = vm_command_next(stmts, cmds, vm);
 
     if (!vm->end) {
-        if ((cmds->prev_op == OP_PIPE || cmds->current_op == OP_PIPE)) {
+        // TODO: is this check redundant?
+        if (cmds->prev_op == OP_PIPE) {
             vm->op_current = OP_PIPE;
         }
         else {
@@ -607,9 +608,7 @@ int vm_run(Statements* restrict stmts, Shell* restrict shell, Arena* restrict sc
 [[nodiscard]]
 int vm_execute(Statements* restrict stmts, Shell* restrict shell, Arena* restrict scratch)
 {
-    assert(shell);
-    assert(stmts);
-
+    assert(shell); assert(stmts); assert(scratch);
     if (!stmts || !stmts->count) {
         return EXIT_SUCCESS;
     }
@@ -633,7 +632,7 @@ int vm_execute(Statements* restrict stmts, Shell* restrict shell, Arena* restric
 [[nodiscard]]
 int vm_execute_noninteractive(Statements* restrict stmts, Shell* restrict shell)
 {
-    assert(stmts);
+    assert(shell); assert(stmts);
     if (!stmts || !stmts->count) {
         return EXIT_SUCCESS;
     }

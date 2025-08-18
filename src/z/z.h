@@ -24,8 +24,7 @@
 typedef struct {
     double rank;
     time_t last_accessed;
-    char* path;
-    size_t path_length;
+    Str path;
 } z_Directory;
 
 typedef struct {

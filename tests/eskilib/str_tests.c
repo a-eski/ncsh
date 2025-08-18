@@ -303,6 +303,116 @@ void estridx_returns_idx_test()
     eassert(idx == 3);
 }
 
+void estrtoarr_returns_arr_test()
+{
+    SCRATCH_ARENA_TEST_SETUP;
+
+    constexpr size_t n = 6;
+    Str vals[n] = {
+        [0] = Str_New_Literal("ls"),
+        [1] = Str_New_Literal("sort"),
+        [2] = Str_New_Literal("head"),
+        [3] = Str_New_Literal("-1"),
+        [4] = Str_New_Literal("wc"),
+        [5] = Str_New_Literal("-c")
+    };
+
+    char** res = estrtoarr(vals, n, &s);
+
+    eassert(res);
+    eassert(!memcmp(res[0], vals[0].value, vals[0].length - 1));
+    eassert(!memcmp(res[1], vals[1].value, vals[1].length - 1));
+    eassert(!memcmp(res[2], vals[2].value, vals[2].length - 1));
+    eassert(!memcmp(res[3], vals[3].value, vals[3].length - 1));
+    eassert(!memcmp(res[4], vals[4].value, vals[4].length - 1));
+    eassert(!memcmp(res[5], vals[5].value, vals[5].length - 1));
+    eassert(!res[6]);
+
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
+void sb_test()
+{
+    SCRATCH_ARENA_TEST_SETUP;
+    auto sb = sb_new(&s);
+    auto str = Str_New_Literal("ncsh");
+
+    sb_add(&str, sb, &s);
+    eassert(sb->n == 1);
+    auto res = sb_to_str(sb, &s);
+
+    eassert(res);
+    eassert(res->length == str.length);
+    eassert(!memcmp(res->value, str.value, str.length - 1));
+
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
+void sb_many_test()
+{
+    SCRATCH_ARENA_TEST_SETUP;
+    auto sb = sb_new(&s);
+
+    sb_add(&Str_New_Literal("/home"), sb, &s);
+    eassert(sb->n == 1);
+    sb_add(&Str_New_Literal("/alex"), sb, &s);
+    eassert(sb->n == 2);
+    sb_add(&Str_New_Literal("/ncsh"), sb, &s);
+    eassert(sb->n == 3);
+    auto res = sb_to_str(sb, &s);
+
+    auto expected = Str_New_Literal("/home/alex/ncsh");
+    eassert(res);
+    eassert(res->length == expected.length);
+    eassert(!memcmp(res->value, expected.value, expected.length - 1));
+
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
+void sb_realloc_test()
+{
+    SCRATCH_ARENA_TEST_SETUP;
+    auto sb = sb_new(&s);
+
+    auto str = &Str_New_Literal("/alex");
+    for (size_t i = 0; i < 15; ++i) {
+        sb_add(str, sb, &s);
+        eassert(sb->n = i + 1);
+    }
+    eassert(sb->c = SB_START_N * 2);
+
+    auto res = sb_to_str(sb, &s);
+
+    auto expected = Str_New_Literal("/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex");
+    eassert(res);
+    eassert(res->length == expected.length);
+    eassert(!memcmp(res->value, expected.value, expected.length - 1));
+
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
+void sb_multiple_realloc_test()
+{
+    SCRATCH_ARENA_TEST_SETUP;
+    auto sb = sb_new(&s);
+
+    auto str = &Str_New_Literal("/alex");
+    for (size_t i = 0; i < 25; ++i) {
+        sb_add(str, sb, &s);
+        eassert(sb->n = i + 1);
+    }
+    eassert(sb->c = SB_START_N * 2 * 2);
+
+    auto res = sb_to_str(sb, &s);
+
+    auto expected = Str_New_Literal("/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex");
+    eassert(res);
+    eassert(res->length == expected.length);
+    eassert(!memcmp(res->value, expected.value, expected.length - 1));
+
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
 void str_tests()
 {
     etest_start();
@@ -342,6 +452,12 @@ void str_tests()
     etest_run(estrcat_other_bad_value_returns_null_test);
 
     etest_run(estridx_returns_idx_test);
+
+    etest_run(estrtoarr_returns_arr_test);
+
+    etest_run(sb_test);
+    etest_run(sb_many_test);
+    etest_run(sb_realloc_test);
 
     etest_finish();
 }

@@ -15,7 +15,6 @@ Commands* commands_alloc(Arena* restrict scratch)
     c->strs = arena_malloc(scratch, DEFAULT_N, Str);
     c->ops = arena_malloc(scratch, DEFAULT_N, enum Ops);
     c->next = NULL;
-    c->current_op = OP_NONE;
     c->prev_op = OP_NONE;
     return c;
 }
@@ -53,7 +52,7 @@ Commands* command_next(Commands* restrict cmds, Arena* restrict scratch)
     }
 
     cmds->next = commands_alloc(scratch);
-    // cmds->strs[cmds->pos].value = NULL;
+    cmds->strs[cmds->pos].value = NULL;
     cmds->pos = 0;
 
     cmds = cmds->next;
