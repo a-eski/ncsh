@@ -29,7 +29,6 @@
 jmp_buf env_jmp_buf;
 sig_atomic_t vm_child_pid;
 volatile int sigwinch_caught;
-volatile int sigint_caught;
 
 /* arena_init
  * Initialize arenas used for the lifteim of the shell.
@@ -37,11 +36,11 @@ volatile int sigint_caught;
  * Returns: pointer to start of the memory block allocated.
  */
 [[nodiscard]]
-char* arena_init(Shell* restrict shell)
+static char* arena_init(Shell* restrict shell)
 {
     constexpr int arena_capacity = 1 << 24;
-    constexpr int scratch_arena_capacity = 1 << 20;
-    constexpr int total_capacity = arena_capacity + scratch_arena_capacity;
+    constexpr int scratch_capacity = 1 << 20;
+    constexpr int total_capacity = arena_capacity + scratch_capacity;
 
     char* memory = malloc(total_capacity);
     if (!memory) {
@@ -50,8 +49,34 @@ char* arena_init(Shell* restrict shell)
 
     shell->arena = (Arena){.start = memory, .end = memory + (arena_capacity)};
     char* scratch_memory_start = memory + (arena_capacity + 1);
-    shell->scratch_arena =
-        (Arena){.start = scratch_memory_start, .end = scratch_memory_start + (scratch_arena_capacity)};
+    shell->scratch =
+        (Arena){.start = scratch_memory_start, .end = scratch_memory_start + (scratch_capacity)};
+
+    return memory;
+}
+
+
+/* arena_noninteractive_init
+ * Initialize arenas used for the lifteim of the shell.
+ * A permanent arena and a scratch arena are allocated.
+ * Returns: pointer to start of the memory block allocated.
+ */
+[[nodiscard]]
+static char* arena_noninteractive_init(Shell* restrict shell)
+{
+    constexpr int arena_capacity = 1 << 20;
+    constexpr int scratch_capacity = 1 << 16;
+    constexpr int total_capacity = arena_capacity + scratch_capacity;
+
+    char* memory = malloc(total_capacity);
+    if (!memory) {
+        return NULL;
+    }
+
+    shell->arena = (Arena){.start = memory, .end = memory + (arena_capacity)};
+    char* scratch_memory_start = memory + (arena_capacity + 1);
+    shell->scratch =
+        (Arena){.start = scratch_memory_start, .end = scratch_memory_start + (scratch_capacity)};
 
     return memory;
 }
@@ -61,7 +86,7 @@ char* arena_init(Shell* restrict shell)
  * Returns: exit result, EXIT_SUCCESS or EXIT_FAILURE
  */
 [[nodiscard]]
-char* init(Shell* restrict shell, char** restrict envp)
+static char* init(Shell* restrict shell, char** restrict envp)
 {
     char* memory = arena_init(shell);
     if (!memory) {
@@ -73,7 +98,7 @@ char* init(Shell* restrict shell, char** restrict envp)
 
     env_new(shell, envp, &shell->arena);
 
-    if (conf_init(shell) != E_SUCCESS) {
+    if (conf_init(shell, shell->scratch) != E_SUCCESS) {
         return NULL;
     }
 
@@ -91,14 +116,14 @@ char* init(Shell* restrict shell, char** restrict envp)
     return memory;
 }
 
-void cleanup(char* restrict shell_memory, Shell* restrict shell)
+static void cleanup(char* restrict shell_memory, Shell* restrict shell)
 {
     // don't bother cleaning up if no shell memory allocated
     if (!shell_memory) {
         return;
     }
     if (shell->input.buffer) {
-        io_deinit(&shell->input, shell->scratch_arena);
+        io_deinit(&shell->input, shell->scratch);
     }
     if (shell->z_db.database_file) {
         z_exit(&shell->z_db);
@@ -106,8 +131,8 @@ void cleanup(char* restrict shell_memory, Shell* restrict shell)
     free(shell_memory);
 }
 
-clock_t start;
-void welcome()
+static clock_t start;
+static void welcome()
 {
 #ifdef NCSH_START_TIME
     start = clock();
@@ -121,7 +146,7 @@ void welcome()
     tty_puts(NCSH " version: " NCSH_VERSION);
 }
 
-void startup_time()
+static void startup_time()
 {
 #ifdef NCSH_START_TIME
     clock_t end = clock();
@@ -137,7 +162,7 @@ void startup_time()
  * Returns: exit status, see defines.h (EXIT_...)
  */
 [[nodiscard]]
-int noninteractive(int argc, char** restrict argv, char** restrict envp)
+static int noninteractive(int argc, char** restrict argv, char** restrict envp)
 {
     assert(argc > 1); // 1 because first arg is ncsh
     assert(argv);
@@ -153,8 +178,8 @@ int noninteractive(int argc, char** restrict argv, char** restrict envp)
 
     tty_init_caps();
 
-    constexpr int arena_capacity = 1 << 16;
-    char* memory = malloc(arena_capacity);
+    Shell shell = {0};
+    char* memory = arena_noninteractive_init(&shell);
     if (!memory) {
         tty_color_set(TTYIO_RED_ERROR);
         tty_puts("ncsh: could not start up, not enough memory available.");
@@ -163,13 +188,10 @@ int noninteractive(int argc, char** restrict argv, char** restrict envp)
         return EXIT_FAILURE;
     }
 
-    Shell shell = {0};
-    shell.arena = (Arena){.start = memory, .end = memory + (arena_capacity)};
-
     env_new(&shell, envp, &shell.arena);
 
     int rv = EXIT_SUCCESS;
-    if (conf_init(&shell) != E_SUCCESS) {
+    if (conf_init(&shell, shell.scratch) != E_SUCCESS) {
         rv = EXIT_FAILURE;
         goto exit;
     }
@@ -218,7 +240,7 @@ int main(int argc, char** argv, char** envp)
     startup_time();
 
     while (1) {
-        int input_result = io_readline(&shell.input, &shell.scratch_arena);
+        int input_result = io_readline(&shell.input, &shell.scratch);
         switch (input_result) {
         case EXIT_FAILURE: {
             rv = EXIT_FAILURE;
@@ -232,7 +254,7 @@ int main(int argc, char** argv, char** envp)
         }
         }
 
-        int command_result = interpreter_run(&shell, shell.scratch_arena);
+        int command_result = interpreter_run(&shell, shell.scratch);
         if (command_result == EXIT_FAILURE) {
             rv = EXIT_FAILURE;
             break;

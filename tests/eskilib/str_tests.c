@@ -413,6 +413,88 @@ void sb_multiple_realloc_test()
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
+void sb_joined_test()
+{
+    SCRATCH_ARENA_TEST_SETUP;
+    auto sb = sb_new(&s);
+    auto str = Str_New_Literal("ncsh");
+
+    sb_add(&str, sb, &s);
+    eassert(sb->n == 1);
+    auto res = sb_to_joined_str(sb, ':', &s);
+
+    eassert(res);
+    eassert(res->length == str.length);
+    eassert(!memcmp(res->value, str.value, str.length - 1));
+
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
+void sb_joined_many_test()
+{
+    SCRATCH_ARENA_TEST_SETUP;
+    auto sb = sb_new(&s);
+
+    sb_add(&Str_New_Literal("/home"), sb, &s);
+    eassert(sb->n == 1);
+    sb_add(&Str_New_Literal("alex"), sb, &s);
+    eassert(sb->n == 2);
+    sb_add(&Str_New_Literal("ncsh"), sb, &s);
+    eassert(sb->n == 3);
+    auto res = sb_to_joined_str(sb, '/', &s);
+
+    auto expected = Str_New_Literal("/home/alex/ncsh");
+    eassert(res);
+    eassert(res->length == expected.length);
+    eassert(!memcmp(res->value, expected.value, expected.length - 1));
+
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
+void sb_joined_realloc_test()
+{
+    SCRATCH_ARENA_TEST_SETUP;
+    auto sb = sb_new(&s);
+
+    auto str = &Str_New_Literal("alex");
+    for (size_t i = 0; i < 15; ++i) {
+        sb_add(str, sb, &s);
+        eassert(sb->n = i + 1);
+    }
+    eassert(sb->c = SB_START_N * 2);
+
+    auto res = sb_to_joined_str(sb, '/', &s);
+
+    auto expected = Str_New_Literal("alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex");
+    eassert(res);
+    eassert(res->length == expected.length);
+    eassert(!memcmp(res->value, expected.value, expected.length - 1));
+
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
+void sb_joined_multiple_realloc_test()
+{
+    SCRATCH_ARENA_TEST_SETUP;
+    auto sb = sb_new(&s);
+
+    auto str = &Str_New_Literal("alex");
+    for (size_t i = 0; i < 25; ++i) {
+        sb_add(str, sb, &s);
+        eassert(sb->n = i + 1);
+    }
+    eassert(sb->c = SB_START_N * 2 * 2);
+
+    auto res = sb_to_joined_str(sb, '/', &s);
+
+    auto expected = Str_New_Literal("alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex");
+    eassert(res);
+    eassert(res->length == expected.length);
+    eassert(!memcmp(res->value, expected.value, expected.length - 1));
+
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
 void str_tests()
 {
     etest_start();
@@ -458,6 +540,12 @@ void str_tests()
     etest_run(sb_test);
     etest_run(sb_many_test);
     etest_run(sb_realloc_test);
+    etest_run(sb_multiple_realloc_test);
+
+    etest_run(sb_joined_test);
+    etest_run(sb_joined_many_test);
+    etest_run(sb_joined_realloc_test);
+    etest_run(sb_joined_multiple_realloc_test);
 
     etest_finish();
 }

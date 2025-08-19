@@ -116,7 +116,7 @@
  * The max input for reading in a line. Relevant to ncsh_readline when processing user input.
  */
 #ifndef NCSH_MAX_INPUT
-#define    NCSH_MAX_INPUT 1024
+#define    NCSH_MAX_INPUT 2048
 #endif // !NCSH_MAX_INPUT
 
 // clang-format on

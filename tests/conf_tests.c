@@ -15,7 +15,7 @@ void conf_init_test()
 
     Shell shell = {0};
     shell_init(&shell, &arena, envp_ptr);
-    conf_init(&shell);
+    conf_init(&shell, s);
 
     eassert(shell.config.file.value);
     eassert(shell.config.location.value);

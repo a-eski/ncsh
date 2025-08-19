@@ -28,9 +28,7 @@ void expansion_home(Shell* shell, Lexemes* restrict lexemes, size_t pos, Arena* 
     }
 
     if (lexemes->strs[pos].length == 2) {
-        lexemes->strs[pos].length = home->length;
-        lexemes->strs[pos].value = arena_malloc(scratch, lexemes->strs[pos].length, char);
-        memcpy(lexemes->strs[pos].value, home->value, lexemes->strs[pos].length - 1);
+        estrset(&lexemes->strs[pos], home, scratch);
         lexemes->ops[pos] = OP_CONSTANT;
         debugf("lexemes->strs[pos].value set to %s\n", lexemes->strs[pos].value);
         return;
@@ -38,8 +36,9 @@ void expansion_home(Shell* shell, Lexemes* restrict lexemes, size_t pos, Arena* 
 
     assert(lexemes->strs[pos].value);
     // only do home expansion when there is a value and home is in first position.
-    if (!lexemes->strs[pos].value || lexemes->strs[pos].value[0] != '~')
+    if (!lexemes->strs[pos].value || lexemes->strs[pos].value[0] != '~') {
         return;
+    }
 
     size_t len = lexemes->strs[pos].length + home->length - 2; // subtract 1, both account for null termination
     char* new_value = arena_malloc(scratch, len, char);
@@ -56,7 +55,6 @@ void expansion_glob(char* restrict in, Commands* restrict cmds, Arena* restrict 
     assert(in); assert(cmds); assert(scratch);
 
     glob_t glob_buf = {0};
-    size_t glob_len;
     glob(in, GLOB_DOOFFS, NULL, &glob_buf);
     if (!glob_buf.gl_pathc) {
         globfree(&glob_buf);
@@ -70,11 +68,7 @@ void expansion_glob(char* restrict in, Commands* restrict cmds, Arena* restrict 
           command_realloc(cmds, scratch);
         }
 
-        glob_len = strlen(glob_buf.gl_pathv[i]) + 1;
-        debugf("cmds->pos: %zu\n", cmds->pos);
-        cmds->strs[cmds->pos].value = arena_malloc(scratch, glob_len, char);
-        memcpy(cmds->strs[cmds->pos].value, glob_buf.gl_pathv[i], glob_len);
-        cmds->strs[cmds->pos].length = glob_len;
+        estrset(&cmds->strs[cmds->pos], &Str_Get(glob_buf.gl_pathv[i]), scratch);
         cmds->ops[cmds->pos] = OP_CONSTANT;
         ++cmds->pos;
     }
@@ -89,11 +83,7 @@ void expansion_assignment(Lexemes* lexeme, size_t pos, Shell* restrict shell)
     // variable values are stored in env hashmap.
     // the key is the previous value, which is tagged with OP_VARIABLE.
     // when VM comes in contact with OP_VARIABLE, it looks up value in env.
-    size_t assignment_pos;
-    for (assignment_pos = 0; assignment_pos < lexeme->strs[pos].length; ++assignment_pos) {
-        if (lexeme->strs[pos].value[assignment_pos] == '=')
-            break;
-    }
+    size_t assignment_pos = estridx(&lexeme->strs[pos], '=');
 
     Str key = {.length = assignment_pos + 1};
     key.value = arena_malloc(&shell->arena, key.length, char);
@@ -128,9 +118,7 @@ void expansion_variable(Str* restrict in, Commands* restrict cmds, /*Statements*
 
     debugf("var %s %zu\n", val->value, val->length);
 
-    cmds->strs[cmds->pos].value = arena_malloc(scratch, val->length, char);
-    memcpy(cmds->strs[cmds->pos].value, val->value, val->length - 1);
-    cmds->strs[cmds->pos].length = val->length;
+    estrset(&cmds->strs[cmds->pos], val, scratch);
     cmds->ops[cmds->pos] = OP_CONSTANT;
     ++cmds->pos;
 

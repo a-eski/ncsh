@@ -1,5 +1,6 @@
 /* Copyright eskilib (C) by Alex Eski 2024 */
-/* Str.h: minimalist header lib for dealing with strings */
+/* INFO: str.h: minimalist header only lib for dealing with strings */
+/* WARN: currently all string functions incorporate null terminator in length and all Str are null-terminated. */
 
 #pragma once
 
@@ -14,11 +15,10 @@
 
 #define Str_Empty ((Str){.value = NULL, .length = 0})
 
-// WARN: currently all string functions using this code incorporate null terminator in length. All Str are null-terminated.
 #define Str_New_Literal(str)                                                                                           \
     (Str)                                                                                                              \
     {                                                                                                                  \
-        .value = str, .length = sizeof(str)                                                                            \
+        .value = (str), .length = (sizeof(str))                                                                        \
     }
 #define Str_New(str, len)                                                                                              \
     (Str)                                                                                                              \
@@ -47,7 +47,6 @@ enodiscard static inline bool estrcmp(Str v, Str v2)
 
     return !v.value || !memcmp(v.value, v2.value, v.length);
 }
-
 
 enodiscard static inline bool estrcmp_a(char* restrict str, size_t str_len, char* restrict str_two, size_t str_two_len)
 {
@@ -192,12 +191,11 @@ enodiscard static inline Str* estrdup(Str* v, Arena* restrict a)
     return rv;
 }
 
-enodiscard static inline Str* estralloc(char* restrict v, size_t n, Arena* restrict a)
+static inline void estrset(Str* restrict out, Str* restrict in, Arena* restrict a)
 {
-    Str* rv = arena_malloc(a, 1, Str);
-    rv->value = v;
-    rv->length = n;
-    return rv;
+    out->value = arena_malloc(a, in->length, char);
+    memcpy(out->value, in->value, in->length - 1);
+    out->length = in->length;
 }
 
 typedef struct Str_Builder {
@@ -246,6 +244,30 @@ enodiscard static inline Str* sb_to_str(Str_Builder* restrict sb, Arena* restric
         memcpy(rv->value + pos, sb->strs[i].value, sb->strs[i].length - 1);
         pos += sb->strs[i].length - 1;
     }
+
+    return rv;
+}
+
+enodiscard static inline Str* sb_to_joined_str(Str_Builder* restrict sb, char joiner, Arena* restrict a)
+{
+    size_t n = 0;
+    for (size_t i = 0; i < sb->n; ++i) {
+        n += sb->strs[i].length - 1;
+    }
+    ++n;
+
+    Str* rv = arena_malloc(a, 1, Str);
+    rv->value = arena_malloc(a, n, char);
+    size_t pos = 0;
+    for (size_t i = 0; i < sb->n - 1; ++i) {
+        memcpy(rv->value + pos, sb->strs[i].value, sb->strs[i].length - 1);
+        pos += sb->strs[i].length;
+        rv->value[pos - 1] = joiner;
+    }
+    memcpy(rv->value + pos, sb->strs[sb->n - 1].value, sb->strs[sb->n - 1].length - 1);
+    pos += sb->strs[sb->n - 1].length;
+    rv->value[pos - 1] = '\0';
+    rv->length = pos;
 
     return rv;
 }

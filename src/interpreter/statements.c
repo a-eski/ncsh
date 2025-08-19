@@ -4,16 +4,16 @@
 #include "../arena.h"
 #include "statements.h"
 
-#define DEFAULT_N 10
-#define MAX_N 40
+#define STMT_DEFAULT_N 10
+#define STMT_MAX_N 40
 
 Commands* commands_alloc(Arena* restrict scratch)
 {
     Commands* c = arena_malloc(scratch, 1, Commands);
     c->count = 0;
-    c->cap = DEFAULT_N;
-    c->strs = arena_malloc(scratch, DEFAULT_N, Str);
-    c->ops = arena_malloc(scratch, DEFAULT_N, enum Ops);
+    c->cap = STMT_DEFAULT_N;
+    c->strs = arena_malloc(scratch, STMT_DEFAULT_N, Str);
+    c->ops = arena_malloc(scratch, STMT_DEFAULT_N, enum Ops);
     c->next = NULL;
     c->prev_op = OP_NONE;
     return c;
@@ -72,18 +72,12 @@ Commands* command_statement_next(Statements* restrict stmts, Commands* cmds, enu
 void statements_init(Statements* restrict stmts, Arena* restrict scratch)
 {
     assert(stmts);
-    stmts->statements = arena_malloc(scratch, DEFAULT_N, Statement);
+    stmts->statements = arena_malloc(scratch, STMT_DEFAULT_N, Statement);
     stmts->type = ST_NORMAL;
     stmts->statements->count = 0;
     stmts->statements->type = LT_NORMAL;
     stmts->statements->commands = commands_alloc(scratch);
 }
-
-// TODO: implement?
-/*void statements_realloc(Statements* restrict statements, Arena* restrict scratch)
-{
-
-}*/
 
 void statement_next(Statements* restrict stmts, enum Logic_Type type, Arena* restrict scratch)
 {
@@ -91,6 +85,6 @@ void statement_next(Statements* restrict stmts, enum Logic_Type type, Arena* res
     ++stmts->statements[stmts->pos].count;
     ++stmts->pos;
     ++stmts->count;
-    stmts->cap = DEFAULT_N;
+    stmts->cap = STMT_DEFAULT_N;
     stmts->statements[stmts->pos].commands = commands_alloc(scratch);
 }

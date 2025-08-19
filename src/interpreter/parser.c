@@ -377,7 +377,6 @@ int parser_parse(Lexemes* restrict lexemes, Statements* stmts, Shell* restrict s
         }
 
         commands->strs[commands->pos] = lexemes->strs[i];
-        // commands->strs[commands->pos] = *estrdup(&lexemes->strs[i], scratch);
         commands->ops[commands->pos] = lexemes->ops[i];
         ++commands->pos;
     }

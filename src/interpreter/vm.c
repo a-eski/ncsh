@@ -577,7 +577,7 @@ int vm_run(Statements* restrict stmts, Shell* restrict shell, Arena* restrict sc
                     pipe_connect(vm.command_position, stmts->pipes_count, &vm.pipes_io);
 
                 char** buffers = estrtoarr(vm.strs, vm.strs_n, scratch);
-                vm.exec_result = execvp(buffers[0], buffers);
+                vm.exec_result = execvp(*buffers, buffers);
                 if (vm.exec_result == EXECVP_FAILED) {
                     vm.end = true;
                     tty_perror("ncsh: Could not run command");

@@ -77,7 +77,7 @@ typedef struct {
  */
 typedef struct Shell {
     Arena arena;
-    Arena scratch_arena;
+    Arena scratch;
 
     Env* env;
     Config config;

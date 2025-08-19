@@ -24,13 +24,3 @@ void lexemes_init_n(Lexemes* restrict lexemes, size_t n, Arena* restrict scratch
     [[maybe_unused]] Str* strs = lexemes->strs + n;
     strs = arena_malloc(scratch, LEXER_TOKENS_LIMIT, Str);
 }
-
-/*Lexemes* lexemes_alloc(Arena* restrict scratch)
-{
-    Lexemes* lexemes = arena_malloc(scratch, 1, Lexemes);
-    lexemes->count = 0;
-    lexemes->ops = arena_malloc(scratch, LEXER_TOKENS_LIMIT, uint8_t);
-    lexemes->lens = arena_malloc(scratch, LEXER_TOKENS_LIMIT, size_t);
-    lexemes->vals = arena_malloc(scratch, LEXER_TOKENS_LIMIT, char*);
-    return lexemes;
-}*/

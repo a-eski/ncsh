@@ -26,15 +26,13 @@ static Alias* aliases;
 [[nodiscard]]
 Str alias_check(Str alias)
 {
-    if (!alias.value || alias.length < 2) {
+    if (!alias.value || alias.length < 2 || !aliases_count) {
         return Str_Empty;
     }
 
-    if (aliases_count) {
-        for (size_t i = 0; i < aliases_count; ++i) {
-            if (estrcmp(*aliases[i].alias, alias)) {
-                return *aliases[i].actual_command;
-            }
+    for (size_t i = 0; i < aliases_count; ++i) {
+        if (estrcmp(*aliases[i].alias, alias)) {
+            return *aliases[i].actual_command;
         }
     }
 
@@ -50,13 +48,6 @@ void alias_add(Str alias, Arena* restrict arena)
 
     debugf("trying to add alias: %s\n", val);
 
-    size_t split_pos = estridx(&alias, '=');
-
-    if (!split_pos || split_pos == alias.length - 1) {
-        tty_fprintln(stderr, "ncsh: Could not process alias while reading rc file: %s", alias.value);
-        return;
-    }
-
     if (!aliases) {
         aliases_count = 0;
         aliases = arena_malloc(arena, NCSH_DEFAULT_ALIASES, Alias);
@@ -71,31 +62,27 @@ void alias_add(Str alias, Arena* restrict arena)
         aliases_cap = new_cap;
     }
 
-    size_t alias_len = split_pos + 1;
-    if (!alias_len)
+    size_t split_pos = estridx(&alias, '=');
+
+    if (!split_pos || split_pos == alias.length - 1) {
+        tty_fprintln(stderr, "ncsh: Could not process alias while reading rc file: %s", alias.value);
         return;
+    }
 
-    aliases[aliases_count].alias = arena_malloc(arena, 1, Str);
-
-    aliases[aliases_count].alias->length = alias_len;
-    aliases[aliases_count].alias->value = arena_malloc(arena, alias_len, char);
-    memcpy(aliases[aliases_count].alias->value, alias.value, alias_len - 1);
-    aliases[aliases_count].alias->value[alias_len - 1] = '\0';
+    size_t alias_len = split_pos + 1;
+    if (!alias_len) {
+        return;
+    }
+    aliases[aliases_count].alias = estrdup(&Str_New(alias.value, alias_len), arena);
 
     size_t ac_len = alias.length - split_pos - 1;
-    if (ac_len == 0)
+    if (ac_len == 0) {
         return;
-
-    aliases[aliases_count].actual_command = arena_malloc(arena, 1, Str);
-
-    aliases[aliases_count].actual_command->length = ac_len;
-    aliases[aliases_count].actual_command->value = arena_malloc(arena, ac_len, char);
-    memcpy(aliases[aliases_count].actual_command->value, alias.value + split_pos + 1, ac_len - 1);
-    aliases[aliases_count].actual_command->value[ac_len - 1] = '\0';
+    }
+    aliases[aliases_count].actual_command = estrdup(&Str_New(alias.value + split_pos + 1, ac_len), arena);
 
     debugf("added alias %s with actual command %s\n", aliases[aliases_count].alias->value,
            aliases[aliases_count].actual_command->value);
-
     ++aliases_count;
 }
 
@@ -115,18 +102,11 @@ void alias_add_new(Str alias, Str command, Arena* restrict arena)
         aliases_cap = new_cap;
     }
 
-    aliases[aliases_count].alias = arena_malloc(arena, 1, Str);
-    aliases[aliases_count].alias->length = alias.length;
-    aliases[aliases_count].alias->value = arena_malloc(arena, alias.length, char);
-    memcpy(aliases[aliases_count].alias->value, alias.value, alias.length);
-
-    aliases[aliases_count].actual_command = arena_malloc(arena, 1, Str);
-    aliases[aliases_count].actual_command->length = command.length;
-    aliases[aliases_count].actual_command->value = arena_malloc(arena, command.length, char);
-    memcpy(aliases[aliases_count].actual_command->value, command.value, command.length);
+    aliases[aliases_count].alias = estrdup(&alias, arena);
+    aliases[aliases_count].actual_command = estrdup(&command, arena);
 
     debugf("added alias %s with actual command %s\n", aliases[aliases_count].alias->value,
-           aliases[aliases_count].actual_command->value);
+            aliases[aliases_count].actual_command->value);
 
     ++aliases_count;
 }

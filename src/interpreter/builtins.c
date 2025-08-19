@@ -1,7 +1,7 @@
 /* Copyright ncsh (C) by Alex Eski 2024 */
 /* builtins.h: shell builtins implementations for ncsh */
 
-/* --- this file is a mess and needs some work --- */
+/* TODO: --- this file is a mess and needs some work --- */
 
 #ifndef _DEFAULT_SOURCE
 #define _DEFAULT_SOURCE
@@ -189,9 +189,8 @@ static const Builtin builtins[] = {
     {.flag = BF_FALSE, .str.length = sizeof(NCSH_FALSE), .str.value = NCSH_FALSE, .func = &builtins_false},
     {.flag = BF_ENABLE, .str.length = sizeof(NCSH_ENABLE), .str.value = NCSH_ENABLE, .func = &builtins_enable},
     {.flag = BF_DISABLE, .str.length = sizeof(NCSH_DISABLE), .str.value = NCSH_DISABLE, .func = &builtins_disable},
-    /*{.flag = BF_EXPORT, .val.length = sizeof(NCSH_EXPORT), .val.value = NCSH_EXPORT, .func = &builtins_export},
-    {.flag = BF_SET, .val.length = sizeof(NCSH_SET), .val.value = NCSH_SET, .func = &builtins_set},
-    {.flag = BF_UNSET, .val.length = sizeof(NCSH_UNSET), .val.value = NCSH_UNSET, .func = &builtins_unset},*/
+    /*{.flag = BF_EXPORT, .str.length = sizeof(NCSH_EXPORT), .str.value = NCSH_EXPORT, .func = &builtins_export},
+    {.flag = BF_SET, .str.length = sizeof(NCSH_SET), .str.value = NCSH_SET, .func = &builtins_set},*/
 };
 
 static constexpr size_t builtins_count = sizeof(builtins) / sizeof(builtins[0]);
@@ -204,7 +203,7 @@ static int builtins_z(z_Database* restrict z_db, Str* restrict strs, Arena* rest
 {
     assert(z_db); assert(strs && strs->value); assert(arena); assert(scratch);
 
-    if (strs[1].length == 0) {
+    if (!strs[1].length) {
         z(&Str_Empty, NULL, z_db, arena, *scratch);
         return EXIT_SUCCESS;
     }
@@ -268,7 +267,9 @@ static int builtins_z(z_Database* restrict z_db, Str* restrict strs, Arena* rest
 static int builtins_history(History* restrict history, Str* restrict strs, Arena* restrict arena,
                      Arena* restrict scratch)
 {
-    if (!strs || !strs[1].value) {
+    assert(history); assert(strs); assert(arena); assert(scratch);
+
+    if (!strs[1].value) {
         return history_command_display(history);
     }
 
@@ -296,7 +297,7 @@ static int builtins_history(History* restrict history, Str* restrict strs, Arena
     if (args && args[1].value && !args[2].value) {
         // history add
         if (estrcmp(*args, Str_New_Literal(NCSH_HISTORY_ADD))) {
-            if (history_command_add(args[1], history, arena) != Z_SUCCESS) {
+            if (history_command_add(args[1], history, arena) != EXIT_SUCCESS) {
                 return EXIT_FAILURE_CONTINUE;
             }
 
@@ -305,7 +306,7 @@ static int builtins_history(History* restrict history, Str* restrict strs, Arena
         // history rm/remove
         else if (estrcmp(*args, Str_New_Literal(NCSH_HISTORY_RM)) ||
                  estrcmp(*args, Str_New_Literal(NCSH_HISTORY_REMOVE))) {
-            if (history_command_remove(args[1], history, arena, scratch) != Z_SUCCESS) {
+            if (history_command_remove(args[1], history, arena, scratch) != EXIT_SUCCESS) {
                 return EXIT_FAILURE_CONTINUE;
             }
 
@@ -329,16 +330,22 @@ static int builtins_history(History* restrict history, Str* restrict strs, Arena
 [[nodiscard]]
 static int builtins_alias(Str* restrict strs, Arena* restrict arena)
 {
-    assert(strs && *strs->value);
+    assert(strs && strs->value && *strs->value);
 
-    if (!strs || !strs[1].value) {
+    if (!strs[1].value) {
         alias_print(vm_output_fd);
         return EXIT_SUCCESS;
     }
 
     // skip first position since we know it is 'alias'
     Str* args = strs + 1;
-    if (estrcmp(*args, Str_New_Literal(NCSH_ALIAS_ADD))) {
+    if (!args || !args->length) {
+        if (builtins_writeln(vm_output_fd, ALIAS_USAGE, sizeof(ALIAS_USAGE) - 1) == -1) {
+            return EXIT_FAILURE;
+        }
+        return EXIT_FAILURE_CONTINUE;
+    }
+    else if (estrcmp(*args, Str_New_Literal(NCSH_ALIAS_ADD))) {
         ++args;
         if (!args || !args->value) {
             if (builtins_writeln(vm_output_fd, ALIAS_ADD_USAGE, sizeof(ALIAS_ADD_USAGE) - 1) == -1) {
@@ -392,16 +399,22 @@ static int builtins_alias(Str* restrict strs, Arena* restrict arena)
 [[nodiscard]]
 static int builtins_unalias(Str* restrict strs)
 {
-    assert(strs && *strs->value);
+    assert(strs && strs->value);
 
-    if (!strs || !strs[1].value) {
+    if (!strs[1].value) {
         alias_print(vm_output_fd);
         return EXIT_SUCCESS;
     }
 
     // skip first position since we know it is 'unalias'
     Str* args = strs + 1;
-    if (estrcmp(*args, Str_New_Literal(NCSH_UNALIAS_DELETE)) ||
+    if (!args || !args->length) {
+        if (builtins_writeln(vm_output_fd, UNALIAS_USAGE, sizeof(UNALIAS_USAGE) - 1) == -1) {
+            return EXIT_FAILURE;
+        }
+        return EXIT_FAILURE_CONTINUE;
+    }
+    else if (estrcmp(*args, Str_New_Literal(NCSH_UNALIAS_DELETE)) ||
         estrcmp(*args, Str_New_Literal(NCSH_UNALIAS_DELETE_ALIAS))) {
         alias_delete();
         return EXIT_SUCCESS;
@@ -622,7 +635,7 @@ static int builtins_pwd([[maybe_unused]] Str* restrict strs)
 static int builtins_kill(Str* restrict strs)
 {
     assert(strs);
-    if (!strs || !strs->value) {
+    if (!strs->value) {
         if (builtins_writeln(vm_output_fd, KILL_NOTHING_TO_KILL_MESSAGE, sizeof(KILL_NOTHING_TO_KILL_MESSAGE) - 1) ==
             -1) {
             return EXIT_FAILURE;
@@ -736,8 +749,9 @@ static int builtins_disable(Str* restrict strs)
         return EXIT_SUCCESS;
     }
 
-    if (!builtins_disable__(args))
+    if (!builtins_disable__(args)) {
         return EXIT_SUCCESS;
+    }
 
     builtins_writeln(vm_output_fd, DISABLE_BUILTIN_NOT_FOUND, sizeof(DISABLE_BUILTIN_NOT_FOUND) - 1);
     return EXIT_SUCCESS;

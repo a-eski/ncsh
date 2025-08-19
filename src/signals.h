@@ -12,7 +12,6 @@
 
 extern sig_atomic_t vm_child_pid;
 extern volatile int sigwinch_caught;
-extern volatile int sigint_caught;
 
 static void signal_handler(int sig, [[maybe_unused]] siginfo_t* info, [[maybe_unused]] void* context)
 {
@@ -24,9 +23,6 @@ static void signal_handler(int sig, [[maybe_unused]] siginfo_t* info, [[maybe_un
     if (sig == SIGINT || sig == SIGQUIT) {
         if (vm_child_pid != 0) {
             kill(vm_child_pid, sig);
-        }
-        else {
-            sigint_caught = 1;
         }
         return;
     }

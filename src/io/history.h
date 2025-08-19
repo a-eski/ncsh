@@ -18,7 +18,7 @@
 
 typedef struct {
     size_t count;
-    char* file;
+    Str file;
     Str* entries;
 } History;
 

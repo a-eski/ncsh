@@ -13,7 +13,6 @@
 #define AUTOCOMPLETE_DIM 244
 
 extern volatile int sigwinch_caught;
-extern volatile int sigint_caught;
 
 void io_prompt_init()
 {
@@ -71,7 +70,7 @@ int io_init(Config* restrict config, Env* restrict env, Input* restrict input, A
  */
 void io_deinit(Input* restrict input, Arena scratch)
 {
-    if (input && input->history.file && input->history.entries) {
+    if (input && input->history.file.value && input->history.entries) {
         history_save(&input->history, &scratch);
     }
 }
@@ -1060,9 +1059,6 @@ int io_readline(Input* restrict input, Arena* restrict scratch)
         if (sigwinch_caught) {
             io_resize(input);
             sigwinch_caught = 0;
-        }
-        if (sigint_caught) {
-            input->reprint_prompt = true;
         }
 
         io_autocomplete(input);
