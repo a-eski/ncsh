@@ -95,10 +95,12 @@ unity_debug:
 ud:
 	make unity_debug
 
+# TODO: finish impl
 # Unity/jumbo debug build, with history, z database, rc file in place
 in_place_debug:
 	$(CC) $(STD) $(debug_flags) -DNCSH_IN_PLACE src/unity.c -o $(target)
 
+# TODO: finish impl
 # Unity/jumbo release build, with history, z database, rc file in place
 in_place_release:
 	$(CC) $(STD) $(release_flags) -DNCSH_IN_PLACE src/unity.c -o $(target)

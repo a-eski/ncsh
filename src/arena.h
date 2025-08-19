@@ -30,6 +30,7 @@ typedef struct {
 
 /* arena_abort_fn_set
  * Set the function to be called if the arena is full and the requested memory can't be allocated in the arena.
+ * abort_func should call exit, abort, or longjmp.
  */
 void arena_abort_fn_set(void (*abort_func)());
 

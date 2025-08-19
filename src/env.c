@@ -63,7 +63,7 @@ Str* env_add_or_get(Env* env, Str key)
             env->keys[i] = key;
             return env->vals + i;
         }
-        else if (estrcmp_s(env->keys[i], key)) {
+        else if (estrcmp(env->keys[i], key)) {
             return env->vals + i;
         }
     }
@@ -74,11 +74,11 @@ Str* env_home_get(Env* env)
     assert(env);
 
     Str xdg_config_home_key = Str_New_Literal(NCSH_XDG_CONFIG_HOME_VAL);
-    Str home_key = Str_New_Literal(NCSH_HOME_VAL);
-
     Str* home = env_add_or_get(env, xdg_config_home_key);
     debugf("%s? %s\n", NCSH_XDG_CONFIG_HOME_VAL, home->value);
+
     if (!home || !home->value) {
+        Str home_key = Str_New_Literal(NCSH_HOME_VAL);
         home = env_add_or_get(env, home_key);
         debugf("HOME? %s\n", home->value);
     }

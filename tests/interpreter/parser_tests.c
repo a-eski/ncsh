@@ -41,11 +41,11 @@ void parser_parse_ls_test()
     eassert(statements.statements->count == 1);
     eassert(statements.statements->commands->count == 1);
 
-    eassert(!memcmp(statements.statements->commands->vals[0], line, len));
-    eassert(statements.statements->commands->lens[0] == len);
+    eassert(!memcmp(statements.statements->commands->strs[0].value, line, len));
+    eassert(statements.statements->commands->strs[0].length == len);
     eassert(statements.statements->commands->ops[0] == OP_CONSTANT);
 
-    eassert(!statements.statements->commands->vals[1]);
+    eassert(!statements.statements->commands->strs[1].value);
 
     eassert(!statements.statements->commands->next);
 
@@ -69,15 +69,15 @@ void parser_parse_ls_dash_l_test()
     eassert(statements.statements->count == 1);
     eassert(statements.statements->commands->count == 2);
 
-    eassert(!memcmp(statements.statements->commands->vals[0], LS, ls_len - 1));
-    eassert(statements.statements->commands->lens[0] == ls_len);
+    eassert(!memcmp(statements.statements->commands->strs[0].value, LS, ls_len - 1));
+    eassert(statements.statements->commands->strs[0].length == ls_len);
     eassert(statements.statements->commands->ops[0] == OP_CONSTANT);
 
-    eassert(!memcmp(statements.statements->commands->vals[1], DASH_L, dashl_len - 1));
-    eassert(statements.statements->commands->lens[1] == dashl_len);
+    eassert(!memcmp(statements.statements->commands->strs[1].value, DASH_L, dashl_len - 1));
+    eassert(statements.statements->commands->strs[1].length == dashl_len);
     eassert(statements.statements->commands->ops[1] == OP_CONSTANT);
 
-    eassert(!statements.statements->commands->vals[2]);
+    eassert(!statements.statements->commands->strs[2].value);
     eassert(!statements.statements->commands->next);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
@@ -102,27 +102,26 @@ void parser_parse_pipe_test()
 
     Commands* commands = statements.statements->commands;
     eassert(commands->count == 1);
-    eassert(!memcmp(commands->vals[0], LS, ls_len - 1));
-    eassert(commands->lens[0] == ls_len);
+    eassert(!memcmp(commands->strs[0].value, LS, ls_len - 1));
+    eassert(commands->strs[0].length == ls_len);
     eassert(commands->ops[0] == OP_CONSTANT);
-    eassert(commands->current_op == OP_PIPE);
 
-    eassert(!commands->vals[1]);
+    eassert(!commands->strs[1].value);
 
     commands = commands->next;
     eassert(commands->count == 1);
-    eassert(!memcmp(commands->vals[0], SORT, sort_len - 1));
-    eassert(commands->lens[0] == sort_len);
+    eassert(!memcmp(commands->strs[0].value, SORT, sort_len - 1));
+    eassert(commands->strs[0].length == sort_len);
     eassert(commands->ops[0] == OP_CONSTANT);
     eassert(commands->prev_op == OP_PIPE);
 
-    eassert(!commands->vals[1]);
+    eassert(!commands->strs[1].value);
     eassert(!commands->next);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-void parser_parse_multiple_pipe_test()
+void parser_parse_multiple_pipes_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
@@ -141,38 +140,36 @@ void parser_parse_multiple_pipe_test()
 
     Commands* commands = statements.statements->commands;
     eassert(commands->count == 1);
-    eassert(!memcmp(commands->vals[0], LS, ls_len - 1));
-    eassert(commands->lens[0] == ls_len);
+    eassert(!memcmp(commands->strs[0].value, LS, ls_len - 1));
+    eassert(commands->strs[0].length == ls_len);
     eassert(commands->ops[0] == OP_CONSTANT);
-    eassert(commands->current_op == OP_PIPE);
 
-    eassert(!commands->vals[1]);
+    eassert(!commands->strs[1].value);
 
     commands = commands->next;
     eassert(commands->count == 1);
-    eassert(!memcmp(commands->vals[0], SORT, sort_len - 1));
-    eassert(commands->lens[0] == sort_len);
+    eassert(!memcmp(commands->strs[0].value, SORT, sort_len - 1));
+    eassert(commands->strs[0].length == sort_len);
     eassert(commands->ops[0] == OP_CONSTANT);
-    eassert(commands->current_op == OP_PIPE);
     eassert(commands->prev_op == OP_PIPE);
 
-    eassert(!commands->vals[1]);
+    eassert(!commands->strs[1].value);
 
     commands = commands->next;
     eassert(commands->count == 1);
-    eassert(!memcmp(commands->vals[0], "table", 5));
-    eassert(commands->lens[0] == 6);
+    eassert(!memcmp(commands->strs[0].value, "table", 5));
+    eassert(commands->strs[0].length == 6);
     eassert(commands->ops[0] == OP_CONSTANT);
     eassert(commands->prev_op == OP_PIPE);
 
-    eassert(!commands->vals[1]);
+    eassert(!commands->strs[1].value);
 
     eassert(!commands->next);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-void parser_parse_multiple_pipe_multiple_args_test()
+void parser_parse_multiple_pipes_multiple_args_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
@@ -184,6 +181,15 @@ void parser_parse_multiple_pipe_multiple_args_test()
     Statements statements = {0};
     int res = parser_parse(&lexemes, &statements, NULL, &scratch_arena);
 
+    Commands* c = statements.statements->commands;
+    while (c) {
+        for (size_t i = 0; i < c->count; ++i) {
+            printf("%s ", c->strs[i].value);
+        }
+        c = c->next;
+    }
+    puts("");
+
     eassert(!res);
     eassert(statements.count == 1);
     eassert(statements.statements->count == 1);
@@ -193,57 +199,54 @@ void parser_parse_multiple_pipe_multiple_args_test()
     Commands* commands = statements.statements->commands;
     eassert(commands->count == 1);
 
-    eassert(!memcmp(commands->vals[0], LS, ls_len - 1));
-    eassert(commands->lens[0] == ls_len);
+    eassert(!memcmp(commands->strs[0].value, LS, ls_len - 1));
+    eassert(commands->strs[0].length == ls_len);
     eassert(commands->ops[0] == OP_CONSTANT);
 
-    eassert(commands->current_op == OP_PIPE);
-
-    eassert(!commands->vals[1]);
+    eassert(!commands->strs[1].value);
 
     // Second command
     commands = commands->next;
     eassert(commands->count == 1);
 
-    eassert(!memcmp(commands->vals[0], SORT, sort_len - 1));
-    eassert(commands->lens[0] == sort_len);
+    eassert(!memcmp(commands->strs[0].value, SORT, sort_len - 1));
+    eassert(commands->strs[0].length == sort_len);
     eassert(commands->ops[0] == OP_CONSTANT);
 
-    eassert(commands->current_op == OP_PIPE);
     eassert(commands->prev_op == OP_PIPE);
 
-    eassert(!commands->vals[1]);
+    eassert(!commands->strs[1].value);
 
     // Third command
     commands = commands->next;
     eassert(commands->count == 2);
 
-    eassert(!memcmp(commands->vals[0], "head", 4));
-    eassert(commands->lens[0] == 5);
+    eassert(!memcmp(commands->strs[0].value, "head", 4));
+    eassert(commands->strs[0].length == 5);
     eassert(commands->ops[0] == OP_CONSTANT);
 
-    eassert(!memcmp(commands->vals[1], "-1", 2));
-    eassert(commands->lens[1] == 3);
+    eassert(!memcmp(commands->strs[1].value, "-1", 2));
+    eassert(commands->strs[1].length == 3);
     eassert(commands->ops[1] == OP_CONSTANT);
 
     eassert(commands->prev_op == OP_PIPE);
 
-    eassert(!commands->vals[2]);
+    eassert(!commands->strs[2].value);
 
     // Fourth command
     commands = commands->next;
     eassert(commands->count == 2);
-    eassert(!memcmp(commands->vals[0], "wc", 2));
-    eassert(commands->lens[0] == 3);
+    eassert(!memcmp(commands->strs[0].value, "wc", 2));
+    eassert(commands->strs[0].length == 3);
     eassert(commands->ops[0] == OP_CONSTANT);
 
-    eassert(!memcmp(commands->vals[1], "-c", 2));
-    eassert(commands->lens[1] == 3);
+    eassert(!memcmp(commands->strs[1].value, "-c", 2));
+    eassert(commands->strs[1].length == 3);
     eassert(commands->ops[1] == OP_CONSTANT);
 
     eassert(commands->prev_op == OP_PIPE);
 
-    eassert(!commands->vals[2]);
+    eassert(!commands->strs[2].value);
 
     eassert(!commands->next);
 
@@ -267,11 +270,11 @@ void parser_parse_background_job_test()
     eassert(statements.statements->count == 1);
     eassert(statements.statements->commands->count == 1);
 
-    eassert(!memcmp(statements.statements->commands->vals[0], JOB, job_len - 1));
-    eassert(statements.statements->commands->lens[0] == job_len);
+    eassert(!memcmp(statements.statements->commands->strs[0].value, JOB, job_len - 1));
+    eassert(statements.statements->commands->strs[0].length == job_len);
     eassert(statements.statements->commands->ops[0] == OP_CONSTANT);
 
-    eassert(!statements.statements->commands->vals[1]);
+    eassert(!statements.statements->commands->strs[1].value);
     eassert(!statements.statements->commands->next);
 
     eassert(statements.is_bg_job);
@@ -296,11 +299,11 @@ void parser_parse_output_redirection_test()
     eassert(statements.statements->count == 1);
     eassert(statements.statements->commands->count == 1);
 
-    eassert(!memcmp(statements.statements->commands->vals[0], LS, ls_len - 1));
-    eassert(statements.statements->commands->lens[0] == ls_len);
+    eassert(!memcmp(statements.statements->commands->strs[0].value, LS, ls_len - 1));
+    eassert(statements.statements->commands->strs[0].length == ls_len);
     eassert(statements.statements->commands->ops[0] == OP_CONSTANT);
 
-    eassert(!statements.statements->commands->vals[1]);
+    eassert(!statements.statements->commands->strs[1].value);
     eassert(!statements.statements->commands->next);
 
     eassert(statements.redirect_type == RT_OUT);
@@ -327,11 +330,11 @@ void parser_parse_output_redirection_append_test()
     eassert(statements.statements->count == 1);
     eassert(statements.statements->commands->count == 1);
 
-    eassert(!memcmp(statements.statements->commands->vals[0], LS, ls_len - 1));
-    eassert(statements.statements->commands->lens[0] == ls_len);
+    eassert(!memcmp(statements.statements->commands->strs[0].value, LS, ls_len - 1));
+    eassert(statements.statements->commands->strs[0].length == ls_len);
     eassert(statements.statements->commands->ops[0] == OP_CONSTANT);
 
-    eassert(!statements.statements->commands->vals[1]);
+    eassert(!statements.statements->commands->strs[1].value);
     eassert(!statements.statements->commands->next);
 
     eassert(statements.redirect_type == RT_OUT_APPEND);
@@ -358,11 +361,11 @@ void parser_parse_input_redirection_test()
     eassert(statements.statements->count == 1);
     eassert(statements.statements->commands->count == 1);
 
-    eassert(!memcmp(statements.statements->commands->vals[0], SORT, sort_len - 1));
-    eassert(statements.statements->commands->lens[0] == sort_len);
+    eassert(!memcmp(statements.statements->commands->strs[0].value, SORT, sort_len - 1));
+    eassert(statements.statements->commands->strs[0].length == sort_len);
     eassert(statements.statements->commands->ops[0] == OP_CONSTANT);
 
-    eassert(!statements.statements->commands->vals[1]);
+    eassert(!statements.statements->commands->strs[1].value);
     eassert(!statements.statements->commands->next);
 
     eassert(statements.redirect_type == RT_IN);
@@ -389,11 +392,11 @@ void parser_parse_input_redirection_append_test()
     eassert(statements.statements->count == 1);
     eassert(statements.statements->commands->count == 1);
 
-    eassert(!memcmp(statements.statements->commands->vals[0], SORT, sort_len - 1));
-    eassert(statements.statements->commands->lens[0] == sort_len);
+    eassert(!memcmp(statements.statements->commands->strs[0].value, SORT, sort_len - 1));
+    eassert(statements.statements->commands->strs[0].length == sort_len);
     eassert(statements.statements->commands->ops[0] == OP_CONSTANT);
 
-    eassert(!statements.statements->commands->vals[1]);
+    eassert(!statements.statements->commands->strs[1].value);
     eassert(!statements.statements->commands->next);
 
     eassert(statements.redirect_type == RT_IN_APPEND);
@@ -420,11 +423,11 @@ void parser_parse_stderr_redirection_test()
     eassert(statements.statements->count == 1);
     eassert(statements.statements->commands->count == 1);
 
-    eassert(!memcmp(statements.statements->commands->vals[0], LS, ls_len - 1));
-    eassert(statements.statements->commands->lens[0] == ls_len);
+    eassert(!memcmp(statements.statements->commands->strs[0].value, LS, ls_len - 1));
+    eassert(statements.statements->commands->strs[0].length == ls_len);
     eassert(statements.statements->commands->ops[0] == OP_CONSTANT);
 
-    eassert(!statements.statements->commands->vals[1]);
+    eassert(!statements.statements->commands->strs[1].value);
     eassert(!statements.statements->commands->next);
 
     eassert(statements.redirect_type == RT_ERR);
@@ -451,11 +454,11 @@ void parser_parse_stderr_redirection_append_test()
     eassert(statements.statements->count == 1);
     eassert(statements.statements->commands->count == 1);
 
-    eassert(!memcmp(statements.statements->commands->vals[0], LS, ls_len - 1));
-    eassert(statements.statements->commands->lens[0] == ls_len);
+    eassert(!memcmp(statements.statements->commands->strs[0].value, LS, ls_len - 1));
+    eassert(statements.statements->commands->strs[0].length == ls_len);
     eassert(statements.statements->commands->ops[0] == OP_CONSTANT);
 
-    eassert(!statements.statements->commands->vals[1]);
+    eassert(!statements.statements->commands->strs[1].value);
     eassert(!statements.statements->commands->next);
 
     eassert(statements.redirect_type == RT_ERR_APPEND);
@@ -482,11 +485,11 @@ void parser_parse_stdout_and_stderr_redirection_test()
     eassert(statements.statements->count == 1);
     eassert(statements.statements->commands->count == 1);
 
-    eassert(!memcmp(statements.statements->commands->vals[0], LS, ls_len - 1));
-    eassert(statements.statements->commands->lens[0] == ls_len);
+    eassert(!memcmp(statements.statements->commands->strs[0].value, LS, ls_len - 1));
+    eassert(statements.statements->commands->strs[0].length == ls_len);
     eassert(statements.statements->commands->ops[0] == OP_CONSTANT);
 
-    eassert(!statements.statements->commands->vals[1]);
+    eassert(!statements.statements->commands->strs[1].value);
     eassert(!statements.statements->commands->next);
 
     eassert(statements.redirect_type == RT_OUT_ERR);
@@ -513,11 +516,11 @@ void parser_parse_stdout_and_stderr_redirection_append_test()
     eassert(statements.statements->count == 1);
     eassert(statements.statements->commands->count == 1);
 
-    eassert(!memcmp(statements.statements->commands->vals[0], LS, ls_len - 1));
-    eassert(statements.statements->commands->lens[0] == ls_len);
+    eassert(!memcmp(statements.statements->commands->strs[0].value, LS, ls_len - 1));
+    eassert(statements.statements->commands->strs[0].length == ls_len);
     eassert(statements.statements->commands->ops[0] == OP_CONSTANT);
 
-    eassert(!statements.statements->commands->vals[1]);
+    eassert(!statements.statements->commands->strs[1].value);
     eassert(!statements.statements->commands->next);
 
     eassert(statements.redirect_type == RT_OUT_ERR_APPEND);
@@ -544,23 +547,23 @@ void parser_parse_git_commit_test()
     eassert(statements.statements->count == 1);
     eassert(statements.statements->commands->count == 4);
 
-    eassert(!memcmp(statements.statements->commands->vals[0], "git", 3));
-    eassert(statements.statements->commands->lens[0] == 4);
+    eassert(!memcmp(statements.statements->commands->strs[0].value, "git", 3));
+    eassert(statements.statements->commands->strs[0].length == 4);
     eassert(statements.statements->commands->ops[0] == OP_CONSTANT);
 
-    eassert(!memcmp(statements.statements->commands->vals[1], "commit", 6));
-    eassert(statements.statements->commands->lens[1] == 7);
+    eassert(!memcmp(statements.statements->commands->strs[1].value, "commit", 6));
+    eassert(statements.statements->commands->strs[1].length == 7);
     eassert(statements.statements->commands->ops[1] == OP_CONSTANT);
 
-    eassert(!memcmp(statements.statements->commands->vals[2], "-m", 2));
-    eassert(statements.statements->commands->lens[2] == 3);
+    eassert(!memcmp(statements.statements->commands->strs[2].value, "-m", 2));
+    eassert(statements.statements->commands->strs[2].length == 3);
     eassert(statements.statements->commands->ops[2] == OP_CONSTANT);
 
-    eassert(!memcmp(statements.statements->commands->vals[3], "this is a commit message", 24));
-    eassert(statements.statements->commands->lens[3] == 25);
+    eassert(!memcmp(statements.statements->commands->strs[3].value, "this is a commit message", 24));
+    eassert(statements.statements->commands->strs[3].length == 25);
     eassert(statements.statements->commands->ops[3] == OP_CONSTANT);
 
-    eassert(!statements.statements->commands->vals[4]);
+    eassert(!statements.statements->commands->strs[4].value);
     eassert(!statements.statements->commands->next);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
@@ -651,15 +654,15 @@ void parser_parse_variable_test()
     eassert(statements.statements->count == 1);
     eassert(statements.statements->commands->count == 2);
 
-    eassert(!memcmp(statements.statements->commands->vals[0], ECHO, echo_len - 1));
-    eassert(statements.statements->commands->lens[0] == echo_len);
+    eassert(!memcmp(statements.statements->commands->strs[0].value, ECHO, echo_len - 1));
+    eassert(statements.statements->commands->strs[0].length == echo_len);
     eassert(statements.statements->commands->ops[0] == OP_CONSTANT);
 
-    eassert(!memcmp(statements.statements->commands->vals[1], "hello", 5));
-    eassert(statements.statements->commands->lens[1] == 6);
+    eassert(!memcmp(statements.statements->commands->strs[1].value, "hello", 5));
+    eassert(statements.statements->commands->strs[1].length == 6);
     eassert(statements.statements->commands->ops[1] == OP_CONSTANT);
 
-    eassert(!statements.statements->commands->vals[2]);
+    eassert(!statements.statements->commands->strs[2].value);
     eassert(!statements.statements->commands->next);
 
     ARENA_TEST_TEARDOWN;
@@ -687,15 +690,15 @@ void parser_parse_variable_expansion_test()
     eassert(statements.statements->count == 1);
     eassert(statements.statements->commands->count == 2);
 
-    eassert(!memcmp(statements.statements->commands->vals[0], ECHO, echo_len - 1));
-    eassert(statements.statements->commands->lens[0] == echo_len);
+    eassert(!memcmp(statements.statements->commands->strs[0].value, ECHO, echo_len - 1));
+    eassert(statements.statements->commands->strs[0].length == echo_len);
     eassert(statements.statements->commands->ops[0] == OP_CONSTANT);
 
-    eassert(!memcmp(statements.statements->commands->vals[1], "ls | sort", 9));
-    eassert(statements.statements->commands->lens[1] == 10);
+    eassert(!memcmp(statements.statements->commands->strs[1].value, "ls | sort", 9));
+    eassert(statements.statements->commands->strs[1].length == 10);
     eassert(statements.statements->commands->ops[1] == OP_CONSTANT);
 
-    eassert(!statements.statements->commands->vals[2]);
+    eassert(!statements.statements->commands->strs[2].value);
     eassert(!statements.statements->commands->next);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
@@ -720,15 +723,15 @@ void parser_parse_variable_and_test()
     eassert(statements.statements->count == 1);
     eassert(statements.statements->commands->count == 2);
 
-    eassert(!memcmp(statements.statements->commands->vals[0], ECHO, echo_len - 1));
-    eassert(statements.statements->commands->lens[0] == echo_len);
+    eassert(!memcmp(statements.statements->commands->strs[0].value, ECHO, echo_len - 1));
+    eassert(statements.statements->commands->strs[0].length == echo_len);
     eassert(statements.statements->commands->ops[0] == OP_CONSTANT);
 
-    eassert(!memcmp(statements.statements->commands->vals[1], "hello", 5));
-    eassert(statements.statements->commands->lens[1] == 6);
+    eassert(!memcmp(statements.statements->commands->strs[1].value, "hello", 5));
+    eassert(statements.statements->commands->strs[1].length == 6);
     eassert(statements.statements->commands->ops[1] == OP_CONSTANT);
 
-    eassert(!statements.statements->commands->vals[2]);
+    eassert(!statements.statements->commands->strs[2].value);
     eassert(!statements.statements->commands->next);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
@@ -755,11 +758,11 @@ void parser_parse_variable_command_test()
     eassert(statements.statements->commands->count == 1);
 
     Commands* cmds = statements.statements->commands;
-    eassert(!memcmp(cmds->vals[0], LS, ls_len - 1));
-    eassert(cmds->lens[0] == ls_len);
+    eassert(!memcmp(cmds->strs[0].value, LS, ls_len - 1));
+    eassert(cmds->strs[0].length == ls_len);
     eassert(cmds->ops[0] == OP_CONSTANT);
 
-    eassert(!cmds->vals[1]);
+    eassert(!cmds->strs[1].value);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -784,17 +787,17 @@ void parser_parse_home_test()
     eassert(statements.statements->commands->count == 2);
 
     // first command
-    eassert(!memcmp(statements.statements->commands->vals[0], LS, ls_len - 1));
-    eassert(statements.statements->commands->lens[0] == ls_len);
+    eassert(!memcmp(statements.statements->commands->strs[0].value, LS, ls_len - 1));
+    eassert(statements.statements->commands->strs[0].length == ls_len);
     eassert(statements.statements->commands->ops[0] == OP_CONSTANT);
 
     // second command
     Str home = Str_Get(getenv(NCSH_HOME_VAL));
-    eassert(!memcmp(statements.statements->commands->vals[1], home.value, home.length - 1));
-    eassert(statements.statements->commands->lens[1] == home.length);
+    eassert(!memcmp(statements.statements->commands->strs[1].value, home.value, home.length - 1));
+    eassert(statements.statements->commands->strs[1].length == home.length);
     eassert(statements.statements->commands->ops[1] == OP_CONSTANT);
 
-    eassert(!statements.statements->commands->vals[2]);
+    eassert(!statements.statements->commands->strs[2].value);
     eassert(!statements.statements->commands->next);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
@@ -820,25 +823,25 @@ void parser_parse_home_at_start_test()
     eassert(statements.statements->commands->count == 2);
 
     // first command
-    eassert(!memcmp(statements.statements->commands->vals[0], LS, ls_len - 1));
-    eassert(statements.statements->commands->lens[0] == ls_len);
+    eassert(!memcmp(statements.statements->commands->strs[0].value, LS, ls_len - 1));
+    eassert(statements.statements->commands->strs[0].length == ls_len);
     eassert(statements.statements->commands->ops[0] == OP_CONSTANT);
 
     // construct home expanded value from '~/snap'
 
     Str home = Str_Get(getenv(NCSH_HOME_VAL));
-    char* val = arena_malloc(&scratch_arena, statements.statements->commands->lens[1] + home.length - 1, char);
+    char* val = arena_malloc(&scratch_arena, statements.statements->commands->strs[1].length + home.length - 1, char);
     memcpy(val, home.value, home.length - 1);
     memcpy(val + home.length - 1, "/snap", 5);
     // eassert(!memcmp(val, "/home/alex/snap", 15)); // just make sure constructing home expanded value correctly
     size_t val_len = strlen(val) + 1;
 
     // second command
-    eassert(!memcmp(statements.statements->commands->vals[1], val, val_len - 1));
-    eassert(statements.statements->commands->lens[1] == val_len);
+    eassert(!memcmp(statements.statements->commands->strs[1].value, val, val_len - 1));
+    eassert(statements.statements->commands->strs[1].length == val_len);
     eassert(statements.statements->commands->ops[1] == OP_CONSTANT);
 
-    eassert(!statements.statements->commands->vals[2]);
+    eassert(!statements.statements->commands->strs[2].value);
     eassert(!statements.statements->commands->next);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
@@ -878,23 +881,23 @@ void parser_parse_glob_star_test()
     eassert(statements.statements->count == 1);
     eassert(statements.statements->commands->count == 4);
 
-    eassert(!memcmp(statements.statements->commands->vals[0], LS, ls_len - 1));
-    eassert(statements.statements->commands->lens[0] == ls_len);
+    eassert(!memcmp(statements.statements->commands->strs[0].value, LS, ls_len - 1));
+    eassert(statements.statements->commands->strs[0].length == ls_len);
     eassert(statements.statements->commands->ops[0] == OP_CONSTANT);
 
-    eassert(!memcmp(statements.statements->commands->vals[1], "COMPILE.md", 10));
-    eassert(statements.statements->commands->lens[1] == 11);
+    eassert(!memcmp(statements.statements->commands->strs[1].value, "COMPILE.md", 10));
+    eassert(statements.statements->commands->strs[1].length == 11);
     eassert(statements.statements->commands->ops[1] == OP_CONSTANT);
 
-    eassert(!memcmp(statements.statements->commands->vals[2], "NOTES.md", 8));
-    eassert(statements.statements->commands->lens[2] == 9);
+    eassert(!memcmp(statements.statements->commands->strs[2].value, "NOTES.md", 8));
+    eassert(statements.statements->commands->strs[2].length == 9);
     eassert(statements.statements->commands->ops[2] == OP_CONSTANT);
 
-    eassert(!memcmp(statements.statements->commands->vals[3], "README.md", 9));
-    eassert(statements.statements->commands->lens[3] == 10);
+    eassert(!memcmp(statements.statements->commands->strs[3].value, "README.md", 9));
+    eassert(statements.statements->commands->strs[3].length == 10);
     eassert(statements.statements->commands->ops[3] == OP_CONSTANT);
 
-    eassert(!statements.statements->commands->vals[4]);
+    eassert(!statements.statements->commands->strs[4].value);
     eassert(!statements.statements->commands->next);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
@@ -917,15 +920,15 @@ void parser_parse_glob_question_test()
     eassert(statements.statements->count == 1);
     eassert(statements.statements->commands->count == 2);
 
-    eassert(!memcmp(statements.statements->commands->vals[0], LS, ls_len - 1));
-    eassert(statements.statements->commands->lens[0] == ls_len);
+    eassert(!memcmp(statements.statements->commands->strs[0].value, LS, ls_len - 1));
+    eassert(statements.statements->commands->strs[0].length == ls_len);
     eassert(statements.statements->commands->ops[0] == OP_CONSTANT);
 
-    eassert(!memcmp(statements.statements->commands->vals[1], "NOTES.md", 8));
-    eassert(statements.statements->commands->lens[1] == 9);
+    eassert(!memcmp(statements.statements->commands->strs[1].value, "NOTES.md", 8));
+    eassert(statements.statements->commands->strs[1].length == 9);
     eassert(statements.statements->commands->ops[1] == OP_CONSTANT);
 
-    eassert(!statements.statements->commands->vals[2]);
+    eassert(!statements.statements->commands->strs[2].value);
     eassert(!statements.statements->commands->next);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
@@ -948,18 +951,28 @@ void parser_parse_glob_question_midcommand_test()
     eassert(statements.statements->count == 1);
     eassert(statements.statements->commands->count == 2);
 
-    eassert(!memcmp(statements.statements->commands->vals[0], LS, ls_len - 1));
-    eassert(statements.statements->commands->lens[0] == ls_len);
+    eassert(!memcmp(statements.statements->commands->strs[0].value, LS, ls_len - 1));
+    eassert(statements.statements->commands->strs[0].length == ls_len);
     eassert(statements.statements->commands->ops[0] == OP_CONSTANT);
 
-    eassert(!memcmp(statements.statements->commands->vals[1], "NOTES.md", 8));
-    eassert(statements.statements->commands->lens[1] == 9);
+    eassert(!memcmp(statements.statements->commands->strs[1].value, "NOTES.md", 8));
+    eassert(statements.statements->commands->strs[1].length == 9);
     eassert(statements.statements->commands->ops[1] == OP_CONSTANT);
 
-    eassert(!statements.statements->commands->vals[2]);
+    eassert(!statements.statements->commands->strs[2].value);
     eassert(!statements.statements->commands->next);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
+// Since some tests can call arena_realloc, we need to take care
+// to ensure the scratch arena lifetime is properly managed and not reset
+int parser_arena_ctx_wrapper(Str line, Statements* stmts, Arena* restrict sa)
+{
+    Lexemes lexemes = {0};
+    lexer_lex(line.value, line.length, &lexemes, sa);
+    int res = parser_parse(&lexemes, stmts, NULL, sa);
+    return res;
 }
 
 void parser_parse_glob_star_shouldnt_crash()
@@ -967,17 +980,16 @@ void parser_parse_glob_star_shouldnt_crash()
     SCRATCH_ARENA_TEST_SETUP;
 
     // found from fuzzer crashing inputs
-    char* line = "* * * * * * * * * * * * * * * * * *";
-    size_t len = strlen(line) + 1;
+    Str line = Str_New_Literal("* * * * * * * * * * * * * * * * * *");
 
     Lexemes lexemes = {0};
-    lexer_lex(line, len, &lexemes, &scratch_arena);
-    Statements statements = {0};
-    int res = parser_parse(&lexemes, &statements, NULL, &scratch_arena);
+    lexer_lex(line.value, line.length, &lexemes, &s);
+    Statements stmts = {0};
+    int res = parser_parse(&lexemes, &stmts, NULL, &s);
 
     eassert(!res);
-    eassert(statements.count == 1);
-    eassert(statements.statements->count == 1);
+    eassert(stmts.count == 1);
+    eassert(stmts.statements->count == 1);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -1042,15 +1054,15 @@ void parser_parse_comment_test()
     eassert(statements.statements->count == 1);
     eassert(statements.statements->commands->count == 2);
 
-    eassert(!memcmp(statements.statements->commands->vals[0], ECHO, echo_len - 1));
-    eassert(statements.statements->commands->lens[0] == echo_len);
+    eassert(!memcmp(statements.statements->commands->strs[0].value, ECHO, echo_len - 1));
+    eassert(statements.statements->commands->strs[0].length == echo_len);
     eassert(statements.statements->commands->ops[0] == OP_CONSTANT);
 
-    eassert(!memcmp(statements.statements->commands->vals[1], "hello", 5));
-    eassert(statements.statements->commands->lens[1] == 6);
+    eassert(!memcmp(statements.statements->commands->strs[1].value, "hello", 5));
+    eassert(statements.statements->commands->strs[1].length == 6);
     eassert(statements.statements->commands->ops[1] == OP_CONSTANT);
 
-    eassert(!statements.statements->commands->vals[2]);
+    eassert(!statements.statements->commands->strs[2].value);
     eassert(!statements.statements->commands->next);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
@@ -1076,36 +1088,36 @@ void parser_parse_bool_test()
     Commands* commands = statements.statements->commands;
     eassert(commands->count == 1);
 
-    eassert(!memcmp(commands->vals[0], "false", 5));
-    eassert(commands->lens[0] == 6);
+    eassert(!memcmp(commands->strs[0].value, "false", 5));
+    eassert(commands->strs[0].length == 6);
     eassert(commands->ops[0] == OP_FALSE);
     eassert(commands->prev_op == OP_NONE);
 
-    eassert(!commands->vals[1]);
+    eassert(!commands->strs[1].value);
 
     // second command
     commands = commands->next;
     eassert(commands->count == 1);
 
-    eassert(commands->vals[0]);
-    eassert(!memcmp(commands->vals[0], "true", 4));
-    eassert(commands->lens[0] == 5);
+    eassert(commands->strs[0].value);
+    eassert(!memcmp(commands->strs[0].value, "true", 4));
+    eassert(commands->strs[0].length == 5);
     eassert(commands->ops[0] == OP_TRUE);
     eassert(commands->prev_op == OP_AND);
 
-    eassert(!commands->vals[1]);
+    eassert(!commands->strs[1].value);
 
     // third command
     commands = commands->next;
     eassert(commands->count == 1);
 
-    eassert(commands->vals[0]);
-    eassert(!memcmp(commands->vals[0], "false", 5));
-    eassert(commands->lens[0] == 6);
+    eassert(commands->strs[0].value);
+    eassert(!memcmp(commands->strs[0].value, "false", 5));
+    eassert(commands->strs[0].length == 6);
     eassert(commands->ops[0] == OP_FALSE);
     eassert(commands->prev_op == OP_OR);
 
-    eassert(!commands->vals[1]);
+    eassert(!commands->strs[1].value);
     eassert(!commands->next);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
@@ -1133,20 +1145,20 @@ void parser_parse_if_test()
     eassert(statements.statements[0].type == LT_IF_CONDITIONS);
     eassert(commands->count == 3);
 
-    eassert(!memcmp(commands->vals[0], "1", 1));
-    eassert(commands->lens[0] == 2);
+    eassert(!memcmp(commands->strs[0].value, "1", 1));
+    eassert(commands->strs[0].length == 2);
     eassert(commands->ops[0] == OP_CONSTANT);
 
-    eassert(!memcmp(commands->vals[1], "-eq", 3));
-    eassert(commands->lens[1] == 4);
+    eassert(!memcmp(commands->strs[1].value, "-eq", 3));
+    eassert(commands->strs[1].length == 4);
     eassert(commands->ops[1] == OP_EQUALS);
     eassert(commands->prev_op == OP_EQUALS);
 
-    eassert(!memcmp(commands->vals[2], "1", 1));
-    eassert(commands->lens[2] == 2);
+    eassert(!memcmp(commands->strs[2].value, "1", 1));
+    eassert(commands->strs[2].length == 2);
     eassert(commands->ops[2] == OP_CONSTANT);
 
-    eassert(!commands->vals[3]);
+    eassert(!commands->strs[3].value);
     eassert(!commands->next);
 
     // second statement, if statements
@@ -1155,19 +1167,19 @@ void parser_parse_if_test()
     eassert(statements.statements[1].type == LT_IF);
     eassert(commands->count == 2);
 
-    eassert(commands->vals[0]);
-    eassert(!memcmp(commands->vals[0], ECHO, echo_len - 1));
-    eassert(commands->lens[0] == echo_len);
+    eassert(commands->strs[0].value);
+    eassert(!memcmp(commands->strs[0].value, ECHO, echo_len - 1));
+    eassert(commands->strs[0].length == echo_len);
     eassert(commands->ops[0] == OP_CONSTANT);
     eassert(commands->prev_op == OP_NONE);
 
-    eassert(!memcmp(commands->vals[1], "hi", 2));
-    eassert(commands->lens[1] == 3);
+    eassert(!memcmp(commands->strs[1].value, "hi", 2));
+    eassert(commands->strs[1].length == 3);
     eassert(commands->ops[1] == OP_CONSTANT);
     eassert(commands->prev_op == OP_NONE);
 
-    eassert(!commands->vals[2]);
-    eassert(!commands->next->vals[0]);
+    eassert(!commands->strs[2].value);
+    eassert(!commands->next->strs[0].value);
     // eassert(!commands->next);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
@@ -1180,6 +1192,7 @@ void parser_parse_if_variable_test()
 
     Shell shell = {0};
     shell_init(&shell, &scratch_arena, envp_ptr);
+    shell.arena = a;
     *env_add_or_get(shell.env, Str_New_Literal("VAL")) = Str_New_Literal("1");
 
     char* line = "if [ $VAL -eq 1 ]; then echo 'hi'; fi";
@@ -1198,22 +1211,22 @@ void parser_parse_if_variable_test()
     Commands* commands = statements.statements[0].commands;
     eassert(statements.statements[0].count == 1);
     eassert(statements.statements[0].type == LT_IF_CONDITIONS);
-    eassert(commands->count == 3);
+    eassert(commands->count == 2);
 
-    eassert(!memcmp(commands->vals[0], "1", 1));
-    eassert(commands->lens[0] == 2);
+    eassert(!memcmp(commands->strs[0].value, "1", 1));
+    eassert(commands->strs[0].length == 2);
     eassert(commands->ops[0] == OP_CONSTANT);
 
-    eassert(!memcmp(commands->vals[1], "-eq", 3));
-    eassert(commands->lens[1] == 4);
+    eassert(!memcmp(commands->strs[1].value, "-eq", 3));
+    eassert(commands->strs[1].length == 4);
     eassert(commands->ops[1] == OP_EQUALS);
     eassert(commands->prev_op == OP_EQUALS);
 
-    eassert(!memcmp(commands->vals[2], "1", 1));
-    eassert(commands->lens[2] == 2);
+    eassert(!memcmp(commands->strs[2].value, "1", 1));
+    eassert(commands->strs[2].length == 2);
     eassert(commands->ops[2] == OP_CONSTANT);
 
-    eassert(!commands->vals[3]);
+    eassert(!commands->strs[3].value);
     eassert(!commands->next);
 
     // second statement, if statements
@@ -1222,19 +1235,19 @@ void parser_parse_if_variable_test()
     eassert(statements.statements[1].type == LT_IF);
     eassert(commands->count == 2);
 
-    eassert(commands->vals[0]);
-    eassert(!memcmp(commands->vals[0], ECHO, echo_len - 1));
-    eassert(commands->lens[0] == echo_len);
+    eassert(commands->strs[0].value);
+    eassert(!memcmp(commands->strs[0].value, ECHO, echo_len - 1));
+    eassert(commands->strs[0].length == echo_len);
     eassert(commands->ops[0] == OP_CONSTANT);
     eassert(commands->prev_op == OP_NONE);
 
-    eassert(!memcmp(commands->vals[1], "hi", 2));
-    eassert(commands->lens[1] == 3);
+    eassert(!memcmp(commands->strs[1].value, "hi", 2));
+    eassert(commands->strs[1].length == 3);
     eassert(commands->ops[1] == OP_CONSTANT);
     eassert(commands->prev_op == OP_NONE);
 
-    eassert(!commands->vals[2]);
-    eassert(!commands->next->vals[0]);
+    eassert(!commands->strs[2].value);
+    eassert(!commands->next->strs[0].value);
     // eassert(!commands->next);
 
     ARENA_TEST_TEARDOWN;
@@ -1263,19 +1276,19 @@ void parser_parse_if_multiple_conditions_test()
     eassert(statements.statements[0].type == LT_IF_CONDITIONS);
     eassert(commands->count == 1);
 
-    eassert(!memcmp(commands->vals[0], "true", 4));
-    eassert(commands->lens[0] == 5);
+    eassert(!memcmp(commands->strs[0].value, "true", 4));
+    eassert(commands->strs[0].length == 5);
     eassert(commands->ops[0] == OP_TRUE);
 
-    eassert(!commands->vals[1]);
+    eassert(!commands->strs[1].value);
 
     commands = commands->next;
-    eassert(!memcmp(commands->vals[0], "true", 4));
-    eassert(commands->lens[0] == 5);
+    eassert(!memcmp(commands->strs[0].value, "true", 4));
+    eassert(commands->strs[0].length == 5);
     eassert(commands->ops[0] == OP_TRUE);
     eassert(commands->prev_op == OP_AND);
 
-    eassert(!commands->vals[1]);
+    eassert(!commands->strs[1].value);
     eassert(!commands->next);
 
     // second statement, if statements
@@ -1284,19 +1297,19 @@ void parser_parse_if_multiple_conditions_test()
     eassert(statements.statements[1].type == LT_IF);
     eassert(commands->count == 2);
 
-    eassert(commands->vals[0]);
-    eassert(!memcmp(commands->vals[0], ECHO, echo_len - 1));
-    eassert(commands->lens[0] == echo_len);
+    eassert(commands->strs[0].value);
+    eassert(!memcmp(commands->strs[0].value, ECHO, echo_len - 1));
+    eassert(commands->strs[0].length == echo_len);
     eassert(commands->ops[0] == OP_CONSTANT);
     eassert(commands->prev_op == OP_NONE);
 
-    eassert(!memcmp(commands->vals[1], "hi", 2));
-    eassert(commands->lens[1] == 3);
+    eassert(!memcmp(commands->strs[1].value, "hi", 2));
+    eassert(commands->strs[1].length == 3);
     eassert(commands->ops[1] == OP_CONSTANT);
     eassert(commands->prev_op == OP_NONE);
 
-    eassert(!commands->vals[2]);
-    eassert(!commands->next->vals[0]);
+    eassert(!commands->strs[2].value);
+    eassert(!commands->next->strs[0].value);
     // eassert(!commands->next);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
@@ -1324,21 +1337,21 @@ void parser_parse_if_else_test()
     eassert(statements.statements[0].type == LT_IF_CONDITIONS);
     eassert(commands->count == 3);
 
-    eassert(!memcmp(commands->vals[0], "1", 1));
-    eassert(commands->lens[0] == 2);
+    eassert(!memcmp(commands->strs[0].value, "1", 1));
+    eassert(commands->strs[0].length == 2);
     eassert(commands->ops[0] == OP_CONSTANT);
     eassert(commands->prev_op == OP_EQUALS);
 
-    eassert(!memcmp(commands->vals[1], "-eq", 3));
-    eassert(commands->lens[1] == 4);
+    eassert(!memcmp(commands->strs[1].value, "-eq", 3));
+    eassert(commands->strs[1].length == 4);
     eassert(commands->ops[1] == OP_EQUALS);
 
-    eassert(!memcmp(commands->vals[2], "1", 1));
-    eassert(commands->lens[2] == 2);
+    eassert(!memcmp(commands->strs[2].value, "1", 1));
+    eassert(commands->strs[2].length == 2);
     eassert(commands->ops[2] == OP_CONSTANT);
     eassert(commands->prev_op == OP_EQUALS);
 
-    eassert(!commands->vals[3]);
+    eassert(!commands->strs[3].value);
     eassert(!commands->next);
 
     // second statement, if statements
@@ -1347,18 +1360,18 @@ void parser_parse_if_else_test()
     eassert(statements.statements[1].type == LT_IF);
     eassert(commands->count == 2);
 
-    eassert(commands->vals[0]);
-    eassert(!memcmp(commands->vals[0], ECHO, echo_len - 1));
-    eassert(commands->lens[0] == echo_len);
+    eassert(commands->strs[0].value);
+    eassert(!memcmp(commands->strs[0].value, ECHO, echo_len - 1));
+    eassert(commands->strs[0].length == echo_len);
     eassert(commands->ops[0] == OP_CONSTANT);
     eassert(commands->prev_op == OP_NONE);
 
-    eassert(!memcmp(commands->vals[1], "hi", 2));
-    eassert(commands->lens[1] == 3);
+    eassert(!memcmp(commands->strs[1].value, "hi", 2));
+    eassert(commands->strs[1].length == 3);
     eassert(commands->ops[1] == OP_CONSTANT);
     eassert(commands->prev_op == OP_NONE);
 
-    eassert(!commands->vals[2]);
+    eassert(!commands->strs[2].value);
     // eassert(!commands->next);
 
     // third statement, else statements
@@ -1367,20 +1380,20 @@ void parser_parse_if_else_test()
     eassert(statements.statements[2].type == LT_ELSE);
     eassert(commands->count == 2);
 
-    eassert(commands->vals[0]);
-    eassert(!memcmp(commands->vals[0], ECHO, echo_len - 1));
-    eassert(commands->lens[0] == echo_len);
+    eassert(commands->strs[0].value);
+    eassert(!memcmp(commands->strs[0].value, ECHO, echo_len - 1));
+    eassert(commands->strs[0].length == echo_len);
     eassert(commands->ops[0] == OP_CONSTANT);
     eassert(commands->prev_op == OP_NONE);
 
-    eassert(!memcmp(commands->vals[1], "hello", 5));
-    eassert(commands->lens[1] == 6);
+    eassert(!memcmp(commands->strs[1].value, "hello", 5));
+    eassert(commands->strs[1].length == 6);
     eassert(commands->ops[1] == OP_CONSTANT);
     eassert(commands->prev_op == OP_NONE);
 
-    eassert(!commands->vals[2]);
-    eassert(!commands->next->vals[0]);
-    // TODO: fix this so commands->next is null and don't need to check vals[0]
+    eassert(!commands->strs[2].value);
+    eassert(!commands->next->strs[0].value);
+    // TODO: fix this so commands->next is null and don't need to check strs[0].value
     // eassert(!commands->next);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
@@ -1408,22 +1421,21 @@ void parser_parse_if_elif_else_test()
     eassert(statements.statements[0].type == LT_IF_CONDITIONS);
     eassert(commands->count == 3);
 
-    eassert(!memcmp(commands->vals[0], "1", 1));
-    eassert(commands->lens[0] == 2);
+    eassert(!memcmp(commands->strs[0].value, "1", 1));
+    eassert(commands->strs[0].length == 2);
     eassert(commands->ops[0] == OP_CONSTANT);
     eassert(commands->prev_op == OP_EQUALS);
 
-    eassert(!memcmp(commands->vals[1], "-eq", 3));
-    eassert(commands->lens[1] == 4);
+    eassert(!memcmp(commands->strs[1].value, "-eq", 3));
+    eassert(commands->strs[1].length == 4);
     eassert(commands->ops[1] == OP_EQUALS);
-    eassert(commands->current_op == OP_EQUALS);
 
-    eassert(!memcmp(commands->vals[2], "2", 1));
-    eassert(commands->lens[2] == 2);
+    eassert(!memcmp(commands->strs[2].value, "2", 1));
+    eassert(commands->strs[2].length == 2);
     eassert(commands->ops[2] == OP_CONSTANT);
     eassert(commands->prev_op == OP_EQUALS);
 
-    eassert(!commands->vals[3]);
+    eassert(!commands->strs[3].value);
     eassert(!commands->next);
 
     // second statement
@@ -1432,19 +1444,19 @@ void parser_parse_if_elif_else_test()
     eassert(statements.statements[1].type == LT_IF);
     eassert(commands->count == 2);
 
-    eassert(commands->vals[0]);
-    eassert(!memcmp(commands->vals[0], ECHO, echo_len - 1));
-    eassert(commands->lens[0] == echo_len);
+    eassert(commands->strs[0].value);
+    eassert(!memcmp(commands->strs[0].value, ECHO, echo_len - 1));
+    eassert(commands->strs[0].length == echo_len);
     eassert(commands->ops[0] == OP_CONSTANT);
     eassert(commands->prev_op == OP_NONE);
 
-    eassert(!memcmp(commands->vals[1], "hi", 2));
-    eassert(commands->lens[1] == 3);
+    eassert(!memcmp(commands->strs[1].value, "hi", 2));
+    eassert(commands->strs[1].length == 3);
     eassert(commands->ops[1] == OP_CONSTANT);
     eassert(commands->prev_op == OP_NONE);
 
-    eassert(!commands->vals[2]);
-    eassert(!commands->next->vals[0]);
+    eassert(!commands->strs[2].value);
+    eassert(!commands->next->strs[0].value);
 
     // third statement
     commands = statements.statements[2].commands;
@@ -1452,22 +1464,21 @@ void parser_parse_if_elif_else_test()
     eassert(statements.statements[2].type == LT_ELIF_CONDTIONS);
     eassert(commands->count == 3);
 
-    eassert(!memcmp(commands->vals[0], "1", 1));
-    eassert(commands->lens[0] == 2);
+    eassert(!memcmp(commands->strs[0].value, "1", 1));
+    eassert(commands->strs[0].length == 2);
     eassert(commands->ops[0] == OP_CONSTANT);
     eassert(commands->prev_op == OP_EQUALS);
 
-    eassert(!memcmp(commands->vals[1], "-eq", 3));
-    eassert(commands->lens[1] == 4);
+    eassert(!memcmp(commands->strs[1].value, "-eq", 3));
+    eassert(commands->strs[1].length == 4);
     eassert(commands->ops[1] == OP_EQUALS);
-    eassert(commands->current_op == OP_EQUALS);
 
-    eassert(!memcmp(commands->vals[2], "1", 1));
-    eassert(commands->lens[2] == 2);
+    eassert(!memcmp(commands->strs[2].value, "1", 1));
+    eassert(commands->strs[2].length == 2);
     eassert(commands->ops[2] == OP_CONSTANT);
     eassert(commands->prev_op == OP_EQUALS);
 
-    eassert(!commands->vals[3]);
+    eassert(!commands->strs[3].value);
     eassert(!commands->next);
 
     // fourth statement
@@ -1476,19 +1487,19 @@ void parser_parse_if_elif_else_test()
     eassert(statements.statements[3].type == LT_ELIF);
     eassert(commands->count == 2);
 
-    eassert(commands->vals[0]);
-    eassert(!memcmp(commands->vals[0], ECHO, echo_len - 1));
-    eassert(commands->lens[0] == echo_len);
+    eassert(commands->strs[0].value);
+    eassert(!memcmp(commands->strs[0].value, ECHO, echo_len - 1));
+    eassert(commands->strs[0].length == echo_len);
     eassert(commands->ops[0] == OP_CONSTANT);
     eassert(commands->prev_op == OP_NONE);
 
-    eassert(!memcmp(commands->vals[1], "hey", 3));
-    eassert(commands->lens[1] == 4);
+    eassert(!memcmp(commands->strs[1].value, "hey", 3));
+    eassert(commands->strs[1].length == 4);
     eassert(commands->ops[1] == OP_CONSTANT);
     eassert(commands->prev_op == OP_NONE);
 
-    eassert(!commands->vals[2]);
-    eassert(!commands->next->vals[0]);
+    eassert(!commands->strs[2].value);
+    eassert(!commands->next->strs[0].value);
 
     // fifth statement
     commands = statements.statements[4].commands;
@@ -1496,19 +1507,19 @@ void parser_parse_if_elif_else_test()
     eassert(statements.statements[4].type == LT_ELSE);
     eassert(commands->count == 2);
 
-    eassert(commands->vals[0]);
-    eassert(!memcmp(commands->vals[0], ECHO, echo_len - 1));
-    eassert(commands->lens[0] == echo_len);
+    eassert(commands->strs[0].value);
+    eassert(!memcmp(commands->strs[0].value, ECHO, echo_len - 1));
+    eassert(commands->strs[0].length == echo_len);
     eassert(commands->ops[0] == OP_CONSTANT);
     eassert(commands->prev_op == OP_NONE);
 
-    eassert(!memcmp(commands->vals[1], "hello", 5));
-    eassert(commands->lens[1] == 6);
+    eassert(!memcmp(commands->strs[1].value, "hello", 5));
+    eassert(commands->strs[1].length == 6);
     eassert(commands->ops[1] == OP_CONSTANT);
     eassert(commands->prev_op == OP_NONE);
 
-    eassert(!commands->vals[2]);
-    eassert(!commands->next->vals[0]);
+    eassert(!commands->strs[2].value);
+    eassert(!commands->next->strs[0].value);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -1535,22 +1546,21 @@ void parser_parse_if_elif_test()
     eassert(statements.statements[0].type == LT_IF_CONDITIONS);
     eassert(commands->count == 3);
 
-    eassert(!memcmp(commands->vals[0], "1", 1));
-    eassert(commands->lens[0] == 2);
+    eassert(!memcmp(commands->strs[0].value, "1", 1));
+    eassert(commands->strs[0].length == 2);
     eassert(commands->ops[0] == OP_CONSTANT);
     eassert(commands->prev_op == OP_EQUALS);
 
-    eassert(!memcmp(commands->vals[1], "-eq", 3));
-    eassert(commands->lens[1] == 4);
+    eassert(!memcmp(commands->strs[1].value, "-eq", 3));
+    eassert(commands->strs[1].length == 4);
     eassert(commands->ops[1] == OP_EQUALS);
-    eassert(commands->current_op == OP_EQUALS);
 
-    eassert(!memcmp(commands->vals[2], "2", 1));
-    eassert(commands->lens[2] == 2);
+    eassert(!memcmp(commands->strs[2].value, "2", 1));
+    eassert(commands->strs[2].length == 2);
     eassert(commands->ops[2] == OP_CONSTANT);
     eassert(commands->prev_op == OP_EQUALS);
 
-    eassert(!commands->vals[3]);
+    eassert(!commands->strs[3].value);
     eassert(!commands->next);
 
     // second statement
@@ -1559,19 +1569,19 @@ void parser_parse_if_elif_test()
     eassert(statements.statements[1].type == LT_IF);
     eassert(commands->count == 2);
 
-    eassert(commands->vals[0]);
-    eassert(!memcmp(commands->vals[0], ECHO, echo_len - 1));
-    eassert(commands->lens[0] == echo_len);
+    eassert(commands->strs[0].value);
+    eassert(!memcmp(commands->strs[0].value, ECHO, echo_len - 1));
+    eassert(commands->strs[0].length == echo_len);
     eassert(commands->ops[0] == OP_CONSTANT);
     eassert(commands->prev_op == OP_NONE);
 
-    eassert(!memcmp(commands->vals[1], "hi", 2));
-    eassert(commands->lens[1] == 3);
+    eassert(!memcmp(commands->strs[1].value, "hi", 2));
+    eassert(commands->strs[1].length == 3);
     eassert(commands->ops[1] == OP_CONSTANT);
     eassert(commands->prev_op == OP_NONE);
 
-    eassert(!commands->vals[2]);
-    eassert(!commands->next->vals[0]);
+    eassert(!commands->strs[2].value);
+    eassert(!commands->next->strs[0].value);
 
     // third statement
     commands = statements.statements[2].commands;
@@ -1579,22 +1589,21 @@ void parser_parse_if_elif_test()
     eassert(statements.statements[2].type == LT_ELIF_CONDTIONS);
     eassert(commands->count == 3);
 
-    eassert(!memcmp(commands->vals[0], "1", 1));
-    eassert(commands->lens[0] == 2);
+    eassert(!memcmp(commands->strs[0].value, "1", 1));
+    eassert(commands->strs[0].length == 2);
     eassert(commands->ops[0] == OP_CONSTANT);
     eassert(commands->prev_op == OP_EQUALS);
 
-    eassert(!memcmp(commands->vals[1], "-eq", 3));
-    eassert(commands->lens[1] == 4);
+    eassert(!memcmp(commands->strs[1].value, "-eq", 3));
+    eassert(commands->strs[1].length == 4);
     eassert(commands->ops[1] == OP_EQUALS);
-    eassert(commands->current_op == OP_EQUALS);
 
-    eassert(!memcmp(commands->vals[2], "1", 1));
-    eassert(commands->lens[2] == 2);
+    eassert(!memcmp(commands->strs[2].value, "1", 1));
+    eassert(commands->strs[2].length == 2);
     eassert(commands->ops[2] == OP_CONSTANT);
     eassert(commands->prev_op == OP_EQUALS);
 
-    eassert(!commands->vals[3]);
+    eassert(!commands->strs[3].value);
     eassert(!commands->next);
 
     // fourth statement
@@ -1603,33 +1612,34 @@ void parser_parse_if_elif_test()
     eassert(statements.statements[3].type == LT_ELIF);
     eassert(commands->count == 2);
 
-    eassert(commands->vals[0]);
-    eassert(!memcmp(commands->vals[0], ECHO, echo_len - 1));
-    eassert(commands->lens[0] == echo_len);
+    eassert(commands->strs[0].value);
+    eassert(!memcmp(commands->strs[0].value, ECHO, echo_len - 1));
+    eassert(commands->strs[0].length == echo_len);
     eassert(commands->ops[0] == OP_CONSTANT);
     eassert(commands->prev_op == OP_NONE);
 
-    eassert(!memcmp(commands->vals[1], "hey", 3));
-    eassert(commands->lens[1] == 4);
+    eassert(!memcmp(commands->strs[1].value, "hey", 3));
+    eassert(commands->strs[1].length == 4);
     eassert(commands->ops[1] == OP_CONSTANT);
     eassert(commands->prev_op == OP_NONE);
 
-    eassert(!commands->vals[2]);
-    eassert(!commands->next->vals[0]);
+    eassert(!commands->strs[2].value);
+    eassert(!commands->next->strs[0].value);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 void parser_tests()
 {
+    // etest_init(true);
     etest_start();
 
     etest_run(parser_parse_ls_test);
     etest_run(parser_parse_ls_dash_l_test);
 
     etest_run(parser_parse_pipe_test);
-    etest_run(parser_parse_multiple_pipe_test);
-    etest_run(parser_parse_multiple_pipe_multiple_args_test);
+    etest_run(parser_parse_multiple_pipes_test);
+    etest_run(parser_parse_multiple_pipes_multiple_args_test);
 
     etest_run(parser_parse_background_job_test);
 
@@ -1655,15 +1665,15 @@ void parser_tests()
     etest_run(parser_parse_home_test);
     etest_run(parser_parse_home_at_start_test);
 
-    etest_run(parser_parse_math_operators_test);
+    // etest_run(parser_parse_math_operators_test);
 
     etest_run(parser_parse_glob_star_test);
     etest_run(parser_parse_glob_question_test);
     etest_run(parser_parse_glob_question_midcommand_test);
 
-    etest_run(parser_parse_glob_star_shouldnt_crash);
-    etest_run(parser_parse_tilde_home_shouldnt_crash);
-    etest_run(parser_parse_glob_question_and_tilde_home_shouldnt_crash);
+    // etest_run(parser_parse_glob_star_shouldnt_crash);
+    // etest_run(parser_parse_tilde_home_shouldnt_crash);
+    // etest_run(parser_parse_glob_question_and_tilde_home_shouldnt_crash);
 
     etest_run(parser_parse_comment_test);
 

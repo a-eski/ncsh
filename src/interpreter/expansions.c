@@ -27,28 +27,27 @@ void expansion_home(Shell* shell, Lexemes* restrict lexemes, size_t pos, Arena* 
         return;
     }
 
-    if (lexemes->lens[pos] == 2) {
-        lexemes->lens[pos] = home->length;
-        lexemes->vals[pos] = arena_malloc(scratch, lexemes->lens[pos], char);
-        memcpy(lexemes->vals[pos], home->value, lexemes->lens[pos] - 1);
+    if (lexemes->strs[pos].length == 2) {
+        estrset(&lexemes->strs[pos], home, scratch);
         lexemes->ops[pos] = OP_CONSTANT;
-        debugf("lexemes->vals[pos] set to %s\n", lexemes->vals[pos]);
+        debugf("lexemes->strs[pos].value set to %s\n", lexemes->strs[pos].value);
         return;
     }
 
-    assert(lexemes->vals[pos]);
+    assert(lexemes->strs[pos].value);
     // only do home expansion when there is a value and home is in first position.
-    if (!lexemes->vals[pos] || lexemes->vals[pos][0] != '~')
+    if (!lexemes->strs[pos].value || lexemes->strs[pos].value[0] != '~') {
         return;
+    }
 
-    size_t len = lexemes->lens[pos] + home->length - 2; // subtract 1, both account for null termination
+    size_t len = lexemes->strs[pos].length + home->length - 2; // subtract 1, both account for null termination
     char* new_value = arena_malloc(scratch, len, char);
     memcpy(new_value, home->value, home->length - 1);
-    memcpy(new_value + home->length - 1, lexemes->vals[pos] + 1, lexemes->lens[pos] - 1);
-    debugf("performing home expansion on %s to %s\n", lexemes->vals[pos], new_value);
-    lexemes->vals[pos] = new_value;
+    memcpy(new_value + home->length - 1, lexemes->strs[pos].value + 1, lexemes->strs[pos].length - 1);
+    debugf("performing home expansion on %s to %s\n", lexemes->strs[pos].value, new_value);
+    lexemes->strs[pos].value = new_value;
     lexemes->ops[pos] = OP_CONSTANT;
-    lexemes->lens[pos] = len;
+    lexemes->strs[pos].length = len;
 }
 
 void expansion_glob(char* restrict in, Commands* restrict cmds, Arena* restrict scratch)
@@ -56,7 +55,6 @@ void expansion_glob(char* restrict in, Commands* restrict cmds, Arena* restrict 
     assert(in); assert(cmds); assert(scratch);
 
     glob_t glob_buf = {0};
-    size_t glob_len;
     glob(in, GLOB_DOOFFS, NULL, &glob_buf);
     if (!glob_buf.gl_pathc) {
         globfree(&glob_buf);
@@ -70,11 +68,7 @@ void expansion_glob(char* restrict in, Commands* restrict cmds, Arena* restrict 
           command_realloc(cmds, scratch);
         }
 
-        glob_len = strlen(glob_buf.gl_pathv[i]) + 1;
-        debugf("cmds->pos: %zu\n", cmds->pos);
-        cmds->vals[cmds->pos] = arena_malloc(scratch, glob_len, char);
-        memcpy(cmds->vals[cmds->pos], glob_buf.gl_pathv[i], glob_len);
-        cmds->lens[cmds->pos] = glob_len;
+        estrset(&cmds->strs[cmds->pos], &Str_Get(glob_buf.gl_pathv[i]), scratch);
         cmds->ops[cmds->pos] = OP_CONSTANT;
         ++cmds->pos;
     }
@@ -89,44 +83,42 @@ void expansion_assignment(Lexemes* lexeme, size_t pos, Shell* restrict shell)
     // variable values are stored in env hashmap.
     // the key is the previous value, which is tagged with OP_VARIABLE.
     // when VM comes in contact with OP_VARIABLE, it looks up value in env.
-    size_t assignment_pos;
-    for (assignment_pos = 0; assignment_pos < lexeme->lens[pos]; ++assignment_pos) {
-        if (lexeme->vals[pos][assignment_pos] == '=')
-            break;
-    }
+    size_t assignment_pos = estridx(&lexeme->strs[pos], '=');
 
     Str key = {.length = assignment_pos + 1};
     key.value = arena_malloc(&shell->arena, key.length, char);
-    memcpy(key.value, lexeme->vals[pos], assignment_pos);
+    memcpy(key.value, lexeme->strs[pos].value, assignment_pos);
 
-    Str val = {.length = lexeme->lens[pos] - assignment_pos - 1};
+    Str val = {.length = lexeme->strs[pos].length - assignment_pos - 1};
     val.value = arena_malloc(&shell->arena, val.length, char);
-    memcpy(val.value, lexeme->vals[pos] + key.length, val.length);
+    memcpy(val.value, lexeme->strs[pos].value + key.length, val.length);
     debugf("setting key %s with val %s\n", key.value, val.value);
 
     *env_add_or_get(shell->env, key) = val;
 }
 
-void expansion_variable(char* restrict in, size_t len, Commands* restrict cmds, /*Statements* stmts,*/ Shell* restrict shell, Arena* restrict scratch)
+void expansion_variable(Str* restrict in, Commands* restrict cmds, /*Statements* stmts,*/ Shell* restrict shell, Arena* restrict scratch)
 {
-    assert(in); assert(cmds); assert(shell); assert(scratch);
-    if (!in || len < 2) {
+    assert(in); assert(in->value); assert(cmds); assert(shell); assert(scratch);
+    if (!in || in->length < 2) {
         return;
     }
 
-    char* key = in[0] == '$' ? in + 1 : in; // skip first value if $
-    size_t key_len = in[0] == '$' ? len - 1 : len;
-    debugf("key %s, key_len %zu\n", key, key_len);
-    Str* val = env_add_or_get(shell->env, Str_New(key, key_len));
+    Str key;
+    if (in->value[0] == '$')
+        key = (Str){.value = in->value + 1, .length = in->length - 1};
+    else
+        key = (Str){.value = in->value, .length = in->length};
+
+    debugf("key %s, key_len %zu\n", key.value, key.length);
+    Str* val = env_add_or_get(shell->env, key);
     if (!val || !val->value) {
         return;
     }
 
     debugf("var %s %zu\n", val->value, val->length);
 
-    cmds->vals[cmds->pos] = arena_malloc(scratch, val->length, char);
-    memcpy(cmds->vals[cmds->pos], val->value, val->length - 1);
-    cmds->lens[cmds->pos] = val->length;
+    estrset(&cmds->strs[cmds->pos], val, scratch);
     cmds->ops[cmds->pos] = OP_CONSTANT;
     ++cmds->pos;
 
@@ -160,19 +152,19 @@ void expansion_variable(char* restrict in, size_t len, Commands* restrict cmds, 
 void expansion_alias(Lexemes* restrict lexemes, size_t n, Arena* restrict scratch)
 {
     // TODO: alias expansion. Aliases with " " are not expanded into multiple commands.
-    Str alias = alias_check(lexemes->vals[n], lexemes->lens[n]);
+    Str alias = alias_check(lexemes->strs[n]);
     if (!alias.length) {
         return;
     }
 
     char* space = strchr(alias.value, ' ');
     if (!space) {
-        if (alias.length > lexemes->lens[n]) {
-            lexemes->vals[n] = arena_realloc(scratch, alias.length, char, lexemes->vals[n], lexemes->lens[n]);
+        if (alias.length > lexemes->strs[n].length) {
+            lexemes->strs[n].value = arena_realloc(scratch, alias.length, char, lexemes->strs[n].value, lexemes->strs[n].length);
         }
 
-        memcpy(lexemes->vals[n], alias.value, alias.length);
-        lexemes->lens[n] = alias.length;
+        memcpy(lexemes->strs[n].value, alias.value, alias.length);
+        lexemes->strs[n].length = alias.length;
         return;
     }
 

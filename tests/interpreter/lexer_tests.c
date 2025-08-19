@@ -20,12 +20,12 @@ void lexer_lex_ls_test()
 
     eassert(lexemes.count == 1);
 
-    eassert(lexemes.vals[0]);
-    eassert(!memcmp(lexemes.vals[0], line, len));
+    eassert(lexemes.strs[0].value);
+    eassert(!memcmp(lexemes.strs[0].value, line, len));
     eassert(lexemes.ops[0] == OP_CONSTANT);
-    eassert(lexemes.lens[0] == len);
+    eassert(lexemes.strs[0].length == len);
 
-    eassert(!lexemes.vals[1]);
+    eassert(!lexemes.strs[1].value);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -42,15 +42,15 @@ void lexer_lex_ls_dash_l_test()
 
     eassert(lexemes.count == 2);
 
-    eassert(!memcmp(lexemes.vals[0], "ls", 3));
+    eassert(!memcmp(lexemes.strs[0].value, "ls", 3));
     eassert(lexemes.ops[0] == OP_CONSTANT);
-    eassert(lexemes.lens[0] == 3);
+    eassert(lexemes.strs[0].length == 3);
 
-    eassert(!memcmp(lexemes.vals[1], "-l", 3));
+    eassert(!memcmp(lexemes.strs[1].value, "-l", 3));
     eassert(lexemes.ops[1] == OP_CONSTANT);
-    eassert(lexemes.lens[1] == 3);
+    eassert(lexemes.strs[1].length == 3);
 
-    eassert(!lexemes.vals[2]);
+    eassert(!lexemes.strs[2].value);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -67,24 +67,24 @@ void lexer_lex_pipe_test()
 
     eassert(lexemes.count == 3);
 
-    eassert(memcmp(lexemes.vals[0], "ls", 3) == 0);
+    eassert(memcmp(lexemes.strs[0].value, "ls", 3) == 0);
     eassert(lexemes.ops[0] == OP_CONSTANT);
-    eassert(lexemes.lens[0] == 3);
+    eassert(lexemes.strs[0].length == 3);
 
-    eassert(memcmp(lexemes.vals[1], "|", 2) == 0);
+    eassert(memcmp(lexemes.strs[1].value, "|", 2) == 0);
     eassert(lexemes.ops[1] == OP_PIPE);
-    eassert(lexemes.lens[1] == 2);
+    eassert(lexemes.strs[1].length == 2);
 
-    eassert(memcmp(lexemes.vals[2], "sort", 5) == 0);
+    eassert(memcmp(lexemes.strs[2].value, "sort", 5) == 0);
     eassert(lexemes.ops[2] == OP_CONSTANT);
-    eassert(lexemes.lens[2] == 5);
+    eassert(lexemes.strs[2].length == 5);
 
-    eassert(!lexemes.vals[3]);
+    eassert(!lexemes.strs[3].value);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-void lexer_lex_multiple_pipe_test()
+void lexer_lex_multiple_pipes_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
@@ -96,27 +96,80 @@ void lexer_lex_multiple_pipe_test()
 
     eassert(lexemes.count == 5);
 
-    eassert(!memcmp(lexemes.vals[0], "ls", 3));
+    eassert(!memcmp(lexemes.strs[0].value, "ls", 3));
     eassert(lexemes.ops[0] == OP_CONSTANT);
-    eassert(lexemes.lens[0] == 3);
+    eassert(lexemes.strs[0].length == 3);
 
-    eassert(!memcmp(lexemes.vals[1], "|", 2));
+    eassert(!memcmp(lexemes.strs[1].value, "|", 2));
     eassert(lexemes.ops[1] == OP_PIPE);
-    eassert(lexemes.lens[1] == 2);
+    eassert(lexemes.strs[1].length == 2);
 
-    eassert(!memcmp(lexemes.vals[2], "sort", 5));
+    eassert(!memcmp(lexemes.strs[2].value, "sort", 5));
     eassert(lexemes.ops[2] == OP_CONSTANT);
-    eassert(lexemes.lens[2] == 5);
+    eassert(lexemes.strs[2].length == 5);
 
-    eassert(!memcmp(lexemes.vals[3], "|", 2));
+    eassert(!memcmp(lexemes.strs[3].value, "|", 2));
     eassert(lexemes.ops[3] == OP_PIPE);
-    eassert(lexemes.lens[3] == 2);
+    eassert(lexemes.strs[3].length == 2);
 
-    eassert(!memcmp(lexemes.vals[4], "table", 6));
+    eassert(!memcmp(lexemes.strs[4].value, "table", 6));
     eassert(lexemes.ops[4] == OP_CONSTANT);
-    eassert(lexemes.lens[4] == 6);
+    eassert(lexemes.strs[4].length == 6);
 
-    eassert(!lexemes.vals[5]);
+    eassert(!lexemes.strs[5].value);
+
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
+void lexer_lex_multiple_pipes_multiple_args_test()
+{
+    SCRATCH_ARENA_TEST_SETUP;
+
+    char* line = "ls | sort | head -1 | wc -c";
+    size_t len = strlen(line) + 1;
+
+    Lexemes lexemes = {0};
+    lexer_lex(line, len, &lexemes, &scratch_arena);
+
+    eassert(lexemes.count == 9);
+
+    eassert(!memcmp(lexemes.strs[0].value, "ls", 2));
+    eassert(lexemes.ops[0] == OP_CONSTANT);
+    eassert(lexemes.strs[0].length == 3);
+
+    eassert(memcmp(lexemes.strs[1].value, "|", 2) == 0);
+    eassert(lexemes.ops[1] == OP_PIPE);
+    eassert(lexemes.strs[1].length == 2);
+
+    eassert(!memcmp(lexemes.strs[2].value, "sort", 4));
+    eassert(lexemes.ops[2] == OP_CONSTANT);
+    eassert(lexemes.strs[2].length == 5);
+
+    eassert(memcmp(lexemes.strs[3].value, "|", 2) == 0);
+    eassert(lexemes.ops[3] == OP_PIPE);
+    eassert(lexemes.strs[3].length == 2);
+
+    eassert(!memcmp(lexemes.strs[4].value, "head", 4));
+    eassert(lexemes.ops[4] == OP_CONSTANT);
+    eassert(lexemes.strs[4].length == 5);
+
+    eassert(!memcmp(lexemes.strs[5].value, "-1", 2));
+    eassert(lexemes.ops[5] == OP_CONSTANT);
+    eassert(lexemes.strs[5].length == 3);
+
+    eassert(memcmp(lexemes.strs[6].value, "|", 2) == 0);
+    eassert(lexemes.ops[6] == OP_PIPE);
+    eassert(lexemes.strs[6].length == 2);
+
+    eassert(!memcmp(lexemes.strs[7].value, "wc", 2));
+    eassert(lexemes.ops[7] == OP_CONSTANT);
+    eassert(lexemes.strs[7].length == 3);
+
+    eassert(!memcmp(lexemes.strs[8].value, "-c", 2));
+    eassert(lexemes.ops[8] == OP_CONSTANT);
+    eassert(lexemes.strs[8].length == 3);
+
+    eassert(!lexemes.strs[9].value);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -133,15 +186,15 @@ void lexer_lex_background_job_test()
 
     eassert(lexemes.count == 2);
 
-    eassert(!memcmp(lexemes.vals[0], "longrunningprogram", 19));
+    eassert(!memcmp(lexemes.strs[0].value, "longrunningprogram", 19));
     eassert(lexemes.ops[0] == OP_CONSTANT);
-    eassert(lexemes.lens[0] == 19);
+    eassert(lexemes.strs[0].length == 19);
 
-    eassert(!memcmp(lexemes.vals[1], "&", 2));
+    eassert(!memcmp(lexemes.strs[1].value, "&", 2));
     eassert(lexemes.ops[1] == OP_BACKGROUND_JOB);
-    eassert(lexemes.lens[1] == 2);
+    eassert(lexemes.strs[1].length == 2);
 
-    eassert(!lexemes.vals[2]);
+    eassert(!lexemes.strs[2].value);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -158,19 +211,19 @@ void lexer_lex_output_redirection_test()
 
     eassert(lexemes.count == 3);
 
-    eassert(!memcmp(lexemes.vals[0], "ls", 3));
+    eassert(!memcmp(lexemes.strs[0].value, "ls", 3));
     eassert(lexemes.ops[0] == OP_CONSTANT);
-    eassert(lexemes.lens[0] == 3);
+    eassert(lexemes.strs[0].length == 3);
 
-    eassert(!memcmp(lexemes.vals[1], ">", 2));
+    eassert(!memcmp(lexemes.strs[1].value, ">", 2));
     eassert(lexemes.ops[1] == OP_STDOUT_REDIRECTION);
-    eassert(lexemes.lens[1] == 2);
+    eassert(lexemes.strs[1].length == 2);
 
-    eassert(!memcmp(lexemes.vals[2], "text.txt", 9));
+    eassert(!memcmp(lexemes.strs[2].value, "text.txt", 9));
     eassert(lexemes.ops[2] == OP_CONSTANT);
-    eassert(lexemes.lens[2] == 9);
+    eassert(lexemes.strs[2].length == 9);
 
-    eassert(!lexemes.vals[3]);
+    eassert(!lexemes.strs[3].value);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -187,19 +240,19 @@ void lexer_lex_output_redirection_append_test()
 
     eassert(lexemes.count == 3);
 
-    eassert(!memcmp(lexemes.vals[0], "ls", 3));
+    eassert(!memcmp(lexemes.strs[0].value, "ls", 3));
     eassert(lexemes.ops[0] == OP_CONSTANT);
-    eassert(lexemes.lens[0] == 3);
+    eassert(lexemes.strs[0].length == 3);
 
-    eassert(!memcmp(lexemes.vals[1], ">>", 3));
+    eassert(!memcmp(lexemes.strs[1].value, ">>", 3));
     eassert(lexemes.ops[1] == OP_STDOUT_REDIRECTION_APPEND);
-    eassert(lexemes.lens[1] == 3);
+    eassert(lexemes.strs[1].length == 3);
 
-    eassert(!memcmp(lexemes.vals[2], "text.txt", 9));
+    eassert(!memcmp(lexemes.strs[2].value, "text.txt", 9));
     eassert(lexemes.ops[2] == OP_CONSTANT);
-    eassert(lexemes.lens[2] == 9);
+    eassert(lexemes.strs[2].length == 9);
 
-    eassert(!lexemes.vals[3]);
+    eassert(!lexemes.strs[3].value);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -216,17 +269,17 @@ void lexer_lex_input_redirection_test()
 
     eassert(lexemes.count == 3);
 
-    eassert(!memcmp(lexemes.vals[0], "t.txt", 6));
+    eassert(!memcmp(lexemes.strs[0].value, "t.txt", 6));
     eassert(lexemes.ops[0] == OP_CONSTANT);
-    eassert(lexemes.lens[0] == 6);
+    eassert(lexemes.strs[0].length == 6);
 
-    eassert(!memcmp(lexemes.vals[1], "<", 2));
+    eassert(!memcmp(lexemes.strs[1].value, "<", 2));
     eassert(lexemes.ops[1] == OP_STDIN_REDIRECTION);
-    eassert(lexemes.lens[1] == 2);
+    eassert(lexemes.strs[1].length == 2);
 
-    eassert(!memcmp(lexemes.vals[2], "sort", 5));
+    eassert(!memcmp(lexemes.strs[2].value, "sort", 5));
     eassert(lexemes.ops[2] == OP_CONSTANT);
-    eassert(lexemes.lens[2] == 5);
+    eassert(lexemes.strs[2].length == 5);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -243,19 +296,19 @@ void lexer_lex_stdout_and_stderr_redirection_test()
 
     eassert(lexemes.count == 3);
 
-    eassert(!memcmp(lexemes.vals[0], "ls", 3));
+    eassert(!memcmp(lexemes.strs[0].value, "ls", 3));
     eassert(lexemes.ops[0] == OP_CONSTANT);
-    eassert(lexemes.lens[0] == 3);
+    eassert(lexemes.strs[0].length == 3);
 
-    eassert(!memcmp(lexemes.vals[1], "&>", 3));
+    eassert(!memcmp(lexemes.strs[1].value, "&>", 3));
     eassert(lexemes.ops[1] == OP_STDOUT_AND_STDERR_REDIRECTION);
-    eassert(lexemes.lens[1] == 3);
+    eassert(lexemes.strs[1].length == 3);
 
-    eassert(!memcmp(lexemes.vals[2], "text.txt", 9));
+    eassert(!memcmp(lexemes.strs[2].value, "text.txt", 9));
     eassert(lexemes.ops[2] == OP_CONSTANT);
-    eassert(lexemes.lens[2] == 9);
+    eassert(lexemes.strs[2].length == 9);
 
-    eassert(!lexemes.vals[3]);
+    eassert(!lexemes.strs[3].value);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -272,19 +325,19 @@ void lexer_lex_stdout_and_stderr_redirection_append_test()
 
     eassert(lexemes.count == 3);
 
-    eassert(!memcmp(lexemes.vals[0], "ls", 3));
+    eassert(!memcmp(lexemes.strs[0].value, "ls", 3));
     eassert(lexemes.ops[0] == OP_CONSTANT);
-    eassert(lexemes.lens[0] == 3);
+    eassert(lexemes.strs[0].length == 3);
 
-    eassert(!memcmp(lexemes.vals[1], "&>>", 4));
+    eassert(!memcmp(lexemes.strs[1].value, "&>>", 4));
     eassert(lexemes.ops[1] == OP_STDOUT_AND_STDERR_REDIRECTION_APPEND);
-    eassert(lexemes.lens[1] == 4);
+    eassert(lexemes.strs[1].length == 4);
 
-    eassert(!memcmp(lexemes.vals[2], "text.txt", 9));
+    eassert(!memcmp(lexemes.strs[2].value, "text.txt", 9));
     eassert(lexemes.ops[2] == OP_CONSTANT);
-    eassert(lexemes.lens[2] == 9);
+    eassert(lexemes.strs[2].length == 9);
 
-    eassert(!lexemes.vals[3]);
+    eassert(!lexemes.strs[3].value);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -303,11 +356,11 @@ void lexer_lex_assignment_test()
 
     // quotes stripped by the lexer
     size_t stripped_len = sizeof("STR=Hello");
-    eassert(!memcmp(lexemes.vals[0], "STR=Hello", stripped_len));
+    eassert(!memcmp(lexemes.strs[0].value, "STR=Hello", stripped_len));
     eassert(lexemes.ops[0] == OP_ASSIGNMENT);
-    eassert(lexemes.lens[0] == stripped_len);
+    eassert(lexemes.strs[0].length == stripped_len);
 
-    eassert(!lexemes.vals[1]);
+    eassert(!lexemes.strs[1].value);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -325,11 +378,11 @@ void lexer_lex_assignment_spaces_test()
     eassert(lexemes.count == 1);
 
     // quotes stripped by the lexer
-    eassert(!memcmp(lexemes.vals[0], "STR=ls -a", len - 2));
+    eassert(!memcmp(lexemes.strs[0].value, "STR=ls -a", len - 2));
     eassert(lexemes.ops[0] == OP_ASSIGNMENT);
-    eassert(lexemes.lens[0] == len - 2);
+    eassert(lexemes.strs[0].length == len - 2);
 
-    eassert(!lexemes.vals[1]);
+    eassert(!lexemes.strs[1].value);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -347,11 +400,11 @@ void lexer_lex_assignment_spaces_multiple_test()
     eassert(lexemes.count == 1);
 
     // quotes stripped by the lexer
-    eassert(!memcmp(lexemes.vals[0], "STR=ls | sort", len - 2));
+    eassert(!memcmp(lexemes.strs[0].value, "STR=ls | sort", len - 2));
     eassert(lexemes.ops[0] == OP_ASSIGNMENT);
-    eassert(lexemes.lens[0] == len - 2);
+    eassert(lexemes.strs[0].length == len - 2);
 
-    eassert(!lexemes.vals[1])
+    eassert(!lexemes.strs[1].value)
 
         SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -368,15 +421,15 @@ void lexer_lex_variable_test()
 
     eassert(lexemes.count == 2);
 
-    eassert(!memcmp(lexemes.vals[0], "echo", 5));
+    eassert(!memcmp(lexemes.strs[0].value, "echo", 5));
     eassert(lexemes.ops[0] == OP_CONSTANT);
-    eassert(lexemes.lens[0] = 5);
+    eassert(lexemes.strs[0].length = 5);
 
-    eassert(!memcmp(lexemes.vals[1], "$STR", 5));
+    eassert(!memcmp(lexemes.strs[1].value, "$STR", 5));
     eassert(lexemes.ops[1] == OP_VARIABLE);
-    eassert(lexemes.lens[1] = 5);
+    eassert(lexemes.strs[1].length = 5);
 
-    eassert(!lexemes.vals[2]);
+    eassert(!lexemes.strs[2].value);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -393,23 +446,23 @@ void lexer_lex_variable_and_test()
 
     eassert(lexemes.count == 4);
 
-    eassert(!memcmp(lexemes.vals[0], "STR=hello", sizeof("STR=hello")));
+    eassert(!memcmp(lexemes.strs[0].value, "STR=hello", sizeof("STR=hello")));
     eassert(lexemes.ops[0] == OP_ASSIGNMENT);
-    eassert(lexemes.lens[0] == sizeof("STR=hello"));
+    eassert(lexemes.strs[0].length == sizeof("STR=hello"));
 
-    eassert(!memcmp(lexemes.vals[1], "&&", 3));
+    eassert(!memcmp(lexemes.strs[1].value, "&&", 3));
     eassert(lexemes.ops[1] == OP_AND);
-    eassert(lexemes.lens[1] == 3);
+    eassert(lexemes.strs[1].length == 3);
 
-    eassert(!memcmp(lexemes.vals[2], "echo", 5));
+    eassert(!memcmp(lexemes.strs[2].value, "echo", 5));
     eassert(lexemes.ops[2] == OP_CONSTANT);
-    eassert(lexemes.lens[2] = 5);
+    eassert(lexemes.strs[2].length = 5);
 
-    eassert(!memcmp(lexemes.vals[3], "$STR", 5));
+    eassert(!memcmp(lexemes.strs[3].value, "$STR", 5));
     eassert(lexemes.ops[3] == OP_VARIABLE);
-    eassert(lexemes.lens[3] = 5);
+    eassert(lexemes.strs[3].length = 5);
 
-    eassert(!lexemes.vals[4]);
+    eassert(!lexemes.strs[4].value);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -426,19 +479,19 @@ void lexer_lex_variable_command_test()
 
     eassert(lexemes.count == 3);
 
-    eassert(!memcmp(lexemes.vals[0], "COMMAND=ls", sizeof("COMMAND=ls")));
+    eassert(!memcmp(lexemes.strs[0].value, "COMMAND=ls", sizeof("COMMAND=ls")));
     eassert(lexemes.ops[0] == OP_ASSIGNMENT);
-    eassert(lexemes.lens[0] == sizeof("COMMAND=ls"));
+    eassert(lexemes.strs[0].length == sizeof("COMMAND=ls"));
 
-    eassert(!memcmp(lexemes.vals[1], "&&", 3));
+    eassert(!memcmp(lexemes.strs[1].value, "&&", 3));
     eassert(lexemes.ops[1] == OP_AND);
-    eassert(lexemes.lens[1] == 3);
+    eassert(lexemes.strs[1].length == 3);
 
-    eassert(!memcmp(lexemes.vals[2], "$COMMAND", 8));
+    eassert(!memcmp(lexemes.strs[2].value, "$COMMAND", 8));
     eassert(lexemes.ops[2] == OP_VARIABLE);
-    eassert(lexemes.lens[2] = 8);
+    eassert(lexemes.strs[2].length = 8);
 
-    eassert(!lexemes.vals[3]);
+    eassert(!lexemes.strs[3].value);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -455,15 +508,15 @@ void lexer_lex_double_quotes_test()
 
     eassert(lexemes.count == 2);
 
-    eassert(!memcmp(lexemes.vals[0], "echo", 5));
+    eassert(!memcmp(lexemes.strs[0].value, "echo", 5));
     eassert(lexemes.ops[0] == OP_CONSTANT);
-    eassert(lexemes.lens[0] == 5);
+    eassert(lexemes.strs[0].length == 5);
 
-    eassert(!memcmp(lexemes.vals[1], "hello", 6));
+    eassert(!memcmp(lexemes.strs[1].value, "hello", 6));
     eassert(lexemes.ops[1] == OP_CONSTANT);
-    eassert(lexemes.lens[1] == 6);
+    eassert(lexemes.strs[1].length == 6);
 
-    eassert(!lexemes.vals[2]);
+    eassert(!lexemes.strs[2].value);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -480,15 +533,15 @@ void lexer_lex_single_quotes_test()
 
     eassert(lexemes.count == 2);
 
-    eassert(!memcmp(lexemes.vals[0], "echo", 5));
+    eassert(!memcmp(lexemes.strs[0].value, "echo", 5));
     eassert(lexemes.ops[0] == OP_CONSTANT);
-    eassert(lexemes.lens[0] == 5);
+    eassert(lexemes.strs[0].length == 5);
 
-    eassert(!memcmp(lexemes.vals[1], "hello", 6));
+    eassert(!memcmp(lexemes.strs[1].value, "hello", 6));
     eassert(lexemes.ops[1] == OP_CONSTANT);
-    eassert(lexemes.lens[1] == 6);
+    eassert(lexemes.strs[1].length == 6);
 
-    eassert(!lexemes.vals[2]);
+    eassert(!lexemes.strs[2].value);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -505,15 +558,15 @@ void lexer_lex_backtick_quotes_test()
 
     eassert(lexemes.count == 2);
 
-    eassert(!memcmp(lexemes.vals[0], "echo", 5));
+    eassert(!memcmp(lexemes.strs[0].value, "echo", 5));
     eassert(lexemes.ops[0] == OP_CONSTANT);
-    eassert(lexemes.lens[0] == 5);
+    eassert(lexemes.strs[0].length == 5);
 
-    eassert(!memcmp(lexemes.vals[1], "hello", 6));
+    eassert(!memcmp(lexemes.strs[1].value, "hello", 6));
     eassert(lexemes.ops[1] == OP_CONSTANT);
-    eassert(lexemes.lens[1] == 6);
+    eassert(lexemes.strs[1].length == 6);
 
-    eassert(!lexemes.vals[2]);
+    eassert(!lexemes.strs[2].value);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -530,23 +583,23 @@ void lexer_lex_git_commit_test()
 
     eassert(lexemes.count == 4);
 
-    eassert(!memcmp(lexemes.vals[0], "git", 4));
+    eassert(!memcmp(lexemes.strs[0].value, "git", 4));
     eassert(lexemes.ops[0] == OP_CONSTANT);
-    eassert(lexemes.lens[0] == 4);
+    eassert(lexemes.strs[0].length == 4);
 
-    eassert(!memcmp(lexemes.vals[1], "commit", 7));
+    eassert(!memcmp(lexemes.strs[1].value, "commit", 7));
     eassert(lexemes.ops[1] == OP_CONSTANT);
-    eassert(lexemes.lens[1] == 7);
+    eassert(lexemes.strs[1].length == 7);
 
-    eassert(!memcmp(lexemes.vals[2], "-m", 3));
+    eassert(!memcmp(lexemes.strs[2].value, "-m", 3));
     eassert(lexemes.ops[2] == OP_CONSTANT);
-    eassert(lexemes.lens[2] == 3);
+    eassert(lexemes.strs[2].length == 3);
 
-    eassert(!memcmp(lexemes.vals[3], "this is a commit message", 25));
+    eassert(!memcmp(lexemes.strs[3].value, "this is a commit message", 25));
     eassert(lexemes.ops[3] == OP_CONSTANT);
-    eassert(lexemes.lens[3] == 25);
+    eassert(lexemes.strs[3].length == 25);
 
-    eassert(!lexemes.vals[4]);
+    eassert(!lexemes.strs[4].value);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -563,15 +616,15 @@ void lexer_lex_home_test()
 
     eassert(lexemes.count == 2);
 
-    eassert(!memcmp(lexemes.vals[0], "ls", 3));
+    eassert(!memcmp(lexemes.strs[0].value, "ls", 3));
     eassert(lexemes.ops[0] == OP_CONSTANT);
-    eassert(lexemes.lens[0] == 3);
+    eassert(lexemes.strs[0].length == 3);
 
-    eassert(!memcmp(lexemes.vals[1], "~", 2));
+    eassert(!memcmp(lexemes.strs[1].value, "~", 2));
     eassert(lexemes.ops[1] == OP_HOME_EXPANSION);
-    eassert(lexemes.lens[1] == 2);
+    eassert(lexemes.strs[1].length == 2);
 
-    eassert(!lexemes.vals[2]);
+    eassert(!lexemes.strs[2].value);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -588,15 +641,15 @@ void lexer_lex_home_at_start_test()
 
     eassert(lexemes.count == 2);
 
-    eassert(!memcmp(lexemes.vals[0], "ls", 3));
+    eassert(!memcmp(lexemes.strs[0].value, "ls", 3));
     eassert(lexemes.ops[0] == OP_CONSTANT);
-    eassert(lexemes.lens[0] == 3);
+    eassert(lexemes.strs[0].length == 3);
 
-    eassert(!memcmp(lexemes.vals[1], "~/snap", sizeof("~/snap") - 1));
+    eassert(!memcmp(lexemes.strs[1].value, "~/snap", sizeof("~/snap") - 1));
     eassert(lexemes.ops[1] == OP_HOME_EXPANSION);
-    eassert(lexemes.lens[1] == sizeof("~/snap"));
+    eassert(lexemes.strs[1].length == sizeof("~/snap"));
 
-    eassert(!lexemes.vals[2]);
+    eassert(!lexemes.strs[2].value);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -613,42 +666,42 @@ void lexer_lex_math_operators_test()
 
     eassert(lexemes.ops[0] == OP_MATH_EXPRESSION_START);
 
-    eassert(!memcmp(lexemes.vals[1], "1", 1));
+    eassert(!memcmp(lexemes.strs[1].value, "1", 1));
     eassert(lexemes.ops[1] == OP_CONSTANT);
 
     eassert(lexemes.ops[2] == OP_ADD);
 
-    eassert(!memcmp(lexemes.vals[3], "1", 1));
+    eassert(!memcmp(lexemes.strs[3].value, "1", 1));
     eassert(lexemes.ops[3] == OP_CONSTANT);
 
     eassert(lexemes.ops[4] == OP_SUBTRACT);
 
-    eassert(!memcmp(lexemes.vals[5], "1", 1));
+    eassert(!memcmp(lexemes.strs[5].value, "1", 1));
     eassert(lexemes.ops[5] == OP_CONSTANT);
 
     eassert(lexemes.ops[6] == OP_MULTIPLY);
 
-    eassert(!memcmp(lexemes.vals[7], "1", 1));
+    eassert(!memcmp(lexemes.strs[7].value, "1", 1));
     eassert(lexemes.ops[7] == OP_CONSTANT);
 
     eassert(lexemes.ops[8] == OP_DIVIDE);
 
-    eassert(!memcmp(lexemes.vals[9], "1", 1));
+    eassert(!memcmp(lexemes.strs[9].value, "1", 1));
     eassert(lexemes.ops[9] == OP_CONSTANT);
 
     eassert(lexemes.ops[10] == OP_MODULO);
 
-    eassert(!memcmp(lexemes.vals[11], "1", 1));
+    eassert(!memcmp(lexemes.strs[11].value, "1", 1));
     eassert(lexemes.ops[11] == OP_CONSTANT);
 
     eassert(lexemes.ops[12] == OP_EXPONENTIATION);
 
-    eassert(!memcmp(lexemes.vals[13], "1", 1));
+    eassert(!memcmp(lexemes.strs[13].value, "1", 1));
     eassert(lexemes.ops[13] == OP_CONSTANT);
 
     eassert(lexemes.ops[14] == OP_MATH_EXPRESSION_END);
 
-    eassert(!lexemes.vals[15]);
+    eassert(!lexemes.strs[15].value);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -665,15 +718,15 @@ void lexer_lex_glob_star_test()
 
     eassert(lexemes.count == 2);
 
-    eassert(!memcmp(lexemes.vals[0], "ls", 3));
+    eassert(!memcmp(lexemes.strs[0].value, "ls", 3));
     eassert(lexemes.ops[0] == OP_CONSTANT);
-    eassert(lexemes.lens[0] == 3);
+    eassert(lexemes.strs[0].length == 3);
 
-    eassert(!memcmp(lexemes.vals[1], "*.md", sizeof("*.md") - 1));
+    eassert(!memcmp(lexemes.strs[1].value, "*.md", sizeof("*.md") - 1));
     eassert(lexemes.ops[1] == OP_GLOB_EXPANSION);
-    eassert(lexemes.lens[1] == sizeof("*.md"));
+    eassert(lexemes.strs[1].length == sizeof("*.md"));
 
-    eassert(!lexemes.vals[2]);
+    eassert(!lexemes.strs[2].value);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -690,15 +743,15 @@ void lexer_lex_glob_question_test()
 
     eassert(lexemes.count == 2);
 
-    eassert(!memcmp(lexemes.vals[0], "ls", 3));
+    eassert(!memcmp(lexemes.strs[0].value, "ls", 3));
     eassert(lexemes.ops[0] == OP_CONSTANT);
-    eassert(lexemes.lens[0] == 3);
+    eassert(lexemes.strs[0].length == 3);
 
-    eassert(!memcmp(lexemes.vals[1], "?.md", sizeof("?.md") - 1));
+    eassert(!memcmp(lexemes.strs[1].value, "?.md", sizeof("?.md") - 1));
     eassert(lexemes.ops[1] == OP_GLOB_EXPANSION);
-    eassert(lexemes.lens[1] == sizeof("?.md"));
+    eassert(lexemes.strs[1].length == sizeof("?.md"));
 
-    eassert(!lexemes.vals[2]);
+    eassert(!lexemes.strs[2].value);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -716,9 +769,9 @@ void lexer_lex_glob_star_shouldnt_crash()
 
     eassert(lexemes.count == 18);
     for (size_t i = 0; i < lexemes.count; ++i) {
-        eassert(lexemes.vals[i][0] == '*');
+        eassert(lexemes.strs[i].value[0] == '*');
         eassert(lexemes.ops[0] == OP_GLOB_EXPANSION);
-        eassert(lexemes.lens[0] == 2);
+        eassert(lexemes.strs[0].length == 2);
     }
 
     SCRATCH_ARENA_TEST_TEARDOWN;
@@ -770,27 +823,27 @@ void lexer_lex_bool_test()
 
     eassert(lexemes.count == 5);
 
-    eassert(!memcmp(lexemes.vals[0], "false", 6));
+    eassert(!memcmp(lexemes.strs[0].value, "false", 6));
     eassert(lexemes.ops[0] == OP_FALSE);
-    eassert(lexemes.lens[0] == 6);
+    eassert(lexemes.strs[0].length == 6);
 
-    eassert(!memcmp(lexemes.vals[1], "&&", 3));
+    eassert(!memcmp(lexemes.strs[1].value, "&&", 3));
     eassert(lexemes.ops[1] == OP_AND);
-    eassert(lexemes.lens[1] == 3);
+    eassert(lexemes.strs[1].length == 3);
 
-    eassert(!memcmp(lexemes.vals[2], "true", 5));
+    eassert(!memcmp(lexemes.strs[2].value, "true", 5));
     eassert(lexemes.ops[2] == OP_TRUE);
-    eassert(lexemes.lens[2] == 5);
+    eassert(lexemes.strs[2].length == 5);
 
-    eassert(!memcmp(lexemes.vals[3], "||", 3));
+    eassert(!memcmp(lexemes.strs[3].value, "||", 3));
     eassert(lexemes.ops[3] == OP_OR);
-    eassert(lexemes.lens[3] == 3);
+    eassert(lexemes.strs[3].length == 3);
 
-    eassert(!memcmp(lexemes.vals[4], "false", 6));
+    eassert(!memcmp(lexemes.strs[4].value, "false", 6));
     eassert(lexemes.ops[4] == OP_FALSE);
-    eassert(lexemes.lens[4] == 6);
+    eassert(lexemes.strs[4].length == 6);
 
-    eassert(!lexemes.vals[5]);
+    eassert(!lexemes.strs[5].value);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -864,16 +917,16 @@ void lexer_lex_comment_test()
 
     eassert(lexemes.count == 2);
 
-    eassert(!memcmp(lexemes.vals[0], "echo", 5));
+    eassert(!memcmp(lexemes.strs[0].value, "echo", 5));
     eassert(lexemes.ops[0] == OP_CONSTANT);
-    eassert(lexemes.lens[0] == 5);
+    eassert(lexemes.strs[0].length == 5);
 
-    eassert(!memcmp(lexemes.vals[1], "hello", 6));
+    eassert(!memcmp(lexemes.strs[1].value, "hello", 6));
     eassert(lexemes.ops[1] == OP_CONSTANT);
-    eassert(lexemes.lens[1] == 6);
+    eassert(lexemes.strs[1].length == 6);
 
     // comment is stripped by the lexer
-    eassert(!lexemes.vals[2]);
+    eassert(!lexemes.strs[2].value);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -888,7 +941,8 @@ void lexer_tests()
     etest_run(lexer_lex_ls_test);
     etest_run(lexer_lex_ls_dash_l_test);
     etest_run(lexer_lex_pipe_test);
-    etest_run(lexer_lex_multiple_pipe_test);
+    etest_run(lexer_lex_multiple_pipes_test);
+    etest_run(lexer_lex_multiple_pipes_multiple_args_test);
     etest_run(lexer_lex_background_job_test);
     etest_run(lexer_lex_output_redirection_test);
     etest_run(lexer_lex_double_quotes_test);

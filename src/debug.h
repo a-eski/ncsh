@@ -21,22 +21,22 @@
 #include "eskilib/str.h"
 #include "interpreter/lexer.h"
 
-#define debug(buf) debug_internal(__FILE__, __LINE__, __func__, buf)
-#define debugf(fmt, ...) debugf_internal(__FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__)
-#define debug_line(buf, len, max_len) debug_line_internal(__FILE__, __LINE__, __func__, buf, len, max_len)
-#define debug_lexer_input(buf, len) debug_lexer_input_internal(__FILE__, __LINE__, __func__, buf, len)
-#define debug_lexemes(lexemes) debug_lexemes_internal(__FILE__, __LINE__, __func__, lexemes)
-#define debug_argsv(argsc, argsv) debug_argsv_internal(__FILE__, __LINE__, __func__, argsc, argsv)
-#define debug_string(str, name) debug_string_internal(__FILE__, __LINE__, __func__, str, name)
+#define debug(buf) debug__(__FILE__, __LINE__, __func__, buf)
+#define debugf(fmt, ...) debugf__(__FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__)
+#define debug_line(buf, len, max_len) debug_line__(__FILE__, __LINE__, __func__, buf, len, max_len)
+#define debug_lexer_input(buf, len) debug_lexer_input__(__FILE__, __LINE__, __func__, buf, len)
+#define debug_lexemes(lexemes) debug_lexemes__(__FILE__, __LINE__, __func__, lexemes)
+#define debug_argsv(argsc, argsv) debug_argsv__(__FILE__, __LINE__, __func__, argsc, argsv)
+#define debug_string(str, name) debug_string__(__FILE__, __LINE__, __func__, str, name)
 
-static inline void debug_internal(const char* file, const int line, const char* func, char* buffer)
+static inline void debug__(const char* file, const int line, const char* func, char* buffer)
 {
     fprintf(stderr, "%s %s:%d ", file, func, line);
     fprintf(stderr, "%s\n", buffer);
     fflush(stderr);
 }
 
-static inline void debugf_internal(const char* file, const int line, const char* func, char* fmt, ...)
+static inline void debugf__(const char* file, const int line, const char* func, char* fmt, ...)
 {
     va_list args;
     va_start(args, format);
@@ -46,7 +46,7 @@ static inline void debugf_internal(const char* file, const int line, const char*
     fflush(stderr);
 }
 
-static inline void debug_line_internal(const char* file, const int line, const char* func, char* buffer,
+static inline void debug_line__(const char* file, const int line, const char* func, char* buffer,
                                        size_t buf_position, size_t max_buf_position)
 {
     fprintf(stderr, "%s %s:%d ", file, func, line);
@@ -58,7 +58,7 @@ static inline void debug_line_internal(const char* file, const int line, const c
     fflush(stderr);
 }
 
-static inline void debug_lexer_input_internal(const char* file, const int line, const char* func, char* buffer,
+static inline void debug_lexer_input__(const char* file, const int line, const char* func, char* buffer,
                                               size_t buf_position)
 {
     fprintf(stderr, "%s %s:%d ", file, func, line);
@@ -68,7 +68,7 @@ static inline void debug_lexer_input_internal(const char* file, const int line, 
     fflush(stderr);
 }
 
-static inline void debug_lexemes_internal(const char* file, const int line, const char* func, Lexemes* lexemes)
+static inline void debug_lexemes__(const char* file, const int line, const char* func, Lexemes* lexemes)
 {
     fprintf(stderr, "%s %s:%d ", file, func, line);
     fprintf(stderr, "lexemes->count: %lu\n", lexemes->count);
@@ -84,7 +84,7 @@ static inline void debug_lexemes_internal(const char* file, const int line, cons
     fflush(stderr);
 }
 
-static inline void debug_argsv_internal(const char* file, const int line, const char* func, int argc, char** argv)
+static inline void debug_argsv__(const char* file, const int line, const char* func, int argc, char** argv)
 {
     for (int i = 0; i < argc; ++i) {
         fprintf(stderr, "%s %s:%d ", file, func, line);
@@ -93,7 +93,7 @@ static inline void debug_argsv_internal(const char* file, const int line, const 
     fflush(stderr);
 }
 
-static inline void debug_string_internal(const char* file, const int line, const char* func, Str string, char* name)
+static inline void debug_string__(const char* file, const int line, const char* func, Str string, char* name)
 {
     fprintf(stderr, "%s %s:%d ", file, func, line);
     fprintf(stderr, "%s value: %s\n", name, string.value);

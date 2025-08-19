@@ -42,10 +42,10 @@ void vm_next_simple_test()
     eassert(stmts.pos == 1);
     eassert(vm.state == VS_NORMAL);
     eassert(vm.op_current == OP_NONE);
-    eassert(!memcmp(vm.buffer[0], "ls", 2));
-    eassert(vm.buffer_lens[0] == 3);
+    eassert(!memcmp(vm.strs[0].value, "ls", 2));
+    eassert(vm.strs[0].length == 3);
 
-    eassert(!vm.buffer[1]);
+    eassert(!vm.strs[1].value);
     eassert(!cmds);
     eassert(vm.end);
 
@@ -78,10 +78,10 @@ void vm_next_bool_test()
     eassert(stmts.pos == 1);
     eassert(vm.state == VS_NORMAL);
     eassert(vm.op_current == OP_NONE);
-    eassert(!memcmp(vm.buffer[0], "ls", 2));
-    eassert(vm.buffer_lens[0] == 3);
+    eassert(!memcmp(vm.strs[0].value, "ls", 2));
+    eassert(vm.strs[0].length == 3);
 
-    eassert(!vm.buffer[1]);
+    eassert(!vm.strs[1].value);
     eassert(!cmds);
     eassert(vm.end);
 
@@ -114,10 +114,10 @@ void vm_next_if_test()
     eassert(stmts.pos == 1);
     eassert(vm.state == VS_IN_CONDITIONS);
     eassert(vm.op_current == OP_EQUALS);
-    eassert(!memcmp(vm.buffer[0], "1", 1));
-    eassert(!memcmp(vm.buffer[1], "-eq", 1));
-    eassert(!memcmp(vm.buffer[2], "1", 1));
-    eassert(!vm.buffer[3]);
+    eassert(!memcmp(vm.strs[0].value, "1", 1));
+    eassert(!memcmp(vm.strs[1].value, "-eq", 1));
+    eassert(!memcmp(vm.strs[2].value, "1", 1));
+    eassert(!vm.strs[3].value);
 
     vm.state = EXIT_SUCCESS;
 
@@ -126,9 +126,9 @@ void vm_next_if_test()
 
     eassert(stmts.pos == 2);
     eassert(vm.state == VS_IN_IF_STATEMENTS);
-    eassert(!memcmp(vm.buffer[0], "echo", 4));
-    eassert(!memcmp(vm.buffer[1], "hi", 2));
-    eassert(!vm.buffer[2]);
+    eassert(!memcmp(vm.strs[0].value, "echo", 4));
+    eassert(!memcmp(vm.strs[1].value, "hi", 2));
+    eassert(!vm.strs[2].value);
 
     eassert(vm.end);
     eassert(!cmds);
@@ -163,8 +163,8 @@ void vm_next_if_multiple_conditions_true_and_test()
     eassert(cmds);
     eassert(stmts.pos == 0);
     eassert(vm.state == VS_IN_CONDITIONS);
-    eassert(!memcmp(vm.buffer[0], "true", 4));
-    eassert(!vm.buffer[1]);
+    eassert(!memcmp(vm.strs[0].value, "true", 4));
+    eassert(!vm.strs[1].value);
 
     // assume first condition succeeds
     vm.state = EXIT_SUCCESS;
@@ -177,17 +177,17 @@ void vm_next_if_multiple_conditions_true_and_test()
     eassert(vm.state == VS_IN_CONDITIONS);
 
     eassert(vm.op_current == OP_AND);
-    eassert(!memcmp(vm.buffer[0], "true", 4));
+    eassert(!memcmp(vm.strs[0].value, "true", 4));
 
-    eassert(!vm.buffer[1]);
+    eassert(!vm.strs[1].value);
 
     // if statements
     cmds = vm_next(&stmts, cmds, &vm);
 
     eassert(stmts.pos == 2);
     eassert(vm.state == VS_IN_IF_STATEMENTS);
-    eassert(!memcmp(vm.buffer[0], "echo", 4));
-    eassert(!memcmp(vm.buffer[1], "hi", 2));
+    eassert(!memcmp(vm.strs[0].value, "echo", 4));
+    eassert(!memcmp(vm.strs[1].value, "hi", 2));
 
     eassert(vm.end);
     eassert(!cmds);
@@ -223,9 +223,9 @@ void vm_next_if_multiple_conditions_false_and_test()
     eassert(stmts.pos == 0);
 
     eassert(vm.state == VS_IN_CONDITIONS);
-    eassert(!memcmp(vm.buffer[0], "false", 4));
+    eassert(!memcmp(vm.strs[0].value, "false", 4));
 
-    eassert(!vm.buffer[1]);
+    eassert(!vm.strs[1].value);
 
     // VM will short ciruit the and and stop evaluation
 
@@ -259,8 +259,8 @@ void vm_next_if_multiple_conditions_true_or_test()
     eassert(cmds);
     eassert(stmts.pos == 0);
     eassert(vm.state == VS_IN_CONDITIONS);
-    eassert(!memcmp(vm.buffer[0], "true", 4));
-    eassert(!vm.buffer[1]);
+    eassert(!memcmp(vm.strs[0].value, "true", 4));
+    eassert(!vm.strs[1].value);
 
     // assume first condition succeeds
     vm.state = EXIT_SUCCESS;
@@ -273,17 +273,17 @@ void vm_next_if_multiple_conditions_true_or_test()
     eassert(vm.state == VS_IN_CONDITIONS);
 
     eassert(vm.op_current == OP_OR);
-    eassert(!memcmp(vm.buffer[0], "true", 4));
+    eassert(!memcmp(vm.strs[0].value, "true", 4));
 
-    eassert(!vm.buffer[1]);
+    eassert(!vm.strs[1].value);
 
     // if statements
     cmds = vm_next(&stmts, cmds, &vm);
 
     eassert(stmts.pos == 2);
     eassert(vm.state == VS_IN_IF_STATEMENTS);
-    eassert(!memcmp(vm.buffer[0], "echo", 4));
-    eassert(!memcmp(vm.buffer[1], "hi", 2));
+    eassert(!memcmp(vm.strs[0].value, "echo", 4));
+    eassert(!memcmp(vm.strs[1].value, "hi", 2));
 
     eassert(vm.end);
     eassert(!cmds);
@@ -318,12 +318,12 @@ void vm_next_if_else_true_test()
     eassert(stmts.pos == 1);
     eassert(vm.state == VS_IN_CONDITIONS);
     eassert(vm.op_current == OP_EQUALS);
-    eassert(!memcmp(vm.buffer[0], "1", 1));
-    eassert(vm.buffer_lens[0] == 2);
-    eassert(!memcmp(vm.buffer[1], "-eq", 1));
-    eassert(vm.buffer_lens[1] == 4);
-    eassert(!memcmp(vm.buffer[2], "1", 1));
-    eassert(vm.buffer_lens[2] == 2);
+    eassert(!memcmp(vm.strs[0].value, "1", 1));
+    eassert(vm.strs[0].length == 2);
+    eassert(!memcmp(vm.strs[1].value, "-eq", 1));
+    eassert(vm.strs[1].length == 4);
+    eassert(!memcmp(vm.strs[2].value, "1", 1));
+    eassert(vm.strs[2].length == 2);
 
     // simulate vm status (condition result)
     vm.status = EXIT_SUCCESS;
@@ -333,8 +333,8 @@ void vm_next_if_else_true_test()
 
     eassert(stmts.pos == 2);
     eassert(vm.state == VS_IN_IF_STATEMENTS);
-    eassert(!memcmp(vm.buffer[0], "echo", 4));
-    eassert(!memcmp(vm.buffer[1], "hi", 2));
+    eassert(!memcmp(vm.strs[0].value, "echo", 4));
+    eassert(!memcmp(vm.strs[1].value, "hi", 2));
 
     eassert(vm.end);
     eassert(!cmds);
@@ -368,10 +368,10 @@ void vm_next_if_else_false_test()
 
     eassert(vm.state == VS_IN_CONDITIONS);
     eassert(vm.op_current == OP_EQUALS);
-    eassert(!memcmp(vm.buffer[0], "1", 1));
-    eassert(!memcmp(vm.buffer[1], "-eq", 1));
-    eassert(!memcmp(vm.buffer[2], "2", 1));
-    eassert(!vm.buffer[3]);
+    eassert(!memcmp(vm.strs[0].value, "1", 1));
+    eassert(!memcmp(vm.strs[1].value, "-eq", 1));
+    eassert(!memcmp(vm.strs[2].value, "2", 1));
+    eassert(!vm.strs[3].value);
 
     // simulate VM status (condition result)
     vm.status = EXIT_FAILURE;
@@ -380,10 +380,10 @@ void vm_next_if_else_false_test()
     cmds = vm_next(&stmts, cmds, &vm);
 
     eassert(vm.state == VS_IN_ELSE_STATEMENTS);
-    eassert(!memcmp(vm.buffer[0], "echo", 4));
-    eassert(!memcmp(vm.buffer[1], "hello", 5));
+    eassert(!memcmp(vm.strs[0].value, "echo", 4));
+    eassert(!memcmp(vm.strs[1].value, "hello", 5));
 
-    eassert(!vm.buffer[2]);
+    eassert(!vm.strs[2].value);
     eassert(!cmds);
     eassert(vm.end);
 
@@ -417,12 +417,12 @@ void vm_next_if_elif_else_if_true_test()
     eassert(stmts.pos == 1);
     eassert(vm.state == VS_IN_CONDITIONS);
     eassert(vm.op_current == OP_EQUALS);
-    eassert(!memcmp(vm.buffer[0], "1", 1));
-    eassert(vm.buffer_lens[0] == 2);
-    eassert(!memcmp(vm.buffer[1], "-eq", 1));
-    eassert(vm.buffer_lens[1] == 4);
-    eassert(!memcmp(vm.buffer[2], "1", 1));
-    eassert(vm.buffer_lens[2] == 2);
+    eassert(!memcmp(vm.strs[0].value, "1", 1));
+    eassert(vm.strs[0].length == 2);
+    eassert(!memcmp(vm.strs[1].value, "-eq", 1));
+    eassert(vm.strs[1].length == 4);
+    eassert(!memcmp(vm.strs[2].value, "1", 1));
+    eassert(vm.strs[2].length == 2);
 
     // simulate vm status (condition result)
     vm.status = EXIT_SUCCESS;
@@ -432,8 +432,8 @@ void vm_next_if_elif_else_if_true_test()
 
     eassert(stmts.pos == 2);
     eassert(vm.state == VS_IN_IF_STATEMENTS);
-    eassert(!memcmp(vm.buffer[0], "echo", 4));
-    eassert(!memcmp(vm.buffer[1], "hi", 2));
+    eassert(!memcmp(vm.strs[0].value, "echo", 4));
+    eassert(!memcmp(vm.strs[1].value, "hi", 2));
 
     eassert(vm.end);
     eassert(!cmds);
@@ -466,12 +466,12 @@ void vm_next_if_elif_else_elif_true_test()
     eassert(stmts.pos == 1);
     eassert(vm.state == VS_IN_CONDITIONS);
     eassert(vm.op_current == OP_EQUALS);
-    eassert(!memcmp(vm.buffer[0], "2", 1));
-    eassert(vm.buffer_lens[0] == 2);
-    eassert(!memcmp(vm.buffer[1], "-eq", 1));
-    eassert(vm.buffer_lens[1] == 4);
-    eassert(!memcmp(vm.buffer[2], "1", 1));
-    eassert(vm.buffer_lens[2] == 2);
+    eassert(!memcmp(vm.strs[0].value, "2", 1));
+    eassert(vm.strs[0].length == 2);
+    eassert(!memcmp(vm.strs[1].value, "-eq", 1));
+    eassert(vm.strs[1].length == 4);
+    eassert(!memcmp(vm.strs[2].value, "1", 1));
+    eassert(vm.strs[2].length == 2);
 
     // simulate vm status (condition result)
     vm.status = EXIT_FAILURE;
@@ -482,12 +482,12 @@ void vm_next_if_elif_else_elif_true_test()
     eassert(stmts.pos == 3);
     eassert(vm.state == VS_IN_CONDITIONS);
     eassert(vm.op_current == OP_EQUALS);
-    eassert(!memcmp(vm.buffer[0], "1", 1));
-    eassert(vm.buffer_lens[0] == 2);
-    eassert(!memcmp(vm.buffer[1], "-eq", 1));
-    eassert(vm.buffer_lens[1] == 4);
-    eassert(!memcmp(vm.buffer[2], "1", 1));
-    eassert(vm.buffer_lens[2] == 2);
+    eassert(!memcmp(vm.strs[0].value, "1", 1));
+    eassert(vm.strs[0].length == 2);
+    eassert(!memcmp(vm.strs[1].value, "-eq", 1));
+    eassert(vm.strs[1].length == 4);
+    eassert(!memcmp(vm.strs[2].value, "1", 1));
+    eassert(vm.strs[2].length == 2);
 
     // simulate vm status (condition result)
     vm.status = EXIT_SUCCESS;
@@ -499,8 +499,8 @@ void vm_next_if_elif_else_elif_true_test()
     printf("%zu\n", stmts.pos);
     eassert(stmts.pos == 4);
     eassert(vm.state == VS_IN_ELIF_STATEMENTS);
-    eassert(!memcmp(vm.buffer[0], "echo", 4));
-    eassert(!memcmp(vm.buffer[1], "hey", 2));
+    eassert(!memcmp(vm.strs[0].value, "echo", 4));
+    eassert(!memcmp(vm.strs[1].value, "hey", 2));
 
     eassert(vm.end);
     eassert(!cmds);

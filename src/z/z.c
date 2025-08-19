@@ -19,8 +19,7 @@
 
 double z_score(z_Directory* restrict directory, int fzf_score, time_t now)
 {
-    assert(directory);
-    assert(fzf_score > 0);
+    assert(directory); assert(fzf_score > 0);
 
     time_t duration = now - directory->last_accessed;
 
@@ -38,12 +37,12 @@ double z_score(z_Directory* restrict directory, int fzf_score, time_t now)
     }
 }
 
-bool z_match_exists(char* restrict target, size_t target_length, z_Database* restrict db)
+bool z_match_exists(Str* restrict target, z_Database* restrict db)
 {
-    assert(db && target && target_length > 0);
+    assert(db); assert(target); assert(target->value); assert(target->length > 0);
 
     for (size_t i = 0; i < db->count; ++i) {
-        if (estrcmp((db->dirs + i)->path, (db->dirs + i)->path_length, target, target_length)) {
+        if (estrcmp(*target, db->dirs[i].path)) {
             ++(db->dirs + i)->rank;
             (db->dirs + i)->last_accessed = time(NULL);
             return true;
@@ -53,16 +52,16 @@ bool z_match_exists(char* restrict target, size_t target_length, z_Database* res
     return false;
 }
 
-z_Directory* z_match_find(char* restrict target, size_t target_length, char* restrict cwd, size_t cwd_length, z_Database* restrict db,
-                          Arena* restrict scratch_arena)
+z_Directory* z_match_find(Str* restrict target, char* restrict cwd, size_t cwd_length, z_Database* restrict db,
+                          Arena* restrict scratch)
 {
-    assert(target && target_length && cwd && cwd_length && scratch_arena && db);
+    assert(target); assert(target->value); assert(target->length); assert(cwd); assert(cwd_length);
     if (!db->count || cwd_length < 2) {
         return NULL;
     }
 
-    fzf_slab_t* slab = fzf_make_slab((fzf_slab_config_t){(size_t)1 << 6, 1 << 6}, scratch_arena);
-    fzf_pattern_t* pattern = fzf_parse_pattern(target, target_length - 1, scratch_arena);
+    fzf_slab_t* slab = fzf_make_slab((fzf_slab_config_t){(size_t)1 << 6, 1 << 6}, scratch);
+    fzf_pattern_t* pattern = fzf_parse_pattern(target->value, target->length - 1, scratch);
     z_Match current_match = {0};
     time_t now = time(NULL);
 #ifdef Z_DEBUG
@@ -70,17 +69,17 @@ z_Directory* z_match_find(char* restrict target, size_t target_length, char* res
 #endif
 
     for (size_t i = 0; i < db->count; ++i) {
-        if (!estrcmp((db->dirs + i)->path, (db->dirs + i)->path_length, cwd, cwd_length)) {
+        if (!estrcmp_s(db->dirs[i].path, cwd, cwd_length)) {
             int fzf_score =
-                fzf_get_score((db->dirs + i)->path, (db->dirs + i)->path_length - 1, pattern, slab, scratch_arena);
+                fzf_get_score((db->dirs + i)->path.value, (db->dirs + i)->path.length - 1, pattern, slab, scratch);
             if (!fzf_score)
                 continue;
 
             double potential_match_z_score = z_score((db->dirs + i), fzf_score, now);
 #ifdef Z_DEBUG
-            tty_println("%zu %s len: %zu", i, (db->dirs + i)->path, (db->dirs + i)->path_length);
-            tty_println("%s fzf_score %d", (db->dirs + i)->path, fzf_score);
-            tty_println("%s z_score %f", (db->dirs + i)->path, potential_match_z_score);
+            tty_println("%zu %s len: %zu", i, (db->dirs + i)->path.value, (db->dirs + i)->path.length);
+            tty_println("%s fzf_score %d", (db->dirs + i)->path.value, fzf_score);
+            tty_println("%s z_score %f", (db->dirs + i)->path.value, potential_match_z_score);
 #endif /* ifdef Z_DEBUG */
 
             if (!current_match.dir || current_match.z_score < potential_match_z_score) {
@@ -91,7 +90,7 @@ z_Directory* z_match_find(char* restrict target, size_t target_length, char* res
     }
 
 #ifdef Z_DEBUG
-    tty_println("match %s", current_match.dir->path);
+    tty_println("match %s", current_match.dir->path.value);
 #endif /* ifdef Z_DEBUG */
 
     return current_match.dir;
@@ -119,7 +118,7 @@ enum z_Result z_write_entry(z_Directory* restrict dir, FILE* restrict file)
         return Z_FILE_ERROR;
     }
 
-    bytes_written = fwrite(&dir->path_length, sizeof(uint32_t), 1, file);
+    bytes_written = fwrite(&dir->path.length, sizeof(uint32_t), 1, file);
     if (!bytes_written || feof(file)) {
         return Z_ZERO_BYTES_READ;
     }
@@ -127,7 +126,7 @@ enum z_Result z_write_entry(z_Directory* restrict dir, FILE* restrict file)
         return Z_FILE_ERROR;
     }
 
-    bytes_written = fwrite(dir->path, sizeof(char), dir->path_length, file);
+    bytes_written = fwrite(dir->path.value, sizeof(char), dir->path.length, file);
     if (!bytes_written) {
         return Z_ZERO_BYTES_READ;
     }
@@ -197,20 +196,20 @@ enum z_Result z_read_entry(z_Directory* restrict dir, FILE* restrict file, Arena
     else if (ferror(file)) {
         return Z_FILE_ERROR;
     }
-    bytes_read = fread(&dir->path_length, sizeof(uint32_t), 1, file);
+    bytes_read = fread(&dir->path.length, sizeof(uint32_t), 1, file);
     if (!bytes_read || feof(file)) {
         return Z_ZERO_BYTES_READ;
     }
     else if (ferror(file)) {
         return Z_FILE_ERROR;
     }
-    else if (dir->path_length == 0) {
+    else if (dir->path.length == 0) {
         return Z_FILE_ERROR;
     }
 
-    dir->path = arena_malloc(arena, dir->path_length + 1, char);
+    dir->path.value = arena_malloc(arena, dir->path.length, char);
 
-    bytes_read = fread(dir->path, sizeof(char), dir->path_length, file);
+    bytes_read = fread(dir->path.value, sizeof(char), dir->path.length, file);
     if (!bytes_read) {
         return Z_ZERO_BYTES_READ;
     }
@@ -218,7 +217,8 @@ enum z_Result z_read_entry(z_Directory* restrict dir, FILE* restrict file, Arena
         return Z_FILE_ERROR;
     }
 
-    dir->path[dir->path_length] = '\0'; // Null-terminate the string
+    dir->path.value[dir->path.length - 1] = '\0'; // Null-terminate the string
+    assert(strlen(dir->path.value) + 1 == dir->path.length);
     return Z_SUCCESS;
 }
 
@@ -276,7 +276,7 @@ enum z_Result z_read(z_Database* restrict db, Arena* restrict arena)
 #ifdef Z_DEBUG
         tty_println("Rank: %f", (db->dirs + i)->rank);
         tty_println("Last accessed: %ld", (db->dirs + i)->last_accessed);
-        tty_println("Path: %s", (db->dirs + i)->path);
+        tty_println("Path: %s", (db->dirs + i)->path.value);
 #endif /* ifdef Z_DEBUG */
     }
 
@@ -286,20 +286,15 @@ enum z_Result z_read(z_Database* restrict db, Arena* restrict arena)
     return Z_SUCCESS;
 }
 
-enum z_Result z_write_entry_new(char* restrict path, size_t path_length, z_Database* restrict db, Arena* restrict arena)
+enum z_Result z_write_entry_new(Str* restrict path, z_Database* restrict db, Arena* restrict arena)
 {
-    assert(path && db && path_length > 1);
-    assert(path[path_length - 1] == '\0');
+    assert(path); assert(path->value); assert(db); assert(path->length > 1); assert(path->value[path->length - 1] == '\0');
+
     if (db->count == Z_DATABASE_IN_MEMORY_LIMIT) {
         return Z_FAILURE;
     }
 
-    db->dirs[db->count].path = arena_malloc(arena, path_length, char);
-
-    memcpy(db->dirs[db->count].path, path, path_length);
-    assert(db->dirs[db->count].path[path_length - 1] == '\0');
-
-    db->dirs[db->count].path_length = path_length;
+    db->dirs[db->count].path = *estrdup(path, arena);
     ++db->dirs[db->count].rank;
     db->dirs[db->count].last_accessed = time(NULL);
     ++db->count;
@@ -307,11 +302,11 @@ enum z_Result z_write_entry_new(char* restrict path, size_t path_length, z_Datab
     return Z_SUCCESS;
 }
 
-enum z_Result z_database_add(char* restrict path, size_t path_length, char* restrict cwd, size_t cwd_length, z_Database* restrict db,
+enum z_Result z_database_add(Str* restrict path, char* restrict cwd, size_t cwd_length, z_Database* restrict db,
                              Arena* restrict arena)
 {
-    assert(db && arena);
-    if (!path || !path_length) {
+    assert(db); assert(arena);
+    if (!path || !path->value || !path->length) {
         return Z_NULL_REFERENCE;
     }
 
@@ -319,31 +314,20 @@ enum z_Result z_database_add(char* restrict path, size_t path_length, char* rest
         return Z_HIT_MEMORY_LIMIT;
     }
 
-    assert(path && path[path_length - 1] == '\0');
-    assert(strlen(path) + 1 == path_length);
+    assert(path && path->value[path->length - 1] == '\0');
+    assert(strlen(path->value) + 1 == path->length);
     assert(cwd && cwd[cwd_length - 1] == '\0');
     assert(strlen(cwd) + 1 == cwd_length);
+    assert(path->length + cwd_length > 0);
 
-    size_t total_length = path_length + cwd_length;
-    assert(total_length > 0);
-
-    db->dirs[db->count].path = arena_malloc(arena, total_length, char);
-
-    memcpy(db->dirs[db->count].path, cwd, cwd_length);
-    db->dirs[db->count].path[cwd_length - 1] = '/';
-    memcpy(db->dirs[db->count].path + cwd_length, path, path_length);
-
-    assert(strlen(db->dirs[db->count].path) + 1 == total_length);
-    assert(db->dirs[db->count].path[total_length - 1] == '\0');
-
-#ifdef Z_DEBUG
-    tty_println("adding new value to db after memcpys %s", db->dirs[db->count].path);
-#endif /* ifdef Z_DEBUG */
-
-    db->dirs[db->count].path_length = total_length;
+    db->dirs[db->count].path = *estrjoin(&Str_New(cwd, cwd_length), path, '/', arena);
     ++db->dirs[db->count].rank;
     db->dirs[db->count].last_accessed = time(NULL);
     ++db->count;
+
+#ifdef Z_DEBUG
+    tty_println("adding new value to db after memcpys %s", db->dirs[db->count].path.value);
+#endif /* ifdef Z_DEBUG */
 
     return Z_SUCCESS;
 }
@@ -365,7 +349,6 @@ enum z_Result z_database_file_set([[maybe_unused]] Str* restrict config_file, z_
     }
 
     db->database_file = arena_malloc(arena, config_file->length + z_db_file_len, char);
-
     memcpy(db->database_file, config_file->value, config_file->length);
     memcpy(db->database_file + config_file->length - 1, Z_DATABASE_FILE, z_db_file_len);
 
@@ -405,10 +388,10 @@ bool z_is_dir(struct dirent* restrict dir)
     return !stat(dir->d_name, &sb) && S_ISDIR(sb.st_mode);
 }
 
-enum z_Result z_directory_match_exists(char* restrict target, size_t target_length, char* restrict cwd, Str* restrict output,
-                                       Arena* restrict scratch_arena)
+enum z_Result z_directory_match_exists(Str* restrict target, char* restrict cwd, Str* restrict output,
+                                       Arena* restrict scratch)
 {
-    assert(target && cwd && target_length > 0);
+    assert(target); assert(cwd); assert(target->length > 0);
 
     struct dirent* dir;
     DIR* current_dir = opendir(cwd);
@@ -429,12 +412,12 @@ enum z_Result z_directory_match_exists(char* restrict target, size_t target_leng
         dir_len = strlen(dir->d_name) + 1;
 #endif /* _DIRENT_HAVE_D_RECLEN */
 
-        if (z_is_dir(dir) && estrcmp(dir->d_name, dir_len, target, target_length)) {
-            output->value = arena_malloc(scratch_arena, dir_len, char);
+        if (z_is_dir(dir) && estrcmp_s(*target, dir->d_name, dir_len)) {
+            output->value = arena_malloc(scratch, dir_len, char);
             output->length = dir_len;
             memcpy(output->value, dir->d_name, dir_len);
 
-            if ((closedir(current_dir)) == -1) {
+            if ((closedir(current_dir)) == EOF) {
                 tty_perror("z: could not close directory");
                 return Z_FAILURE;
             }
@@ -443,7 +426,7 @@ enum z_Result z_directory_match_exists(char* restrict target, size_t target_leng
         }
     }
 
-    if ((closedir(current_dir)) == -1) {
+    if ((closedir(current_dir)) == EOF) {
         tty_perror("z: could not close directory");
         return Z_FAILURE;
     }
@@ -451,20 +434,21 @@ enum z_Result z_directory_match_exists(char* restrict target, size_t target_leng
     return Z_MATCH_NOT_FOUND;
 }
 
-void z(char* restrict target, size_t target_length, char* restrict cwd, z_Database* restrict db, Arena* restrict arena, Arena scratch_arena)
+void z(Str* restrict target, char* restrict cwd, z_Database* restrict db, Arena* restrict arena, Arena scratch)
 {
 #ifdef Z_DEBUG
     tty_println("z: %s", target);
 #endif /* ifdef Z_DEBUG */
 
+    // TODO: use env.h
     char* home = getenv("HOME");
     if (!home) {
         tty_perror("z: couldn't get HOME from environment");
     }
 
-    if (!target) {
+    if (!target || !target->value) {
         if (home) {
-            if (chdir(home) == -1) {
+            if (chdir(home) == EOF) {
                 tty_perror("z: couldn't change directory to home");
             }
         }
@@ -472,17 +456,17 @@ void z(char* restrict target, size_t target_length, char* restrict cwd, z_Databa
         return;
     }
 
-    assert(target_length && cwd && db && arena && scratch_arena.start);
-    if (!cwd || !db || target_length < 2) {
+    assert(target->length); assert(cwd); assert(db); assert(arena);
+    if (!cwd || !db || target->length < 2) {
         return;
     }
-    assert(!target[target_length - 1]);
-    if (target[target_length - 1]) {
+    assert(!target->value[target->length - 1]);
+    if (target->value[target->length - 1]) {
         return;
     }
 
-    if (estrcmp(target, target_length, home, strlen(home) + 1)) {
-        if (chdir(home) == -1) {
+    if (estrcmp_s(*target, home, strlen(home) + 1)) {
+        if (chdir(home) == EOF) {
             tty_perror("z: couldn't change directory to home");
         }
 
@@ -490,16 +474,16 @@ void z(char* restrict target, size_t target_length, char* restrict cwd, z_Databa
     }
 
     // handle z .
-    if (target_length == 2 && target[0] == '.') {
-        if (chdir(target) == -1) {
+    if (target->length == 2 && target->value[0] == '.') {
+        if (chdir(target->value) == EOF) {
             tty_perror("z: couldn't change directory (1)");
         }
 
         return;
     }
     // handle z ..
-    else if (target_length == 3 && target[0] == '.' && target[1] == '.') {
-        if (chdir(target) == -1) {
+    else if (target->length == 3 && target->value[0] == '.' && target->value[1] == '.') {
+        if (chdir(target->value) == EOF) {
             tty_perror("z: couldn't change directory (2)");
         }
 
@@ -508,14 +492,14 @@ void z(char* restrict target, size_t target_length, char* restrict cwd, z_Databa
 
     size_t cwd_length = strlen(cwd) + 1;
     Str output = {0};
-    z_Directory* match = z_match_find(target, target_length, cwd, cwd_length, db, &scratch_arena);
+    z_Directory* match = z_match_find(target, cwd, cwd_length, db, &scratch);
 
-    if (z_directory_match_exists(target, target_length, cwd, &output, &scratch_arena) == Z_SUCCESS) {
+    if (z_directory_match_exists(target, cwd, &output, &scratch) == Z_SUCCESS) {
 #ifdef Z_DEBUG
         tty_println("dir matches %s", output.value);
 #endif /* ifdef Z_DEBUG */
 
-        if (chdir(output.value) == -1) {
+        if (chdir(output.value) == EOF) {
             if (!match) {
                 tty_perror("z: couldn't change directory (3)");
                 return;
@@ -523,19 +507,19 @@ void z(char* restrict target, size_t target_length, char* restrict cwd, z_Databa
         }
 
         if (!match) {
-            z_database_add(output.value, output.length, cwd, cwd_length, db, arena);
+            z_database_add(&output, cwd, cwd_length, db, arena);
             return;
         }
     }
 
-    if (match && match->path) {
+    if (match && match->path.value) {
         // try to change to the match first, if that doesn't work try target
-        if (chdir(match->path) == -1) {
-            if (chdir(target) == -1) {
+        if (chdir(match->path.value) == EOF) {
+            if (chdir(target->value) == EOF) {
                 tty_perror("z: couldn't change directory (4)");
                 return;
             }
-            z_database_add(target, target_length, cwd, cwd_length, db, arena);
+            z_database_add(target, cwd, cwd_length, db, arena);
             return;
         }
 
@@ -544,35 +528,35 @@ void z(char* restrict target, size_t target_length, char* restrict cwd, z_Databa
         return;
     }
 
-    if (chdir(target) == -1) {
+    if (chdir(target->value) == EOF) {
         tty_perror("z: couldn't change directory");
         return;
     }
 
-    z_database_add(target, target_length, cwd, cwd_length, db, arena);
+    z_database_add(target, cwd, cwd_length, db, arena);
 }
 
 #define Z_ENTRY_EXISTS_MESSAGE "z: Entry already exists in z database."
 #define Z_ADDED_NEW_ENTRY_MESSAGE "z: Added new entry to z database."
 #define Z_ERROR_ADDING_ENTRY_MESSAGE "z: Error adding new entry to z database."
 
-enum z_Result z_add(char* restrict path, size_t path_length, z_Database* restrict db, Arena* restrict arena)
+enum z_Result z_add(Str* restrict path, z_Database* restrict db, Arena* restrict arena)
 {
-    if (!path || !db) {
+    if (!path || !path->value || !db) {
         tty_fputs("z: Null value passed to z add.", stderr);
         return Z_NULL_REFERENCE;
     }
-    if (path_length < 2 || path[path_length - 1] != '\0') {
+    if (path->length < 2 || path->value[path->length - 1] != '\0') {
         tty_fputs("z: Bad string passed to z add.", stderr);
         return Z_BAD_STRING;
     }
 
-    if (z_match_exists(path, path_length, db)) {
+    if (z_match_exists(path, db)) {
         tty_writeln(Z_ENTRY_EXISTS_MESSAGE, sizeof(Z_ENTRY_EXISTS_MESSAGE) - 1);
         return Z_SUCCESS;
     }
 
-    if (z_write_entry_new(path, path_length, db, arena) == Z_SUCCESS) {
+    if (z_write_entry_new(path, db, arena) == Z_SUCCESS) {
         tty_writeln(Z_ADDED_NEW_ENTRY_MESSAGE, sizeof(Z_ADDED_NEW_ENTRY_MESSAGE) - 1);
         return Z_SUCCESS;
     }
@@ -587,30 +571,28 @@ void z_remove_dirs_shift(size_t offset, z_Database* restrict db)
         return;
     }
 
-    for (size_t i = offset; i < db->count - 1; ++i) {
-        db->dirs[i] = db->dirs[i + 1];
-    }
+    memmove(db->dirs + offset, db->dirs + offset + 1, db->count - 1);
 }
 
 #define Z_ENTRY_NOT_FOUND_MESSAGE "z: Entry could not be found in z database."
 #define Z_ENTRY_REMOVED_MESSAGE "z: Removed entry from z database."
-enum z_Result z_remove(char* restrict path, size_t path_length, z_Database* restrict db)
+enum z_Result z_remove(Str* restrict path, z_Database* restrict db)
 {
     assert(db);
 
-    if (!path) {
+    if (!path || !path->value) {
         tty_fputs("z: Null value passed to z rm/remove.", stderr);
         return Z_NULL_REFERENCE;
     }
-    if (path_length < 2 || path[path_length - 1] != '\0') {
+    if (path->length < 2 || path->value[path->length - 1] != '\0') {
         tty_fputs("z: Bad string passed to z rm/remove.", stderr);
         return Z_BAD_STRING;
     }
 
     for (size_t i = 0; i < db->count; ++i) {
-        if (estrcmp((db->dirs + i)->path, (db->dirs + i)->path_length, (char*)path, path_length)) {
-            (db->dirs + i)->path = NULL;
-            (db->dirs + i)->path_length = 0;
+        if (estrcmp(*path, db->dirs[i].path)) {
+            (db->dirs + i)->path.value = NULL;
+            (db->dirs + i)->path.length = 0;
             (db->dirs + i)->last_accessed = 0;
             (db->dirs + i)->rank = 0;
             z_remove_dirs_shift(i, db);
@@ -656,8 +638,8 @@ void z_print(z_Database* restrict db)
     }
 
     for (size_t i = 0; i < db->count; ++i) {
-        tty_println("z[%zu].path: %s", i, db->dirs[i].path);
-        tty_println("z[%zu].path_length: %zu", i, db->dirs[i].path_length);
+        tty_println("z[%zu].path.value: %s", i, db->dirs[i].path.value);
+        tty_println("z[%zu].path.length: %zu", i, db->dirs[i].path.length);
         tty_println("z[%zu].last_accessed: %zu", i, db->dirs[i].last_accessed);
         tty_println("z[%zu].rank: %f", i, db->dirs[i].rank);
         tty_send(&tcaps.newline);

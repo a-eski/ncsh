@@ -24,44 +24,30 @@ static Alias* aliases;
  * Returns: the actual command as a Str, a char* value and a size_t length.
  */
 [[nodiscard]]
-Str alias_check(char* restrict buffer, size_t len)
+Str alias_check(Str alias)
 {
-    if (!buffer || len < 2) {
+    if (!alias.value || alias.length < 2 || !aliases_count) {
         return Str_Empty;
     }
 
-    if (aliases_count) {
-        for (size_t i = 0; i < aliases_count; ++i) {
-            if (estrcmp(buffer, len, aliases[i].alias->value, aliases[i].alias->length)) {
-                return *aliases[i].actual_command;
-            }
+    for (size_t i = 0; i < aliases_count; ++i) {
+        if (estrcmp(*aliases[i].alias, alias)) {
+            return *aliases[i].actual_command;
         }
     }
 
     return Str_Empty;
 }
 
-void alias_add(char* restrict val, size_t len, Arena* restrict arena)
+void alias_add(Str alias, Arena* restrict arena)
 {
-    assert(val);
-    assert(len > 0);
-    if (!len) {
+    assert(alias.value); assert(alias.length > 0);
+    if (!alias.length) {
         return;
     }
 
     debugf("trying to add alias: %s\n", val);
 
-    size_t i;
-    for (i = 0; i < len; ++i) {
-        if (val[i] == '=')
-            break;
-    }
-
-    if (!i || i == len - 1) {
-        tty_fprintln(stderr, "ncsh: Could not process alias while reading rc file: %s", val);
-        return;
-    }
-
     if (!aliases) {
         aliases_count = 0;
         aliases = arena_malloc(arena, NCSH_DEFAULT_ALIASES, Alias);
@@ -76,35 +62,31 @@ void alias_add(char* restrict val, size_t len, Arena* restrict arena)
         aliases_cap = new_cap;
     }
 
-    size_t alias_len = i + 1;
-    if (!alias_len)
+    size_t split_pos = estridx(&alias, '=');
+
+    if (!split_pos || split_pos == alias.length - 1) {
+        tty_fprintln(stderr, "ncsh: Could not process alias while reading rc file: %s", alias.value);
         return;
+    }
 
-    aliases[aliases_count].alias = arena_malloc(arena, 1, Str);
-
-    aliases[aliases_count].alias->length = alias_len;
-    aliases[aliases_count].alias->value = arena_malloc(arena, alias_len, char);
-    memcpy(aliases[aliases_count].alias->value, val, alias_len - 1);
-    aliases[aliases_count].alias->value[alias_len - 1] = '\0';
-
-    size_t ac_len = len - i - 1;
-    if (ac_len == 0)
+    size_t alias_len = split_pos + 1;
+    if (!alias_len) {
         return;
+    }
+    aliases[aliases_count].alias = estrdup(&Str_New(alias.value, alias_len), arena);
 
-    aliases[aliases_count].actual_command = arena_malloc(arena, 1, Str);
-
-    aliases[aliases_count].actual_command->length = ac_len;
-    aliases[aliases_count].actual_command->value = arena_malloc(arena, ac_len, char);
-    memcpy(aliases[aliases_count].actual_command->value, val + i + 1, ac_len - 1);
-    aliases[aliases_count].actual_command->value[ac_len - 1] = '\0';
+    size_t ac_len = alias.length - split_pos - 1;
+    if (ac_len == 0) {
+        return;
+    }
+    aliases[aliases_count].actual_command = estrdup(&Str_New(alias.value + split_pos + 1, ac_len), arena);
 
     debugf("added alias %s with actual command %s\n", aliases[aliases_count].alias->value,
            aliases[aliases_count].actual_command->value);
-
     ++aliases_count;
 }
 
-void alias_add_new(char* restrict alias, size_t a_len, char* restrict command, size_t c_len, Arena* restrict arena)
+void alias_add_new(Str alias, Str command, Arena* restrict arena)
 {
     if (!aliases) {
         aliases_count = 0;
@@ -120,32 +102,22 @@ void alias_add_new(char* restrict alias, size_t a_len, char* restrict command, s
         aliases_cap = new_cap;
     }
 
-    aliases[aliases_count].alias = arena_malloc(arena, 1, Str);
-    aliases[aliases_count].alias->length = a_len;
-    aliases[aliases_count].alias->value = arena_malloc(arena, a_len, char);
-    memcpy(aliases[aliases_count].alias->value, alias, a_len);
-
-    aliases[aliases_count].actual_command = arena_malloc(arena, 1, Str);
-    aliases[aliases_count].actual_command->length = c_len;
-    aliases[aliases_count].actual_command->value = arena_malloc(arena, c_len, char);
-    memcpy(aliases[aliases_count].actual_command->value, command, c_len);
+    aliases[aliases_count].alias = estrdup(&alias, arena);
+    aliases[aliases_count].actual_command = estrdup(&command, arena);
 
     debugf("added alias %s with actual command %s\n", aliases[aliases_count].alias->value,
-           aliases[aliases_count].actual_command->value);
+            aliases[aliases_count].actual_command->value);
 
     ++aliases_count;
 }
 
-void alias_remove(char* restrict val, size_t len)
+void alias_remove(Str alias)
 {
-    assert(val);
-    assert(len);
     debugf("removing alias %s %zu\n", val, len);
-    Str str = {.value = val, .length = len};
     size_t i;
     bool found = false;
     for (i = 0; i < aliases_count; ++i) {
-        if (estrcmp_s(str, *aliases[i].actual_command)) {
+        if (estrcmp(alias, *aliases[i].actual_command)) {
             found = true;
             break;
         }

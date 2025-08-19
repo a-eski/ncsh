@@ -18,7 +18,7 @@
 
 typedef struct {
     size_t count;
-    char* file;
+    Str file;
     Str* entries;
 } History;
 
@@ -40,7 +40,7 @@ int history_command_count(History* restrict history);
 
 int history_command_clean(History* restrict history, Arena* restrict arena, Arena* restrict scratch_arena);
 
-int history_command_add(char* restrict value, size_t value_len, History* restrict history, Arena* restrict arena);
+int history_command_add(Str val, History* restrict history, Arena* restrict arena);
 
-int history_command_remove(char* restrict value, size_t value_len, History* restrict history, Arena* restrict arena,
+int history_command_remove(Str val, History* restrict history, Arena* restrict arena,
                            Arena* restrict scratch_arena);

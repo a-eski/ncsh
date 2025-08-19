@@ -4,12 +4,11 @@
 #include "etest.h"
 #include "lib/arena_test_helper.h"
 
-Arena* test_arena;
+static Arena* ar;
 
 void alias_check_no_alias_test()
 {
-    char buffer[] = "echo hello";
-    Str result = alias_check(buffer, sizeof(buffer));
+    Str result = alias_check(Str_New_Literal("echo hello"));
 
     eassert(!result.length);
     eassert(!result.value);
@@ -17,12 +16,10 @@ void alias_check_no_alias_test()
 
 void alias_add_then_check_alias_found_test()
 {
-    char* alias = "n=nvim";
-    size_t alias_len = strlen(alias) + 1;
-    alias_add(alias, alias_len, test_arena);
+    Str alias = Str_New_Literal("n=nvim");
+    alias_add(alias, ar);
 
-    char buffer[] = "n";
-    Str result = alias_check(buffer, sizeof(buffer));
+    Str result = alias_check(Str_New_Literal("n"));
 
     char expected_result[] = "nvim";
     eassert(result.length == sizeof(expected_result));
@@ -31,10 +28,10 @@ void alias_add_then_check_alias_found_test()
 
 void alias_add_new_then_check_alias_found_test()
 {
-    alias_add_new("n", 2, "nvim", 5, test_arena);
+    Str alias = Str_New_Literal("n");
+    alias_add_new(alias, Str_New_Literal("nvim"), ar);
 
-    char buffer[] = "n";
-    Str result = alias_check(buffer, sizeof(buffer));
+    Str result = alias_check(alias);
 
     char expected_result[] = "nvim";
     eassert(result.length == sizeof(expected_result));
@@ -43,12 +40,10 @@ void alias_add_new_then_check_alias_found_test()
 
 void alias_add_then_check_alias_found_multiple_chars_test()
 {
-    char* alias = "fd=fdfind";
-    size_t alias_len = strlen(alias) + 1;
-    alias_add(alias, alias_len, test_arena);
+    Str alias = Str_New_Literal("fd=fdfind");
+    alias_add(alias, ar);
 
-    char buffer[] = "fd";
-    Str result = alias_check(buffer, sizeof(buffer));
+    Str result = alias_check(Str_New_Literal("fd"));
 
     char expected_result[] = "fdfind";
     eassert(result.length == sizeof(expected_result));
@@ -57,10 +52,10 @@ void alias_add_then_check_alias_found_multiple_chars_test()
 
 void alias_add_new_then_check_alias_found_multiple_chars_test()
 {
-    alias_add_new("fd", 3, "fdfind", 7, test_arena);
+    Str alias = Str_New_Literal("fd");
+    alias_add_new(alias, Str_New_Literal("fdfind"), ar);
 
-    char buffer[] = "fd";
-    Str result = alias_check(buffer, sizeof(buffer));
+    Str result = alias_check(alias);
 
     char expected_result[] = "fdfind";
     eassert(result.length == sizeof(expected_result));
@@ -69,28 +64,25 @@ void alias_add_new_then_check_alias_found_multiple_chars_test()
 
 void alias_add_then_remove_test()
 {
-    char* alias = "n=nvim";
-    size_t alias_len = strlen(alias) + 1;
-    alias_add(alias, alias_len, test_arena);
+    Str alias = Str_New_Literal("n=nvim");
+    alias_add(alias, ar);
 
-    char buffer[] = "nvim";
-    alias_remove(buffer, sizeof(buffer));
+    Str buffer = Str_New_Literal("nvim");
+    alias_remove(buffer);
 
-    Str result = alias_check(buffer, sizeof(buffer));
+    Str result = alias_check(buffer);
     eassert(result.length == 0);
     eassert(result.value == NULL);
 }
 
 void alias_add_then_delete_test()
 {
-    char* alias = "n=nvim";
-    size_t alias_len = strlen(alias) + 1;
-    alias_add(alias, alias_len, test_arena);
+    Str alias = Str_New_Literal("n=nvim");
+    alias_add(alias, ar);
 
     alias_delete();
 
-    char buffer[] = "nvim";
-    Str result = alias_check(buffer, sizeof(buffer));
+    Str result = alias_check(Str_New_Literal("n"));
     eassert(result.length == 0);
     eassert(result.value == NULL);
 }
@@ -98,7 +90,7 @@ void alias_add_then_delete_test()
 void alias_tests()
 {
     ARENA_TEST_SETUP;
-    test_arena = &arena;
+    ar = &arena;
 
     etest_start();
 

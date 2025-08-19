@@ -35,105 +35,45 @@ enum eresult conf_location_init(Shell* restrict shell)
         return E_FAILURE_NULL_REFERENCE;
     }
 
-    shell->config.location.value = arena_malloc(&shell->arena, NCSH_MAX_INPUT, char);
-
-    char* conf_original_ptr = shell->config.location.value;
     Str* home = env_home_get(shell->env);
-    assert(home && home->value);
-    shell->config.location.length = home->length - 1;
 
-    constexpr size_t location_len = sizeof(DOT_CONFIG) + sizeof(NCSH);
-    constexpr size_t location_folder_len = 1 + location_len + 1;
-    if (shell->config.location.length + location_folder_len > NCSH_MAX_INPUT) {
+    constexpr size_t location_len = sizeof(DOT_CONFIG) + sizeof(NCSH) + 1 + 1;
+    if (home->length + location_len > PATH_MAX) {
         shell->config.location.value[0] = '\0';
         return E_FAILURE_OVERFLOW_PROTECTION;
     }
 
-    memcpy(shell->config.location.value, home->value, home->length - 1);
-    shell->config.location.value += home->length - 1;
-    *shell->config.location.value = '/';
-    ++shell->config.location.length;
-    ++shell->config.location.value;
-    memcpy(shell->config.location.value, DOT_CONFIG "/" NCSH, location_len);
-    shell->config.location.value += location_len;
-    *shell->config.location.value = '\0';
-    shell->config.location.length += location_len;
-    shell->config.location.value = (char*)conf_original_ptr;
-
-    debugf("shell->config.location.value: %s\n", shell->config.location.value);
-    assert(strlen(shell->config.location.value) + 1 == shell->config.location.length);
+    shell->config.location = *estrjoin(home, &Str_New_Literal(DOT_CONFIG "/" NCSH), '/', &shell->arena);
     mkdir(shell->config.location.value, 0755);
 
+    debugf("config location: %s\n", shell->config.location.value);
     return E_SUCCESS;
 }
 
 [[nodiscard]]
 enum eresult conf_file_set(Shell* restrict shell)
 {
-    constexpr size_t rc_len = sizeof(RC_FILE);
-    constexpr size_t rc_len_nt = rc_len - 1;
 
+    Str rc_file = Str_New_Literal(RC_FILE);
 #if defined(NCSH_IN_PLACE)
-    shell->config.file.value = arena_malloc(arena, rc_len, char);
-    memcpy(shell->config.file.value, RC_FILE, rc_len_nt);
-    shell->config.file.value[rc_len_nt] = '\0';
-    shell->config.file.length = rc_len;
+    shell->config.file = *estrdup(&rc_file, &shell->arena);
     return E_SUCCESS;
 #endif
 
     if (!shell->config.location.value || !shell->config.location.length) {
-        shell->config.file.value = arena_malloc(&shell->arena, rc_len, char);
-        memcpy(shell->config.file.value, RC_FILE, rc_len_nt);
-        shell->config.file.value[rc_len_nt] = '\0';
-        shell->config.file.length = rc_len;
-
+        shell->config.file = *estrdup(&rc_file, &shell->arena);
         return E_SUCCESS;
     }
 
-    if (shell->config.location.length + rc_len > NCSH_MAX_INPUT) {
+    if (shell->config.location.length + rc_file.length > NCSH_MAX_INPUT) {
         shell->config.file.value = NULL;
         return E_FAILURE_OVERFLOW_PROTECTION;
     }
 
-    shell->config.file.value =
-        arena_malloc(&shell->arena, shell->config.location.length + rc_len, char);
-    memcpy(shell->config.file.value,
-           shell->config.location.value,
-           shell->config.location.length - 1);
-    memcpy(shell->config.file.value + shell->config.location.length - 1,"/" RC_FILE, rc_len);
-    shell->config.file.length =
-        shell->config.location.length + rc_len;
-    shell->config.file.value[shell->config.file.length - 1] = '\0';
-    debugf("file %s\n", shell->config.file.value);
+    shell->config.file = *estrjoin(&shell->config.location, &rc_file, '/', &shell->arena);
 
+    debugf("config file %s\n", shell->config.file.value);
     return E_SUCCESS;
-}
-
-/* conf_path_add
- * The function which handles config items which add values to PATH.
- */
-#define PATH "PATH"
-#define PATH_ADD "PATH+="
-
-void conf_path_add(Str* path, char* restrict val, int len, Arena* restrict arena)
-{
-    assert(val);
-    assert(len > 0);
-    if (len <= 0 || !path->length) {
-        return;
-    }
-
-    assert(!val[len - 1]);
-    debugf("trying to add %s to path\n", val);
-
-    Str new_path = {.length = path->length + (size_t)len};
-    new_path.value = arena_realloc(arena, new_path.length, char, path->value, path->length);
-    memcpy(new_path.value, path->value, path->length - 1);
-    new_path.value[path->length - 1] = ':';
-    memcpy(new_path.value + path->length, val, (size_t)len);
-    path->value = new_path.value;
-    path->length = new_path.length;
-    debugf("Got new path to set %s\n", new_path.value);
 }
 
 /* conf_process
@@ -141,33 +81,34 @@ void conf_path_add(Str* path, char* restrict val, int len, Arena* restrict arena
  */
 #define PATH_ADD "PATH+="
 #define ALIAS_ADD "ALIAS "
-void conf_process(FILE* restrict file, Shell* shell)
+void conf_process(FILE* restrict file, Shell* restrict shell, Arena* restrict scratch)
 {
     int buffer_length;
     char buffer[NCSH_MAX_INPUT] = {0};
-    bool update_path = false;
     Str path_key = Str_New_Literal(NCSH_PATH_VAL);
     Str* path = env_add_or_get(shell->env, path_key);
+    Str_Builder* sb = sb_new(scratch);
+    sb_add(path, sb, scratch);
 
     while ((buffer_length = efgets(buffer, sizeof(buffer), file)) != EOF) {
         // Add to path (6 because PATH+=)
         if (buffer_length > 6 && !memcmp(buffer, PATH_ADD, sizeof(PATH_ADD) - 1)) {
             assert(buffer + 6 && *(buffer + 6));
             debugf("adding to PATH: %s\n", buffer + 6);
-            conf_path_add(path, buffer + 6, buffer_length - 6, &shell->arena);
-            update_path = true;
+            sb_add(&Str_New(buffer + 6, (size_t)(buffer_length - 6)), sb, scratch);
         }
         // Aliasing (aliased=alias)
         else if (buffer_length > 6 && !memcmp(buffer, ALIAS_ADD, sizeof(ALIAS_ADD) - 1)) {
             assert(buffer + 6 && *(buffer + 6));
-            alias_add(buffer + 6, (size_t)(buffer_length - 6), &shell->arena);
+            alias_add(Str_New(buffer + 6, (size_t)(buffer_length - 6)), &shell->arena);
         }
 
         memset(buffer, '\0', (size_t)buffer_length);
     }
 
-    if (path->length && update_path) {
-        setenv(PATH, path->value, true);
+    if (sb->n > 1) {
+        *path = *sb_to_joined_str(sb, ':', &shell->arena);
+        setenv(NCSH_PATH_VAL, path->value, true);
     }
 }
 
@@ -176,7 +117,7 @@ void conf_process(FILE* restrict file, Shell* shell)
  * Returns: enum eresult, E_SUCCESS if config file loaded or user doesn't want one.
  */
 [[nodiscard]]
-enum eresult conf_file_load(Shell* shell)
+enum eresult conf_file_load(Shell* restrict shell, Arena* restrict scratch)
 {
     FILE* file = fopen(shell->config.file.value, "r");
     if (!file || ferror(file) || feof(file)) {
@@ -209,7 +150,7 @@ enum eresult conf_file_load(Shell* shell)
         return E_SUCCESS;
     }
 
-    conf_process(file, shell);
+    conf_process(file, shell, scratch);
 
     fclose(file);
     return E_SUCCESS;
@@ -221,9 +162,9 @@ enum eresult conf_file_load(Shell* shell)
  * Returns: enum eresult, E_SUCCESS is successful
  */
 [[nodiscard]]
-enum eresult conf_init(Shell* shell)
+enum eresult conf_init(Shell* restrict shell, Arena scratch)
 {
-    assert(shell && shell->arena.start);
+    assert(shell); assert(shell->arena.start);
 
     enum eresult result;
     if ((result = conf_location_init(shell)) != E_SUCCESS) {
@@ -236,7 +177,7 @@ enum eresult conf_init(Shell* shell)
         return result;
     }
 
-    if ((result = conf_file_load(shell)) != E_SUCCESS) {
+    if ((result = conf_file_load(shell, &scratch)) != E_SUCCESS) {
         debug("failed loading config file");
         return result;
     }
