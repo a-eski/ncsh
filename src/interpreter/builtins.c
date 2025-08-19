@@ -297,20 +297,12 @@ static int builtins_history(History* restrict history, Str* restrict strs, Arena
     if (args && args[1].value && !args[2].value) {
         // history add
         if (estrcmp(*args, Str_New_Literal(NCSH_HISTORY_ADD))) {
-            if (history_command_add(args[1], history, arena) != EXIT_SUCCESS) {
-                return EXIT_FAILURE_CONTINUE;
-            }
-
-            return EXIT_SUCCESS;
+            return history_command_add(args[1], history, arena);
         }
         // history rm/remove
         else if (estrcmp(*args, Str_New_Literal(NCSH_HISTORY_RM)) ||
                  estrcmp(*args, Str_New_Literal(NCSH_HISTORY_REMOVE))) {
-            if (history_command_remove(args[1], history, arena, scratch) != EXIT_SUCCESS) {
-                return EXIT_FAILURE_CONTINUE;
-            }
-
-            return EXIT_SUCCESS;
+            return history_command_remove(args[1], history, arena, scratch);
         }
     }
 

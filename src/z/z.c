@@ -572,9 +572,6 @@ void z_remove_dirs_shift(size_t offset, z_Database* restrict db)
     }
 
     memmove(db->dirs + offset, db->dirs + offset + 1, db->count - 1);
-    /*for (size_t i = offset; i < db->count - 1; ++i) {
-        db->dirs[i] = db->dirs[i + 1];
-    }*/
 }
 
 #define Z_ENTRY_NOT_FOUND_MESSAGE "z: Entry could not be found in z database."
