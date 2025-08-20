@@ -1,6 +1,6 @@
 /* Copyright ncsh (C) by Alex Eski 2025 */
 /* signals.h: signal handling, process group handling. */
-/* signal handling is the hard part of writing a shell :) */
+/* as Stephen Bourne said, signal handling is the hard part of writing a shell */
 
 #pragma once
 
@@ -69,10 +69,6 @@ static pid_t signal_init()
 
     // Setup the process group for the shell
     pid_t shell_pgid = getpid();
-
-    if (setpgid(shell_pgid, shell_pgid) < 0) {
-        return -1;
-    }
 
     if (tcsetpgrp(STDIN_FILENO, shell_pgid) < 0) {
         return -1;
