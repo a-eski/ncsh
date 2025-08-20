@@ -13,6 +13,7 @@
 
 __sig_atomic_t vm_child_pid;
 jmp_buf env_jmp_buf;
+volatile int sigwinch_caught;
 
 Commands* vm_next(Statements* restrict stmts, Commands* cmds, Vm_Data* restrict vm);
 

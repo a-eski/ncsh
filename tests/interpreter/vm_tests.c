@@ -13,6 +13,7 @@
 
 sig_atomic_t vm_child_pid;
 jmp_buf env_jmp_buf;
+volatile int sigwinch_caught;
 
 // use a macro so line numbers are preserved
 #define vm_tester(input)                                                                                               \

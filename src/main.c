@@ -111,7 +111,10 @@ static char* init(Shell* restrict shell, char** restrict envp)
         return NULL;
     }
 
-    signal_init();
+    if ((shell->pgid = signal_init()) < 0) {
+        tty_perror("ncsh: fatal error while initializing signal handlers");
+        return NULL;
+    }
 
     return memory;
 }

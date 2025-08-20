@@ -15,10 +15,6 @@
  * Size of VM buffer & buffer lengths, max number of char* VM can store and process */
 #define VM_MAX_INPUT 64
 
-/* EXECVP_FAILED Macro constant
- * Result of system call execvp when it fails */
-#define EXECVP_FAILED -1
-
 /****** TYPES ******/
 enum Vm_State {
     VS_NORMAL = 0,
@@ -66,7 +62,6 @@ typedef struct {
     enum Vm_State state;
 
     int status;
-    int exec_result;
 
     Output_Redirect_IO output_redirect_io;
     Input_Redirect_IO input_redirect_io;

@@ -68,7 +68,7 @@ enum eresult history_load(History* restrict history, Arena* restrict arena)
 
         char character;
         if (!read(STDIN_FILENO, &character, 1)) {
-                tty_perror(NCSH_ERROR_STDIN);
+                tty_perror(NCSH_ERROR_STDIN(__func__));
                 return E_FAILURE;
             }
 

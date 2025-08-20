@@ -15,6 +15,7 @@
 #include <unistd.h>
 
 #include "../defines.h"
+#include "../signals.h"
 #include "../types.h"
 #include "../debug.h"
 #include "../ttyio/ttyio.h"
@@ -80,7 +81,7 @@ void vm_status_check(Vm_Data* restrict vm)
 #endif /* NCSH_DEBUG */
 }
 
-void vm_status_set(int pid, Vm_Data* restrict vm)
+void vm_waitpid(int pid, Vm_Data* restrict vm)
 {
     pid_t waitpid_result;
     while (1) {
@@ -110,18 +111,16 @@ void vm_status_set(int pid, Vm_Data* restrict vm)
 [[nodiscard]]
 int vm_status_aggregate(Vm_Data* restrict vm)
 {
-    if (vm->exec_result == EXECVP_FAILED) {
-        debug("execvp failed");
-        return EXIT_FAILURE;
-    }
     if (vm->status == EXIT_FAILURE) {
         return EXIT_FAILURE_CONTINUE;
     }
     return vm->status;
 }
 
-[[nodiscard]]
-int vm_math_process(Vm_Data* restrict vm)
+/* vm_math_process
+ * Sets vm->status with result of operation
+ */
+void vm_math_process(Vm_Data* restrict vm)
 {
     debug("evaluating math conditions");
 
@@ -131,7 +130,8 @@ int vm_math_process(Vm_Data* restrict vm)
 #endif
 
     if (!vm->strs || !vm->strs[0].value || !vm->strs[2].value) {
-        return EXIT_FAILURE_CONTINUE;
+        vm->status = EXIT_FAILURE_CONTINUE;
+        return;
     }
 
     char* c1 = vm->strs[0].value;
@@ -160,7 +160,7 @@ int vm_math_process(Vm_Data* restrict vm)
     }
     }
 
-    return result ? EXIT_SUCCESS : EXIT_FAILURE;
+    vm->status = result ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
 [[nodiscard]]
@@ -531,8 +531,47 @@ Commands* vm_next(Statements* restrict stmts, Commands* cmds, Vm_Data* restrict 
 }
 
 [[nodiscard]]
+int vm_run_foreground(Statements* restrict stmts, Vm_Data* restrict vm, Arena* restrict scratch, pid_t shell_pgid)
+{
+    int pid = fork();
+    if (pid < 0) {
+        return vm_fork_failure(vm->command_position, stmts->pipes_count, &vm->pipes_io);
+    }
+
+    if (pid == 0) { // runs in the child process
+        pid_t cpid = getpid();
+        setpgid(cpid, cpid);
+        tcsetpgrp(STDIN_FILENO, cpid);
+        signal_reset();
+
+        if (vm->op_current == OP_PIPE)
+            pipe_connect(vm->command_position, stmts->pipes_count, &vm->pipes_io);
+
+        char** buffers = estrtoarr(vm->strs, vm->strs_n, scratch);
+        int exec_result = execvp(*buffers, buffers);
+        if (exec_result == -1) {
+            tty_perror("ncsh: Could not run command");
+            exit(-1);
+        }
+    }
+
+    setpgid(pid, pid);
+    tcsetpgrp(STDIN_FILENO, pid);
+
+    if (vm->op_current == OP_PIPE) {
+        pipe_stop(vm->command_position, stmts->pipes_count, &vm->pipes_io);
+    }
+
+    vm_waitpid(pid, vm);
+    // waitpid(pid, &vm->status, WUNTRACED);
+    tcsetpgrp(STDIN_FILENO, shell_pgid);
+    return EXIT_SUCCESS;
+}
+
+[[nodiscard]]
 int vm_run(Statements* restrict stmts, Shell* restrict shell, Arena* restrict scratch)
 {
+    int rv;
     Vm_Data vm = {0};
 
     if (redirection_start_if_needed(stmts, &vm) != EXIT_SUCCESS) {
@@ -547,12 +586,14 @@ int vm_run(Statements* restrict stmts, Shell* restrict shell, Arena* restrict sc
         cmds = vm_next(stmts, cmds, &vm);
 
         if (!vm.strs || !vm.strs[0].value) {
-            return EXIT_FAILURE_CONTINUE;
+            rv = EXIT_FAILURE_CONTINUE;
+            goto failure;
         }
 
         if (vm.op_current == OP_PIPE && !vm.end) {
             if (pipe_start(vm.command_position, &vm.pipes_io) != EXIT_SUCCESS) {
-                return EXIT_FAILURE;
+                rv = EXIT_FAILURE;
+                goto failure;
             }
         }
 
@@ -565,34 +606,13 @@ int vm_run(Statements* restrict stmts, Shell* restrict shell, Arena* restrict sc
         }
         else if (vm.state == VS_IN_CONDITIONS &&
                  (vm.op_current == OP_EQUALS || vm.op_current == OP_GREATER_THAN || vm.op_current == OP_LESS_THAN)) {
-            vm.status = vm_math_process(&vm);
+            vm_math_process(&vm);
         }
         else {
-            int vm_pid = fork();
-            if (vm_pid < 0)
-                return vm_fork_failure(vm.command_position, stmts->pipes_count, &vm.pipes_io);
-
-            if (vm_pid == 0) { // runs in the child process
-                if (vm.op_current == OP_PIPE)
-                    pipe_connect(vm.command_position, stmts->pipes_count, &vm.pipes_io);
-
-                char** buffers = estrtoarr(vm.strs, vm.strs_n, scratch);
-                vm.exec_result = execvp(*buffers, buffers);
-                if (vm.exec_result == EXECVP_FAILED) {
-                    vm.end = true;
-                    tty_perror("ncsh: Could not run command");
-                    kill(getpid(), SIGTERM);
-                }
+            rv = vm_run_foreground(stmts, &vm, scratch, shell->pgid);
+            if (rv != EXIT_SUCCESS) {
+                goto failure;
             }
-
-            vm_child_pid = vm_pid;
-            if (vm.op_current == OP_PIPE)
-                pipe_stop(vm.command_position, stmts->pipes_count, &vm.pipes_io);
-
-            if (vm.exec_result == EXECVP_FAILED)
-                break;
-
-            vm_status_set(vm_pid, &vm);
         }
 
         ++vm.command_position;
@@ -600,6 +620,10 @@ int vm_run(Statements* restrict stmts, Shell* restrict shell, Arena* restrict sc
 
     redirection_stop_if_needed(&vm);
     return vm_status_aggregate(&vm);
+
+failure:
+    redirection_stop_if_needed(&vm);
+    return rv;
 }
 
 /* vm_execute
