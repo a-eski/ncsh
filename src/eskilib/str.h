@@ -217,7 +217,8 @@ enodiscard static inline Str_Builder* sb_new(Arena* restrict a)
     return sb;
 }
 
-static inline void sb_add(Str* restrict v, Str_Builder* restrict sb, Arena* restrict a)
+[[maybe_unused]]
+static void sb_add(Str* restrict v, Str_Builder* restrict sb, Arena* restrict a)
 {
     if (sb->n >= sb->c - 1) {
         size_t new_c = sb->c * 2;
