@@ -41,7 +41,8 @@ Str alias_check(Str alias)
 
 void alias_add(Str alias, Arena* restrict arena)
 {
-    assert(alias.value); assert(alias.length > 0);
+    assert(alias.value); assert(alias.length > 0); assert(*alias.value); assert(strlen(alias.value) + 1 == alias.length);
+
     if (!alias.length) {
         return;
     }

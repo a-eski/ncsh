@@ -20,7 +20,7 @@ volatile int sigwinch_caught;
     SCRATCH_ARENA_TEST_SETUP;                                                                                          \
                                                                                                                        \
     Lexemes lexemes = {0};                                                                                             \
-    lexer_lex(input, strlen(input) + 1, &lexemes, &scratch_arena);                                                     \
+    lexer_lex(Str_Get(input), &lexemes, &scratch_arena);                                                     \
     int res = sema_analyze(&lexemes);                                                                     \
     eassert(res == EXIT_SUCCESS);                                                                                      \
     Statements statements = {0};                                                                                       \

@@ -93,13 +93,11 @@ void conf_process(FILE* restrict file, Shell* restrict shell, Arena* restrict sc
     while ((buffer_length = efgets(buffer, sizeof(buffer), file)) != EOF) {
         // Add to path (6 because PATH+=)
         if (buffer_length > 6 && !memcmp(buffer, PATH_ADD, sizeof(PATH_ADD) - 1)) {
-            assert(buffer + 6 && *(buffer + 6));
-            debugf("adding to PATH: %s\n", buffer + 6);
+            assert(buffer + 6 && *(buffer + 6)); assert(strlen(buffer + 6) + 1 == (size_t)(buffer_length - 6));
             sb_add(&Str_New(buffer + 6, (size_t)(buffer_length - 6)), sb, scratch);
         }
         // Aliasing (aliased=alias)
         else if (buffer_length > 6 && !memcmp(buffer, ALIAS_ADD, sizeof(ALIAS_ADD) - 1)) {
-            assert(buffer + 6 && *(buffer + 6));
             alias_add(Str_New(buffer + 6, (size_t)(buffer_length - 6)), &shell->arena);
         }
 
@@ -108,7 +106,6 @@ void conf_process(FILE* restrict file, Shell* restrict shell, Arena* restrict sc
 
     if (sb->n > 1) {
         *path = *sb_to_joined_str(sb, ':', &shell->arena);
-        setenv(NCSH_PATH_VAL, path->value, true);
     }
 }
 

@@ -172,7 +172,11 @@ enodiscard static inline char** estrtoarr(Str* strs, size_t n, Arena* restrict a
 
 static inline void estrtrim(Str* v)
 {
-    size_t i = v->length - 2; // extra +1 to skip the null terminator
+    if (v->length <= 2) {
+        return;
+    }
+
+    size_t i = v->length - 2; // extra -1 to skip the null terminator
     while (i > 0 && v->value[i] == ' ') {
         v->value[i--] = '\0';
     }
@@ -220,6 +224,8 @@ enodiscard static inline Str_Builder* sb_new(Arena* restrict a)
 [[maybe_unused]]
 static void sb_add(Str* restrict v, Str_Builder* restrict sb, Arena* restrict a)
 {
+    assert(v->value); assert(v->length > 0); assert(*v->value); assert(strlen(v->value) + 1 == v->length);
+
     if (sb->n >= sb->c - 1) {
         size_t new_c = sb->c * 2;
         sb->strs = arena_realloc(a, new_c, Str, sb->strs, sb->c);

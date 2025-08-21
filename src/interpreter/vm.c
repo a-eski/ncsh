@@ -548,11 +548,9 @@ int vm_run_foreground(Statements* restrict stmts, Vm_Data* restrict vm, Arena* r
             pipe_connect(vm->command_position, stmts->pipes_count, &vm->pipes_io);
 
         char** buffers = estrtoarr(vm->strs, vm->strs_n, scratch);
-        int exec_result = execvp(*buffers, buffers);
-        if (exec_result == -1) {
-            tty_perror("ncsh: Could not run command");
-            exit(-1);
-        }
+        execvp(*buffers, buffers);
+        tty_perror("ncsh: Could not run command");
+        exit(-1);
     }
 
     setpgid(pid, pid);

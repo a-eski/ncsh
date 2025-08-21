@@ -21,11 +21,10 @@ void vm_next_simple_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    char* line = "ls";
-    size_t len = strlen(line) + 1;
+    auto line = Str_New_Literal("ls");
 
     Lexemes lexemes = {0};
-    lexer_lex(line, len, &lexemes, &scratch_arena);
+    lexer_lex(line, &lexemes, &scratch_arena);
     Statements stmts = {0};
     int res = parser_parse(&lexemes, &stmts, NULL, &scratch_arena);
     eassert(!res);
@@ -57,11 +56,10 @@ void vm_next_bool_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    char* line = "ls";
-    size_t len = strlen(line) + 1;
+    auto line = Str_New_Literal("ls");
 
     Lexemes lexemes = {0};
-    lexer_lex(line, len, &lexemes, &scratch_arena);
+    lexer_lex(line, &lexemes, &scratch_arena);
     Statements stmts = {0};
     int res = parser_parse(&lexemes, &stmts, NULL, &scratch_arena);
     eassert(!res);
@@ -93,11 +91,10 @@ void vm_next_if_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    char* line = "if [ 1 -eq 1 ]; then echo 'hi'; fi";
-    size_t len = strlen(line) + 1;
+    auto line = Str_New_Literal("if [ 1 -eq 1 ]; then echo 'hi'; fi");
 
     Lexemes lexemes = {0};
-    lexer_lex(line, len, &lexemes, &scratch_arena);
+    lexer_lex(line, &lexemes, &scratch_arena);
     Statements stmts = {0};
     int res = parser_parse(&lexemes, &stmts, NULL, &scratch_arena);
     eassert(!res);
@@ -141,11 +138,10 @@ void vm_next_if_multiple_conditions_true_and_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    char* line = "if [ true && true ]; then echo 'hi'; fi";
-    size_t len = strlen(line) + 1;
+    auto line = Str_New_Literal("if [ true && true ]; then echo 'hi'; fi");
 
     Lexemes lexemes = {0};
-    lexer_lex(line, len, &lexemes, &scratch_arena);
+    lexer_lex(line, &lexemes, &scratch_arena);
     Statements stmts = {0};
     int res = parser_parse(&lexemes, &stmts, NULL, &scratch_arena);
     eassert(!res);
@@ -200,11 +196,10 @@ void vm_next_if_multiple_conditions_false_and_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    char* line = "if [ false && true ]; then echo 'hi'; fi";
-    size_t len = strlen(line) + 1;
+    auto line = Str_New_Literal("if [ false && true ]; then echo 'hi'; fi");
 
     Lexemes lexemes = {0};
-    lexer_lex(line, len, &lexemes, &scratch_arena);
+    lexer_lex(line, &lexemes, &scratch_arena);
     Statements stmts = {0};
     int res = parser_parse(&lexemes, &stmts, NULL, &scratch_arena);
     eassert(!res);
@@ -237,11 +232,10 @@ void vm_next_if_multiple_conditions_true_or_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    char* line = "if [ true || true ]; then echo 'hi'; fi";
-    size_t len = strlen(line) + 1;
+    auto line = Str_New_Literal("if [ true || true ]; then echo 'hi'; fi");
 
     Lexemes lexemes = {0};
-    lexer_lex(line, len, &lexemes, &scratch_arena);
+    lexer_lex(line, &lexemes, &scratch_arena);
     Statements stmts = {0};
     int res = parser_parse(&lexemes, &stmts, NULL, &scratch_arena);
     eassert(!res);
@@ -296,11 +290,10 @@ void vm_next_if_else_true_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    char* line = "if [ 1 -eq 1 ]; then echo 'hi'; else echo 'hello'; fi";
-    size_t len = strlen(line) + 1;
+    auto line = Str_New_Literal("if [ 1 -eq 1 ]; then echo 'hi'; else echo 'hello'; fi");
 
     Lexemes lexemes = {0};
-    lexer_lex(line, len, &lexemes, &scratch_arena);
+    lexer_lex(line, &lexemes, &scratch_arena);
     Statements stmts = {0};
     int res = parser_parse(&lexemes, &stmts, NULL, &scratch_arena);
     eassert(!res);
@@ -347,11 +340,10 @@ void vm_next_if_else_false_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    char* line = "if [ 1 -eq 2 ]; then echo 'hi'; else echo 'hello'; fi";
-    size_t len = strlen(line) + 1;
+    auto line = Str_New_Literal("if [ 1 -eq 2 ]; then echo 'hi'; else echo 'hello'; fi");
 
     Lexemes lexemes = {0};
-    lexer_lex(line, len, &lexemes, &scratch_arena);
+    lexer_lex(line, &lexemes, &scratch_arena);
     Statements stmts = {0};
     int res = parser_parse(&lexemes, &stmts, NULL, &scratch_arena);
     eassert(!res);
@@ -395,11 +387,10 @@ void vm_next_if_elif_else_if_true_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    char* line = "if [ 1 -eq 1 ]; then echo 'hi'; elif [ 2 -eq 1 ]; then echo hey; else echo 'hello'; fi";
-    size_t len = strlen(line) + 1;
+    auto line = Str_New_Literal("if [ 1 -eq 1 ]; then echo 'hi'; elif [ 2 -eq 1 ]; then echo hey; else echo 'hello'; fi");
 
     Lexemes lexemes = {0};
-    lexer_lex(line, len, &lexemes, &scratch_arena);
+    lexer_lex(line, &lexemes, &scratch_arena);
     Statements stmts = {0};
     int res = parser_parse(&lexemes, &stmts, NULL, &scratch_arena);
     eassert(!res);
@@ -444,11 +435,10 @@ void vm_next_if_elif_else_elif_true_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    char* line = "if [ 2 -eq 1 ]; then echo 'hi'; elif [ 1 -eq 1 ]; then echo hey; else echo 'hello'; fi";
-    size_t len = strlen(line) + 1;
+    auto line = Str_New_Literal("if [ 2 -eq 1 ]; then echo 'hi'; elif [ 1 -eq 1 ]; then echo hey; else echo 'hello'; fi");
 
     Lexemes lexemes = {0};
-    lexer_lex(line, len, &lexemes, &scratch_arena);
+    lexer_lex(line, &lexemes, &scratch_arena);
     Statements stmts = {0};
     int res = parser_parse(&lexemes, &stmts, NULL, &scratch_arena);
     eassert(!res);

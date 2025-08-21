@@ -8,31 +8,23 @@
 #include "../lib/arena_test_helper.h"
 #include "../lib/shell_test_helper.h"
 
-#define LS "ls"
-#define SORT "sort"
-#define DASH_L "-l"
-#define JOB "longrunningprogram"
-#define FILE "text.txt"
-#define ECHO "echo"
+#define LS Str_New_Literal("ls")
+#define SORT Str_New_Literal("sort")
+#define DASH_L Str_New_Literal("-l")
+#define JOB Str_New_Literal("longrunningprogram")
+#define FILE Str_New_Literal("text.txt")
+#define ECHO Str_New_Literal("echo")
 
 static char** envp_ptr;
-
-static constexpr size_t ls_len = sizeof(LS);
-static constexpr size_t sort_len = sizeof(SORT);
-static constexpr size_t dashl_len = sizeof(DASH_L);
-static constexpr size_t job_len = sizeof(JOB);
-static constexpr size_t file_len = sizeof(FILE);
-static constexpr size_t echo_len = sizeof(ECHO);
 
 void parser_parse_ls_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    char* line = LS;
-    size_t len = ls_len;
+    auto line = LS;
 
     Lexemes lexemes = {0};
-    lexer_lex(line, len, &lexemes, &scratch_arena);
+    lexer_lex(line, &lexemes, &scratch_arena);
     Statements statements = {0};
     int res = parser_parse(&lexemes, &statements, NULL, &scratch_arena);
 
@@ -41,8 +33,8 @@ void parser_parse_ls_test()
     eassert(statements.statements->count == 1);
     eassert(statements.statements->commands->count == 1);
 
-    eassert(!memcmp(statements.statements->commands->strs[0].value, line, len));
-    eassert(statements.statements->commands->strs[0].length == len);
+    eassert(!memcmp(statements.statements->commands->strs[0].value, line.value, line.length));
+    eassert(statements.statements->commands->strs[0].length == line.length);
     eassert(statements.statements->commands->ops[0] == OP_CONSTANT);
 
     eassert(!statements.statements->commands->strs[1].value);
@@ -56,11 +48,9 @@ void parser_parse_ls_dash_l_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    char* line = "ls -l";
-    size_t len = sizeof("ls -l");
-
+    auto line = Str_New_Literal("ls -l");
     Lexemes lexemes = {0};
-    lexer_lex(line, len, &lexemes, &scratch_arena);
+    lexer_lex(line, &lexemes, &scratch_arena);
     Statements statements = {0};
     int res = parser_parse(&lexemes, &statements, NULL, &scratch_arena);
 
@@ -69,12 +59,12 @@ void parser_parse_ls_dash_l_test()
     eassert(statements.statements->count == 1);
     eassert(statements.statements->commands->count == 2);
 
-    eassert(!memcmp(statements.statements->commands->strs[0].value, LS, ls_len - 1));
-    eassert(statements.statements->commands->strs[0].length == ls_len);
+    eassert(!memcmp(statements.statements->commands->strs[0].value, LS.value, LS.length - 1));
+    eassert(statements.statements->commands->strs[0].length == LS.length);
     eassert(statements.statements->commands->ops[0] == OP_CONSTANT);
 
-    eassert(!memcmp(statements.statements->commands->strs[1].value, DASH_L, dashl_len - 1));
-    eassert(statements.statements->commands->strs[1].length == dashl_len);
+    eassert(!memcmp(statements.statements->commands->strs[1].value, DASH_L.value, DASH_L.length - 1));
+    eassert(statements.statements->commands->strs[1].length == DASH_L.length);
     eassert(statements.statements->commands->ops[1] == OP_CONSTANT);
 
     eassert(!statements.statements->commands->strs[2].value);
@@ -87,11 +77,10 @@ void parser_parse_pipe_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    char* line = "ls | sort";
-    size_t len = sizeof("ls | sort");
+    auto line = Str_New_Literal("ls | sort");
 
     Lexemes lexemes = {0};
-    lexer_lex(line, len, &lexemes, &scratch_arena);
+    lexer_lex(line, &lexemes, &scratch_arena);
     Statements statements = {0};
     int res = parser_parse(&lexemes, &statements, NULL, &scratch_arena);
 
@@ -102,16 +91,16 @@ void parser_parse_pipe_test()
 
     Commands* commands = statements.statements->commands;
     eassert(commands->count == 1);
-    eassert(!memcmp(commands->strs[0].value, LS, ls_len - 1));
-    eassert(commands->strs[0].length == ls_len);
+    eassert(!memcmp(commands->strs[0].value, LS.value, LS.length - 1));
+    eassert(commands->strs[0].length == LS.length);
     eassert(commands->ops[0] == OP_CONSTANT);
 
     eassert(!commands->strs[1].value);
 
     commands = commands->next;
     eassert(commands->count == 1);
-    eassert(!memcmp(commands->strs[0].value, SORT, sort_len - 1));
-    eassert(commands->strs[0].length == sort_len);
+    eassert(!memcmp(commands->strs[0].value, SORT.value, SORT.length - 1));
+    eassert(commands->strs[0].length == SORT.length);
     eassert(commands->ops[0] == OP_CONSTANT);
     eassert(commands->prev_op == OP_PIPE);
 
@@ -125,11 +114,10 @@ void parser_parse_multiple_pipes_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    char* line = "ls | sort | table";
-    size_t len = strlen(line) + 1;
+    auto line = Str_New_Literal("ls | sort | table");
 
     Lexemes lexemes = {0};
-    lexer_lex(line, len, &lexemes, &scratch_arena);
+    lexer_lex(line, &lexemes, &scratch_arena);
     Statements statements = {0};
     int res = parser_parse(&lexemes, &statements, NULL, &scratch_arena);
 
@@ -140,16 +128,16 @@ void parser_parse_multiple_pipes_test()
 
     Commands* commands = statements.statements->commands;
     eassert(commands->count == 1);
-    eassert(!memcmp(commands->strs[0].value, LS, ls_len - 1));
-    eassert(commands->strs[0].length == ls_len);
+    eassert(!memcmp(commands->strs[0].value, LS.value, LS.length - 1));
+    eassert(commands->strs[0].length == LS.length);
     eassert(commands->ops[0] == OP_CONSTANT);
 
     eassert(!commands->strs[1].value);
 
     commands = commands->next;
     eassert(commands->count == 1);
-    eassert(!memcmp(commands->strs[0].value, SORT, sort_len - 1));
-    eassert(commands->strs[0].length == sort_len);
+    eassert(!memcmp(commands->strs[0].value, SORT.value, SORT.length - 1));
+    eassert(commands->strs[0].length == SORT.length);
     eassert(commands->ops[0] == OP_CONSTANT);
     eassert(commands->prev_op == OP_PIPE);
 
@@ -173,11 +161,10 @@ void parser_parse_multiple_pipes_multiple_args_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    char* line = "ls | sort | head -1 | wc -c";
-    size_t len = strlen(line) + 1;
+    auto line = Str_New_Literal("ls | sort | head -1 | wc -c");
 
     Lexemes lexemes = {0};
-    lexer_lex(line, len, &lexemes, &scratch_arena);
+    lexer_lex(line, &lexemes, &scratch_arena);
     Statements statements = {0};
     int res = parser_parse(&lexemes, &statements, NULL, &scratch_arena);
 
@@ -199,8 +186,8 @@ void parser_parse_multiple_pipes_multiple_args_test()
     Commands* commands = statements.statements->commands;
     eassert(commands->count == 1);
 
-    eassert(!memcmp(commands->strs[0].value, LS, ls_len - 1));
-    eassert(commands->strs[0].length == ls_len);
+    eassert(!memcmp(commands->strs[0].value, LS.value, LS.length - 1));
+    eassert(commands->strs[0].length == LS.length);
     eassert(commands->ops[0] == OP_CONSTANT);
 
     eassert(!commands->strs[1].value);
@@ -209,8 +196,8 @@ void parser_parse_multiple_pipes_multiple_args_test()
     commands = commands->next;
     eassert(commands->count == 1);
 
-    eassert(!memcmp(commands->strs[0].value, SORT, sort_len - 1));
-    eassert(commands->strs[0].length == sort_len);
+    eassert(!memcmp(commands->strs[0].value, SORT.value, SORT.length - 1));
+    eassert(commands->strs[0].length == SORT.length);
     eassert(commands->ops[0] == OP_CONSTANT);
 
     eassert(commands->prev_op == OP_PIPE);
@@ -257,11 +244,10 @@ void parser_parse_background_job_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    char* line = "longrunningprogram &";
-    size_t len = sizeof("longrunningprogram &");
+    auto line = Str_New_Literal("longrunningprogram &");
 
     Lexemes lexemes = {0};
-    lexer_lex(line, len, &lexemes, &scratch_arena);
+    lexer_lex(line, &lexemes, &scratch_arena);
     Statements statements = {0};
     int res = parser_parse(&lexemes, &statements, NULL, &scratch_arena);
 
@@ -270,8 +256,8 @@ void parser_parse_background_job_test()
     eassert(statements.statements->count == 1);
     eassert(statements.statements->commands->count == 1);
 
-    eassert(!memcmp(statements.statements->commands->strs[0].value, JOB, job_len - 1));
-    eassert(statements.statements->commands->strs[0].length == job_len);
+    eassert(!memcmp(statements.statements->commands->strs[0].value, JOB.value, JOB.length - 1));
+    eassert(statements.statements->commands->strs[0].length == JOB.length);
     eassert(statements.statements->commands->ops[0] == OP_CONSTANT);
 
     eassert(!statements.statements->commands->strs[1].value);
@@ -286,11 +272,10 @@ void parser_parse_output_redirection_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    char* line = "ls > text.txt";
-    size_t len = strlen(line) + 1;
+    auto line = Str_New_Literal("ls > text.txt");
 
     Lexemes lexemes = {0};
-    lexer_lex(line, len, &lexemes, &scratch_arena);
+    lexer_lex(line, &lexemes, &scratch_arena);
     Statements statements = {0};
     int res = parser_parse(&lexemes, &statements, NULL, &scratch_arena);
 
@@ -299,8 +284,8 @@ void parser_parse_output_redirection_test()
     eassert(statements.statements->count == 1);
     eassert(statements.statements->commands->count == 1);
 
-    eassert(!memcmp(statements.statements->commands->strs[0].value, LS, ls_len - 1));
-    eassert(statements.statements->commands->strs[0].length == ls_len);
+    eassert(!memcmp(statements.statements->commands->strs[0].value, LS.value, LS.length - 1));
+    eassert(statements.statements->commands->strs[0].length == LS.length);
     eassert(statements.statements->commands->ops[0] == OP_CONSTANT);
 
     eassert(!statements.statements->commands->strs[1].value);
@@ -308,7 +293,7 @@ void parser_parse_output_redirection_test()
 
     eassert(statements.redirect_type == RT_OUT);
     eassert(statements.redirect_filename);
-    eassert(!memcmp(statements.redirect_filename, FILE, file_len - 1));
+    eassert(!memcmp(statements.redirect_filename, FILE.value, FILE.length - 1));
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -317,11 +302,10 @@ void parser_parse_output_redirection_append_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    char* line = "ls >> text.txt";
-    size_t len = strlen(line) + 1;
+    auto line = Str_New_Literal("ls >> text.txt");
 
     Lexemes lexemes = {0};
-    lexer_lex(line, len, &lexemes, &scratch_arena);
+    lexer_lex(line, &lexemes, &scratch_arena);
     Statements statements = {0};
     int res = parser_parse(&lexemes, &statements, NULL, &scratch_arena);
 
@@ -330,8 +314,8 @@ void parser_parse_output_redirection_append_test()
     eassert(statements.statements->count == 1);
     eassert(statements.statements->commands->count == 1);
 
-    eassert(!memcmp(statements.statements->commands->strs[0].value, LS, ls_len - 1));
-    eassert(statements.statements->commands->strs[0].length == ls_len);
+    eassert(!memcmp(statements.statements->commands->strs[0].value, LS.value, LS.length - 1));
+    eassert(statements.statements->commands->strs[0].length == LS.length);
     eassert(statements.statements->commands->ops[0] == OP_CONSTANT);
 
     eassert(!statements.statements->commands->strs[1].value);
@@ -339,7 +323,7 @@ void parser_parse_output_redirection_append_test()
 
     eassert(statements.redirect_type == RT_OUT_APPEND);
     eassert(statements.redirect_filename);
-    eassert(!memcmp(statements.redirect_filename, FILE, file_len - 1));
+    eassert(!memcmp(statements.redirect_filename, FILE.value, FILE.length - 1));
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -348,11 +332,10 @@ void parser_parse_input_redirection_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    char* line = "sort < text.txt";
-    size_t len = strlen(line) + 1;
+    auto line = Str_New_Literal("sort < text.txt");
 
     Lexemes lexemes = {0};
-    lexer_lex(line, len, &lexemes, &scratch_arena);
+    lexer_lex(line, &lexemes, &scratch_arena);
     Statements statements = {0};
     int res = parser_parse(&lexemes, &statements, NULL, &scratch_arena);
 
@@ -361,8 +344,8 @@ void parser_parse_input_redirection_test()
     eassert(statements.statements->count == 1);
     eassert(statements.statements->commands->count == 1);
 
-    eassert(!memcmp(statements.statements->commands->strs[0].value, SORT, sort_len - 1));
-    eassert(statements.statements->commands->strs[0].length == sort_len);
+    eassert(!memcmp(statements.statements->commands->strs[0].value, SORT.value, SORT.length - 1));
+    eassert(statements.statements->commands->strs[0].length == SORT.length);
     eassert(statements.statements->commands->ops[0] == OP_CONSTANT);
 
     eassert(!statements.statements->commands->strs[1].value);
@@ -370,7 +353,7 @@ void parser_parse_input_redirection_test()
 
     eassert(statements.redirect_type == RT_IN);
     eassert(statements.redirect_filename);
-    eassert(!memcmp(statements.redirect_filename, FILE, file_len - 1));
+    eassert(!memcmp(statements.redirect_filename, FILE.value, FILE.length - 1));
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -379,11 +362,10 @@ void parser_parse_input_redirection_append_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    char* line = "sort << text.txt";
-    size_t len = strlen(line) + 1;
+    auto line = Str_New_Literal("sort << text.txt");
 
     Lexemes lexemes = {0};
-    lexer_lex(line, len, &lexemes, &scratch_arena);
+    lexer_lex(line, &lexemes, &scratch_arena);
     Statements statements = {0};
     int res = parser_parse(&lexemes, &statements, NULL, &scratch_arena);
 
@@ -392,8 +374,8 @@ void parser_parse_input_redirection_append_test()
     eassert(statements.statements->count == 1);
     eassert(statements.statements->commands->count == 1);
 
-    eassert(!memcmp(statements.statements->commands->strs[0].value, SORT, sort_len - 1));
-    eassert(statements.statements->commands->strs[0].length == sort_len);
+    eassert(!memcmp(statements.statements->commands->strs[0].value, SORT.value, SORT.length - 1));
+    eassert(statements.statements->commands->strs[0].length == SORT.length);
     eassert(statements.statements->commands->ops[0] == OP_CONSTANT);
 
     eassert(!statements.statements->commands->strs[1].value);
@@ -401,7 +383,7 @@ void parser_parse_input_redirection_append_test()
 
     eassert(statements.redirect_type == RT_IN_APPEND);
     eassert(statements.redirect_filename);
-    eassert(!memcmp(statements.redirect_filename, FILE, file_len - 1));
+    eassert(!memcmp(statements.redirect_filename, FILE.value, FILE.length - 1));
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -410,11 +392,10 @@ void parser_parse_stderr_redirection_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    char* line = "ls 2> text.txt";
-    size_t len = strlen(line) + 1;
+    auto line = Str_New_Literal("ls 2> text.txt");
 
     Lexemes lexemes = {0};
-    lexer_lex(line, len, &lexemes, &scratch_arena);
+    lexer_lex(line, &lexemes, &scratch_arena);
     Statements statements = {0};
     int res = parser_parse(&lexemes, &statements, NULL, &scratch_arena);
 
@@ -423,8 +404,8 @@ void parser_parse_stderr_redirection_test()
     eassert(statements.statements->count == 1);
     eassert(statements.statements->commands->count == 1);
 
-    eassert(!memcmp(statements.statements->commands->strs[0].value, LS, ls_len - 1));
-    eassert(statements.statements->commands->strs[0].length == ls_len);
+    eassert(!memcmp(statements.statements->commands->strs[0].value, LS.value, LS.length - 1));
+    eassert(statements.statements->commands->strs[0].length == LS.length);
     eassert(statements.statements->commands->ops[0] == OP_CONSTANT);
 
     eassert(!statements.statements->commands->strs[1].value);
@@ -432,7 +413,7 @@ void parser_parse_stderr_redirection_test()
 
     eassert(statements.redirect_type == RT_ERR);
     eassert(statements.redirect_filename);
-    eassert(!memcmp(statements.redirect_filename, FILE, file_len - 1));
+    eassert(!memcmp(statements.redirect_filename, FILE.value, FILE.length - 1));
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -441,11 +422,10 @@ void parser_parse_stderr_redirection_append_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    char* line = "ls 2>> text.txt";
-    size_t len = strlen(line) + 1;
+    auto line = Str_New_Literal("ls 2>> text.txt");
 
     Lexemes lexemes = {0};
-    lexer_lex(line, len, &lexemes, &scratch_arena);
+    lexer_lex(line, &lexemes, &scratch_arena);
     Statements statements = {0};
     int res = parser_parse(&lexemes, &statements, NULL, &scratch_arena);
 
@@ -454,8 +434,8 @@ void parser_parse_stderr_redirection_append_test()
     eassert(statements.statements->count == 1);
     eassert(statements.statements->commands->count == 1);
 
-    eassert(!memcmp(statements.statements->commands->strs[0].value, LS, ls_len - 1));
-    eassert(statements.statements->commands->strs[0].length == ls_len);
+    eassert(!memcmp(statements.statements->commands->strs[0].value, LS.value, LS.length - 1));
+    eassert(statements.statements->commands->strs[0].length == LS.length);
     eassert(statements.statements->commands->ops[0] == OP_CONSTANT);
 
     eassert(!statements.statements->commands->strs[1].value);
@@ -463,7 +443,7 @@ void parser_parse_stderr_redirection_append_test()
 
     eassert(statements.redirect_type == RT_ERR_APPEND);
     eassert(statements.redirect_filename);
-    eassert(!memcmp(statements.redirect_filename, FILE, file_len - 1));
+    eassert(!memcmp(statements.redirect_filename, FILE.value, FILE.length - 1));
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -472,11 +452,10 @@ void parser_parse_stdout_and_stderr_redirection_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    char* line = "ls &> text.txt";
-    size_t len = strlen(line) + 1;
+    auto line = Str_New_Literal("ls &> text.txt");
 
     Lexemes lexemes = {0};
-    lexer_lex(line, len, &lexemes, &scratch_arena);
+    lexer_lex(line, &lexemes, &scratch_arena);
     Statements statements = {0};
     int res = parser_parse(&lexemes, &statements, NULL, &scratch_arena);
 
@@ -485,8 +464,8 @@ void parser_parse_stdout_and_stderr_redirection_test()
     eassert(statements.statements->count == 1);
     eassert(statements.statements->commands->count == 1);
 
-    eassert(!memcmp(statements.statements->commands->strs[0].value, LS, ls_len - 1));
-    eassert(statements.statements->commands->strs[0].length == ls_len);
+    eassert(!memcmp(statements.statements->commands->strs[0].value, LS.value, LS.length - 1));
+    eassert(statements.statements->commands->strs[0].length == LS.length);
     eassert(statements.statements->commands->ops[0] == OP_CONSTANT);
 
     eassert(!statements.statements->commands->strs[1].value);
@@ -494,7 +473,7 @@ void parser_parse_stdout_and_stderr_redirection_test()
 
     eassert(statements.redirect_type == RT_OUT_ERR);
     eassert(statements.redirect_filename);
-    eassert(!memcmp(statements.redirect_filename, FILE, file_len - 1));
+    eassert(!memcmp(statements.redirect_filename, FILE.value, FILE.length - 1));
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -503,11 +482,10 @@ void parser_parse_stdout_and_stderr_redirection_append_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    char* line = "ls &>> text.txt";
-    size_t len = strlen(line) + 1;
+    auto line = Str_New_Literal("ls &>> text.txt");
 
     Lexemes lexemes = {0};
-    lexer_lex(line, len, &lexemes, &scratch_arena);
+    lexer_lex(line, &lexemes, &scratch_arena);
     Statements statements = {0};
     int res = parser_parse(&lexemes, &statements, NULL, &scratch_arena);
 
@@ -516,8 +494,8 @@ void parser_parse_stdout_and_stderr_redirection_append_test()
     eassert(statements.statements->count == 1);
     eassert(statements.statements->commands->count == 1);
 
-    eassert(!memcmp(statements.statements->commands->strs[0].value, LS, ls_len - 1));
-    eassert(statements.statements->commands->strs[0].length == ls_len);
+    eassert(!memcmp(statements.statements->commands->strs[0].value, LS.value, LS.length - 1));
+    eassert(statements.statements->commands->strs[0].length == LS.length);
     eassert(statements.statements->commands->ops[0] == OP_CONSTANT);
 
     eassert(!statements.statements->commands->strs[1].value);
@@ -525,7 +503,7 @@ void parser_parse_stdout_and_stderr_redirection_append_test()
 
     eassert(statements.redirect_type == RT_OUT_ERR_APPEND);
     eassert(statements.redirect_filename);
-    eassert(!memcmp(statements.redirect_filename, FILE, file_len - 1));
+    eassert(!memcmp(statements.redirect_filename, FILE.value, FILE.length - 1));
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -534,11 +512,10 @@ void parser_parse_git_commit_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    char* line = "git commit -m \"this is a commit message\"";
-    size_t len = strlen(line) + 1;
+    auto line = Str_New_Literal("git commit -m \"this is a commit message\"");
 
     Lexemes lexemes = {0};
-    lexer_lex(line, len, &lexemes, &scratch_arena);
+    lexer_lex(line, &lexemes, &scratch_arena);
     Statements statements = {0};
     int res = parser_parse(&lexemes, &statements, NULL, &scratch_arena);
 
@@ -573,11 +550,10 @@ void parser_parse_assignment_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    char* line = "STR=\"Hello\"";
-    size_t len = strlen(line) + 1;
+    auto line = Str_New_Literal("STR=\"Hello\"");
 
     Lexemes lexemes = {0};
-    lexer_lex(line, len, &lexemes, &scratch_arena);
+    lexer_lex(line, &lexemes, &scratch_arena);
     Statements statements = {0};
     Shell shell = {0};
     shell_init(&shell, &scratch_arena, envp_ptr);
@@ -594,11 +570,10 @@ void parser_parse_assignment_spaces_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    char* line = "STR=\"ls -a\"";
-    size_t len = strlen(line) + 1;
+    auto line = Str_New_Literal("STR=\"ls -a\"");
 
     Lexemes lexemes = {0};
-    lexer_lex(line, len, &lexemes, &scratch_arena);
+    lexer_lex(line, &lexemes, &scratch_arena);
     Statements statements = {0};
     Shell shell = {0};
     shell_init(&shell, &scratch_arena, envp_ptr);
@@ -615,11 +590,10 @@ void parser_parse_assignment_spaces_multiple_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    char* line = "STR=\"ls | sort\"";
-    size_t len = strlen(line) + 1;
+    auto line = Str_New_Literal("STR=\"ls | sort\"");
 
     Lexemes lexemes = {0};
-    lexer_lex(line, len, &lexemes, &scratch_arena);
+    lexer_lex(line, &lexemes, &scratch_arena);
     Statements statements = {0};
     Shell shell = {0};
     shell_init(&shell, &scratch_arena, envp_ptr);
@@ -641,11 +615,10 @@ void parser_parse_variable_test()
     shell_init(&shell, &arena, envp_ptr);
     *env_add_or_get(shell.env, Str_New_Literal("STR")) = Str_New_Literal("hello");
 
-    char* line = "echo $STR";
-    size_t len = strlen(line) + 1;
+    auto line = Str_New_Literal("echo $STR");
 
     Lexemes lexemes = {0};
-    lexer_lex(line, len, &lexemes, &s);
+    lexer_lex(line, &lexemes, &s);
     Statements statements = {0};
     int res = parser_parse(&lexemes, &statements, &shell, &s);
 
@@ -654,8 +627,8 @@ void parser_parse_variable_test()
     eassert(statements.statements->count == 1);
     eassert(statements.statements->commands->count == 2);
 
-    eassert(!memcmp(statements.statements->commands->strs[0].value, ECHO, echo_len - 1));
-    eassert(statements.statements->commands->strs[0].length == echo_len);
+    eassert(!memcmp(statements.statements->commands->strs[0].value, ECHO.value, ECHO.length - 1));
+    eassert(statements.statements->commands->strs[0].length == ECHO.length);
     eassert(statements.statements->commands->ops[0] == OP_CONSTANT);
 
     eassert(!memcmp(statements.statements->commands->strs[1].value, "hello", 5));
@@ -677,11 +650,10 @@ void parser_parse_variable_expansion_test()
     shell_init(&shell, &scratch_arena, envp_ptr);
     *env_add_or_get(shell.env, Str_New_Literal("STR")) = Str_New_Literal("ls | sort");
 
-    char* line = "echo $STR";
-    size_t len = strlen(line) + 1;
+    auto line = Str_New_Literal("echo $STR");
 
     Lexemes lexemes = {0};
-    lexer_lex(line, len, &lexemes, &scratch_arena);
+    lexer_lex(line, &lexemes, &scratch_arena);
     Statements statements = {0};
     int res = parser_parse(&lexemes, &statements, &shell, &scratch_arena);
 
@@ -690,8 +662,8 @@ void parser_parse_variable_expansion_test()
     eassert(statements.statements->count == 1);
     eassert(statements.statements->commands->count == 2);
 
-    eassert(!memcmp(statements.statements->commands->strs[0].value, ECHO, echo_len - 1));
-    eassert(statements.statements->commands->strs[0].length == echo_len);
+    eassert(!memcmp(statements.statements->commands->strs[0].value, ECHO.value, ECHO.length - 1));
+    eassert(statements.statements->commands->strs[0].length == ECHO.length);
     eassert(statements.statements->commands->ops[0] == OP_CONSTANT);
 
     eassert(!memcmp(statements.statements->commands->strs[1].value, "ls | sort", 9));
@@ -708,11 +680,10 @@ void parser_parse_variable_and_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    char* line = "STR=hello && echo $STR";
-    size_t len = strlen(line) + 1;
+    auto line = Str_New_Literal("STR=hello && echo $STR");
 
     Lexemes lexemes = {0};
-    lexer_lex(line, len, &lexemes, &scratch_arena);
+    lexer_lex(line, &lexemes, &scratch_arena);
     Statements statements = {0};
     Shell shell = {0};
     shell_init(&shell, &scratch_arena, envp_ptr);
@@ -723,8 +694,8 @@ void parser_parse_variable_and_test()
     eassert(statements.statements->count == 1);
     eassert(statements.statements->commands->count == 2);
 
-    eassert(!memcmp(statements.statements->commands->strs[0].value, ECHO, echo_len - 1));
-    eassert(statements.statements->commands->strs[0].length == echo_len);
+    eassert(!memcmp(statements.statements->commands->strs[0].value, ECHO.value, ECHO.length - 1));
+    eassert(statements.statements->commands->strs[0].length == ECHO.length);
     eassert(statements.statements->commands->ops[0] == OP_CONSTANT);
 
     eassert(!memcmp(statements.statements->commands->strs[1].value, "hello", 5));
@@ -741,11 +712,10 @@ void parser_parse_variable_command_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    char* line = "COMMAND=ls && $COMMAND";
-    size_t len = strlen(line) + 1;
+    auto line = Str_New_Literal("COMMAND=ls && $COMMAND");
 
     Lexemes lexemes = {0};
-    lexer_lex(line, len, &lexemes, &scratch_arena);
+    lexer_lex(line, &lexemes, &scratch_arena);
 
     Statements statements = {0};
     Shell shell = {0};
@@ -758,8 +728,8 @@ void parser_parse_variable_command_test()
     eassert(statements.statements->commands->count == 1);
 
     Commands* cmds = statements.statements->commands;
-    eassert(!memcmp(cmds->strs[0].value, LS, ls_len - 1));
-    eassert(cmds->strs[0].length == ls_len);
+    eassert(!memcmp(cmds->strs[0].value, LS.value, LS.length - 1));
+    eassert(cmds->strs[0].length == LS.length);
     eassert(cmds->ops[0] == OP_CONSTANT);
 
     eassert(!cmds->strs[1].value);
@@ -771,11 +741,10 @@ void parser_parse_home_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    char* line = "ls ~";
-    size_t len = 5;
+    auto line = Str_New_Literal("ls ~");
 
     Lexemes lexemes = {0};
-    lexer_lex(line, len, &lexemes, &scratch_arena);
+    lexer_lex(line, &lexemes, &scratch_arena);
     Statements statements = {0};
     Shell shell = {0};
     shell_init(&shell, &scratch_arena, envp_ptr);
@@ -787,8 +756,8 @@ void parser_parse_home_test()
     eassert(statements.statements->commands->count == 2);
 
     // first command
-    eassert(!memcmp(statements.statements->commands->strs[0].value, LS, ls_len - 1));
-    eassert(statements.statements->commands->strs[0].length == ls_len);
+    eassert(!memcmp(statements.statements->commands->strs[0].value, LS.value, LS.length - 1));
+    eassert(statements.statements->commands->strs[0].length == LS.length);
     eassert(statements.statements->commands->ops[0] == OP_CONSTANT);
 
     // second command
@@ -807,11 +776,10 @@ void parser_parse_home_at_start_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    char* line = "ls ~/snap";
-    size_t len = strlen(line) + 1;
+    auto line = Str_New_Literal("ls ~/snap");
 
     Lexemes lexemes = {0};
-    lexer_lex(line, len, &lexemes, &scratch_arena);
+    lexer_lex(line, &lexemes, &scratch_arena);
     Statements statements = {0};
     Shell shell = {0};
     shell_init(&shell, &scratch_arena, envp_ptr);
@@ -823,8 +791,8 @@ void parser_parse_home_at_start_test()
     eassert(statements.statements->commands->count == 2);
 
     // first command
-    eassert(!memcmp(statements.statements->commands->strs[0].value, LS, ls_len - 1));
-    eassert(statements.statements->commands->strs[0].length == ls_len);
+    eassert(!memcmp(statements.statements->commands->strs[0].value, LS.value, LS.length - 1));
+    eassert(statements.statements->commands->strs[0].length == LS.length);
     eassert(statements.statements->commands->ops[0] == OP_CONSTANT);
 
     // construct home expanded value from '~/snap'
@@ -851,11 +819,10 @@ void parser_parse_math_operators_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    char* line = "$( 1 + 1 - 1 * 1 / 1 % 1 ** 1 )";
-    size_t len = strlen(line) + 1;
+    auto line = Str_New_Literal("$( 1 + 1 - 1 * 1 / 1 % 1 ** 1 )");
 
     Lexemes lexemes = {0};
-    lexer_lex(line, len, &lexemes, &scratch_arena);
+    lexer_lex(line, &lexemes, &scratch_arena);
     Statements statements = {0};
     int res = parser_parse(&lexemes, &statements, NULL, &scratch_arena);
     eassert(!res);
@@ -868,11 +835,10 @@ void parser_parse_glob_star_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    char* line = "ls *.md";
-    size_t len = strlen(line) + 1;
+    auto line = Str_New_Literal("ls *.md");
 
     Lexemes lexemes = {0};
-    lexer_lex(line, len, &lexemes, &scratch_arena);
+    lexer_lex(line, &lexemes, &scratch_arena);
     Statements statements = {0};
     int res = parser_parse(&lexemes, &statements, NULL, &scratch_arena);
 
@@ -881,8 +847,8 @@ void parser_parse_glob_star_test()
     eassert(statements.statements->count == 1);
     eassert(statements.statements->commands->count == 4);
 
-    eassert(!memcmp(statements.statements->commands->strs[0].value, LS, ls_len - 1));
-    eassert(statements.statements->commands->strs[0].length == ls_len);
+    eassert(!memcmp(statements.statements->commands->strs[0].value, LS.value, LS.length - 1));
+    eassert(statements.statements->commands->strs[0].length == LS.length);
     eassert(statements.statements->commands->ops[0] == OP_CONSTANT);
 
     eassert(!memcmp(statements.statements->commands->strs[1].value, "COMPILE.md", 10));
@@ -907,11 +873,10 @@ void parser_parse_glob_question_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    char* line = "ls ?OTES.md";
-    size_t len = strlen(line) + 1;
+    auto line = Str_New_Literal("ls ?OTES.md");
 
     Lexemes lexemes = {0};
-    lexer_lex(line, len, &lexemes, &scratch_arena);
+    lexer_lex(line, &lexemes, &scratch_arena);
     Statements statements = {0};
     int res = parser_parse(&lexemes, &statements, NULL, &scratch_arena);
 
@@ -920,8 +885,8 @@ void parser_parse_glob_question_test()
     eassert(statements.statements->count == 1);
     eassert(statements.statements->commands->count == 2);
 
-    eassert(!memcmp(statements.statements->commands->strs[0].value, LS, ls_len - 1));
-    eassert(statements.statements->commands->strs[0].length == ls_len);
+    eassert(!memcmp(statements.statements->commands->strs[0].value, LS.value, LS.length - 1));
+    eassert(statements.statements->commands->strs[0].length == LS.length);
     eassert(statements.statements->commands->ops[0] == OP_CONSTANT);
 
     eassert(!memcmp(statements.statements->commands->strs[1].value, "NOTES.md", 8));
@@ -938,11 +903,10 @@ void parser_parse_glob_question_midcommand_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    char* line = "ls N?TES.md";
-    size_t len = strlen(line) + 1;
+    auto line = Str_New_Literal("ls N?TES.md");
 
     Lexemes lexemes = {0};
-    lexer_lex(line, len, &lexemes, &scratch_arena);
+    lexer_lex(line, &lexemes, &scratch_arena);
     Statements statements = {0};
     int res = parser_parse(&lexemes, &statements, NULL, &scratch_arena);
 
@@ -951,8 +915,8 @@ void parser_parse_glob_question_midcommand_test()
     eassert(statements.statements->count == 1);
     eassert(statements.statements->commands->count == 2);
 
-    eassert(!memcmp(statements.statements->commands->strs[0].value, LS, ls_len - 1));
-    eassert(statements.statements->commands->strs[0].length == ls_len);
+    eassert(!memcmp(statements.statements->commands->strs[0].value, LS.value, LS.length - 1));
+    eassert(statements.statements->commands->strs[0].length == LS.length);
     eassert(statements.statements->commands->ops[0] == OP_CONSTANT);
 
     eassert(!memcmp(statements.statements->commands->strs[1].value, "NOTES.md", 8));
@@ -970,7 +934,7 @@ void parser_parse_glob_question_midcommand_test()
 int parser_arena_ctx_wrapper(Str line, Statements* stmts, Arena* restrict sa)
 {
     Lexemes lexemes = {0};
-    lexer_lex(line.value, line.length, &lexemes, sa);
+    lexer_lex(line, &lexemes, sa);
     int res = parser_parse(&lexemes, stmts, NULL, sa);
     return res;
 }
@@ -983,7 +947,7 @@ void parser_parse_glob_star_shouldnt_crash()
     Str line = Str_New_Literal("* * * * * * * * * * * * * * * * * *");
 
     Lexemes lexemes = {0};
-    lexer_lex(line.value, line.length, &lexemes, &s);
+    lexer_lex(line, &lexemes, &s);
     Statements stmts = {0};
     int res = parser_parse(&lexemes, &stmts, NULL, &s);
 
@@ -999,12 +963,10 @@ void parser_parse_tilde_home_shouldnt_crash()
     SCRATCH_ARENA_TEST_SETUP;
 
     // found from fuzzer crashing inputs
-    char* line =
-        "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~?~";
-    size_t len = strlen(line) + 1;
+    auto line = Str_New_Literal("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~?~");
 
     Lexemes lexemes = {0};
-    lexer_lex(line, len, &lexemes, &scratch_arena);
+    lexer_lex(line, &lexemes, &scratch_arena);
     Statements statements = {0};
     Shell shell = {0};
     shell_init(&shell, &scratch_arena, envp_ptr);
@@ -1019,12 +981,11 @@ void parser_parse_glob_question_and_tilde_home_shouldnt_crash()
     SCRATCH_ARENA_TEST_SETUP;
 
     // found from fuzzer crashing inputs
-    char* line = "??~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-                 "~~~~?~>w?";
-    size_t len = strlen(line) + 1;
+    auto line = Str_New_Literal("??~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+                                "~~~~?~>w?");
 
     Lexemes lexemes = {0};
-    lexer_lex(line, len, &lexemes, &scratch_arena);
+    lexer_lex(line, &lexemes, &scratch_arena);
     Statements statements = {0};
     Shell shell = {0};
     shell_init(&shell, &scratch_arena, envp_ptr);
@@ -1039,11 +1000,10 @@ void parser_parse_comment_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    char* line = "echo \"hello\" # this is a comment";
-    size_t len = strlen(line) + 1;
+    auto line = Str_New_Literal("echo \"hello\" # this is a comment");
 
     Lexemes lexemes = {0};
-    lexer_lex(line, len, &lexemes, &scratch_arena);
+    lexer_lex(line, &lexemes, &scratch_arena);
     Statements statements = {0};
     Shell shell = {0};
     shell_init(&shell, &scratch_arena, envp_ptr);
@@ -1054,8 +1014,8 @@ void parser_parse_comment_test()
     eassert(statements.statements->count == 1);
     eassert(statements.statements->commands->count == 2);
 
-    eassert(!memcmp(statements.statements->commands->strs[0].value, ECHO, echo_len - 1));
-    eassert(statements.statements->commands->strs[0].length == echo_len);
+    eassert(!memcmp(statements.statements->commands->strs[0].value, ECHO.value, ECHO.length - 1));
+    eassert(statements.statements->commands->strs[0].length == ECHO.length);
     eassert(statements.statements->commands->ops[0] == OP_CONSTANT);
 
     eassert(!memcmp(statements.statements->commands->strs[1].value, "hello", 5));
@@ -1072,11 +1032,10 @@ void parser_parse_bool_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    char* line = "false && true || false";
-    size_t len = strlen(line) + 1;
+    auto line = Str_New_Literal("false && true || false");
 
     Lexemes lexemes = {0};
-    lexer_lex(line, len, &lexemes, &scratch_arena);
+    lexer_lex(line, &lexemes, &scratch_arena);
     Statements statements = {0};
     int res = parser_parse(&lexemes, &statements, NULL, &scratch_arena);
 
@@ -1127,11 +1086,10 @@ void parser_parse_if_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    char* line = "if [ 1 -eq 1 ]; then echo 'hi'; fi";
-    size_t len = strlen(line) + 1;
+    auto line = Str_New_Literal("if [ 1 -eq 1 ]; then echo 'hi'; fi");
 
     Lexemes lexemes = {0};
-    lexer_lex(line, len, &lexemes, &scratch_arena);
+    lexer_lex(line, &lexemes, &scratch_arena);
     Statements statements = {0};
     int res = parser_parse(&lexemes, &statements, NULL, &scratch_arena);
 
@@ -1168,8 +1126,8 @@ void parser_parse_if_test()
     eassert(commands->count == 2);
 
     eassert(commands->strs[0].value);
-    eassert(!memcmp(commands->strs[0].value, ECHO, echo_len - 1));
-    eassert(commands->strs[0].length == echo_len);
+    eassert(!memcmp(commands->strs[0].value, ECHO.value, ECHO.length - 1));
+    eassert(commands->strs[0].length == ECHO.length);
     eassert(commands->ops[0] == OP_CONSTANT);
     eassert(commands->prev_op == OP_NONE);
 
@@ -1195,11 +1153,10 @@ void parser_parse_if_variable_test()
     shell.arena = a;
     *env_add_or_get(shell.env, Str_New_Literal("VAL")) = Str_New_Literal("1");
 
-    char* line = "if [ $VAL -eq 1 ]; then echo 'hi'; fi";
-    size_t len = strlen(line) + 1;
+    auto line = Str_New_Literal("if [ $VAL -eq 1 ]; then echo 'hi'; fi");
 
     Lexemes lexemes = {0};
-    lexer_lex(line, len, &lexemes, &s);
+    lexer_lex(line, &lexemes, &s);
     Statements statements = {0};
     int res = parser_parse(&lexemes, &statements, &shell, &s);
 
@@ -1236,8 +1193,8 @@ void parser_parse_if_variable_test()
     eassert(commands->count == 2);
 
     eassert(commands->strs[0].value);
-    eassert(!memcmp(commands->strs[0].value, ECHO, echo_len - 1));
-    eassert(commands->strs[0].length == echo_len);
+    eassert(!memcmp(commands->strs[0].value, ECHO.value, ECHO.length - 1));
+    eassert(commands->strs[0].length == ECHO.length);
     eassert(commands->ops[0] == OP_CONSTANT);
     eassert(commands->prev_op == OP_NONE);
 
@@ -1258,11 +1215,10 @@ void parser_parse_if_multiple_conditions_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    char* line = "if [ true && true ]; then echo 'hi'; fi";
-    size_t len = strlen(line) + 1;
+    auto line = Str_New_Literal("if [ true && true ]; then echo 'hi'; fi");
 
     Lexemes lexemes = {0};
-    lexer_lex(line, len, &lexemes, &scratch_arena);
+    lexer_lex(line, &lexemes, &scratch_arena);
     Statements statements = {0};
     int res = parser_parse(&lexemes, &statements, NULL, &scratch_arena);
 
@@ -1298,8 +1254,8 @@ void parser_parse_if_multiple_conditions_test()
     eassert(commands->count == 2);
 
     eassert(commands->strs[0].value);
-    eassert(!memcmp(commands->strs[0].value, ECHO, echo_len - 1));
-    eassert(commands->strs[0].length == echo_len);
+    eassert(!memcmp(commands->strs[0].value, ECHO.value, ECHO.length - 1));
+    eassert(commands->strs[0].length == ECHO.length);
     eassert(commands->ops[0] == OP_CONSTANT);
     eassert(commands->prev_op == OP_NONE);
 
@@ -1319,11 +1275,10 @@ void parser_parse_if_else_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    char* line = "if [ 1 -eq 1 ]; then echo 'hi'; else echo hello; fi";
-    size_t len = strlen(line) + 1;
+    auto line = Str_New_Literal("if [ 1 -eq 1 ]; then echo 'hi'; else echo hello; fi");
 
     Lexemes lexemes = {0};
-    lexer_lex(line, len, &lexemes, &scratch_arena);
+    lexer_lex(line, &lexemes, &scratch_arena);
     Statements statements = {0};
     int res = parser_parse(&lexemes, &statements, NULL, &scratch_arena);
 
@@ -1361,8 +1316,8 @@ void parser_parse_if_else_test()
     eassert(commands->count == 2);
 
     eassert(commands->strs[0].value);
-    eassert(!memcmp(commands->strs[0].value, ECHO, echo_len - 1));
-    eassert(commands->strs[0].length == echo_len);
+    eassert(!memcmp(commands->strs[0].value, ECHO.value, ECHO.length - 1));
+    eassert(commands->strs[0].length == ECHO.length);
     eassert(commands->ops[0] == OP_CONSTANT);
     eassert(commands->prev_op == OP_NONE);
 
@@ -1381,8 +1336,8 @@ void parser_parse_if_else_test()
     eassert(commands->count == 2);
 
     eassert(commands->strs[0].value);
-    eassert(!memcmp(commands->strs[0].value, ECHO, echo_len - 1));
-    eassert(commands->strs[0].length == echo_len);
+    eassert(!memcmp(commands->strs[0].value, ECHO.value, ECHO.length - 1));
+    eassert(commands->strs[0].length == ECHO.length);
     eassert(commands->ops[0] == OP_CONSTANT);
     eassert(commands->prev_op == OP_NONE);
 
@@ -1403,11 +1358,10 @@ void parser_parse_if_elif_else_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    char* line = "if [ 1 -eq 2 ]; then echo 'hi'; elif [ 1 -eq 1 ]; then echo hey; else echo hello; fi";
-    size_t len = strlen(line) + 1;
+    auto line = Str_New_Literal("if [ 1 -eq 2 ]; then echo 'hi'; elif [ 1 -eq 1 ]; then echo hey; else echo hello; fi");
 
     Lexemes lexemes = {0};
-    lexer_lex(line, len, &lexemes, &scratch_arena);
+    lexer_lex(line, &lexemes, &scratch_arena);
     Statements statements = {0};
     int res = parser_parse(&lexemes, &statements, NULL, &scratch_arena);
 
@@ -1445,8 +1399,8 @@ void parser_parse_if_elif_else_test()
     eassert(commands->count == 2);
 
     eassert(commands->strs[0].value);
-    eassert(!memcmp(commands->strs[0].value, ECHO, echo_len - 1));
-    eassert(commands->strs[0].length == echo_len);
+    eassert(!memcmp(commands->strs[0].value, ECHO.value, ECHO.length - 1));
+    eassert(commands->strs[0].length == ECHO.length);
     eassert(commands->ops[0] == OP_CONSTANT);
     eassert(commands->prev_op == OP_NONE);
 
@@ -1488,8 +1442,8 @@ void parser_parse_if_elif_else_test()
     eassert(commands->count == 2);
 
     eassert(commands->strs[0].value);
-    eassert(!memcmp(commands->strs[0].value, ECHO, echo_len - 1));
-    eassert(commands->strs[0].length == echo_len);
+    eassert(!memcmp(commands->strs[0].value, ECHO.value, ECHO.length - 1));
+    eassert(commands->strs[0].length == ECHO.length);
     eassert(commands->ops[0] == OP_CONSTANT);
     eassert(commands->prev_op == OP_NONE);
 
@@ -1508,8 +1462,8 @@ void parser_parse_if_elif_else_test()
     eassert(commands->count == 2);
 
     eassert(commands->strs[0].value);
-    eassert(!memcmp(commands->strs[0].value, ECHO, echo_len - 1));
-    eassert(commands->strs[0].length == echo_len);
+    eassert(!memcmp(commands->strs[0].value, ECHO.value, ECHO.length - 1));
+    eassert(commands->strs[0].length == ECHO.length);
     eassert(commands->ops[0] == OP_CONSTANT);
     eassert(commands->prev_op == OP_NONE);
 
@@ -1528,11 +1482,10 @@ void parser_parse_if_elif_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    char* line = "if [ 1 -eq 2 ]; then echo 'hi'; elif [ 1 -eq 1 ]; then echo hey; fi";
-    size_t len = strlen(line) + 1;
+    auto line = Str_New_Literal("if [ 1 -eq 2 ]; then echo 'hi'; elif [ 1 -eq 1 ]; then echo hey; fi");
 
     Lexemes lexemes = {0};
-    lexer_lex(line, len, &lexemes, &scratch_arena);
+    lexer_lex(line, &lexemes, &scratch_arena);
     Statements statements = {0};
     int res = parser_parse(&lexemes, &statements, NULL, &scratch_arena);
 
@@ -1570,8 +1523,8 @@ void parser_parse_if_elif_test()
     eassert(commands->count == 2);
 
     eassert(commands->strs[0].value);
-    eassert(!memcmp(commands->strs[0].value, ECHO, echo_len - 1));
-    eassert(commands->strs[0].length == echo_len);
+    eassert(!memcmp(commands->strs[0].value, ECHO.value, ECHO.length - 1));
+    eassert(commands->strs[0].length == ECHO.length);
     eassert(commands->ops[0] == OP_CONSTANT);
     eassert(commands->prev_op == OP_NONE);
 
@@ -1613,8 +1566,8 @@ void parser_parse_if_elif_test()
     eassert(commands->count == 2);
 
     eassert(commands->strs[0].value);
-    eassert(!memcmp(commands->strs[0].value, ECHO, echo_len - 1));
-    eassert(commands->strs[0].length == echo_len);
+    eassert(!memcmp(commands->strs[0].value, ECHO.value, ECHO.length - 1));
+    eassert(commands->strs[0].length == ECHO.length);
     eassert(commands->ops[0] == OP_CONSTANT);
     eassert(commands->prev_op == OP_NONE);
 
