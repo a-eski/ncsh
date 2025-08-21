@@ -76,39 +76,60 @@ enum eresult conf_file_set(Shell* restrict shell)
     return E_SUCCESS;
 }
 
+/* conf_path_add
+ * The function which handles config items which add values to PATH.
+ */
+#define PATH "PATH"
+#define PATH_ADD "PATH+="
+void conf_path_add(Str* path, char* restrict val, int len, Arena* restrict arena)
+{
+    assert(val && *val); assert(len > 0); assert(path->value);
+    if (len <= 0 || !path->length) {
+        return;
+    }
+
+    assert(!val[len - 1]);
+    debugf("adding to add %s to path\n", val);
+
+    Str new_path = {.length = path->length + (size_t)len};
+    new_path.value = arena_realloc(arena, new_path.length, char, path->value, path->length);
+    memcpy(new_path.value, path->value, path->length - 1);
+    new_path.value[path->length - 1] = ':';
+    memcpy(new_path.value + path->length, val, (size_t)len);
+    path->value = new_path.value;
+    path->length = new_path.length;
+    debugf("Got new path to set %s\n", new_path.value);
+}
+
 /* conf_process
  * Iterate through the .ncshrc config file and perform any actions needed.
  */
 #define PATH_ADD "PATH+="
 #define ALIAS_ADD "ALIAS "
-void conf_process(FILE* restrict file, Shell* restrict shell, Arena* restrict scratch)
+void conf_process(FILE* restrict file, Shell* shell)
 {
     int buffer_length;
     char buffer[NCSH_MAX_INPUT] = {0};
+    bool update_path = false;
     Str path_key = Str_New_Literal(NCSH_PATH_VAL);
     Str* path = env_add_or_get(shell->env, path_key);
-    Str_Builder* sb = sb_new(scratch);
-    sb_add(path, sb, scratch);
 
     while ((buffer_length = efgets(buffer, sizeof(buffer), file)) != EOF) {
         // Add to path (6 because PATH+=)
         if (buffer_length > 6 && !memcmp(buffer, PATH_ADD, sizeof(PATH_ADD) - 1)) {
-            assert(buffer + 6 && *(buffer + 6));
-            debugf("adding to PATH: %s\n", buffer + 6);
-            sb_add(&Str_New(buffer + 6, (size_t)(buffer_length - 6)), sb, scratch);
+            conf_path_add(path, buffer + 6, buffer_length - 6, &shell->arena);
+            update_path = true;
         }
-        // Aliasing (aliased=alias)
+        // Aliasing (6 because 'ALIAS aliased=alias')
         else if (buffer_length > 6 && !memcmp(buffer, ALIAS_ADD, sizeof(ALIAS_ADD) - 1)) {
-            assert(buffer + 6 && *(buffer + 6));
             alias_add(Str_New(buffer + 6, (size_t)(buffer_length - 6)), &shell->arena);
         }
 
         memset(buffer, '\0', (size_t)buffer_length);
     }
 
-    if (sb->n > 1) {
-        *path = *sb_to_joined_str(sb, ':', &shell->arena);
-        setenv(NCSH_PATH_VAL, path->value, true);
+    if (path->length && update_path) {
+        setenv(PATH, path->value, true);
     }
 }
 
@@ -117,7 +138,7 @@ void conf_process(FILE* restrict file, Shell* restrict shell, Arena* restrict sc
  * Returns: enum eresult, E_SUCCESS if config file loaded or user doesn't want one.
  */
 [[nodiscard]]
-enum eresult conf_file_load(Shell* restrict shell, Arena* restrict scratch)
+enum eresult conf_file_load(Shell* restrict shell)
 {
     FILE* file = fopen(shell->config.file.value, "r");
     if (!file || ferror(file) || feof(file)) {
@@ -150,7 +171,7 @@ enum eresult conf_file_load(Shell* restrict shell, Arena* restrict scratch)
         return E_SUCCESS;
     }
 
-    conf_process(file, shell, scratch);
+    conf_process(file, shell);
 
     fclose(file);
     return E_SUCCESS;
@@ -162,7 +183,7 @@ enum eresult conf_file_load(Shell* restrict shell, Arena* restrict scratch)
  * Returns: enum eresult, E_SUCCESS is successful
  */
 [[nodiscard]]
-enum eresult conf_init(Shell* restrict shell, Arena scratch)
+enum eresult conf_init(Shell* restrict shell)
 {
     assert(shell); assert(shell->arena.start);
 
@@ -177,7 +198,7 @@ enum eresult conf_init(Shell* restrict shell, Arena scratch)
         return result;
     }
 
-    if ((result = conf_file_load(shell, &scratch)) != E_SUCCESS) {
+    if ((result = conf_file_load(shell)) != E_SUCCESS) {
         debug("failed loading config file");
         return result;
     }

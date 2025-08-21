@@ -9,7 +9,7 @@ int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size)
     SCRATCH_ARENA_TEST_SETUP;
 
     Lexemes lexemes = {0};
-    (void)lexer_lex((char*)Data, Size, &lexemes, &scratch_arena);
+    (void)lexer_lex(Str_New((char*)Data, Size), &lexemes, &scratch_arena);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
     return EXIT_SUCCESS;

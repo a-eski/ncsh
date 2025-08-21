@@ -11,7 +11,7 @@
  * Turns the inputted line into values, lengths, and bytecodes that can be parsed.
  * Populates lexemes with the output.
  */
-void lexer_lex(char* restrict line, size_t length, Lexemes* lexemes, Arena* restrict scratch);
+void lexer_lex(Str line, Lexemes* lexemes, Arena* restrict scratch);
 
 /* lexer_lex_noninteractive
  * Turns the inputted line into values, lengths, and bytecodes that can be parsed.

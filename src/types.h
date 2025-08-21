@@ -76,6 +76,8 @@ typedef struct {
  * they live for the lifetime of the main shell loop.
  */
 typedef struct Shell {
+    __pid_t pgid;
+
     Arena arena;
     Arena scratch;
 

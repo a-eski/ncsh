@@ -10,7 +10,7 @@
 
 // clang-format off
 
-#define NCSH_VERSION "0.0.5.13"
+#define NCSH_VERSION "0.0.5.15"
 
 /* EXIT_* Constants
  * Exit values used by a multitude of functions and areas in the shell.

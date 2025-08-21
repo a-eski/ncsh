@@ -321,12 +321,33 @@ void estrtoarr_returns_arr_test()
 
     eassert(res);
     eassert(!memcmp(res[0], vals[0].value, vals[0].length - 1));
+    eassert(strlen(res[0]) == vals[0].length - 1);
     eassert(!memcmp(res[1], vals[1].value, vals[1].length - 1));
+    eassert(strlen(res[1]) == vals[1].length - 1);
     eassert(!memcmp(res[2], vals[2].value, vals[2].length - 1));
+    eassert(strlen(res[2]) == vals[2].length - 1);
     eassert(!memcmp(res[3], vals[3].value, vals[3].length - 1));
+    eassert(strlen(res[3]) == vals[3].length - 1);
     eassert(!memcmp(res[4], vals[4].value, vals[4].length - 1));
+    eassert(strlen(res[4]) == vals[4].length - 1);
     eassert(!memcmp(res[5], vals[5].value, vals[5].length - 1));
+    eassert(strlen(res[5]) == vals[5].length - 1);
     eassert(!res[6]);
+
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
+void estrtrim_test()
+{
+    SCRATCH_ARENA_TEST_SETUP;
+
+    auto str = estrdup(&Str_New_Literal("nvim  "), &s);
+
+    estrtrim(str);
+
+    auto expected = Str_New_Literal("nvim");
+    eassert(str->length == expected.length);
+    eassert(!memcmp(str->value, expected.value, str->length - 1));
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -495,6 +516,50 @@ void sb_joined_multiple_realloc_test()
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
+void sb_joined_path_test()
+{
+    SCRATCH_ARENA_TEST_SETUP;
+    auto sb = sb_new(&s);
+
+    auto str = Str_Get(getenv("PATH"));
+
+    sb_add(&str, sb, &s);
+    sb_add(&Str_New_Literal("/opt/nvim-linux-x86_64/bin"), sb, &s);
+    sb_add(&Str_New_Literal("/home/alex/.cargo/bin"), sb, &s);
+    sb_add(&Str_New_Literal("/usr/local/opt/llvm/bin"), sb, &s);
+    sb_add(&Str_New_Literal("/usr/local/go/bin"), sb, &s);
+
+    auto res = sb_to_joined_str(sb, ':', &s);
+
+    eassert(res->value);
+    eassert(res->length > str.length);
+
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
+void sb_joined_path_in_scratch_to_perm_test()
+{
+    ARENA_TEST_SETUP;
+    SCRATCH_ARENA_TEST_SETUP;
+    auto sb = sb_new(&s);
+
+    auto str = Str_Get(getenv("PATH"));
+
+    sb_add(&str, sb, &s);
+    sb_add(&Str_New_Literal("/opt/nvim-linux-x86_64/bin"), sb, &s);
+    sb_add(&Str_New_Literal("/home/alex/.cargo/bin"), sb, &s);
+    sb_add(&Str_New_Literal("/usr/local/opt/llvm/bin"), sb, &s);
+    sb_add(&Str_New_Literal("/usr/local/go/bin"), sb, &s);
+
+    auto res = sb_to_joined_str(sb, ':', &a);
+
+    eassert(res->value);
+    eassert(res->length > str.length);
+
+    SCRATCH_ARENA_TEST_TEARDOWN;
+    ARENA_TEST_TEARDOWN;
+}
+
 void str_tests()
 {
     etest_start();
@@ -537,6 +602,8 @@ void str_tests()
 
     etest_run(estrtoarr_returns_arr_test);
 
+    etest_run(estrtrim_test);
+
     etest_run(sb_test);
     etest_run(sb_many_test);
     etest_run(sb_realloc_test);
@@ -546,6 +613,8 @@ void str_tests()
     etest_run(sb_joined_many_test);
     etest_run(sb_joined_realloc_test);
     etest_run(sb_joined_multiple_realloc_test);
+    etest_run(sb_joined_path_test);
+    etest_run(sb_joined_path_in_scratch_to_perm_test);
 
     etest_finish();
 }

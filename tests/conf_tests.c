@@ -10,17 +10,15 @@ static char** envp_ptr;
 
 void conf_init_test()
 {
-    SCRATCH_ARENA_TEST_SETUP;
     ARENA_TEST_SETUP;
 
     Shell shell = {0};
     shell_init(&shell, &arena, envp_ptr);
-    conf_init(&shell, s);
+    conf_init(&shell);
 
     eassert(shell.config.file.value);
     eassert(shell.config.location.value);
 
-    SCRATCH_ARENA_TEST_TEARDOWN;
     ARENA_TEST_TEARDOWN;
 }
 

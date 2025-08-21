@@ -98,7 +98,7 @@ static char* init(Shell* restrict shell, char** restrict envp)
 
     env_new(shell, envp, &shell->arena);
 
-    if (conf_init(shell, shell->scratch) != E_SUCCESS) {
+    if (conf_init(shell) != E_SUCCESS) {
         return NULL;
     }
 
@@ -111,7 +111,10 @@ static char* init(Shell* restrict shell, char** restrict envp)
         return NULL;
     }
 
-    signal_init();
+    if ((shell->pgid = signal_init()) < 0) {
+        tty_perror("ncsh: fatal error while initializing signal handlers");
+        return NULL;
+    }
 
     return memory;
 }
@@ -191,7 +194,7 @@ static int noninteractive(int argc, char** restrict argv, char** restrict envp)
     env_new(&shell, envp, &shell.arena);
 
     int rv = EXIT_SUCCESS;
-    if (conf_init(&shell, shell.scratch) != E_SUCCESS) {
+    if (conf_init(&shell) != E_SUCCESS) {
         rv = EXIT_FAILURE;
         goto exit;
     }

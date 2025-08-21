@@ -13,13 +13,14 @@
 
 sig_atomic_t vm_child_pid;
 jmp_buf env_jmp_buf;
+volatile int sigwinch_caught;
 
 // use a macro so line numbers are preserved
 #define vm_tester(input)                                                                                               \
     SCRATCH_ARENA_TEST_SETUP;                                                                                          \
                                                                                                                        \
     Lexemes lexemes = {0};                                                                                             \
-    lexer_lex(input, strlen(input) + 1, &lexemes, &scratch_arena);                                                     \
+    lexer_lex(Str_Get(input), &lexemes, &scratch_arena);                                                     \
     int res = sema_analyze(&lexemes);                                                                     \
     eassert(res == EXIT_SUCCESS);                                                                                      \
     Statements statements = {0};                                                                                       \

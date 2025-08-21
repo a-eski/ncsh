@@ -52,7 +52,6 @@ Commands* command_next(Commands* restrict cmds, Arena* restrict scratch)
     }
 
     cmds->next = commands_alloc(scratch);
-    cmds->strs[cmds->pos].value = NULL;
     cmds->pos = 0;
 
     cmds = cmds->next;

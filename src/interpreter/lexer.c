@@ -8,7 +8,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../configurables.h"
 #include "../debug.h"
 #include "../defines.h"
 #include "lexemes.h"
@@ -255,23 +254,24 @@ uint8_t lexer_op_process()
 /* lexer_lex
  * Turns the inputted line into values, lengths, and bytecodes that the VM can work with.
  */
-void lexer_lex(char* restrict line, size_t length, Lexemes* lexemes, Arena* restrict scratch)
+void lexer_lex(Str line, Lexemes* lexemes, Arena* restrict scratch)
 {
     if (!lexemes) {
         return;
     }
     assert(lexemes);
     lexemes_init(lexemes, scratch);
-    assert(line && scratch);
-    if (!line || !*line || !length) {
+    assert(line.value); assert(scratch);
+    if (!line.value || !*line.value || !line.length) {
         lexemes->count = 0;
         return;
     }
-    if (length < 2 || length > NCSH_MAX_INPUT) {
+    if (line.length < 2 || line.length > NCSH_MAX_INPUT) {
         lexemes->count = 0;
         return;
     }
-    assert(!line[length - 1] && length >= 2);
+
+    estrtrim(&line);
 
     debug_lexer_input(line, length);
 
@@ -280,8 +280,8 @@ void lexer_lex(char* restrict line, size_t length, Lexemes* lexemes, Arena* rest
     lex_state = 0;
     size_t n = lexemes->count;
 
-    for (register size_t pos = 0; pos < length; ++pos) {
-        if (lexemes->count == LEXER_TOKENS_LIMIT - 1 && pos < length) { // can't lex all of the tokens
+    for (register size_t pos = 0; pos < line.length; ++pos) {
+        if (lexemes->count == LEXER_TOKENS_LIMIT - 1 && pos < line.length) { // can't lex all of the tokens
             lexemes->count = 0;
             break;
         }
@@ -290,7 +290,7 @@ void lexer_lex(char* restrict line, size_t length, Lexemes* lexemes, Arena* rest
             break;
         }
 
-        switch (line[pos]) {
+        switch (line.value[pos]) {
         case DOUBLE_QUOTE_KEY: {
             if (!(lex_state & IN_DOUBLE_QUOTES))
                 lex_state |= IN_DOUBLE_QUOTES;
@@ -318,35 +318,35 @@ void lexer_lex(char* restrict line, size_t length, Lexemes* lexemes, Arena* rest
                 lex_state &= ~IN_DOLLAR_SIGN;
             }
 
-            lex_buf[lex_buf_pos++] = line[pos];
+            lex_buf[lex_buf_pos++] = line.value[pos];
             continue;
         }
         case CLOSING_PARAN: {
             if (lex_state & IN_MATHEMATICAL_EXPRESSION)
                 lex_state &= ~IN_MATHEMATICAL_EXPRESSION;
 
-            lex_buf[lex_buf_pos++] = line[pos];
+            lex_buf[lex_buf_pos++] = line.value[pos];
             continue;
         }
         case GLOB_STAR: {
             if (!(lex_state & IN_MATHEMATICAL_EXPRESSION) && !(lex_state & IN_GLOB_EXPANSION))
                 lex_state |= IN_GLOB_EXPANSION;
 
-            lex_buf[lex_buf_pos++] = line[pos];
+            lex_buf[lex_buf_pos++] = line.value[pos];
             continue;
         }
         case GLOB_QUESTION: {
             if (!(lex_state & IN_GLOB_EXPANSION))
                 lex_state |= IN_GLOB_EXPANSION;
 
-            lex_buf[lex_buf_pos++] = line[pos];
+            lex_buf[lex_buf_pos++] = line.value[pos];
             continue;
         }
         case ASSIGNMENT: {
             if (!(lex_state & IN_ASSIGNMENT))
                 lex_state |= IN_ASSIGNMENT;
 
-            lex_buf[lex_buf_pos++] = line[pos];
+            lex_buf[lex_buf_pos++] = line.value[pos];
             continue;
         }
         case COMMENT: {
@@ -357,17 +357,17 @@ void lexer_lex(char* restrict line, size_t length, Lexemes* lexemes, Arena* rest
         }
         case DOLLAR_SIGN: {
             // exclude variables from this one
-            if (!(lex_state & IN_DOLLAR_SIGN) && pos < length - 1 && line[pos + 1] == '(')
+            if (!(lex_state & IN_DOLLAR_SIGN) && pos < line.length - 1 && line.value[pos + 1] == '(')
                 lex_state |= IN_DOLLAR_SIGN;
 
-            lex_buf[lex_buf_pos++] = line[pos];
+            lex_buf[lex_buf_pos++] = line.value[pos];
             continue;
         }
         case TILDE: {
             if (!(lex_state & IN_HOME_EXPANSION))
                 lex_state |= IN_HOME_EXPANSION;
 
-            lex_buf[lex_buf_pos++] = line[pos];
+            lex_buf[lex_buf_pos++] = line.value[pos];
             continue;
         }
         // delimiter case // NOTE: should \t, \a, or EOF be included?
@@ -376,7 +376,7 @@ void lexer_lex(char* restrict line, size_t length, Lexemes* lexemes, Arena* rest
         case '\n':
         case '\0': {
             if (lex_state & IN_COMMENT) {
-                if (line[pos] != '\n') {
+                if (line.value[pos] != '\n') {
                     continue;
                 }
                 else {
@@ -386,7 +386,7 @@ void lexer_lex(char* restrict line, size_t length, Lexemes* lexemes, Arena* rest
             }
 
             if (lex_state & IN_SINGLE_QUOTES || lex_state & IN_DOUBLE_QUOTES || lex_state & IN_BACKTICK_QUOTES) {
-                lex_buf[lex_buf_pos++] = line[pos];
+                lex_buf[lex_buf_pos++] = line.value[pos];
                 continue;
             }
 
@@ -396,11 +396,11 @@ void lexer_lex(char* restrict line, size_t length, Lexemes* lexemes, Arena* rest
                 break;
             }
 
-            lex_buf[lex_buf_pos++] = line[pos];
+            lex_buf[lex_buf_pos++] = line.value[pos];
             continue;
         }
         default: {
-            lex_buf[lex_buf_pos++] = line[pos];
+            lex_buf[lex_buf_pos++] = line.value[pos];
             continue;
         }
         }
@@ -436,7 +436,7 @@ void lexer_lex_noninteractive(char** restrict inputs, size_t inputs_count, Lexem
     }
 
     for (size_t i = 0; i < inputs_count; ++i) {
-        lexer_lex(inputs[i], strlen(inputs[i]) + 1, lexemes, scratch);
+        lexer_lex(Str_Get(inputs[i]), lexemes, scratch);
     }
 
     debug_lexemes(lexemes);

@@ -16,7 +16,7 @@ int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size)
 
     Shell shell = {0};
     shell.arena = scratch_arena;
-    shell.scratch_arena = scratch_arena;
+    shell.scratch = scratch_arena;
     shell.input.buffer = (char*)Data;
     shell.input.pos = Size;
     interpreter_init(&shell);
