@@ -120,7 +120,7 @@ void conf_process(FILE* restrict file, Shell* shell)
             conf_path_add(path, buffer + 6, buffer_length - 6, &shell->arena);
             update_path = true;
         }
-        // Aliasing (aliased=alias)
+        // Aliasing (6 because 'ALIAS aliased=alias')
         else if (buffer_length > 6 && !memcmp(buffer, ALIAS_ADD, sizeof(ALIAS_ADD) - 1)) {
             alias_add(Str_New(buffer + 6, (size_t)(buffer_length - 6)), &shell->arena);
         }
@@ -171,7 +171,6 @@ enum eresult conf_file_load(Shell* restrict shell)
         return E_SUCCESS;
     }
 
-    // conf_process(file, shell, scratch);
     conf_process(file, shell);
 
     fclose(file);
