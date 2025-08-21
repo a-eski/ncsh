@@ -561,7 +561,6 @@ int vm_run_foreground(Statements* restrict stmts, Vm_Data* restrict vm, Arena* r
     }
 
     vm_waitpid(pid, vm);
-    // waitpid(pid, &vm->status, WUNTRACED);
     tcsetpgrp(STDIN_FILENO, shell_pgid);
     return EXIT_SUCCESS;
 }
