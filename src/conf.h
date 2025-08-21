@@ -10,4 +10,4 @@
 #define DOT_CONFIG ".config"
 #define RC_FILE "ncshrc"
 
-enum eresult conf_init(Shell* shell, Arena scratch);
+enum eresult conf_init(Shell* shell);

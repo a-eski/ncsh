@@ -1,6 +1,6 @@
 /* Copyright ncsh (C) by Alex Eski 2025 */
 /* signals.h: signal handling, process group handling. */
-/* as Stephen Bourne said, signal handling is the hard part of writing a shell */
+/* as Stephen Bourne said, signal handling is the hard part of writing a shell. */
 
 #pragma once
 
@@ -44,7 +44,7 @@ static void signal_handler(int sig, [[maybe_unused]] siginfo_t* info, [[maybe_un
 }
 
 [[maybe_unused]]
-[[nodiscard("Can return -1 or shell pgid, shell should call perror and then exit in the case of -1.")]]
+[[nodiscard("Can return -1 or the shell's pgid, shell should call perror and then exit in the case of rv -1.")]]
 static pid_t signal_init()
 {
     struct sigaction sa_ncsh = {0};
@@ -67,14 +67,24 @@ static pid_t signal_init()
     sigaction(SIGTTIN, &sa_ign, NULL);
     sigaction(SIGTTOU, &sa_ign, NULL);
 
-    // Setup the process group for the shell
-    pid_t shell_pgid = getpid();
+    pid_t shell_pid = getpid();
+    pid_t shell_pgid = getpgrp();
+    pid_t fg_pgid = tcgetpgrp(STDIN_FILENO);
+    // If the shell is the login shell and already the foreground process,
+    // do not call setpgid as it is an invalid operation in that case.
+    if (shell_pgid == fg_pgid && getsid(0) == shell_pid) {
+        return shell_pgid;
+    }
 
-    if (tcsetpgrp(STDIN_FILENO, shell_pgid) < 0) {
+    if (setpgid(shell_pid, shell_pid) < 0) {
         return -1;
     }
 
-    return shell_pgid;
+    if (tcsetpgrp(STDIN_FILENO, shell_pid) < 0) {
+        return -1;
+    }
+
+    return shell_pid;
 }
 
 /* signal_reset

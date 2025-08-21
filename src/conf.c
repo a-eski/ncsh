@@ -138,7 +138,7 @@ void conf_process(FILE* restrict file, Shell* shell)
  * Returns: enum eresult, E_SUCCESS if config file loaded or user doesn't want one.
  */
 [[nodiscard]]
-enum eresult conf_file_load(Shell* restrict shell, Arena* restrict scratch)
+enum eresult conf_file_load(Shell* restrict shell)
 {
     FILE* file = fopen(shell->config.file.value, "r");
     if (!file || ferror(file) || feof(file)) {
@@ -172,7 +172,6 @@ enum eresult conf_file_load(Shell* restrict shell, Arena* restrict scratch)
     }
 
     // conf_process(file, shell, scratch);
-    (void)scratch;
     conf_process(file, shell);
 
     fclose(file);
@@ -185,7 +184,7 @@ enum eresult conf_file_load(Shell* restrict shell, Arena* restrict scratch)
  * Returns: enum eresult, E_SUCCESS is successful
  */
 [[nodiscard]]
-enum eresult conf_init(Shell* restrict shell, Arena scratch)
+enum eresult conf_init(Shell* restrict shell)
 {
     assert(shell); assert(shell->arena.start);
 
@@ -200,7 +199,7 @@ enum eresult conf_init(Shell* restrict shell, Arena scratch)
         return result;
     }
 
-    if ((result = conf_file_load(shell, &scratch)) != E_SUCCESS) {
+    if ((result = conf_file_load(shell)) != E_SUCCESS) {
         debug("failed loading config file");
         return result;
     }
