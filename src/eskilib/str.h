@@ -278,3 +278,27 @@ enodiscard static inline Str* sb_to_joined_str(Str_Builder* restrict sb, char jo
 
     return rv;
 }
+
+/* estrsjoin
+ *  Join n strings into a new one allocated in the arena and separated by the joiner character.
+ */
+enodiscard static inline Str* estrsjoin(Str* v, size_t n, char joiner, Arena* restrict a)
+{
+    assert(v); assert(n); assert(a);
+    if (!v || !n || !v->length) {
+        return NULL;
+    }
+
+    Str_Builder* sb = sb_new(a);
+
+    for (size_t i = 0; i < n; ++i) {
+        sb_add(&v[i], sb, a);
+    }
+
+    Str* str = sb_to_joined_str(sb, joiner, a);
+
+    assert(strlen(str->value) + 1 == str->length);
+    assert(str->value[str->length - 1] == '\0');
+
+    return str;
+}

@@ -492,13 +492,7 @@ Commands* vm_next_normal(Statements* restrict stmts, Commands* restrict cmds, Vm
     cmds = vm_command_next(stmts, cmds, vm);
 
     if (!vm->end) {
-        // TODO: is this check redundant?
-        if (cmds->prev_op == OP_PIPE) {
-            vm->op_current = OP_PIPE;
-        }
-        else {
-            vm->op_current = cmds->prev_op;
-        }
+        vm->op_current = cmds->prev_op;
     }
 
     return cmds;
@@ -565,6 +559,52 @@ int vm_run_foreground(Statements* restrict stmts, Vm_Data* restrict vm, Arena* r
     return EXIT_SUCCESS;
 }
 
+void vm_check_background(Processes* restrict pcs)
+{
+    int s;
+    pid_t pid;
+    size_t j;
+    while ((pid = waitpid(-1, &s, WNOHANG)) > 0) {
+        for (j = 0; j < pcs->job_number; ++j) {
+            if (pcs->pids[j] == pid)
+                break;
+        }
+        if (WIFEXITED(s)) {
+            tty_println("job [%zu] pid [%d]: exited with code %d", j + 1, pid, WEXITSTATUS(s));
+            --pcs->job_number;
+        }
+        else if (WIFSIGNALED(s)) {
+            tty_println("job [%zu] pid [%d]: killed by signal %d", j + 1, pid, WTERMSIG(s));
+            --pcs->job_number;
+        }
+    }
+}
+
+[[nodiscard]]
+int vm_run_background(Statements* restrict stmts, Vm_Data* restrict vm, Arena* restrict scratch, Processes* restrict pcs)
+{
+    int pid = fork();
+    if (pid < 0) {
+        return vm_fork_failure(vm->command_position, stmts->pipes_count, &vm->pipes_io);
+    }
+
+    if (pid == 0) { // runs in the child process
+        setpgid(0, 0);
+        signal_reset();
+
+        char** buffers = estrtoarr(vm->strs, vm->strs_n, scratch);
+        execvp(*buffers, buffers);
+        tty_perror("ncsh: Could not run command");
+        exit(-1);
+    }
+
+    setpgid(pid, pid);
+    size_t job_number = ++pcs->job_number;
+    tty_println("job [%zu] pid [%d]", job_number, pid);
+    pcs->pids[job_number - 1] = pid;
+    return EXIT_SUCCESS;
+}
+
 [[nodiscard]]
 int vm_run(Statements* restrict stmts, Shell* restrict shell, Arena* restrict scratch)
 {
@@ -605,6 +645,9 @@ int vm_run(Statements* restrict stmts, Shell* restrict shell, Arena* restrict sc
                  (vm.op_current == OP_EQUALS || vm.op_current == OP_GREATER_THAN || vm.op_current == OP_LESS_THAN)) {
             vm_math_process(&vm);
         }
+        else if (stmts->is_bg_job) {
+            rv = vm_run_background(stmts, &vm, scratch, &shell->pcs);
+        }
         else {
             rv = vm_run_foreground(stmts, &vm, scratch, shell->pgid);
             if (rv != EXIT_SUCCESS) {
@@ -634,14 +677,9 @@ int vm_execute(Statements* restrict stmts, Shell* restrict shell, Arena* restric
         return EXIT_SUCCESS;
     }
 
-    /*if (shell->processes.job_number > 0) {
-        vm_background_jobs_check(&shell->processes);
-    }*/
-
-    // TODO: implement background jobs
-    /*if (tokens.is_background_job == true) {
-        return vm_background_job_run(toks, &shell->processes, data);
-    }*/
+    if (shell->pcs.job_number > 0) {
+        vm_check_background(&shell->pcs);
+    }
 
     return vm_run(stmts, shell, scratch);
 }

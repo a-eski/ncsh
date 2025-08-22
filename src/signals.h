@@ -8,7 +8,6 @@
 #define _POSIX_C_SOURCE 200809L
 #endif /* ifndef _POXIC_C_SOURCE */
 
-#include <stdlib.h>
 #include <signal.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -24,14 +23,15 @@ static void signal_handler(int sig, [[maybe_unused]] siginfo_t* info, [[maybe_un
         return;
     }
 
-    if (sig == SIGINT || sig == SIGQUIT) {
+    if (sig == SIGINT || sig == SIGQUIT || sig == SIGTERM) {
         if (vm_child_pid != 0) {
             kill(vm_child_pid, sig);
         }
         return;
     }
 
-    if (sig == SIGCHLD) {
+    // TODO: consider using signals to handle bg jobs?
+    /*if (sig == SIGCHLD) {
         int status;
         pid_t pid;
         while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
@@ -40,7 +40,7 @@ static void signal_handler(int sig, [[maybe_unused]] siginfo_t* info, [[maybe_un
             }
         }
         return;
-    }
+    }*/
 }
 
 [[maybe_unused]]
@@ -54,6 +54,7 @@ static pid_t signal_init()
 
     sigaction(SIGINT, &sa_ncsh, NULL);
     sigaction(SIGQUIT, &sa_ncsh, NULL);
+    sigaction(SIGTERM, &sa_ncsh, NULL);
     sigaction(SIGCHLD, &sa_ncsh, NULL);
     sigaction(SIGWINCH, &sa_ncsh, NULL);
 
@@ -102,6 +103,7 @@ static void signal_reset()
 
     sigaction(SIGINT,  &sa_dfl, NULL);
     sigaction(SIGQUIT, &sa_dfl, NULL);
+    sigaction(SIGTERM, &sa_dfl, NULL);
     sigaction(SIGCHLD, &sa_dfl, NULL);
     sigaction(SIGWINCH, &sa_dfl, NULL);
     sigaction(SIGPIPE, &sa_dfl, NULL);

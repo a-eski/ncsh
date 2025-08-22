@@ -303,7 +303,48 @@ void estridx_returns_idx_test()
     eassert(idx == 3);
 }
 
-void estrtoarr_returns_arr_test()
+void estrtoarr_single_test()
+{
+    SCRATCH_ARENA_TEST_SETUP;
+
+    constexpr size_t n = 6;
+    Str vals[n] = {
+        [0] = Str_New_Literal("ls")
+    };
+
+    char** res = estrtoarr(vals, n, &s);
+
+    eassert(res);
+    eassert(!memcmp(res[0], vals[0].value, vals[0].length - 1));
+    eassert(strlen(res[0]) == vals[0].length - 1);
+    eassert(!res[1]);
+
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
+void estrtoarr_two_test()
+{
+    SCRATCH_ARENA_TEST_SETUP;
+
+    constexpr size_t n = 6;
+    Str vals[n] = {
+        [0] = Str_New_Literal("ls"),
+        [1] = Str_New_Literal("sort")
+    };
+
+    char** res = estrtoarr(vals, n, &s);
+
+    eassert(res);
+    eassert(!memcmp(res[0], vals[0].value, vals[0].length - 1));
+    eassert(strlen(res[0]) == vals[0].length - 1);
+    eassert(!memcmp(res[1], vals[1].value, vals[1].length - 1));
+    eassert(strlen(res[1]) == vals[1].length - 1);
+    eassert(!res[2]);
+
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
+void estrtoarr_multiple_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
@@ -600,7 +641,9 @@ void str_tests()
 
     etest_run(estridx_returns_idx_test);
 
-    etest_run(estrtoarr_returns_arr_test);
+    etest_run(estrtoarr_single_test);
+    etest_run(estrtoarr_two_test);
+    etest_run(estrtoarr_multiple_test);
 
     etest_run(estrtrim_test);
 
