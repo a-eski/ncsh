@@ -12,10 +12,11 @@
 /* struct Processes
  * Maintains details about background jobs that have been started by the user.
  */
-/*typedef struct {
+typedef struct {
     size_t job_number;
     __pid_t pids[NCSH_MAX_PROCESSES];
-} Processes;*/
+    // char* names[NCSH_MAX_PROCESSES];
+} Processes;
 
 /* Env
  * Stores env variables from envp in hashtable with static size.
@@ -85,7 +86,7 @@ typedef struct Shell {
     Config config;
 
     Input input;
-    // Processes processes;
+    Processes pcs;
 
     z_Database z_db;
 } Shell;

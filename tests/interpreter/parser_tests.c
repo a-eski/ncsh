@@ -14,6 +14,7 @@
 #define JOB Str_New_Literal("longrunningprogram")
 #define FILE Str_New_Literal("text.txt")
 #define ECHO Str_New_Literal("echo")
+#define SLEEP Str_New_Literal("sleep")
 
 static char** envp_ptr;
 
@@ -168,15 +169,6 @@ void parser_parse_multiple_pipes_multiple_args_test()
     Statements statements = {0};
     int res = parser_parse(&lexemes, &statements, NULL, &scratch_arena);
 
-    Commands* c = statements.statements->commands;
-    while (c) {
-        for (size_t i = 0; i < c->count; ++i) {
-            printf("%s ", c->strs[i].value);
-        }
-        c = c->next;
-    }
-    puts("");
-
     eassert(!res);
     eassert(statements.count == 1);
     eassert(statements.statements->count == 1);
@@ -261,6 +253,38 @@ void parser_parse_background_job_test()
     eassert(statements.statements->commands->ops[0] == OP_CONSTANT);
 
     eassert(!statements.statements->commands->strs[1].value);
+    eassert(!statements.statements->commands->next);
+
+    eassert(statements.is_bg_job);
+
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
+void parser_parse_background_job_args_test()
+{
+    SCRATCH_ARENA_TEST_SETUP;
+
+    auto line = Str_New_Literal("sleep 5 &");
+
+    Lexemes lexemes = {0};
+    lexer_lex(line, &lexemes, &scratch_arena);
+    Statements statements = {0};
+    int res = parser_parse(&lexemes, &statements, NULL, &scratch_arena);
+
+    eassert(!res);
+    eassert(statements.count == 1);
+    eassert(statements.statements->count == 1);
+    eassert(statements.statements->commands->count == 2);
+
+    eassert(!memcmp(statements.statements->commands->strs[0].value, SLEEP.value, SLEEP.length - 1));
+    eassert(statements.statements->commands->strs[0].length == SLEEP.length);
+    eassert(statements.statements->commands->ops[0] == OP_CONSTANT);
+
+    eassert(!memcmp(statements.statements->commands->strs[1].value, "5", 1));
+    eassert(statements.statements->commands->strs[1].length == 2);
+    eassert(statements.statements->commands->ops[1] == OP_CONSTANT);
+
+    eassert(!statements.statements->commands->strs[2].value);
     eassert(!statements.statements->commands->next);
 
     eassert(statements.is_bg_job);
@@ -1595,6 +1619,7 @@ void parser_tests()
     etest_run(parser_parse_multiple_pipes_multiple_args_test);
 
     etest_run(parser_parse_background_job_test);
+    etest_run(parser_parse_background_job_args_test);
 
     etest_run(parser_parse_output_redirection_test);
     etest_run(parser_parse_output_redirection_append_test);
