@@ -571,12 +571,10 @@ void vm_check_background(Processes* restrict pcs)
         }
         if (WIFEXITED(s)) {
             tty_println("job [%zu] pid [%d]: exited with code %d", j + 1, pid, WEXITSTATUS(s));
-            // free(pcs->names[j]);
             --pcs->job_number;
         }
         else if (WIFSIGNALED(s)) {
             tty_println("job [%zu] pid [%d]: killed by signal %d", j + 1, pid, WTERMSIG(s));
-            // free(pcs->names[j]);
             --pcs->job_number;
         }
     }
@@ -604,8 +602,6 @@ int vm_run_background(Statements* restrict stmts, Vm_Data* restrict vm, Arena* r
     size_t job_number = ++pcs->job_number;
     tty_println("job [%zu] pid [%d]", job_number, pid);
     pcs->pids[job_number - 1] = pid;
-    // pcs->names[job_number - 1] = malloc(vm->strs->length);
-    // memcpy(pcs->names[job_number - 1], vm->strs->value, vm->strs->length - 1);
     return EXIT_SUCCESS;
 }
 

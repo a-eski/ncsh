@@ -15,7 +15,6 @@
 typedef struct {
     size_t job_number;
     __pid_t pids[NCSH_MAX_PROCESSES];
-    // char* names[NCSH_MAX_PROCESSES];
 } Processes;
 
 /* Env
