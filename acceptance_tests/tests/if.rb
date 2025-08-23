@@ -431,10 +431,137 @@ def if_variable_tests(row)
   if_variables_test(row)
 end
 
+def true_if_elif_test(row)
+  assert_check_new_row(row)
+
+  @tty.send_line_exact('if [ false ]; then echo hello; elif [ true ]; then echo hey; else echo hi; fi')
+  row += 1
+  @tty.assert_row(row, 'hey')
+  row += 1
+  test_passed('true if elif test')
+  row
+end
+
+def false_if_elif_test(row)
+  assert_check_new_row(row)
+  @tty.send_line_exact('if [ false ]; then echo hello; elif [ false ]; then echo hey; else echo hi; fi')
+  row += 1
+  @tty.assert_row(row, 'hi')
+  row += 1
+  assert_check_new_row(row)
+  test_passed('false if elif test')
+  row
+end
+
+def true_and_true_if_elif_multiple_condition_test(row)
+  assert_check_new_row(row)
+
+  @tty.send_line_exact('if [ false ]; then echo hello; elif [ true && true ]; then echo hey; else echo hi; fi')
+  row += 1
+  @tty.assert_row(row, 'hey')
+  row += 1
+  test_passed('true and elif multiple condition test')
+  row
+end
+
+def true_and_false_if_elif_multiple_condition_test(row)
+  assert_check_new_row(row)
+
+  @tty.send_line_exact('if [ true && false ]; then echo hello; elif [ true && false ]; then echo hey; else echo hi; fi')
+  row += 1
+  @tty.assert_row(row, 'hi')
+  row += 1
+  test_passed('true and elif multiple condition test')
+  row
+end
+
+def false_and_true_if_elif_multiple_condition_test(row)
+  assert_check_new_row(row)
+  @tty.send_line_exact('if [ false && true ]; then echo hello; elif [ false && true ]; then echo hey; else echo hi; fi')
+  row += 1
+  @tty.assert_row(row, 'hi')
+  row += 1
+  assert_check_new_row(row)
+  test_passed('false and elif multiple condition test')
+  row
+end
+
+def false_and_false_if_elif_multiple_condition_test(row)
+  assert_check_new_row(row)
+  @tty.send_line_exact('if [ false && false ]; then echo hello; elif [ false && false ]; then echo hey; else echo hi; fi')
+  row += 1
+  @tty.assert_row(row, 'hi')
+  row += 1
+  assert_check_new_row(row)
+  test_passed('false and elif multiple condition test')
+  row
+end
+
+def true_or_true_if_elif_multiple_condition_test(row)
+  assert_check_new_row(row)
+
+  @tty.send_line_exact('if [ false ]; then echo hello; elif [ false || true ]; then echo hey; else echo hi; fi')
+  row += 1
+  @tty.assert_row(row, 'hey')
+  row += 1
+  test_passed('true or elif multiple condition test')
+  row
+end
+
+def true_or_false_if_elif_multiple_condition_test(row)
+  assert_check_new_row(row)
+
+  @tty.send_line_exact('if [ false ]; then echo hello; elif [ true || false ]; then echo hey; else echo hi; fi')
+  row += 1
+  @tty.assert_row(row, 'hey')
+  row += 1
+  test_passed('true or elif multiple condition test')
+  row
+end
+
+def false_or_true_if_elif_multiple_condition_test(row)
+  assert_check_new_row(row)
+  @tty.send_line_exact('if [ false ]; then echo hello; elif [ false || true]; then echo hey; else echo hi; fi')
+  row += 1
+  @tty.assert_row(row, 'hey')
+  row += 1
+  assert_check_new_row(row)
+  test_passed('false or elif multiple condition test')
+  row
+end
+
+def false_or_false_if_elif_multiple_condition_test(row)
+  assert_check_new_row(row)
+  @tty.send_line_exact('if [ false ]; then echo hello; elif [ false || false ]; then echo hey; else echo hi; fi')
+  row += 1
+  @tty.assert_row(row, 'hi')
+  row += 1
+  assert_check_new_row(row)
+  test_passed('false or elif multiple condition test')
+  row
+end
+
+def elif_tests(row)
+  starting_tests('elif tests')
+  row = true_if_elif_test(row)
+  row = false_if_elif_test(row)
+
+  row = true_and_true_if_elif_multiple_condition_test(row)
+  row = true_and_false_if_elif_multiple_condition_test(row)
+  row = false_and_true_if_elif_multiple_condition_test(row)
+  row = false_and_false_if_elif_multiple_condition_test(row)
+
+  row = true_or_true_if_elif_multiple_condition_test(row)
+  row = true_or_false_if_elif_multiple_condition_test(row)
+  row = false_or_true_if_elif_multiple_condition_test(row)
+  false_or_false_if_elif_multiple_condition_test(row)
+end
+
 def if_tests(row)
   row = bool_if_tests(row)
   row = equals_if_tests(row)
   row = gt_if_tests(row)
   row = lt_if_tests(row)
-  if_variable_tests(row)
+  row = if_variable_tests(row)
+  elif_tests(row)
 end
