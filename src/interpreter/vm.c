@@ -2,9 +2,7 @@
 /* vm.c: the VM for ncsh. Accepts op bytecodes and constant values and their lengths,
  * and processes those into commands. */
 
-#ifndef _POSIX_C_SOURCE
 #define _POSIX_C_SOURCE 200809L
-#endif /* ifndef _POSIX_C_SOURCE */
 
 #include <assert.h>
 #include <errno.h>
@@ -377,17 +375,20 @@ Commands* vm_next_if(Statements* restrict stmts, Commands* restrict cmds, Vm_Dat
             vm->end = true;
             return NULL;
         }
-
-        if (vm->status == EXIT_SUCCESS && vm->state == VS_IN_ELSE_STATEMENTS) {
-            return vm_command_set(stmts, cmds, vm, VS_IN_ELSE_STATEMENTS);
-        }
-        else if (vm->state == VS_IN_CONDITIONS && vm->status != EXIT_SUCCESS) {
-            return vm_command_set(stmts, cmds, vm, VS_IN_ELSE_STATEMENTS);
-        }
-        else {
+        if (vm->state == VS_IN_ELIF_STATEMENTS) {
+            vm->strs = NULL;
             vm->end = true;
             return NULL;
         }
+        if (vm->status == EXIT_SUCCESS && vm->state == VS_IN_ELSE_STATEMENTS) {
+            return vm_command_set(stmts, cmds, vm, VS_IN_ELSE_STATEMENTS);
+        }
+        if (vm->state == VS_IN_CONDITIONS && vm->status != EXIT_SUCCESS) {
+            return vm_command_set(stmts, cmds, vm, VS_IN_ELSE_STATEMENTS);
+        }
+
+        vm->end = true;
+        return NULL;
     }
 
     if (stmts->statements[stmts->pos].type == LT_ELIF_CONDTIONS) {
@@ -462,7 +463,7 @@ Commands* vm_next_if(Statements* restrict stmts, Commands* restrict cmds, Vm_Dat
         debug("in LT_ELIF");
         debugf("vm->status %d\n", vm->status);
 
-        if (vm->status == EXIT_SUCCESS && vm->state == VS_IN_ELIF_STATEMENTS) {
+        if (vm->status == EXIT_SUCCESS && vm->state == VS_IN_CONDITIONS) {
             return vm_command_set(stmts, cmds, vm, VS_IN_ELIF_STATEMENTS);
         }
     }
@@ -533,9 +534,7 @@ int vm_run_foreground(Statements* restrict stmts, Vm_Data* restrict vm, Arena* r
     }
 
     if (pid == 0) { // runs in the child process
-        pid_t cpid = getpid();
-        setpgid(cpid, cpid);
-        tcsetpgrp(STDIN_FILENO, cpid);
+        setpgid(0, 0);
         signal_reset();
 
         if (vm->op_current == OP_PIPE)
