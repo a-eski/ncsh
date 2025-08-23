@@ -54,6 +54,8 @@ enum Statements_Type {
     ST_IF_ELIF_ELSE,
 };
 
+// TODO: should flatten statements type?
+// currently have stmts->statements[stmts->count]->commands and is hard to manage
 typedef struct {
     enum Redirect_Type redirect_type;
     char* redirect_filename;

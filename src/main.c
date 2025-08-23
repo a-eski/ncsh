@@ -1,9 +1,6 @@
 /* Copyright ncsh by Alex Eski 2024 */
 
-#include "debug.h"
-#ifndef _POXIC_C_SOURCE
 #define _POSIX_C_SOURCE 200809L
-#endif /* ifndef _POXIC_C_SOURCE */
 
 #include <assert.h>
 #include <setjmp.h>
@@ -11,6 +8,7 @@
 #include <time.h>
 #include <unistd.h>
 
+#include "debug.h"
 #include "arena.h"
 #include "conf.h"
 #include "defines.h"
@@ -27,8 +25,8 @@
  * These are only used to simplify signal handling and failure cases.
  */
 jmp_buf env_jmp_buf;
-sig_atomic_t vm_child_pid;
-volatile int sigwinch_caught;
+volatile sig_atomic_t vm_child_pid;
+volatile sig_atomic_t sigwinch_caught;
 
 /* arena_init
  * Initialize arenas used for the lifteim of the shell.
@@ -219,6 +217,7 @@ exit:
 [[nodiscard]]
 int main(int argc, char** argv, char** envp)
 {
+    debug_pcs;
 
     int rv = EXIT_SUCCESS;
     if (argc > 1 || !isatty(STDIN_FILENO)) {

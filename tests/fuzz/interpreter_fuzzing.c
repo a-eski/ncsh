@@ -7,8 +7,8 @@
 #include "../lib/arena_test_helper.h"
 
 jmp_buf env_jmp_buf;
-sig_atomic_t vm_child_pid;
-volatile int sigwinch_caught;
+volatile sig_atomic_t vm_child_pid;
+volatile sig_atomic_t sigwinch_caught;
 
 int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size)
 {

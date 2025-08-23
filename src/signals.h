@@ -4,17 +4,15 @@
 
 #pragma once
 
-#ifndef _POXIC_C_SOURCE
 #define _POSIX_C_SOURCE 200809L
-#endif /* ifndef _POXIC_C_SOURCE */
 
 #include <signal.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <sys/wait.h>
 
-extern sig_atomic_t vm_child_pid;
-extern volatile int sigwinch_caught;
+extern volatile sig_atomic_t vm_child_pid;
+extern volatile sig_atomic_t sigwinch_caught;
 
 static void signal_handler(int sig, [[maybe_unused]] siginfo_t* info, [[maybe_unused]] void* context)
 {
@@ -23,12 +21,12 @@ static void signal_handler(int sig, [[maybe_unused]] siginfo_t* info, [[maybe_un
         return;
     }
 
-    if (sig == SIGINT || sig == SIGQUIT || sig == SIGTERM) {
+    /*if (sig == SIGINT || sig == SIGQUIT || sig == SIGTERM) {
         if (vm_child_pid != 0) {
             kill(vm_child_pid, sig);
         }
         return;
-    }
+    }*/
 
     // TODO: consider using signals to handle bg jobs?
     /*if (sig == SIGCHLD) {
@@ -49,7 +47,8 @@ static pid_t signal_init()
 {
     struct sigaction sa_ncsh = {0};
     sa_ncsh.sa_sigaction = signal_handler;
-    sa_ncsh.sa_flags = SA_SIGINFO | SA_RESTART;
+    // sa_ncsh.sa_flags = SA_SIGINFO | SA_RESTART;
+    sa_ncsh.sa_flags = 0;
     sigemptyset(&sa_ncsh.sa_mask);
 
     sigaction(SIGINT, &sa_ncsh, NULL);
@@ -63,6 +62,7 @@ static pid_t signal_init()
     sigemptyset(&sa_ign.sa_mask);
     sa_ign.sa_flags = 0;
 
+    // sigaction(SIGINT, &sa_ign, NULL);
     sigaction(SIGPIPE, &sa_ign, NULL); // shell handles pipes
     sigaction(SIGTSTP, &sa_ign, NULL); // ignore these signals that can stop the shell
     sigaction(SIGTTIN, &sa_ign, NULL);
@@ -107,6 +107,9 @@ static void signal_reset()
     sigaction(SIGCHLD, &sa_dfl, NULL);
     sigaction(SIGWINCH, &sa_dfl, NULL);
     sigaction(SIGPIPE, &sa_dfl, NULL);
+    sigaction(SIGTSTP, &sa_dfl, NULL); // ignore these signals that can stop the shell
+    sigaction(SIGTTIN, &sa_dfl, NULL);
+    sigaction(SIGTTOU, &sa_dfl, NULL);
 
     struct sigaction sa_ign;
     sa_ign.sa_handler = SIG_IGN;

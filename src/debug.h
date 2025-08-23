@@ -6,6 +6,9 @@
 
 #pragma once
 
+#include <unistd.h>
+#define _POSIX_C_SOURCE 200809L
+
 #ifndef NCSH_DEBUG
 #define debug(buf)
 #define debugf(fmt, ...)
@@ -14,6 +17,8 @@
 #define debug_lexemes(lexemes)
 #define debug_argsv(argsc, argsv)
 #define debug_string(str, name)
+// #define debug_pcs
+#define debug_pcs debug_pcs__(__FILE__, __LINE__, __func__)
 #else /* !NCSH_DEBUG */
 #include <stdarg.h>
 #include <stdio.h>
@@ -28,6 +33,7 @@
 #define debug_lexemes(lexemes) debug_lexemes__(__FILE__, __LINE__, __func__, lexemes)
 #define debug_argsv(argsc, argsv) debug_argsv__(__FILE__, __LINE__, __func__, argsc, argsv)
 #define debug_string(str, name) debug_string__(__FILE__, __LINE__, __func__, str, name)
+#define debug_pcs debug_pcs__(__FILE__, __LINE__, __func__)
 
 static inline void debug__(const char* file, const int line, const char* func, char* buffer)
 {
@@ -102,3 +108,21 @@ static inline void debug_string__(const char* file, const int line, const char* 
     fflush(stderr);
 }
 #endif // !NCSH_DEBUG
+
+#if 1 || defined(NCSH_DEBUG)
+#include <stdio.h>
+#include <sys/types.h>
+
+static inline void debug_pcs__(const char* file, const int line, const char* func)
+{
+    pid_t pid = getpid();
+    pid_t ppid = getppid();
+    pid_t sid = getsid(0);      // session ID
+    pid_t pgid = getpgrp();     // process group ID
+    pid_t tpgid = tcgetpgrp(STDIN_FILENO); // foreground process group ID
+
+    fprintf(stderr, "%s %s:%d ", file, func, line);
+    fprintf(stderr, "PID=%d PPID=%d SID=%d PGID=%d TPGID=%d\n",
+           pid, ppid, sid, pgid, tpgid);
+}
+#endif // if 0 || defined(NCSH_DEBUG)

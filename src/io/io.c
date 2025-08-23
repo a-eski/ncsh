@@ -841,7 +841,7 @@ enum io_Type : uint_fast8_t {
     IO_CHAR,
     IO_CTRL_A,              // home
     IO_CTRL_B,              // backwards
-    IO_CTRL_C,              // exit
+    // IO_CTRL_C,              // exit
     IO_CTRL_D,              // exit if empty, delete if not
     IO_CTRL_E,              // end
     IO_CTRL_F,              // forwards
@@ -882,7 +882,7 @@ io_func io_funcs[] = {
     io_char,
     io_cursor_home,            // CTRL_A
     io_backwards,              // CTRL_B
-    io_exit,                   // CTRL_C
+    // io_exit,                   // CTRL_C
     io_exit_if_empty_or_del,   // CTRL_D
     io_cursor_end,             // CTRL_E
     io_forwards,               // CTRL_F
@@ -955,7 +955,7 @@ int io_next(Input* restrict input)
     switch (input->c) {
         case CTRL_A: return io_funcs[IO_CTRL_A](input);
         case CTRL_B: return io_funcs[IO_CTRL_B](input);
-        case CTRL_C: return io_funcs[IO_CTRL_C](input);
+        // case CTRL_C: return io_funcs[IO_CTRL_C](input);
         case CTRL_D: return io_funcs[IO_CTRL_D](input);
         case CTRL_E: return io_funcs[IO_END](input);
         case CTRL_F: return io_funcs[IO_CTRL_F](input);

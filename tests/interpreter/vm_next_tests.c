@@ -11,9 +11,9 @@
 #include "../etest.h"
 #include "../lib/arena_test_helper.h"
 
-__sig_atomic_t vm_child_pid;
+volatile __sig_atomic_t vm_child_pid;
 jmp_buf env_jmp_buf;
-volatile int sigwinch_caught;
+volatile __sig_atomic_t sigwinch_caught;
 
 Commands* vm_next(Statements* restrict stmts, Commands* cmds, Vm_Data* restrict vm);
 

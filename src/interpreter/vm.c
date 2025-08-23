@@ -30,7 +30,7 @@
 #endif /* NCSH_VM_TEST */
 
 /* vm_child_pid: Used in signal handling, signals.h & main.c */
-extern sig_atomic_t vm_child_pid;
+extern volatile sig_atomic_t vm_child_pid;
 
 /* vm_output_fd: set in pipe.c or redirection.c, read from builtins */
 int vm_output_fd;
@@ -537,6 +537,7 @@ int vm_run_foreground(Statements* restrict stmts, Vm_Data* restrict vm, Arena* r
         setpgid(cpid, cpid);
         tcsetpgrp(STDIN_FILENO, cpid);
         signal_reset();
+        debug_pcs;
 
         if (vm->op_current == OP_PIPE)
             pipe_connect(vm->command_position, stmts->pipes_count, &vm->pipes_io);
@@ -556,6 +557,7 @@ int vm_run_foreground(Statements* restrict stmts, Vm_Data* restrict vm, Arena* r
 
     vm_waitpid(pid, vm);
     tcsetpgrp(STDIN_FILENO, shell_pgid);
+    debug_pcs;
     return EXIT_SUCCESS;
 }
 
