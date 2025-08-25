@@ -219,7 +219,7 @@ Commands* vm_next_if_statement(Statements* restrict stmts, Vm_Data* restrict vm)
     return stmts->statements[stmts->pos].commands;
 }
 
-Commands* vm_next_else_statement(Statements* restrict stmts, Commands** restrict cmds, Vm_Data* restrict vm)
+Commands* vm_next_else_statement(Statements* restrict stmts, Vm_Data* restrict vm)
 {
     do {
         ++stmts->pos;
