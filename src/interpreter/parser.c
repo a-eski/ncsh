@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "../defines.h"
 #include "../debug.h"
 #include "../ttyio/ttyio.h"
 #include "expansions.h"
@@ -25,7 +26,7 @@ bool parser_consume(Lexemes* restrict lexemes, size_t* restrict n, enum Ops expe
         return true;
     }
     else {
-        debugf("parser_consume false. expected %d, actual %d\n", expected, lexemes->ops[*n]);
+        debugf("ncsh parser: consumption failed. expected %d, actual %d\n", expected, lexemes->ops[*n]);
         return false;
     }
 }
@@ -63,7 +64,7 @@ int parser_commands_process(Shell* shell, Lexemes* restrict lexemes, size_t* res
 {
     if (!parser_is_valid_statement(parser_peek(lexemes, *n))) {
         tty_puts("ncsh parser: no valid statement.");
-        return EXIT_FAILURE;
+        return EXIT_FAILURE_CONTINUE;
     }
 
     do {
@@ -136,8 +137,8 @@ int parser_commands_process(Shell* shell, Lexemes* restrict lexemes, size_t* res
 int parser_conditions(Shell* shell, Lexemes* restrict lexemes, size_t* restrict n, enum Logic_Type type, Statements* restrict stmts, Arena* restrict scratch)
 {
     if (!parser_consume(lexemes, n, OP_CONDITION_START)) {
-        debug("no OP_CONDITION_START");
-        return EXIT_FAILURE;
+        tty_puts("ncsh parser: missing condition start '['");
+        return EXIT_FAILURE_CONTINUE;
     }
 
     debug("processing conditions");
@@ -148,12 +149,13 @@ int parser_conditions(Shell* shell, Lexemes* restrict lexemes, size_t* restrict 
 
     commands = command_statement_next(stmts, commands, type, scratch);
     if (!parser_consume(lexemes, n, OP_CONDITION_END)) {
-        debug("no OP_CONDITION_END");
-        return EXIT_FAILURE;
+        tty_puts("ncsh parser: found condition start '[', missing condition end ']'");
+        return EXIT_FAILURE_CONTINUE;
     }
 
     if (!parser_consume(lexemes, n, OP_THEN)) {
-        return EXIT_FAILURE;
+        tty_puts("ncsh parser: missing 'then' after condition");
+        return EXIT_FAILURE_CONTINUE;
     }
 
     return EXIT_SUCCESS;
@@ -174,7 +176,8 @@ int parser_else_statements(Shell* shell, Lexemes* restrict lexemes, size_t* rest
 {
     debug("processing else");
     if (!parser_consume(lexemes, n, OP_ELSE)) {
-        return EXIT_FAILURE;
+        tty_puts("ncsh parser: expected 'else'");
+        return EXIT_FAILURE_CONTINUE;
     }
 
     int res = parser_commands_process(shell, lexemes, n, stmts, scratch);
@@ -190,19 +193,20 @@ int parser_elif_statements(Shell* shell, Lexemes* restrict lexemes, size_t* rest
 {
     debug("processing elif");
     if (!parser_consume(lexemes, n, OP_ELIF)) {
-        return EXIT_FAILURE;
+        tty_puts("ncsh parser: expected 'elif'");
+        return EXIT_FAILURE_CONTINUE;
     }
 
     int res = parser_conditions(shell, lexemes, n, LT_ELIF_CONDITIONS, stmts, scratch);
     if (res != EXIT_SUCCESS) {
-        debug("failed parsing elif conditions");
+        tty_puts("ncsh parser: failed parsing elif conditions");
         return res;
     }
 
     res = parser_commands_process(shell, lexemes, n, stmts, scratch);
     if (res != EXIT_SUCCESS) {
-        debug("failed parsing elif commands");
-        return EXIT_FAILURE;
+        tty_puts("ncsh parser: failed parsing elif commands");
+        return EXIT_FAILURE_CONTINUE;
     }
     commands = command_statement_next(stmts, commands, LT_ELIF, scratch);
 
@@ -210,8 +214,8 @@ int parser_elif_statements(Shell* shell, Lexemes* restrict lexemes, size_t* rest
         debug("found another elif to process");
         res = parser_elif_statements(shell, lexemes, n, stmts, scratch);
         if (res != EXIT_SUCCESS) {
-            debug("failed parsing another elif");
-            return EXIT_FAILURE;
+            tty_puts("ncsh parser: failed parsing subsequent elif conditions or commands");
+            return EXIT_FAILURE_CONTINUE;
         }
     }
 
@@ -224,7 +228,7 @@ int parser_if(Shell* shell, Lexemes* restrict lexemes, size_t* restrict n, State
     debug("processing if");
     if (!parser_consume(lexemes, n, OP_IF)) {
         debug("no OP_IF");
-        return EXIT_FAILURE;
+        return EXIT_FAILURE_CONTINUE;
     }
 
     int res = parser_conditions(shell, lexemes, n, LT_IF_CONDITIONS, stmts, scratch);
@@ -248,10 +252,10 @@ int parser_if(Shell* shell, Lexemes* restrict lexemes, size_t* restrict n, State
     enum Ops peeked = parser_peek(lexemes, *n);
     if (peeked != OP_ELSE && peeked != OP_ELIF) {
         debug("no OP_ELSE or OP_ELIF");
-        return EXIT_FAILURE;
+        return EXIT_FAILURE_CONTINUE;
     }
 
-    res = EXIT_FAILURE;
+    res = EXIT_FAILURE_CONTINUE;
     if (peeked == OP_ELSE) {
         stmts->type = ST_IF_ELSE;
         res = parser_else_statements(shell, lexemes, n, stmts, scratch);
@@ -277,7 +281,7 @@ int parser_if(Shell* shell, Lexemes* restrict lexemes, size_t* restrict n, State
     }
 
     if (!parser_consume(lexemes, n, OP_FI)) {
-        return EXIT_FAILURE;
+        return EXIT_FAILURE_CONTINUE;
     }
 
     return EXIT_SUCCESS;
@@ -323,7 +327,7 @@ int parser_parse(Lexemes* restrict lexemes, Statements* stmts, Shell* restrict s
         case OP_IF: {
             res = parser_if(shell, lexemes, &i, stmts, scratch);
             if (res != EXIT_SUCCESS) {
-                return EXIT_FAILURE;
+                return EXIT_FAILURE_CONTINUE;
             }
             continue;
         }

@@ -219,7 +219,7 @@ Commands* vm_next_if_statement(Statements* restrict stmts, Vm_Data* restrict vm)
     return stmts->statements[stmts->pos].commands;
 }
 
-Commands* vm_next_else_statement(Statements* restrict stmts, Vm_Data* restrict vm)
+Commands* vm_next_else_statement(Statements* restrict stmts, Commands** restrict cmds, Vm_Data* restrict vm)
 {
     do {
         ++stmts->pos;
@@ -428,10 +428,6 @@ Commands* vm_next_if(Statements* restrict stmts, Commands* restrict cmds, Vm_Dat
             return vm_command_set(stmts, cmds, vm, VS_IN_CONDITIONS);
         }
 
-        else if (stmts->statements[stmts->pos].type == LT_ELIF_CONDITIONS) {
-            return vm_command_set(stmts, cmds, vm, VS_IN_CONDITIONS);
-        }
-
         else if (vm->status != EXIT_SUCCESS && cmds->prev_op == OP_AND) {
             if (stmts->type == ST_IF_ELIF_ELSE) {
                 cmds = vm_next_else_statement(stmts, vm);
@@ -439,7 +435,7 @@ Commands* vm_next_if(Statements* restrict stmts, Commands* restrict cmds, Vm_Dat
                     return NULL;
                 }
 
-                return vm_command_set(stmts, cmds, vm, VS_IN_CONDITIONS);
+                return vm_command_set(stmts, cmds, vm, VS_IN_ELSE_STATEMENTS);
             }
             else {
                 vm->end = true;
@@ -448,7 +444,8 @@ Commands* vm_next_if(Statements* restrict stmts, Commands* restrict cmds, Vm_Dat
         }
 
         else if (vm->status != EXIT_SUCCESS && cmds->prev_op == OP_OR) {
-                if (cmds->ops[cmds->pos] == OP_TRUE || cmds->ops[cmds->pos] == OP_CONSTANT) {
+                // if (cmds->ops[cmds->pos] == OP_TRUE || cmds->ops[cmds->pos] == OP_CONSTANT || stmts->statements[stmts->pos].type == LT_ELIF_CONDITIONS) {
+                if (stmts->statements[stmts->pos].type == LT_ELIF_CONDITIONS) {
                     return vm_command_set(stmts, cmds, vm, VS_IN_CONDITIONS);
                 }
                 else if (stmts->type == ST_IF_ELIF_ELSE) {
@@ -471,6 +468,7 @@ Commands* vm_next_if(Statements* restrict stmts, Commands* restrict cmds, Vm_Dat
                 if (!cmds) {
                     return NULL;
                 }
+                return vm_command_set(stmts, cmds, vm, VS_IN_ELSE_STATEMENTS);
             }
             else if (stmts->type == ST_IF_ELIF && stmts->pos < stmts->count - 1) {
                 debug("going to next elif condition");
@@ -511,7 +509,6 @@ Commands* vm_next_if(Statements* restrict stmts, Commands* restrict cmds, Vm_Dat
             if (!cmds) {
                 return NULL;
             }
-
             return vm_command_set(stmts, cmds, vm, VS_IN_ELSE_STATEMENTS);
         }
     }
