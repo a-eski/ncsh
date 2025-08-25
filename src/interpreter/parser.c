@@ -193,7 +193,7 @@ int parser_elif_statements(Shell* shell, Lexemes* restrict lexemes, size_t* rest
         return EXIT_FAILURE;
     }
 
-    int res = parser_conditions(shell, lexemes, n, LT_ELIF_CONDTIONS, stmts, scratch);
+    int res = parser_conditions(shell, lexemes, n, LT_ELIF_CONDITIONS, stmts, scratch);
     if (res != EXIT_SUCCESS) {
         debug("failed parsing elif conditions");
         return res;

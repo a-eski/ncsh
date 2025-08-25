@@ -1,0 +1,1 @@
+if [ false ]; then echo hello; elif [ false || true]; then echo hey; else echo hi; fi

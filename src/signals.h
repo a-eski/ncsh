@@ -4,9 +4,7 @@
 
 #pragma once
 
-#ifndef _POXIC_C_SOURCE
 #define _POSIX_C_SOURCE 200809L
-#endif /* ifndef _POXIC_C_SOURCE */
 
 #include <signal.h>
 #include <sys/types.h>

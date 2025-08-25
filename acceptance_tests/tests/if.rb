@@ -1,6 +1,83 @@
 # frozen_string_literal: true
 
 require './acceptance_tests/tests/common'
+require 'ttytest'
+
+conditions = %w[
+  true
+  false
+  true && true
+  true && false
+  false && true
+  false && false
+  true || true
+  true || false
+  false || true
+  false || false
+  true && true && true
+  true && true && false
+  true && false && false
+  false && false && false
+  false && true && true
+  false && false && true
+  true && false && true
+  false && true && false
+  true || true || true
+  true || true || false
+  true || false || false
+  false || false || false
+  false || true || true
+  false || false || true
+  true || false || true
+  false || true || false
+]
+
+results = [
+  true,
+  false,
+  true,
+  false,
+  false,
+  false,
+  true,
+  true,
+  true,
+  false,
+  true,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  true,
+  true,
+  true,
+  false,
+  true,
+  true,
+  true,
+  true
+]
+
+def generate_if_tests
+  conditions.each do |condition, i|
+    name = condition.gsub(' ', '_').gsub('&&', 'and').gsub('||', 'or')
+
+    define_method(name, condition, results[i]) do |condition, res|
+      assert_check_new_row(row)
+      @tty.send_line_exact("if [ #{condition} ]; then echo hello; fi")
+      row += 1
+      if res
+        @tty.assert_row(row, 'hello')
+        row += 1
+      end
+      test_passed('true if test')
+      row
+    end
+  end
+end
 
 # bool if tests
 def true_if_test(row)
@@ -521,7 +598,7 @@ end
 
 def false_or_true_if_elif_multiple_condition_test(row)
   assert_check_new_row(row)
-  @tty.send_line_exact('if [ false ]; then echo hello; elif [ false || true]; then echo hey; else echo hi; fi')
+  @tty.send_line_exact('if [ false ]; then echo hello; elif [ false || true ]; then echo hey; else echo hi; fi')
   row += 1
   @tty.assert_row(row, 'hey')
   row += 1
