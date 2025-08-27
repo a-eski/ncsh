@@ -176,9 +176,10 @@ static inline void estrtrim(Str* v)
         return;
     }
 
-    size_t i;
-    for (i = v->length - 2; i > 0 && v->value[i] == ' '; --i);
-    v->value[i + 1] = '\0';
+    size_t i = v->length - 2;
+    while (i > 0 && v->value[i] == ' ') {
+        v->value[i--] = '\0';
+    }
     v->length = i + 2;
 
     assert(v->value[v->length - 1] == '\0');

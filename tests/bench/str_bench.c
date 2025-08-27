@@ -77,6 +77,10 @@ void estrtrim_bench()
     auto data = Str_New_Literal("stringtoBeTrimmed  ");
 
     estrtrim(&data);
+
+    auto dataNoTrim = Str_New_Literal("stringtoNotBeTrimmed");
+
+    estrtrim(&dataNoTrim);
 }
 
 int main()
