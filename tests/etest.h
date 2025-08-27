@@ -52,11 +52,13 @@ static int tests_passed;
 
 static bool abort_on_failed_assert;
 
-[[maybe_unused]] static void etest_init(bool abort_on_failed_assertion)
+[[maybe_unused]]
+static void etest_init(bool abort_on_failed_assertion)
 {
     abort_on_failed_assert = abort_on_failed_assertion;
 }
 
+[[maybe_unused]]
 static void etest_run_internal(char* function_name, void (*function)(void))
 {
     test_failed = false;
@@ -83,6 +85,7 @@ static void etest_failed_internal(void)
     test_failed = true;
 }
 
+[[maybe_unused]]
 static void etest_start_internal(char* file)
 {
     test_failed = 0;
@@ -90,6 +93,7 @@ static void etest_start_internal(char* file)
     printf(YELLOW_BRIGHT "Starting tests for %s\n" RESET, file);
 }
 
+[[maybe_unused]]
 static void etest_finish_internal(char* file)
 {
     printf(YELLOW_BRIGHT "Finished tests for %s: %d tests passed, %d tests failed.\n" RESET, file, tests_passed,

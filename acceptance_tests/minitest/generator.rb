@@ -119,6 +119,19 @@ def generate_if_bool_tests
         tty.assert_row(row, 'hi')
       end
     end
+
+    define_method("test_if_multiple_elif_#{name}_#{i}") do
+      tty = TTYtest.new_terminal(%(../bin/ncsh), width: 180, height: 160)
+      row = ROW_START
+      tty.assert_row_ends_with(row, ' ❱ ')
+      tty.send_line_exact("if [ false ]; then echo hello; elif [ false ]; then echo hi; elif [ #{condition} ]; then echo hey; fi")
+      row += 1
+      if result
+        tty.assert_row(row, 'hey')
+      else
+        tty.assert_row_ends_with(row, ' ❱ ')
+      end
+    end
   end
 end
 
@@ -202,6 +215,19 @@ def generate_if_math_tests
         tty.assert_row(row, 'hey')
       else
         tty.assert_row(row, 'hi')
+      end
+    end
+
+    define_method("test_if_multiple_elif_#{name}_#{i}") do
+      tty = TTYtest.new_terminal(%(../bin/ncsh), width: 180, height: 160)
+      row = ROW_START
+      tty.assert_row_ends_with(row, ' ❱ ')
+      tty.send_line_exact("if [ 1 -eq 5 ]; then echo hello; elif [ 1 -eq 5 ]; then echo hi; elif [ #{condition} ]; then echo hey; fi")
+      row += 1
+      if result
+        tty.assert_row(row, 'hey')
+      else
+        tty.assert_row_ends_with(row, ' ❱ ')
       end
     end
   end
