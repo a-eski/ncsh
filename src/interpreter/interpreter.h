@@ -5,8 +5,6 @@
 
 #include "../types.h"
 
-void interpreter_init(Shell* restrict shell);
-
 /* interpreter_run
  * Lex, parse, perform semantic analysis, and execute.
  * Pass in copy of scratch arena so it is valid for scope of interpreter, then resets when scope ends.

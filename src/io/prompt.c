@@ -194,7 +194,6 @@ int prompt(Input* restrict input)
 int prompt_if_needed(Input* restrict input)
 {
     if (input->reprint_prompt == true) {
-        tty_send(&tcaps.cursor_hide);
         if (prompt(input) == EXIT_FAILURE) {
             tty_send(&tcaps.cursor_show);
             return EXIT_FAILURE;

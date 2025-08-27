@@ -63,28 +63,13 @@ void alias_add(Str alias, Arena* restrict arena)
         aliases_cap = new_cap;
     }
 
-    size_t split_pos = estridx(&alias, '=');
-
-    if (!split_pos || split_pos == alias.length - 1) {
-        tty_fprintln(stderr, "ncsh: Could not process alias while reading rc file: %s", alias.value);
-        return;
-    }
-
-    size_t alias_len = split_pos + 1;
-    if (!alias_len) {
-        return;
-    }
-    aliases[aliases_count].alias = estrdup(&Str_New(alias.value, alias_len), arena);
-
-    size_t ac_len = alias.length - split_pos - 1;
-    if (ac_len == 0) {
-        return;
-    }
-    aliases[aliases_count].actual_command = estrdup(&Str_New(alias.value + split_pos + 1, ac_len), arena);
-
-    debugf("added alias %s with actual command %s\n", aliases[aliases_count].alias->value,
-           aliases[aliases_count].actual_command->value);
+    Str* vals = estrsplit(alias, '=', arena);
+    aliases[aliases_count].alias = &vals[0];
+    aliases[aliases_count].actual_command = &vals[1];
     ++aliases_count;
+
+    debugf("added alias %s with actual command %s\n", aliases[aliases_count - 1].alias->value,
+           aliases[aliases_count - 1].actual_command->value);
 }
 
 void alias_add_new(Str alias, Str command, Arena* restrict arena)

@@ -36,7 +36,7 @@ enum Logic_Type {
     LT_IF_CONDITIONS = 1,
     LT_IF,
     LT_ELSE,
-    LT_ELIF_CONDTIONS,
+    LT_ELIF_CONDITIONS,
     LT_ELIF
 };
 

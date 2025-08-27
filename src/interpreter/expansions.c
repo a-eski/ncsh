@@ -83,18 +83,10 @@ void expansion_assignment(Lexemes* lexeme, size_t pos, Shell* restrict shell)
     // variable values are stored in env hashmap.
     // the key is the previous value, which is tagged with OP_VARIABLE.
     // when VM comes in contact with OP_VARIABLE, it looks up value in env.
-    size_t assignment_pos = estridx(&lexeme->strs[pos], '=');
+    Str* vals = estrsplit(lexeme->strs[pos], '=', &shell->arena);
+    *env_add_or_get(shell->env, vals[0]) = vals[1];
 
-    Str key = {.length = assignment_pos + 1};
-    key.value = arena_malloc(&shell->arena, key.length, char);
-    memcpy(key.value, lexeme->strs[pos].value, assignment_pos);
-
-    Str val = {.length = lexeme->strs[pos].length - assignment_pos - 1};
-    val.value = arena_malloc(&shell->arena, val.length, char);
-    memcpy(val.value, lexeme->strs[pos].value + key.length, val.length);
     debugf("setting key %s with val %s\n", key.value, val.value);
-
-    *env_add_or_get(shell->env, key) = val;
 }
 
 void expansion_variable(Str* restrict in, Commands* restrict cmds, /*Statements* stmts,*/ Shell* restrict shell, Arena* restrict scratch)

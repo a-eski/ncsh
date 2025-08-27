@@ -393,6 +393,21 @@ void estrtrim_test()
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
+void estrtrim_nothing_to_trim_test()
+{
+    SCRATCH_ARENA_TEST_SETUP;
+
+    auto str = estrdup(&Str_New_Literal("nvim"), &s);
+
+    estrtrim(str);
+
+    auto expected = Str_New_Literal("nvim");
+    eassert(str->length == expected.length);
+    eassert(!memcmp(str->value, expected.value, str->length - 1));
+
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
 void sb_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
@@ -646,6 +661,7 @@ void str_tests()
     etest_run(estrtoarr_multiple_test);
 
     etest_run(estrtrim_test);
+    etest_run(estrtrim_nothing_to_trim_test);
 
     etest_run(sb_test);
     etest_run(sb_many_test);

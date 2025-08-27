@@ -176,11 +176,13 @@ static inline void estrtrim(Str* v)
         return;
     }
 
-    size_t i = v->length - 2; // extra -1 to skip the null terminator
+    size_t i = v->length - 2;
     while (i > 0 && v->value[i] == ' ') {
         v->value[i--] = '\0';
     }
     v->length = i + 2;
+
+    assert(v->value[v->length - 1] == '\0');
 }
 
 enodiscard static inline Str* estrdup(Str* v, Arena* restrict a)
@@ -287,6 +289,10 @@ enodiscard static inline Str* estrsjoin(Str* v, size_t n, char joiner, Arena* re
     assert(v); assert(n); assert(a);
     if (!v || !n || !v->length) {
         return NULL;
+    }
+
+    if (n == 2) {
+        return estrjoin(&v[0], &v[1], joiner, a);
     }
 
     Str_Builder* sb = sb_new(a);
