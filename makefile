@@ -294,6 +294,10 @@ test_str:
 ts:
 	make test_str
 
+bench_str:
+	$(CC) $(STD) $(release_flags) ./src/arena.c ./tests/bench/str_bench.c -o ./bin/str_bench
+	hyperfine --warmup 10000 --shell=none './bin/str_bench'
+
 # Run VM sanity tests
 test_vm:
 	$(CC) $(STD) $(test_flags) -DNCSH_VM_TEST $(TTYIO_IN) ./src/arena.c ./src/interpreter/lexer.c ./src/eskilib/efile.c ./src/io/hashset.c ./src/io/history.c ./src/z/fzf.c ./src/z/z.c ./src/env.c ./src/alias.c ./src/conf.c ./src/interpreter/vm.c ./src/interpreter/sema.c ./src/interpreter/parser.c ./src/interpreter/builtins.c ./src/interpreter/lexemes.c ./src/interpreter/statements.c ./src/interpreter/expansions.c ./src/interpreter/pipe.c ./src/interpreter/redirection.c ./tests/interpreter/vm_tests.c -o ./bin/vm_tests

@@ -170,7 +170,7 @@ enodiscard static inline char** estrtoarr(Str* strs, size_t n, Arena* restrict a
     return buffer;
 }
 
-static inline void estrtrim(Str* v)
+/*static inline void estrtrim(Str* v)
 {
     if (v->length <= 2) {
         return;
@@ -180,6 +180,18 @@ static inline void estrtrim(Str* v)
     while (i > 0 && v->value[i] == ' ') {
         v->value[i--] = '\0';
     }
+    v->length = i + 2;
+}*/
+
+static inline void estrtrim(Str* v)
+{
+    if (v->length <= 2) {
+        return;
+    }
+
+   size_t i; // extra -1 to skip the null terminator
+    for (i = v->length - 2; i > 0 &&  v->value[i] == ' '; --i);
+    v->value[i + 1] = 0;
     v->length = i + 2;
 }
 
