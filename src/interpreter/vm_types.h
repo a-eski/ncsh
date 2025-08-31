@@ -56,7 +56,6 @@ typedef struct {
     size_t strs_n;
     Str* strs;
     uint8_t command_position;
-    size_t stmt_pos;
     bool end;
 
     enum Ops op_current;
