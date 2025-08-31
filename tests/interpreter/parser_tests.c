@@ -1439,7 +1439,7 @@ void parser_parse_if_elif_else_test()
     // third statement
     commands = statements.statements[2].commands;
     eassert(statements.statements[2].count == 1);
-    eassert(statements.statements[2].type == LT_ELIF_CONDTIONS);
+    eassert(statements.statements[2].type == LT_ELIF_CONDITIONS);
     eassert(commands->count == 3);
 
     eassert(!memcmp(commands->strs[0].value, "1", 1));
@@ -1563,7 +1563,7 @@ void parser_parse_if_elif_test()
     // third statement
     commands = statements.statements[2].commands;
     eassert(statements.statements[2].count == 1);
-    eassert(statements.statements[2].type == LT_ELIF_CONDTIONS);
+    eassert(statements.statements[2].type == LT_ELIF_CONDITIONS);
     eassert(commands->count == 3);
 
     eassert(!memcmp(commands->strs[0].value, "1", 1));

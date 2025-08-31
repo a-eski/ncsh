@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdlib.h> // used in macros
+#include "../../src/arena.h" // used in macros
 
 #define ARENA_TEST_SETUP                                                                                               \
     constexpr int arena_capacity = 1 << 26;                                                                            \

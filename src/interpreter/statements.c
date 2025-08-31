@@ -74,6 +74,7 @@ void statements_init(Statements* restrict stmts, Arena* restrict scratch)
     stmts->statements = arena_malloc(scratch, STMT_DEFAULT_N, Statement);
     stmts->type = ST_NORMAL;
     stmts->statements->count = 0;
+    stmts->cap = STMT_DEFAULT_N;
     stmts->statements->type = LT_NORMAL;
     stmts->statements->commands = commands_alloc(scratch);
 }

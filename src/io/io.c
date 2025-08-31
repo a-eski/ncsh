@@ -322,12 +322,14 @@ char io_read()
 int io_autocompletions_select_from(Input* restrict input)
 {
     tty_send(&tcaps.line_clr_to_eol);
+    tty_send(&tcaps.cursor_hide);
     tty_send(&tcaps.newline);
 
     Autocompletion autocompletion_matches[NCSH_MAX_AUTOCOMPLETION_MATCHES] = {0};
     uint8_t ac_matches_count = ac_get(input->buffer, autocompletion_matches, input->autocompletions_tree, *input->scratch);
 
     if (!ac_matches_count) {
+        tty_send(&tcaps.cursor_show);
         return EXIT_SUCCESS;
     }
 
@@ -374,11 +376,13 @@ int io_autocompletions_select_from(Input* restrict input)
         case '\r': {
             continue_input = false;
             size_t length = strlen(autocompletion_matches[position].value) + 1;
-            if (input->pos + length > NCSH_MAX_INPUT)
-                return EXIT_FAILURE;
+            if (input->pos + length > NCSH_MAX_INPUT) {
+                goto failure;
+            }
             char* input_buf = input->buffer + input->pos;
-            if (!input_buf)
-                return EXIT_FAILURE;
+            if (!input_buf) {
+                goto failure;
+            }
             memcpy(input->buffer + input->pos, autocompletion_matches[position].value, length);
             input->pos += length;
             exit = EXIT_SUCCESS_EXECUTE;
@@ -398,7 +402,12 @@ int io_autocompletions_select_from(Input* restrict input)
         tty_color_reset();
     }
 
+    tty_send(&tcaps.cursor_show);
     return exit;
+
+failure:
+    tty_send(&tcaps.cursor_show);
+    return EXIT_FAILURE;
 }
 
 [[nodiscard]]
@@ -463,10 +472,12 @@ int io_eol(Input* restrict input)
 {
     if (!input->pos && !input->buffer[input->pos]) {
         input->reprint_prompt = true;
+        tty_send(&tcaps.cursor_hide); // cursor is shown again after prompt is printed
         tty_send(&tcaps.newline);
         return EXIT_CONTINUE;
     }
 
+    tty_send(&tcaps.cursor_hide);
     while (input->pos < input->max_pos && input->buffer[input->pos]) {
         ++input->pos;
         tty_send(&tcaps.cursor_right);
@@ -479,6 +490,7 @@ int io_eol(Input* restrict input)
 
     tty_send(&tcaps.line_clr_to_eol);
     tty_send(&tcaps.newline);
+    tty_send(&tcaps.cursor_show);
     return EXIT_SUCCESS_EXECUTE;
 }
 
@@ -741,7 +753,6 @@ int io_cursor_end(Input* restrict input)
     }
 
     if (input->lines_y > input->current_y) {
-        tty_send(&tcaps.cursor_hide);
         input->current_y = input->lines_y - input->current_y;
         assert(input->current_y > 0);
         tty_send_n(&tcaps.cursor_down, input->current_y);
