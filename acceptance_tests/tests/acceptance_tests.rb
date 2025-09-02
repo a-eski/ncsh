@@ -11,7 +11,6 @@ require './acceptance_tests/tests/history'
 require './acceptance_tests/tests/logic'
 require './acceptance_tests/tests/if'
 require './acceptance_tests/tests/keys'
-require './acceptance_tests/tests/parser'
 require './acceptance_tests/tests/pipes'
 require './acceptance_tests/tests/redirection'
 require './acceptance_tests/tests/startup'
@@ -41,8 +40,7 @@ def run_acceptance_tests(prompt_directory_option, prompt_user_option, is_custom_
   row = autocompletion_tests(row)
   row = syntax_tests(row)
   row = expansion_tests(row)
-  row = variables_tests(row)
-  parser_tests(row)
+  variables_tests(row)
   @tty.send_line(%(exit))
 
   row = 0

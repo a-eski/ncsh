@@ -21,7 +21,7 @@ void lexer_lex_ls_test()
 
     eassert(lexemes.strs[0].value);
     eassert(!memcmp(lexemes.strs[0].value, line.value, line.length));
-    eassert(lexemes.ops[0] == OP_CONSTANT);
+    eassert(lexemes.ops[0] == OP_CONST);
     eassert(lexemes.strs[0].length == line.length);
 
     eassert(!lexemes.strs[1].value);
@@ -41,11 +41,11 @@ void lexer_lex_ls_dash_l_test()
     eassert(lexemes.count == 2);
 
     eassert(!memcmp(lexemes.strs[0].value, "ls", 3));
-    eassert(lexemes.ops[0] == OP_CONSTANT);
+    eassert(lexemes.ops[0] == OP_CONST);
     eassert(lexemes.strs[0].length == 3);
 
     eassert(!memcmp(lexemes.strs[1].value, "-l", 3));
-    eassert(lexemes.ops[1] == OP_CONSTANT);
+    eassert(lexemes.ops[1] == OP_CONST);
     eassert(lexemes.strs[1].length == 3);
 
     eassert(!lexemes.strs[2].value);
@@ -65,7 +65,7 @@ void lexer_lex_pipe_test()
     eassert(lexemes.count == 3);
 
     eassert(memcmp(lexemes.strs[0].value, "ls", 3) == 0);
-    eassert(lexemes.ops[0] == OP_CONSTANT);
+    eassert(lexemes.ops[0] == OP_CONST);
     eassert(lexemes.strs[0].length == 3);
 
     eassert(memcmp(lexemes.strs[1].value, "|", 2) == 0);
@@ -73,7 +73,7 @@ void lexer_lex_pipe_test()
     eassert(lexemes.strs[1].length == 2);
 
     eassert(memcmp(lexemes.strs[2].value, "sort", 5) == 0);
-    eassert(lexemes.ops[2] == OP_CONSTANT);
+    eassert(lexemes.ops[2] == OP_CONST);
     eassert(lexemes.strs[2].length == 5);
 
     eassert(!lexemes.strs[3].value);
@@ -93,7 +93,7 @@ void lexer_lex_multiple_pipes_test()
     eassert(lexemes.count == 5);
 
     eassert(!memcmp(lexemes.strs[0].value, "ls", 3));
-    eassert(lexemes.ops[0] == OP_CONSTANT);
+    eassert(lexemes.ops[0] == OP_CONST);
     eassert(lexemes.strs[0].length == 3);
 
     eassert(!memcmp(lexemes.strs[1].value, "|", 2));
@@ -101,7 +101,7 @@ void lexer_lex_multiple_pipes_test()
     eassert(lexemes.strs[1].length == 2);
 
     eassert(!memcmp(lexemes.strs[2].value, "sort", 5));
-    eassert(lexemes.ops[2] == OP_CONSTANT);
+    eassert(lexemes.ops[2] == OP_CONST);
     eassert(lexemes.strs[2].length == 5);
 
     eassert(!memcmp(lexemes.strs[3].value, "|", 2));
@@ -109,7 +109,7 @@ void lexer_lex_multiple_pipes_test()
     eassert(lexemes.strs[3].length == 2);
 
     eassert(!memcmp(lexemes.strs[4].value, "table", 6));
-    eassert(lexemes.ops[4] == OP_CONSTANT);
+    eassert(lexemes.ops[4] == OP_CONST);
     eassert(lexemes.strs[4].length == 6);
 
     eassert(!lexemes.strs[5].value);
@@ -129,7 +129,7 @@ void lexer_lex_multiple_pipes_multiple_args_test()
     eassert(lexemes.count == 9);
 
     eassert(!memcmp(lexemes.strs[0].value, "ls", 2));
-    eassert(lexemes.ops[0] == OP_CONSTANT);
+    eassert(lexemes.ops[0] == OP_CONST);
     eassert(lexemes.strs[0].length == 3);
 
     eassert(memcmp(lexemes.strs[1].value, "|", 2) == 0);
@@ -137,7 +137,7 @@ void lexer_lex_multiple_pipes_multiple_args_test()
     eassert(lexemes.strs[1].length == 2);
 
     eassert(!memcmp(lexemes.strs[2].value, "sort", 4));
-    eassert(lexemes.ops[2] == OP_CONSTANT);
+    eassert(lexemes.ops[2] == OP_CONST);
     eassert(lexemes.strs[2].length == 5);
 
     eassert(!memcmp(lexemes.strs[3].value, "|", 2));
@@ -145,11 +145,11 @@ void lexer_lex_multiple_pipes_multiple_args_test()
     eassert(lexemes.strs[3].length == 2);
 
     eassert(!memcmp(lexemes.strs[4].value, "head", 4));
-    eassert(lexemes.ops[4] == OP_CONSTANT);
+    eassert(lexemes.ops[4] == OP_CONST);
     eassert(lexemes.strs[4].length == 5);
 
     eassert(!memcmp(lexemes.strs[5].value, "-1", 2));
-    eassert(lexemes.ops[5] == OP_CONSTANT);
+    eassert(lexemes.ops[5] == OP_CONST);
     eassert(lexemes.strs[5].length == 3);
 
     eassert(!memcmp(lexemes.strs[6].value, "|", 2));
@@ -157,11 +157,11 @@ void lexer_lex_multiple_pipes_multiple_args_test()
     eassert(lexemes.strs[6].length == 2);
 
     eassert(!memcmp(lexemes.strs[7].value, "wc", 2));
-    eassert(lexemes.ops[7] == OP_CONSTANT);
+    eassert(lexemes.ops[7] == OP_CONST);
     eassert(lexemes.strs[7].length == 3);
 
     eassert(!memcmp(lexemes.strs[8].value, "-c", 2));
-    eassert(lexemes.ops[8] == OP_CONSTANT);
+    eassert(lexemes.ops[8] == OP_CONST);
     eassert(lexemes.strs[8].length == 3);
 
     eassert(!lexemes.strs[9].value);
@@ -181,7 +181,7 @@ void lexer_lex_background_job_test()
     eassert(lexemes.count == 2);
 
     eassert(!memcmp(lexemes.strs[0].value, "longrunningprogram", 19));
-    eassert(lexemes.ops[0] == OP_CONSTANT);
+    eassert(lexemes.ops[0] == OP_CONST);
     eassert(lexemes.strs[0].length == 19);
 
     eassert(!memcmp(lexemes.strs[1].value, "&", 2));
@@ -205,7 +205,7 @@ void lexer_lex_output_redirection_test()
     eassert(lexemes.count == 3);
 
     eassert(!memcmp(lexemes.strs[0].value, "ls", 3));
-    eassert(lexemes.ops[0] == OP_CONSTANT);
+    eassert(lexemes.ops[0] == OP_CONST);
     eassert(lexemes.strs[0].length == 3);
 
     eassert(!memcmp(lexemes.strs[1].value, ">", 2));
@@ -213,7 +213,7 @@ void lexer_lex_output_redirection_test()
     eassert(lexemes.strs[1].length == 2);
 
     eassert(!memcmp(lexemes.strs[2].value, "text.txt", 9));
-    eassert(lexemes.ops[2] == OP_CONSTANT);
+    eassert(lexemes.ops[2] == OP_CONST);
     eassert(lexemes.strs[2].length == 9);
 
     eassert(!lexemes.strs[3].value);
@@ -233,7 +233,7 @@ void lexer_lex_output_redirection_append_test()
     eassert(lexemes.count == 3);
 
     eassert(!memcmp(lexemes.strs[0].value, "ls", 3));
-    eassert(lexemes.ops[0] == OP_CONSTANT);
+    eassert(lexemes.ops[0] == OP_CONST);
     eassert(lexemes.strs[0].length == 3);
 
     eassert(!memcmp(lexemes.strs[1].value, ">>", 3));
@@ -241,7 +241,7 @@ void lexer_lex_output_redirection_append_test()
     eassert(lexemes.strs[1].length == 3);
 
     eassert(!memcmp(lexemes.strs[2].value, "text.txt", 9));
-    eassert(lexemes.ops[2] == OP_CONSTANT);
+    eassert(lexemes.ops[2] == OP_CONST);
     eassert(lexemes.strs[2].length == 9);
 
     eassert(!lexemes.strs[3].value);
@@ -261,7 +261,7 @@ void lexer_lex_input_redirection_test()
     eassert(lexemes.count == 3);
 
     eassert(!memcmp(lexemes.strs[0].value, "t.txt", 6));
-    eassert(lexemes.ops[0] == OP_CONSTANT);
+    eassert(lexemes.ops[0] == OP_CONST);
     eassert(lexemes.strs[0].length == 6);
 
     eassert(!memcmp(lexemes.strs[1].value, "<", 2));
@@ -269,7 +269,7 @@ void lexer_lex_input_redirection_test()
     eassert(lexemes.strs[1].length == 2);
 
     eassert(!memcmp(lexemes.strs[2].value, "sort", 5));
-    eassert(lexemes.ops[2] == OP_CONSTANT);
+    eassert(lexemes.ops[2] == OP_CONST);
     eassert(lexemes.strs[2].length == 5);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
@@ -287,7 +287,7 @@ void lexer_lex_stdout_and_stderr_redirection_test()
     eassert(lexemes.count == 3);
 
     eassert(!memcmp(lexemes.strs[0].value, "ls", 3));
-    eassert(lexemes.ops[0] == OP_CONSTANT);
+    eassert(lexemes.ops[0] == OP_CONST);
     eassert(lexemes.strs[0].length == 3);
 
     eassert(!memcmp(lexemes.strs[1].value, "&>", 3));
@@ -295,7 +295,7 @@ void lexer_lex_stdout_and_stderr_redirection_test()
     eassert(lexemes.strs[1].length == 3);
 
     eassert(!memcmp(lexemes.strs[2].value, "text.txt", 9));
-    eassert(lexemes.ops[2] == OP_CONSTANT);
+    eassert(lexemes.ops[2] == OP_CONST);
     eassert(lexemes.strs[2].length == 9);
 
     eassert(!lexemes.strs[3].value);
@@ -315,7 +315,7 @@ void lexer_lex_stdout_and_stderr_redirection_append_test()
     eassert(lexemes.count == 3);
 
     eassert(!memcmp(lexemes.strs[0].value, "ls", 3));
-    eassert(lexemes.ops[0] == OP_CONSTANT);
+    eassert(lexemes.ops[0] == OP_CONST);
     eassert(lexemes.strs[0].length == 3);
 
     eassert(!memcmp(lexemes.strs[1].value, "&>>", 4));
@@ -323,7 +323,7 @@ void lexer_lex_stdout_and_stderr_redirection_append_test()
     eassert(lexemes.strs[1].length == 4);
 
     eassert(!memcmp(lexemes.strs[2].value, "text.txt", 9));
-    eassert(lexemes.ops[2] == OP_CONSTANT);
+    eassert(lexemes.ops[2] == OP_CONST);
     eassert(lexemes.strs[2].length == 9);
 
     eassert(!lexemes.strs[3].value);
@@ -407,7 +407,7 @@ void lexer_lex_variable_test()
     eassert(lexemes.count == 2);
 
     eassert(!memcmp(lexemes.strs[0].value, "echo", 5));
-    eassert(lexemes.ops[0] == OP_CONSTANT);
+    eassert(lexemes.ops[0] == OP_CONST);
     eassert(lexemes.strs[0].length = 5);
 
     eassert(!memcmp(lexemes.strs[1].value, "$STR", 5));
@@ -439,7 +439,7 @@ void lexer_lex_variable_and_test()
     eassert(lexemes.strs[1].length == 3);
 
     eassert(!memcmp(lexemes.strs[2].value, "echo", 5));
-    eassert(lexemes.ops[2] == OP_CONSTANT);
+    eassert(lexemes.ops[2] == OP_CONST);
     eassert(lexemes.strs[2].length = 5);
 
     eassert(!memcmp(lexemes.strs[3].value, "$STR", 5));
@@ -491,11 +491,11 @@ void lexer_lex_double_quotes_test()
     eassert(lexemes.count == 2);
 
     eassert(!memcmp(lexemes.strs[0].value, "echo", 5));
-    eassert(lexemes.ops[0] == OP_CONSTANT);
+    eassert(lexemes.ops[0] == OP_CONST);
     eassert(lexemes.strs[0].length == 5);
 
     eassert(!memcmp(lexemes.strs[1].value, "hello", 6));
-    eassert(lexemes.ops[1] == OP_CONSTANT);
+    eassert(lexemes.ops[1] == OP_CONST);
     eassert(lexemes.strs[1].length == 6);
 
     eassert(!lexemes.strs[2].value);
@@ -515,11 +515,11 @@ void lexer_lex_single_quotes_test()
     eassert(lexemes.count == 2);
 
     eassert(!memcmp(lexemes.strs[0].value, "echo", 5));
-    eassert(lexemes.ops[0] == OP_CONSTANT);
+    eassert(lexemes.ops[0] == OP_CONST);
     eassert(lexemes.strs[0].length == 5);
 
     eassert(!memcmp(lexemes.strs[1].value, "hello", 6));
-    eassert(lexemes.ops[1] == OP_CONSTANT);
+    eassert(lexemes.ops[1] == OP_CONST);
     eassert(lexemes.strs[1].length == 6);
 
     eassert(!lexemes.strs[2].value);
@@ -539,11 +539,11 @@ void lexer_lex_backtick_quotes_test()
     eassert(lexemes.count == 2);
 
     eassert(!memcmp(lexemes.strs[0].value, "echo", 5));
-    eassert(lexemes.ops[0] == OP_CONSTANT);
+    eassert(lexemes.ops[0] == OP_CONST);
     eassert(lexemes.strs[0].length == 5);
 
     eassert(!memcmp(lexemes.strs[1].value, "hello", 6));
-    eassert(lexemes.ops[1] == OP_CONSTANT);
+    eassert(lexemes.ops[1] == OP_CONST);
     eassert(lexemes.strs[1].length == 6);
 
     eassert(!lexemes.strs[2].value);
@@ -563,19 +563,19 @@ void lexer_lex_git_commit_test()
     eassert(lexemes.count == 4);
 
     eassert(!memcmp(lexemes.strs[0].value, "git", 4));
-    eassert(lexemes.ops[0] == OP_CONSTANT);
+    eassert(lexemes.ops[0] == OP_CONST);
     eassert(lexemes.strs[0].length == 4);
 
     eassert(!memcmp(lexemes.strs[1].value, "commit", 7));
-    eassert(lexemes.ops[1] == OP_CONSTANT);
+    eassert(lexemes.ops[1] == OP_CONST);
     eassert(lexemes.strs[1].length == 7);
 
     eassert(!memcmp(lexemes.strs[2].value, "-m", 3));
-    eassert(lexemes.ops[2] == OP_CONSTANT);
+    eassert(lexemes.ops[2] == OP_CONST);
     eassert(lexemes.strs[2].length == 3);
 
     eassert(!memcmp(lexemes.strs[3].value, "this is a commit message", 25));
-    eassert(lexemes.ops[3] == OP_CONSTANT);
+    eassert(lexemes.ops[3] == OP_CONST);
     eassert(lexemes.strs[3].length == 25);
 
     eassert(!lexemes.strs[4].value);
@@ -595,7 +595,7 @@ void lexer_lex_home_test()
     eassert(lexemes.count == 2);
 
     eassert(!memcmp(lexemes.strs[0].value, "ls", 3));
-    eassert(lexemes.ops[0] == OP_CONSTANT);
+    eassert(lexemes.ops[0] == OP_CONST);
     eassert(lexemes.strs[0].length == 3);
 
     eassert(!memcmp(lexemes.strs[1].value, "~", 2));
@@ -619,7 +619,7 @@ void lexer_lex_home_at_start_test()
     eassert(lexemes.count == 2);
 
     eassert(!memcmp(lexemes.strs[0].value, "ls", 3));
-    eassert(lexemes.ops[0] == OP_CONSTANT);
+    eassert(lexemes.ops[0] == OP_CONST);
     eassert(lexemes.strs[0].length == 3);
 
     eassert(!memcmp(lexemes.strs[1].value, "~/snap", sizeof("~/snap") - 1));
@@ -643,37 +643,37 @@ void lexer_lex_math_operators_test()
     eassert(lexemes.ops[0] == OP_MATH_EXPRESSION_START);
 
     eassert(!memcmp(lexemes.strs[1].value, "1", 1));
-    eassert(lexemes.ops[1] == OP_CONSTANT);
+    eassert(lexemes.ops[1] == OP_CONST);
 
     eassert(lexemes.ops[2] == OP_ADD);
 
     eassert(!memcmp(lexemes.strs[3].value, "1", 1));
-    eassert(lexemes.ops[3] == OP_CONSTANT);
+    eassert(lexemes.ops[3] == OP_CONST);
 
     eassert(lexemes.ops[4] == OP_SUBTRACT);
 
     eassert(!memcmp(lexemes.strs[5].value, "1", 1));
-    eassert(lexemes.ops[5] == OP_CONSTANT);
+    eassert(lexemes.ops[5] == OP_CONST);
 
     eassert(lexemes.ops[6] == OP_MULTIPLY);
 
     eassert(!memcmp(lexemes.strs[7].value, "1", 1));
-    eassert(lexemes.ops[7] == OP_CONSTANT);
+    eassert(lexemes.ops[7] == OP_CONST);
 
     eassert(lexemes.ops[8] == OP_DIVIDE);
 
     eassert(!memcmp(lexemes.strs[9].value, "1", 1));
-    eassert(lexemes.ops[9] == OP_CONSTANT);
+    eassert(lexemes.ops[9] == OP_CONST);
 
     eassert(lexemes.ops[10] == OP_MODULO);
 
     eassert(!memcmp(lexemes.strs[11].value, "1", 1));
-    eassert(lexemes.ops[11] == OP_CONSTANT);
+    eassert(lexemes.ops[11] == OP_CONST);
 
     eassert(lexemes.ops[12] == OP_EXPONENTIATION);
 
     eassert(!memcmp(lexemes.strs[13].value, "1", 1));
-    eassert(lexemes.ops[13] == OP_CONSTANT);
+    eassert(lexemes.ops[13] == OP_CONST);
 
     eassert(lexemes.ops[14] == OP_MATH_EXPRESSION_END);
 
@@ -694,7 +694,7 @@ void lexer_lex_glob_star_test()
     eassert(lexemes.count == 2);
 
     eassert(!memcmp(lexemes.strs[0].value, "ls", 3));
-    eassert(lexemes.ops[0] == OP_CONSTANT);
+    eassert(lexemes.ops[0] == OP_CONST);
     eassert(lexemes.strs[0].length == 3);
 
     eassert(!memcmp(lexemes.strs[1].value, "*.md", sizeof("*.md") - 1));
@@ -718,7 +718,7 @@ void lexer_lex_glob_question_test()
     eassert(lexemes.count == 2);
 
     eassert(!memcmp(lexemes.strs[0].value, "ls", 3));
-    eassert(lexemes.ops[0] == OP_CONSTANT);
+    eassert(lexemes.ops[0] == OP_CONST);
     eassert(lexemes.strs[0].length == 3);
 
     eassert(!memcmp(lexemes.strs[1].value, "?.md", sizeof("?.md") - 1));
@@ -831,13 +831,13 @@ void lexer_lex_if_test()
 
     eassert(lexemes.ops[0] == OP_IF);
     eassert(lexemes.ops[1] == OP_CONDITION_START);
-    eassert(lexemes.ops[2] == OP_CONSTANT);
+    eassert(lexemes.ops[2] == OP_CONST);
     eassert(lexemes.ops[3] == OP_EQUALS);
-    eassert(lexemes.ops[4] == OP_CONSTANT);
+    eassert(lexemes.ops[4] == OP_CONST);
     eassert(lexemes.ops[5] == OP_CONDITION_END);
     eassert(lexemes.ops[6] == OP_THEN);
-    eassert(lexemes.ops[7] == OP_CONSTANT);
-    eassert(lexemes.ops[8] == OP_CONSTANT);
+    eassert(lexemes.ops[7] == OP_CONST);
+    eassert(lexemes.ops[8] == OP_CONST);
     eassert(lexemes.ops[9] == OP_FI);
     eassert(!lexemes.ops[10])
 
@@ -857,16 +857,16 @@ void lexer_lex_if_else_test()
 
     eassert(lexemes.ops[0] == OP_IF);
     eassert(lexemes.ops[1] == OP_CONDITION_START);
-    eassert(lexemes.ops[2] == OP_CONSTANT);
+    eassert(lexemes.ops[2] == OP_CONST);
     eassert(lexemes.ops[3] == OP_EQUALS);
-    eassert(lexemes.ops[4] == OP_CONSTANT);
+    eassert(lexemes.ops[4] == OP_CONST);
     eassert(lexemes.ops[5] == OP_CONDITION_END);
     eassert(lexemes.ops[6] == OP_THEN);
-    eassert(lexemes.ops[7] == OP_CONSTANT);
-    eassert(lexemes.ops[8] == OP_CONSTANT);
+    eassert(lexemes.ops[7] == OP_CONST);
+    eassert(lexemes.ops[8] == OP_CONST);
     eassert(lexemes.ops[9] == OP_ELSE);
-    eassert(lexemes.ops[10] == OP_CONSTANT);
-    eassert(lexemes.ops[11] == OP_CONSTANT);
+    eassert(lexemes.ops[10] == OP_CONST);
+    eassert(lexemes.ops[11] == OP_CONST);
     eassert(lexemes.ops[12] == OP_FI);
     eassert(!lexemes.ops[13])
 
@@ -885,11 +885,11 @@ void lexer_lex_comment_test()
     eassert(lexemes.count == 2);
 
     eassert(!memcmp(lexemes.strs[0].value, "echo", 5));
-    eassert(lexemes.ops[0] == OP_CONSTANT);
+    eassert(lexemes.ops[0] == OP_CONST);
     eassert(lexemes.strs[0].length == 5);
 
     eassert(!memcmp(lexemes.strs[1].value, "hello", 6));
-    eassert(lexemes.ops[1] == OP_CONSTANT);
+    eassert(lexemes.ops[1] == OP_CONST);
     eassert(lexemes.strs[1].length == 6);
 
     // comment is stripped by the lexer

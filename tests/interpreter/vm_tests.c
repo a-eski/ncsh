@@ -23,13 +23,11 @@ volatile int sigwinch_caught;
     lexer_lex(Str_Get(input), &lexemes, &scratch_arena);                                                     \
     int res = sema_analyze(&lexemes);                                                                     \
     eassert(res == EXIT_SUCCESS);                                                                                      \
-    Statements statements = {0};                                                                                       \
     Shell shell = {0};                                                                                                 \
-    res = parser_parse(&lexemes, &statements, NULL, &scratch_arena);                                                   \
-    eassert(res == EXIT_SUCCESS);                                                                                      \
-    res = vm_execute(&statements, &shell, &scratch_arena);                                                             \
+    auto parse_rv = parser_parse(&lexemes, NULL, &scratch_arena);                                                   \
+    eassert(!parse_rv.parser_errno);                                                                                      \
+    res = vm_execute(parse_rv.stmts, &shell, &scratch_arena);                                                             \
     eassert(res == EXIT_SUCCESS || res == EXIT_FAILURE_CONTINUE);                                                      \
-                                                                                                                       \
     SCRATCH_ARENA_TEST_TEARDOWN;
 
 void running_vm_tests()

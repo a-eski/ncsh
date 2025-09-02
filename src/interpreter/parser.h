@@ -5,6 +5,16 @@
 
 #include "../types.h"
 #include "lexemes.h"
-#include "statements.h"
+#include "stmts.h"
 
-int parser_parse(Lexemes* lexemes, Statements* restrict stmts, Shell* restrict shell, Arena* restrict scratch);
+/* Parser errnos */
+#define PE_NOTHING -1 // nothing to process
+
+typedef struct {
+    int parser_errno;
+    char* msg;
+    Statements* stmts;
+} Parser_Output;
+
+// int parser_parse(Lexemes* lexemes, Statements* restrict stmts, Shell* restrict shell, Arena* restrict scratch);
+Parser_Output parser_parse(Lexemes* lexemes, Shell* restrict shell, Arena* restrict scratch);

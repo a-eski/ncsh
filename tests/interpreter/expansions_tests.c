@@ -27,12 +27,12 @@ void expansion_home_test()
     lexemes.strs[0].length = 2;
     lexemes.ops[0] = OP_HOME_EXPANSION;
 
-    expansion_home(&shell, &lexemes, 0, &a);
+    expansion_home(&(Parser_Data){.lexemes = &lexemes, .sh = &shell, .s = &a}, 0);
 
     printf("%s\n", lexemes.strs[0].value);
     eassert(!memcmp(lexemes.strs[0].value, home, home_len - 1));
     eassert(lexemes.strs[0].length == home_len);
-    eassert(lexemes.ops[0] == OP_CONSTANT);
+    eassert(lexemes.ops[0] == OP_CONST);
 
     ARENA_TEST_TEARDOWN;
 }
@@ -56,11 +56,11 @@ void expansion_home_suffix_test()
     lexemes.ops[0] = OP_HOME_EXPANSION;
     #undef V
 
-    expansion_home(&shell, &lexemes, 0, &a);
+    expansion_home(&(Parser_Data){.lexemes = &lexemes, .sh = &shell, .s = &a}, 0);
 
     eassert(!memcmp(lexemes.strs[0].value, expected->value, expected->length - 1));
     eassert(lexemes.strs[0].length == expected->length);
-    eassert(lexemes.ops[0] == OP_CONSTANT);
+    eassert(lexemes.ops[0] == OP_CONST);
 
     ARENA_TEST_TEARDOWN;
 }
@@ -73,16 +73,15 @@ void expansion_variable_path_test()
     shell_init(&shell, &a, envp_ptr);
     char* path = getenv(NCSH_PATH_VAL);
     size_t path_len = strlen(path) + 1;
+    Commands* cmds = cmds_alloc(&a);
 
-    Commands* cmds = commands_alloc(&a);
-
-    expansion_variable(&Str_New_Literal("$PATH"), cmds, &shell, &a);
+    expansion_variable(&(Parser_Data){.cur_cmds = cmds, .sh = &shell, .s = &a}, &Str_New_Literal("$PATH"));
 
     eassert(cmds->strs);
     eassert(cmds->strs[0].value);
     eassert(!memcmp(cmds->strs[0].value, path, path_len - 1));
     eassert(cmds->strs[0].length == path_len);
-    eassert(cmds->ops[0] == OP_CONSTANT);
+    eassert(cmds->ops[0] == OP_CONST);
     eassert(cmds->pos == 1);
 
     ARENA_TEST_TEARDOWN;
@@ -97,15 +96,15 @@ void expansion_variable_path_no_dollar_sign_test()
     char* path = getenv(NCSH_PATH_VAL);
     size_t path_len = strlen(path) + 1;
 
-    Commands* cmds = commands_alloc(&a);
+    Commands* cmds = cmds_alloc(&a);
 
-    expansion_variable(&Str_New_Literal("PATH"), cmds, &shell, &a);
+    expansion_variable(&(Parser_Data){.cur_cmds = cmds, .sh = &shell, .s = &a}, &Str_New_Literal("PATH"));
 
     eassert(cmds->strs);
     eassert(cmds->strs[0].value);
     eassert(!memcmp(cmds->strs[0].value, path, path_len - 1));
     eassert(cmds->strs[0].length == path_len);
-    eassert(cmds->ops[0] = OP_CONSTANT);
+    eassert(cmds->ops[0] = OP_CONST);
     eassert(cmds->pos == 1);
 
     ARENA_TEST_TEARDOWN;
@@ -118,14 +117,13 @@ void expansion_variable_home_test()
     Shell shell = {0};
     shell_init(&shell, &a, envp_ptr);
     Str home = *env_home_get(shell.env);
+    Commands* cmds = cmds_alloc(&a);
 
-    Commands* cmds = commands_alloc(&a);
-
-    expansion_variable(&Str_New_Literal("$HOME"), cmds, &shell, &a);
+    expansion_variable(&(Parser_Data){.cur_cmds = cmds, .sh = &shell, .s = &a}, &Str_New_Literal("$HOME"));
 
     eassert(!memcmp(cmds->strs[0].value, home.value, home.length - 1));
     cmds->strs[0].length = home.length;
-    cmds->ops[0] = OP_CONSTANT;
+    cmds->ops[0] = OP_CONST;
     eassert(cmds->pos == 1);
 
     ARENA_TEST_TEARDOWN;
@@ -138,14 +136,13 @@ void expansion_variable_test()
     Shell shell = {0};
     shell_init(&shell, &a, envp_ptr);
     *env_add_or_get(shell.env, Str_New_Literal("VAL")) = Str_New_Literal("hello");
+    Commands* cmds = cmds_alloc(&a);
 
-    Commands* cmds = commands_alloc(&a);
-
-    expansion_variable(&Str_New_Literal("$VAL"), cmds, &shell, &a);
+    expansion_variable(&(Parser_Data){.cur_cmds = cmds, .sh = &shell, .s = &a}, &Str_New_Literal("$VAL"));
 
     eassert(!memcmp(cmds->strs[0].value, "hello", sizeof("hello") - 1));
     cmds->strs[0].length = sizeof("hello");
-    cmds->ops[0] = OP_CONSTANT;
+    cmds->ops[0] = OP_CONST;
     eassert(cmds->pos == 1);
 
     ARENA_TEST_TEARDOWN;
@@ -159,13 +156,13 @@ void expansion_variable_no_dollar_sign_test()
     shell_init(&shell, &a, envp_ptr);
     *env_add_or_get(shell.env, Str_New_Literal("VAL")) = Str_New_Literal("hello");
 
-    Commands* cmds = commands_alloc(&a);
+    Commands* cmds = cmds_alloc(&a);
 
-    expansion_variable(&Str_New_Literal("VAL"), cmds, &shell, &a);
+    expansion_variable(&(Parser_Data){.cur_cmds = cmds, .sh = &shell, .s = &a}, &Str_New_Literal("VAL"));
 
     eassert(!memcmp(cmds->strs[0].value, "hello", sizeof("hello") - 1));
     cmds->strs[0].length = sizeof("hello");
-    cmds->ops[0] = OP_CONSTANT;
+    cmds->ops[0] = OP_CONST;
     eassert(cmds->pos == 1);
 
     ARENA_TEST_TEARDOWN;
@@ -180,13 +177,13 @@ void expansion_variable_with_spaces_test()
     Str v = Str_New_Literal("VAL");
     *env_add_or_get(shell.env, v) = Str_New_Literal("hello      there , 1");
 
-    Commands* cmds = commands_alloc(&a);
+    Commands* cmds = cmds_alloc(&a);
 
-    expansion_variable(&Str_New_Literal("$VAL"), cmds, &shell, &a);
+    expansion_variable(&(Parser_Data){.cur_cmds = cmds, .sh = &shell, .s = &a}, &Str_New_Literal("$VAL"));
 
     eassert(!memcmp(cmds->strs[0].value, v.value, v.length - 1));
     cmds->strs[0].length = v.length;
-    cmds->ops[0] = OP_CONSTANT;
+    cmds->ops[0] = OP_CONST;
     eassert(cmds->pos == 1);
 
     ARENA_TEST_TEARDOWN;
@@ -201,13 +198,13 @@ void expansion_variable_number_test()
     Str v = Str_New_Literal("1");
     *env_add_or_get(shell.env, v) = Str_New_Literal("1");
 
-    Commands* cmds = commands_alloc(&a);
+    Commands* cmds = cmds_alloc(&a);
 
-    expansion_variable(&Str_New_Literal("$VAL"), cmds, &shell, &a);
+    expansion_variable(&(Parser_Data){.cur_cmds = cmds, .sh = &shell, .s = &a}, &Str_New_Literal("$VAL"));
 
     eassert(!memcmp(cmds->strs[0].value, v.value, v.length - 1));
     cmds->strs[0].length = v.length;
-    cmds->ops[0] = OP_CONSTANT;
+    cmds->ops[0] = OP_CONST;
     eassert(cmds->pos == 1);
 
     ARENA_TEST_TEARDOWN;

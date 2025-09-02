@@ -8,6 +8,7 @@
 
 #include "ops.h"
 #include "../eskilib/str.h"
+#include "stmts.h"
 
 /****** MACROS ******/
 
@@ -60,8 +61,13 @@ typedef struct {
 
     enum Ops op_current;
     enum Vm_State state;
-
     int status;
+
+    Statements* stmts;
+    Statement* cur_stmt;
+    Commands* cur_cmds;
+    Shell* sh;
+    Arena* s;
 
     Output_Redirect_IO output_redirect_io;
     Input_Redirect_IO input_redirect_io;

@@ -1,12 +1,12 @@
 /* Copyright ncsh (C) by Alex Eski 2025 */
 /* environment.h: deal with environment variables and other things related to the environment. */
 
-#include "debug.h"
 #define _POSIX_C_SOURCE 200809L
 
 #include <stdint.h>
 #include <assert.h>
 
+#include "debug.h"
 #include "arena.h"
 #include "env.h"
 #include "eskilib/str.h"

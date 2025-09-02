@@ -9,7 +9,7 @@ enum Ops : uint8_t {
     // Default value, indicative of an issue parsing when found during execution
     OP_NONE = 0,
     // Constant value
-    OP_CONSTANT = 1,
+    OP_CONST = 1,
     // Shell operators
     OP_PIPE = 2,                                  // |
     OP_STDOUT_REDIRECTION = 3,                    // >

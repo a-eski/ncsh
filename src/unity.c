@@ -32,7 +32,7 @@
 #include "interpreter/lexemes.c"
 #include "interpreter/lexer.c"
 #include "interpreter/parser.c"
-#include "interpreter/statements.c"
+#include "interpreter/stmts.c"
 
 #include "io/ac.c"
 #include "io/hashset.c"

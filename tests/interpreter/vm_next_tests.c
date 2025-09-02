@@ -6,7 +6,7 @@
 #include "../../src/interpreter/lexemes.h"
 #include "../../src/interpreter/lexer.h"
 #include "../../src/interpreter/parser.h"
-#include "../../src/interpreter/statements.h"
+#include "../../src/interpreter/stmts.h"
 #include "../../src/interpreter/vm_types.h"
 #include "../etest.h"
 #include "../lib/arena_test_helper.h"
@@ -32,7 +32,6 @@ void vm_next_simple_test()
 
     // simulate setup the VM does
     Vm_Data vm = {0};
-    stmts.pos = 0;
     Commands* cmds = stmts.statements[0].commands;
     cmds->pos = 0;
 

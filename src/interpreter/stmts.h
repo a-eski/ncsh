@@ -1,10 +1,14 @@
+/* Copyright ncsh (C) by Alex Eski 2025 */
+/* stmts.h: statements and commands for ncsh */
+
 #pragma once
 
 #include <stdint.h>
 #include <unistd.h>
 
-#include "../arena.h"
 #include "../eskilib/str.h"
+#include "../types.h"
+#include "lexemes.h"
 #include "ops.h"
 
 enum Redirect_Type : uint8_t {
@@ -19,7 +23,8 @@ enum Redirect_Type : uint8_t {
     RT_OUT_ERR_APPEND = 10, // OP_STDOUT_AND_STDERR_REDIRECTION_APPEND = 10,    // &>>
 };
 
-typedef struct Commands_ {
+typedef struct Commands Commands;
+struct Commands {
     size_t pos;
     size_t count;
     size_t cap;
@@ -28,8 +33,8 @@ typedef struct Commands_ {
     enum Ops* ops;
     Str* strs;
 
-    struct Commands_* next;
-} Commands;
+    Commands* next;
+};
 
 enum Logic_Type {
     LT_NORMAL = 0,
@@ -40,11 +45,14 @@ enum Logic_Type {
     LT_ELIF
 };
 
-typedef struct {
+typedef struct Statement Statement;
+struct Statement {
     enum Logic_Type type;
-    size_t count;
     Commands* commands;
-} Statement;
+    Statement* right;
+    Statement* left;
+    Statement* prev;
+};
 
 enum Statements_Type {
     ST_NORMAL = 0,
@@ -58,23 +66,32 @@ typedef struct {
     enum Redirect_Type redirect_type;
     char* redirect_filename;
     bool is_bg_job;
-    uint8_t pipes_count;
+    uint8_t pipes_count; // counts the number of commands, not pipes.
 
-    size_t pos;
-    size_t count;
-    size_t cap;
     enum Statements_Type type;
-    Statement* statements;
+    Statement* head;
 } Statements;
 
-Commands* commands_alloc(Arena* restrict scratch);
+typedef struct {
+    Lexemes* restrict lexemes;
+    Statements* restrict stmts;
+    Statement* restrict cur_stmt;
+    Statement* restrict prev_stmt;
+    Commands* restrict cur_cmds;
+    Arena* restrict s;
+    Shell* restrict sh;
+} Parser_Data;
 
-void command_realloc(Commands* restrict cmds, Arena* restrict scratch);
-void commands_realloc(Statements* restrict stmts, Arena* restrict scratch);
+Commands* cmds_alloc(Arena* restrict scratch);
 
-Commands* command_next(Commands* restrict cmds, Arena* restrict scratch);
-Commands* command_statement_next(Statements* restrict stmts, Commands* cmds, enum Logic_Type type, Arena* restrict scratch);
+void cmd_realloc(Commands* restrict cmds, Arena* restrict scratch);
 
-void statements_init(Statements* restrict stmts, Arena* restrict scratch);
+void cmds_realloc(Parser_Data* restrict data, Arena* restrict scratch);
 
-void statement_next(Statements* restrict stmts, enum Logic_Type type, Arena* restrict scratch);
+Commands* cmd_next(Commands* restrict cmds, Arena* restrict scratch);
+
+Statement* stmt_alloc(Arena* restrict scratch);
+
+void cmd_stmt_next(Parser_Data* data, enum Logic_Type type);
+
+Statements* stmts_alloc(Arena* restrict scratch);
