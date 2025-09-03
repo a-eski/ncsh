@@ -192,7 +192,7 @@ def generate_if_math_tests
       end
     end
 
-    define_method("test_if_elif_#{name}_#{i}") do
+    define_method("test_if_first_elif_#{name}_#{i}") do
       tty = TTYtest.new_terminal(%(../bin/ncsh), width: 180, height: 160)
       row = ROW_START
       tty.assert_row_ends_with(row, ' ❱ ')
@@ -205,7 +205,46 @@ def generate_if_math_tests
       end
     end
 
-    define_method("test_if_elif_else_#{name}_#{i}") do
+    define_method("test_if_second_elif_#{name}_#{i}") do
+      tty = TTYtest.new_terminal(%(../bin/ncsh), width: 180, height: 160)
+      row = ROW_START
+      tty.assert_row_ends_with(row, ' ❱ ')
+      tty.send_line_exact("if [ #{condition} ]; then echo hello; elif [ 1 -eq 5 ]; then echo hey; fi")
+      row += 1
+      if result
+        tty.assert_row(row, 'hello')
+      else
+        tty.assert_row_ends_with(row, ' ❱ ')
+      end
+    end
+
+    define_method("test_if_first_elif_else_#{name}_#{i}") do
+      tty = TTYtest.new_terminal(%(../bin/ncsh), width: 180, height: 160)
+      row = ROW_START
+      tty.assert_row_ends_with(row, ' ❱ ')
+      tty.send_line_exact("if [ #{condition} ]; then echo hello; elif [ 1 -eq 5 ]; then echo hey; else echo hi; fi")
+      row += 1
+      if result
+        tty.assert_row(row, 'hello')
+      else
+        tty.assert_row(row, 'hi')
+      end
+    end
+
+    define_method("test_if_elif_else_multiple_conditions_#{name}_#{i}") do
+      tty = TTYtest.new_terminal(%(../bin/ncsh), width: 180, height: 160)
+      row = ROW_START
+      tty.assert_row_ends_with(row, ' ❱ ')
+      tty.send_line_exact("if [ false && true ]; then echo hello; elif [ #{condition} ]; then echo hey; else echo hi; fi")
+      row += 1
+      if result
+        tty.assert_row(row, 'hey')
+      else
+        tty.assert_row(row, 'hi')
+      end
+    end
+
+    define_method("test_if_second_elif_else_#{name}_#{i}") do
       tty = TTYtest.new_terminal(%(../bin/ncsh), width: 180, height: 160)
       row = ROW_START
       tty.assert_row_ends_with(row, ' ❱ ')
@@ -218,7 +257,33 @@ def generate_if_math_tests
       end
     end
 
-    define_method("test_if_multiple_elif_#{name}_#{i}") do
+    define_method("test_if_first_elif_multiple_#{name}_#{i}") do
+      tty = TTYtest.new_terminal(%(../bin/ncsh), width: 180, height: 160)
+      row = ROW_START
+      tty.assert_row_ends_with(row, ' ❱ ')
+      tty.send_line_exact("if [ #{condition} ]; then echo hello; elif [ 1 -eq 5 ]; then echo hi; elif [ 5 -lt 1 ]; then echo hey; fi")
+      row += 1
+      if result
+        tty.assert_row(row, 'hello')
+      else
+        tty.assert_row_ends_with(row, ' ❱ ')
+      end
+    end
+
+    define_method("test_if_second_elif_multiple_#{name}_#{i}") do
+      tty = TTYtest.new_terminal(%(../bin/ncsh), width: 180, height: 160)
+      row = ROW_START
+      tty.assert_row_ends_with(row, ' ❱ ')
+      tty.send_line_exact("if [ 1 -eq 5 ]; then echo hello; elif [ #{condition} ]; then echo hi; elif [ 5 -lt 1 ]; then echo hey; fi")
+      row += 1
+      if result
+        tty.assert_row(row, 'hi')
+      else
+        tty.assert_row_ends_with(row, ' ❱ ')
+      end
+    end
+
+    define_method("test_if_third_elif_multiple_#{name}_#{i}") do
       tty = TTYtest.new_terminal(%(../bin/ncsh), width: 180, height: 160)
       row = ROW_START
       tty.assert_row_ends_with(row, ' ❱ ')
@@ -228,6 +293,20 @@ def generate_if_math_tests
         tty.assert_row(row, 'hey')
       else
         tty.assert_row_ends_with(row, ' ❱ ')
+      end
+    end
+
+    define_method("test_if_multiple_elif_else_#{name}_#{i}") do
+      tty = TTYtest.new_terminal(%(../bin/ncsh), width: 180, height: 160)
+      row = ROW_START
+      tty.assert_row_ends_with(row, ' ❱ ')
+      tty.send_line_exact("if [ 1 -eq 5 ]; then echo hello; elif [ 1 -eq 5 ]; then echo hi; elif [ #{condition} ]; then echo hey; else echo 'whats up' fi")
+      row += 1
+      if result
+        tty.assert_row(row, 'hey')
+      else
+        tty.assert_row(row, 'whats up')
+        # tty.assert_row_ends_with(row, ' ❱ ')
       end
     end
   end

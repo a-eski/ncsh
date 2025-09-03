@@ -2,7 +2,6 @@
 /* vm.c: the VM for ncsh. Accepts op bytecodes and constant values and their lengths,
  * and processes those into commands. */
 
-#include "stmts.h"
 #define _POSIX_C_SOURCE 200809L
 
 #include <assert.h>
@@ -18,6 +17,7 @@
 #include "../types.h"
 #include "../debug.h"
 #include "../ttyio/ttyio.h"
+#include "stmts.h"
 #include "builtins.h"
 #include "pipe.h"
 #include "redirection.h"
@@ -38,16 +38,14 @@ int vm_output_fd;
 
 /* Failure Handling */
 [[nodiscard]]
-int vm_fork_failure(size_t command_position, size_t number_of_commands, Pipe_IO* restrict pipes)
+int vm_fork_failure(Vm_Data* restrict vm)
 {
-    assert(pipes);
-
-    if (command_position != number_of_commands - 1) {
-        if (command_position % 2 != 0) {
-            close(pipes->fd_one[1]);
+    if (vm->command_position != vm->stmts->pipes_count - 1) {
+        if (vm->command_position % 2 != 0) {
+            close(vm->pipes_io.fd_one[1]);
         }
         else {
-            close(pipes->fd_two[1]);
+            close(vm->pipes_io.fd_two[1]);
         }
     }
 
@@ -216,6 +214,15 @@ Commands* vm_next_if_statement(Vm_Data* restrict vm)
     return vm->cur_stmt->commands;
 }
 
+Statement* vm_find_else(Vm_Data* restrict vm)
+{
+    Statement* stmt = vm->stmts->head;
+    while (stmt && stmt->type != LT_ELSE) {
+        stmt = stmt->left;
+    }
+    return stmt;
+}
+
 Commands* vm_next_else_statement(Vm_Data* restrict vm)
 {
     switch (vm->cur_stmt->type) {
@@ -225,8 +232,10 @@ Commands* vm_next_else_statement(Vm_Data* restrict vm)
         break;
     case LT_NORMAL:
     case LT_IF:
-    case LT_ELSE:
     case LT_ELIF:
+        vm->cur_stmt = vm_find_else(vm);
+        break;
+    case LT_ELSE:
         vm->cur_stmt = vm->cur_stmt->prev->left;
         break;
     }
@@ -240,6 +249,15 @@ Commands* vm_next_else_statement(Vm_Data* restrict vm)
 
 Commands* vm_next_elif_condition(Vm_Data* restrict vm)
 {
+    if (!vm->cur_stmt->prev) {
+        if (vm->cur_stmt->left && vm->cur_stmt->left->type == LT_ELIF_CONDITIONS) {
+            vm->cur_stmt = vm->cur_stmt->left;
+            return vm->cur_stmt->commands;
+        }
+
+        return NULL;
+    }
+
     vm->cur_stmt = vm->cur_stmt->prev->left;
     if (!vm->cur_stmt || vm->cur_stmt->type != LT_ELIF_CONDITIONS ||
         !vm->cur_stmt->commands) {
@@ -311,6 +329,13 @@ Commands* vm_next_if(Statements* restrict stmts, Commands* restrict cmds, Vm_Dat
                 }
 
                 else if (stmts->type == ST_IF_ELIF || stmts->type == ST_IF_ELIF_ELSE) {
+                    /*if (vm->cur_stmt->prev->type == LT_ELIF_CONDITIONS) {
+                        cmds = vm_next_elif_condition(vm);
+                        if (cmds) {
+                            return vm_command_set(cmds, vm, VS_IN_CONDITIONS);
+                        }
+                    }*/
+
                     debug("going to next elif condition");
                     cmds = vm_next_elif_condition(vm);
                     if (!cmds) {
@@ -476,8 +501,7 @@ Commands* vm_next_if(Statements* restrict stmts, Commands* restrict cmds, Vm_Dat
                 }
                 return vm_command_set(cmds, vm, VS_IN_ELSE_STATEMENTS);
             }
-            // TODO: is it right to check vm->cur_stmt->right?
-            else if (stmts->type == ST_IF_ELIF && vm->cur_stmt->right) {
+            else if (stmts->type == ST_IF_ELIF) {
                 debug("going to next elif condition");
                 cmds = vm_next_elif_condition(vm);
                 if (!cmds) {
@@ -513,6 +537,13 @@ Commands* vm_next_if(Statements* restrict stmts, Commands* restrict cmds, Vm_Dat
         }
 
         else if (vm->status != EXIT_SUCCESS && stmts->type == ST_IF_ELIF_ELSE) {
+            if (vm->cur_stmt->prev->type == LT_ELIF_CONDITIONS) {
+                cmds = vm_next_elif_condition(vm);
+                if (cmds) {
+                    return vm_command_set(cmds, vm, VS_IN_CONDITIONS);
+                }
+            }
+
             cmds = vm_next_else_statement(vm);
             if (!cmds) {
                 return NULL;
@@ -536,35 +567,34 @@ Commands* vm_next_if(Statements* restrict stmts, Commands* restrict cmds, Vm_Dat
     return NULL;
 }
 
-Commands* vm_next_normal(Commands* restrict cmds, Vm_Data* restrict vm)
+Commands* vm_next_normal(Vm_Data* restrict vm)
 {
-    if (cmds && cmds->prev_op == OP_AND && vm->status != EXIT_SUCCESS) {
+    if (vm->cur_cmds && vm->cur_cmds->prev_op == OP_AND && vm->status != EXIT_SUCCESS) {
         debug("breaking out of VM loop, short circuiting on AND.");
         vm->status = EXIT_FAILURE_CONTINUE; // make sure condition failure doesn't cause shell to exit
         vm->end = true;
         return NULL;
     }
-    else if (cmds && cmds->prev_op == OP_OR && vm->status == EXIT_SUCCESS) {
+    else if (vm->cur_cmds && vm->cur_cmds->prev_op == OP_OR && vm->status == EXIT_SUCCESS) {
         debug("breaking out of VM loop, short circuiting on OR.");
         vm->end = true;
         return NULL;
     }
 
-    vm->strs = cmds->strs;
-    vm->strs_n = cmds->count;
-    cmds = vm_command_next(cmds, vm);
+    vm->strs = vm->cur_cmds->strs;
+    vm->strs_n = vm->cur_cmds->count;
+    vm->cur_cmds = vm_command_next(vm->cur_cmds, vm);
 
     if (!vm->end) {
-        vm->op_current = cmds->prev_op;
+        vm->op_current = vm->cur_cmds->prev_op;
     }
 
-    return cmds;
+    return vm->cur_cmds;
 }
 
-Commands* vm_next(Statements* restrict stmts, Commands* cmds, Vm_Data* restrict vm)
+Commands* vm_next(Commands* cmds, Vm_Data* restrict vm)
 {
-    assert(stmts);
-    assert(vm);
+    assert(vm); assert(vm->stmts);
 
     if (!cmds)
     {
@@ -572,27 +602,27 @@ Commands* vm_next(Statements* restrict stmts, Commands* cmds, Vm_Data* restrict 
         return NULL;
     }
 
-    switch (stmts->type) {
+    switch (vm->stmts->type) {
     case ST_IF:
     case ST_IF_ELSE:
     case ST_IF_ELIF:
     case ST_IF_ELIF_ELSE: {
         debug("vm_next_if");
-        return vm_next_if(stmts, cmds, vm);
+        return vm_next_if(vm->stmts, cmds, vm);
     }
     default: {
         debug("vm_next_normal");
-        return vm_next_normal(cmds, vm);
+        return vm_next_normal(vm);
     }
     }
 }
 
 [[nodiscard]]
-int vm_run_foreground(Statements* restrict stmts, Vm_Data* restrict vm, Arena* restrict scratch, pid_t shell_pgid)
+int vm_run_foreground(Vm_Data* restrict vm, Arena* restrict scratch, pid_t shell_pgid)
 {
     int pid = fork();
     if (pid < 0) {
-        return vm_fork_failure(vm->command_position, stmts->pipes_count, &vm->pipes_io);
+        return vm_fork_failure(vm);
     }
 
     if (pid == 0) { // runs in the child process
@@ -600,7 +630,7 @@ int vm_run_foreground(Statements* restrict stmts, Vm_Data* restrict vm, Arena* r
         signal_reset();
 
         if (vm->op_current == OP_PIPE)
-            pipe_connect(vm->command_position, stmts->pipes_count, &vm->pipes_io);
+            pipe_connect(vm->command_position, vm->stmts->pipes_count, &vm->pipes_io);
 
         char** buffers = estrtoarr(vm->strs, vm->strs_n, scratch);
         if (!buffers || !*buffers) {
@@ -615,7 +645,7 @@ int vm_run_foreground(Statements* restrict stmts, Vm_Data* restrict vm, Arena* r
     tcsetpgrp(STDIN_FILENO, pid);
 
     if (vm->op_current == OP_PIPE) {
-        pipe_stop(vm->command_position, stmts->pipes_count, &vm->pipes_io);
+        pipe_stop(vm->command_position, vm->stmts->pipes_count, &vm->pipes_io);
     }
 
     vm_waitpid(pid, vm);
@@ -645,11 +675,11 @@ void vm_check_background(Processes* restrict pcs)
 }
 
 [[nodiscard]]
-int vm_run_background(Statements* restrict stmts, Vm_Data* restrict vm, Arena* restrict scratch, Processes* restrict pcs)
+int vm_run_background(Vm_Data* restrict vm, Arena* restrict scratch, Processes* restrict pcs)
 {
     int pid = fork();
     if (pid < 0) {
-        return vm_fork_failure(vm->command_position, stmts->pipes_count, &vm->pipes_io);
+        return vm_fork_failure(vm);
     }
 
     if (pid == 0) { // runs in the child process
@@ -678,16 +708,14 @@ int vm_run(Statements* restrict stmts, Shell* restrict shell, Arena* restrict sc
     int rv;
     Vm_Data vm = {.stmts = stmts, .cur_stmt = stmts->head, .sh = shell, .s = scratch};
     vm.cur_cmds = vm.cur_stmt->commands;
+    vm.cur_cmds->pos = 0;
 
     if (redirection_start_if_needed(&vm) != EXIT_SUCCESS) {
         return EXIT_FAILURE_CONTINUE;
     }
 
-    Commands* cmds = vm.cur_cmds;
-    cmds->pos = 0;
-
-    while (!vm.end && cmds) {
-        cmds = vm_next(stmts, cmds, &vm);
+    while (!vm.end && vm.cur_cmds) {
+        vm.cur_cmds = vm_next(vm.cur_cmds, &vm);
 
         if (!vm.strs || !vm.strs[0].value) {
             rv = EXIT_FAILURE_CONTINUE;
@@ -713,13 +741,13 @@ int vm_run(Statements* restrict stmts, Shell* restrict shell, Arena* restrict sc
             vm_math_process(&vm);
         }
         else if (stmts->is_bg_job) {
-            rv = vm_run_background(stmts, &vm, scratch, &shell->pcs);
+            rv = vm_run_background(&vm, scratch, &shell->pcs);
             if (rv != EXIT_SUCCESS) {
                 goto failure;
             }
         }
         else {
-            rv = vm_run_foreground(stmts, &vm, scratch, shell->pgid);
+            rv = vm_run_foreground(&vm, scratch, shell->pgid);
             if (rv != EXIT_SUCCESS) {
                 goto failure;
             }

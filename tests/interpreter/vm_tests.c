@@ -20,19 +20,15 @@ volatile int sigwinch_caught;
     SCRATCH_ARENA_TEST_SETUP;                                                                                          \
                                                                                                                        \
     Lexemes lexemes = {0};                                                                                             \
-    lexer_lex(Str_Get(input), &lexemes, &scratch_arena);                                                     \
-    int res = sema_analyze(&lexemes);                                                                     \
+    lexer_lex(Str_Get(input), &lexemes, &scratch_arena);                                                               \
+    int res = sema_analyze(&lexemes);                                                                                  \
     eassert(res == EXIT_SUCCESS);                                                                                      \
     Shell shell = {0};                                                                                                 \
-    auto parse_rv = parser_parse(&lexemes, NULL, &scratch_arena);                                                   \
-    eassert(!parse_rv.parser_errno);                                                                                      \
-    res = vm_execute(parse_rv.stmts, &shell, &scratch_arena);                                                             \
+    auto parse_rv = parser_parse(&lexemes, NULL, &scratch_arena);                                                      \
+    eassert(!parse_rv.parser_errno);                                                                                   \
+    res = vm_execute(parse_rv.output.stmts, &shell, &scratch_arena);                                                   \
     eassert(res == EXIT_SUCCESS || res == EXIT_FAILURE_CONTINUE);                                                      \
     SCRATCH_ARENA_TEST_TEARDOWN;
-
-void running_vm_tests()
-{
-}
 
 void vm_tests()
 {
@@ -40,7 +36,6 @@ void vm_tests()
 
     etest_start();
 
-    etest_run(running_vm_tests);
     etest_run_tester("simple_test", vm_tester("ls"));
     etest_run_tester("pipe_test", vm_tester("ls | sort"));
     etest_run_tester("pipe_multiple_test", vm_tester("ls | sort | wc -c"));

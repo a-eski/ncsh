@@ -29,9 +29,8 @@ void parser_parse_ls_test()
     auto res = parser_parse(&lexemes, NULL, &scratch_arena);
 
     eassert(!res.parser_errno);
-    eassert(!res.msg);
-    eassert(res.stmts);
-    auto stmts = res.stmts;
+    eassert(res.output.stmts);
+    auto stmts = res.output.stmts;
     eassert(stmts->type == ST_NORMAL);
     eassert(!stmts->is_bg_job);
     eassert(stmts->pipes_count == 1);
@@ -62,10 +61,9 @@ void parser_parse_ls_dash_l_test()
     auto res = parser_parse(&lexemes, NULL, &scratch_arena);
 
     eassert(!res.parser_errno);
-    eassert(!res.msg);
-    eassert(res.stmts);
+    eassert(res.output.stmts);
 
-    auto stmts = res.stmts;
+    auto stmts = res.output.stmts;
     eassert(stmts->type == ST_NORMAL);
     eassert(!stmts->is_bg_job);
     eassert(stmts->pipes_count == 1);
@@ -100,9 +98,8 @@ void parser_parse_pipe_test()
     auto res = parser_parse(&lexemes, NULL, &scratch_arena);
 
     eassert(!res.parser_errno);
-    eassert(!res.msg);
-    eassert(res.stmts);
-    auto stmts = res.stmts;
+    eassert(res.output.stmts);
+    auto stmts = res.output.stmts;
     eassert(stmts->type == ST_NORMAL);
     eassert(!stmts->is_bg_job);
     eassert(stmts->pipes_count == 2);
@@ -142,9 +139,8 @@ void parser_parse_multiple_pipes_test()
     auto res = parser_parse(&lexemes, NULL, &scratch_arena);
 
     eassert(!res.parser_errno);
-    eassert(!res.msg);
-    eassert(res.stmts);
-    auto stmts = res.stmts;
+    eassert(res.output.stmts);
+    auto stmts = res.output.stmts;
     eassert(stmts->type == ST_NORMAL);
     eassert(!stmts->is_bg_job);
     eassert(stmts->pipes_count == 3);
@@ -194,9 +190,8 @@ void parser_parse_multiple_pipes_multiple_args_test()
     auto res = parser_parse(&lexemes, NULL, &scratch_arena);
 
     eassert(!res.parser_errno);
-    eassert(!res.msg);
-    eassert(res.stmts);
-    auto stmts = res.stmts;
+    eassert(res.output.stmts);
+    auto stmts = res.output.stmts;
     eassert(stmts->type == ST_NORMAL);
     eassert(!stmts->is_bg_job);
     eassert(stmts->pipes_count == 4);
@@ -273,10 +268,9 @@ void parser_parse_background_job_test()
     auto res = parser_parse(&lexemes, NULL, &scratch_arena);
 
     eassert(!res.parser_errno);
-    eassert(!res.msg);
-    eassert(res.stmts);
+    eassert(res.output.stmts);
 
-    auto stmts = res.stmts;
+    auto stmts = res.output.stmts;
     eassert(stmts->type == ST_NORMAL);
     eassert(stmts->is_bg_job);
     eassert(stmts->pipes_count == 1);
@@ -307,10 +301,9 @@ void parser_parse_background_job_args_test()
     auto res = parser_parse(&lexemes, NULL, &scratch_arena);
 
     eassert(!res.parser_errno);
-    eassert(!res.msg);
-    eassert(res.stmts);
+    eassert(res.output.stmts);
 
-    auto stmts = res.stmts;
+    auto stmts = res.output.stmts;
     eassert(stmts->type == ST_NORMAL);
     eassert(stmts->is_bg_job);
     eassert(stmts->pipes_count == 1);
@@ -345,10 +338,9 @@ void parser_parse_output_redirection_test()
     auto res = parser_parse(&lexemes, NULL, &scratch_arena);
 
     eassert(!res.parser_errno);
-    eassert(!res.msg);
-    eassert(res.stmts);
+    eassert(res.output.stmts);
 
-    auto stmts = res.stmts;
+    auto stmts = res.output.stmts;
     eassert(stmts->type == ST_NORMAL);
     eassert(!stmts->is_bg_job);
     eassert(stmts->pipes_count == 1);
@@ -381,10 +373,9 @@ void parser_parse_output_redirection_append_test()
     auto res = parser_parse(&lexemes, NULL, &scratch_arena);
 
     eassert(!res.parser_errno);
-    eassert(!res.msg);
-    eassert(res.stmts);
+    eassert(res.output.stmts);
 
-    auto stmts = res.stmts;
+    auto stmts = res.output.stmts;
     eassert(stmts->type == ST_NORMAL);
     eassert(!stmts->is_bg_job);
     eassert(stmts->pipes_count == 1);
@@ -417,10 +408,9 @@ void parser_parse_input_redirection_test()
     auto res = parser_parse(&lexemes, NULL, &scratch_arena);
 
     eassert(!res.parser_errno);
-    eassert(!res.msg);
-    eassert(res.stmts);
+    eassert(res.output.stmts);
 
-    auto stmts = res.stmts;
+    auto stmts = res.output.stmts;
     eassert(stmts->type == ST_NORMAL);
     eassert(!stmts->is_bg_job);
     eassert(stmts->pipes_count == 1);
@@ -453,10 +443,9 @@ void parser_parse_input_redirection_append_test()
     auto res = parser_parse(&lexemes, NULL, &scratch_arena);
 
     eassert(!res.parser_errno);
-    eassert(!res.msg);
-    eassert(res.stmts);
+    eassert(res.output.stmts);
 
-    auto stmts = res.stmts;
+    auto stmts = res.output.stmts;
     eassert(stmts->type == ST_NORMAL);
     eassert(!stmts->is_bg_job);
     eassert(stmts->pipes_count == 1);
@@ -489,10 +478,9 @@ void parser_parse_stderr_redirection_test()
     auto res = parser_parse(&lexemes, NULL, &scratch_arena);
 
     eassert(!res.parser_errno);
-    eassert(!res.msg);
-    eassert(res.stmts);
+    eassert(res.output.stmts);
 
-    auto stmts = res.stmts;
+    auto stmts = res.output.stmts;
     eassert(stmts->type == ST_NORMAL);
     eassert(!stmts->is_bg_job);
     eassert(stmts->pipes_count == 1);
@@ -525,10 +513,9 @@ void parser_parse_stderr_redirection_append_test()
     auto res = parser_parse(&lexemes, NULL, &scratch_arena);
 
     eassert(!res.parser_errno);
-    eassert(!res.msg);
-    eassert(res.stmts);
+    eassert(res.output.stmts);
 
-    auto stmts = res.stmts;
+    auto stmts = res.output.stmts;
     eassert(stmts->type == ST_NORMAL);
     eassert(!stmts->is_bg_job);
     eassert(stmts->pipes_count == 1);
@@ -561,10 +548,9 @@ void parser_parse_stdout_and_stderr_redirection_test()
     auto res = parser_parse(&lexemes, NULL, &scratch_arena);
 
     eassert(!res.parser_errno);
-    eassert(!res.msg);
-    eassert(res.stmts);
+    eassert(res.output.stmts);
 
-    auto stmts = res.stmts;
+    auto stmts = res.output.stmts;
     eassert(stmts->type == ST_NORMAL);
     eassert(!stmts->is_bg_job);
     eassert(stmts->pipes_count == 1);
@@ -597,10 +583,9 @@ void parser_parse_stdout_and_stderr_redirection_append_test()
     auto res = parser_parse(&lexemes, NULL, &scratch_arena);
 
     eassert(!res.parser_errno);
-    eassert(!res.msg);
-    eassert(res.stmts);
+    eassert(res.output.stmts);
 
-    auto stmts = res.stmts;
+    auto stmts = res.output.stmts;
     eassert(stmts->type == ST_NORMAL);
     eassert(!stmts->is_bg_job);
     eassert(stmts->pipes_count == 1);
@@ -633,9 +618,8 @@ void parser_parse_git_commit_test()
     auto res = parser_parse(&lexemes, NULL, &scratch_arena);
 
     eassert(!res.parser_errno);
-    eassert(!res.msg);
-    eassert(res.stmts);
-    auto stmts = res.stmts;
+    eassert(res.output.stmts);
+    auto stmts = res.output.stmts;
     eassert(stmts->type == ST_NORMAL);
     eassert(!stmts->is_bg_job);
     eassert(stmts->pipes_count == 1);
@@ -680,9 +664,8 @@ void parser_parse_assignment_test()
     auto res = parser_parse(&lexemes, &shell, &scratch_arena);
 
     eassert(!res.parser_errno);
-    eassert(!res.msg);
-    eassert(res.stmts);
-    auto stmts = res.stmts;
+    eassert(res.output.stmts);
+    auto stmts = res.output.stmts;
     eassert(stmts->type == ST_NORMAL);
     eassert(!stmts->is_bg_job);
     eassert(stmts->pipes_count == 1);
@@ -708,9 +691,8 @@ void parser_parse_assignment_spaces_test()
     auto res = parser_parse(&lexemes, &shell, &scratch_arena);
 
     eassert(!res.parser_errno);
-    eassert(!res.msg);
-    eassert(res.stmts);
-    auto stmts = res.stmts;
+    eassert(res.output.stmts);
+    auto stmts = res.output.stmts;
     eassert(stmts->type == ST_NORMAL);
     eassert(!stmts->is_bg_job);
     eassert(stmts->pipes_count == 1);
@@ -736,9 +718,8 @@ void parser_parse_assignment_spaces_multiple_test()
     auto res = parser_parse(&lexemes, &shell, &scratch_arena);
 
     eassert(!res.parser_errno);
-    eassert(!res.msg);
-    eassert(res.stmts);
-    auto stmts = res.stmts;
+    eassert(res.output.stmts);
+    auto stmts = res.output.stmts;
     eassert(stmts->type == ST_NORMAL);
     eassert(!stmts->is_bg_job);
     eassert(stmts->pipes_count == 1);
@@ -769,9 +750,8 @@ void parser_parse_variable_test()
     auto res = parser_parse(&lexemes, &shell, &s);
 
     eassert(!res.parser_errno);
-    eassert(!res.msg);
-    eassert(res.stmts);
-    auto stmts = res.stmts;
+    eassert(res.output.stmts);
+    auto stmts = res.output.stmts;
     eassert(stmts->type == ST_NORMAL);
     eassert(!stmts->is_bg_job);
     eassert(stmts->pipes_count == 1);
@@ -815,9 +795,8 @@ void parser_parse_variable_and_test()
     auto res = parser_parse(&lexemes, &shell, &s);
 
     eassert(!res.parser_errno);
-    eassert(!res.msg);
-    eassert(res.stmts);
-    auto stmts = res.stmts;
+    eassert(res.output.stmts);
+    auto stmts = res.output.stmts;
     eassert(stmts->type == ST_NORMAL);
     eassert(!stmts->is_bg_job);
     eassert(stmts->pipes_count == 1);
@@ -860,9 +839,8 @@ void parser_parse_variable_command_test()
     auto res = parser_parse(&lexemes, &shell, &s);
 
     eassert(!res.parser_errno);
-    eassert(!res.msg);
-    eassert(res.stmts);
-    auto stmts = res.stmts;
+    eassert(res.output.stmts);
+    auto stmts = res.output.stmts;
     eassert(stmts->type == ST_NORMAL);
     eassert(!stmts->is_bg_job);
     eassert(stmts->pipes_count == 1);
@@ -895,9 +873,8 @@ void parser_parse_home_test()
     auto res = parser_parse(&lexemes, &shell, &scratch_arena);
 
     eassert(!res.parser_errno);
-    eassert(!res.msg);
-    eassert(res.stmts);
-    auto stmts = res.stmts;
+    eassert(res.output.stmts);
+    auto stmts = res.output.stmts;
     eassert(stmts->type == ST_NORMAL);
     eassert(!stmts->is_bg_job);
     eassert(stmts->pipes_count == 1);
@@ -937,9 +914,8 @@ void parser_parse_home_at_start_test()
     auto res = parser_parse(&lexemes, &shell, &scratch_arena);
 
     eassert(!res.parser_errno);
-    eassert(!res.msg);
-    eassert(res.stmts);
-    auto stmts = res.stmts;
+    eassert(res.output.stmts);
+    auto stmts = res.output.stmts;
     eassert(stmts->type == ST_NORMAL);
     eassert(!stmts->is_bg_job);
     eassert(stmts->pipes_count == 1);
@@ -985,9 +961,8 @@ void parser_parse_math_operators_test()
     auto res = parser_parse(&lexemes, NULL, &scratch_arena);
 
     eassert(!res.parser_errno);
-    eassert(!res.msg);
-    eassert(res.stmts);
-    auto stmts = res.stmts;
+    eassert(res.output.stmts);
+    auto stmts = res.output.stmts;
     eassert(stmts->type == ST_NORMAL);
     eassert(!stmts->is_bg_job);
     eassert(stmts->pipes_count == 1);
@@ -1012,9 +987,8 @@ void parser_parse_glob_star_test()
     auto res = parser_parse(&lexemes, NULL, &scratch_arena);
 
     eassert(!res.parser_errno);
-    eassert(!res.msg);
-    eassert(res.stmts);
-    auto stmts = res.stmts;
+    eassert(res.output.stmts);
+    auto stmts = res.output.stmts;
     eassert(stmts->type == ST_NORMAL);
     eassert(!stmts->is_bg_job);
     eassert(stmts->pipes_count == 1);
@@ -1057,9 +1031,8 @@ void parser_parse_glob_question_test()
     auto res = parser_parse(&lexemes, NULL, &scratch_arena);
 
     eassert(!res.parser_errno);
-    eassert(!res.msg);
-    eassert(res.stmts);
-    auto stmts = res.stmts;
+    eassert(res.output.stmts);
+    auto stmts = res.output.stmts;
     eassert(stmts->type == ST_NORMAL);
     eassert(!stmts->is_bg_job);
     eassert(stmts->pipes_count == 1);
@@ -1094,9 +1067,8 @@ void parser_parse_glob_question_midcommand_test()
     auto res = parser_parse(&lexemes, NULL, &scratch_arena);
 
     eassert(!res.parser_errno);
-    eassert(!res.msg);
-    eassert(res.stmts);
-    auto stmts = res.stmts;
+    eassert(res.output.stmts);
+    auto stmts = res.output.stmts;
     eassert(stmts->type == ST_NORMAL);
     eassert(!stmts->is_bg_job);
     eassert(stmts->pipes_count == 1);
@@ -1201,9 +1173,8 @@ void parser_parse_comment_test()
     auto res = parser_parse(&lexemes, NULL, &scratch_arena);
 
     eassert(!res.parser_errno);
-    eassert(!res.msg);
-    eassert(res.stmts);
-    auto stmts = res.stmts;
+    eassert(res.output.stmts);
+    auto stmts = res.output.stmts;
     eassert(stmts->type == ST_NORMAL);
     eassert(!stmts->is_bg_job);
     eassert(stmts->pipes_count == 1);
@@ -1238,9 +1209,8 @@ void parser_parse_bool_test()
     auto res = parser_parse(&lexemes, NULL, &scratch_arena);
 
     eassert(!res.parser_errno);
-    eassert(!res.msg);
-    eassert(res.stmts);
-    auto stmts = res.stmts;
+    eassert(res.output.stmts);
+    auto stmts = res.output.stmts;
     eassert(stmts->type == ST_NORMAL);
     eassert(!stmts->is_bg_job);
     eassert(stmts->pipes_count == 1);
@@ -1298,9 +1268,8 @@ void parser_parse_if_test()
     auto res = parser_parse(&lexemes, NULL, &scratch_arena);
 
     eassert(!res.parser_errno);
-    eassert(!res.msg);
-    eassert(res.stmts);
-    auto stmts = res.stmts;
+    eassert(res.output.stmts);
+    auto stmts = res.output.stmts;
     eassert(stmts->type == ST_IF);
     eassert(!stmts->is_bg_job);
     eassert(stmts->pipes_count == 1);
@@ -1371,9 +1340,8 @@ void parser_parse_if_variable_test()
     auto res = parser_parse(&lexemes, &shell, &s);
 
     eassert(!res.parser_errno);
-    eassert(!res.msg);
-    eassert(res.stmts);
-    auto stmts = res.stmts;
+    eassert(res.output.stmts);
+    auto stmts = res.output.stmts;
     eassert(stmts->type == ST_IF);
     eassert(!stmts->is_bg_job);
     eassert(stmts->pipes_count == 1);
@@ -1438,9 +1406,8 @@ void parser_parse_if_multiple_conditions_test()
     auto res = parser_parse(&lexemes, NULL, &scratch_arena);
 
     eassert(!res.parser_errno);
-    eassert(!res.msg);
-    eassert(res.stmts);
-    auto stmts = res.stmts;
+    eassert(res.output.stmts);
+    auto stmts = res.output.stmts;
     eassert(stmts->type == ST_IF);
     eassert(!stmts->is_bg_job);
     eassert(stmts->pipes_count == 1);
@@ -1514,9 +1481,8 @@ void parser_parse_if_else_test()
     auto res = parser_parse(&lexemes, NULL, &scratch_arena);
 
     eassert(!res.parser_errno);
-    eassert(!res.msg);
-    eassert(res.stmts);
-    auto stmts = res.stmts;
+    eassert(res.output.stmts);
+    auto stmts = res.output.stmts;
     eassert(stmts->type == ST_IF_ELSE);
     eassert(!stmts->is_bg_job);
     eassert(stmts->pipes_count == 1);
@@ -1605,9 +1571,8 @@ void parser_parse_if_elif_test()
     auto res = parser_parse(&lexemes, NULL, &scratch_arena);
 
     eassert(!res.parser_errno);
-    eassert(!res.msg);
-    eassert(res.stmts);
-    auto stmts = res.stmts;
+    eassert(res.output.stmts);
+    auto stmts = res.output.stmts;
     eassert(stmts->type == ST_IF_ELIF);
     eassert(!stmts->is_bg_job);
     eassert(stmts->pipes_count == 1);
@@ -1714,9 +1679,8 @@ void parser_parse_if_elif_else_test()
     auto res = parser_parse(&lexemes, NULL, &scratch_arena);
 
     eassert(!res.parser_errno);
-    eassert(!res.msg);
-    eassert(res.stmts);
-    auto stmts = res.stmts;
+    eassert(res.output.stmts);
+    auto stmts = res.output.stmts;
     eassert(stmts->type == ST_IF_ELIF_ELSE);
     eassert(!stmts->is_bg_job);
     eassert(stmts->pipes_count == 1);
@@ -1843,9 +1807,8 @@ void parser_parse_if_elif_multiple_else_test()
     auto res = parser_parse(&lexemes, NULL, &scratch_arena);
 
     eassert(!res.parser_errno);
-    eassert(!res.msg);
-    eassert(res.stmts);
-    auto stmts = res.stmts;
+    eassert(res.output.stmts);
+    auto stmts = res.output.stmts;
     eassert(stmts->type == ST_IF_ELIF_ELSE);
     eassert(!stmts->is_bg_job);
     eassert(stmts->pipes_count == 1);

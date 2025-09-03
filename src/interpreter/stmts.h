@@ -92,6 +92,6 @@ Commands* cmd_next(Commands* restrict cmds, Arena* restrict scratch);
 
 Statement* stmt_alloc(Arena* restrict scratch);
 
-void cmd_stmt_next(Parser_Data* data, enum Logic_Type type);
-
 Statements* stmts_alloc(Arena* restrict scratch);
+
+void cmd_stmt_next(Parser_Data* data, enum Logic_Type type);

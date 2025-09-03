@@ -7,14 +7,18 @@
 #include "lexemes.h"
 #include "stmts.h"
 
-/* Parser errnos */
-#define PE_NOTHING -1 // nothing to process
+enum {
+    PE_NOTHING,
+    PE_INVALID_STMT,
+    PE_MISSING_TOK
+};
 
 typedef struct {
     int parser_errno;
-    char* msg;
-    Statements* stmts;
+    union {
+        char* msg;
+        Statements* stmts;
+    } output;
 } Parser_Output;
 
-// int parser_parse(Lexemes* lexemes, Statements* restrict stmts, Shell* restrict shell, Arena* restrict scratch);
 Parser_Output parser_parse(Lexemes* lexemes, Shell* restrict shell, Arena* restrict scratch);
