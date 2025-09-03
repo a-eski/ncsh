@@ -345,6 +345,7 @@ int io_autocompletions_select_from(Input* restrict input)
     }
 
     tty_send_n(&tcaps.cursor_up, ac_matches_count);
+    tty_send(&tcaps.cursor_show);
 
     size_t position = 0;
     char character;
@@ -402,11 +403,9 @@ int io_autocompletions_select_from(Input* restrict input)
         tty_color_reset();
     }
 
-    tty_send(&tcaps.cursor_show);
     return exit;
 
 failure:
-    tty_send(&tcaps.cursor_show);
     return EXIT_FAILURE;
 }
 

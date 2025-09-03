@@ -2,6 +2,8 @@
 
 require 'ttytest'
 
+# generator: generate a variety of if, elif, else tests
+
 ROW_START = 2 # to skip version and other startup stuff
 
 def generate_if_bool_tests
@@ -164,12 +166,15 @@ def generate_if_math_tests
     result = results[i]
 
     name = condition.gsub(' ', '_')
-                    .gsub('-', '').gsub('1', 'one').gsub('2', 'two')
+                    .gsub('-', '')
+                    .gsub('1', 'one')
+                    .gsub('2', 'two')
 
     define_method("test_if_#{name}_#{i}") do
       tty = TTYtest.new_terminal(%(../bin/ncsh), width: 180, height: 160)
       row = ROW_START
       tty.assert_row_ends_with(row, ' ❱ ')
+
       tty.send_line_exact("if [ #{condition} ]; then echo hello; fi")
       row += 1
       if result
@@ -183,6 +188,7 @@ def generate_if_math_tests
       tty = TTYtest.new_terminal(%(../bin/ncsh), width: 180, height: 160)
       row = ROW_START
       tty.assert_row_ends_with(row, ' ❱ ')
+
       tty.send_line_exact("if [ #{condition} ]; then echo hello; else echo hi; fi")
       row += 1
       if result
@@ -196,6 +202,7 @@ def generate_if_math_tests
       tty = TTYtest.new_terminal(%(../bin/ncsh), width: 180, height: 160)
       row = ROW_START
       tty.assert_row_ends_with(row, ' ❱ ')
+
       tty.send_line_exact("if [ 1 -eq 5 ]; then echo hello; elif [ #{condition} ]; then echo hey; fi")
       row += 1
       if result
@@ -209,6 +216,7 @@ def generate_if_math_tests
       tty = TTYtest.new_terminal(%(../bin/ncsh), width: 180, height: 160)
       row = ROW_START
       tty.assert_row_ends_with(row, ' ❱ ')
+
       tty.send_line_exact("if [ #{condition} ]; then echo hello; elif [ 1 -eq 5 ]; then echo hey; fi")
       row += 1
       if result
@@ -222,6 +230,7 @@ def generate_if_math_tests
       tty = TTYtest.new_terminal(%(../bin/ncsh), width: 180, height: 160)
       row = ROW_START
       tty.assert_row_ends_with(row, ' ❱ ')
+
       tty.send_line_exact("if [ #{condition} ]; then echo hello; elif [ 1 -eq 5 ]; then echo hey; else echo hi; fi")
       row += 1
       if result
@@ -235,6 +244,7 @@ def generate_if_math_tests
       tty = TTYtest.new_terminal(%(../bin/ncsh), width: 180, height: 160)
       row = ROW_START
       tty.assert_row_ends_with(row, ' ❱ ')
+
       tty.send_line_exact("if [ false && true ]; then echo hello; elif [ #{condition} ]; then echo hey; else echo hi; fi")
       row += 1
       if result
@@ -248,6 +258,7 @@ def generate_if_math_tests
       tty = TTYtest.new_terminal(%(../bin/ncsh), width: 180, height: 160)
       row = ROW_START
       tty.assert_row_ends_with(row, ' ❱ ')
+
       tty.send_line_exact("if [ 1 -eq 5 ]; then echo hello; elif [ #{condition} ]; then echo hey; else echo hi; fi")
       row += 1
       if result
@@ -261,6 +272,7 @@ def generate_if_math_tests
       tty = TTYtest.new_terminal(%(../bin/ncsh), width: 180, height: 160)
       row = ROW_START
       tty.assert_row_ends_with(row, ' ❱ ')
+
       tty.send_line_exact("if [ #{condition} ]; then echo hello; elif [ 1 -eq 5 ]; then echo hi; elif [ 5 -lt 1 ]; then echo hey; fi")
       row += 1
       if result
@@ -274,6 +286,7 @@ def generate_if_math_tests
       tty = TTYtest.new_terminal(%(../bin/ncsh), width: 180, height: 160)
       row = ROW_START
       tty.assert_row_ends_with(row, ' ❱ ')
+
       tty.send_line_exact("if [ 1 -eq 5 ]; then echo hello; elif [ #{condition} ]; then echo hi; elif [ 5 -lt 1 ]; then echo hey; fi")
       row += 1
       if result
@@ -287,6 +300,7 @@ def generate_if_math_tests
       tty = TTYtest.new_terminal(%(../bin/ncsh), width: 180, height: 160)
       row = ROW_START
       tty.assert_row_ends_with(row, ' ❱ ')
+
       tty.send_line_exact("if [ 1 -eq 5 ]; then echo hello; elif [ 1 -eq 5 ]; then echo hi; elif [ #{condition} ]; then echo hey; fi")
       row += 1
       if result
@@ -300,6 +314,7 @@ def generate_if_math_tests
       tty = TTYtest.new_terminal(%(../bin/ncsh), width: 180, height: 160)
       row = ROW_START
       tty.assert_row_ends_with(row, ' ❱ ')
+
       tty.send_line_exact("if [ 1 -eq 5 ]; then echo hello; elif [ 1 -eq 5 ]; then echo hi; elif [ #{condition} ]; then echo hey; else echo 'whats up' fi")
       row += 1
       if result
@@ -313,6 +328,7 @@ def generate_if_math_tests
       tty = TTYtest.new_terminal(%(../bin/ncsh), width: 180, height: 160)
       row = ROW_START
       tty.assert_row_ends_with(row, ' ❱ ')
+
       tty.send_line_exact("if [ false && true ]; then echo hello; elif [ false && true ]; then echo hi; elif [ #{condition} ]; then echo hey; else echo 'whats up' fi")
       row += 1
       if result

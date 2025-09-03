@@ -249,7 +249,7 @@ Commands* vm_next_else_statement(Vm_Data* restrict vm)
 
 Commands* vm_next_elif_condition(Vm_Data* restrict vm)
 {
-    if (!vm->cur_stmt->prev) {
+    if (!vm->cur_stmt->prev || (vm->cur_stmt->type != LT_IF && vm->cur_stmt->prev->type == LT_IF_CONDITIONS)) {
         if (vm->cur_stmt->left && vm->cur_stmt->left->type == LT_ELIF_CONDITIONS) {
             vm->cur_stmt = vm->cur_stmt->left;
             return vm->cur_stmt->commands;
@@ -463,6 +463,13 @@ Commands* vm_next_if(Commands* restrict cmds, Vm_Data* restrict vm)
         }
 
         else if (vm->status != EXIT_SUCCESS && cmds->prev_op == OP_AND) {
+            if (vm->cur_stmt->prev->type == LT_IF_CONDITIONS) {
+                cmds = vm_next_elif_condition(vm);
+                if (cmds) {
+                    return vm_command_set(cmds, vm, VS_IN_CONDITIONS);
+                }
+            }
+
             if (vm->stmts->type == ST_IF_ELIF_ELSE) {
                 cmds = vm_next_else_statement(vm);
                 if (!cmds) {
