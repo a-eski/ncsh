@@ -67,34 +67,26 @@ int prompt_short_directory_print(Input* restrict input)
     }
 
     size_t dir_len = prompt_short_directory_get(cwd, directory);
-    int printed = 0;
     if (prompt_data.show_user) {
         tty_color_set(USER_COLOR);
-        printed += tty_write(input->user->value, input->user->length);
-        printed += tty_putc(' ');
+        tty_write(input->user->value, input->user->length);
+        tty_putc(' ');
         tty_color_set(DIRECTORY_COLOR);
-        printed += tty_write(directory, dir_len);
+        tty_write(directory, dir_len);
         tty_send(&tcaps.color_reset);
-        printed += tty_print(NCSH_PROMPT_ENDING_STRING);
-
-        /*printf(ncsh_GREEN "%s"
-                      " " ncsh_CYAN "%s" WHITE_BRIGHT NCSH_PROMPT_ENDING_STRING,
-           input->user.value, directory);*/
-        assert(printed > 0);
-        input->prompt_len = (size_t)printed;
+        tty_print(NCSH_PROMPT_ENDING_STRING);
     }
     else {
         tty_color_set(DIRECTORY_COLOR);
-        printed += tty_write(directory, dir_len);
+        tty_write(directory, dir_len);
         tty_send(&tcaps.color_reset);
-        printed += tty_print(NCSH_PROMPT_ENDING_STRING);
-        // printf(ncsh_CYAN "%s" WHITE_BRIGHT NCSH_PROMPT_ENDING_STRING, directory);
-        assert(printed > 0);
-        input->prompt_len = (size_t)printed;
+        tty_print(NCSH_PROMPT_ENDING_STRING);
     }
 
     // save cursor position so we can reset cursor when loading history entries
     tty_send(&tcaps.cursor_save);
+
+    tty_print("pos.x %zu", term.pos.x);
     return EXIT_SUCCESS;
 }
 
@@ -106,32 +98,22 @@ int prompt_directory_print(Input* restrict input)
         tty_perror("ncsh: Error when getting current directory");
         return EXIT_FAILURE;
     }
-    int printed = 0;
+
     if (prompt_data.show_user) {
         tty_color_set(USER_COLOR);
-        printed += tty_write(input->user->value, input->user->length);
-        printed += tty_putc(' ');
+        tty_write(input->user->value, input->user->length);
+        tty_putc(' ');
         tty_color_set(DIRECTORY_COLOR);
-        printed += tty_print("%s", cwd);
+        tty_print("%s", cwd);
         tty_send(&tcaps.color_reset);
-        printed += tty_print(NCSH_PROMPT_ENDING_STRING);
-
-        /*printf(ncsh_GREEN "%s"
-                          " " ncsh_CYAN "%s" WHITE_BRIGHT NCSH_PROMPT_ENDING_STRING,
-               input->user.value, cwd);*/
-        assert(printed > 0);
-        input->prompt_len = (size_t)printed;
+        tty_print(NCSH_PROMPT_ENDING_STRING);
     }
     else {
         tty_color_set(DIRECTORY_COLOR);
-        printed += tty_print("%s", cwd);
+        tty_print("%s", cwd);
         tty_send(&tcaps.color_reset);
-        printed += tty_print(NCSH_PROMPT_ENDING_STRING);
-        // printf(ncsh_CYAN "%s" WHITE_BRIGHT NCSH_PROMPT_ENDING_STRING, cwd);
-        assert(printed > 0);
-        input->prompt_len = (size_t)printed;
+        tty_print(NCSH_PROMPT_ENDING_STRING);
     }
-
 
     // save cursor position so we can reset cursor when loading history entries
     tty_send(&tcaps.cursor_save);
@@ -141,23 +123,14 @@ int prompt_directory_print(Input* restrict input)
 [[nodiscard]]
 int prompt_no_directory_print(Input* restrict input)
 {
-    int printed = 0;
     if (prompt_data.show_user) {
         tty_color_set(USER_COLOR);
-        printed += tty_write(input->user->value, input->user->length);
+        tty_write(input->user->value, input->user->length);
         tty_send(&tcaps.color_reset);
-        printed += tty_print(NCSH_PROMPT_ENDING_STRING);
-        // printf(ncsh_GREEN "%s" WHITE_BRIGHT NCSH_PROMPT_ENDING_STRING, input->user.value);
-
-        assert(printed > 0);
-        input->prompt_len = (size_t)printed;
+        tty_print(NCSH_PROMPT_ENDING_STRING);
     }
     else {
-        printed += tty_print(NCSH_PROMPT_ENDING_STRING);
-
-        // printf(WHITE_BRIGHT NCSH_PROMPT_ENDING_STRING);
-        assert(printed > 0);
-        input->prompt_len = (size_t)printed;
+        tty_print(NCSH_PROMPT_ENDING_STRING);
     }
 
     // save cursor position so we can reset cursor when loading history entries

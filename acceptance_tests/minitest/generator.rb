@@ -33,7 +33,12 @@ def generate_if_bool_tests
     'false || true || true',
     'false || false || true',
     'true || false || true',
-    'false || true || false'
+    'false || true || false',
+    'false || false || false || true',  # true
+    'false || false || false || false', # false
+    'true && true && true && false',    # false
+    'false || false || true || false',  # true
+    'true && true && true && true'      # true
   ]
 
   results = [
@@ -62,79 +67,15 @@ def generate_if_bool_tests
     true,
     true,
     true,
+    true,
+    true,
+    false,
+    false,
+    true,
     true
   ]
 
-  conditions.each_with_index do |condition, i|
-    result = results[i]
-
-    name = condition.gsub(' ', '_').gsub('&&', 'and').gsub('||', 'or')
-
-    define_method("test_if_#{name}_#{i}") do
-      tty = TTYtest.new_terminal(%(../bin/ncsh), width: 180, height: 160)
-      row = ROW_START
-      tty.assert_row_ends_with(row, ' ❱ ')
-      tty.send_line_exact("if [ #{condition} ]; then echo hello; fi")
-      row += 1
-      if result
-        tty.assert_row(row, 'hello')
-      else
-        tty.assert_row_ends_with(row, ' ❱ ')
-      end
-    end
-
-    define_method("test_if_else_#{name}_#{i}") do
-      tty = TTYtest.new_terminal(%(../bin/ncsh), width: 180, height: 160)
-      row = ROW_START
-      tty.assert_row_ends_with(row, ' ❱ ')
-      tty.send_line_exact("if [ #{condition} ]; then echo hello; else echo hi; fi")
-      row += 1
-      if result
-        tty.assert_row(row, 'hello')
-      else
-        tty.assert_row(row, 'hi')
-      end
-    end
-
-    define_method("test_if_elif_#{name}_#{i}") do
-      tty = TTYtest.new_terminal(%(../bin/ncsh), width: 180, height: 160)
-      row = ROW_START
-      tty.assert_row_ends_with(row, ' ❱ ')
-      tty.send_line_exact("if [ false ]; then echo hello; elif [ #{condition} ]; then echo hey; fi")
-      row += 1
-      if result
-        tty.assert_row(row, 'hey')
-      else
-        tty.assert_row_ends_with(row, ' ❱ ')
-      end
-    end
-
-    define_method("test_if_elif_else_#{name}_#{i}") do
-      tty = TTYtest.new_terminal(%(../bin/ncsh), width: 180, height: 160)
-      row = ROW_START
-      tty.assert_row_ends_with(row, ' ❱ ')
-      tty.send_line_exact("if [ false ]; then echo hello; elif [ #{condition} ]; then echo hey; else echo hi; fi")
-      row += 1
-      if result
-        tty.assert_row(row, 'hey')
-      else
-        tty.assert_row(row, 'hi')
-      end
-    end
-
-    define_method("test_if_multiple_elif_#{name}_#{i}") do
-      tty = TTYtest.new_terminal(%(../bin/ncsh), width: 180, height: 160)
-      row = ROW_START
-      tty.assert_row_ends_with(row, ' ❱ ')
-      tty.send_line_exact("if [ false ]; then echo hello; elif [ false ]; then echo hi; elif [ #{condition} ]; then echo hey; fi")
-      row += 1
-      if result
-        tty.assert_row(row, 'hey')
-      else
-        tty.assert_row_ends_with(row, ' ❱ ')
-      end
-    end
-  end
+  generate_tests(conditions, results)
 end
 
 def generate_if_math_tests
@@ -162,6 +103,10 @@ def generate_if_math_tests
     true
   ]
 
+  generate_tests(conditions, results)
+end
+
+def generate_tests(conditions, results)
   conditions.each_with_index do |condition, i|
     result = results[i]
 
@@ -169,6 +114,8 @@ def generate_if_math_tests
                     .gsub('-', '')
                     .gsub('1', 'one')
                     .gsub('2', 'two')
+                    .gsub('&&', 'and')
+                    .gsub('||', 'or')
 
     define_method("test_if_#{name}_#{i}") do
       tty = TTYtest.new_terminal(%(../bin/ncsh), width: 180, height: 160)
@@ -310,17 +257,59 @@ def generate_if_math_tests
       end
     end
 
-    define_method("test_if_elif_multiple_else_#{name}_#{i}") do
+    define_method("test_if_fourth_elif_multiple_#{name}_#{i}") do
       tty = TTYtest.new_terminal(%(../bin/ncsh), width: 180, height: 160)
       row = ROW_START
       tty.assert_row_ends_with(row, ' ❱ ')
 
-      tty.send_line_exact("if [ 1 -eq 5 ]; then echo hello; elif [ 1 -eq 5 ]; then echo hi; elif [ #{condition} ]; then echo hey; else echo 'whats up' fi")
+      tty.send_line_exact("if [ 1 -eq 5 ]; then echo hello; elif [ 1 -eq 5 ]; then echo hi; elif [ false && true ]; then echo hiya; elif [ #{condition} ]; then echo hey; fi")
       row += 1
       if result
         tty.assert_row(row, 'hey')
       else
-        tty.assert_row(row, 'whats up')
+        tty.assert_row_ends_with(row, ' ❱ ')
+      end
+    end
+
+    define_method("test_if_first_elif_multiple_else_#{name}_#{i}") do
+      tty = TTYtest.new_terminal(%(../bin/ncsh), width: 180, height: 160)
+      row = ROW_START
+      tty.assert_row_ends_with(row, ' ❱ ')
+
+      tty.send_line_exact("if [ 1 -eq 5 ]; then echo hello; elif [ #{condition} ]; then echo hi; elif [ true && false ]; then echo hey; else echo hallo fi")
+      row += 1
+      if result
+        tty.assert_row(row, 'hi')
+      else
+        tty.assert_row(row, 'hallo')
+      end
+    end
+
+    define_method("test_if_second_elif_multiple_else_#{name}_#{i}") do
+      tty = TTYtest.new_terminal(%(../bin/ncsh), width: 180, height: 160)
+      row = ROW_START
+      tty.assert_row_ends_with(row, ' ❱ ')
+
+      tty.send_line_exact("if [ 1 -eq 5 ]; then echo hello; elif [ 1 -eq 5 ]; then echo hi; elif [ #{condition} ]; then echo hey; else echo hallo fi")
+      row += 1
+      if result
+        tty.assert_row(row, 'hey')
+      else
+        tty.assert_row(row, 'hallo')
+      end
+    end
+
+    define_method("test_if_third_elif_multiple_else_#{name}_#{i}") do
+      tty = TTYtest.new_terminal(%(../bin/ncsh), width: 180, height: 160)
+      row = ROW_START
+      tty.assert_row_ends_with(row, ' ❱ ')
+
+      tty.send_line_exact("if [ 1 -eq 5 ]; then echo hello; elif [ 1 -eq 5 ]; then echo hi; elif [ false || false ]; then echo hey; elif [ #{condition} ] then echo hiya; else echo hallo fi")
+      row += 1
+      if result
+        tty.assert_row(row, 'hiya')
+      else
+        tty.assert_row(row, 'hallo')
       end
     end
 
@@ -329,12 +318,26 @@ def generate_if_math_tests
       row = ROW_START
       tty.assert_row_ends_with(row, ' ❱ ')
 
-      tty.send_line_exact("if [ false && true ]; then echo hello; elif [ false && true ]; then echo hi; elif [ #{condition} ]; then echo hey; else echo 'whats up' fi")
+      tty.send_line_exact("if [ false && true ]; then echo hello; elif [ false && true ]; then echo hi; elif [ #{condition} ]; then echo hey; else echo hallo fi")
       row += 1
       if result
         tty.assert_row(row, 'hey')
       else
-        tty.assert_row(row, 'whats up')
+        tty.assert_row(row, 'hallo')
+      end
+    end
+
+    define_method("test_if_multiple_second_elif_multiple_else_#{name}_#{i}") do
+      tty = TTYtest.new_terminal(%(../bin/ncsh), width: 180, height: 160)
+      row = ROW_START
+      tty.assert_row_ends_with(row, ' ❱ ')
+
+      tty.send_line_exact("if [ false && true ]; then echo hello; elif [ false && true ]; then echo hi; elif [ #{condition} ]; then echo hey; elif [ false && true ]; then echo hiya; else echo hallo fi")
+      row += 1
+      if result
+        tty.assert_row(row, 'hey')
+      else
+        tty.assert_row(row, 'hallo')
       end
     end
   end

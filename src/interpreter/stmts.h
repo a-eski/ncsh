@@ -28,12 +28,12 @@ struct Commands {
     size_t pos;
     size_t count;
     size_t cap;
-    enum Ops prev_op;
 
     enum Ops* ops;
     Str* strs;
 
     Commands* next;
+    enum Ops prev_op;
 };
 
 enum Logic_Type {
@@ -47,11 +47,11 @@ enum Logic_Type {
 
 typedef struct Statement Statement;
 struct Statement {
-    enum Logic_Type type;
     Commands* commands;
     Statement* right;
     Statement* left;
     Statement* prev;
+    enum Logic_Type type;
 };
 
 enum Statements_Type {

@@ -2,6 +2,9 @@
 
 require 'minitest/autorun'
 
+Minitest::Test.parallelize_me!
+Minitest.parallel_executor = Minitest::Parallel::Executor.new(12)
+
 module NcshTests
   # tests for if ... elif ... else ... fi
   class IfTests < Minitest::Test

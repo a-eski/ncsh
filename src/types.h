@@ -42,7 +42,6 @@ typedef struct {
 typedef struct {
     // values related to prompt
     bool reprint_prompt;
-    size_t prompt_len;
     Str* user;
 
     // values related to the line buffer
@@ -54,6 +53,7 @@ typedef struct {
     char* yank;
 
     // position relative to start line of prompt
+    // size_t start_y;
     size_t current_y;
     size_t lines_y;
 

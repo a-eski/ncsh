@@ -140,7 +140,7 @@ enodiscard static inline Str* estrcat(Str* restrict v, Str* restrict v2, Arena* 
     str->length = v->length + v2->length - 1;
     str->value = arena_malloc(a, str->length, char);
     memcpy(str->value, v->value, v->length - 1);
-    memcpy(str->value + v->length, v2->value, v->length - 1);
+    memcpy(str->value + v->length - 1, v2->value, v2->length - 1);
     return str;
 }
 
@@ -159,6 +159,9 @@ enodiscard static inline size_t estridx(Str* v, char c)
     return idx;
 }
 
+/* estrtoarr
+ * Pass in an array of Str's with size n and get back a null terminated array of char*.
+ */
 enodiscard static inline char** estrtoarr(Str* strs, size_t n, Arena* restrict a)
 {
     char** buffer = arena_malloc(a, n, char*);

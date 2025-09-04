@@ -77,10 +77,9 @@ void io_deinit(Input* restrict input, Arena scratch)
 
 void io_cursor_restore(Input* restrict input)
 {
-    size_t prev_size_y = term.size.y;
     size_t prev_pos_y = term.pos.y;
     tty_send(&tcaps.cursor_restore);
-    if (prev_pos_y == prev_size_y - 1) {
+    if (prev_pos_y <= term.pos.y) {
         tty_send_n(&tcaps.cursor_up, input->lines_y);
     }
 }
@@ -115,16 +114,6 @@ int io_exit([[maybe_unused]] Input* restrict input)
     return EXIT_SUCCESS_END;
 }
 
-// IO
-/* enum Line_Adjustment
- * Represents if the cursor was moved to previous line, next line, or not at all.
- */
-enum Line_Adjustment : uint8_t {
-    L_NONE = 0,
-    L_NEXT,
-    L_PREVIOUS
-};
-
 /* io_adjust_line_if_needed
  * Checks if a newline needs to be inserted.
  * For moving to the next line, nothing happens except increasing lines_y and current_y, which track y position relative
@@ -132,30 +121,13 @@ enum Line_Adjustment : uint8_t {
  * previous line, decrease lines_y and current_y. Returns: enum Line_Adjustment, a value that indicates whether any line
  * change has happened or not
  */
-enum Line_Adjustment io_adjust_line_if_needed(Input* restrict input)
+int io_adjust_line_if_needed(Input* restrict input)
 {
-    if (!input->pos || input->pos < term.size.x) {
-        return L_NONE;
+    if (!input->pos) {
+        return 0;
     }
 
-    // Is eol
-    if (term.pos.x >= term.size.x - 1) {
-        ++input->lines_y;
-        input->current_y = input->lines_y;
-        return L_NEXT;
-    }
-
-    // is start of line?
-    if (term.pos.y > 0 && term.pos.x == 0) {
-        --input->lines_y;
-        input->current_y = input->lines_y;
-
-        tty_send(&tcaps.line_clr_to_eol);
-        tty_goto_prev_eol();
-        return L_PREVIOUS;
-    }
-
-    return L_NONE;
+    return tty_line_adjust();
 }
 
 [[nodiscard]]
@@ -1024,14 +996,7 @@ void io_autocomplete(Input* restrict input)
     }
 
     input->current_autocompletion_len = strlen(input->current_autocompletion);
-    if (input->current_y == 0 &&
-        input->prompt_len + term.pos.x + input->current_autocompletion_len >
-            term.size.x) {
-        input->current_autocompletion[0] = '\0';
-        input->current_autocompletion_len = 0;
-        return;
-    }
-    else if (term.pos.x + input->current_autocompletion_len >
+    if (term.pos.x + input->current_autocompletion_len >
              term.size.x) {
         input->current_autocompletion[0] = '\0';
         input->current_autocompletion_len = 0;
@@ -1051,6 +1016,8 @@ int io_readline(Input* restrict input, Arena* restrict scratch)
     input->reprint_prompt = true;
     int rv = EXIT_SUCCESS;
     tty_init_input_mode(TTY_NONCANONICAL_MODE);
+    // input->start_y = term.pos.y;
+    tty_println("io.c, term.pos.x %zu, term.pos.y %zu", term.pos.x, term.pos.y);
 
     while (1) {
         if (prompt_if_needed(input) != EXIT_SUCCESS) {
