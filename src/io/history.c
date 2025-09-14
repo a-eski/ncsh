@@ -33,12 +33,13 @@ void history_file_set([[maybe_unused]] Str config_file, History* restrict histor
         return;
     }
 
-    history->file.value = arena_malloc(arena, config_file.length + sizeof(NCSH_HISTORY_FILE), char);
+    history->file = *estrcat(&config_file, &Str_New_Literal(NCSH_HISTORY_FILE), arena);
+    /*history->file.value = arena_malloc(arena, config_file.length + sizeof(NCSH_HISTORY_FILE), char);
     memcpy(history->file.value, config_file.value, config_file.length);
     memcpy(history->file.value + config_file.length - 1, NCSH_HISTORY_FILE, sizeof(NCSH_HISTORY_FILE));
-    history->file.length = config_file.length + sizeof(NCSH_HISTORY_FILE);
+    history->file.length = config_file.length + sizeof(NCSH_HISTORY_FILE);*/
 
-    debugf("history->file: %s\n", history->file);
+    debugf("history->file: %s\n", history->file.value);
 #endif /* ifdef NCSH_HISTORY_TEST */
 }
 
@@ -153,11 +154,11 @@ enum eresult history_init(Str config_location, History* restrict history, Arena*
 {
     assert(history && arena);
 
-    enum eresult result;
+    /*enum eresult result;
     if ((result = history_alloc(history, arena)) != E_SUCCESS) {
         tty_perror("ncsh: Error when allocating memory for history");
         return result;
-    }
+    }*/
 
     history_file_set(config_location, history, arena);
     if (!history->file.value) {
@@ -165,10 +166,10 @@ enum eresult history_init(Str config_location, History* restrict history, Arena*
         return E_FAILURE;
     }
 
-    if ((result = history_load(history, arena)) != E_SUCCESS) {
+    /*if ((result = history_load(history, arena)) != E_SUCCESS) {
         tty_perror("ncsh: Error when loading data from history file");
         return result;
-    }
+    }*/
 
     return E_SUCCESS;
 }

@@ -76,6 +76,33 @@ enum eresult conf_file_set(Shell* restrict shell)
     return E_SUCCESS;
 }
 
+/*enum eresult conf_history_file_set(Shell* restrict shell)
+{
+#if defined(NCSH_HISTORY_TEST) || defined(NCSH_IN_PLACE)
+    shell->config.history_file = *estrdup(&Str_New_Literal(NCSH_HISTORY_FILE), arena);
+    return E_SUCCESS;
+#else
+    Str config_file = shell->config.history_file;
+    if (!config_file.value || !config_file.length) {
+        shell->config.history_file = Str_New_Literal(NCSH_HISTORY_FILE);
+        return E_SUCCESS;
+    }
+
+    if (config_file.length + sizeof(NCSH_HISTORY_FILE) > NCSH_MAX_INPUT) {
+        shell->config.history_file = Str_Empty;
+        return E_FAILURE_OVERFLOW_PROTECTION;
+    }
+
+    shell->config.history_file.value = arena_malloc(&shell->arena, config_file.length + sizeof(NCSH_HISTORY_FILE), char);
+    memcpy(shell->config.history_file.value, config_file.value, config_file.length);
+    memcpy(shell->config.history_file.value + config_file.length - 1, NCSH_HISTORY_FILE, sizeof(NCSH_HISTORY_FILE));
+    shell->config.history_file.length = config_file.length + sizeof(NCSH_HISTORY_FILE);
+
+    debugf("shell->config.history_file: %s\n", shell->config.history_file);
+    return E_SUCCESS;
+#endif // ifdef NCSH_HISTORY_TEST
+}*/
+
 /* conf_path_add
  * The function which handles config items which add values to PATH.
  */
@@ -197,6 +224,11 @@ enum eresult conf_init(Shell* restrict shell)
         debug("failed setting config file");
         return result;
     }
+
+    /*if ((result = conf_history_file_set(shell)) != E_SUCCESS) {
+        debug("failed setting config file");
+        return result;
+    }*/
 
     if ((result = conf_file_load(shell)) != E_SUCCESS) {
         debug("failed loading config file");

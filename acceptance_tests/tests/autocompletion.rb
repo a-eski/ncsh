@@ -40,7 +40,7 @@ def select_tab_autocompletion_test(row)
   @tty.send_keys(TTYtest::TAB)
   row += 1
   @tty.send_down_arrows(5)
-  @tty.send_newline
+  @tty.send_return
   row += TAB_AUTOCOMPLETE_ROWS + 1
   @tty.assert_row_ends_with(row, WC_C_LENGTH)
   row += 1
@@ -80,7 +80,7 @@ def backspace_and_delete_autocompletion_test(row)
   @tty.send_keys_one_at_a_time(' |')
   @tty.send_right_arrow
   @tty.assert_row_ends_with(row, 'ls | sort | wc -c > t3.txt')
-  @tty.send_newline
+  @tty.send_return
   row += 1
   @tty.assert_row(row, WC_C_LENGTH)
   row += 1

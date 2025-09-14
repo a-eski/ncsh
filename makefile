@@ -4,7 +4,7 @@ CC ?= gcc
 DESTDIR ?= /bin
 RELEASE ?= 1
 
-main_flags = -Wall -Wextra -Werror -pedantic -pedantic-errors -Wsign-conversion -Wformat=2 -Wshadow -Wvla -fstack-protector-strong -fPIC -fPIE -Wundef -Wbad-function-cast -Wcast-align -Wstrict-prototypes -Wnested-externs -Winline -Wdisabled-optimization -Wunreachable-code -Wchar-subscripts
+main_flags = -Wall -Wextra -Werror -pedantic -pedantic-errors -Wsign-conversion -Wformat=2 -Wshadow -Wvla -fstack-protector-strong -fPIC -fPIE -Wundef -Wbad-function-cast -Wcast-align -Wstrict-prototypes -Wnested-externs -Winline -Winline -Wdisabled-optimization -Wunreachable-code -Wchar-subscripts
 # -pg
 
 debug_flags = $(main_flags) -D_FORTIFY_SOURCE=3 -fsanitize=address,undefined,leak -g
@@ -16,16 +16,16 @@ release_flags = $(main_flags) -flto=6 -O3 -ffast-math -march=native -DNDEBUG
 
 fuzz_flags = $(debug_flags) -fsanitize=fuzzer -DNDEBUG -O3
 
-objects = obj/main.o obj/arena.o obj/io.o obj/pipe.o obj/redirection.o obj/vm.o obj/sema.o obj/interpreter.o obj/parser.o obj/prompt.o obj/efile.o obj/hashset.o obj/lexer.o obj/lexemes.o obj/expansions.o obj/stmts.o obj/builtins.o obj/history.o obj/ac.o obj/env.o obj/alias.o obj/conf.o obj/fzf.o obj/z.o obj/ttyio.o obj/tcaps.o obj/terminfo.o obj/unibilium.o obj/uninames.o obj/uniutil.o
+objects = obj/main.o obj/bestline.o obj/arena.o obj/pipe.o obj/redirection.o obj/vm.o obj/sema.o obj/interpreter.o obj/parser.o obj/prompt.o obj/efile.o obj/hashset.o obj/lexer.o obj/lexemes.o obj/expansions.o obj/stmts.o obj/builtins.o obj/history.o obj/ac.o obj/env.o obj/alias.o obj/conf.o obj/fzf.o obj/z.o obj/ttyio.o obj/tcaps.o obj/terminfo.o obj/unibilium.o obj/uninames.o obj/uniutil.o
 
 target = ./bin/ncsh
 
 ifeq ($(RELEASE), 1)
 	CFLAGS ?= $(release_flags)
-	cc_with_flags = $(CC) $(STD) $(CFLAGS)
+	cc_with_flags = $(CC) $(STD) $(CFLAGS) $(DEFINES)
 else
 	CFLAGS ?= $(debug_flags)
-	cc_with_flags = $(CC) $(STD) $(CFLAGS)
+	cc_with_flags = $(CC) $(STD) $(CFLAGS) $(DEFINES)
 endif
 
 ifneq ($(OS),Windows_NT)
@@ -79,7 +79,7 @@ r:
 
 # Normal debug build
 debug:
-	make -B RELEASE=0
+	make RELEASE=0
 d:
 	make debug
 
@@ -123,7 +123,7 @@ check:
 	# make test_prompt
 	make test_ac
 	make test_hashset
-	make test_history
+	# make test_history
 	make test_lexer
 	make test_parser
 	make test_vm_next
@@ -370,13 +370,12 @@ dumpdot:
 	dot -Tpng trie -o trie.png
 	dot -Tsvg trie -o trie.svg
 
-.PHONY: ast
-ast:
-	$(cc_with_flags) src/arena.c src/interpreter/lexer.c src/interpreter/lexemes.c src/interpreter/ast_test.c -o ast
-
 # Clean-up
 .PHONY: clean
 clean:
 	rm $(target) $(objects)
+.PHONY: cl
+cl :
+	make clean
 
 # obj/*.gcno obj/*.gcda

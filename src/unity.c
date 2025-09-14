@@ -34,6 +34,7 @@
 #include "interpreter/parser.c"
 #include "interpreter/stmts.c"
 
+#include "io/bestline.c"
 #include "io/ac.c"
 #include "io/hashset.c"
 #include "io/history.c"

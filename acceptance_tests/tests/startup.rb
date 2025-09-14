@@ -30,10 +30,10 @@ end
 
 def newline_sanity_test(row)
   assert_check_new_row(row)
-  @tty.send_newline
+  @tty.send_return
   row += 1
   assert_check_new_row(row)
-  @tty.send_newline
+  @tty.send_return
   row += 1
   test_passed('Newline sanity test')
   row

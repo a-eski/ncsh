@@ -469,7 +469,7 @@ static int builtins_echo(Str* restrict strs)
         tty_dprint(vm_output_fd, "%s ", prev->value);
     }
     if (prev) {
-        tty_dprint(vm_output_fd, "%s", prev->value);
+        tty_dwrite(vm_output_fd, prev->value, prev->length - 1);
     }
 
     if (echo_add_newline) {

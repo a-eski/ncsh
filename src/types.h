@@ -34,6 +34,7 @@ typedef struct
 typedef struct {
     Str location;
     Str file;
+    Str history_file;
 } Config;
 
 /* struct Input

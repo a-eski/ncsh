@@ -34,7 +34,7 @@ def command_variables_test(row)
   @tty.send_line('$command')
   row += 2
   @tty.assert_row_starts_with(row, LS_FIRST_ITEM)
-  row += LS_LINES_NO_Z
+  row += LS_LINES
   test_passed('command variables test')
   row
 end
