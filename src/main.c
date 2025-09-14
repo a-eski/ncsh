@@ -33,6 +33,10 @@ jmp_buf env_jmp_buf;
 sig_atomic_t vm_child_pid;
 volatile int sigwinch_caught;
 
+Input* input_;
+Arena* scratch_;
+Arena* arena_;
+
 /* arena_init
  * Initialize arenas used for the lifteim of the shell.
  * A permanent arena and a scratch arena are allocated.
@@ -83,6 +87,61 @@ static char* arena_noninteractive_init(Shell* restrict shell)
     return memory;
 }
 
+void completion(const char *buf, int pos, bestlineCompletions *lc) {
+    if (pos <= 0 || !buf) {
+        return;
+    }
+
+    uint8_t ac_matches_count =
+        ac_first((char*)buf, input_->current_autocompletion, input_->autocompletions_tree, *input_->scratch);
+
+    if (!ac_matches_count) {
+        if (input_->current_autocompletion[0] == '\0') {
+            return;
+        }
+        input_->current_autocompletion[0] = '\0';
+        input_->current_autocompletion_len = 0;
+        return;
+    }
+
+    if (input_->current_autocompletion) {
+        Str* completion = estrcat(&Str_New((char*)buf, (size_t)(pos + 1)), &Str_Get(input_->current_autocompletion), input_->scratch);
+        bestlineAddCompletion(lc, completion->value);
+    }
+}
+
+char *hints(const char *buf, const char **ansi1, const char **ansi2) {
+    if (!buf || !*buf) {
+        return NULL;
+    }
+
+    uint8_t ac_matches_count =
+        ac_first((char*)buf, input_->current_autocompletion, input_->autocompletions_tree, *input_->scratch);
+
+    if (!ac_matches_count) {
+        if (input_->current_autocompletion[0] == '\0') {
+            return NULL;
+        }
+        input_->current_autocompletion[0] = '\0';
+        input_->current_autocompletion_len = 0;
+        return NULL;
+    }
+
+    if (input_->current_autocompletion) {
+        // "\033[2m"
+        *ansi1 = "\033[35m"; /* magenta foreground */
+        *ansi2 = "\033[39m"; /* reset foreground */
+        return input_->current_autocompletion;
+    }
+    return NULL;
+}
+
+/* hooks into bestline history loading to populate trie used for autocompletions */
+void ac_add_when_history_expanded(const char *in, int n) {
+    assert(n > 0);
+    ac_add((char *)in, (size_t)n, input_->autocompletions_tree, arena_);
+}
+
 /* init
  * Called on startup to allocate memory related to the shells lifetime.
  * Returns: exit result, EXIT_SUCCESS or EXIT_FAILURE
@@ -124,6 +183,15 @@ static char* init(Shell* restrict shell, char** restrict envp)
         return NULL;
     }
 
+    input_ = &shell->input;
+    input_->scratch = &shell->scratch;
+    arena_ = &shell->arena;
+    bestlineSetHintsCallback(hints);
+    bestlineSetCompletionCallback(completion);
+    bestlineSetOnHistoryLoadedCallback(ac_add_when_history_expanded);
+    bestlineHistoryLoad(shell->config.history_file.value);
+    shell->arena = *arena_;
+
     return memory;
 }
 
@@ -133,8 +201,8 @@ static void cleanup(char* restrict shell_memory, Shell* restrict shell)
     if (!shell_memory) {
         return;
     }
-    if (shell->input.history.file.value) {
-        bestlineHistorySave(shell->input.history.file.value);
+    if (shell->config.history_file.value) {
+        bestlineHistorySave(shell->config.history_file.value);
     }
     if (shell->input.buffer) {
         free(shell->input.buffer);
@@ -195,9 +263,9 @@ static int noninteractive(int argc, char** restrict argv, char** restrict envp)
     Shell shell = {0};
     char* memory = arena_noninteractive_init(&shell);
     if (!memory) {
-        // tty_color_set(TTYIO_RED_ERROR);
+        tty_color_set(TTYIO_RED_ERROR);
         bestlineWriteStr(STDERR_FILENO, Str_New_Literal("ncsh: could not start up, not enough memory available.\n"));
-        // tty_color_reset();
+        tty_color_reset();
         tty_deinit_caps();
         return EXIT_FAILURE;
     }
@@ -216,65 +284,6 @@ exit:
     tty_deinit_caps();
     free(memory);
     return rv;
-}
-
-Input* input_;
-Arena* scratch_;
-Arena* arena_;
-
-void completion(const char *buf, int pos, bestlineCompletions *lc) {
-    if (pos <= 0 || !buf) {
-        return;
-    }
-
-    uint8_t ac_matches_count =
-        ac_first((char*)buf, input_->current_autocompletion, input_->autocompletions_tree, *input_->scratch);
-
-    if (!ac_matches_count) {
-        if (input_->current_autocompletion[0] == '\0') {
-            return;
-        }
-        input_->current_autocompletion[0] = '\0';
-        input_->current_autocompletion_len = 0;
-        return;
-    }
-
-    if (input_->current_autocompletion) {
-        Str* completion = estrcat(&Str_New((char*)buf, (size_t)(pos + 1)), &Str_Get(input_->current_autocompletion), input_->scratch);
-        bestlineAddCompletion(lc, completion->value);
-    }
-}
-
-char *hints(const char *buf, const char **ansi1, const char **ansi2) {
-    if (!buf || !*buf) {
-        return NULL;
-    }
-
-    uint8_t ac_matches_count =
-        ac_first((char*)buf, input_->current_autocompletion, input_->autocompletions_tree, *input_->scratch);
-
-    if (!ac_matches_count) {
-        if (input_->current_autocompletion[0] == '\0') {
-            return NULL;
-        }
-        input_->current_autocompletion[0] = '\0';
-        input_->current_autocompletion_len = 0;
-        return NULL;
-    }
-
-    if (input_->current_autocompletion) {
-        // "\033[2m"
-        *ansi1 = "\033[35m"; /* magenta foreground */
-        *ansi2 = "\033[39m"; /* reset foreground */
-        return input_->current_autocompletion;
-    }
-    return NULL;
-}
-
-/* hooks into bestline history loading to populate trie used for autocompletions */
-void ac_add_when_history_expanded(const char *in, int n) {
-    assert(n > 0);
-    ac_add((char *)in, (size_t)n, input_->autocompletions_tree, arena_);
 }
 
 /* main
@@ -308,15 +317,6 @@ int main(int argc, char** argv, char** envp)
         goto exit;
     }
 
-    input_ = &shell.input;
-    input_->scratch = &shell.scratch;
-    arena_ = &shell.arena;
-    // bestlineLlamaMode(0);
-    bestlineSetHintsCallback(hints);
-    bestlineSetCompletionCallback(completion);
-    bestlineSetOnHistoryLoadedCallback(ac_add_when_history_expanded);
-    bestlineHistoryLoad(shell.config.history_file.value);
-    shell.arena = *arena_;
     startup_time();
 
     Str prompt;

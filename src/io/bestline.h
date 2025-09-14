@@ -21,6 +21,8 @@ typedef char *(bestlineHintsCallback)(const char *, const char **, const char **
 typedef void(bestlineFreeHintsCallback)(void *);
 typedef unsigned(bestlineXlatCallback)(unsigned);
 typedef void(bestlineOnHistoryLoadedCallback(const char *, int));
+// typedef void(bestlineHistoryCleanCallback(const char *, int));
+// typedef void(bestlineHistoryRemoveCallback(const char *, int));
 
 void bestlineSetCompletionCallback(bestlineCompletionCallback *);
 void bestlineSetHintsCallback(bestlineHintsCallback *);
@@ -37,6 +39,8 @@ char *bestlineWithHistory(const char *, const char *);
 int bestlineHistoryAdd(const char *);
 int bestlineHistoryLoad(const char *);
 int bestlineHistorySave(const char *);
+// int bestlineHistoryClean();
+// int bestlineHistoryRemove(const char *, int);
 void bestlineBalanceMode(char);
 void bestlineEmacsMode(char);
 void bestlineClearScreen(int);

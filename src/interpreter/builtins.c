@@ -264,6 +264,7 @@ static int builtins_z(z_Database* restrict z_db, Str* restrict strs, Arena* rest
 #define HISTORY_COMMAND_NOT_FOUND_MESSAGE "ncsh history: command not found."
 
 [[nodiscard]]
+[[maybe_unused]]
 static int builtins_history(History* restrict history, Str* restrict strs, Arena* restrict arena,
                      Arena* restrict scratch)
 {
@@ -922,13 +923,13 @@ bool builtins_check_and_run(Vm_Data* restrict vm, Shell* restrict shell, Arena* 
             return true;
         }
 
-        if (estrcmp(vm->strs[0], Str_New_Literal(NCSH_HISTORY))) {
+        /*if (estrcmp(vm->strs[0], Str_New_Literal(NCSH_HISTORY))) {
             if (builtins_disabled_state & BF_HISTORY) {
                 return false;
             }
             vm->status = builtins_history(&shell->input.history, vm->strs, &shell->arena, scratch);
             return true;
-        }
+        }*/
 
         if (estrcmp(vm->strs[0], Str_New_Literal(NCSH_ALIAS))) {
             if (builtins_disabled_state & BF_ALIAS) {

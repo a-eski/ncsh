@@ -5,7 +5,6 @@
 #include "arena.h"
 #include "z/z.h"
 #include "io/ac.h"
-#include "io/history.h"
 
 #define NCSH_MAX_PROCESSES 100
 
@@ -42,26 +41,11 @@ typedef struct {
  */
 typedef struct {
     // values related to prompt
-    bool reprint_prompt;
     Str* user;
 
     // values related to the line buffer
-    char c;
-    size_t start_pos;
     size_t pos;
-    size_t max_pos;
     char* buffer;
-    char* yank;
-
-    // position relative to start line of prompt
-    // size_t start_y;
-    size_t current_y;
-    size_t lines_y;
-
-    // history
-    size_t history_position;
-    Str history_entry;
-    History history;
 
     // autocompletions
     size_t current_autocompletion_len;

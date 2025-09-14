@@ -10,4 +10,10 @@
 #define DOT_CONFIG ".config"
 #define RC_FILE "ncshrc"
 
+#ifdef NCSH_HISTORY_TEST
+#define NCSH_HISTORY_FILE "ncsh_history_test"
+#else
+#define NCSH_HISTORY_FILE "/ncsh_history"
+#endif
+
 enum eresult conf_init(Shell* shell);
