@@ -84,3 +84,12 @@ learning
 sudo docker build -t ncsh-docked .
 sudo docker run ncsh-docked
 ```
+
+## z
+
+z add /home/alex/ncsh
+z add /home/alex/.config
+z add /home/alex/.config/ncsh
+z add /home/alex/.config/nvim
+z add /home/alex/ttytest2
+z add /home/alex/ttyio

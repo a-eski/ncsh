@@ -3732,6 +3732,7 @@ int bestlineHistoryLoad(const char *filename) {
         return 0;
     if (!(h = (char **)calloc(2 * BESTLINE_MAX_HISTORY, sizeof(char *))))
         return -1;
+    assert(filename);
     if ((fd = open(filename, O_RDONLY)) != -1) {
         if ((n = GetFdSize(fd))) {
             if ((m = (char *)mmap(0, n, PROT_READ, MAP_SHARED, fd, 0)) != MAP_FAILED) {

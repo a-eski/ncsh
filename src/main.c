@@ -111,11 +111,6 @@ static char* init(Shell* restrict shell, char** restrict envp)
         shell->input.user->length = 0;
     }
 
-    if (history_init(shell->config.location, &shell->input.history, &shell->arena) != E_SUCCESS) {
-        tty_perror("ncsh: Error occurred while setting up history");
-        return NULL;
-    }
-
     shell->input.current_autocompletion = arena_malloc(&shell->arena, NCSH_MAX_INPUT, char);
     shell->input.autocompletions_tree = ac_alloc(&shell->arena);
 
@@ -320,7 +315,7 @@ int main(int argc, char** argv, char** envp)
     bestlineSetHintsCallback(hints);
     bestlineSetCompletionCallback(completion);
     bestlineSetOnHistoryLoadedCallback(ac_add_when_history_expanded);
-    bestlineHistoryLoad(shell.input.history.file.value);
+    bestlineHistoryLoad(shell.config.history_file.value);
     shell.arena = *arena_;
     startup_time();
 

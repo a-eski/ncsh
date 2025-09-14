@@ -10,7 +10,7 @@ def basic_ls_test(row)
   @tty.send_return
   row += 1
   @tty.assert_row_starts_with(row, LS_FIRST_ITEM)
-  row += LS_LINES - 1
+  row += LS_LINES
   test_passed('Basic input (ls) test')
   row
 end

@@ -34,10 +34,6 @@ void history_file_set([[maybe_unused]] Str config_file, History* restrict histor
     }
 
     history->file = *estrcat(&config_file, &Str_New_Literal(NCSH_HISTORY_FILE), arena);
-    /*history->file.value = arena_malloc(arena, config_file.length + sizeof(NCSH_HISTORY_FILE), char);
-    memcpy(history->file.value, config_file.value, config_file.length);
-    memcpy(history->file.value + config_file.length - 1, NCSH_HISTORY_FILE, sizeof(NCSH_HISTORY_FILE));
-    history->file.length = config_file.length + sizeof(NCSH_HISTORY_FILE);*/
 
     debugf("history->file: %s\n", history->file.value);
 #endif /* ifdef NCSH_HISTORY_TEST */
