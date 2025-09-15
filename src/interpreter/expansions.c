@@ -8,28 +8,24 @@
 #include "../alias.h"
 #include "../debug.h"
 #include "../env.h"
-// #include "../ttyio/ttyio.h"
 #include "lexemes.h"
 #include "ops.h"
-#include "statements.h"
-// #include "lexer.h"
-// #include "parser.h"
+#include "stmts.h"
 #include "../types.h"
 
-void expansion_home(Shell* shell, Lexemes* restrict lexemes, size_t pos, Arena* scratch)
+void expansion_home(Parser_Data* restrict data, size_t pos)
 {
-    assert(shell); assert(lexemes); assert(scratch);
-
-    Str* home = env_home_get(shell->env);
+    Str* home = env_home_get(data->sh->env);
     assert(home->value && home->length);
     if (!home || home->length == 0) {
         // TODO: return error
         return;
     }
 
+    Lexemes* restrict lexemes = data->lexemes;
     if (lexemes->strs[pos].length == 2) {
-        estrset(&lexemes->strs[pos], home, scratch);
-        lexemes->ops[pos] = OP_CONSTANT;
+        estrset(&lexemes->strs[pos], home, data->s);
+        lexemes->ops[pos] = OP_CONST;
         debugf("lexemes->strs[pos].value set to %s\n", lexemes->strs[pos].value);
         return;
     }
@@ -41,12 +37,12 @@ void expansion_home(Shell* shell, Lexemes* restrict lexemes, size_t pos, Arena* 
     }
 
     size_t len = lexemes->strs[pos].length + home->length - 2; // subtract 1, both account for null termination
-    char* new_value = arena_malloc(scratch, len, char);
+    char* new_value = arena_malloc(data->s, len, char);
     memcpy(new_value, home->value, home->length - 1);
     memcpy(new_value + home->length - 1, lexemes->strs[pos].value + 1, lexemes->strs[pos].length - 1);
     debugf("performing home expansion on %s to %s\n", lexemes->strs[pos].value, new_value);
     lexemes->strs[pos].value = new_value;
-    lexemes->ops[pos] = OP_CONSTANT;
+    lexemes->ops[pos] = OP_CONST;
     lexemes->strs[pos].length = len;
 }
 
@@ -65,11 +61,11 @@ void expansion_glob(char* restrict in, Commands* restrict cmds, Arena* restrict 
         debugf("%s\n", glob_buf.gl_pathv[i]);
         if (cmds->pos >= cmds->cap - 1) {
           debug("realloc");
-          command_realloc(cmds, scratch);
+          cmd_realloc(cmds, scratch);
         }
 
         estrset(&cmds->strs[cmds->pos], &Str_Get(glob_buf.gl_pathv[i]), scratch);
-        cmds->ops[cmds->pos] = OP_CONSTANT;
+        cmds->ops[cmds->pos] = OP_CONST;
         ++cmds->pos;
     }
 
@@ -89,9 +85,9 @@ void expansion_assignment(Lexemes* lexeme, size_t pos, Shell* restrict shell)
     debugf("setting key %s with val %s\n", key.value, val.value);
 }
 
-void expansion_variable(Str* restrict in, Commands* restrict cmds, /*Statements* stmts,*/ Shell* restrict shell, Arena* restrict scratch)
+void expansion_variable(Parser_Data* restrict data, Str* restrict in)
 {
-    assert(in); assert(in->value); assert(cmds); assert(shell); assert(scratch);
+    assert(in); assert(in->value);
     if (!in || in->length < 2) {
         return;
     }
@@ -103,16 +99,16 @@ void expansion_variable(Str* restrict in, Commands* restrict cmds, /*Statements*
         key = (Str){.value = in->value, .length = in->length};
 
     debugf("key %s, key_len %zu\n", key.value, key.length);
-    Str* val = env_add_or_get(shell->env, key);
+    Str* val = env_add_or_get(data->sh->env, key);
     if (!val || !val->value) {
         return;
     }
 
     debugf("var %s %zu\n", val->value, val->length);
 
-    estrset(&cmds->strs[cmds->pos], val, scratch);
-    cmds->ops[cmds->pos] = OP_CONSTANT;
-    ++cmds->pos;
+    estrset(&data->cur_cmds->strs[data->cur_cmds->pos], val, data->s);
+    data->cur_cmds->ops[data->cur_cmds->pos] = OP_CONST;
+    ++data->cur_cmds->pos;
 
     // TODO: improve expansion to separate values when not in quotes, expand variables which contain a space
     /*char* space = strchr(var.value, ' ');
@@ -120,7 +116,7 @@ void expansion_variable(Str* restrict in, Commands* restrict cmds, /*Statements*
         cmds->vals[cmds->pos] = arena_malloc(scratch, var.length, char);
         memcpy(cmds->vals[cmds->pos], var.value, var.length - 1);
         cmds->lens[cmds->pos] = var.length;
-        cmds->ops[cmds->pos] = OP_CONSTANT;
+        cmds->ops[cmds->pos] = OP_CONST;
         ++cmds->pos;
         return;
     }

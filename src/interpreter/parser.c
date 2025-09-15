@@ -7,16 +7,25 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "../defines.h"
 #include "../debug.h"
-#include "../ttyio/ttyio.h"
 #include "expansions.h"
 #include "lexemes.h"
 #include "ops.h"
 #include "parser.h"
-#include "statements.h"
+#include "stmts.h"
 
-static Commands* commands;
+typedef struct {
+    int parser_errno;
+    char* msg;
+} Parser_Internal;
+
+Parser_Output parser_internal_to_ouput(Parser_Internal* internal)
+{
+    return (Parser_Output){
+        .parser_errno = internal->parser_errno,
+        .output.msg = internal->msg
+    };
+}
 
 bool parser_consume(Lexemes* restrict lexemes, size_t* restrict n, enum Ops expected)
 {
@@ -31,6 +40,7 @@ bool parser_consume(Lexemes* restrict lexemes, size_t* restrict n, enum Ops expe
     }
 }
 
+[[nodiscard("Whole point of peeking is to check the next op!")]]
 enum Ops parser_peek(Lexemes* restrict lexemes, size_t n)
 {
     if (n >= lexemes->count) {
@@ -43,7 +53,7 @@ enum Ops parser_peek(Lexemes* restrict lexemes, size_t n)
 bool parser_is_valid_statement(enum Ops op)
 {
     switch (op) {
-    case OP_CONSTANT:
+    case OP_CONST:
     case OP_TRUE:
     case OP_FALSE:
     case OP_EQUALS:
@@ -60,18 +70,18 @@ bool parser_is_valid_statement(enum Ops op)
     }
 }
 
-int parser_commands_process(Shell* shell, Lexemes* restrict lexemes, size_t* restrict n, Statements* restrict stmts, Arena* restrict scratch)
+Parser_Internal parser_cmds_process(Parser_Data* data, size_t* restrict n)
 {
-    if (!parser_is_valid_statement(parser_peek(lexemes, *n))) {
-        tty_puts("ncsh parser: no valid statement.");
-        return EXIT_FAILURE_CONTINUE;
+    if (!parser_is_valid_statement(parser_peek(data->lexemes, *n))) {
+        return (Parser_Internal){.parser_errno = PE_INVALID_STMT, .msg = "no valid statement where one was expected."};
     }
+
+    Lexemes* lexemes = data->lexemes;
 
     do {
         bool end_of_statement = false;
         size_t len = lexemes->strs[*n].length;
         if (len > 2 && lexemes->strs[*n].value[len - 2] == ';') {
-            debugf("replacing ; val %s, char %c\n", lexemes->strs[*n].value, lexemes->vals[*n][len - 2]);
             lexemes->strs[*n].value[len - 2] = '\0';
             --lexemes->strs[*n].length;
             end_of_statement = true;
@@ -79,278 +89,279 @@ int parser_commands_process(Shell* shell, Lexemes* restrict lexemes, size_t* res
 
         switch (lexemes->ops[*n]) {
         case OP_HOME_EXPANSION:
-            expansion_home(shell, lexemes, *n, scratch);
+            expansion_home(data, *n);
             break;
         case OP_EQUALS:
         case OP_LESS_THAN:
         case OP_GREATER_THAN: {
-            commands->prev_op = lexemes->ops[*n];
+            data->cur_cmds->prev_op = lexemes->ops[*n];
             break;
         }
         case OP_VARIABLE:
-            expansion_variable(&lexemes->strs[*n], commands, /*stmts,*/ shell, scratch);
+            expansion_variable(data, &lexemes->strs[*n]);
             ++*n;
             continue;
         case OP_GLOB_EXPANSION:
-            expansion_glob(lexemes->strs[*n].value, commands, scratch);
+            expansion_glob(lexemes->strs[*n].value, data->cur_cmds, data->s);
             continue;
         case OP_PIPE:
-            ++stmts->pipes_count;
-            commands = command_next(commands, scratch);
-            commands->prev_op = OP_PIPE;
+            ++data->stmts->pipes_count;
+            data->cur_cmds = cmd_next(data->cur_cmds, data->s);
+            data->cur_cmds->prev_op = OP_PIPE;
             continue;
         case OP_ASSIGNMENT:
-            expansion_assignment(lexemes, *n, shell);
+            expansion_assignment(lexemes, *n, data->sh);
             if (*n + 1 < lexemes->count && (lexemes->ops[*n + 1] == OP_AND || lexemes->ops[*n + 1] == OP_OR)) {
                 ++*n; // skip || or && on assignment, assigment not included in commands
             }
             continue;
         case OP_AND:
         case OP_OR: {
-            commands = command_next(commands, scratch);
-            commands->prev_op = lexemes->ops[*n];
+            data->cur_cmds = cmd_next(data->cur_cmds, data->s);
+            data->cur_cmds->prev_op = lexemes->ops[*n];
             ++*n;
             continue;
         }
         }
 
-        commands->strs[commands->pos] = lexemes->strs[*n];
-        commands->ops[commands->pos] = lexemes->ops[*n];
-        ++commands->pos;
+        data->cur_cmds->strs[data->cur_cmds->pos] = lexemes->strs[*n];
+        data->cur_cmds->ops[data->cur_cmds->pos] = lexemes->ops[*n];
+        ++data->cur_cmds->pos;
         ++*n;
 
-        // enum Ops peeked = parser_peek(lexemes, *n);
         if (end_of_statement) {
-            commands = command_next(commands, scratch);
+            data->cur_cmds = cmd_next(data->cur_cmds, data->s);
             debug("end of statement");
         }
-        /*else if (peeked == OP_AND || peeked == OP_OR) {
-            command_next_set_prev_op(lexemes->ops[*n], scratch);
-            debug("end of statement, && or || found");
-        }*/
     } while (parser_is_valid_statement(parser_peek(lexemes, *n)));
 
     debug("commands processed");
-    return EXIT_SUCCESS;
+    return (Parser_Internal){.parser_errno = 0};
 }
 
-int parser_conditions(Shell* shell, Lexemes* restrict lexemes, size_t* restrict n, enum Logic_Type type, Statements* restrict stmts, Arena* restrict scratch)
+Parser_Internal parser_conditions(Parser_Data* data, size_t* restrict n, enum Logic_Type type)
 {
-    if (!parser_consume(lexemes, n, OP_CONDITION_START)) {
-        tty_puts("ncsh parser: missing condition start '['");
-        return EXIT_FAILURE_CONTINUE;
+    if (!parser_consume(data->lexemes, n, OP_CONDITION_START)) {
+        return (Parser_Internal){.parser_errno = PE_MISSING_TOK, .msg = "missing condition start '['."};
     }
 
     debug("processing conditions");
-    int res = parser_commands_process(shell, lexemes, n, stmts, scratch);
-    if (res != EXIT_SUCCESS) {
-        return res;
+    Parser_Internal rv = parser_cmds_process(data, n);
+    if (rv.parser_errno) {
+        return rv;
     }
 
-    commands = command_statement_next(stmts, commands, type, scratch);
-    if (!parser_consume(lexemes, n, OP_CONDITION_END)) {
-        tty_puts("ncsh parser: found condition start '[', missing condition end ']'");
-        return EXIT_FAILURE_CONTINUE;
+    cmd_stmt_next(data, type);
+    if (!parser_consume(data->lexemes, n, OP_CONDITION_END)) {
+        return (Parser_Internal){.parser_errno = PE_MISSING_TOK, .msg = "found condition start '[', missing condition end ']'."};
     }
 
-    if (!parser_consume(lexemes, n, OP_THEN)) {
-        tty_puts("ncsh parser: missing 'then' after condition");
-        return EXIT_FAILURE_CONTINUE;
+    if (!parser_consume(data->lexemes, n, OP_THEN)) {
+        return (Parser_Internal){.parser_errno = PE_MISSING_TOK, .msg = "missing 'then' after a condition."};
     }
 
-    return EXIT_SUCCESS;
+    return (Parser_Internal){.parser_errno = 0};
 }
 
-int parser_if_statements(Shell* shell, Lexemes* restrict lexemes, size_t* restrict n, Statements* restrict stmts, Arena* restrict scratch)
+Parser_Internal parser_if_statements(Parser_Data* restrict data, size_t* restrict n)
 {
     debug("processing if statements");
-    int res = parser_commands_process(shell, lexemes, n, stmts, scratch);
-    if (res != EXIT_SUCCESS) {
-        return res;
+    Parser_Internal rv = parser_cmds_process(data, n);
+    if (rv.parser_errno) {
+        return rv;
     }
-    commands = command_statement_next(stmts, commands, LT_IF, scratch);
-    return res;
+
+    cmd_stmt_next(data, LT_IF);
+    return rv;
 }
 
-int parser_else_statements(Shell* shell, Lexemes* restrict lexemes, size_t* restrict n, Statements* restrict stmts, Arena* restrict scratch)
+Parser_Internal parser_else_statements(Parser_Data* restrict data, size_t* restrict n)
 {
     debug("processing else");
-    if (!parser_consume(lexemes, n, OP_ELSE)) {
-        tty_puts("ncsh parser: expected 'else'");
-        return EXIT_FAILURE_CONTINUE;
+
+    if (!parser_consume(data->lexemes, n, OP_ELSE)) {
+        return (Parser_Internal){.parser_errno = PE_MISSING_TOK, .msg = "expected 'else' but it was not found."};
     }
 
-    int res = parser_commands_process(shell, lexemes, n, stmts, scratch);
-    if (res != EXIT_SUCCESS) {
-        return res;
+    Parser_Internal rv = parser_cmds_process(data, n);
+    if (rv.parser_errno) {
+        return rv;
     }
 
-    commands = command_statement_next(stmts, commands, LT_ELSE, scratch);
-    return EXIT_SUCCESS;
+    cmd_stmt_next(data, LT_ELSE);
+    return rv;
 }
 
-int parser_elif_statements(Shell* shell, Lexemes* restrict lexemes, size_t* restrict n, Statements* restrict stmts, Arena* restrict scratch)
+Parser_Internal parser_elif_statements(Parser_Data* restrict data, size_t* restrict n)
 {
     debug("processing elif");
-    if (!parser_consume(lexemes, n, OP_ELIF)) {
-        tty_puts("ncsh parser: expected 'elif'");
-        return EXIT_FAILURE_CONTINUE;
+
+    if (!parser_consume(data->lexemes, n, OP_ELIF)) {
+        return (Parser_Internal){.parser_errno = PE_MISSING_TOK, .msg = "expected 'elif' but it was not found."};
     }
 
-    int res = parser_conditions(shell, lexemes, n, LT_ELIF_CONDITIONS, stmts, scratch);
-    if (res != EXIT_SUCCESS) {
-        tty_puts("ncsh parser: failed parsing elif conditions");
-        return res;
+    Parser_Internal rv = parser_conditions(data, n, LT_ELIF_CONDITIONS);
+    if (rv.parser_errno) {
+        Str* expanded_msg = estrcat(&Str_Get(rv.msg), &Str_New_Literal(" Failed parsing elif conditions."), data->s);
+        rv.msg = expanded_msg && expanded_msg->value ? expanded_msg->value : rv.msg;
+        return rv;
     }
 
-    res = parser_commands_process(shell, lexemes, n, stmts, scratch);
-    if (res != EXIT_SUCCESS) {
-        tty_puts("ncsh parser: failed parsing elif commands");
-        return EXIT_FAILURE_CONTINUE;
+    rv = parser_cmds_process(data, n);
+    if (rv.parser_errno) {
+        Str* expanded_msg = estrcat(&Str_Get(rv.msg), &Str_New_Literal(" Failed parsing elif commands."), data->s);
+        rv.msg = expanded_msg && expanded_msg->value ? expanded_msg->value : rv.msg;
+        return rv;
     }
-    commands = command_statement_next(stmts, commands, LT_ELIF, scratch);
+    cmd_stmt_next(data, LT_ELIF);
 
-    if (parser_peek(lexemes, *n) == OP_ELIF) {
+    if (parser_peek(data->lexemes, *n) == OP_ELIF) {
         debug("found another elif to process");
-        res = parser_elif_statements(shell, lexemes, n, stmts, scratch);
-        if (res != EXIT_SUCCESS) {
-            tty_puts("ncsh parser: failed parsing subsequent elif conditions or commands");
-            return EXIT_FAILURE_CONTINUE;
+        rv = parser_elif_statements(data, n);
+        if (rv.parser_errno) {
+            return rv;
         }
     }
 
-    return EXIT_SUCCESS;
+    return rv;
 }
 
 [[nodiscard]]
-int parser_if(Shell* shell, Lexemes* restrict lexemes, size_t* restrict n, Statements* restrict stmts, Arena* restrict scratch)
+Parser_Internal parser_if(Parser_Data* data, size_t* restrict n)
 {
     debug("processing if");
-    if (!parser_consume(lexemes, n, OP_IF)) {
+
+    if (!parser_consume(data->lexemes, n, OP_IF)) {
         debug("no OP_IF");
-        return EXIT_FAILURE_CONTINUE;
+        return (Parser_Internal){.parser_errno = PE_MISSING_TOK, "didn't find 'if' where expected."};
     }
 
-    int res = parser_conditions(shell, lexemes, n, LT_IF_CONDITIONS, stmts, scratch);
-    if (res != EXIT_SUCCESS) {
-        return res;
+    Parser_Internal rv = parser_conditions(data, n, LT_IF_CONDITIONS);
+    if (rv.parser_errno) {
+        return rv;
     }
 
-    res = parser_if_statements(shell, lexemes, n, stmts, scratch);
-    if (res != EXIT_SUCCESS) {
-        debug("can't process if statements");
-        return res;
+    rv = parser_if_statements(data, n);
+    if (rv.parser_errno) {
+        Str* expanded_msg = estrcat(&Str_Get(rv.msg), &Str_New_Literal(" Couldn't process if statements."), data->s);
+        rv.msg = expanded_msg && expanded_msg->value ? expanded_msg->value : rv.msg;
+        return rv;
     }
 
-    if (parser_peek(lexemes, *n) == OP_FI) {
-        parser_consume(lexemes, n, OP_FI);
+    if (parser_peek(data->lexemes, *n) == OP_FI) {
+        parser_consume(data->lexemes, n, OP_FI);
         debug("returning success, OP_FI found, no else");
-        stmts->type = ST_IF;
-        return EXIT_SUCCESS;
+        data->stmts->type = ST_IF;
+        return (Parser_Internal){.parser_errno = 0};
     }
 
-    enum Ops peeked = parser_peek(lexemes, *n);
+    enum Ops peeked = parser_peek(data->lexemes, *n);
     if (peeked != OP_ELSE && peeked != OP_ELIF) {
         debug("no OP_ELSE or OP_ELIF");
-        return EXIT_FAILURE_CONTINUE;
+        return (Parser_Internal){.parser_errno = PE_MISSING_TOK, .msg = "missing, 'fi', 'else', or 'elif' where expected."};
     }
 
-    res = EXIT_FAILURE_CONTINUE;
     if (peeked == OP_ELSE) {
-        stmts->type = ST_IF_ELSE;
-        res = parser_else_statements(shell, lexemes, n, stmts, scratch);
+        data->stmts->type = ST_IF_ELSE;
+        rv = parser_else_statements(data, n);
     }
     else if (peeked == OP_ELIF) {
-        res = parser_elif_statements(shell, lexemes, n, stmts, scratch);
-        if (res != EXIT_SUCCESS) {
-            return res;
+        rv = parser_elif_statements(data, n);
+        if (rv.parser_errno) {
+            return rv;
         }
 
-        peeked = parser_peek(lexemes, *n);
+        peeked = parser_peek(data->lexemes, *n);
         if (peeked == OP_ELSE) {
-            stmts->type = ST_IF_ELIF_ELSE;
-            res = parser_else_statements(shell, lexemes, n, stmts, scratch);
+            data->stmts->type = ST_IF_ELIF_ELSE;
+            rv = parser_else_statements(data, n);
         }
         else {
-            stmts->type = ST_IF_ELIF;
+            data->stmts->type = ST_IF_ELIF;
         }
     }
 
-    if (res != EXIT_SUCCESS) {
-        return res;
+    if (rv.parser_errno) {
+        return rv;
     }
 
-    if (!parser_consume(lexemes, n, OP_FI)) {
-        return EXIT_FAILURE_CONTINUE;
+    if (!parser_consume(data->lexemes, n, OP_FI)) {
+        return (Parser_Internal){.parser_errno = PE_MISSING_TOK, .msg = "missing 'fi', no closing 'fi'."};
     }
 
-    return EXIT_SUCCESS;
+    return rv;
 }
 
 [[nodiscard]]
-int parser_parse(Lexemes* restrict lexemes, Statements* stmts, Shell* restrict shell, Arena* restrict scratch)
+Parser_Output parser_parse(Lexemes* restrict lexemes, Shell* restrict shell, Arena* restrict scratch)
 {
-    assert(lexemes); assert(stmts); assert(scratch);
-
-    statements_init(stmts, scratch);
+    assert(lexemes); assert(scratch);
     if (!lexemes->count) {
-        return EXIT_SUCCESS;
+        return (Parser_Output){
+            .parser_errno = PE_NOTHING,
+            .output.msg = "Nothing to process"
+        };
     }
-    assert(stmts->statements->commands); assert(stmts->statements->commands->strs);
 
-    int res;
-    commands = stmts->statements[stmts->pos].commands;
-    commands->pos = commands->count;
-    assert(commands);
+    Parser_Data data = {
+        .lexemes = lexemes,
+        .stmts = arena_malloc(scratch, 1, Statements),
+        .cur_stmt = stmt_alloc(scratch),
+        .s = scratch,
+        .sh = shell
+    };
+    data.cur_cmds = data.cur_stmt->commands;
 
-    if (lexemes->ops[0] == OP_CONSTANT) {
+    Parser_Internal rv;
+
+    if (lexemes->ops[0] == OP_CONST) {
         // TODO: check aliases in certain other conditions, like after && or ||.
         expansion_alias(lexemes, 0, scratch);
     }
 
     for (size_t i = 0; i < lexemes->count; ++i) {
-        if (commands->pos >= commands->cap - 1) {
-            commands_realloc(stmts, scratch);
+        if (data.cur_cmds->pos >= data.cur_cmds->cap - 1) {
+            cmds_realloc(&data, scratch);
         }
 
         switch (lexemes->ops[i]) {
         case OP_HOME_EXPANSION: {
-            expansion_home(shell, lexemes, i, scratch);
+            expansion_home(&data, i);
             break;
         }
         case OP_EQUALS:
         case OP_LESS_THAN:
         case OP_GREATER_THAN: {
-            commands->prev_op = lexemes->ops[i];
+            data.cur_cmds->prev_op = lexemes->ops[i];
             break;
         }
         case OP_IF: {
-            res = parser_if(shell, lexemes, &i, stmts, scratch);
-            if (res != EXIT_SUCCESS) {
-                return EXIT_FAILURE_CONTINUE;
+            rv = parser_if(&data, &i);
+            if (rv.parser_errno) {
+                return parser_internal_to_ouput(&rv);
             }
             continue;
         }
         case OP_VARIABLE: {
-            expansion_variable(&lexemes->strs[i], commands, /*stmts,*/ shell, scratch);
+            expansion_variable(&data, &lexemes->strs[i]);
             continue;
         }
         case OP_GLOB_EXPANSION: {
-            expansion_glob(lexemes->strs[i].value, commands, scratch);
+            expansion_glob(lexemes->strs[i].value, data.cur_cmds, scratch);
             continue;
         }
         case OP_PIPE: {
-            ++stmts->pipes_count;
-            commands = command_next(commands, scratch);
-            commands->prev_op = OP_PIPE;
+            ++data.stmts->pipes_count;
+            data.cur_cmds = cmd_next(data.cur_cmds, scratch);
+            data.cur_cmds->prev_op = OP_PIPE;
             continue;
         }
         case OP_BACKGROUND_JOB: {
-            stmts->is_bg_job = true;
+            data.stmts->is_bg_job = true;
             continue;
         }
         case OP_ASSIGNMENT: {
-            if (commands->pos != 0) {
+            if (data.cur_cmds->pos != 0) {
                 break;
             }
             expansion_assignment(lexemes, i, shell);
@@ -361,8 +372,8 @@ int parser_parse(Lexemes* restrict lexemes, Statements* stmts, Shell* restrict s
         }
         case OP_AND:
         case OP_OR: {
-            commands = command_next(commands, scratch);
-            commands->prev_op = lexemes->ops[i];
+            data.cur_cmds = cmd_next(data.cur_cmds, scratch);
+            data.cur_cmds->prev_op = lexemes->ops[i];
             continue;
         }
         case OP_STDOUT_REDIRECTION:
@@ -373,30 +384,28 @@ int parser_parse(Lexemes* restrict lexemes, Statements* stmts, Shell* restrict s
         case OP_STDERR_REDIRECTION_APPEND:
         case OP_STDOUT_AND_STDERR_REDIRECTION:
         case OP_STDOUT_AND_STDERR_REDIRECTION_APPEND: {
-            stmts->redirect_type = lexemes->ops[i];
-            stmts->redirect_filename = lexemes->strs[i + 1].value;
+            data.stmts->redirect_type = lexemes->ops[i];
+            data.stmts->redirect_filename = lexemes->strs[i + 1].value;
             ++i; // skip filename and redirect type, not needed in commands
             continue;
         }
         }
 
-        commands->strs[commands->pos] = lexemes->strs[i];
-        commands->ops[commands->pos] = lexemes->ops[i];
-        ++commands->pos;
+        data.cur_cmds->strs[data.cur_cmds->pos] = lexemes->strs[i];
+        data.cur_cmds->ops[data.cur_cmds->pos] = lexemes->ops[i];
+        ++data.cur_cmds->pos;
     }
 
-    if (commands->pos > 0) {
-        if (!stmts->count) {
-            stmts->count = !stmts->pos ? 1 : stmts->pos;
-        }
-        if (!stmts->statements->count) {
-            ++stmts->statements->count;
-        }
-        commands->count = commands->pos;
+    if (data.cur_cmds->pos > 0) {
+        data.cur_cmds->count = data.cur_cmds->pos;
+    }
+
+    if (!data.stmts->head) {
+        data.stmts->head = data.cur_stmt;
     }
 
     // no branch is fine, this value not used unless pipes are present.
-    ++stmts->pipes_count; // count the number of commands, not pipes
+    ++data.stmts->pipes_count;
 
-    return EXIT_SUCCESS;
+    return (Parser_Output){.output.stmts = data.stmts};
 }

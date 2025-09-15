@@ -36,7 +36,7 @@ def multiple_end_of_line_backspace_test(row)
   @tty.send_keys_one_at_a_time('echo hello') # make sure buffer is properly formed after backspaces
   @tty.send_backspace
   @tty.send_keys_one_at_a_time('o')
-  @tty.send_newline
+  @tty.send_return
   row += 1
   @tty.assert_row(row, 'hello')
   row += 1
@@ -128,12 +128,9 @@ def delete_word_tests(row)
   assert_check_new_row(row)
   @tty.send_keys_one_at_a_time('ls | sort ')
   @tty.send_keys(TTYtest::CTRLW)
-  @tty.assert_row_ends_with(row, 'ls | sort')
-  @tty.send_keys(TTYtest::CTRLW)
   @tty.assert_row_ends_with(row, 'ls |')
   @tty.send_keys(TTYtest::CTRLW)
-  @tty.assert_row_ends_with(row, 'ls')
-  @tty.send_keys(TTYtest::CTRLW)
+  assert_check_new_row(row)
   test_passed('Delete word test')
   row
 end

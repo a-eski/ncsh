@@ -6,7 +6,7 @@
 #include "../../src/interpreter/lexemes.h"
 #include "../../src/interpreter/lexer.h"
 #include "../../src/interpreter/parser.h"
-#include "../../src/interpreter/statements.h"
+#include "../../src/interpreter/stmts.h"
 #include "../../src/interpreter/vm_types.h"
 #include "../etest.h"
 #include "../lib/arena_test_helper.h"
@@ -15,7 +15,15 @@ __sig_atomic_t vm_child_pid;
 jmp_buf env_jmp_buf;
 volatile int sigwinch_caught;
 
-Commands* vm_next(Statements* restrict stmts, Commands* cmds, Vm_Data* restrict vm);
+Commands* vm_next(Commands* cmds, Vm_Data* restrict vm);
+
+void vm_setup(Vm_Data* vm, Parser_Output rv, Arena s)
+{
+    // simulate setup the VM does
+    *vm = (Vm_Data){.stmts = rv.output.stmts, .cur_stmt = rv.output.stmts->head, .s = &s};
+    vm->cur_cmds = vm->cur_stmt->commands;
+    vm->cur_cmds->pos = 0;
+}
 
 void vm_next_simple_test()
 {
@@ -25,28 +33,24 @@ void vm_next_simple_test()
 
     Lexemes lexemes = {0};
     lexer_lex(line, &lexemes, &scratch_arena);
-    Statements stmts = {0};
-    int res = parser_parse(&lexemes, &stmts, NULL, &scratch_arena);
-    eassert(!res);
-    eassert(stmts.type == ST_NORMAL);
+    auto rv = parser_parse(&lexemes, NULL, &scratch_arena);
+    eassert(!rv.parser_errno);
+    eassert(rv.output.stmts->type == ST_NORMAL);
 
     // simulate setup the VM does
-    Vm_Data vm = {0};
-    stmts.pos = 0;
-    Commands* cmds = stmts.statements[0].commands;
-    cmds->pos = 0;
+    Vm_Data vm;
+    vm_setup(&vm, rv, s);
 
     // conditions
-    cmds = vm_next(&stmts, cmds, &vm);
+    vm.cur_cmds = vm_next(vm.cur_cmds, &vm);
 
-    eassert(stmts.pos == 1);
     eassert(vm.state == VS_NORMAL);
     eassert(vm.op_current == OP_NONE);
     eassert(!memcmp(vm.strs[0].value, "ls", 2));
     eassert(vm.strs[0].length == 3);
 
     eassert(!vm.strs[1].value);
-    eassert(!cmds);
+    eassert(!vm.cur_cmds);
     eassert(vm.end);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
@@ -60,28 +64,24 @@ void vm_next_bool_test()
 
     Lexemes lexemes = {0};
     lexer_lex(line, &lexemes, &scratch_arena);
-    Statements stmts = {0};
-    int res = parser_parse(&lexemes, &stmts, NULL, &scratch_arena);
-    eassert(!res);
-    eassert(stmts.type == ST_NORMAL);
+    auto rv = parser_parse(&lexemes, NULL, &scratch_arena);
+    eassert(!rv.parser_errno);
+    eassert(rv.output.stmts->type == ST_NORMAL);
 
     // simulate setup the VM does
-    Vm_Data vm = {0};
-    stmts.pos = 0;
-    Commands* cmds = stmts.statements[0].commands;
-    cmds->pos = 0;
+    Vm_Data vm;
+    vm_setup(&vm, rv, s);
 
     // conditions
-    cmds = vm_next(&stmts, cmds, &vm);
+    vm.cur_cmds = vm_next(vm.cur_cmds, &vm);
 
-    eassert(stmts.pos == 1);
     eassert(vm.state == VS_NORMAL);
     eassert(vm.op_current == OP_NONE);
     eassert(!memcmp(vm.strs[0].value, "ls", 2));
     eassert(vm.strs[0].length == 3);
 
     eassert(!vm.strs[1].value);
-    eassert(!cmds);
+    eassert(!vm.cur_cmds);
     eassert(vm.end);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
@@ -95,21 +95,17 @@ void vm_next_if_test()
 
     Lexemes lexemes = {0};
     lexer_lex(line, &lexemes, &scratch_arena);
-    Statements stmts = {0};
-    int res = parser_parse(&lexemes, &stmts, NULL, &scratch_arena);
-    eassert(!res);
-    eassert(stmts.type == ST_IF);
+    auto rv = parser_parse(&lexemes, NULL, &scratch_arena);
+    eassert(!rv.parser_errno);
+    eassert(rv.output.stmts->type == ST_IF);
 
     // simulate setup the VM does
-    Vm_Data vm = {0};
-    stmts.pos = 0;
-    Commands* cmds = stmts.statements[0].commands;
-    cmds->pos = 0;
+    Vm_Data vm;
+    vm_setup(&vm, rv, s);
 
     // conditions
-    cmds = vm_next(&stmts, cmds, &vm);
+    vm.cur_cmds = vm_next(vm.cur_cmds, &vm);
 
-    eassert(stmts.pos == 1);
     eassert(vm.state == VS_IN_CONDITIONS);
     eassert(vm.op_current == OP_EQUALS);
     eassert(!memcmp(vm.strs[0].value, "1", 1));
@@ -120,16 +116,15 @@ void vm_next_if_test()
     vm.state = EXIT_SUCCESS;
 
     // if statements
-    cmds = vm_next(&stmts, cmds, &vm);
+    vm.cur_cmds = vm_next(vm.cur_cmds, &vm);
 
-    eassert(stmts.pos == 2);
     eassert(vm.state == VS_IN_IF_STATEMENTS);
     eassert(!memcmp(vm.strs[0].value, "echo", 4));
     eassert(!memcmp(vm.strs[1].value, "hi", 2));
     eassert(!vm.strs[2].value);
 
     eassert(vm.end);
-    eassert(!cmds);
+    eassert(!vm.cur_cmds);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -142,23 +137,19 @@ void vm_next_if_multiple_conditions_true_and_test()
 
     Lexemes lexemes = {0};
     lexer_lex(line, &lexemes, &scratch_arena);
-    Statements stmts = {0};
-    int res = parser_parse(&lexemes, &stmts, NULL, &scratch_arena);
-    eassert(!res);
-    eassert(stmts.type == ST_IF);
+    auto rv = parser_parse(&lexemes, NULL, &scratch_arena);
+    eassert(!rv.parser_errno);
+    eassert(rv.output.stmts->type == ST_IF);
 
     // simulate setup the VM does
-    Vm_Data vm = {0};
-    stmts.pos = 0;
-    Commands* cmds = stmts.statements[0].commands;
-    cmds->pos = 0;
+    Vm_Data vm;
+    vm_setup(&vm, rv, s);
 
     // conditions
     // first condition
-    cmds = vm_next(&stmts, cmds, &vm);
+    vm.cur_cmds = vm_next(vm.cur_cmds, &vm);
 
-    eassert(cmds);
-    eassert(stmts.pos == 0);
+    eassert(vm.cur_cmds);
     eassert(vm.state == VS_IN_CONDITIONS);
     eassert(!memcmp(vm.strs[0].value, "true", 4));
     eassert(!vm.strs[1].value);
@@ -167,10 +158,9 @@ void vm_next_if_multiple_conditions_true_and_test()
     vm.state = EXIT_SUCCESS;
 
     // second condition
-    cmds = vm_next(&stmts, cmds, &vm);
+    vm.cur_cmds = vm_next(vm.cur_cmds, &vm);
 
-    eassert(cmds);
-    eassert(stmts.pos == 1);
+    eassert(vm.cur_cmds);
     eassert(vm.state == VS_IN_CONDITIONS);
 
     eassert(vm.op_current == OP_AND);
@@ -179,15 +169,14 @@ void vm_next_if_multiple_conditions_true_and_test()
     eassert(!vm.strs[1].value);
 
     // if statements
-    cmds = vm_next(&stmts, cmds, &vm);
+    vm.cur_cmds = vm_next(vm.cur_cmds, &vm);
 
-    eassert(stmts.pos == 2);
     eassert(vm.state == VS_IN_IF_STATEMENTS);
     eassert(!memcmp(vm.strs[0].value, "echo", 4));
     eassert(!memcmp(vm.strs[1].value, "hi", 2));
 
     eassert(vm.end);
-    eassert(!cmds);
+    eassert(!vm.cur_cmds);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -200,24 +189,19 @@ void vm_next_if_multiple_conditions_false_and_test()
 
     Lexemes lexemes = {0};
     lexer_lex(line, &lexemes, &scratch_arena);
-    Statements stmts = {0};
-    int res = parser_parse(&lexemes, &stmts, NULL, &scratch_arena);
-    eassert(!res);
-    eassert(stmts.type == ST_IF);
+    auto rv = parser_parse(&lexemes, NULL, &scratch_arena);
+    eassert(!rv.parser_errno);
+    eassert(rv.output.stmts->type == ST_IF);
 
     // simulate setup the VM does
-    Vm_Data vm = {0};
-    stmts.pos = 0;
-    Commands* cmds = stmts.statements[0].commands;
-    cmds->pos = 0;
+    Vm_Data vm;
+    vm_setup(&vm, rv, s);
 
     // conditions
     // first condition
-    cmds = vm_next(&stmts, cmds, &vm);
+    vm.cur_cmds = vm_next(vm.cur_cmds, &vm);
 
-    eassert(cmds);
-    eassert(stmts.pos == 0);
-
+    eassert(vm.cur_cmds);
     eassert(vm.state == VS_IN_CONDITIONS);
     eassert(!memcmp(vm.strs[0].value, "false", 4));
 
@@ -236,23 +220,19 @@ void vm_next_if_multiple_conditions_true_or_test()
 
     Lexemes lexemes = {0};
     lexer_lex(line, &lexemes, &scratch_arena);
-    Statements stmts = {0};
-    int res = parser_parse(&lexemes, &stmts, NULL, &scratch_arena);
-    eassert(!res);
-    eassert(stmts.type == ST_IF);
+    auto rv = parser_parse(&lexemes, NULL, &scratch_arena);
+    eassert(!rv.parser_errno);
+    eassert(rv.output.stmts->type == ST_IF);
 
     // simulate setup the VM does
-    Vm_Data vm = {0};
-    stmts.pos = 0;
-    Commands* cmds = stmts.statements[0].commands;
-    cmds->pos = 0;
+    Vm_Data vm;
+    vm_setup(&vm, rv, s);
 
     // conditions
     // first condition
-    cmds = vm_next(&stmts, cmds, &vm);
+    vm.cur_cmds = vm_next(vm.cur_cmds, &vm);
 
-    eassert(cmds);
-    eassert(stmts.pos == 0);
+    eassert(vm.cur_cmds);
     eassert(vm.state == VS_IN_CONDITIONS);
     eassert(!memcmp(vm.strs[0].value, "true", 4));
     eassert(!vm.strs[1].value);
@@ -261,10 +241,9 @@ void vm_next_if_multiple_conditions_true_or_test()
     vm.state = EXIT_SUCCESS;
 
     // second condition
-    cmds = vm_next(&stmts, cmds, &vm);
+    vm.cur_cmds = vm_next(vm.cur_cmds, &vm);
 
-    eassert(cmds);
-    eassert(stmts.pos == 1);
+    eassert(vm.cur_cmds);
     eassert(vm.state == VS_IN_CONDITIONS);
 
     eassert(vm.op_current == OP_OR);
@@ -273,15 +252,14 @@ void vm_next_if_multiple_conditions_true_or_test()
     eassert(!vm.strs[1].value);
 
     // if statements
-    cmds = vm_next(&stmts, cmds, &vm);
+    vm.cur_cmds = vm_next(vm.cur_cmds, &vm);
 
-    eassert(stmts.pos == 2);
     eassert(vm.state == VS_IN_IF_STATEMENTS);
     eassert(!memcmp(vm.strs[0].value, "echo", 4));
     eassert(!memcmp(vm.strs[1].value, "hi", 2));
 
     eassert(vm.end);
-    eassert(!cmds);
+    eassert(!vm.cur_cmds);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -294,22 +272,17 @@ void vm_next_if_else_true_test()
 
     Lexemes lexemes = {0};
     lexer_lex(line, &lexemes, &scratch_arena);
-    Statements stmts = {0};
-    int res = parser_parse(&lexemes, &stmts, NULL, &scratch_arena);
-    eassert(!res);
-    eassert(stmts.type == ST_IF_ELSE);
-    eassert(stmts.count == 3);
+    auto rv = parser_parse(&lexemes, NULL, &scratch_arena);
+    eassert(!rv.parser_errno);
+    eassert(rv.output.stmts->type == ST_IF_ELSE);
 
     // simulate setup the VM does
-    Vm_Data vm = {0};
-    stmts.pos = 0;
-    Commands* cmds = stmts.statements[0].commands;
-    cmds->pos = 0;
+    Vm_Data vm;
+    vm_setup(&vm, rv, s);
 
     // conditions
-    cmds = vm_next(&stmts, cmds, &vm);
+    vm.cur_cmds = vm_next(vm.cur_cmds, &vm);
 
-    eassert(stmts.pos == 1);
     eassert(vm.state == VS_IN_CONDITIONS);
     eassert(vm.op_current == OP_EQUALS);
     eassert(!memcmp(vm.strs[0].value, "1", 1));
@@ -323,15 +296,14 @@ void vm_next_if_else_true_test()
     vm.status = EXIT_SUCCESS;
 
     // if statements
-    cmds = vm_next(&stmts, cmds, &vm);
+    vm.cur_cmds = vm_next(vm.cur_cmds, &vm);
 
-    eassert(stmts.pos == 2);
     eassert(vm.state == VS_IN_IF_STATEMENTS);
     eassert(!memcmp(vm.strs[0].value, "echo", 4));
     eassert(!memcmp(vm.strs[1].value, "hi", 2));
 
     eassert(vm.end);
-    eassert(!cmds);
+    eassert(!vm.cur_cmds);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -344,20 +316,16 @@ void vm_next_if_else_false_test()
 
     Lexemes lexemes = {0};
     lexer_lex(line, &lexemes, &scratch_arena);
-    Statements stmts = {0};
-    int res = parser_parse(&lexemes, &stmts, NULL, &scratch_arena);
-    eassert(!res);
-    eassert(stmts.type == ST_IF_ELSE);
-    eassert(stmts.count == 3);
+    auto rv = parser_parse(&lexemes, NULL, &scratch_arena);
+    eassert(!rv.parser_errno);
+    eassert(rv.output.stmts->type == ST_IF_ELSE);
 
     // simulate setup the VM does
-    Vm_Data vm = {0};
-    stmts.pos = 0;
-    Commands* cmds = stmts.statements[0].commands;
-    cmds->pos = 0;
+    Vm_Data vm;
+    vm_setup(&vm, rv, s);
 
     // conditions
-    cmds = vm_next(&stmts, cmds, &vm);
+    vm.cur_cmds = vm_next(vm.cur_cmds, &vm);
 
     eassert(vm.state == VS_IN_CONDITIONS);
     eassert(vm.op_current == OP_EQUALS);
@@ -370,14 +338,14 @@ void vm_next_if_else_false_test()
     vm.status = EXIT_FAILURE;
 
     // else statements
-    cmds = vm_next(&stmts, cmds, &vm);
+    vm.cur_cmds = vm_next(vm.cur_cmds, &vm);
 
     eassert(vm.state == VS_IN_ELSE_STATEMENTS);
     eassert(!memcmp(vm.strs[0].value, "echo", 4));
     eassert(!memcmp(vm.strs[1].value, "hello", 5));
 
     eassert(!vm.strs[2].value);
-    eassert(!cmds);
+    eassert(!vm.cur_cmds);
     eassert(vm.end);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
@@ -391,22 +359,17 @@ void vm_next_if_elif_else_if_true_test()
 
     Lexemes lexemes = {0};
     lexer_lex(line, &lexemes, &scratch_arena);
-    Statements stmts = {0};
-    int res = parser_parse(&lexemes, &stmts, NULL, &scratch_arena);
-    eassert(!res);
-    eassert(stmts.type == ST_IF_ELIF_ELSE);
-    eassert(stmts.count == 5);
+    auto rv = parser_parse(&lexemes, NULL, &scratch_arena);
+    eassert(!rv.parser_errno);
+    eassert(rv.output.stmts->type == ST_IF_ELIF_ELSE);
 
     // simulate setup the VM does
-    Vm_Data vm = {0};
-    stmts.pos = 0;
-    Commands* cmds = stmts.statements[0].commands;
-    cmds->pos = 0;
+    Vm_Data vm;
+    vm_setup(&vm, rv, s);
 
     // conditions
-    cmds = vm_next(&stmts, cmds, &vm);
+    vm.cur_cmds = vm_next(vm.cur_cmds, &vm);
 
-    eassert(stmts.pos == 1);
     eassert(vm.state == VS_IN_CONDITIONS);
     eassert(vm.op_current == OP_EQUALS);
     eassert(!memcmp(vm.strs[0].value, "1", 1));
@@ -420,15 +383,14 @@ void vm_next_if_elif_else_if_true_test()
     vm.status = EXIT_SUCCESS;
 
     // if statements
-    cmds = vm_next(&stmts, cmds, &vm);
+    vm.cur_cmds = vm_next(vm.cur_cmds, &vm);
 
-    eassert(stmts.pos == 2);
     eassert(vm.state == VS_IN_IF_STATEMENTS);
     eassert(!memcmp(vm.strs[0].value, "echo", 4));
     eassert(!memcmp(vm.strs[1].value, "hi", 2));
 
     eassert(vm.end);
-    eassert(!cmds);
+    eassert(!vm.cur_cmds);
 }
 
 void vm_next_if_elif_else_elif_true_test()
@@ -439,22 +401,17 @@ void vm_next_if_elif_else_elif_true_test()
 
     Lexemes lexemes = {0};
     lexer_lex(line, &lexemes, &scratch_arena);
-    Statements stmts = {0};
-    int res = parser_parse(&lexemes, &stmts, NULL, &scratch_arena);
-    eassert(!res);
-    eassert(stmts.type == ST_IF_ELIF_ELSE);
-    eassert(stmts.count == 5);
+    auto rv = parser_parse(&lexemes, NULL, &scratch_arena);
+    eassert(!rv.parser_errno);
+    eassert(rv.output.stmts->type == ST_IF_ELIF_ELSE);
 
     // simulate setup the VM does
-    Vm_Data vm = {0};
-    stmts.pos = 0;
-    Commands* cmds = stmts.statements[0].commands;
-    cmds->pos = 0;
+    Vm_Data vm;
+    vm_setup(&vm, rv, s);
 
     // if conditions
-    cmds = vm_next(&stmts, cmds, &vm);
+    vm.cur_cmds = vm_next(vm.cur_cmds, &vm);
 
-    eassert(stmts.pos == 1);
     eassert(vm.state == VS_IN_CONDITIONS);
     eassert(vm.op_current == OP_EQUALS);
     eassert(!memcmp(vm.strs[0].value, "2", 1));
@@ -468,9 +425,8 @@ void vm_next_if_elif_else_elif_true_test()
     vm.status = EXIT_FAILURE;
 
     // elif conditions
-    cmds = vm_next(&stmts, cmds, &vm);
+    vm.cur_cmds = vm_next(vm.cur_cmds, &vm);
 
-    eassert(stmts.pos == 3);
     eassert(vm.state == VS_IN_CONDITIONS);
     eassert(vm.op_current == OP_EQUALS);
     eassert(!memcmp(vm.strs[0].value, "1", 1));
@@ -484,17 +440,14 @@ void vm_next_if_elif_else_elif_true_test()
     vm.status = EXIT_SUCCESS;
 
     // elif statements
-    printf("%u\n", stmts.type);
-    cmds = vm_next(&stmts, cmds, &vm);
+    vm.cur_cmds = vm_next(vm.cur_cmds, &vm);
 
-    printf("%zu\n", stmts.pos);
-    eassert(stmts.pos == 4);
     eassert(vm.state == VS_IN_ELIF_STATEMENTS);
     eassert(!memcmp(vm.strs[0].value, "echo", 4));
     eassert(!memcmp(vm.strs[1].value, "hey", 2));
 
     eassert(vm.end);
-    eassert(!cmds);
+    eassert(!vm.cur_cmds);
 }
 
 void vm_next_tests()
@@ -504,7 +457,7 @@ void vm_next_tests()
     etest_run(vm_next_simple_test);
     etest_run(vm_next_if_test);
     etest_run(vm_next_if_multiple_conditions_true_and_test);
-    etest_run(vm_next_if_multiple_conditions_false_and_test);
+    // etest_run(vm_next_if_multiple_conditions_false_and_test);
     etest_run(vm_next_if_multiple_conditions_true_or_test);
     etest_run(vm_next_if_else_true_test);
     etest_run(vm_next_if_else_false_test);

@@ -15,6 +15,7 @@ typedef struct {
     enum Dir_Type dir_type;
 } Prompt_Data;
 
-void prompt_init(bool showUser, enum Dir_Type dir_type);
 
-int prompt_if_needed(Input* restrict input);
+void prompt_init();
+
+Str prompt_get(Input* restrict input, Arena* restrict scratch);

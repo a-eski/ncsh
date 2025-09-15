@@ -296,6 +296,22 @@ void estrcat_valid_values_returns_concatted_str_test()
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
+void estrcat_valid_mixed_values_returns_concatted_str_test()
+{
+    SCRATCH_ARENA_TEST_SETUP;
+
+    char* rv = malloc(sizeof("hello"));
+    memcpy(rv, "hello", sizeof("hello"));
+    Str* result = estrcat(&Str_Get(rv), &Str_New_Literal(", world"), &s);
+
+    eassert(result);
+    eassert(!memcmp(result->value, "hello, world", sizeof("hello, world") - 1));
+    eassert(result->length = sizeof("hello, world"));
+
+    free(rv);
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
 void estridx_returns_idx_test()
 {
     size_t idx = estridx(&Str_New_Literal("vim=nvim"), '=');
@@ -373,7 +389,7 @@ void estrtoarr_multiple_test()
     eassert(strlen(res[4]) == vals[4].length - 1);
     eassert(!memcmp(res[5], vals[5].value, vals[5].length - 1));
     eassert(strlen(res[5]) == vals[5].length - 1);
-    eassert(!res[6]);
+    eassert(!res[6]); // should be null terminated array to work with stdlib.
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -653,6 +669,8 @@ void str_tests()
     etest_run(estrcat_bad_value_returns_null_test);
     etest_run(estrcat_one_bad_value_returns_null_test);
     etest_run(estrcat_other_bad_value_returns_null_test);
+    etest_run(estrcat_valid_values_returns_concatted_str_test);
+    etest_run(estrcat_valid_mixed_values_returns_concatted_str_test);
 
     etest_run(estridx_returns_idx_test);
 

@@ -9,6 +9,7 @@
 #include "parser.h"
 #include "sema.h"
 #include "vm.h"
+#include "../ttyio/ttyio.h"
 
 [[nodiscard]]
 int interpreter_run(Shell* restrict shell, Arena scratch)
@@ -16,17 +17,17 @@ int interpreter_run(Shell* restrict shell, Arena scratch)
     Lexemes lexemes = {0};
     lexer_lex(Str_New(shell->input.buffer, shell->input.pos), &lexemes, &scratch);
 
-    int result = sema_analyze(&lexemes);
-    if (result != EXIT_SUCCESS)
-        return result;
+    int rv = sema_analyze(&lexemes);
+    if (rv != EXIT_SUCCESS)
+        return rv;
 
-    Statements statements = {0};
-    result = parser_parse(&lexemes, &statements, shell, &scratch);
-    if (result != EXIT_SUCCESS) {
-        return result;
+    Parser_Output parse_rv = parser_parse(&lexemes, shell, &scratch);
+    if (parse_rv.parser_errno) {
+        tty_puts(parse_rv.output.msg);
+        return rv;
     }
 
-    return vm_execute(&statements, shell, &scratch);
+    return vm_execute(parse_rv.output.stmts, shell, &scratch);
 }
 
 [[nodiscard]]
@@ -35,16 +36,15 @@ int interpreter_run_noninteractive(char** restrict argv, size_t argc, Shell* res
     Lexemes lexemes = {0};
     lexer_lex_noninteractive(argv, argc, &lexemes, &shell->arena);
 
-    int result = sema_analyze(&lexemes);
-    if (result != EXIT_SUCCESS) {
-        return result;
+    int rv = sema_analyze(&lexemes);
+    if (rv != EXIT_SUCCESS)
+        return rv;
+
+    Parser_Output parse_rv = parser_parse(&lexemes, shell, &shell->arena);
+    if (parse_rv.parser_errno) {
+        tty_puts(parse_rv.output.msg);
+        return rv;
     }
 
-    Statements statements = {0};
-    result = parser_parse(&lexemes, &statements, shell, &shell->arena);
-    if (result != EXIT_SUCCESS) {
-        return result;
-    }
-
-    return vm_execute_noninteractive(&statements, shell);
+    return vm_execute_noninteractive(parse_rv.output.stmts, shell);
 }

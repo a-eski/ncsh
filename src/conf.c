@@ -22,6 +22,7 @@
 #include "debug.h"
 #include "defines.h" // used for macro NCSH_MAX_INPUT
 #include "env.h"
+#include "types.h"
 #include "eskilib/efile.h"
 #include "eskilib/eresult.h"
 #include "eskilib/str.h"
@@ -74,6 +75,31 @@ enum eresult conf_file_set(Shell* restrict shell)
 
     debugf("config file %s\n", shell->config.file.value);
     return E_SUCCESS;
+}
+
+enum eresult conf_history_file_set(Shell* restrict shell)
+{
+#if defined(NCSH_HISTORY_TEST) || defined(NCSH_IN_PLACE)
+    shell->config.history_file = *estrdup(&Str_New_Literal(NCSH_HISTORY_FILE), &shell->arena);
+    return E_SUCCESS;
+#else
+    if (!shell->config.location.value || !shell->config.location.length) {
+        shell->config.history_file = Str_New_Literal(NCSH_HISTORY_FILE);
+        return E_SUCCESS;
+    }
+
+    if (shell->config.location.length + sizeof(NCSH_HISTORY_FILE) > NCSH_MAX_INPUT) {
+        shell->config.history_file = Str_Empty;
+        return E_FAILURE_OVERFLOW_PROTECTION;
+    }
+
+    shell->config.history_file = *estrcat(&shell->config.location, &Str_New_Literal(NCSH_HISTORY_FILE), &shell->arena);
+
+    assert(shell->config.history_file.value);
+    assert(shell->config.history_file.length == strlen(shell->config.history_file.value) + 1);
+    debugf("history->file: %s\n", shell->config.history_file.value);
+    return E_SUCCESS;
+#endif /* ifdef NCSH_HISTORY_TEST */
 }
 
 /* conf_path_add
@@ -194,6 +220,11 @@ enum eresult conf_init(Shell* restrict shell)
     }
 
     if ((result = conf_file_set(shell)) != E_SUCCESS) {
+        debug("failed setting config file");
+        return result;
+    }
+
+    if ((result = conf_history_file_set(shell)) != E_SUCCESS) {
         debug("failed setting config file");
         return result;
     }

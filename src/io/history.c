@@ -15,32 +15,21 @@
 #include "../eskilib/str.h"
 #include "../ttyio/ttyio.h"
 #include "hashset.h"
-#include "history.h"
 
-void history_file_set([[maybe_unused]] Str config_file, History* restrict history, Arena* restrict arena)
-{
-#if defined(NCSH_HISTORY_TEST) || defined(NCSH_IN_PLACE)
-    history->file = *estrdup(&Str_New_Literal(NCSH_HISTORY_FILE), arena);
-    return;
+#ifdef NCSH_HISTORY_TEST
+#define NCSH_HISTORY_FILE "ncsh_history_test"
 #else
-    if (!config_file.value || !config_file.length) {
-        history->file = Str_New_Literal(NCSH_HISTORY_FILE);
-        return;
-    }
+#define NCSH_HISTORY_FILE "/ncsh_history"
+#endif
 
-    if (config_file.length + sizeof(NCSH_HISTORY_FILE) > NCSH_MAX_INPUT) {
-        history->file = Str_Empty;
-        return;
-    }
+#define NCSH_MAX_HISTORY_FILE 2000
+#define NCSH_MAX_HISTORY_IN_MEMORY 2400
 
-    history->file.value = arena_malloc(arena, config_file.length + sizeof(NCSH_HISTORY_FILE), char);
-    memcpy(history->file.value, config_file.value, config_file.length);
-    memcpy(history->file.value + config_file.length - 1, NCSH_HISTORY_FILE, sizeof(NCSH_HISTORY_FILE));
-    history->file.length = config_file.length + sizeof(NCSH_HISTORY_FILE);
-
-    debugf("history->file: %s\n", history->file);
-#endif /* ifdef NCSH_HISTORY_TEST */
-}
+typedef struct {
+    size_t count;
+    Str file;
+    Str* entries;
+} History;
 
 [[nodiscard]]
 enum eresult history_alloc(History* restrict history, Arena* restrict arena)
@@ -144,31 +133,6 @@ enum eresult history_reload(History* restrict history, Arena* restrict arena)
         history->entries[i].length = (size_t)buffer_length;
     }
     fclose(file);
-
-    return E_SUCCESS;
-}
-
-[[nodiscard]]
-enum eresult history_init(Str config_location, History* restrict history, Arena* restrict arena)
-{
-    assert(history && arena);
-
-    enum eresult result;
-    if ((result = history_alloc(history, arena)) != E_SUCCESS) {
-        tty_perror("ncsh: Error when allocating memory for history");
-        return result;
-    }
-
-    history_file_set(config_location, history, arena);
-    if (!history->file.value) {
-        tty_fprint(stderr, "ncsh: Could not load history file path.");
-        return E_FAILURE;
-    }
-
-    if ((result = history_load(history, arena)) != E_SUCCESS) {
-        tty_perror("ncsh: Error when loading data from history file");
-        return result;
-    }
 
     return E_SUCCESS;
 }
@@ -287,84 +251,6 @@ enum eresult history_save(History* restrict history, Arena* restrict scratch)
     return E_SUCCESS;
 }
 
-enum eresult history_add(char* restrict line, size_t length, History* restrict history, Arena* restrict arena)
-{
-    assert(history);
-    assert(line);
-
-    if (!history || !line) {
-        return E_FAILURE_NULL_REFERENCE;
-    }
-    else if (!length || !line[0]) {
-        return E_FAILURE_ZERO_LENGTH;
-    }
-    else if (line[length - 1]) {
-        return E_FAILURE_BAD_STRING;
-    }
-    else if (history->count + 1 < history->count) {
-        return E_FAILURE_OVERFLOW_PROTECTION;
-    }
-    else if (history->count + 1 >= NCSH_MAX_HISTORY_IN_MEMORY) {
-        return E_NO_OP_MAX_LIMIT_REACHED;
-    }
-    else if (length == 2 && (line[0] == ' ' || line[0] == '\n')) {
-        return E_FAILURE_BAD_STRING;
-    }
-
-    assert(length > 0);
-    assert(!line[length - 1]);
-
-    history->entries[history->count].length = length;
-    history->entries[history->count].value = arena_malloc(arena, length, char);
-    memcpy(history->entries[history->count].value, line, length);
-    history->entries[history->count].value[length - 1] = '\0';
-    ++history->count;
-    return E_SUCCESS;
-}
-
-[[nodiscard]]
-Str history_get(size_t position, History* restrict history)
-{
-    assert(history);
-
-    if (!history || !history->count || !history->entries) {
-        return Str_Empty;
-    }
-    else if (position >= history->count) {
-        return Str_Empty;
-    }
-    else if (history->count - position - 1 > history->count) {
-        return Str_Empty;
-    }
-    else if (position > NCSH_MAX_HISTORY_IN_MEMORY) {
-        return history->entries[NCSH_MAX_HISTORY_IN_MEMORY];
-    }
-
-    return history->entries[history->count - position - 1];
-}
-
-[[nodiscard]]
-int history_command_display(History* restrict history)
-{
-    assert(history);
-    if (!history || !history->count) {
-        return EXIT_SUCCESS;
-    }
-
-    for (size_t i = 0; i < history->count; ++i) {
-        tty_print("%zu %s\n", i + 1, history->entries[i].value);
-    }
-    return EXIT_SUCCESS;
-}
-
-[[nodiscard]]
-int history_command_count(History* restrict history)
-{
-    assert(history);
-    tty_print("history count: %zu\n", history->count);
-    return EXIT_SUCCESS;
-}
-
 [[nodiscard]]
 int history_command_clean(History* restrict history, Arena* restrict arena, Arena* restrict scratch)
 {
@@ -373,12 +259,6 @@ int history_command_clean(History* restrict history, Arena* restrict arena, Aren
     }
 
     return EXIT_SUCCESS;
-}
-
-[[nodiscard]]
-int history_command_add(Str val, History* restrict history, Arena* restrict arena)
-{
-    return history_add(val.value, val.length, history, arena) == E_SUCCESS ? EXIT_SUCCESS : EXIT_FAILURE_CONTINUE;
 }
 
 void history_remove_entries_shift(size_t offset, History* restrict history)
@@ -400,7 +280,6 @@ int history_command_remove(Str val, History* restrict history, Arena* restrict a
         return EXIT_FAILURE_CONTINUE;
     }
 
-    // TODO: is this even needed? didn't we reload history in history clean?
     for (size_t i = 0; i < history->count; ++i) {
         if (estrcmp(history->entries[i], val)) {
             history->entries[i].value = NULL;

@@ -122,8 +122,19 @@ def stdout_and_stderr_redirection_tests(row)
   basic_stdout_and_stderr_redirection_stdout_test row
 end
 
+def comment_test(row)
+  assert_check_new_row(row)
+  @tty.send_line('echo hello # this is a comment')
+  row += 1
+  @tty.assert_row(row, 'hello')
+  row += 1
+  test_passed('Comment test')
+  row
+end
+
 def syntax_tests(row)
   row = syntax_error_tests(row)
   row = stderr_redirection_tests(row)
-  stdout_and_stderr_redirection_tests(row)
+  row = stdout_and_stderr_redirection_tests(row)
+  comment_test(row)
 end

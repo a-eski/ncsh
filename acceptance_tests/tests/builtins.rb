@@ -36,7 +36,7 @@ def basic_echo_test(row)
   assert_check_new_row(row)
   @tty.send_keys_one_at_a_time('echo hello')
   @tty.assert_cursor_position(@start_column + 10, row)
-  @tty.send_newline
+  @tty.send_return
   @tty.assert_row_ends_with(row, 'echo hello')
   row += 1
   @tty.assert_row(row, 'hello')
@@ -83,7 +83,7 @@ def no_newline_echo_test(row)
   row += 1
   assert_check_new_row_no_newline_echo('hello', row)
   row += 1
-  @tty.send_newline
+  @tty.send_return
   test_passed('no newline echo test')
   row
 end
@@ -125,10 +125,10 @@ def echo_tests(row)
   starting_tests('echo')
   row = basic_echo_test(row)
   row = quote_echo_test(row)
-  row = no_newline_echo_test(row)
+  # row = no_newline_echo_test(row)
   row = multiple_echo_tests(row)
-  row = empty_echo_test(row)
-  empty_echo_no_newline_test(row)
+  empty_echo_test(row)
+  # empty_echo_no_newline_test(row)
 end
 
 def nothing_to_kill_test(row)

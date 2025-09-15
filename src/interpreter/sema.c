@@ -272,7 +272,7 @@ int sema_check(Lexemes* restrict lexemes)
             if (i >= lexemes->count - 1) {
                 return INVALID_SYNTAX(INVALID_SYNTAX_THEN_NO_NEXT_ARG);
             }
-            if (lexemes->ops[i + 1] != OP_CONSTANT) { // OP_STATEMENT for logic statements instead of using constant?
+            if (lexemes->ops[i + 1] != OP_CONST) { // OP_STATEMENT for logic statements instead of using constant?
                 return INVALID_SYNTAX(INVALID_SYNTAX_THEN_NO_NEXT_STATEMENT);
             }
             break;
@@ -284,7 +284,7 @@ int sema_check(Lexemes* restrict lexemes)
             if (i + 1 == lexemes->count - 1) {
                 return INVALID_SYNTAX(INVALID_SYNTAX_ELSE_NO_NEXT_ARG);
             }
-            if (lexemes->ops[i + 1] != OP_CONSTANT) { // OP_STATEMENT for logic statements instead of using constant?
+            if (lexemes->ops[i + 1] != OP_CONST) { // OP_STATEMENT for logic statements instead of using constant?
                 return INVALID_SYNTAX(INVALID_SYNTAX_ELSE_NO_NEXT_STATEMENT);
             }
             break;

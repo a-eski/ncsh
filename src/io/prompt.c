@@ -7,7 +7,6 @@
 
 #include "../defines.h" // used for macros
 #include "prompt.h"
-#include "../ttyio/ttyio.h"
 
 #define USER_COLOR 147
 #define DIRECTORY_COLOR 10
@@ -48,121 +47,70 @@ size_t prompt_short_directory_get(char* restrict cwd, char* restrict output)
     }
 
     memcpy(output, cwd + last_slash_pos - 1, i - last_slash_pos + 1); // has 2 slashes
-    return i - last_slash_pos + 1;                                    // null termination not included in len
+    return i - last_slash_pos + 2;                                    // null termination not included in len
 }
 
-/* prompt_short_directory_print
- * Gets and prints the shortened directory prompt when it is enabled at compile time via configurables.h option.
- * Handles whether User is included in prompt or not, based on
- * Returns: EXIT_FAILURE or EXIT_SUCCESS
- */
 [[nodiscard]]
-int prompt_short_directory_print(Input* restrict input)
+Str prompt_get_short_directory(Input* restrict input, Arena* restrict scratch)
 {
     char cwd[PATH_MAX] = {0};
     char directory[PATH_MAX] = {0};
     if (!getcwd(cwd, sizeof(cwd))) {
-        tty_perror("ncsh: Error when getting current directory");
-        return EXIT_FAILURE;
+        return Str_Empty;
     }
 
     size_t dir_len = prompt_short_directory_get(cwd, directory);
-    int printed = 0;
+    assert(strlen(directory) + 1 == dir_len);
+
+    Str_Builder* sb = sb_new(scratch);
     if (prompt_data.show_user) {
-        tty_color_set(USER_COLOR);
-        printed += tty_write(input->user->value, input->user->length);
-        printed += tty_putc(' ');
-        tty_color_set(DIRECTORY_COLOR);
-        printed += tty_write(directory, dir_len);
-        tty_send(&tcaps.color_reset);
-        printed += tty_print(NCSH_PROMPT_ENDING_STRING);
-
-        /*printf(ncsh_GREEN "%s"
-                      " " ncsh_CYAN "%s" WHITE_BRIGHT NCSH_PROMPT_ENDING_STRING,
-           input->user.value, directory);*/
-        assert(printed > 0);
-        input->prompt_len = (size_t)printed;
-    }
-    else {
-        tty_color_set(DIRECTORY_COLOR);
-        printed += tty_write(directory, dir_len);
-        tty_send(&tcaps.color_reset);
-        printed += tty_print(NCSH_PROMPT_ENDING_STRING);
-        // printf(ncsh_CYAN "%s" WHITE_BRIGHT NCSH_PROMPT_ENDING_STRING, directory);
-        assert(printed > 0);
-        input->prompt_len = (size_t)printed;
+        sb_add(&Str_New_Literal("\033[38;5;147m"), sb, scratch);
+        sb_add(input->user, sb, scratch);
+        sb_add(&Str_New_Literal(" "), sb, scratch);
     }
 
-    // save cursor position so we can reset cursor when loading history entries
-    tty_send(&tcaps.cursor_save);
-    return EXIT_SUCCESS;
+    sb_add(&Str_New_Literal("\033[92m"), sb, scratch);
+    sb_add(&Str_New(directory, dir_len), sb, scratch);
+    sb_add(&Str_New_Literal("\033[0m"), sb, scratch);
+    sb_add(&Str_New_Literal(NCSH_PROMPT_ENDING_STRING), sb, scratch);
+    return *sb_to_str(sb, scratch);
 }
 
 [[nodiscard]]
-int prompt_directory_print(Input* restrict input)
+Str prompt_get_directory(Input* restrict input, Arena* restrict scratch)
 {
     char cwd[PATH_MAX] = {0};
     if (!getcwd(cwd, sizeof(cwd))) {
-        tty_perror("ncsh: Error when getting current directory");
-        return EXIT_FAILURE;
+        return Str_Empty;
     }
-    int printed = 0;
+
+    Str_Builder* sb = sb_new(scratch);
     if (prompt_data.show_user) {
-        tty_color_set(USER_COLOR);
-        printed += tty_write(input->user->value, input->user->length);
-        printed += tty_putc(' ');
-        tty_color_set(DIRECTORY_COLOR);
-        printed += tty_print("%s", cwd);
-        tty_send(&tcaps.color_reset);
-        printed += tty_print(NCSH_PROMPT_ENDING_STRING);
-
-        /*printf(ncsh_GREEN "%s"
-                          " " ncsh_CYAN "%s" WHITE_BRIGHT NCSH_PROMPT_ENDING_STRING,
-               input->user.value, cwd);*/
-        assert(printed > 0);
-        input->prompt_len = (size_t)printed;
-    }
-    else {
-        tty_color_set(DIRECTORY_COLOR);
-        printed += tty_print("%s", cwd);
-        tty_send(&tcaps.color_reset);
-        printed += tty_print(NCSH_PROMPT_ENDING_STRING);
-        // printf(ncsh_CYAN "%s" WHITE_BRIGHT NCSH_PROMPT_ENDING_STRING, cwd);
-        assert(printed > 0);
-        input->prompt_len = (size_t)printed;
+        sb_add(&Str_New_Literal("\033[38;5;147m"), sb, scratch);
+        sb_add(input->user, sb, scratch);
+        sb_add(&Str_New_Literal(" "), sb, scratch);
     }
 
-
-    // save cursor position so we can reset cursor when loading history entries
-    tty_send(&tcaps.cursor_save);
-    return EXIT_SUCCESS;
+    sb_add(&Str_New_Literal("\033[92m"), sb, scratch);
+    sb_add(&Str_Get(cwd), sb, scratch);
+    sb_add(&Str_New_Literal("\033[0m"), sb, scratch);
+    sb_add(&Str_New_Literal(NCSH_PROMPT_ENDING_STRING), sb, scratch);
+    return *sb_to_str(sb, scratch);
 }
 
 [[nodiscard]]
-int prompt_no_directory_print(Input* restrict input)
+Str prompt_get_no_directory(Input* restrict input, Arena* restrict scratch)
 {
-    int printed = 0;
-    if (prompt_data.show_user) {
-        tty_color_set(USER_COLOR);
-        printed += tty_write(input->user->value, input->user->length);
-        tty_send(&tcaps.color_reset);
-        printed += tty_print(NCSH_PROMPT_ENDING_STRING);
-        // printf(ncsh_GREEN "%s" WHITE_BRIGHT NCSH_PROMPT_ENDING_STRING, input->user.value);
-
-        assert(printed > 0);
-        input->prompt_len = (size_t)printed;
-    }
-    else {
-        printed += tty_print(NCSH_PROMPT_ENDING_STRING);
-
-        // printf(WHITE_BRIGHT NCSH_PROMPT_ENDING_STRING);
-        assert(printed > 0);
-        input->prompt_len = (size_t)printed;
+    if (!prompt_data.show_user) {
+        return Str_New_Literal(NCSH_PROMPT_ENDING_STRING);
     }
 
-    // save cursor position so we can reset cursor when loading history entries
-    tty_send(&tcaps.cursor_save);
-    return EXIT_SUCCESS;
+    Str_Builder* sb = sb_new(scratch);
+    sb_add(&Str_New_Literal("\033[38;5;147m"), sb, scratch);
+    sb_add(input->user, sb, scratch);
+    sb_add(&Str_New_Literal("\033[0m"), sb, scratch);
+    sb_add(&Str_New_Literal(NCSH_PROMPT_ENDING_STRING), sb, scratch);
+    return *sb_to_str(sb, scratch);
 }
 
 /* prompt
@@ -170,44 +118,43 @@ int prompt_no_directory_print(Input* restrict input)
  * Returns: the length of the prompt.
  */
 [[nodiscard]]
-int prompt(Input* restrict input)
+Str prompt_get(Input* restrict input, Arena* restrict scratch)
 {
     switch (prompt_data.dir_type) {
         case DIR_SHORT:
-            return prompt_short_directory_print(input);
+            return prompt_get_short_directory(input, scratch);
         case DIR_NORMAL:
-            return prompt_directory_print(input);
+            return prompt_get_directory(input, scratch);
         case DIR_NONE:
-            return prompt_no_directory_print(input);
+            return prompt_get_no_directory(input, scratch);
         default:
             unreachable();
-            return 0;
+            return Str_Empty;
     }
 }
 
-/* prompt_if_needed
- * Prints the prompt if input.reprint_prompt is true.
- * Calls prompt.
- * Returns: the length of the prompt.
- */
-[[nodiscard]]
-int prompt_if_needed(Input* restrict input)
+void prompt_init()
 {
-    if (input->reprint_prompt == true) {
-        if (prompt(input) == EXIT_FAILURE) {
-            tty_send(&tcaps.cursor_show);
-            return EXIT_FAILURE;
-        }
-        tty_send(&tcaps.cursor_show);
-        input->lines_y = 0;
-        input->history_position = 0;
-        input->reprint_prompt = false;
-    }
-    return EXIT_SUCCESS;
-}
+    bool show_user;
+#if NCSH_PROMPT_SHOW_USER == NCSH_SHOW_USER_NORMAL
+    show_user = true;
+#elif NCSH_PROMPT_SHOW_USER == NCSH_SHOW_USER_NONE
+    show_user = false;
+#else
+    show_user = true;
+#endif /* if NCSH_PROMPT_SHOW_USER == NCSH_SHOW_USER_NORMAL */
 
-void prompt_init(bool showUser, enum Dir_Type dir_type)
-{
-    prompt_data.show_user = showUser;
+    enum Dir_Type dir_type;
+#if NCSH_PROMPT_DIRECTORY == NCSH_DIRECTORY_NORMAL
+    dir_type = DIR_NORMAL;
+#elif NCSH_PROMPT_DIRECTORY == NCSH_DIRECTORY_SHORT
+    dir_type = DIR_SHORT;
+#elif NCSH_PROMPT_DIRECTORY == NCSH_DIRECTORY_NONE
+    dir_type = DIR_NONE;
+#else
+    dir_type = DIR_NORMAL;
+#endif /* if NCSH_PROMPT_DIRECTORY == NCSH_PROMPT_DIRECTORY */
+
+    prompt_data.show_user = show_user;
     prompt_data.dir_type = dir_type;
 }

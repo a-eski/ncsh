@@ -13,8 +13,7 @@
 
 void arena_abort__()
 {
-    puts("ncsh: ran out of allocated memory.");
-    fprintf(stderr, "\nncsh: out of memory, aborting.\n");
+    fprintf(stderr, "\nncsh: ran out of memory, aborting.\n");
     abort();
 }
 

@@ -5,6 +5,20 @@
 
 #include "../types.h"
 #include "lexemes.h"
-#include "statements.h"
+#include "stmts.h"
 
-int parser_parse(Lexemes* lexemes, Statements* restrict stmts, Shell* restrict shell, Arena* restrict scratch);
+enum {
+    PE_NOTHING,
+    PE_INVALID_STMT,
+    PE_MISSING_TOK
+};
+
+typedef struct {
+    int parser_errno;
+    union {
+        char* msg;
+        Statements* stmts;
+    } output;
+} Parser_Output;
+
+Parser_Output parser_parse(Lexemes* lexemes, Shell* restrict shell, Arena* restrict scratch);

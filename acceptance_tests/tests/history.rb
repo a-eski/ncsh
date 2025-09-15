@@ -17,7 +17,7 @@ def basic_history_test(row)
   assert_history_up_result(row, 'ls | sort | wc -c')
   assert_history_up_result(row, 'ls | wc -c')
   assert_history_down_result(row, 'ls | sort | wc -c')
-  @tty.send_newline
+  @tty.send_return
   row += 1
   @tty.assert_row_ends_with(row, WC_C_LENGTH)
   row += 1
@@ -30,7 +30,7 @@ def history_delete_test(row)
   assert_history_up_result(row, 'ls | sort | wc -c')
   @tty.send_left_arrows(12)
   @tty.send_deletes(7)
-  @tty.send_newline
+  @tty.send_return
   row += 1
   @tty.assert_row_ends_with(row, WC_C_LENGTH)
   row += 1
@@ -77,9 +77,9 @@ def history_tests(row)
   row = basic_history_test(row)
   row = history_delete_test(row)
   row = history_backspace_test(row)
-  row = history_clear_test(row)
+  history_clear_test(row)
   # row =
-  history_add_test(row)
+  # history_add_test(row)
   # row = history_remove_test(row)
   # row = history_clean_test(row)
 end

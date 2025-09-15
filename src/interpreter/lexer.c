@@ -107,7 +107,7 @@ enum Ops lexer_op_check_len_one(char* restrict line)
         return OP_CONDITION_START;
     }
     default: {
-        return OP_CONSTANT;
+        return OP_CONST;
     }
     }
 }
@@ -121,7 +121,7 @@ enum Ops lexer_op_check_len_two(char* restrict line)
         }
     }
 
-    return OP_CONSTANT;
+    return OP_CONST;
 }
 
 [[nodiscard]]
@@ -133,7 +133,7 @@ enum Ops lexer_op_check_len_three(char* restrict line)
         }
     }
 
-    return OP_CONSTANT;
+    return OP_CONST;
 }
 
 [[nodiscard]]
@@ -154,13 +154,13 @@ enum Ops lexer_op_check_len_four(char* restrict line)
             return OP_ELIF;
     }
     }
-    return OP_CONSTANT;
+    return OP_CONST;
 }
 
 [[nodiscard]]
 enum Ops lexer_op_check_len_five(char* restrict line)
 {
-    return (STRCMP(line, BOOL_FALSE)) ? OP_FALSE : OP_CONSTANT;
+    return (STRCMP(line, BOOL_FALSE)) ? OP_FALSE : OP_CONST;
 }
 
 /* lexer_op_get
@@ -201,7 +201,7 @@ enum Ops lexer_op_get(char* restrict line, size_t len)
     }
 
     default: {
-        return OP_CONSTANT;
+        return OP_CONST;
     }
     }
 }

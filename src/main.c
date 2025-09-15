@@ -1,6 +1,5 @@
 /* Copyright ncsh by Alex Eski 2024 */
 
-#include "debug.h"
 #ifndef _POXIC_C_SOURCE
 #define _POSIX_C_SOURCE 200809L
 #endif /* ifndef _POXIC_C_SOURCE */
@@ -11,13 +10,17 @@
 #include <time.h>
 #include <unistd.h>
 
+#include "eskilib/str.h"
+#include "debug.h"
+#include "io/bestline.h"
+#include "io/bestout.h"
 #include "arena.h"
 #include "conf.h"
 #include "defines.h"
 #include "eskilib/eresult.h"
 #include "interpreter/interpreter.h"
 #include "io/ac.h"
-#include "io/io.h"
+#include "io/prompt.h"
 #include "signals.h"
 #include "ttyio/ttyio.h"
 #include "env.h"
@@ -29,6 +32,10 @@
 jmp_buf env_jmp_buf;
 sig_atomic_t vm_child_pid;
 volatile int sigwinch_caught;
+
+Input* input_;
+Arena* scratch_;
+Arena* arena_;
 
 /* arena_init
  * Initialize arenas used for the lifteim of the shell.
@@ -55,7 +62,6 @@ static char* arena_init(Shell* restrict shell)
     return memory;
 }
 
-
 /* arena_noninteractive_init
  * Initialize arenas used for the lifteim of the shell.
  * A permanent arena and a scratch arena are allocated.
@@ -81,6 +87,61 @@ static char* arena_noninteractive_init(Shell* restrict shell)
     return memory;
 }
 
+void completion(const char *buf, int pos, bestlineCompletions *lc) {
+    if (pos <= 0 || !buf) {
+        return;
+    }
+
+    uint8_t ac_matches_count =
+        ac_first((char*)buf, input_->current_autocompletion, input_->autocompletions_tree, *input_->scratch);
+
+    if (!ac_matches_count) {
+        if (input_->current_autocompletion[0] == '\0') {
+            return;
+        }
+        input_->current_autocompletion[0] = '\0';
+        input_->current_autocompletion_len = 0;
+        return;
+    }
+
+    if (input_->current_autocompletion) {
+        Str* completion = estrcat(&Str_New((char*)buf, (size_t)(pos + 1)), &Str_Get(input_->current_autocompletion), input_->scratch);
+        bestlineAddCompletion(lc, completion->value);
+    }
+}
+
+char *hints(const char *buf, const char **ansi1, const char **ansi2) {
+    if (!buf || !*buf) {
+        return NULL;
+    }
+
+    uint8_t ac_matches_count =
+        ac_first((char*)buf, input_->current_autocompletion, input_->autocompletions_tree, *input_->scratch);
+
+    if (!ac_matches_count) {
+        if (input_->current_autocompletion[0] == '\0') {
+            return NULL;
+        }
+        input_->current_autocompletion[0] = '\0';
+        input_->current_autocompletion_len = 0;
+        return NULL;
+    }
+
+    if (input_->current_autocompletion) {
+        // "\033[2m"
+        *ansi1 = "\033[35m"; /* magenta foreground */
+        *ansi2 = "\033[39m"; /* reset foreground */
+        return input_->current_autocompletion;
+    }
+    return NULL;
+}
+
+/* hooks into bestline history loading to populate trie used for autocompletions */
+void ac_add_when_history_expanded(const char *in, int n) {
+    assert(n > 0);
+    ac_add((char *)in, (size_t)n, input_->autocompletions_tree, arena_);
+}
+
 /* init
  * Called on startup to allocate memory related to the shells lifetime.
  * Returns: exit result, EXIT_SUCCESS or EXIT_FAILURE
@@ -91,7 +152,7 @@ static char* init(Shell* restrict shell, char** restrict envp)
     char* memory = arena_init(shell);
     if (!memory) {
         tty_color_set(TTYIO_RED_ERROR);
-        tty_puts("ncsh: could not start up, not enough memory available.");
+        bestlineWriteStr(STDERR_FILENO, Str_New_Literal("ncsh: could not start up, not enough memory available.\n"));
         tty_color_reset();
         return NULL;
     }
@@ -102,9 +163,15 @@ static char* init(Shell* restrict shell, char** restrict envp)
         return NULL;
     }
 
-    if (io_init(&shell->config, shell->env, &shell->input, &shell->arena) != EXIT_SUCCESS) {
-        return NULL;
+    prompt_init();
+    Str user_key = Str_New_Literal(NCSH_USER_VAL);
+    shell->input.user = env_add_or_get(shell->env, user_key);
+    if (!shell->input.user->value) {
+        shell->input.user->length = 0;
     }
+
+    shell->input.current_autocompletion = arena_malloc(&shell->arena, NCSH_MAX_INPUT, char);
+    shell->input.autocompletions_tree = ac_alloc(&shell->arena);
 
     enum z_Result z_result = z_init(&shell->config.location, &shell->z_db, &shell->arena);
     if (z_result != Z_SUCCESS) {
@@ -112,9 +179,18 @@ static char* init(Shell* restrict shell, char** restrict envp)
     }
 
     if ((shell->pgid = signal_init()) < 0) {
-        tty_perror("ncsh: fatal error while initializing signal handlers");
+        bestlineWriteStr(STDERR_FILENO, Str_New_Literal("ncsh: fatal error while initializing signal handlers\n"));
         return NULL;
     }
+
+    input_ = &shell->input;
+    input_->scratch = &shell->scratch;
+    arena_ = &shell->arena;
+    bestlineSetHintsCallback(hints);
+    bestlineSetCompletionCallback(completion);
+    bestlineSetOnHistoryLoadedCallback(ac_add_when_history_expanded);
+    bestlineHistoryLoad(shell->config.history_file.value);
+    shell->arena = *arena_;
 
     return memory;
 }
@@ -125,8 +201,11 @@ static void cleanup(char* restrict shell_memory, Shell* restrict shell)
     if (!shell_memory) {
         return;
     }
+    if (shell->config.history_file.value) {
+        bestlineHistorySave(shell->config.history_file.value);
+    }
     if (shell->input.buffer) {
-        io_deinit(&shell->input, shell->scratch);
+        free(shell->input.buffer);
     }
     if (shell->z_db.database_file) {
         z_exit(&shell->z_db);
@@ -146,7 +225,7 @@ static void welcome()
     tty_send(&tcaps.cursor_home);
 #endif
 
-    tty_puts(NCSH " version: " NCSH_VERSION);
+    bestlineWriteStr(STDOUT_FILENO, Str_New_Literal(NCSH " version: " NCSH_VERSION "\n"));
 }
 
 static void startup_time()
@@ -185,7 +264,7 @@ static int noninteractive(int argc, char** restrict argv, char** restrict envp)
     char* memory = arena_noninteractive_init(&shell);
     if (!memory) {
         tty_color_set(TTYIO_RED_ERROR);
-        tty_puts("ncsh: could not start up, not enough memory available.");
+        bestlineWriteStr(STDERR_FILENO, Str_New_Literal("ncsh: could not start up, not enough memory available.\n"));
         tty_color_reset();
         tty_deinit_caps();
         return EXIT_FAILURE;
@@ -214,12 +293,11 @@ exit:
  * Interactive mode several lifetimes. Examples:
  * 1. The lifetime of the shell, managed through the arena. See init and exit.
  * 2. The lifetime of the main loop of the shell, managed through the scratch arena.
- * 3. io has its own inner lifetime via the scratch arena.
+ * 3. different modules like the interpreter have their own lifetime via the scratch arena.
  */
 [[nodiscard]]
 int main(int argc, char** argv, char** envp)
 {
-
     int rv = EXIT_SUCCESS;
     if (argc > 1 || !isatty(STDIN_FILENO)) {
         rv = noninteractive(argc, argv, envp);
@@ -239,23 +317,12 @@ int main(int argc, char** argv, char** envp)
         goto exit;
     }
 
-    rv = EXIT_SUCCESS;
     startup_time();
 
-    while (1) {
-        int input_result = io_readline(&shell.input, &shell.scratch);
-        switch (input_result) {
-        case EXIT_FAILURE: {
-            rv = EXIT_FAILURE;
-            goto exit;
-        }
-        case EXIT_SUCCESS_END: {
-            goto exit;
-        }
-        case EXIT_SUCCESS: {
-            goto reset;
-        }
-        }
+    Str prompt;
+    while ((prompt = prompt_get(&shell.input, &shell.scratch)).value &&
+        (shell.input.buffer = bestline(prompt.value))) {
+        shell.input.pos = strlen(shell.input.buffer) + 1;
 
         int command_result = interpreter_run(&shell, shell.scratch);
         if (command_result == EXIT_FAILURE) {
@@ -266,18 +333,15 @@ int main(int argc, char** argv, char** envp)
             break;
         }
 
-        history_add(shell.input.buffer, shell.input.pos, &shell.input.history, &shell.arena);
+        bestlineHistoryAdd(shell.input.buffer);
         ac_add(shell.input.buffer, shell.input.pos, shell.input.autocompletions_tree, &shell.arena);
-
-    reset:
-        memset(shell.input.buffer, '\0', shell.input.max_pos);
         shell.input.pos = 0;
-        shell.input.max_pos = 0;
+        free(shell.input.buffer);
     }
+
 exit:
-    tty_println("exit");
+    tty_puts("exit");
     cleanup(memory, &shell);
     tty_deinit_caps();
-
     return rv;
 }
