@@ -161,6 +161,7 @@
 #include <termios.h>
 #include <unistd.h>
 
+#include "hashset.h"
 #include "bestline.h"
 
 #ifndef SIGWINCH
@@ -260,7 +261,7 @@ static struct bestlineRing ring;
 static struct sigaction orig_cont;
 static struct sigaction orig_winch;
 static struct termios orig_termios;
-static char *history[BESTLINE_MAX_HISTORY];
+static char *bl_history[BESTLINE_MAX_HISTORY];
 static bestlineXlatCallback *xlatCallback;
 static bestlineHintsCallback *hintsCallback;
 static bestlineFreeHintsCallback *freeHintsCallback;
@@ -1518,15 +1519,15 @@ static void abInit(struct abuf *a) {
 }
 
 static char abGrow(struct abuf *a, int need) {
-    int cap;
+    int c;
     char *b;
-    cap = a->cap;
+    c = a->cap;
     do
-        cap += cap / 2;
-    while (cap < need);
-    if (!(b = (char *)realloc(a->b, cap * sizeof(*a->b))))
+        c += c / 2;
+    while (c < need);
+    if (!(b = (char *)realloc(a->b, c * sizeof(*a->b))))
         return 0;
-    a->cap = cap;
+    a->cap = c;
     a->b = b;
     return 1;
 }
@@ -2332,13 +2333,13 @@ static void bestlineEditHistoryGoto(struct bestlineState *l, unsigned i) {
     if (i > historylen - 1)
         return;
     i = Max(Min(i, historylen - 1), 0);
-    free(history[historylen - 1 - l->hindex]);
-    history[historylen - 1 - l->hindex] = strdup(l->buf);
+    free(bl_history[historylen - 1 - l->hindex]);
+    bl_history[historylen - 1 - l->hindex] = strdup(l->buf);
     l->hindex = i;
-    n = strlen(history[historylen - 1 - l->hindex]);
+    n = strlen(bl_history[historylen - 1 - l->hindex]);
     bestlineGrow(l, n + 1);
     n = Min(n, l->buflen - 1);
-    memcpy(l->buf, history[historylen - 1 - l->hindex], n);
+    memcpy(l->buf, bl_history[historylen - 1 - l->hindex], n);
     l->buf[n] = 0;
     l->len = l->pos = n;
     bestlineRefreshLine(l);
@@ -2395,7 +2396,7 @@ static int bestlineSearch(struct bestlineState *l, char *seq, int size) {
                     --j;
                 } else if (i + 1 < historylen) {
                     ++i;
-                    j = strlen(history[historylen - 1 - i]);
+                    j = strlen(bl_history[historylen - 1 - i]);
                 }
             } else if (seq[0] == Ctrl('G')) {
                 bestlineEditHistoryGoto(l, oldindex);
@@ -2413,7 +2414,7 @@ static int bestlineSearch(struct bestlineState *l, char *seq, int size) {
         }
         isstale = 0;
         while (i < historylen) {
-            p = history[historylen - 1 - i];
+            p = bl_history[historylen - 1 - i];
             k = strlen(p);
             if (!isstale) {
                 j = Min(k, j + ab.len);
@@ -3414,8 +3415,8 @@ static ssize_t bestlineEdit(int stdin_fd, int stdout_fd, const char *prompt, con
             seq[1] = 0;
         } else {
             if (historylen) {
-                free(history[--historylen]);
-                history[historylen] = 0;
+                free(bl_history[--historylen]);
+                bl_history[historylen] = 0;
             }
             free(l.buf);
             abFree(&l.full);
@@ -3467,8 +3468,8 @@ static ssize_t bestlineEdit(int stdin_fd, int stdout_fd, const char *prompt, con
                 bestlineEditDelete(&l);
             } else {
                 if (historylen) {
-                    free(history[--historylen]);
-                    history[historylen] = 0;
+                    free(bl_history[--historylen]);
+                    bl_history[historylen] = 0;
                 }
                 free(l.buf);
                 abFree(&l.full);
@@ -3493,8 +3494,8 @@ static ssize_t bestlineEdit(int stdin_fd, int stdout_fd, const char *prompt, con
             char is_finished = 1;
             char needs_strip = 0;
             if (historylen) {
-                free(history[--historylen]);
-                history[historylen] = 0;
+                free(bl_history[--historylen]);
+                bl_history[historylen] = 0;
             }
             l.final = 1;
             bestlineEditEnd(&l);
@@ -3659,9 +3660,9 @@ void bestlineFree(void *ptr) {
 void bestlineHistoryFree(void) {
     size_t i;
     for (i = 0; i < BESTLINE_MAX_HISTORY; i++) {
-        if (history[i]) {
-            free(history[i]);
-            history[i] = 0;
+        if (bl_history[i]) {
+            free(bl_history[i]);
+            bl_history[i] = 0;
         }
     }
     historylen = 0;
@@ -3677,16 +3678,16 @@ int bestlineHistoryAdd(const char *line) {
     char *linecopy;
     if (!BESTLINE_MAX_HISTORY)
         return 0;
-    if (historylen && !strcmp(history[historylen - 1], line))
+    if (historylen && !strcmp(bl_history[historylen - 1], line))
         return 0;
     if (!(linecopy = strdup(line)))
         return 0;
     if (historylen == BESTLINE_MAX_HISTORY) {
-        free(history[0]);
-        memmove(history, history + 1, sizeof(char *) * (BESTLINE_MAX_HISTORY - 1));
+        free(bl_history[0]);
+        memmove(bl_history, bl_history + 1, sizeof(char *) * (BESTLINE_MAX_HISTORY - 1));
         historylen--;
     }
-    history[historylen++] = linecopy;
+    bl_history[historylen++] = linecopy;
     return 1;
 }
 
@@ -3706,7 +3707,7 @@ int bestlineHistorySave(const char *filename) {
         return -1;
     chmod(filename, S_IRUSR | S_IWUSR);
     for (j = 0; j < historylen; j++) {
-        fputs(history[j], fp);
+        fputs(bl_history[j], fp);
         fputc('\n', fp);
     }
     fclose(fp);
@@ -3756,7 +3757,7 @@ int bestlineHistoryLoad(const char *filename) {
                             memcpy(s, h[k * 2], t), s[t] = 0;
                             if (onHistoryLoadedCallback)
                                 onHistoryLoadedCallback(s, t + 1);
-                            history[historylen++] = s;
+                            bl_history[historylen++] = s;
                         }
                     }
                 }
@@ -3773,6 +3774,20 @@ int bestlineHistoryLoad(const char *filename) {
     }
     free(h);
     return rc;
+}
+
+int bestlineHistoryPrint(int fd)
+{
+    for (unsigned i = 0; i < historylen; ++i) {
+        bestlineWriteChars(fd, bl_history[i]);
+        bestlineWrite(fd, "\n", 1);
+    }
+    return 0;
+}
+
+unsigned bestlineHistoryCount()
+{
+    return historylen;
 }
 
 /**

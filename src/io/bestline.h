@@ -3,13 +3,6 @@
 extern "C" {
 #endif
 
-enum bestlinePromptDirType {
-    DT_NORMAL,
-    DT_SHORT,
-    DT_NONE
-};
-void bestlinePromptInit(bool showUser, enum bestlinePromptDirType dirType);
-
 typedef struct bestlineCompletions {
     unsigned long len;
     char **cvec;
@@ -21,8 +14,6 @@ typedef char *(bestlineHintsCallback)(const char *, const char **, const char **
 typedef void(bestlineFreeHintsCallback)(void *);
 typedef unsigned(bestlineXlatCallback)(unsigned);
 typedef void(bestlineOnHistoryLoadedCallback(const char *, int));
-// typedef void(bestlineHistoryCleanCallback(const char *, int));
-// typedef void(bestlineHistoryRemoveCallback(const char *, int));
 
 void bestlineSetCompletionCallback(bestlineCompletionCallback *);
 void bestlineSetHintsCallback(bestlineHintsCallback *);
@@ -39,6 +30,8 @@ char *bestlineWithHistory(const char *, const char *);
 int bestlineHistoryAdd(const char *);
 int bestlineHistoryLoad(const char *);
 int bestlineHistorySave(const char *);
+int bestlineHistoryPrint(int fd);
+unsigned bestlineHistoryCount();
 // int bestlineHistoryClean();
 // int bestlineHistoryRemove(const char *, int);
 void bestlineBalanceMode(char);

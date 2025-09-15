@@ -13,6 +13,7 @@ debug_flags = $(main_flags) -D_FORTIFY_SOURCE=3 -fsanitize=address,undefined,lea
 test_flags =  $(debug_flags)
 
 release_flags = $(main_flags) -flto=6 -O3 -ffast-math -march=native -DNDEBUG
+# release_flags = $(main_flags) -flto -O3 -ffast-math -march=native -DNDEBUG
 
 fuzz_flags = $(debug_flags) -fsanitize=fuzzer -DNDEBUG -O3
 
@@ -85,6 +86,7 @@ d:
 
 # Unity/jumbo release build
 unity:
+	echo "warn: unity release builds not currently working for GCC."
 	$(CC) $(STD) $(release_flags) src/unity.c -o $(target)
 
 u:
@@ -302,13 +304,13 @@ bench_str:
 
 # Run VM sanity tests
 test_vm:
-	$(CC) $(STD) $(test_flags) -DNCSH_VM_TEST $(TTYIO_IN) ./src/arena.c ./src/interpreter/lexer.c ./src/eskilib/efile.c ./src/io/hashset.c ./src/io/history.c ./src/z/fzf.c ./src/z/z.c ./src/env.c ./src/alias.c ./src/conf.c ./src/interpreter/vm.c ./src/interpreter/sema.c ./src/interpreter/parser.c ./src/interpreter/builtins.c ./src/interpreter/lexemes.c ./src/interpreter/stmts.c ./src/interpreter/expansions.c ./src/interpreter/pipe.c ./src/interpreter/redirection.c ./tests/interpreter/vm_tests.c -o ./bin/vm_tests
+	$(CC) $(STD) $(test_flags) -DNCSH_VM_TEST $(TTYIO_IN) ./src/arena.c ./src/interpreter/lexer.c ./src/eskilib/efile.c ./src/io/bestline.c ./src/io/hashset.c ./src/io/history.c ./src/z/fzf.c ./src/z/z.c ./src/env.c ./src/alias.c ./src/conf.c ./src/interpreter/vm.c ./src/interpreter/sema.c ./src/interpreter/parser.c ./src/interpreter/builtins.c ./src/interpreter/lexemes.c ./src/interpreter/stmts.c ./src/interpreter/expansions.c ./src/interpreter/pipe.c ./src/interpreter/redirection.c ./tests/interpreter/vm_tests.c -o ./bin/vm_tests
 	./bin/vm_tests
 tvm:
 	make test_vm
 
 test_vm_next:
-	$(CC) $(STD) $(test_flags) -DNCSH_VM_TEST $(TTYIO_IN) ./src/arena.c ./src/interpreter/lexer.c ./src/eskilib/efile.c ./src/io/hashset.c ./src/io/history.c ./src/z/fzf.c ./src/z/z.c ./src/env.c ./src/alias.c ./src/conf.c ./src/interpreter/vm.c ./src/interpreter/sema.c ./src/interpreter/parser.c ./src/interpreter/builtins.c ./src/interpreter/lexemes.c ./src/interpreter/stmts.c ./src/interpreter/expansions.c ./src/interpreter/pipe.c ./src/interpreter/redirection.c ./tests/interpreter/vm_next_tests.c -o ./bin/vm_next_tests
+	$(CC) $(STD) $(test_flags) -DNCSH_VM_TEST $(TTYIO_IN) ./src/arena.c ./src/interpreter/lexer.c ./src/eskilib/efile.c ./src/io/bestline.c ./src/io/hashset.c ./src/io/history.c ./src/z/fzf.c ./src/z/z.c ./src/env.c ./src/alias.c ./src/conf.c ./src/interpreter/vm.c ./src/interpreter/sema.c ./src/interpreter/parser.c ./src/interpreter/builtins.c ./src/interpreter/lexemes.c ./src/interpreter/stmts.c ./src/interpreter/expansions.c ./src/interpreter/pipe.c ./src/interpreter/redirection.c ./tests/interpreter/vm_next_tests.c -o ./bin/vm_next_tests
 	./bin/vm_next_tests
 tvmn:
 	make test_vm_next
