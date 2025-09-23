@@ -131,11 +131,11 @@ static Str* expand_variable(Str* restrict in, Env* restrict env, Arena* restrict
 
     debug("found space");
     Lexemes lexemes = {0};
-    lexer_lex(var.value, var.length, &lexemes, scratch);
+    lex(var.value, var.length, &lexemes, scratch);
     if (!lexemes.count) {
         return;
     }
-    int res = parser_parse(&lexemes, stmts, shell, scratch);
+    int res = parse(&lexemes, stmts, shell, scratch);
     if (res != EXIT_SUCCESS) {
         return;
     }*/

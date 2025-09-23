@@ -12,7 +12,7 @@
 #include "../defines.h" // used for macros like NCSH_MAX_INPUT
 #include "../eskilib/num.h"
 #include "lex.h"
-#include "lexer_defines.h"
+#include "symbols.h"
 
 /* Lexer Internal Variables */
 static char* restrict lex_buf;
@@ -67,7 +67,7 @@ static constexpr enum Token ops_3char[] = {T_EQ_A,
 [[nodiscard]]
 bool lexer_tok_check_var(char* line, size_t len)
 {
-    return len > 2 && line[0] == VARIABLE;
+    return len > 2 && line[0] == DOLLAR;
 }
 
 [[nodiscard]]
