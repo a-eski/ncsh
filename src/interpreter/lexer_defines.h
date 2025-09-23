@@ -1,17 +1,28 @@
 #pragma once
 
 // supported quotes
-#define SINGLE_QUOTE_KEY '\''
-#define DOUBLE_QUOTE_KEY '\"'
-#define SINGLE_QUOTE_KEY '\''
-#define BACKTICK_QUOTE_KEY '`'
+#define SINGLE_QUOTE '\''
+#define DOUBLE_QUOTE '\"'
+#define BACKTICK_QUOTE '`'
 
-// symbols (unused currently)
-#define OPENING_PARAN '('
-#define CLOSING_PARAN ')'
-
-// ops
+// symbols
+#define O_PARAN '('
+#define C_PARAN ')'
 #define PIPE '|'
+#define GT '>'
+#define LT '<'
+#define O_BRACKET '['
+#define C_BRACKET ']'
+#define SEMICOLON ';'
+#define COMMENT '#'
+#define BANG '!'
+#define DOLLAR '$'
+#define STAR '*'
+#define QUESTION '?'
+#define EQ '='
+#define AMP '&'
+
+// TODO: remove unused
 #define STDIN_REDIRECTION '<'
 #define STDOUT_REDIRECTION '>'
 #define BACKGROUND_JOB '&'
@@ -26,7 +37,6 @@
 #define OR "||"
 
 // ops: multiple
-#define DOLLAR_SIGN '$'
 #define VARIABLE '$'
 #define MATH_EXPRESSION_START "$("
 #define MATH_EXPRESSION_END ')'
@@ -57,19 +67,20 @@
 #define THEN "then"
 #define ELSE "else"
 #define ELIF "elif"
-// #define SEMICOLON ';'
-// #define OPENING_BRACKET '['
-// #define CLOSING_BRACKET ']'
 #define CONDITION_START '['
 #define CONDITION_END "];"
+#define CONDITION_START_ALT "[["
+#define CONDITION_END_ALT "]];"
 
 // ops: equality
 #define EQUALS "-eq"
 #define LESS_THAN "-lt"
+#define LESS_THAN_OR_EQUALS "-le"
 #define GREATER_THAN "-gt"
+#define GREATER_THAN_OR_EQUALS "-ge"
 
-// ops: misc
-#define COMMENT '#'
-
-// currently unsupported
-#define BANG '!'
+// ops: loops
+#define WHILE "while"
+#define FOR "for"
+#define DO "do"
+#define DONE "done"

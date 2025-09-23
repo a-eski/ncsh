@@ -80,8 +80,8 @@ void z_add_to_database_empty_database_test()
     eassert(z_init(&config_location, &db, &arena) == Z_SUCCESS);
     eassert(db.count == 0);
 
-    Str new_value = Str_New_Literal("ncsh");
-    Str cwd = Str_New_Literal("/mnt/c/Users/Alex/source/repos/PersonalRepos/shells");
+    Str new_value = Str_Lit("ncsh");
+    Str cwd = Str_Lit("/mnt/c/Users/Alex/source/repos/PersonalRepos/shells");
 
     eassert(z_database_add(&new_value, cwd.value, cwd.length, &db, &arena) == Z_SUCCESS);
     eassert(db.count == 1);
@@ -102,7 +102,7 @@ void z_add_new_entry_test()
     eassert(z_init(&config_location, &db, &arena) == Z_SUCCESS);
     eassert(db.count == 0);
 
-    Str path = Str_New_Literal("/mnt/c/Users/Alex/source/repos/PersonalRepos/shells");
+    Str path = Str_Lit("/mnt/c/Users/Alex/source/repos/PersonalRepos/shells");
     eassert(z_add(&path, &db, &arena) == Z_SUCCESS);
     eassert(db.count == 1);
     eassert(db.dirs[0].path.length == path.length);
@@ -122,7 +122,7 @@ void z_add_existing_in_database_new_entry()
     eassert(db.count == 1);
 
     double initial_rank = db.dirs[0].rank;
-    Str path = Str_New_Literal("/mnt/c/Users/Alex/source/repos/PersonalRepos/shells");
+    Str path = Str_Lit("/mnt/c/Users/Alex/source/repos/PersonalRepos/shells");
     eassert(z_add(&path, &db, &arena) == Z_SUCCESS);
     eassert(db.count == 1);
     eassert(db.dirs[0].path.length == path.length);
@@ -143,8 +143,8 @@ void z_add_null_parameters()
     eassert(db.count == 1);
 
     eassert(z_add(&Str_Empty, &db, &arena) == Z_NULL_REFERENCE);
-    eassert(z_add(&Str_New(NULL, 3), &db, &arena) == Z_NULL_REFERENCE);
-    eassert(z_add(&Str_New("..", 3), NULL, &arena) == Z_NULL_REFERENCE);
+    eassert(z_add(&Str(NULL, 3), &db, &arena) == Z_NULL_REFERENCE);
+    eassert(z_add(&Str("..", 3), NULL, &arena) == Z_NULL_REFERENCE);
 
     z_exit(&db);
     ARENA_TEST_TEARDOWN;
@@ -159,10 +159,10 @@ void z_add_bad_parameters()
     eassert(z_init(&config_location, &db, &arena) == Z_SUCCESS);
     eassert(db.count == 1);
 
-    eassert(z_add(&Str_New(".", 0), &db, &arena) == Z_BAD_STRING);
-    eassert(z_add(&Str_New(".", 1), &db, &arena) == Z_BAD_STRING);
-    eassert(z_add(&Str_New("..", 1), &db, &arena) == Z_BAD_STRING);
-    eassert(z_add(&Str_New("..", 2), &db, &arena) == Z_BAD_STRING);
+    eassert(z_add(&Str(".", 0), &db, &arena) == Z_BAD_STRING);
+    eassert(z_add(&Str(".", 1), &db, &arena) == Z_BAD_STRING);
+    eassert(z_add(&Str("..", 1), &db, &arena) == Z_BAD_STRING);
+    eassert(z_add(&Str("..", 2), &db, &arena) == Z_BAD_STRING);
 
     z_exit(&db);
     ARENA_TEST_TEARDOWN;
@@ -175,7 +175,7 @@ void z_add_new_entry_contained_in_another_entry_but_different_test()
     z_Database db = {0};
     eassert(z_init(&config_location, &db, &arena) == Z_SUCCESS);
     eassert(db.count == 1);
-    Str path = Str_New_Literal("/mnt/c/Users/Alex/source/repos/PersonalRepos");
+    Str path = Str_Lit("/mnt/c/Users/Alex/source/repos/PersonalRepos");
 
     eassert(z_add(&path, &db, &arena) == Z_SUCCESS);
 
@@ -197,7 +197,7 @@ void z_match_find_empty_database_test()
     eassert(z_init(&config_location, &db, &arena) == Z_SUCCESS);
     eassert(db.count == 0);
 
-    Str target = Str_New_Literal("path");
+    Str target = Str_Lit("path");
     char cwd[CWD_LENGTH];
     if (!getcwd(cwd, CWD_LENGTH)) {
         ARENA_TEST_TEARDOWN;
@@ -221,7 +221,7 @@ void z_write_empty_database_test()
     eassert(z_init(&config_location, &db, &arena) == Z_SUCCESS);
     eassert(db.count == 0);
 
-    Str new_value = Str_New_Literal("ncsh");
+    Str new_value = Str_Lit("ncsh");
     Str cwd = {.value = "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells", .length = 52};
 
     eassert(z_database_add(&new_value, cwd.value, cwd.length, &db, &arena) == Z_SUCCESS);
@@ -261,7 +261,7 @@ void z_write_nonempty_database_test()
     eassert(db.count == 1);
 
     double start_rank = db.dirs[0].rank;
-    Str new_value = Str_New_Literal("ttytest2");
+    Str new_value = Str_Lit("ttytest2");
     Str cwd = {.value = "/mnt/c/Users/Alex/source/repos/PersonalRepos", .length = 45};
 
     eassert(z_database_add(&new_value, cwd.value, cwd.length, &db, &arena) == Z_SUCCESS);
@@ -285,7 +285,7 @@ void z_match_find_finds_exact_match_test()
     eassert(z_init(&config_location, &db, &arena) == Z_SUCCESS);
     eassert(db.count == 2);
 
-    Str target = Str_New_Literal("/mnt/c/Users/Alex/source/repos/PersonalRepos/shells/ncsh");
+    Str target = Str_Lit("/mnt/c/Users/Alex/source/repos/PersonalRepos/shells/ncsh");
     char cwd[CWD_LENGTH];
     if (!getcwd(cwd, CWD_LENGTH)) {
         ARENA_TEST_TEARDOWN;
@@ -312,7 +312,7 @@ void z_match_find_finds_match_test()
     eassert(z_init(&config_location, &db, &arena) == Z_SUCCESS);
     eassert(db.count == 2);
 
-    Str target = Str_New_Literal("ncsh");
+    Str target = Str_Lit("ncsh");
     char cwd[CWD_LENGTH];
     if (!getcwd(cwd, CWD_LENGTH)) {
         ARENA_TEST_TEARDOWN;
@@ -339,7 +339,7 @@ void z_match_find_no_match_test()
     eassert(z_init(&config_location, &db, &arena) == Z_SUCCESS);
     eassert(db.count == 2);
 
-    Str target = Str_New_Literal("path");
+    Str target = Str_Lit("path");
     char cwd[CWD_LENGTH];
     if (!getcwd(cwd, CWD_LENGTH)) {
         ARENA_TEST_TEARDOWN;
@@ -364,7 +364,7 @@ void z_match_find_multiple_matches_test()
     eassert(z_init(&config_location, &db, &arena) == Z_SUCCESS);
     eassert(db.count == 2);
 
-    Str target = Str_New_Literal("PersonalRepos");
+    Str target = Str_Lit("PersonalRepos");
     char cwd[CWD_LENGTH];
     if (!getcwd(cwd, CWD_LENGTH)) {
         ARENA_TEST_TEARDOWN;
@@ -396,7 +396,7 @@ void z_change_directory_test()
         eassert(false);
     }
 
-    Str target = Str_New_Literal("ncsh");
+    Str target = Str_Lit("ncsh");
     z(&target, buffer, &db, &arena, scratch_arena);
 
     if (!getcwd(buffer_after, CWD_LENGTH)) {
@@ -475,7 +475,7 @@ void z_no_match_change_directory_test()
         eassert(false);
     }
 
-    Str target = Str_New_Literal("zzz");
+    Str target = Str_Lit("zzz");
     z(&target, buffer, &db, &arena, scratch_arena);
 
     if (!getcwd(buffer_after, CWD_LENGTH)) {
@@ -515,7 +515,7 @@ void z_valid_subdirectory_change_directory_test()
         eassert(false);
     }
 
-    Str target = Str_New_Literal("tests");
+    Str target = Str_Lit("tests");
     z(&target, buffer, &db, &arena, scratch_arena);
 
     if (!getcwd(buffer_after, CWD_LENGTH)) {
@@ -556,7 +556,7 @@ void z_dir_slash_dir_change_directory_test()
         eassert(false);
     }
     size_t buffer_length = strlen(buffer) + 1;
-    Str target = Str_New_Literal("tests/test_dir");
+    Str target = Str_Lit("tests/test_dir");
     z_database_add(&target, buffer, buffer_length, &db, &arena);
 
     z(&target, buffer, &db, &arena, scratch_arena);
@@ -601,7 +601,7 @@ void z_double_dot_change_directory_test()
         eassert(false);
     }
 
-    Str target = Str_New_Literal("..");
+    Str target = Str_Lit("..");
     z(&target, buffer, &db, &arena, scratch_arena);
 
     if (!getcwd(buffer_after, CWD_LENGTH)) {
@@ -643,7 +643,7 @@ void z_empty_database_valid_subdirectory_change_directory_test()
         eassert(false);
     }
 
-    Str target = Str_New_Literal("tests");
+    Str target = Str_Lit("tests");
     z(&target, buffer, &db, &arena, scratch_arena);
 
     if (!getcwd(buffer_after, CWD_LENGTH)) {
@@ -687,7 +687,7 @@ void z_contains_correct_match_test()
         eassert(false);
     }
 
-    Str target = Str_New_Literal("PersonalRepos");
+    Str target = Str_Lit("PersonalRepos");
     z(&target, buffer, &db, &arena, scratch_arena);
     char* path = "/mnt/c/Users/Alex/source/repos/PersonalRepos/shells";
 
@@ -721,7 +721,7 @@ void z_crashing_input_test()
     eassert(db.count == 2);
 
     char* buffer = arena_malloc(&arena, CWD_LENGTH, char);
-    Str target = Str_New_Literal("");
+    Str target = Str_Lit("");
     z(&target, buffer, &db, &arena, scratch_arena);
 
     // not crashing is a test passed

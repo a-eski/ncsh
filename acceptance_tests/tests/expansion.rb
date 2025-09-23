@@ -19,18 +19,18 @@ def home_expansion_tests(row)
   home_expansion_echo_test(row)
 end
 
-def ls_star_expansion_test(row)
-  @tty.send_line('ls *.md')
+def star_expansion_test(row)
+  @tty.send_line('echo *.md')
   row += 1
-  @tty.assert_row(row, 'COMPILE.md  NOTES.md  README.md')
+  @tty.assert_row(row, 'COMPILE.md NOTES.md README.md')
   row += 1
-  test_passed('ls star expansion test')
+  test_passed('star expansion test')
   row
 end
 
 def star_expansion_tests(row)
   starting_tests('star expansion')
-  ls_star_expansion_test(row)
+  star_expansion_test(row)
 end
 
 def ls_question_expansion_test(row)

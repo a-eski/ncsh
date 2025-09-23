@@ -3,12 +3,11 @@
 
 #pragma once
 
-#include "../types.h"
-#include "lexemes.h"
+#include "lex.h"
 #include "stmts.h"
 
 enum {
-    PE_NOTHING,
+    PE_NOTHING = 1,
     PE_INVALID_STMT,
     PE_MISSING_TOK
 };
@@ -21,4 +20,4 @@ typedef struct {
     } output;
 } Parser_Output;
 
-Parser_Output parser_parse(Lexemes* lexemes, Shell* restrict shell, Arena* restrict scratch);
+Parser_Output parse(Lexemes* lexemes, Arena* restrict scratch);

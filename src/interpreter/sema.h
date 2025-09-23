@@ -2,6 +2,6 @@
 
 #pragma once
 
-#include "lexemes.h"
+#include "lex.h"
 
 int sema_analyze(Lexemes* restrict lexemes);

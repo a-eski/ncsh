@@ -65,6 +65,7 @@ typedef struct {
 
     Statements* stmts;
     Statement* cur_stmt;
+    enum Ops* ops;
     Commands* cur_cmds;
     Shell* sh;
     Arena* s;

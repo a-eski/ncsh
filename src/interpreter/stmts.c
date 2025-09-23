@@ -20,6 +20,7 @@ Commands* cmds_alloc(Arena* restrict scratch)
     c->strs = arena_malloc(scratch, STMT_DEFAULT_N, Str);
     c->ops = arena_malloc(scratch, STMT_DEFAULT_N, enum Ops);
     c->next = NULL;
+    c->op = OP_NONE;
     c->prev_op = OP_NONE;
     return c;
 }
@@ -28,6 +29,16 @@ void cmd_realloc(Commands* restrict cmds, Arena* restrict scratch)
 {
     size_t c = cmds->cap;
     size_t new_cap = c *= 2;
+    cmds->cap = new_cap;
+    cmds->strs =
+        arena_realloc(scratch, new_cap, Str, cmds->strs, c);
+    cmds->ops =
+        arena_realloc(scratch, new_cap, enum Ops, cmds->ops, c);
+}
+
+void cmd_realloc_exact(Commands* restrict cmds, Arena* restrict scratch, size_t new_cap)
+{
+    size_t c = cmds->cap;
     cmds->cap = new_cap;
     cmds->strs =
         arena_realloc(scratch, new_cap, Str, cmds->strs, c);

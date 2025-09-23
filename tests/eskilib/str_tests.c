@@ -9,7 +9,7 @@
 void estrcmp_no_length_test()
 {
     char* val = "";
-    bool result = estrcmp(Str_New(val, 0), Str_New("", 0));
+    bool result = estrcmp(Str(val, 0), Str("", 0));
     eassert(!result);
 }
 
@@ -34,7 +34,7 @@ void estrcmp_a_null_test()
 
 void estrcmp_s1_null_test()
 {
-    bool result = estrcmp(Str_Empty, Str_New_Literal("hello"));
+    bool result = estrcmp(Str_Empty, Str_Lit("hello"));
     eassert(!result);
 }
 
@@ -62,8 +62,8 @@ void estrcmp_a_empty_string_test()
 
 void estrcmp_true_test()
 {
-    Str val = Str_New_Literal("hello");
-    bool result = estrcmp(val, Str_New_Literal("hello"));
+    Str val = Str_Lit("hello");
+    bool result = estrcmp(val, Str_Lit("hello"));
     eassert(result);
 }
 
@@ -77,8 +77,8 @@ void estrcmp_a_true_test()
 
 void estrcmp_false_test()
 {
-    Str s1 = Str_New_Literal("hello hello");
-    Str s2 = Str_New_Literal("hello there");
+    Str s1 = Str_Lit("hello hello");
+    Str s2 = Str_Lit("hello there");
 
     bool result = estrcmp(s1, s2);
 
@@ -87,8 +87,8 @@ void estrcmp_false_test()
 
 void estrcmp_a_false_test()
 {
-    Str s1 = Str_New_Literal("hello hello");
-    Str s2 = Str_New_Literal("hello there");
+    Str s1 = Str_Lit("hello hello");
+    Str s2 = Str_Lit("hello there");
 
     bool result = estrcmp_a(s1.value, s1.length, s2.value, s2.length);
 
@@ -97,7 +97,7 @@ void estrcmp_a_false_test()
 
 void estrcmp_mismatched_lengths_false_test()
 {
-    bool result = estrcmp(Str_New_Literal("hello"), Str_New_Literal("hello there"));
+    bool result = estrcmp(Str_Lit("hello"), Str_Lit("hello there"));
 
     eassert(!result);
 }
@@ -119,7 +119,7 @@ void estrcmp_partial_comparison_true_test()
     char* val = "hello";
     // only compare the first three characters, 'hel'
     constexpr size_t len = sizeof("hello") - 1 - 2;
-    bool result = estrcmp(Str_New(val, len), Str_New("hello", len));
+    bool result = estrcmp(Str(val, len), Str("hello", len));
     eassert(result);
 }
 
@@ -134,8 +134,8 @@ void estrcmp_a_partial_comparison_true_test()
 
 void estrcmp_partial_comparison_false_test()
 {
-    Str s1 = Str_New("hello hello", sizeof("hello hello") - 2);
-    Str s2 = Str_New("hello there", sizeof("hello there") - 2);
+    Str s1 = Str("hello hello", sizeof("hello hello") - 2);
+    Str s2 = Str("hello there", sizeof("hello there") - 2);
 
     bool result = estrcmp(s1, s2);
 
@@ -144,8 +144,8 @@ void estrcmp_partial_comparison_false_test()
 
 void estrcmp_a_partial_comparison_false_test()
 {
-    Str s1 = Str_New("hello hello", sizeof("hello hello") - 2);
-    Str s2 = Str_New("hello there", sizeof("hello there") - 2);
+    Str s1 = Str("hello hello", sizeof("hello hello") - 2);
+    Str s2 = Str("hello there", sizeof("hello there") - 2);
 
     bool result = estrcmp_a(s1.value, s1.length, s2.value, s2.length);
 
@@ -167,7 +167,7 @@ void estrsplit_last_pos_splitter_returns_null_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    Str* results= estrsplit(Str_New_Literal("hello="), '=', &s);
+    Str* results= estrsplit(Str_Lit("hello="), '=', &s);
 
     eassert(!results);
 
@@ -178,7 +178,7 @@ void estrsplit_valid_input_returns_strs_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    Str* results = estrsplit(Str_New_Literal("HOME=/home/alex"), '=', &s);
+    Str* results = estrsplit(Str_Lit("HOME=/home/alex"), '=', &s);
 
     eassert(!memcmp(results[0].value, "HOME", sizeof("HOME") - 1));
     eassert(results[0].length == sizeof("HOME"));
@@ -193,7 +193,7 @@ void estrsplit_valid_input_alternate_splitter_returns_strs_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    Str* results = estrsplit(Str_New_Literal("HOME,/home/alex"), ',', &s);
+    Str* results = estrsplit(Str_Lit("HOME,/home/alex"), ',', &s);
 
     eassert(!memcmp(results[0].value, "HOME", sizeof("HOME") - 1));
     eassert(results[0].length == sizeof("HOME"));
@@ -219,7 +219,7 @@ void estrjoin_one_bad_value_returns_null_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    Str* result = estrjoin(&Str_New_Literal("hello"), &Str_Empty, '=', &s);
+    Str* result = estrjoin(&Str_Lit("hello"), &Str_Empty, '=', &s);
 
     eassert(!result);
 
@@ -230,7 +230,7 @@ void estrjoin_other_bad_value_returns_null_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    Str* result = estrjoin(&Str_Empty, &Str_New_Literal("hello"), '=', &s);
+    Str* result = estrjoin(&Str_Empty, &Str_Lit("hello"), '=', &s);
 
     eassert(!result);
 
@@ -241,7 +241,7 @@ void estrjoin_valid_values_returns_joined_str_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    Str* result = estrjoin(&Str_New_Literal("hello"), &Str_New_Literal("world"), ' ', &s);
+    Str* result = estrjoin(&Str_Lit("hello"), &Str_Lit("world"), ' ', &s);
 
     eassert(result);
     eassert(!memcmp(result->value, "hello world", sizeof("hello world") - 1));
@@ -265,7 +265,7 @@ void estrcat_one_bad_value_returns_null_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    Str* result = estrcat(&Str_New_Literal("hello"), &Str_Empty, &s);
+    Str* result = estrcat(&Str_Lit("hello"), &Str_Empty, &s);
 
     eassert(!result);
 
@@ -276,7 +276,7 @@ void estrcat_other_bad_value_returns_null_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    Str* result = estrcat(&Str_Empty, &Str_New_Literal("hello"), &s);
+    Str* result = estrcat(&Str_Empty, &Str_Lit("hello"), &s);
 
     eassert(!result);
 
@@ -287,7 +287,7 @@ void estrcat_valid_values_returns_concatted_str_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    Str* result = estrcat(&Str_New_Literal("hello"), &Str_New_Literal(", world"), &s);
+    Str* result = estrcat(&Str_Lit("hello"), &Str_Lit(", world"), &s);
 
     eassert(result);
     eassert(!memcmp(result->value, "hello, world", sizeof("hello, world") - 1));
@@ -302,7 +302,7 @@ void estrcat_valid_mixed_values_returns_concatted_str_test()
 
     char* rv = malloc(sizeof("hello"));
     memcpy(rv, "hello", sizeof("hello"));
-    Str* result = estrcat(&Str_Get(rv), &Str_New_Literal(", world"), &s);
+    Str* result = estrcat(&Str_Get(rv), &Str_Lit(", world"), &s);
 
     eassert(result);
     eassert(!memcmp(result->value, "hello, world", sizeof("hello, world") - 1));
@@ -314,7 +314,7 @@ void estrcat_valid_mixed_values_returns_concatted_str_test()
 
 void estridx_returns_idx_test()
 {
-    size_t idx = estridx(&Str_New_Literal("vim=nvim"), '=');
+    size_t idx = estridx(&Str_Lit("vim=nvim"), '=');
 
     eassert(idx == 3);
 }
@@ -325,7 +325,7 @@ void estrtoarr_single_test()
 
     constexpr size_t n = 6;
     Str vals[n] = {
-        [0] = Str_New_Literal("ls")
+        [0] = Str_Lit("ls")
     };
 
     char** res = estrtoarr(vals, n, &s);
@@ -344,8 +344,8 @@ void estrtoarr_two_test()
 
     constexpr size_t n = 6;
     Str vals[n] = {
-        [0] = Str_New_Literal("ls"),
-        [1] = Str_New_Literal("sort")
+        [0] = Str_Lit("ls"),
+        [1] = Str_Lit("sort")
     };
 
     char** res = estrtoarr(vals, n, &s);
@@ -366,12 +366,12 @@ void estrtoarr_multiple_test()
 
     constexpr size_t n = 6;
     Str vals[n] = {
-        [0] = Str_New_Literal("ls"),
-        [1] = Str_New_Literal("sort"),
-        [2] = Str_New_Literal("head"),
-        [3] = Str_New_Literal("-1"),
-        [4] = Str_New_Literal("wc"),
-        [5] = Str_New_Literal("-c")
+        [0] = Str_Lit("ls"),
+        [1] = Str_Lit("sort"),
+        [2] = Str_Lit("head"),
+        [3] = Str_Lit("-1"),
+        [4] = Str_Lit("wc"),
+        [5] = Str_Lit("-c")
     };
 
     char** res = estrtoarr(vals, n, &s);
@@ -398,11 +398,11 @@ void estrtrim_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    auto str = estrdup(&Str_New_Literal("nvim  "), &s);
+    auto str = estrdup(&Str_Lit("nvim  "), &s);
 
     estrtrim(str);
 
-    auto expected = Str_New_Literal("nvim");
+    auto expected = Str_Lit("nvim");
     eassert(str->length == expected.length);
     eassert(!memcmp(str->value, expected.value, str->length - 1));
 
@@ -413,11 +413,11 @@ void estrtrim_nothing_to_trim_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    auto str = estrdup(&Str_New_Literal("nvim"), &s);
+    auto str = estrdup(&Str_Lit("nvim"), &s);
 
     estrtrim(str);
 
-    auto expected = Str_New_Literal("nvim");
+    auto expected = Str_Lit("nvim");
     eassert(str->length == expected.length);
     eassert(!memcmp(str->value, expected.value, str->length - 1));
 
@@ -428,7 +428,7 @@ void sb_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
     auto sb = sb_new(&s);
-    auto str = Str_New_Literal("ncsh");
+    auto str = Str_Lit("ncsh");
 
     sb_add(&str, sb, &s);
     eassert(sb->n == 1);
@@ -446,15 +446,15 @@ void sb_many_test()
     SCRATCH_ARENA_TEST_SETUP;
     auto sb = sb_new(&s);
 
-    sb_add(&Str_New_Literal("/home"), sb, &s);
+    sb_add(&Str_Lit("/home"), sb, &s);
     eassert(sb->n == 1);
-    sb_add(&Str_New_Literal("/alex"), sb, &s);
+    sb_add(&Str_Lit("/alex"), sb, &s);
     eassert(sb->n == 2);
-    sb_add(&Str_New_Literal("/ncsh"), sb, &s);
+    sb_add(&Str_Lit("/ncsh"), sb, &s);
     eassert(sb->n == 3);
     auto res = sb_to_str(sb, &s);
 
-    auto expected = Str_New_Literal("/home/alex/ncsh");
+    auto expected = Str_Lit("/home/alex/ncsh");
     eassert(res);
     eassert(res->length == expected.length);
     eassert(!memcmp(res->value, expected.value, expected.length - 1));
@@ -467,7 +467,7 @@ void sb_realloc_test()
     SCRATCH_ARENA_TEST_SETUP;
     auto sb = sb_new(&s);
 
-    auto str = &Str_New_Literal("/alex");
+    auto str = &Str_Lit("/alex");
     for (size_t i = 0; i < 15; ++i) {
         sb_add(str, sb, &s);
         eassert(sb->n = i + 1);
@@ -476,7 +476,7 @@ void sb_realloc_test()
 
     auto res = sb_to_str(sb, &s);
 
-    auto expected = Str_New_Literal("/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex");
+    auto expected = Str_Lit("/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex");
     eassert(res);
     eassert(res->length == expected.length);
     eassert(!memcmp(res->value, expected.value, expected.length - 1));
@@ -489,7 +489,7 @@ void sb_multiple_realloc_test()
     SCRATCH_ARENA_TEST_SETUP;
     auto sb = sb_new(&s);
 
-    auto str = &Str_New_Literal("/alex");
+    auto str = &Str_Lit("/alex");
     for (size_t i = 0; i < 25; ++i) {
         sb_add(str, sb, &s);
         eassert(sb->n = i + 1);
@@ -498,7 +498,7 @@ void sb_multiple_realloc_test()
 
     auto res = sb_to_str(sb, &s);
 
-    auto expected = Str_New_Literal("/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex");
+    auto expected = Str_Lit("/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex");
     eassert(res);
     eassert(res->length == expected.length);
     eassert(!memcmp(res->value, expected.value, expected.length - 1));
@@ -510,7 +510,7 @@ void sb_joined_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
     auto sb = sb_new(&s);
-    auto str = Str_New_Literal("ncsh");
+    auto str = Str_Lit("ncsh");
 
     sb_add(&str, sb, &s);
     eassert(sb->n == 1);
@@ -528,15 +528,15 @@ void sb_joined_many_test()
     SCRATCH_ARENA_TEST_SETUP;
     auto sb = sb_new(&s);
 
-    sb_add(&Str_New_Literal("/home"), sb, &s);
+    sb_add(&Str_Lit("/home"), sb, &s);
     eassert(sb->n == 1);
-    sb_add(&Str_New_Literal("alex"), sb, &s);
+    sb_add(&Str_Lit("alex"), sb, &s);
     eassert(sb->n == 2);
-    sb_add(&Str_New_Literal("ncsh"), sb, &s);
+    sb_add(&Str_Lit("ncsh"), sb, &s);
     eassert(sb->n == 3);
     auto res = sb_to_joined_str(sb, '/', &s);
 
-    auto expected = Str_New_Literal("/home/alex/ncsh");
+    auto expected = Str_Lit("/home/alex/ncsh");
     eassert(res);
     eassert(res->length == expected.length);
     eassert(!memcmp(res->value, expected.value, expected.length - 1));
@@ -549,7 +549,7 @@ void sb_joined_realloc_test()
     SCRATCH_ARENA_TEST_SETUP;
     auto sb = sb_new(&s);
 
-    auto str = &Str_New_Literal("alex");
+    auto str = &Str_Lit("alex");
     for (size_t i = 0; i < 15; ++i) {
         sb_add(str, sb, &s);
         eassert(sb->n = i + 1);
@@ -558,7 +558,7 @@ void sb_joined_realloc_test()
 
     auto res = sb_to_joined_str(sb, '/', &s);
 
-    auto expected = Str_New_Literal("alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex");
+    auto expected = Str_Lit("alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex");
     eassert(res);
     eassert(res->length == expected.length);
     eassert(!memcmp(res->value, expected.value, expected.length - 1));
@@ -571,7 +571,7 @@ void sb_joined_multiple_realloc_test()
     SCRATCH_ARENA_TEST_SETUP;
     auto sb = sb_new(&s);
 
-    auto str = &Str_New_Literal("alex");
+    auto str = &Str_Lit("alex");
     for (size_t i = 0; i < 25; ++i) {
         sb_add(str, sb, &s);
         eassert(sb->n = i + 1);
@@ -580,7 +580,7 @@ void sb_joined_multiple_realloc_test()
 
     auto res = sb_to_joined_str(sb, '/', &s);
 
-    auto expected = Str_New_Literal("alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex");
+    auto expected = Str_Lit("alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex/alex");
     eassert(res);
     eassert(res->length == expected.length);
     eassert(!memcmp(res->value, expected.value, expected.length - 1));
@@ -596,10 +596,10 @@ void sb_joined_path_test()
     auto str = Str_Get(getenv("PATH"));
 
     sb_add(&str, sb, &s);
-    sb_add(&Str_New_Literal("/opt/nvim-linux-x86_64/bin"), sb, &s);
-    sb_add(&Str_New_Literal("/home/alex/.cargo/bin"), sb, &s);
-    sb_add(&Str_New_Literal("/usr/local/opt/llvm/bin"), sb, &s);
-    sb_add(&Str_New_Literal("/usr/local/go/bin"), sb, &s);
+    sb_add(&Str_Lit("/opt/nvim-linux-x86_64/bin"), sb, &s);
+    sb_add(&Str_Lit("/home/alex/.cargo/bin"), sb, &s);
+    sb_add(&Str_Lit("/usr/local/opt/llvm/bin"), sb, &s);
+    sb_add(&Str_Lit("/usr/local/go/bin"), sb, &s);
 
     auto res = sb_to_joined_str(sb, ':', &s);
 
@@ -618,10 +618,10 @@ void sb_joined_path_in_scratch_to_perm_test()
     auto str = Str_Get(getenv("PATH"));
 
     sb_add(&str, sb, &s);
-    sb_add(&Str_New_Literal("/opt/nvim-linux-x86_64/bin"), sb, &s);
-    sb_add(&Str_New_Literal("/home/alex/.cargo/bin"), sb, &s);
-    sb_add(&Str_New_Literal("/usr/local/opt/llvm/bin"), sb, &s);
-    sb_add(&Str_New_Literal("/usr/local/go/bin"), sb, &s);
+    sb_add(&Str_Lit("/opt/nvim-linux-x86_64/bin"), sb, &s);
+    sb_add(&Str_Lit("/home/alex/.cargo/bin"), sb, &s);
+    sb_add(&Str_Lit("/usr/local/opt/llvm/bin"), sb, &s);
+    sb_add(&Str_Lit("/usr/local/go/bin"), sb, &s);
 
     auto res = sb_to_joined_str(sb, ':', &a);
 

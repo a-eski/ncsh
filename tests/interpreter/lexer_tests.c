@@ -12,7 +12,7 @@ void lexer_lex_ls_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    auto line = Str_New_Literal("ls");
+    auto line = Str_Lit("ls");
 
     Lexemes lexemes = {0};
     lexer_lex(line, &lexemes, &scratch_arena);
@@ -33,7 +33,7 @@ void lexer_lex_ls_dash_l_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    auto line = Str_New_Literal("ls -l");
+    auto line = Str_Lit("ls -l");
 
     Lexemes lexemes = {0};
     lexer_lex(line, &lexemes, &scratch_arena);
@@ -57,7 +57,7 @@ void lexer_lex_pipe_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    auto line = Str_New_Literal("ls | sort");
+    auto line = Str_Lit("ls | sort");
 
     Lexemes lexemes = {0};
     lexer_lex(line, &lexemes, &scratch_arena);
@@ -85,7 +85,7 @@ void lexer_lex_multiple_pipes_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    auto line = Str_New_Literal("ls | sort | table");
+    auto line = Str_Lit("ls | sort | table");
 
     Lexemes lexemes = {0};
     lexer_lex(line, &lexemes, &scratch_arena);
@@ -121,7 +121,7 @@ void lexer_lex_multiple_pipes_multiple_args_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    auto line = Str_New_Literal("ls | sort | head -1 | wc -c");
+    auto line = Str_Lit("ls | sort | head -1 | wc -c");
 
     Lexemes lexemes = {0};
     lexer_lex(line, &lexemes, &scratch_arena);
@@ -173,7 +173,7 @@ void lexer_lex_background_job_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    auto line = Str_New_Literal("longrunningprogram &");
+    auto line = Str_Lit("longrunningprogram &");
 
     Lexemes lexemes = {0};
     lexer_lex(line, &lexemes, &scratch_arena);
@@ -197,7 +197,7 @@ void lexer_lex_output_redirection_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    auto line = Str_New_Literal("ls > text.txt");
+    auto line = Str_Lit("ls > text.txt");
 
     Lexemes lexemes = {0};
     lexer_lex(line, &lexemes, &scratch_arena);
@@ -225,7 +225,7 @@ void lexer_lex_output_redirection_append_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    auto line = Str_New_Literal("ls >> text.txt");
+    auto line = Str_Lit("ls >> text.txt");
 
     Lexemes lexemes = {0};
     lexer_lex(line, &lexemes, &scratch_arena);
@@ -253,7 +253,7 @@ void lexer_lex_input_redirection_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    auto line = Str_New_Literal("t.txt < sort");
+    auto line = Str_Lit("t.txt < sort");
 
     Lexemes lexemes = {0};
     lexer_lex(line, &lexemes, &scratch_arena);
@@ -279,7 +279,7 @@ void lexer_lex_stdout_and_stderr_redirection_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    auto line = Str_New_Literal("ls &> text.txt");
+    auto line = Str_Lit("ls &> text.txt");
 
     Lexemes lexemes = {0};
     lexer_lex(line, &lexemes, &scratch_arena);
@@ -307,7 +307,7 @@ void lexer_lex_stdout_and_stderr_redirection_append_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    auto line = Str_New_Literal("ls &>> text.txt");
+    auto line = Str_Lit("ls &>> text.txt");
 
     Lexemes lexemes = {0};
     lexer_lex(line, &lexemes, &scratch_arena);
@@ -335,7 +335,7 @@ void lexer_lex_assignment_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    auto line = Str_New_Literal("STR=\"Hello\"");
+    auto line = Str_Lit("STR=\"Hello\"");
 
     Lexemes lexemes = {0};
     lexer_lex(line, &lexemes, &scratch_arena);
@@ -357,7 +357,7 @@ void lexer_lex_assignment_spaces_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    auto line = Str_New_Literal("STR=\"ls -a\"");
+    auto line = Str_Lit("STR=\"ls -a\"");
 
     Lexemes lexemes = {0};
     lexer_lex(line, &lexemes, &scratch_arena);
@@ -378,7 +378,7 @@ void lexer_lex_assignment_spaces_multiple_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    auto line = Str_New_Literal("STR=\"ls | sort\"");
+    auto line = Str_Lit("STR=\"ls | sort\"");
 
     Lexemes lexemes = {0};
     lexer_lex(line, &lexemes, &scratch_arena);
@@ -399,7 +399,7 @@ void lexer_lex_variable_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    auto line = Str_New_Literal("echo $STR");
+    auto line = Str_Lit("echo $STR");
 
     Lexemes lexemes = {0};
     lexer_lex(line, &lexemes, &scratch_arena);
@@ -423,7 +423,7 @@ void lexer_lex_variable_and_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    auto line = Str_New_Literal("STR=hello && echo $STR");
+    auto line = Str_Lit("STR=hello && echo $STR");
 
     Lexemes lexemes = {0};
     lexer_lex(line, &lexemes, &scratch_arena);
@@ -455,7 +455,7 @@ void lexer_lex_variable_command_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    auto line = Str_New_Literal("COMMAND=ls && $COMMAND");
+    auto line = Str_Lit("COMMAND=ls && $COMMAND");
 
     Lexemes lexemes = {0};
     lexer_lex(line, &lexemes, &scratch_arena);
@@ -483,7 +483,7 @@ void lexer_lex_double_quotes_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    auto line = Str_New_Literal("echo \"hello\"");
+    auto line = Str_Lit("echo \"hello\"");
 
     Lexemes lexemes = {0};
     lexer_lex(line, &lexemes, &scratch_arena);
@@ -507,7 +507,7 @@ void lexer_lex_single_quotes_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    auto line = Str_New_Literal("echo \'hello\'");
+    auto line = Str_Lit("echo \'hello\'");
 
     Lexemes lexemes = {0};
     lexer_lex(line, &lexemes, &scratch_arena);
@@ -531,7 +531,7 @@ void lexer_lex_backtick_quotes_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    auto line = Str_New_Literal("echo `hello`");
+    auto line = Str_Lit("echo `hello`");
 
     Lexemes lexemes = {0};
     lexer_lex(line, &lexemes, &scratch_arena);
@@ -555,7 +555,7 @@ void lexer_lex_git_commit_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    auto line = Str_New_Literal("git commit -m \"this is a commit message\"");
+    auto line = Str_Lit("git commit -m \"this is a commit message\"");
 
     Lexemes lexemes = {0};
     lexer_lex(line, &lexemes, &scratch_arena);
@@ -587,7 +587,7 @@ void lexer_lex_home_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    auto line = Str_New_Literal("ls ~");
+    auto line = Str_Lit("ls ~");
 
     Lexemes lexemes = {0};
     lexer_lex(line, &lexemes, &scratch_arena);
@@ -611,7 +611,7 @@ void lexer_lex_home_at_start_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    auto line = Str_New_Literal("ls ~/snap");
+    auto line = Str_Lit("ls ~/snap");
 
     Lexemes lexemes = {0};
     lexer_lex(line, &lexemes, &scratch_arena);
@@ -635,7 +635,7 @@ void lexer_lex_math_operators_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    auto line = Str_New_Literal("$( 1 + 1 - 1 * 1 / 1 % 1 ** 1 )");
+    auto line = Str_Lit("$( 1 + 1 - 1 * 1 / 1 % 1 ** 1 )");
 
     Lexemes lexemes = {0};
     lexer_lex(line, &lexemes, &scratch_arena);
@@ -686,7 +686,7 @@ void lexer_lex_glob_star_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    auto line = Str_New_Literal("ls *.md");
+    auto line = Str_Lit("ls *.md");
 
     Lexemes lexemes = {0};
     lexer_lex(line, &lexemes, &scratch_arena);
@@ -710,7 +710,7 @@ void lexer_lex_glob_question_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    auto line = Str_New_Literal("ls ?.md");
+    auto line = Str_Lit("ls ?.md");
 
     Lexemes lexemes = {0};
     lexer_lex(line, &lexemes, &scratch_arena);
@@ -735,7 +735,7 @@ void lexer_lex_glob_star_shouldnt_crash()
     SCRATCH_ARENA_TEST_SETUP;
 
     // found from fuzzer crashing inputs
-    auto line = Str_New_Literal("* * * * * * * * * * * * * * * * * *");
+    auto line = Str_Lit("* * * * * * * * * * * * * * * * * *");
 
     Lexemes lexemes = {0};
     lexer_lex(line, &lexemes, &scratch_arena);
@@ -756,7 +756,7 @@ void lexer_lex_tilde_home_shouldnt_crash()
 
     // found from fuzzer crashing inputs
     auto line =
-        Str_New_Literal("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~?~");
+        Str_Lit("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~?~");
 
     Lexemes lexemes = {0};
     lexer_lex(line, &lexemes, &scratch_arena);
@@ -771,7 +771,7 @@ void lexer_lex_glob_question_and_tilde_home_shouldnt_crash()
     SCRATCH_ARENA_TEST_SETUP;
 
     // found from fuzzer crashing inputs
-    auto line = Str_New_Literal("??~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+    auto line = Str_Lit("??~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
                  "~~~~?~>w?");
 
     Lexemes lexemes = {0};
@@ -786,7 +786,7 @@ void lexer_lex_bool_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    auto line = Str_New_Literal("false && true || false");
+    auto line = Str_Lit("false && true || false");
 
     Lexemes lexemes = {0};
     lexer_lex(line, &lexemes, &scratch_arena);
@@ -822,7 +822,7 @@ void lexer_lex_if_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    auto line = Str_New_Literal("if [ 1 -eq 1 ]; then echo 'hi'; fi");
+    auto line = Str_Lit("if [ 1 -eq 1 ]; then echo 'hi'; fi");
 
     Lexemes lexemes = {0};
     lexer_lex(line, &lexemes, &scratch_arena);
@@ -848,7 +848,7 @@ void lexer_lex_if_else_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    auto line = Str_New_Literal("if [ 1 -eq 1 ]; then echo 'hi'; else echo hello; fi");
+    auto line = Str_Lit("if [ 1 -eq 1 ]; then echo 'hi'; else echo hello; fi");
 
     Lexemes lexemes = {0};
     lexer_lex(line, &lexemes, &scratch_arena);
@@ -877,7 +877,7 @@ void lexer_lex_comment_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    auto line = Str_New_Literal("echo \"hello\" # this is a comment");
+    auto line = Str_Lit("echo \"hello\" # this is a comment");
 
     Lexemes lexemes = {0};
     lexer_lex(line, &lexemes, &scratch_arena);
@@ -894,6 +894,95 @@ void lexer_lex_comment_test()
 
     // comment is stripped by the lexer
     eassert(!lexemes.strs[2].value);
+
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
+void lexer_lex_var_increment_test()
+{
+    SCRATCH_ARENA_TEST_SETUP;
+
+    auto line = Str_Lit("count=$((count + 1))");
+
+    Lexemes lexemes = {0};
+    lexer_lex(line, &lexemes, &scratch_arena);
+
+    eassert(lexemes.count == 3);
+
+    eassert(!memcmp(lexemes.strs[0].value, "count=$((count", 14));
+    eassert(lexemes.ops[0] == OP_ASSIGNMENT_EXPR);
+    eassert(lexemes.strs[0].length == 15);
+
+    eassert(!memcmp(lexemes.strs[1].value, "+", 1));
+    eassert(lexemes.ops[1] == OP_ADD);
+    eassert(lexemes.strs[1].length == 2);
+
+    eassert(!memcmp(lexemes.strs[2].value, "1))", 3));
+    eassert(lexemes.ops[2] == OP_CONST);
+    eassert(lexemes.strs[2].length == 4);
+
+    eassert(!lexemes.strs[3].value);
+
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
+void lexer_lex_while_test()
+{
+    SCRATCH_ARENA_TEST_SETUP;
+
+    auto line = Str_Lit("count=1\nwhile [ $count -lt 3 ]; do echo $count\n count=$((count + 1)) done");
+
+    Lexemes lexemes = {0};
+    lexer_lex(line, &lexemes, &scratch_arena);
+
+    eassert(lexemes.count == 15);
+
+    eassert(!memcmp(lexemes.strs[0].value, "count=1", 7));
+    eassert(lexemes.ops[0] == OP_ASSIGNMENT);
+    eassert(lexemes.strs[0].length == 8);
+
+    eassert(!memcmp(lexemes.strs[1].value, "while", 5));
+    eassert(lexemes.ops[1] == OP_WHILE);
+    eassert(lexemes.strs[1].length == 6);
+
+    eassert(lexemes.ops[2] == OP_CONDITION_START);
+
+    eassert(!memcmp(lexemes.strs[3].value, "$count", 6));
+    eassert(lexemes.ops[3] == OP_VARIABLE);
+    eassert(lexemes.strs[3].length == 7);
+
+    eassert(lexemes.ops[4] == OP_LESS_THAN);
+
+    eassert(!memcmp(lexemes.strs[5].value, "3", 1));
+    eassert(lexemes.ops[5] == OP_CONST);
+    eassert(lexemes.strs[5].length == 2);
+
+    eassert(lexemes.ops[6] == OP_CONDITION_END);
+    eassert(lexemes.ops[7] == OP_DO);
+
+    eassert(!memcmp(lexemes.strs[8].value, "echo", 4));
+    eassert(lexemes.ops[8] == OP_CONST);
+    eassert(lexemes.strs[8].length == 5);
+
+    eassert(!memcmp(lexemes.strs[9].value, "$count", 6));
+    eassert(lexemes.ops[9] == OP_VARIABLE);
+    eassert(lexemes.strs[9].length == 7);
+
+    eassert(!memcmp(lexemes.strs[10].value, "count=$((count", 14));
+    eassert(lexemes.ops[10] == OP_ASSIGNMENT_EXPR);
+    eassert(lexemes.strs[10].length == 15);
+
+    eassert(!memcmp(lexemes.strs[11].value, "+", 1));
+    eassert(lexemes.ops[11] == OP_ADD);
+    eassert(lexemes.strs[11].length == 2);
+
+    eassert(!memcmp(lexemes.strs[12].value, "1))", 3));
+    eassert(lexemes.ops[12] == OP_CONST);
+    eassert(lexemes.strs[12].length == 4);
+
+    eassert(lexemes.ops[13] == OP_DONE);
+
+    eassert(!lexemes.strs[14].value);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -940,6 +1029,9 @@ void lexer_tests()
     etest_run(lexer_lex_if_else_test);
     etest_run(lexer_lex_comment_test);
 
+    etest_run(lexer_lex_var_increment_test);
+    etest_run(lexer_lex_while_test);
+
     etest_finish();
 }
 
@@ -957,7 +1049,7 @@ void lexer_lex_bad_input_shouldnt_crash()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    auto line = Str_New_Literal("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~C~~~~~~~~~~~~~k~"
+    auto line = Str_Lit("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~C~~~~~~~~~~~~~k~"
                  "~~~~>ÿÿ> >ÿ>\w\>ÿ> >ÿ> \> >");
 
     Lexemes lexemes = {0};

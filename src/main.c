@@ -105,7 +105,7 @@ void completion(const char *buf, int pos, bestlineCompletions *lc) {
     }
 
     if (input_->current_autocompletion) {
-        Str* completion = estrcat(&Str_New((char*)buf, (size_t)(pos + 1)), &Str_Get(input_->current_autocompletion), input_->scratch);
+        Str* completion = estrcat(&Str((char*)buf, (size_t)(pos + 1)), &Str_Get(input_->current_autocompletion), input_->scratch);
         bestlineAddCompletion(lc, completion->value);
     }
 }
@@ -152,7 +152,7 @@ static char* init(Shell* restrict shell, char** restrict envp)
     char* memory = arena_init(shell);
     if (!memory) {
         tty_color_set(TTYIO_RED_ERROR);
-        bestlineWriteStr(STDERR_FILENO, Str_New_Literal("ncsh: could not start up, not enough memory available.\n"));
+        bestlineWriteStr(STDERR_FILENO, Str_Lit("ncsh: could not start up, not enough memory available.\n"));
         tty_color_reset();
         return NULL;
     }
@@ -164,7 +164,7 @@ static char* init(Shell* restrict shell, char** restrict envp)
     }
 
     prompt_init();
-    Str user_key = Str_New_Literal(NCSH_USER_VAL);
+    Str user_key = Str_Lit(NCSH_USER_VAL);
     shell->input.user = env_add_or_get(shell->env, user_key);
     if (!shell->input.user->value) {
         shell->input.user->length = 0;
@@ -179,7 +179,7 @@ static char* init(Shell* restrict shell, char** restrict envp)
     }
 
     if ((shell->pgid = signal_init()) < 0) {
-        bestlineWriteStr(STDERR_FILENO, Str_New_Literal("ncsh: fatal error while initializing signal handlers\n"));
+        bestlineWriteStr(STDERR_FILENO, Str_Lit("ncsh: fatal error while initializing signal handlers\n"));
         return NULL;
     }
 
@@ -225,7 +225,7 @@ static void welcome()
     tty_send(&tcaps.cursor_home);
 #endif
 
-    bestlineWriteStr(STDOUT_FILENO, Str_New_Literal(NCSH " version: " NCSH_VERSION "\n"));
+    bestlineWriteStr(STDOUT_FILENO, Str_Lit(NCSH " version: " NCSH_VERSION "\n"));
 }
 
 static void startup_time()
@@ -264,7 +264,7 @@ static int noninteractive(int argc, char** restrict argv, char** restrict envp)
     char* memory = arena_noninteractive_init(&shell);
     if (!memory) {
         tty_color_set(TTYIO_RED_ERROR);
-        bestlineWriteStr(STDERR_FILENO, Str_New_Literal("ncsh: could not start up, not enough memory available.\n"));
+        bestlineWriteStr(STDERR_FILENO, Str_Lit("ncsh: could not start up, not enough memory available.\n"));
         tty_color_reset();
         tty_deinit_caps();
         return EXIT_FAILURE;

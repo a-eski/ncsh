@@ -7,7 +7,7 @@
 
 #include "../ttyio/ttyio.h"
 #include "../defines.h"
-#include "lexemes.h"
+#include "lex.h"
 #include "ops.h"
 
 [[nodiscard]]
