@@ -49,15 +49,13 @@ static void expand_glob(Commands* restrict cmds, size_t pos, Arena* restrict scr
         cmd_realloc_exact(cmds, scratch, cmds->count + glob_buf.gl_pathc);
     }
 
-    memmove(cmds->strs + pos + glob_buf.gl_pathc - 1, cmds->strs + pos, glob_buf.gl_pathc - 1);
-    memmove(cmds->ops + pos + glob_buf.gl_pathc - 1, cmds->ops + pos, glob_buf.gl_pathc - 1);
-
     for (size_t i = 0; i < glob_buf.gl_pathc; ++i) {
         debugf("%s\n", glob_buf.gl_pathv[i]);
 
         estrset(&cmds->strs[pos], &Str_Get(glob_buf.gl_pathv[i]), scratch);
         cmds->ops[pos++] = OP_CONST;
     }
+    cmds->count += pos - 1;
 
     globfree(&glob_buf);
 }

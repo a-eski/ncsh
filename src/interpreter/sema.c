@@ -8,6 +8,7 @@
 #include "../ttyio/ttyio.h"
 #include "../defines.h"
 #include "lex.h"
+#include "stmts.h"
 #include "ops.h"
 
 [[nodiscard]]
@@ -310,4 +311,14 @@ int sema_analyze(Lexemes* restrict lexemes)
         return result;
     result = sema_check(lexemes);
     return result;
+}
+
+[[nodiscard]]
+int sema(Statements* restrict stmts)
+{
+    assert(stmts);
+    if (!stmts || !stmts->head)
+        return EXIT_FAILURE_CONTINUE;
+
+    return 0;
 }
