@@ -28,7 +28,7 @@ enum Token {
     T_EQ,        // =
     T_GT,        // >
     T_LT,        // <
-    T_$,         // $
+    T_DOLLAR,    // $
     T_HOME,      // ~
     T_WS,        // whitespace \t, \r, \n, \0, ' '
     T_PIPE,      // |

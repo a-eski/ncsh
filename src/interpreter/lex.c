@@ -65,13 +65,13 @@ static constexpr enum Token ops_3char[] = {T_EQ_A,
                                            T_FOR};
 
 [[nodiscard]]
-bool lexer_tok_check_var(char* line, size_t len)
+bool tok_check_var(char* line, size_t len)
 {
     return len > 2 && line[0] == DOLLAR;
 }
 
 [[nodiscard]]
-enum Token lexer_tok_check_len_two(Str s)
+enum Token tok_check_len_two(Str s)
 {
     for (size_t i = 0; i < ops_2char_len; ++i) {
         if (CMP_2(s.value, ops_2char_str[i])) {
@@ -83,7 +83,7 @@ enum Token lexer_tok_check_len_two(Str s)
 }
 
 [[nodiscard]]
-enum Token lexer_tok_check_len_three(Str s)
+enum Token tok_check_len_three(Str s)
 {
     for (size_t i = 0; i < ops_3char_len; ++i) {
         if (CMP_3(s.value, ops_3char_str[i])) {
@@ -95,7 +95,7 @@ enum Token lexer_tok_check_len_three(Str s)
 }
 
 [[nodiscard]]
-enum Token lexer_tok_check_len_four(Str s)
+enum Token tok_check_len_four(Str s)
 {
     switch (s.value[0]) {
     case 't': {
@@ -122,7 +122,7 @@ enum Token lexer_tok_check_len_four(Str s)
 }
 
 [[nodiscard]]
-enum Token lexer_tok_check_len_five(Str s)
+enum Token tok_check_len_five(Str s)
 {
     switch (s.value[0]) {
     case 'f': {
@@ -139,12 +139,12 @@ enum Token lexer_tok_check_len_five(Str s)
     return get_const_type(s);
 }
 
-/* lexer_tok_get
+/* tok_get
  * Internal function used to map the inputted line to a bytecode.
  * Returns: a value from enum Ops, the bytecode relevant to the input
  */
 [[nodiscard]]
-enum Token lexer_tok_get(Str s)
+enum Token tok_get(Str s)
 {
     assert(s.value);
 
@@ -154,19 +154,19 @@ enum Token lexer_tok_get(Str s)
     }
 
     case 2: {
-        return lexer_tok_check_len_two(s);
+        return tok_check_len_two(s);
     }
 
     case 3: {
-        return lexer_tok_check_len_three(s);
+        return tok_check_len_three(s);
     }
 
     case 4: {
-        return lexer_tok_check_len_four(s);
+        return tok_check_len_four(s);
     }
 
     case 5: {
-        return lexer_tok_check_len_five(s);
+        return tok_check_len_five(s);
     }
 
     default: {
@@ -280,7 +280,7 @@ void lex(Str line, Lexemes* lexemes, Arena* restrict scratch)
             continue;
         }
         case DOLLAR: {
-            lexeme_add(lexemes, &n, line.value[pos], T_$, scratch);
+            lexeme_add(lexemes, &n, line.value[pos], T_DOLLAR, scratch);
             continue;
         }
         case PIPE: {
@@ -317,7 +317,7 @@ void lex(Str line, Lexemes* lexemes, Arena* restrict scratch)
 
             continue;
         }
-        // delimiter case // NOTE: should \t, \a, or EOF be included?
+        // whitespace/delimiter case // NOTE: should \t, \a, or EOF be included?
         case ' ':
         case '\r':
         case '\n':
@@ -353,7 +353,7 @@ void lex(Str line, Lexemes* lexemes, Arena* restrict scratch)
         lexemes->strs[n].length = lex_buf_pos + 1;
         lexemes->strs[n].value = arena_malloc(scratch, lexemes->strs[n].length, char);
         memcpy(lexemes->strs[n].value, lex_buf, lex_buf_pos);
-        lexemes->ops[n] = t == T_NONE ? lexer_tok_get(lexemes->strs[n]) : t;
+        lexemes->ops[n] = t == T_NONE ? tok_get(lexemes->strs[n]) : t;
         ++n;
 
         lex_buf[0] = '\0';
@@ -367,7 +367,6 @@ void lex(Str line, Lexemes* lexemes, Arena* restrict scratch)
 
 /* lex_noninteractive
  * lex the command line input into commands, command lengths, and op codes then stored in Tokens.
- * Allocates memory that is freed by lexer_free_values at the end of each main loop of the shell.
  * Used for noninteractive mode.
  */
 void lex_noninteractive(char** restrict inputs, size_t inputs_count, Lexemes* lexemes, Arena* restrict scratch)

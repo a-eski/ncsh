@@ -12,8 +12,6 @@
 
 #include "eskilib/str.h"
 #include "debug.h"
-#include "io/bestline.h"
-#include "io/bestout.h"
 #include "arena.h"
 #include "conf.h"
 #include "defines.h"
@@ -21,6 +19,9 @@
 #include "interpreter/interpreter.h"
 #include "io/ac.h"
 #include "io/prompt.h"
+#include "io/bestline.h"
+#include "io/bestout.h"
+#include "io/hashset.h"
 #include "signals.h"
 #include "ttyio/ttyio.h"
 #include "env.h"
@@ -34,8 +35,8 @@ sig_atomic_t vm_child_pid;
 volatile int sigwinch_caught;
 
 Input* input_;
-Arena* scratch_;
 Arena* arena_;
+Config* conf_;
 
 /* arena_init
  * Initialize arenas used for the lifteim of the shell.
@@ -87,7 +88,8 @@ static char* arena_noninteractive_init(Shell* restrict shell)
     return memory;
 }
 
-void completion(const char *buf, int pos, bestlineCompletions *lc) {
+void completion(const char *buf, int pos, bestlineCompletions *lc)
+{
     if (pos <= 0 || !buf) {
         return;
     }
@@ -110,7 +112,8 @@ void completion(const char *buf, int pos, bestlineCompletions *lc) {
     }
 }
 
-char *hints(const char *buf, const char **ansi1, const char **ansi2) {
+char *hints(const char *buf, const char **ansi1, const char **ansi2)
+{
     if (!buf || !*buf) {
         return NULL;
     }
@@ -134,6 +137,80 @@ char *hints(const char *buf, const char **ansi1, const char **ansi2) {
         return input_->current_autocompletion;
     }
     return NULL;
+}
+
+void history_clean(char** history, unsigned count)
+{
+    if (!history || !count)
+        return;
+
+    tty_print("ncsh history: starting to clean history with %u entries.\n", count);
+
+    bestlineHistorySave(conf_->history_file.value);
+
+    Hashset hset = {0};
+    hashset_malloc(0, input_->scratch, &hset);
+
+    FILE* file = fopen(conf_->history_file.value, "w");
+    if (!file) {
+        tty_perror("ncsh: Could not open .ncsh_history file to clean history");
+        return;
+    }
+
+    for (size_t i = 0; i < count; ++i) {
+        if (!history[i] || !*history[i]) {
+            continue;
+        }
+
+        Str entry = Str_Get(history[i]);
+        if (!hashset_exists(entry.value, &hset)) {
+            hashset_set(entry, input_->scratch, &hset);
+
+            if (!fputs(entry.value, file)) {
+                tty_perror("ncsh history: Error writing to file");
+                fclose(file);
+                return;
+            }
+            if (!fputc('\n', file)) {
+                tty_perror("ncsh history: Error writing to file");
+                fclose(file);
+                return;
+            }
+        }
+    }
+
+    fclose(file);
+
+    bestlineHistoryLoad(conf_->history_file.value);
+    tty_print("ncsh history: finished cleaning history, history now has %u entries.\n", bestlineHistoryCount());
+}
+
+// clean history first so there is just 1 entry to remove after (if the entry is found).
+void history_remove(const char* rm, int n, char** history, unsigned count)
+{
+    assert(rm); assert(n); assert(history); assert(count);
+
+    Str s = *estrdup(&Str((char*)rm, (size_t)n), arena_);
+
+    history_clean(history, count);
+
+    char **h = bestlineHistory(); // get the reloaded history
+    for (size_t i = 0; i < bestlineHistoryCount(); ++i) {
+        if (estrcmp(Str_Get(h[i]), s)) {
+            h[i] = NULL;
+            if (i + 1 == count || !count) {
+                // tty_print("ncsh history: entry to remove '%s' was not found\n", rm);
+                return;
+            }
+
+            memmove(h + i, h + i + 1, count - i - 1);
+            bestlineHistoryCountDecrement();
+            tty_print("ncsh history: removed entry: %s\n", s.value);
+            return;
+        }
+    }
+
+    tty_print("ncsh history: entry to remove '%s' was not found\n", s.value);
 }
 
 /* hooks into bestline history loading to populate trie used for autocompletions */
@@ -186,10 +263,13 @@ static char* init(Shell* restrict shell, char** restrict envp)
     input_ = &shell->input;
     input_->scratch = &shell->scratch;
     arena_ = &shell->arena;
+    conf_ = &shell->config;
     bestlineSetHintsCallback(hints);
     bestlineSetCompletionCallback(completion);
     bestlineSetOnHistoryLoadedCallback(ac_add_when_history_expanded);
     bestlineHistoryLoad(shell->config.history_file.value);
+    bestlineSetOnHistoryCleanCallback(history_clean);
+    bestlineSetOnHistoryRemoveCallback(history_remove);
     shell->arena = *arena_;
 
     return memory;
@@ -233,7 +313,7 @@ static void startup_time()
 #ifdef NCSH_START_TIME
     clock_t end = clock();
     double elapsed_ms = ((double)(end - start)) / CLOCKS_PER_SEC * 1000;
-    tty_println("ncsh startup time: %.2f milliseconds", elapsed_ms);
+    tty_print("ncsh startup time: %.2f milliseconds\n", elapsed_ms);
 #endif
 }
 

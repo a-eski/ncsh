@@ -24,8 +24,7 @@ void stdout_redirection_start(char* restrict file, bool append, Output_Redirect_
 
     io->fd_stdout = open(file, output_redirection_oflags_get(append), 0644);
     if (io->fd_stdout == -1) {
-        tty_fprintln(stderr, "ncsh: Invalid file handle '%s': could not open file for output redirection.", file);
-        tty_perror("ncsh: file error");
+        tty_perrorf("ncsh: Invalid file handle '%s' for output redirection", file);
         return;
     }
 
@@ -50,8 +49,7 @@ void stdin_redirection_start(char* restrict file, Input_Redirect_IO* restrict io
 
     io->fd = open(file, O_RDONLY);
     if (io->fd == -1) {
-        tty_fprintln(stderr, "ncsh: Invalid file handle '%s': could not open file for input redirection.", file);
-        tty_perror("ncsh: file error");
+        tty_perrorf("ncsh: Invalid file handle '%s' for input redirection", file);
         return;
     }
 
@@ -73,8 +71,7 @@ void stderr_redirection_start(char* restrict file, bool append, Output_Redirect_
 
     io->fd_stderr = open(file, output_redirection_oflags_get(append), 0644);
     if (io->fd_stderr == -1) {
-        tty_fprintln(stderr, "ncsh: Invalid file handle '%s': could not open file for error redirection.", file);
-        tty_perror("ncsh: file error");
+        tty_perrorf("ncsh: Invalid file handle '%s' for error redirection", file);
         return;
     }
 
@@ -101,8 +98,7 @@ void stdout_and_stderr_redirection_start(char* restrict file, bool append, Outpu
     if (file_descriptor == -1) {
         io->fd_stdout = -1;
         io->fd_stderr = -1;
-        tty_fprintln(stderr, "ncsh: Invalid file handle '%s': could not open file for ouput & error redirection.", file);
-        tty_perror("ncsh: file error");
+        tty_perrorf("ncsh: Invalid file handle '%s' for output & error redirection", file);
         return;
     }
     io->fd_stdout = file_descriptor;

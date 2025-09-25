@@ -14,6 +14,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <linux/limits.h>
 #include <setjmp.h>
 #include <stddef.h>
@@ -80,7 +81,7 @@ static int builtins_z(z_Database* restrict z_db, Str* restrict strs, Arena* aren
 #define NCSH_HISTORY_ADD "add"
 #define NCSH_HISTORY_RM "rm" // alias for rm
 #define NCSH_HISTORY_REMOVE "remove"
-static int builtins_history(Str* restrict strs, Arena* restrict arena, Arena* restrict scratch);
+static int builtins_history(Str* restrict strs);
 
 #define NCSH_ALIAS "alias"
 #define NCSH_ALIAS_PRINT "-p"
@@ -264,11 +265,9 @@ static int builtins_z(z_Database* restrict z_db, Str* restrict strs, Arena* rest
 
 [[nodiscard]]
 [[maybe_unused]]
-static int builtins_history(Str* restrict strs, Arena* restrict arena,
-                     Arena* restrict scratch)
+static int builtins_history(Str* restrict strs)
 {
-    (void)scratch; (void)arena;
-    assert(strs); assert(arena); assert(scratch);
+    assert(strs);
 
     if (!strs[1].value) {
         return bestlineHistoryPrint(vm_output_fd);
@@ -292,9 +291,9 @@ static int builtins_history(Str* restrict strs, Arena* restrict arena,
             tty_println("history count: %u", count);
             return EXIT_SUCCESS;
         }
-        /*else if (estrcmp(*args, Str_Lit(NCSH_HISTORY_CLEAN))) {
-            return history_command_clean(history, arena, scratch);
-        }*/
+        else if (estrcmp(*args, Str_Lit(NCSH_HISTORY_CLEAN))) {
+            return bestlineHistoryClean();
+        }
     }
 
     if (args && args[1].value && !args[2].value) {
@@ -303,10 +302,14 @@ static int builtins_history(Str* restrict strs, Arena* restrict arena,
             return bestlineHistoryAdd(args[1].value) == EXIT_SUCCESS ? EXIT_SUCCESS : EXIT_FAILURE_CONTINUE;
         }
         // history rm/remove
-        /*else if (estrcmp(*args, Str_Lit(NCSH_HISTORY_RM)) ||
+        else if (estrcmp(*args, Str_Lit(NCSH_HISTORY_RM)) ||
                  estrcmp(*args, Str_Lit(NCSH_HISTORY_REMOVE))) {
-            return history_command_remove(args[1], history, arena, scratch);
-        }*/
+            if (args[1].length > INT_MAX) {
+                tty_print("ncsh history: unable to remove entry, length was too long for conversion.\n");
+                return EXIT_FAILURE_CONTINUE;
+            }
+            return bestlineHistoryRemove(args[1].value, (int)args[1].length);
+        }
     }
 
     if (builtins_writeln(vm_output_fd, HISTORY_COMMAND_NOT_FOUND_MESSAGE,
@@ -929,7 +932,7 @@ bool builtins_check_and_run(Vm_Data* restrict vm, Shell* restrict shell, Arena* 
             if (builtins_disabled_state & BF_HISTORY) {
                 return false;
             }
-            vm->status = builtins_history(vm->strs, &shell->arena, scratch);
+            vm->status = builtins_history(vm->strs);
             return true;
         }
 

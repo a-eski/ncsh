@@ -7,6 +7,7 @@
 #include <stddef.h>
 
 #include "ops.h"
+#include "../types.h"
 #include "../eskilib/str.h"
 #include "stmts.h"
 

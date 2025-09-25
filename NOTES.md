@@ -28,6 +28,7 @@
 * [tuibox](https://github.com/Cubified/tuibox)
 * [isocline](https://github.com/daanx/isocline/blob/main/src/common.h)
 * [gnu readline](https://savannah.gnu.org/git/?group=readline)
+* [bestline](https://github.com/jart/bestline)
 
 #### curses/ncurses-like Libraries
 
@@ -37,12 +38,6 @@
 ### fzf
 
 * [fzf-native original](https://github.com/nvim-telescope/telescope-fzf-native.nvim)
-* [fzf-native fork](https://github.com/a-eski/telescope-fzf-native.nvim)
-
-## Bugs
-
-* handle pasting when input matches to autocomplete (autocomplete can interfere with pasting)
-* handle multiline when current line is at the bottom of the screen and scrolling has occurred
 
 ## Windows Notes
 

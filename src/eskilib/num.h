@@ -3,7 +3,6 @@
 #pragma once
 
 #include "str.h"
-#include <ctype.h>
 #include <inttypes.h>
 #include <limits.h>
 // #include <errno.h>
@@ -11,16 +10,16 @@
 #include <stdlib.h>
 
 // start with non decimal numbers
+// TODO: work on a solution for parsing out integers
 // TODO: work on a solution for checking then parsing out decimals
 static inline bool isnum(Str s)
 {
     if (s.length < 2) {
-        puts("invalid len");
         return false;
     }
 
     for (size_t i = 0; i < s.length - 1; ++i) {
-        if (!isdigit(s.value[i])) {
+        if (!(s.value[i] >= '0' && s.value[i] <= '9')) {
             return false;
         }
     }

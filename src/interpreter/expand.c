@@ -34,32 +34,6 @@ static Str* expand_home(Str* restrict s, Env* restrict env, Arena* restrict scra
     return estrcat(home, &tildeless, scratch);
 }
 
-// static void expansion_glob(char* restrict in, Commands* restrict cmds, Arena* restrict scratch)
-// {
-//     assert(in); assert(cmds); assert(scratch);
-//
-//     glob_t glob_buf = {0};
-//     glob(in, GLOB_DOOFFS, NULL, &glob_buf);
-//     if (!glob_buf.gl_pathc) {
-//         globfree(&glob_buf);
-//         return;
-//     }
-//
-//     for (size_t i = 0; i < glob_buf.gl_pathc; ++i) {
-//         debugf("%s\n", glob_buf.gl_pathv[i]);
-//         if (cmds->pos >= cmds->cap - 1) {
-//           debug("realloc");
-//           cmd_realloc(cmds, scratch);
-//         }
-//
-//         estrset(&cmds->strs[cmds->pos], &Str_Get(glob_buf.gl_pathv[i]), scratch);
-//         cmds->ops[cmds->pos] = OP_CONST;
-//         ++cmds->pos;
-//     }
-//
-//     globfree(&glob_buf);
-// }
-
 static void expand_glob(Commands* restrict cmds, size_t pos, Arena* restrict scratch)
 {
     assert(cmds); assert(scratch); assert(pos < cmds->count && pos < cmds->cap);

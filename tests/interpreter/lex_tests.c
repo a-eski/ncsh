@@ -481,7 +481,7 @@ void lex_variable_test()
     eassert(lexemes.strs[0].length = 5);
 
     eassert(!memcmp(lexemes.strs[1].value, "$", 1));
-    eassert(lexemes.ops[1] == T_$);
+    eassert(lexemes.ops[1] == T_DOLLAR);
     eassert(lexemes.strs[1].length = 2);
 
     eassert(!memcmp(lexemes.strs[2].value, "STR", 3));
@@ -529,7 +529,7 @@ void lex_variable_and_test()
     eassert(lexemes.strs[5].length = sizeof("echo"));
 
     eassert(!memcmp(lexemes.strs[6].value, "$", sizeof("$")));
-    eassert(lexemes.ops[6] == T_$);
+    eassert(lexemes.ops[6] == T_DOLLAR);
     eassert(lexemes.strs[6].length = sizeof("$"));
 
     eassert(!memcmp(lexemes.strs[7].value, "STR", sizeof("STR")));

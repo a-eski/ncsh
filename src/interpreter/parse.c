@@ -425,7 +425,7 @@ static Parser_Internal parse_token(Parser_Data* restrict data, Lexemes* restrict
         return (Parser_Internal){};
     }
 
-    case T_$: {
+    case T_DOLLAR: {
         peeked = peek(lexemes, *i + 1);
         if (peeked == T_CONST) {
             ++*i;

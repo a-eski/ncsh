@@ -7,7 +7,6 @@
 #include <unistd.h>
 
 #include "../eskilib/str.h"
-#include "../types.h"
 #include "lex.h"
 #include "ops.h"
 

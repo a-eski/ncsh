@@ -20,7 +20,7 @@ int interpreter_run(Shell* restrict shell, Arena scratch)
 
     // int rv = sema_analyze(&lexemes);
     // if (rv != EXIT_SUCCESS)
-    //     return rv;
+        // return rv;
 
     Parser_Output parse_rv = parse(&lexemes, &scratch);
     if (parse_rv.parser_errno) {
@@ -44,7 +44,7 @@ int interpreter_run_noninteractive(char** restrict argv, size_t argc, Shell* res
 
     // int rv = sema_analyze(&lexemes);
     // if (rv != EXIT_SUCCESS)
-    //     return rv;
+        // return rv;
 
     Parser_Output parse_rv = parse(&lexemes, &shell->arena);
     if (parse_rv.parser_errno) {
