@@ -7,7 +7,6 @@
 #include "interpreter.h"
 #include "lex.h"
 #include "parse.h"
-// #include "sema.h"
 #include "expand.h"
 #include "vm.h"
 #include "../ttyio/ttyio.h"
@@ -18,15 +17,10 @@ int interpreter_run(Shell* restrict shell, Arena scratch)
     Lexemes lexemes = {0};
     lex(Str(shell->input.buffer, shell->input.pos), &lexemes, &scratch);
 
-    // int rv = sema_analyze(&lexemes);
-    // if (rv != EXIT_SUCCESS)
-        // return rv;
-
     Parser_Output parse_rv = parse(&lexemes, &scratch);
     if (parse_rv.parser_errno) {
         if (parse_rv.parser_errno != PE_NOTHING) {
-            tty_fwrite(stderr, "ncsh parser: ", sizeof("ncsh parser: "));
-            tty_fputs(parse_rv.output.msg, stderr);
+            tty_fprintln(stderr, "ncsh parser: %s", parse_rv.output.msg);
         }
         return EXIT_FAILURE_CONTINUE;
     }
@@ -41,10 +35,6 @@ int interpreter_run_noninteractive(char** restrict argv, size_t argc, Shell* res
 {
     Lexemes lexemes = {0};
     lex_noninteractive(argv, argc, &lexemes, &shell->arena);
-
-    // int rv = sema_analyze(&lexemes);
-    // if (rv != EXIT_SUCCESS)
-        // return rv;
 
     Parser_Output parse_rv = parse(&lexemes, &shell->arena);
     if (parse_rv.parser_errno) {

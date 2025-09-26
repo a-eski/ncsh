@@ -12,6 +12,7 @@
 #include "ops.h"
 #include "parse.h"
 #include "stmts.h"
+#include "parse_errors.h"
 
 static size_t parser_state;
 
@@ -135,7 +136,6 @@ static Parser_Internal parse_conditions(Parser_Data* data, size_t* restrict n, e
     if (rv.parser_errno)
         return rv;
 
-    // consume semicolon if one is there.
     consume(data->lexemes, n, T_SEMIC);
 
     cmd_stmt_next(data, type);
@@ -153,7 +153,6 @@ static Parser_Internal parse_conditions(Parser_Data* data, size_t* restrict n, e
         return (Parser_Internal){.parser_errno = PE_MISSING_TOK, .msg = "found mismatching brackets, i.e. '[[' for start condition and ']' for end."};
     }
 
-    // consume semicolon if one is there.
     consume(data->lexemes, n, T_SEMIC);
 
     if (!consume(data->lexemes, n, T_THEN)) {
@@ -170,7 +169,6 @@ static Parser_Internal parse_if_statements(Parser_Data* restrict data, size_t* r
     if (rv.parser_errno)
         return rv;
 
-    // consume semicolon if one is there.
     consume(data->lexemes, n, T_SEMIC);
 
     cmd_stmt_next(data, LT_IF);
@@ -189,7 +187,6 @@ static Parser_Internal parse_else_statements(Parser_Data* restrict data, size_t*
     if (rv.parser_errno)
         return rv;
 
-    // consume semicolon if one is there.
     consume(data->lexemes, n, T_SEMIC);
 
     cmd_stmt_next(data, LT_ELSE);
@@ -218,7 +215,6 @@ static Parser_Internal parse_elif_statements(Parser_Data* restrict data, size_t*
         return rv;
     }
 
-    // consume semicolon if one is there.
     consume(data->lexemes, n, T_SEMIC);
 
     cmd_stmt_next(data, LT_ELIF);
@@ -254,7 +250,6 @@ static Parser_Internal parse_if(Parser_Data* data, size_t* restrict n)
         return rv;
     }
 
-    // consume semicolon if one is there.
     consume(data->lexemes, n, T_SEMIC);
 
     enum Token peeked = peek(data->lexemes, *n);
@@ -305,6 +300,134 @@ static void data_cmd_update(Parser_Data* restrict data, Str s, enum Ops op) {
     ++data->cur_cmds->pos;
 }
 
+static Parser_Internal parse_pipe(Parser_Data* restrict data, Lexemes* restrict lexemes, size_t* restrict i)
+{
+    if (peek(lexemes, *i + 1) == T_PIPE) {
+        ++*i;
+
+        if (!(*i - 1))
+            return (Parser_Internal){.parser_errno = PE_INVALID_STMT, .msg = INVALID_SYNTAX_OR_IN_FIRST_ARG};
+        if (*i == lexemes->count - 1)
+            return (Parser_Internal){.parser_errno = PE_INVALID_STMT, .msg = INVALID_SYNTAX_OR_IN_LAST_ARG};
+
+        data->cur_cmds = cmd_next(data->cur_cmds, data->s);
+        data->cur_cmds->prev_op = OP_OR;
+        return (Parser_Internal){};
+    }
+
+    if (!*i)
+        return (Parser_Internal){.parser_errno = PE_INVALID_STMT, .msg = INVALID_SYNTAX_PIPE_FIRST_ARG};
+    if (*i == lexemes->count - 1)
+        return (Parser_Internal){.parser_errno = PE_INVALID_STMT, .msg = INVALID_SYNTAX_PIPE_LAST_ARG};
+
+    ++data->stmts->pipes_count;
+    data->cur_cmds = cmd_next(data->cur_cmds, data->s);
+    data->cur_cmds->prev_op = OP_PIPE;
+    return (Parser_Internal){};
+}
+
+static Parser_Internal parse_amp(Parser_Data* restrict data, Lexemes* restrict lexemes, size_t* restrict i)
+{
+    enum Token peeked = peek(lexemes, *i + 1);
+    size_t start_i = *i;
+
+    if (peeked == T_GT) {
+        ++*i;
+        if (peek(lexemes, *i + 1) == T_GT) {
+            data->stmts->redirect_type = RT_OUT_ERR_APPEND;
+            ++*i;
+        } else {
+            data->stmts->redirect_type = RT_OUT_ERR;
+        }
+
+        if (!start_i) {
+            char* msg = data->stmts->redirect_type == RT_OUT_ERR
+                    ? INVALID_SYNTAX_STDERR_REDIR_FIRST_ARG
+                    : INVALID_SYNTAX_STDERR_REDIR_APPEND_FIRST_ARG;
+            return (Parser_Internal){.parser_errno = PE_INVALID_STMT, .msg = msg};
+        }
+        if (*i == lexemes->count - 1) {
+            char* msg = data->stmts->redirect_type == RT_OUT_ERR
+                    ? INVALID_SYNTAX_STDERR_REDIR_LAST_ARG
+                    : INVALID_SYNTAX_STDERR_REDIR_APPEND_LAST_ARG;
+            return (Parser_Internal){.parser_errno = PE_INVALID_STMT, .msg = msg};
+        }
+
+        data->stmts->redirect_filename = lexemes->strs[*i + 1].value;
+        ++*i; // skip filename and redirect type, not needed in commands
+        return (Parser_Internal){};
+    }
+
+    if (peeked == T_AMP) {
+        ++*i;
+        if (!start_i)
+            return (Parser_Internal){.parser_errno = PE_INVALID_STMT, .msg = INVALID_SYNTAX_AND_IN_FIRST_ARG};
+        if (*i == lexemes->count - 1)
+            return (Parser_Internal){.parser_errno = PE_INVALID_STMT, .msg = INVALID_SYNTAX_AND_IN_LAST_ARG};
+
+        data->cur_cmds = cmd_next(data->cur_cmds, data->s);
+        data->cur_cmds->prev_op = OP_AND;
+        return (Parser_Internal){};
+    }
+
+    if (!*i)
+        return (Parser_Internal){.parser_errno = PE_INVALID_STMT, .msg = INVALID_SYNTAX_BACKGROUND_JOB_FIRST_ARG};
+    if (*i != lexemes->count - 1)
+        return (Parser_Internal){.parser_errno = PE_INVALID_STMT, .msg = INVALID_SYNTAX_BACKGROUND_JOB_NOT_LAST_ARG};
+
+    data->stmts->is_bg_job = true;
+    return (Parser_Internal){};
+}
+
+static Parser_Internal parse_gt(Parser_Data* restrict data, Lexemes* restrict lexemes, size_t* restrict i)
+{
+    size_t start_i = *i;
+    if (peek(lexemes, *i + 1) == T_GT) {
+        data->stmts->redirect_type = RT_OUT_APPEND;
+        ++*i;
+    } else {
+        data->stmts->redirect_type = RT_OUT;
+    }
+
+    if (!start_i) {
+        char* msg = data->stmts->redirect_type == RT_OUT
+                ? INVALID_SYNTAX_STDOUT_REDIR_FIRST_ARG
+                : INVALID_SYNTAX_STDOUT_REDIR_APPEND_FIRST_ARG;
+        return (Parser_Internal){.parser_errno = PE_INVALID_STMT, .msg = msg};
+    }
+    if (*i == lexemes->count - 1) {
+        char* msg = data->stmts->redirect_type == RT_OUT
+                ? INVALID_SYNTAX_STDOUT_REDIR_LAST_ARG
+                : INVALID_SYNTAX_STDOUT_REDIR_APPEND_LAST_ARG;
+        return (Parser_Internal){.parser_errno = PE_INVALID_STMT, .msg = msg};
+    }
+
+    data->stmts->redirect_filename = lexemes->strs[*i + 1].value;
+    ++*i; // skip filename and redirect type, not needed in commands
+    return (Parser_Internal){};
+}
+
+static Parser_Internal parse_lt(Parser_Data* restrict data, Lexemes* restrict lexemes, size_t* restrict i)
+{
+    size_t start_i = *i;
+    if (peek(lexemes, *i + 1) == T_LT) {
+        // TODO: switch this to the "here document operator", there is not actually stdin append
+        data->stmts->redirect_type = RT_IN_APPEND;
+        ++*i;
+    } else {
+        data->stmts->redirect_type = RT_IN;
+    }
+
+    if (!start_i)
+        return (Parser_Internal){.parser_errno = PE_INVALID_STMT, .msg = INVALID_SYNTAX_STDIN_REDIR_FIRST_ARG};
+    if (*i == lexemes->count - 1)
+        return (Parser_Internal){.parser_errno = PE_INVALID_STMT, .msg = INVALID_SYNTAX_STDIN_REDIR_LAST_ARG};
+
+    data->stmts->redirect_filename = lexemes->strs[*i + 1].value;
+    ++*i; // skip filename and redirect type, not needed in commands
+    return (Parser_Internal){};
+}
+
 static Parser_Internal parse_token(Parser_Data* restrict data, Lexemes* restrict lexemes, size_t* restrict i)
 {
     enum Token peeked;
@@ -313,68 +436,19 @@ static Parser_Internal parse_token(Parser_Data* restrict data, Lexemes* restrict
         if (is_in_quotes())
             goto quoted;
 
-        if (peek(lexemes, *i + 1) == T_PIPE) {
-            ++*i;
-            // data_cmd_update(&data, Str_Lit("||"), OP_OR);
-            data->cur_cmds = cmd_next(data->cur_cmds, data->s);
-            data->cur_cmds->prev_op = OP_OR;
-            return (Parser_Internal){};
-        }
-
-        ++data->stmts->pipes_count;
-        data->cur_cmds = cmd_next(data->cur_cmds, data->s);
-        data->cur_cmds->prev_op = OP_PIPE;
-        return (Parser_Internal){};
+        return parse_pipe(data, lexemes, i);
     }
 
     case T_AMP: {
-        peeked = peek(lexemes, *i + 1);
-        if (peeked == T_GT) {
-            ++*i;
-            if (peek(lexemes, *i + 1) == T_GT) {
-                data->stmts->redirect_type = RT_OUT_ERR_APPEND;
-                ++*i;
-            } else {
-                data->stmts->redirect_type = RT_OUT_ERR;
-            }
-            data->stmts->redirect_filename = lexemes->strs[*i + 1].value;
-            ++*i; // skip filename and redirect type, not needed in commands
-            return (Parser_Internal){};
-        }
-        if (peeked == T_AMP) {
-            ++*i;
-            // data_cmd_update(&data, Str_Lit("&&"), OP_AND);
-            data->cur_cmds = cmd_next(data->cur_cmds, data->s);
-            data->cur_cmds->prev_op = OP_AND;
-            return (Parser_Internal){};
-        }
-
-        data->stmts->is_bg_job = true;
-        return (Parser_Internal){};
+        return parse_amp(data, lexemes, i);
     }
 
     case T_GT: {
-        if (peek(lexemes, *i + 1) == T_GT) {
-            data->stmts->redirect_type = RT_OUT_APPEND;
-            ++*i;
-        } else {
-            data->stmts->redirect_type = RT_OUT;
-        }
-        data->stmts->redirect_filename = lexemes->strs[*i + 1].value;
-        ++*i; // skip filename and redirect type, not needed in commands
-        return (Parser_Internal){};
+        return parse_gt(data, lexemes, i);
     }
 
     case T_LT: {
-        if (peek(lexemes, *i + 1) == T_LT) {
-            data->stmts->redirect_type = RT_IN_APPEND;
-            ++*i;
-        } else {
-            data->stmts->redirect_type = RT_IN;
-        }
-        data->stmts->redirect_filename = lexemes->strs[*i + 1].value;
-        ++*i; // skip filename and redirect type, not needed in commands
-        return (Parser_Internal){};
+        return parse_lt(data, lexemes, i);
     }
 
     case T_NUM: {
@@ -383,6 +457,7 @@ static Parser_Internal parse_token(Parser_Data* restrict data, Lexemes* restrict
         if (lexemes->strs[*i].length > 2 || *lexemes->strs[*i].value != '2')
             break;
 
+        size_t start_i = *i;
         if (peek(lexemes, *i + 1) == T_GT) {
             ++*i;
             if (peek(lexemes, *i + 1) == T_GT) {
@@ -393,6 +468,19 @@ static Parser_Internal parse_token(Parser_Data* restrict data, Lexemes* restrict
             }
         } else {
             break;
+        }
+
+        if (!start_i) {
+            char* msg = data->stmts->redirect_type == RT_ERR
+                    ? INVALID_SYNTAX_STDERR_REDIR_FIRST_ARG
+                    : INVALID_SYNTAX_STDERR_REDIR_APPEND_FIRST_ARG;
+            return (Parser_Internal){.parser_errno = PE_INVALID_STMT, .msg = msg};
+        }
+        if (*i == lexemes->count - 1) {
+            char* msg = data->stmts->redirect_type == RT_ERR
+                    ? INVALID_SYNTAX_STDERR_REDIR_LAST_ARG
+                    : INVALID_SYNTAX_STDERR_REDIR_APPEND_LAST_ARG;
+            return (Parser_Internal){.parser_errno = PE_INVALID_STMT, .msg = msg};
         }
 
         data->stmts->redirect_filename = lexemes->strs[*i + 1].value;
