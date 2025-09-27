@@ -35,21 +35,20 @@ enum Ops : uint8_t {
     // Variables
     OP_VARIABLE = 22,   // a variable value (starting with $, $VAR)
     OP_ASSIGNMENT = 23, // assigning a variable (var=val)
-    OP_ASSIGNMENT_EXPR = 24,
     // Boolean
-    OP_TRUE = 25,  // true
-    OP_FALSE = 26, // false
+    OP_TRUE,  // true
+    OP_FALSE, // false
     // Expansion
-    OP_HOME_EXPANSION = 27, // ~
-    OP_GLOB_EXPANSION = 28, // * or ?
+    OP_HOME_EXPANSION, // ~
+    OP_GLOB_EXPANSION, // * or ?
     // Control flow structures
-    OP_CONDITION_START = 29,
-    OP_CONDITION_END = 30,
-    OP_IF = 31,
-    OP_ELSE = 32,
-    OP_ELIF = 33,
-    OP_THEN = 34,
-    OP_FI = 35,
+    OP_CONDITION_START,
+    OP_CONDITION_END,
+    OP_IF,
+    OP_ELSE,
+    OP_ELIF,
+    OP_THEN,
+    OP_FI,
     // Equality comparisons
     OP_EQUALS,
     OP_LESS_THAN,

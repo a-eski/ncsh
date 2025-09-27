@@ -140,15 +140,13 @@
 #endif
 #ifndef _DARWIN_C_SOURCE
 #define _DARWIN_C_SOURCE 1 /* so SIGWINCH / IUTF8 on XNU */
-#endif /* ifndef _DARWIN_C_SOURCE */
+#endif
 
 #include <assert.h>
-// #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <poll.h>
-// #include <setjmp.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>

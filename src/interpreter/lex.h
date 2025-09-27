@@ -22,8 +22,6 @@ enum Token {
     T_C_BRACK,   // ]
     T_SEMIC,     // ;
     T_GLOB,      // *, ?
-    // T_STAR,      // *
-    // T_QUESTION,  // ?
     T_BANG,      // !
     T_EQ,        // =
     T_GT,        // >

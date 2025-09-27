@@ -6,7 +6,6 @@
 #include "../etest.h"
 #include "../../src/interpreter/lex.h"
 #include "../../src/interpreter/parse.h"
-// #include "../../src/interpreter/sema.h"
 #include "../../src/interpreter/vm.h"
 #include "../../src/ttyio/ttyio.h"
 #include "../lib/arena_test_helper.h"
@@ -21,8 +20,6 @@ volatile int sigwinch_caught;
                                                                                                                        \
     Lexemes lexemes = {0};                                                                                             \
     lex(Str_Get(input), &lexemes, &scratch_arena);                                                                     \
-    /* int res = sema_analyze(&lexemes); */                                                                            \
-    /* eassert(res == EXIT_SUCCESS); */                                                                                \
     auto parse_rv = parse(&lexemes, &scratch_arena);                                                                   \
     eassert(!parse_rv.parser_errno);                                                                                   \
     int res = vm_execute(parse_rv.output.stmts, &(Shell){}, &scratch_arena);                                           \
