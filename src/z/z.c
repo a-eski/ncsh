@@ -320,7 +320,7 @@ enum z_Result z_database_add(Str* restrict path, char* restrict cwd, size_t cwd_
     assert(strlen(cwd) + 1 == cwd_length);
     assert(path->length + cwd_length > 0);
 
-    db->dirs[db->count].path = *estrjoin(&Str_New(cwd, cwd_length), path, '/', arena);
+    db->dirs[db->count].path = *estrjoin(&Str(cwd, cwd_length), path, '/', arena);
     ++db->dirs[db->count].rank;
     db->dirs[db->count].last_accessed = time(NULL);
     ++db->count;

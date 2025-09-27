@@ -47,7 +47,7 @@ size_t prompt_short_directory_get(char* restrict cwd, char* restrict output)
     }
 
     memcpy(output, cwd + last_slash_pos - 1, i - last_slash_pos + 1); // has 2 slashes
-    return i - last_slash_pos + 2;                                    // null termination not included in len
+    return i - last_slash_pos + 2;
 }
 
 [[nodiscard]]
@@ -64,15 +64,15 @@ Str prompt_get_short_directory(Input* restrict input, Arena* restrict scratch)
 
     Str_Builder* sb = sb_new(scratch);
     if (prompt_data.show_user) {
-        sb_add(&Str_New_Literal("\033[38;5;147m"), sb, scratch);
+        sb_add(&Str_Lit("\033[38;5;147m"), sb, scratch);
         sb_add(input->user, sb, scratch);
-        sb_add(&Str_New_Literal(" "), sb, scratch);
+        sb_add(&Str_Lit(" "), sb, scratch);
     }
 
-    sb_add(&Str_New_Literal("\033[92m"), sb, scratch);
-    sb_add(&Str_New(directory, dir_len), sb, scratch);
-    sb_add(&Str_New_Literal("\033[0m"), sb, scratch);
-    sb_add(&Str_New_Literal(NCSH_PROMPT_ENDING_STRING), sb, scratch);
+    sb_add(&Str_Lit("\033[92m"), sb, scratch);
+    sb_add(&Str(directory, dir_len), sb, scratch);
+    sb_add(&Str_Lit("\033[0m"), sb, scratch);
+    sb_add(&Str_Lit(NCSH_PROMPT_ENDING_STRING), sb, scratch);
     return *sb_to_str(sb, scratch);
 }
 
@@ -86,15 +86,15 @@ Str prompt_get_directory(Input* restrict input, Arena* restrict scratch)
 
     Str_Builder* sb = sb_new(scratch);
     if (prompt_data.show_user) {
-        sb_add(&Str_New_Literal("\033[38;5;147m"), sb, scratch);
+        sb_add(&Str_Lit("\033[38;5;147m"), sb, scratch);
         sb_add(input->user, sb, scratch);
-        sb_add(&Str_New_Literal(" "), sb, scratch);
+        sb_add(&Str_Lit(" "), sb, scratch);
     }
 
-    sb_add(&Str_New_Literal("\033[92m"), sb, scratch);
+    sb_add(&Str_Lit("\033[92m"), sb, scratch);
     sb_add(&Str_Get(cwd), sb, scratch);
-    sb_add(&Str_New_Literal("\033[0m"), sb, scratch);
-    sb_add(&Str_New_Literal(NCSH_PROMPT_ENDING_STRING), sb, scratch);
+    sb_add(&Str_Lit("\033[0m"), sb, scratch);
+    sb_add(&Str_Lit(NCSH_PROMPT_ENDING_STRING), sb, scratch);
     return *sb_to_str(sb, scratch);
 }
 
@@ -102,14 +102,14 @@ Str prompt_get_directory(Input* restrict input, Arena* restrict scratch)
 Str prompt_get_no_directory(Input* restrict input, Arena* restrict scratch)
 {
     if (!prompt_data.show_user) {
-        return Str_New_Literal(NCSH_PROMPT_ENDING_STRING);
+        return Str_Lit(NCSH_PROMPT_ENDING_STRING);
     }
 
     Str_Builder* sb = sb_new(scratch);
-    sb_add(&Str_New_Literal("\033[38;5;147m"), sb, scratch);
+    sb_add(&Str_Lit("\033[38;5;147m"), sb, scratch);
     sb_add(input->user, sb, scratch);
-    sb_add(&Str_New_Literal("\033[0m"), sb, scratch);
-    sb_add(&Str_New_Literal(NCSH_PROMPT_ENDING_STRING), sb, scratch);
+    sb_add(&Str_Lit("\033[0m"), sb, scratch);
+    sb_add(&Str_Lit(NCSH_PROMPT_ENDING_STRING), sb, scratch);
     return *sb_to_str(sb, scratch);
 }
 

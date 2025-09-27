@@ -44,7 +44,7 @@ enum eresult conf_location_init(Shell* restrict shell)
         return E_FAILURE_OVERFLOW_PROTECTION;
     }
 
-    shell->config.location = *estrjoin(home, &Str_New_Literal(DOT_CONFIG "/" NCSH), '/', &shell->arena);
+    shell->config.location = *estrjoin(home, &Str_Lit(DOT_CONFIG "/" NCSH), '/', &shell->arena);
     mkdir(shell->config.location.value, 0755);
 
     debugf("config location: %s\n", shell->config.location.value);
@@ -55,7 +55,7 @@ enum eresult conf_location_init(Shell* restrict shell)
 enum eresult conf_file_set(Shell* restrict shell)
 {
 
-    Str rc_file = Str_New_Literal(RC_FILE);
+    Str rc_file = Str_Lit(RC_FILE);
 #if defined(NCSH_IN_PLACE)
     shell->config.file = *estrdup(&rc_file, &shell->arena);
     return E_SUCCESS;
@@ -80,11 +80,11 @@ enum eresult conf_file_set(Shell* restrict shell)
 enum eresult conf_history_file_set(Shell* restrict shell)
 {
 #if defined(NCSH_HISTORY_TEST) || defined(NCSH_IN_PLACE)
-    shell->config.history_file = *estrdup(&Str_New_Literal(NCSH_HISTORY_FILE), &shell->arena);
+    shell->config.history_file = *estrdup(&Str_Lit(NCSH_HISTORY_FILE), &shell->arena);
     return E_SUCCESS;
 #else
     if (!shell->config.location.value || !shell->config.location.length) {
-        shell->config.history_file = Str_New_Literal(NCSH_HISTORY_FILE);
+        shell->config.history_file = Str_Lit(NCSH_HISTORY_FILE);
         return E_SUCCESS;
     }
 
@@ -93,7 +93,7 @@ enum eresult conf_history_file_set(Shell* restrict shell)
         return E_FAILURE_OVERFLOW_PROTECTION;
     }
 
-    shell->config.history_file = *estrcat(&shell->config.location, &Str_New_Literal(NCSH_HISTORY_FILE), &shell->arena);
+    shell->config.history_file = *estrcat(&shell->config.location, &Str_Lit(NCSH_HISTORY_FILE), &shell->arena);
 
     assert(shell->config.history_file.value);
     assert(shell->config.history_file.length == strlen(shell->config.history_file.value) + 1);
@@ -137,7 +137,7 @@ void conf_process(FILE* restrict file, Shell* shell)
     int buffer_length;
     char buffer[NCSH_MAX_INPUT] = {0};
     bool update_path = false;
-    Str path_key = Str_New_Literal(NCSH_PATH_VAL);
+    Str path_key = Str_Lit(NCSH_PATH_VAL);
     Str* path = env_add_or_get(shell->env, path_key);
 
     while ((buffer_length = efgets(buffer, sizeof(buffer), file)) != EOF) {
@@ -148,7 +148,7 @@ void conf_process(FILE* restrict file, Shell* shell)
         }
         // Aliasing (6 because 'ALIAS aliased=alias')
         else if (buffer_length > 6 && !memcmp(buffer, ALIAS_ADD, sizeof(ALIAS_ADD) - 1)) {
-            alias_add(Str_New(buffer + 6, (size_t)(buffer_length - 6)), &shell->arena);
+            alias_add(Str(buffer + 6, (size_t)(buffer_length - 6)), &shell->arena);
         }
 
         memset(buffer, '\0', (size_t)buffer_length);

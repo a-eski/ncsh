@@ -15,12 +15,12 @@
 
 #define Str_Empty ((Str){.value = NULL, .length = 0})
 
-#define Str_New_Literal(str)                                                                                           \
+#define Str_Lit(str)                                                                                           \
     (Str)                                                                                                              \
     {                                                                                                                  \
         .value = (str), .length = (sizeof(str))                                                                        \
     }
-#define Str_New(str, len)                                                                                              \
+#define Str(str, len)                                                                                              \
     (Str)                                                                                                              \
     {                                                                                                                  \
         .value = (str), .length = (len)                                                                                \

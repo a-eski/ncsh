@@ -4,7 +4,7 @@ def assert_check_syntax_error(row, input)
   assert_check_new_row(row)
   @tty.send_line(input)
   row += 1
-  @tty.assert_row_starts_with(row, 'ncsh: Invalid syntax:')
+  @tty.assert_row_starts_with(row, 'ncsh parser:')
   row += 1
   row
 end

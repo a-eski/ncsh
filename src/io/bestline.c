@@ -140,15 +140,13 @@
 #endif
 #ifndef _DARWIN_C_SOURCE
 #define _DARWIN_C_SOURCE 1 /* so SIGWINCH / IUTF8 on XNU */
-#endif /* ifndef _DARWIN_C_SOURCE */
+#endif
 
 #include <assert.h>
-#include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <poll.h>
-#include <setjmp.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -161,7 +159,6 @@
 #include <termios.h>
 #include <unistd.h>
 
-#include "hashset.h"
 #include "bestline.h"
 
 #ifndef SIGWINCH
@@ -255,8 +252,7 @@ static char llamamode;
 static char balancemode;
 static char ispaused;
 static char iscapital;
-unsigned historylen;
-// static unsigned historylen;
+static unsigned historylen;
 static struct bestlineRing ring;
 static struct sigaction orig_cont;
 static struct sigaction orig_winch;
@@ -267,6 +263,8 @@ static bestlineHintsCallback *hintsCallback;
 static bestlineFreeHintsCallback *freeHintsCallback;
 static bestlineCompletionCallback *completionCallback;
 static bestlineOnHistoryLoadedCallback *onHistoryLoadedCallback;
+static bestlineHistoryCleanCallback *historyCleanCallback;
+static bestlineHistoryRemoveCallback *historyRemoveCallback;
 
 static void bestlineAtExit(void);
 static void bestlineRefreshLine(struct bestlineState *);
@@ -3790,6 +3788,30 @@ unsigned bestlineHistoryCount()
     return historylen;
 }
 
+void bestlineHistoryCountDecrement()
+{
+    --historylen;
+}
+
+char **bestlineHistory()
+{
+    return bl_history;
+}
+
+int bestlineHistoryClean()
+{
+    if (historyCleanCallback)
+        historyCleanCallback(bl_history, historylen);
+    return 0;
+}
+
+int bestlineHistoryRemove(const char * rm, int n)
+{
+    if (historyRemoveCallback)
+        historyRemoveCallback(rm, n, bl_history, historylen);
+    return 0;
+}
+
 /**
  * Like bestlineRaw, but with the additional parameter init used as the buffer
  * initial value.
@@ -3987,6 +4009,16 @@ void bestlineSetXlatCallback(bestlineXlatCallback *fn) {
 
 void bestlineSetOnHistoryLoadedCallback(bestlineOnHistoryLoadedCallback *fn) {
     onHistoryLoadedCallback = fn;
+}
+
+
+void bestlineSetOnHistoryCleanCallback(bestlineHistoryCleanCallback *fn) {
+    historyCleanCallback = fn;
+}
+
+
+void bestlineSetOnHistoryRemoveCallback(bestlineHistoryRemoveCallback *fn) {
+    historyRemoveCallback = fn;
 }
 
 /**

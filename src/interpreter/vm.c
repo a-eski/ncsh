@@ -132,7 +132,7 @@ void vm_math_process(Vm_Data* restrict vm)
     }
 
     char* c1 = vm->strs[0].value;
-    enum Ops op = vm->op_current;
+    enum Ops op = vm->ops[1];
     char* c2 = vm->strs[2].value;
     assert(c1); assert(c2);
 
@@ -146,8 +146,16 @@ void vm_math_process(Vm_Data* restrict vm)
         result = atoi(c1) < atoi(c2);
         break;
     }
+    case OP_LESS_THAN_OR_EQUALS: {
+        result = atoi(c1) <= atoi(c2);
+        break;
+    }
     case OP_GREATER_THAN: {
         result = atoi(c1) > atoi(c2);
+        break;
+    }
+    case OP_GREATER_THAN_OR_EQUALS: {
+        result = atoi(c1) >= atoi(c2);
         break;
     }
     default: {
@@ -197,6 +205,7 @@ Commands* vm_command_next(Commands* restrict cmds, Vm_Data* restrict vm)
 Commands* vm_command_set(Commands* restrict cmds, Vm_Data* restrict vm, enum Vm_State state)
 {
     vm->strs = cmds->strs;
+    vm->ops = cmds->ops;
     vm->strs_n = cmds->count;
     vm->state = state;
     vm->op_current = cmds->prev_op;
@@ -593,7 +602,9 @@ Commands* vm_next_normal(Vm_Data* restrict vm)
     }
 
     vm->strs = vm->cur_cmds->strs;
+    vm->ops = vm->cur_cmds->ops;
     vm->strs_n = vm->cur_cmds->count;
+    vm->ops = vm->cur_cmds->ops;
     vm->cur_cmds = vm_command_next(vm->cur_cmds, vm);
 
     if (!vm->end) {
@@ -782,7 +793,7 @@ failure:
 int vm_execute(Statements* restrict stmts, Shell* restrict shell, Arena* restrict scratch)
 {
     assert(shell); assert(stmts); assert(scratch);
-    if (!stmts || !stmts->head) {
+    if (!stmts || !stmts->head || !stmts->head->commands) {
         return EXIT_SUCCESS;
     }
 

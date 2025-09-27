@@ -7,8 +7,7 @@
 #include <unistd.h>
 
 #include "../eskilib/str.h"
-#include "../types.h"
-#include "lexemes.h"
+#include "lex.h"
 #include "ops.h"
 
 enum Redirect_Type : uint8_t {
@@ -33,6 +32,7 @@ struct Commands {
     Str* strs;
 
     Commands* next;
+    enum Ops op;
     enum Ops prev_op;
 };
 
@@ -60,6 +60,8 @@ enum Statements_Type {
     ST_IF_ELSE,
     ST_IF_ELIF,
     ST_IF_ELIF_ELSE,
+    ST_WHILE,
+    ST_FOR
 };
 
 typedef struct {
@@ -79,12 +81,13 @@ typedef struct {
     Statement* restrict prev_stmt;
     Commands* restrict cur_cmds;
     Arena* restrict s;
-    Shell* restrict sh;
+    Str_Builder* restrict sb;
 } Parser_Data;
 
 Commands* cmds_alloc(Arena* restrict scratch);
 
 void cmd_realloc(Commands* restrict cmds, Arena* restrict scratch);
+void cmd_realloc_exact(Commands* restrict cmds, Arena* restrict scratch, size_t new_cap);
 
 void cmds_realloc(Parser_Data* restrict data, Arena* restrict scratch);
 

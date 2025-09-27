@@ -4,9 +4,8 @@
 
 #include "../../src/defines.h"
 #include "../etest.h"
-#include "../../src/interpreter/lexer.h"
-#include "../../src/interpreter/parser.h"
-#include "../../src/interpreter/sema.h"
+#include "../../src/interpreter/lex.h"
+#include "../../src/interpreter/parse.h"
 #include "../../src/interpreter/vm.h"
 #include "../../src/ttyio/ttyio.h"
 #include "../lib/arena_test_helper.h"
@@ -20,13 +19,10 @@ volatile int sigwinch_caught;
     SCRATCH_ARENA_TEST_SETUP;                                                                                          \
                                                                                                                        \
     Lexemes lexemes = {0};                                                                                             \
-    lexer_lex(Str_Get(input), &lexemes, &scratch_arena);                                                               \
-    int res = sema_analyze(&lexemes);                                                                                  \
-    eassert(res == EXIT_SUCCESS);                                                                                      \
-    Shell shell = {0};                                                                                                 \
-    auto parse_rv = parser_parse(&lexemes, NULL, &scratch_arena);                                                      \
+    lex(Str_Get(input), &lexemes, &scratch_arena);                                                                     \
+    auto parse_rv = parse(&lexemes, &scratch_arena);                                                                   \
     eassert(!parse_rv.parser_errno);                                                                                   \
-    res = vm_execute(parse_rv.output.stmts, &shell, &scratch_arena);                                                   \
+    int res = vm_execute(parse_rv.output.stmts, &(Shell){}, &scratch_arena);                                           \
     eassert(res == EXIT_SUCCESS || res == EXIT_FAILURE_CONTINUE);                                                      \
     SCRATCH_ARENA_TEST_TEARDOWN;
 

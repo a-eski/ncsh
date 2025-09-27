@@ -14,6 +14,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <linux/limits.h>
 #include <setjmp.h>
 #include <stddef.h>
@@ -80,7 +81,7 @@ static int builtins_z(z_Database* restrict z_db, Str* restrict strs, Arena* aren
 #define NCSH_HISTORY_ADD "add"
 #define NCSH_HISTORY_RM "rm" // alias for rm
 #define NCSH_HISTORY_REMOVE "remove"
-static int builtins_history(Str* restrict strs, Arena* restrict arena, Arena* restrict scratch);
+static int builtins_history(Str* restrict strs);
 
 #define NCSH_ALIAS "alias"
 #define NCSH_ALIAS_PRINT "-p"
@@ -213,12 +214,12 @@ static int builtins_z(z_Database* restrict z_db, Str* restrict strs, Arena* rest
         assert(args->value);
 
         // z print
-        if (estrcmp(*args, Str_New_Literal(Z_PRINT))) {
+        if (estrcmp(*args, Str_Lit(Z_PRINT))) {
             z_print(z_db);
             return EXIT_SUCCESS;
         }
         // z count
-        if (estrcmp(*args, Str_New_Literal(Z_COUNT))) {
+        if (estrcmp(*args, Str_Lit(Z_COUNT))) {
             z_count(z_db);
             return EXIT_SUCCESS;
         }
@@ -236,7 +237,7 @@ static int builtins_z(z_Database* restrict z_db, Str* restrict strs, Arena* rest
 
     if (args && args[1].value && !args[2].value) {
         // z add
-        if (estrcmp(*args, Str_New_Literal(Z_ADD))) {
+        if (estrcmp(*args, Str_Lit(Z_ADD))) {
             if (z_add(&args[1], z_db, arena) != Z_SUCCESS) {
                 return EXIT_FAILURE_CONTINUE;
             }
@@ -244,8 +245,8 @@ static int builtins_z(z_Database* restrict z_db, Str* restrict strs, Arena* rest
             return EXIT_SUCCESS;
         }
         // z rm/remove
-        else if (estrcmp(*args, Str_New_Literal(Z_RM)) ||
-                estrcmp(*args, Str_New_Literal(Z_REMOVE))) {
+        else if (estrcmp(*args, Str_Lit(Z_RM)) ||
+                estrcmp(*args, Str_Lit(Z_REMOVE))) {
             if (z_remove(&args[1], z_db) != Z_SUCCESS) {
                 return EXIT_FAILURE_CONTINUE;
             }
@@ -264,11 +265,9 @@ static int builtins_z(z_Database* restrict z_db, Str* restrict strs, Arena* rest
 
 [[nodiscard]]
 [[maybe_unused]]
-static int builtins_history(Str* restrict strs, Arena* restrict arena,
-                     Arena* restrict scratch)
+static int builtins_history(Str* restrict strs)
 {
-    (void)scratch; (void)arena;
-    assert(strs); assert(arena); assert(scratch);
+    assert(strs);
 
     if (!strs[1].value) {
         return bestlineHistoryPrint(vm_output_fd);
@@ -287,26 +286,30 @@ static int builtins_history(Str* restrict strs, Arena* restrict arena,
     }
 
     if (args && !args[1].length) {
-        if (estrcmp(*args, Str_New_Literal(NCSH_HISTORY_COUNT))) {
+        if (estrcmp(*args, Str_Lit(NCSH_HISTORY_COUNT))) {
             unsigned count = bestlineHistoryCount();
             tty_println("history count: %u", count);
             return EXIT_SUCCESS;
         }
-        /*else if (estrcmp(*args, Str_New_Literal(NCSH_HISTORY_CLEAN))) {
-            return history_command_clean(history, arena, scratch);
-        }*/
+        else if (estrcmp(*args, Str_Lit(NCSH_HISTORY_CLEAN))) {
+            return bestlineHistoryClean();
+        }
     }
 
     if (args && args[1].value && !args[2].value) {
         // history add
-        if (estrcmp(*args, Str_New_Literal(NCSH_HISTORY_ADD))) {
+        if (estrcmp(*args, Str_Lit(NCSH_HISTORY_ADD))) {
             return bestlineHistoryAdd(args[1].value) == EXIT_SUCCESS ? EXIT_SUCCESS : EXIT_FAILURE_CONTINUE;
         }
         // history rm/remove
-        /*else if (estrcmp(*args, Str_New_Literal(NCSH_HISTORY_RM)) ||
-                 estrcmp(*args, Str_New_Literal(NCSH_HISTORY_REMOVE))) {
-            return history_command_remove(args[1], history, arena, scratch);
-        }*/
+        else if (estrcmp(*args, Str_Lit(NCSH_HISTORY_RM)) ||
+                 estrcmp(*args, Str_Lit(NCSH_HISTORY_REMOVE))) {
+            if (args[1].length > INT_MAX) {
+                tty_print("ncsh history: unable to remove entry, length was too long for conversion.\n");
+                return EXIT_FAILURE_CONTINUE;
+            }
+            return bestlineHistoryRemove(args[1].value, (int)args[1].length);
+        }
     }
 
     if (builtins_writeln(vm_output_fd, HISTORY_COMMAND_NOT_FOUND_MESSAGE,
@@ -340,7 +343,7 @@ static int builtins_alias(Str* restrict strs, Arena* restrict arena)
         }
         return EXIT_FAILURE_CONTINUE;
     }
-    else if (estrcmp(*args, Str_New_Literal(NCSH_ALIAS_ADD))) {
+    else if (estrcmp(*args, Str_Lit(NCSH_ALIAS_ADD))) {
         ++args;
         if (!args || !args->value) {
             if (builtins_writeln(vm_output_fd, ALIAS_ADD_USAGE, sizeof(ALIAS_ADD_USAGE) - 1) == -1) {
@@ -359,8 +362,8 @@ static int builtins_alias(Str* restrict strs, Arena* restrict arena)
         Str command = *args;
         alias_add_new(alias, command, arena);
     }
-    else if (estrcmp(*args, Str_New_Literal(NCSH_ALIAS_RM)) ||
-             estrcmp(*args, Str_New_Literal(NCSH_ALIAS_REMOVE))) {
+    else if (estrcmp(*args, Str_Lit(NCSH_ALIAS_RM)) ||
+             estrcmp(*args, Str_Lit(NCSH_ALIAS_REMOVE))) {
         ++args;
         if (!args || !args->value) {
             if (builtins_writeln(vm_output_fd, ALIAS_REMOVE_USAGE, sizeof(ALIAS_REMOVE_USAGE) - 1) == -1) {
@@ -370,11 +373,11 @@ static int builtins_alias(Str* restrict strs, Arena* restrict arena)
         }
         alias_remove(*args);
     }
-    else if (estrcmp(*args, Str_New_Literal(NCSH_ALIAS_DELETE))) {
+    else if (estrcmp(*args, Str_Lit(NCSH_ALIAS_DELETE))) {
         alias_delete();
     }
-    else if (estrcmp(*args, Str_New_Literal(NCSH_ALIAS_PRINT)) ||
-             estrcmp(*args, Str_New_Literal(NCSH_ALIAS_PRINT_))) {
+    else if (estrcmp(*args, Str_Lit(NCSH_ALIAS_PRINT)) ||
+             estrcmp(*args, Str_Lit(NCSH_ALIAS_PRINT_))) {
         alias_print(vm_output_fd);
     }
     else {
@@ -409,8 +412,8 @@ static int builtins_unalias(Str* restrict strs)
         }
         return EXIT_FAILURE_CONTINUE;
     }
-    else if (estrcmp(*args, Str_New_Literal(NCSH_UNALIAS_DELETE)) ||
-        estrcmp(*args, Str_New_Literal(NCSH_UNALIAS_DELETE_ALIAS))) {
+    else if (estrcmp(*args, Str_Lit(NCSH_UNALIAS_DELETE)) ||
+        estrcmp(*args, Str_Lit(NCSH_UNALIAS_DELETE_ALIAS))) {
         alias_delete();
         return EXIT_SUCCESS;
     }
@@ -449,7 +452,7 @@ static int builtins_echo(Str* restrict strs)
     bool echo_add_newline = true;
     // process options for echo
     while (args && args->value) {
-        if (estrcmp(*args, Str_New_Literal(NCSH_ECHO_NO_NEWLINE))) {
+        if (estrcmp(*args, Str_Lit(NCSH_ECHO_NO_NEWLINE))) {
             echo_add_newline = false;
             break;
         }
@@ -767,11 +770,11 @@ static int builtins_enable(Str* restrict strs)
     }
 
     if (args->length == 3) {
-        if (estrcmp(*args, Str_New_Literal("-a"))) {
+        if (estrcmp(*args, Str_Lit("-a"))) {
             builtins_print_enabled();
             return EXIT_SUCCESS;
         }
-        else if (estrcmp(*args, Str_New_Literal("-n"))) {
+        else if (estrcmp(*args, Str_Lit("-n"))) {
             ++args;
             return builtins_disable__(args);
         }
@@ -920,20 +923,20 @@ static int builtins_unset(Str* restrict strs, Env* restrict env)
 bool builtins_check_and_run(Vm_Data* restrict vm, Shell* restrict shell, Arena* restrict scratch)
 {
     if (shell) {
-        if (estrcmp(vm->strs[0], Str_New_Literal(Z))) {
+        if (estrcmp(vm->strs[0], Str_Lit(Z))) {
             vm->status = builtins_z(&shell->z_db, vm->strs, &shell->arena, scratch);
             return true;
         }
 
-        if (estrcmp(vm->strs[0], Str_New_Literal(NCSH_HISTORY))) {
+        if (estrcmp(vm->strs[0], Str_Lit(NCSH_HISTORY))) {
             if (builtins_disabled_state & BF_HISTORY) {
                 return false;
             }
-            vm->status = builtins_history(vm->strs, &shell->arena, scratch);
+            vm->status = builtins_history(vm->strs);
             return true;
         }
 
-        if (estrcmp(vm->strs[0], Str_New_Literal(NCSH_ALIAS))) {
+        if (estrcmp(vm->strs[0], Str_Lit(NCSH_ALIAS))) {
             if (builtins_disabled_state & BF_ALIAS) {
                 return false;
             }
@@ -941,7 +944,7 @@ bool builtins_check_and_run(Vm_Data* restrict vm, Shell* restrict shell, Arena* 
             return true;
         }
 
-        if (estrcmp(vm->strs[0], Str_New_Literal(NCSH_UNSET))) {
+        if (estrcmp(vm->strs[0], Str_Lit(NCSH_UNSET))) {
             if (builtins_disabled_state & BF_UNSET) {
                 return false;
             }

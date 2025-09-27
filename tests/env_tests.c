@@ -33,7 +33,7 @@ void env_add_or_get_path_test()
 
     Shell s = {0};
     env_new(&s, envp_ptr, &arena);
-    Str* path = env_add_or_get(s.env, Str_New_Literal(NCSH_PATH_VAL));
+    Str* path = env_add_or_get(s.env, Str_Lit(NCSH_PATH_VAL));
 
     eassert(path);
     eassert(path->value);
@@ -52,7 +52,7 @@ void env_add_or_get_user_test()
 
     Shell s = {0};
     env_new(&s, envp_ptr, &arena);
-    Str* usr = env_add_or_get(s.env, Str_New_Literal(NCSH_USER_VAL));
+    Str* usr = env_add_or_get(s.env, Str_Lit(NCSH_USER_VAL));
 
     eassert(usr);
     eassert(usr->value);

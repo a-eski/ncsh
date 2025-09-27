@@ -34,7 +34,7 @@ void estrdup_bench()
 {
     ARENA_TEST_SETUP;
 
-    auto data = Str_New_Literal("string to be duplicated");
+    auto data = Str_Lit("string to be duplicated");
 
     [[maybe_unused]] auto result = estrdup(&data, &a);
 
@@ -65,7 +65,7 @@ enodiscard static inline size_t estridx(Str* v, char c)
 }*/
 void estridx_bench()
 {
-    auto data = Str_New_Literal("string=toBeSplit");
+    auto data = Str_Lit("string=toBeSplit");
 
     [[maybe_unused]] auto result = estridx(&data, '=');
 }
@@ -74,11 +74,11 @@ void estridx_bench()
 // 481.2 - 485.5
 void estrtrim_bench()
 {
-    auto data = Str_New_Literal("stringtoBeTrimmed  ");
+    auto data = Str_Lit("stringtoBeTrimmed  ");
 
     estrtrim(&data);
 
-    auto dataNoTrim = Str_New_Literal("stringtoNotBeTrimmed");
+    auto dataNoTrim = Str_Lit("stringtoNotBeTrimmed");
 
     estrtrim(&dataNoTrim);
 }

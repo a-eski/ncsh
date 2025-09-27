@@ -7,6 +7,7 @@
 #include <stddef.h>
 
 #include "ops.h"
+#include "../types.h"
 #include "../eskilib/str.h"
 #include "stmts.h"
 
@@ -65,6 +66,7 @@ typedef struct {
 
     Statements* stmts;
     Statement* cur_stmt;
+    enum Ops* ops;
     Commands* cur_cmds;
     Shell* sh;
     Arena* s;

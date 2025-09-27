@@ -8,7 +8,7 @@ static Arena* ar;
 
 void alias_check_no_alias_test()
 {
-    Str result = alias_check(Str_New_Literal("echo hello"));
+    Str result = alias_check(Str_Lit("echo hello"));
 
     eassert(!result.length);
     eassert(!result.value);
@@ -16,10 +16,10 @@ void alias_check_no_alias_test()
 
 void alias_add_then_check_alias_found_test()
 {
-    Str alias = Str_New_Literal("n=nvim");
+    Str alias = Str_Lit("n=nvim");
     alias_add(alias, ar);
 
-    Str result = alias_check(Str_New_Literal("n"));
+    Str result = alias_check(Str_Lit("n"));
 
     char expected_result[] = "nvim";
     eassert(result.length == sizeof(expected_result));
@@ -28,8 +28,8 @@ void alias_add_then_check_alias_found_test()
 
 void alias_add_new_then_check_alias_found_test()
 {
-    Str alias = Str_New_Literal("n");
-    alias_add_new(alias, Str_New_Literal("nvim"), ar);
+    Str alias = Str_Lit("n");
+    alias_add_new(alias, Str_Lit("nvim"), ar);
 
     Str result = alias_check(alias);
 
@@ -40,10 +40,10 @@ void alias_add_new_then_check_alias_found_test()
 
 void alias_add_then_check_alias_found_multiple_chars_test()
 {
-    Str alias = Str_New_Literal("fd=fdfind");
+    Str alias = Str_Lit("fd=fdfind");
     alias_add(alias, ar);
 
-    Str result = alias_check(Str_New_Literal("fd"));
+    Str result = alias_check(Str_Lit("fd"));
 
     char expected_result[] = "fdfind";
     eassert(result.length == sizeof(expected_result));
@@ -52,8 +52,8 @@ void alias_add_then_check_alias_found_multiple_chars_test()
 
 void alias_add_new_then_check_alias_found_multiple_chars_test()
 {
-    Str alias = Str_New_Literal("fd");
-    alias_add_new(alias, Str_New_Literal("fdfind"), ar);
+    Str alias = Str_Lit("fd");
+    alias_add_new(alias, Str_Lit("fdfind"), ar);
 
     Str result = alias_check(alias);
 
@@ -64,10 +64,10 @@ void alias_add_new_then_check_alias_found_multiple_chars_test()
 
 void alias_add_then_remove_test()
 {
-    Str alias = Str_New_Literal("n=nvim");
+    Str alias = Str_Lit("n=nvim");
     alias_add(alias, ar);
 
-    Str buffer = Str_New_Literal("nvim");
+    Str buffer = Str_Lit("nvim");
     alias_remove(buffer);
 
     Str result = alias_check(buffer);
@@ -77,12 +77,12 @@ void alias_add_then_remove_test()
 
 void alias_add_then_delete_test()
 {
-    Str alias = Str_New_Literal("n=nvim");
+    Str alias = Str_Lit("n=nvim");
     alias_add(alias, ar);
 
     alias_delete();
 
-    Str result = alias_check(Str_New_Literal("n"));
+    Str result = alias_check(Str_Lit("n"));
     eassert(result.length == 0);
     eassert(result.value == NULL);
 }

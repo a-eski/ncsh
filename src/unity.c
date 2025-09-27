@@ -27,11 +27,10 @@
 #include "z/fzf.c"
 #include "z/z.c"
 
-#include "interpreter/expansions.c"
+#include "interpreter/expand.c"
 #include "interpreter/interpreter.c"
-#include "interpreter/lexemes.c"
-#include "interpreter/lexer.c"
-#include "interpreter/parser.c"
+#include "interpreter/lex.c"
+#include "interpreter/parse.c"
 #include "interpreter/stmts.c"
 
 #include "io/bestline.c"
