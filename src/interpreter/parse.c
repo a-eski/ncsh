@@ -64,6 +64,12 @@ enum Token peek(Lexemes* restrict lexemes, size_t n)
     return lexemes->ops[n];
 }
 
+static void data_cmd_update(Parser_Data* restrict data, Str s, enum Ops op) {
+    data->cur_cmds->strs[data->cur_cmds->pos] = s;
+    data->cur_cmds->ops[data->cur_cmds->pos] = op;
+    ++data->cur_cmds->pos;
+}
+
 static inline bool is_in_quotes()
 {
     return parser_state & IN_SINGLE_QUOTES || parser_state & IN_DOUBLE_QUOTES || parser_state & IN_BACKTICK_QUOTES;
@@ -83,7 +89,6 @@ static void handle_quotes(Parser_Data* restrict data, enum Parser_State in_state
     }
 }
 
-[[nodiscard]]
 static bool is_end_of_stmt(enum Token op)
 {
     switch (op) {
@@ -101,7 +106,8 @@ static bool is_end_of_stmt(enum Token op)
 
 static Parser_Internal parse_token(Parser_Data* restrict data, Lexemes* restrict lexemes, size_t* restrict i);
 
-static Parser_Internal process_cmds(Parser_Data* data, size_t* restrict n)
+[[nodiscard]]
+static Parser_Internal parse_cmds(Parser_Data* data, size_t* restrict n)
 {
     Parser_Internal rv;
 
@@ -109,7 +115,7 @@ static Parser_Internal process_cmds(Parser_Data* data, size_t* restrict n)
         rv = parse_token(data, data->lexemes, n);
         if (rv.parser_errno)
             return rv;
-    } while (!is_end_of_stmt(data->lexemes->ops[++*n]));
+    } while (!is_end_of_stmt(data->lexemes->ops[++*n]) && *n < data->lexemes->count - 1);
 
     if (*n > 0 && data->lexemes->ops[*n - 1] == T_C_BRACK)
         --*n;
@@ -118,6 +124,7 @@ static Parser_Internal process_cmds(Parser_Data* data, size_t* restrict n)
     return (Parser_Internal){};
 }
 
+[[nodiscard]]
 static Parser_Internal parse_conditions(Parser_Data* data, size_t* restrict n, enum Logic_Type type)
 {
     if (!consume(data->lexemes, n, T_O_BRACK)) {
@@ -132,7 +139,7 @@ static Parser_Internal parse_conditions(Parser_Data* data, size_t* restrict n, e
     }
 
     debug("processing conditions");
-    Parser_Internal rv = process_cmds(data, n);
+    Parser_Internal rv = parse_cmds(data, n);
     if (rv.parser_errno)
         return rv;
 
@@ -155,17 +162,13 @@ static Parser_Internal parse_conditions(Parser_Data* data, size_t* restrict n, e
 
     consume(data->lexemes, n, T_SEMIC);
 
-    if (!consume(data->lexemes, n, T_THEN)) {
-        return (Parser_Internal){.parser_errno = PE_MISSING_TOK, .msg = "missing 'then' after a condition."};
-    }
-
     return (Parser_Internal){};
 }
 
 static Parser_Internal parse_if_statements(Parser_Data* restrict data, size_t* restrict n)
 {
     debug("processing if statements");
-    Parser_Internal rv = process_cmds(data, n);
+    Parser_Internal rv = parse_cmds(data, n);
     if (rv.parser_errno)
         return rv;
 
@@ -183,7 +186,7 @@ static Parser_Internal parse_else_statements(Parser_Data* restrict data, size_t*
         return (Parser_Internal){.parser_errno = PE_MISSING_TOK, .msg = "expected 'else' but it was not found."};
     }
 
-    Parser_Internal rv = process_cmds(data, n);
+    Parser_Internal rv = parse_cmds(data, n);
     if (rv.parser_errno)
         return rv;
 
@@ -207,8 +210,11 @@ static Parser_Internal parse_elif_statements(Parser_Data* restrict data, size_t*
         rv.msg = expanded_msg && expanded_msg->value ? expanded_msg->value : rv.msg;
         return rv;
     }
+    if (!consume(data->lexemes, n, T_THEN)) {
+        return (Parser_Internal){.parser_errno = PE_MISSING_TOK, .msg = "missing 'then' after a condition."};
+    }
 
-    rv = process_cmds(data, n);
+    rv = parse_cmds(data, n);
     if (rv.parser_errno) {
         Str* expanded_msg = estrcat(&Str_Get(rv.msg), &Str_Lit(" Failed parsing elif commands."), data->s);
         rv.msg = expanded_msg && expanded_msg->value ? expanded_msg->value : rv.msg;
@@ -242,6 +248,9 @@ static Parser_Internal parse_if(Parser_Data* data, size_t* restrict n)
     Parser_Internal rv = parse_conditions(data, n, LT_IF_CONDITIONS);
     if (rv.parser_errno)
         return rv;
+    if (!consume(data->lexemes, n, T_THEN)) {
+        return (Parser_Internal){.parser_errno = PE_MISSING_TOK, .msg = "missing 'then' after a condition."};
+    }
 
     rv = parse_if_statements(data, n);
     if (rv.parser_errno) {
@@ -294,10 +303,52 @@ static Parser_Internal parse_if(Parser_Data* data, size_t* restrict n)
     return rv;
 }
 
-static void data_cmd_update(Parser_Data* restrict data, Str s, enum Ops op) {
-    data->cur_cmds->strs[data->cur_cmds->pos] = s;
-    data->cur_cmds->ops[data->cur_cmds->pos] = op;
-    ++data->cur_cmds->pos;
+[[nodiscard]]
+static Parser_Internal parse_while_statements(Parser_Data* restrict data, size_t* restrict n)
+{
+    debug("processing while statements");
+    Parser_Internal rv = parse_cmds(data, n);
+    if (rv.parser_errno)
+        return rv;
+
+    consume(data->lexemes, n, T_SEMIC);
+
+    cmd_stmt_next(data, LT_WHILE);
+    return rv;
+}
+
+[[nodiscard]]
+static Parser_Internal parse_while(Parser_Data* data, size_t* restrict n)
+{
+    if (data->cur_cmds->pos > 0) {
+        cmd_stmt_next(data, LT_NORMAL);
+    }
+    data->stmts->type = ST_WHILE;
+    consume(data->lexemes, n, T_WHILE);
+
+    Parser_Internal rv = parse_conditions(data, n, LT_WHILE_CONDITIONS);
+    if (rv.parser_errno) {
+        Str* expanded_msg = estrcat(&Str_Get(rv.msg), &Str_Lit(" Failed parsing while conditions."), data->s);
+        rv.msg = expanded_msg && expanded_msg->value ? expanded_msg->value : rv.msg;
+        return rv;
+    }
+
+    consume(data->lexemes, n, T_DO);
+
+    do {
+        rv = parse_while_statements(data, n);
+        if (rv.parser_errno) {
+            Str* expanded_msg = estrcat(&Str_Get(rv.msg), &Str_Lit(" Failed parsing while statements."), data->s);
+            rv.msg = expanded_msg && expanded_msg->value ? expanded_msg->value : rv.msg;
+            return rv;
+        }
+    } while (*n < data->lexemes->count && peek(data->lexemes, *n) != T_DONE);
+
+    if (!consume(data->lexemes, n, T_DONE)) {
+        return (Parser_Internal){.parser_errno = PE_MISSING_TOK, .msg = "missing 'done', no closing 'done' for while loop."};
+    }
+
+    return (Parser_Internal){};
 }
 
 static Parser_Internal parse_pipe(Parser_Data* restrict data, Lexemes* restrict lexemes, size_t* restrict i)
@@ -431,6 +482,8 @@ static Parser_Internal parse_lt(Parser_Data* restrict data, Lexemes* restrict le
 static Parser_Internal parse_token(Parser_Data* restrict data, Lexemes* restrict lexemes, size_t* restrict i)
 {
     enum Token peeked;
+    enum Ops const_op = OP_CONST;
+
     switch (lexemes->ops[*i]) {
     case T_PIPE: {
         if (is_in_quotes())
@@ -452,6 +505,7 @@ static Parser_Internal parse_token(Parser_Data* restrict data, Lexemes* restrict
     }
 
     case T_NUM: {
+        const_op = OP_NUM;
         if (is_in_quotes())
             goto quoted;
         if (lexemes->strs[*i].length > 2 || *lexemes->strs[*i].value != '2')
@@ -491,7 +545,7 @@ static Parser_Internal parse_token(Parser_Data* restrict data, Lexemes* restrict
     case T_EQ: {
         if (*i > 0 && lexemes->ops[*i - 1] == T_CONST) {
             peeked = peek(lexemes, *i + 1);
-            if (peeked == T_CONST || peeked == T_NUM || peeked == T_QUOTE || peeked == T_D_QUOTE || peeked == T_BACKTICK) {
+            if (peeked == T_CONST || peeked == T_NUM || peeked == T_QUOTE || peeked == T_D_QUOTE || peeked == T_BACKTICK || peeked == T_DOLLAR) {
                 data->cur_cmds->op = OP_ASSIGNMENT;
                 data_cmd_update(data, lexemes->strs[*i], OP_ASSIGNMENT);
                 return (Parser_Internal){};
@@ -520,6 +574,13 @@ static Parser_Internal parse_token(Parser_Data* restrict data, Lexemes* restrict
             data_cmd_update(data, lexemes->strs[*i], OP_VARIABLE);
             return (Parser_Internal){};
         }
+        if (peeked == T_O_PARAN) {
+            consume(lexemes, i, T_O_PARAN);
+            ++*i;
+            data_cmd_update(data, Str_Lit("$("), OP_MATH_EXPR_START);
+            return (Parser_Internal){};
+        }
+
         break;
     }
 
@@ -560,6 +621,17 @@ static Parser_Internal parse_token(Parser_Data* restrict data, Lexemes* restrict
             goto quoted;
 
         Parser_Internal rv = parse_if(data, i);
+        if (rv.parser_errno)
+            return rv;
+
+        return (Parser_Internal){};
+    }
+
+    case T_WHILE: {
+        if (is_in_quotes())
+            goto quoted;
+
+        Parser_Internal rv = parse_while(data, i);
         if (rv.parser_errno)
             return rv;
 
@@ -607,6 +679,61 @@ static Parser_Internal parse_token(Parser_Data* restrict data, Lexemes* restrict
         return (Parser_Internal){};
     }
 
+    case T_PLUS: {
+        if (is_in_quotes())
+            goto quoted;
+
+        data_cmd_update(data, lexemes->strs[*i], OP_ADD);
+        data->cur_cmds->prev_op = OP_ADD;
+        return (Parser_Internal){};
+    }
+    case T_MINUS: {
+        if (is_in_quotes())
+            goto quoted;
+
+        data_cmd_update(data, lexemes->strs[*i], OP_SUB);
+        data->cur_cmds->prev_op = OP_SUB;
+        return (Parser_Internal){};
+    }
+    case T_MOD: {
+        if (is_in_quotes())
+            goto quoted;
+
+        data_cmd_update(data, lexemes->strs[*i], OP_MOD);
+        data->cur_cmds->prev_op = OP_MOD;
+        return (Parser_Internal){};
+    }
+    case T_FSLASH: {
+        if (is_in_quotes())
+            goto quoted;
+
+        data_cmd_update(data, lexemes->strs[*i], OP_DIV);
+        data->cur_cmds->prev_op = OP_DIV;
+        return (Parser_Internal){};
+    }
+    case T_STAR: {
+        if (is_in_quotes())
+            goto quoted;
+
+        if (peek(lexemes, *i + 1) == T_STAR) {
+            consume(lexemes, i, T_STAR);
+            data_cmd_update(data, Str_Lit("**"), OP_EXP);
+            data->cur_cmds->prev_op = OP_EXP;
+            return (Parser_Internal){};
+        }
+
+        data_cmd_update(data, lexemes->strs[*i], OP_MUL);
+        data->cur_cmds->prev_op = OP_MUL;
+        return (Parser_Internal){};
+    }
+    case T_C_PARAN: {
+        if (is_in_quotes())
+            goto quoted;
+
+        data_cmd_update(data, lexemes->strs[*i], OP_MATH_EXPR_END);
+        return (Parser_Internal){};
+    }
+
     default: {
     quoted:
         if (is_in_quotes()) {
@@ -617,7 +744,7 @@ static Parser_Internal parse_token(Parser_Data* restrict data, Lexemes* restrict
     }
     }
 
-    data_cmd_update(data, lexemes->strs[*i], OP_CONST);
+    data_cmd_update(data, lexemes->strs[*i], const_op);
     return (Parser_Internal){};
 }
 
@@ -636,9 +763,9 @@ Parser_Output parse(Lexemes* restrict lexemes, Arena* restrict scratch)
         .stmts = arena_malloc(scratch, 1, Statements),
         .cur_stmt = stmt_alloc(scratch),
         .s = scratch,
+        .sb = sb_new(scratch),
+        .cur_cmds = data.cur_stmt->commands
     };
-    data.cur_cmds = data.cur_stmt->commands;
-    data.sb = sb_new(scratch);
     parser_state = 0;
     Parser_Internal rv;
 

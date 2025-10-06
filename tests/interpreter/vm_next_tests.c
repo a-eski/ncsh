@@ -1,28 +1,12 @@
 /* vm_next_tests.c: tests for vm.c function vm_next. */
 
 #include <stdlib.h>
-#include <setjmp.h>
 
 #include "../../src/interpreter/lex.h"
 #include "../../src/interpreter/parse.h"
 #include "../../src/interpreter/stmts.h"
 #include "../../src/interpreter/vm_types.h"
-#include "../etest.h"
-#include "../lib/arena_test_helper.h"
-
-__sig_atomic_t vm_child_pid;
-jmp_buf env_jmp_buf;
-volatile int sigwinch_caught;
-
-Commands* vm_next(Commands* cmds, Vm_Data* restrict vm);
-
-void vm_setup(Vm_Data* vm, Parser_Output rv, Arena s)
-{
-    // simulate setup the VM does
-    *vm = (Vm_Data){.stmts = rv.output.stmts, .cur_stmt = rv.output.stmts->head, .s = &s};
-    vm->cur_cmds = vm->cur_stmt->commands;
-    vm->cur_cmds->pos = 0;
-}
+#include "vm_test_helper.h"
 
 void vm_next_simple_test()
 {
@@ -38,7 +22,7 @@ void vm_next_simple_test()
 
     // simulate setup the VM does
     Vm_Data vm;
-    vm_setup(&vm, rv, s);
+    vm_setup(&vm, rv, &s);
 
     // conditions
     vm.cur_cmds = vm_next(vm.cur_cmds, &vm);
@@ -69,7 +53,7 @@ void vm_next_bool_test()
 
     // simulate setup the VM does
     Vm_Data vm;
-    vm_setup(&vm, rv, s);
+    vm_setup(&vm, rv, &s);
 
     // conditions
     vm.cur_cmds = vm_next(vm.cur_cmds, &vm);
@@ -100,7 +84,7 @@ void vm_next_if_test()
 
     // simulate setup the VM does
     Vm_Data vm;
-    vm_setup(&vm, rv, s);
+    vm_setup(&vm, rv, &s);
 
     // conditions
     vm.cur_cmds = vm_next(vm.cur_cmds, &vm);
@@ -142,7 +126,7 @@ void vm_next_if_multiple_conditions_true_and_test()
 
     // simulate setup the VM does
     Vm_Data vm;
-    vm_setup(&vm, rv, s);
+    vm_setup(&vm, rv, &s);
 
     // conditions
     // first condition
@@ -194,7 +178,7 @@ void vm_next_if_multiple_conditions_false_and_test()
 
     // simulate setup the VM does
     Vm_Data vm;
-    vm_setup(&vm, rv, s);
+    vm_setup(&vm, rv, &s);
 
     // conditions
     // first condition
@@ -225,7 +209,7 @@ void vm_next_if_multiple_conditions_true_or_test()
 
     // simulate setup the VM does
     Vm_Data vm;
-    vm_setup(&vm, rv, s);
+    vm_setup(&vm, rv, &s);
 
     // conditions
     // first condition
@@ -277,7 +261,7 @@ void vm_next_if_else_true_test()
 
     // simulate setup the VM does
     Vm_Data vm;
-    vm_setup(&vm, rv, s);
+    vm_setup(&vm, rv, &s);
 
     // conditions
     vm.cur_cmds = vm_next(vm.cur_cmds, &vm);
@@ -321,7 +305,7 @@ void vm_next_if_else_false_test()
 
     // simulate setup the VM does
     Vm_Data vm;
-    vm_setup(&vm, rv, s);
+    vm_setup(&vm, rv, &s);
 
     // conditions
     vm.cur_cmds = vm_next(vm.cur_cmds, &vm);
@@ -364,7 +348,7 @@ void vm_next_if_elif_else_if_true_test()
 
     // simulate setup the VM does
     Vm_Data vm;
-    vm_setup(&vm, rv, s);
+    vm_setup(&vm, rv, &s);
 
     // conditions
     vm.cur_cmds = vm_next(vm.cur_cmds, &vm);
@@ -406,7 +390,7 @@ void vm_next_if_elif_else_elif_true_test()
 
     // simulate setup the VM does
     Vm_Data vm;
-    vm_setup(&vm, rv, s);
+    vm_setup(&vm, rv, &s);
 
     // if conditions
     vm.cur_cmds = vm_next(vm.cur_cmds, &vm);

@@ -147,16 +147,16 @@ enodiscard static inline Str* estrcat(Str* restrict v, Str* restrict v2, Arena* 
 /* estridx
  *  Return the index of the first occurence of char c in Str v.
  */
-enodiscard static inline size_t estridx(Str* v, char c)
+enodiscard static inline ssize_t estridx(Str* v, char c)
 {
     assert(v); assert(v->value);
 
-    size_t idx;
-    for (idx = 0; idx < v->length; ++idx) {
+    ssize_t idx;
+    for (idx = 0; idx < (ssize_t)v->length; ++idx) {
         if (v->value[idx] == c)
-            break;
+            return idx;
     }
-    return idx;
+    return -1;
 }
 
 /* estrtoarr
@@ -186,6 +186,15 @@ static inline void estrtrim(Str* v)
     v->length = i + 2;
 
     assert(v->value[v->length - 1] == '\0');
+}
+
+enodiscard static inline Str* estrnew(char* v, Arena* restrict a)
+{
+    Str* rv = arena_malloc(a, 1, Str);
+    rv->length = strlen(v) + 1;
+    rv->value = arena_malloc(a, rv->length, char);
+    memcpy(rv->value, v, rv->length - 1);
+    return rv;
 }
 
 enodiscard static inline Str* estrdup(Str* v, Arena* restrict a)
@@ -311,3 +320,162 @@ enodiscard static inline Str* estrsjoin(Str* v, size_t n, char joiner, Arena* re
 
     return str;
 }
+
+// start with non decimal numbers
+// TODO: work on a solution for parsing out integers
+// TODO: work on a solution for checking then parsing out decimals
+enodiscard static inline bool estrisnum(Str s)
+{
+    if (s.length < 2) {
+        return false;
+    }
+
+    if (s.value[0] != '-' && !(s.value[0] >= '0' && s.value[0] <= '9'))
+        return false;
+
+    for (size_t i = 1; i < s.length - 1; ++i) {
+        if (!(s.value[i] >= '0' && s.value[i] <= '9')) {
+            return false;
+        }
+    }
+
+    return true;
+
+    /*char* dot = strstr(s.value, ".");
+    char* comma = strstr(s.value, ",");
+
+    char* endptr;
+    if (!dot && !comma) {
+        if (s.length < 1 + floor(log10(INT_MAX))) {
+            strtoimax(s.value, &endptr, 10);
+        }
+        else if (s.length < 1 + floor(log10(LONG_MAX))) {
+            strtol(s.value, &endptr, 10);
+        }
+        else if (s.length < 1 + floor(log10(LLONG_MAX))) {
+            strtoll(s.value, &endptr, 10);
+        }
+        else if (s.length < 1 + floor(log10(ULLONG_MAX))) {
+            strtoull(s.value, &endptr, 10);
+        }
+
+        if (endptr == s.value || *endptr != 0 || errno == ERANGE)
+            return false;
+
+        return true;
+    }
+
+    return false;*/
+}
+
+typedef struct {
+    enum {
+        N_INT,
+        N_DBL
+    } type;
+    union {
+        int i;
+        double d;
+    } value;
+} Num;
+
+// 0 is ASCII 48, 9 is ASCII 57
+enodiscard static inline int ctoi(char c)
+{
+    assert((int)c > 47 && (int)c < 58);
+    return (int)c - 48;
+}
+
+enodiscard static inline Num estrtonum(Str s)
+{
+    bool is_negative = s.value[0] == '-';
+    int rv = 0;
+    int multiplier = 1;
+    size_t limit = is_negative ? 1 : 0;
+
+    for (size_t i = s.length - 1; i > limit; --i) {
+        rv += ctoi(s.value[i - 1]) * multiplier;
+        multiplier = multiplier == 1 ? 10 : multiplier * 10;
+    }
+
+    if (rv > 0 && is_negative)
+        rv *= -1;
+
+    return (Num){.type = N_INT, .value.i = rv };
+}
+
+enodiscard static inline Str* numtostr(Num n, Arena* restrict arena)
+{
+    char s[20];
+    if (n.type == N_DBL)
+        sprintf(s, "%f", n.value.d);
+    else
+        sprintf(s, "%d", n.value.i);
+    return estrnew(s, arena);
+}
+
+#define NUMCMP(n1, n2, op)                  \
+    if (n1.type != n2.type)                 \
+        return false;                       \
+                                            \
+    if (n1.type == N_DBL)                   \
+        return n1.value.d op n2.value.d;    \
+                                            \
+    return n1.value.i op n2.value.i
+
+enodiscard static inline bool numeq(Num n1, Num n2)
+{
+    NUMCMP(n1, n2, ==);
+}
+
+enodiscard static inline bool numlt(Num n1, Num n2)
+{
+    NUMCMP(n1, n2, <);
+}
+
+enodiscard static inline bool numle(Num n1, Num n2)
+{
+    NUMCMP(n1, n2, <=);
+}
+
+enodiscard static inline bool numgt(Num n1, Num n2)
+{
+    NUMCMP(n1, n2, >);
+}
+
+enodiscard static inline bool numge(Num n1, Num n2)
+{
+    NUMCMP(n1, n2, >=);
+}
+
+enodiscard static inline int numpowi(Num base, Num exp)
+{
+    int rv = 1;
+    while (exp.value.i > 0) {
+        rv *= base.value.i;
+        exp.value.i--;
+    }
+    return rv;
+}
+
+/*enodiscard static inline Num estrtonum(Str s)
+{
+    bool is_negative = s.value[0] == '-';
+    ssize_t has_commas = estridx(&s, ',');
+    ssize_t is_dec = estridx(&s, '.');
+    int rv = 0;
+
+    if (is_dec == -1) {
+        size_t multiplier = 1;
+        for (size_t i = s.length - 1; i > 0; --i) {
+
+        }
+
+        if (rv > 0 && is_negative)
+            rv *= -1;
+
+        return (Num){.type = N_INT, .value.i = rv };
+    }
+
+    return (Num){.type = N_DBL, .value.d = 0};
+}*/

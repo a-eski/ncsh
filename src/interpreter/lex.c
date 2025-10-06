@@ -10,7 +10,6 @@
 
 #include "../debug.h"
 #include "../defines.h" // used for macros like NCSH_MAX_INPUT
-#include "../eskilib/num.h"
 #include "lex.h"
 #include "symbols.h"
 
@@ -22,7 +21,7 @@ static size_t lex_buf_pos;
 [[nodiscard]]
 static inline enum Token get_const_type(Str s)
 {
-    return isnum(s) ? T_NUM : T_CONST;
+    return estrisnum(s) ? T_NUM : T_CONST;
 }
 
 // clang-format off
@@ -65,13 +64,24 @@ static constexpr enum Token ops_3char[] = {T_EQ_A,
                                            T_FOR};
 
 [[nodiscard]]
-bool tok_check_var(char* line, size_t len)
+static inline bool tok_check_var(char* line, size_t len)
 {
     return len > 2 && line[0] == DOLLAR;
 }
 
 [[nodiscard]]
-enum Token tok_check_len_two(Str s)
+static inline enum Token tok_check_len_one(Str s)
+{
+    if (s.value[0] == MINUS)
+        return T_MINUS;
+    if (s.value[0] == FSLASH)
+        return T_FSLASH;
+
+    return get_const_type(s);
+}
+
+[[nodiscard]]
+static inline enum Token tok_check_len_two(Str s)
 {
     for (size_t i = 0; i < ops_2char_len; ++i) {
         if (CMP_2(s.value, ops_2char_str[i])) {
@@ -83,7 +93,7 @@ enum Token tok_check_len_two(Str s)
 }
 
 [[nodiscard]]
-enum Token tok_check_len_three(Str s)
+static inline enum Token tok_check_len_three(Str s)
 {
     for (size_t i = 0; i < ops_3char_len; ++i) {
         if (CMP_3(s.value, ops_3char_str[i])) {
@@ -95,7 +105,7 @@ enum Token tok_check_len_three(Str s)
 }
 
 [[nodiscard]]
-enum Token tok_check_len_four(Str s)
+static inline enum Token tok_check_len_four(Str s)
 {
     switch (s.value[0]) {
     case 't': {
@@ -122,7 +132,7 @@ enum Token tok_check_len_four(Str s)
 }
 
 [[nodiscard]]
-enum Token tok_check_len_five(Str s)
+static inline enum Token tok_check_len_five(Str s)
 {
     switch (s.value[0]) {
     case 'f': {
@@ -151,6 +161,10 @@ enum Token tok_get(Str s)
     switch (s.length - 1) {
     case 0: {
         return T_NONE;
+    }
+
+    case 1: {
+        return tok_check_len_one(s);
     }
 
     case 2: {
@@ -202,6 +216,11 @@ void lexeme_add(Lexemes* restrict lexemes, size_t* n, char c, enum Token tok, Ar
     *n += 1;
 }
 
+static inline bool is_whitespace(char c)
+{
+    return c == ' ' || c == '\t' || c == '\n' || c == '\r';
+}
+
 /* lex
  * Turns the inputted line into values, lengths, and bytecodes that the VM can work with.
  */
@@ -243,8 +262,18 @@ void lex(Str line, Lexemes* lexemes, Arena* restrict scratch)
         }
 
         switch (line.value[pos]) {
-        case QUESTION:
+        case QUESTION: {
+            t = T_GLOB;
+            lex_buf[lex_buf_pos++] = line.value[pos];
+            continue;
+        }
         case STAR: {
+            if (lex_buf_pos == 0 && pos + 1 < line.length) {
+                if (is_whitespace(line.value[pos + 1]) || line.value[pos + 1] == STAR) {
+                    lexeme_add(lexemes, &n, line.value[pos], T_STAR, scratch);
+                    continue;
+                }
+            }
             t = T_GLOB;
             lex_buf[lex_buf_pos++] = line.value[pos];
             continue;
@@ -309,6 +338,14 @@ void lex(Str line, Lexemes* lexemes, Arena* restrict scratch)
         }
         case SEMICOLON: {
             lexeme_add(lexemes, &n, line.value[pos], T_SEMIC, scratch);
+            continue;
+        }
+        case PLUS: {
+            lexeme_add(lexemes, &n, line.value[pos], T_PLUS, scratch);
+            continue;
+        }
+        case MOD: {
+            lexeme_add(lexemes, &n, line.value[pos], T_MOD, scratch);
             continue;
         }
         case COMMENT: {
@@ -383,4 +420,3 @@ void lex_noninteractive(char** restrict inputs, size_t inputs_count, Lexemes* le
 
     debug_lexemes(lexemes);
 }
-

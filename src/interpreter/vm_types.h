@@ -23,7 +23,8 @@ enum Vm_State {
     VS_IN_CONDITIONS,
     VS_IN_IF_STATEMENTS,
     VS_IN_ELSE_STATEMENTS,
-    VS_IN_ELIF_STATEMENTS
+    VS_IN_ELIF_STATEMENTS,
+    VS_IN_LOOP_STATEMENTS
 };
 
 /* Output_Redirect_IO
@@ -57,17 +58,23 @@ typedef struct {
 typedef struct {
     size_t strs_n;
     Str* strs;
-    uint8_t command_position;
-    bool end;
+    enum Ops* ops;
 
     enum Ops op_current;
     enum Vm_State state;
     int status;
 
+    size_t loop_c_n;
+    Str* loop_c_s;
+    enum Ops* loop_c_ops;
+    enum Ops loop_c_op;
+
+    uint8_t command_position;
+    bool end;
     Statements* stmts;
     Statement* cur_stmt;
-    enum Ops* ops;
     Commands* cur_cmds;
+
     Shell* sh;
     Arena* s;
 

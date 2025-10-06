@@ -42,7 +42,9 @@ enum Logic_Type {
     LT_IF,
     LT_ELSE,
     LT_ELIF_CONDITIONS,
-    LT_ELIF
+    LT_ELIF,
+    LT_WHILE,
+    LT_WHILE_CONDITIONS
 };
 
 typedef struct Statement Statement;

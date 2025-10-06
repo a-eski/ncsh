@@ -160,6 +160,22 @@ static void expand_cmds(Commands* restrict cmds, Env* restrict env, Arena* restr
                 expand_glob(cmds, i, scratch);
                 break;
             }
+            case OP_MATH_EXPR_START: {
+                for (size_t j = i; j < cmds->count; j++) {
+                    if (cmds->ops[j] == OP_MATH_EXPR_END)
+                        break;
+                    if (cmds->ops[j] == OP_CONST) {
+                        Str* out = expand_variable(&cmds->strs[j], env, scratch);
+                        if (out == NULL)
+                            continue;
+                        if (estrisnum(*out)) {
+                            cmds->ops[j] = OP_NUM;
+                        }
+                        cmds->strs[j] = *out;
+                    }
+                }
+                break;
+            }
             default:
                 break;
         }

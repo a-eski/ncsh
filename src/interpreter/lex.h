@@ -20,12 +20,19 @@ enum Token {
     T_C_PARAN,   // )
     T_O_BRACK,   // [
     T_C_BRACK,   // ]
+    T_FSLASH,    // /
+    // T_BSLASH,    // '\'
     T_SEMIC,     // ;
+    T_STAR,      // *
+    T_QUESTION,  // ?
     T_GLOB,      // *, ?
     T_BANG,      // !
     T_EQ,        // =
     T_GT,        // >
     T_LT,        // <
+    T_PLUS,      // +
+    T_MINUS,     // -
+    T_MOD,       // %
     T_DOLLAR,    // $
     T_HOME,      // ~
     T_WS,        // whitespace \t, \r, \n, \0, ' '

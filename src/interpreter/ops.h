@@ -8,56 +8,57 @@
 enum Ops : uint8_t {
     // Default value, indicative of an issue parsing when found during execution
     OP_NONE = 0,
-    // Constant value
-    OP_CONST = 1,
+    // Constant values
+    OP_CONST,
+    OP_NUM,
     // Shell operators
-    OP_PIPE = 2,                                  // |
-    OP_STDOUT_REDIRECTION = 3,                    // >
-    OP_STDOUT_REDIRECTION_APPEND = 4,             // >>
-    OP_STDIN_REDIRECTION = 5,                     // <
-    OP_STDIN_REDIRECTION_APPEND = 6,              // <<
-    OP_STDERR_REDIRECTION = 7,                    // 2>
-    OP_STDERR_REDIRECTION_APPEND = 8,             // 2>>
-    OP_STDOUT_AND_STDERR_REDIRECTION = 9,         // &>
-    OP_STDOUT_AND_STDERR_REDIRECTION_APPEND = 10, // &>>
-    OP_BACKGROUND_JOB = 11,                       // &
-    OP_AND = 12,                                  // &&
-    OP_OR = 13,                                   // ||
+    OP_PIPE,                                  // |
+    OP_STDOUT_REDIR,                          // >
+    OP_STDOUT_REDIR_APPEND,                   // >>
+    OP_STDIN_REDIR,                           // <
+    OP_STDIN_REDIR_APPEND,                    // <<
+    OP_STDERR_REDIR,                          // 2>
+    OP_STDERR_REDIR_APPEND,                   // 2>>
+    OP_STDOUT_AND_STDERR_REDIR,               // &>
+    OP_STDOUT_AND_STDERR_REDIR_APPEND,        // &>>
+    OP_BG_JOB,                                // &
+    OP_AND,                                   // &&
+    OP_OR,                                    // ||
     // Math (only implemented in parser)
-    OP_ADD = 14,                   // +
-    OP_SUBTRACT = 15,              // -
-    OP_MULTIPLY = 16,              // *
-    OP_DIVIDE = 17,                // /
-    OP_MODULO = 18,                // %
-    OP_EXPONENTIATION = 19,        // **
-    OP_MATH_EXPRESSION_START = 20, // $(
-    OP_MATH_EXPRESSION_END = 21,   // )
+    OP_ADD,                                   // +
+    OP_SUB,                                   // -
+    OP_MUL,                                   // *
+    OP_DIV,                                   // /
+    OP_MOD,                                   // %
+    OP_EXP,                                   // **
+    OP_MATH_EXPR_START,                       // $( or $((
+    OP_MATH_EXPR_END,                         // ) or ))
     // Variables
-    OP_VARIABLE = 22,   // a variable value (starting with $, $VAR)
-    OP_ASSIGNMENT = 23, // assigning a variable (var=val)
+    OP_VARIABLE,                              // a variable value (starting with $, $VAR)
+    OP_ASSIGNMENT,                            // assigning a variable (var=val)
     // Boolean
-    OP_TRUE,  // true
-    OP_FALSE, // false
+    OP_TRUE,                                  // true
+    OP_FALSE,                                 // false
     // Expansion
-    OP_HOME_EXPANSION, // ~
-    OP_GLOB_EXPANSION, // * or ?
+    OP_HOME_EXPANSION,                        // ~
+    OP_GLOB_EXPANSION,                        // * or ?
     // Control flow structures
-    OP_CONDITION_START,
-    OP_CONDITION_END,
-    OP_IF,
-    OP_ELSE,
-    OP_ELIF,
-    OP_THEN,
-    OP_FI,
+    OP_CONDITION_START,                       // [, [[
+    OP_CONDITION_END,                         // ], ]]
+    OP_IF,                                    // if
+    OP_ELSE,                                  // else
+    OP_ELIF,                                  // elif
+    OP_THEN,                                  // then
+    OP_FI,                                    // fi
     // Equality comparisons
-    OP_EQUALS,
-    OP_LESS_THAN,
-    OP_LESS_THAN_OR_EQUALS,
-    OP_GREATER_THAN,
-    OP_GREATER_THAN_OR_EQUALS,
+    OP_EQUALS,                                // -eq
+    OP_LESS_THAN,                             // -lt
+    OP_LESS_THAN_OR_EQUALS,                   // -le
+    OP_GREATER_THAN,                          // -gt
+    OP_GREATER_THAN_OR_EQUALS,                // -ge
     // Loops
-    OP_WHILE,
-    OP_FOR,
-    OP_DO,
-    OP_DONE
+    OP_WHILE,                                 // while
+    OP_FOR,                                   // for
+    OP_DO,                                    // do
+    OP_DONE                                   // done
 };

@@ -17,11 +17,13 @@
 #include "../types.h"
 #include "../debug.h"
 #include "../ttyio/ttyio.h"
+#include "ops.h"
 #include "stmts.h"
 #include "builtins.h"
 #include "pipe.h"
 #include "redirection.h"
 #include "vm.h"
+#include "vm_math.h"
 #include "vm_types.h"
 
 #ifdef NCSH_VM_TEST
@@ -114,60 +116,6 @@ int vm_status_aggregate(Vm_Data* restrict vm)
     return vm->status;
 }
 
-/* vm_math_process
- * Sets vm->status with result of operation
- */
-void vm_math_process(Vm_Data* restrict vm)
-{
-    debug("evaluating math conditions");
-
-#ifdef NCSH_DEBUG
-    char** buf = vm->buffer;
-    while (*buf && printf("%s\n", *buf) && ++buf);
-#endif
-
-    if (!vm->strs || !vm->strs[0].value || !vm->strs[2].value) {
-        vm->status = EXIT_FAILURE_CONTINUE;
-        return;
-    }
-
-    char* c1 = vm->strs[0].value;
-    enum Ops op = vm->ops[1];
-    char* c2 = vm->strs[2].value;
-    assert(c1); assert(c2);
-
-    bool result;
-    switch (op) {
-    case OP_EQUALS: {
-        result = atoi(c1) == atoi(c2);
-        break;
-    }
-    case OP_LESS_THAN: {
-        result = atoi(c1) < atoi(c2);
-        break;
-    }
-    case OP_LESS_THAN_OR_EQUALS: {
-        result = atoi(c1) <= atoi(c2);
-        break;
-    }
-    case OP_GREATER_THAN: {
-        result = atoi(c1) > atoi(c2);
-        break;
-    }
-    case OP_GREATER_THAN_OR_EQUALS: {
-        result = atoi(c1) >= atoi(c2);
-        break;
-    }
-    default: {
-        tty_fprintln(stderr, "ncsh: while trying to process 'if' logic, found unsupported operation '%d'.", vm->op_current);
-        result = false;
-        break;
-    }
-    }
-
-    vm->status = result ? EXIT_SUCCESS : EXIT_FAILURE;
-}
-
 [[nodiscard]]
 Commands* vm_command_next(Commands* restrict cmds, Vm_Data* restrict vm)
 {
@@ -204,12 +152,23 @@ Commands* vm_command_next(Commands* restrict cmds, Vm_Data* restrict vm)
 [[nodiscard]]
 Commands* vm_command_set(Commands* restrict cmds, Vm_Data* restrict vm, enum Vm_State state)
 {
+    vm->strs_n = cmds->count;
     vm->strs = cmds->strs;
     vm->ops = cmds->ops;
-    vm->strs_n = cmds->count;
     vm->state = state;
     vm->op_current = cmds->prev_op;
     return vm_command_next(cmds, vm);
+}
+
+[[nodiscard]]
+Commands* vm_loop_condition_set(Commands* restrict cmds, Vm_Data* restrict vm)
+{
+    vm->loop_c_n = cmds->count;
+    vm->loop_c_s = cmds->strs;
+    vm->loop_c_ops = cmds->ops;
+    vm->state = VS_IN_CONDITIONS;
+    vm->loop_c_op = cmds->prev_op;
+    return vm_command_set(cmds, vm, VS_IN_CONDITIONS);
 }
 
 Commands* vm_next_if_statement(Vm_Data* restrict vm)
@@ -247,8 +206,13 @@ Commands* vm_next_else_statement(Vm_Data* restrict vm)
     case LT_ELSE:
         vm->cur_stmt = vm->cur_stmt->prev->left;
         break;
+    case LT_WHILE:
+    case LT_WHILE_CONDITIONS:
+        goto next_else_failure;
     }
+
     if (!vm->cur_stmt || vm->cur_stmt->type != LT_ELSE || !vm->cur_stmt->commands) {
+    next_else_failure:
         vm->end = true;
         return NULL;
     }
@@ -587,6 +551,97 @@ Commands* vm_next_if(Commands* restrict cmds, Vm_Data* restrict vm)
     return NULL;
 }
 
+Commands* vm_next_while_statement(Vm_Data* restrict vm)
+{
+    vm->cur_stmt = vm->cur_stmt->right;
+    if (vm->cur_stmt->type != LT_WHILE || !vm->cur_stmt->commands) {
+        vm->end = true;
+        return NULL;
+    }
+
+    return vm->cur_stmt->commands;
+}
+
+Commands* vm_back_to_while_conditions(Vm_Data* restrict vm)
+{
+    vm->strs_n = vm->loop_c_n;
+    vm->strs = vm->loop_c_s;
+    vm->ops = vm->loop_c_ops;
+    vm->state = VS_IN_CONDITIONS;
+    vm->op_current = vm->loop_c_op;
+
+    while (vm->cur_stmt && vm->cur_stmt->prev && vm->cur_stmt->prev->type != LT_WHILE_CONDITIONS) {
+        vm->cur_stmt = vm->cur_stmt->prev;
+    }
+    vm->cur_cmds = vm->cur_stmt->commands;
+
+    return vm_command_set(vm->cur_cmds, vm, VS_IN_CONDITIONS);
+}
+
+[[nodiscard]]
+Commands* vm_next_while(Commands* restrict cmds, Vm_Data* restrict vm)
+{
+    if (vm->cur_stmt->type == LT_WHILE_CONDITIONS) {
+        if (vm->state != VS_IN_CONDITIONS) {
+            return vm_loop_condition_set(cmds, vm);
+        }
+
+        else if (vm->status != EXIT_SUCCESS && cmds->prev_op == OP_AND) {
+            vm->end = true;
+            return NULL;
+        }
+
+        else if (vm->status != EXIT_SUCCESS && cmds->prev_op == OP_OR) {
+            if (cmds->ops[cmds->pos] == OP_TRUE || cmds->ops[cmds->pos] == OP_CONST) {
+                return vm_command_set(cmds, vm, VS_IN_CONDITIONS);
+            }
+
+            else if (vm->cur_stmt->type == LT_IF_CONDITIONS) {
+                return vm_command_set(cmds, vm, VS_IN_CONDITIONS);
+            }
+
+            else {
+                vm->end = true;
+                return NULL;
+            }
+        }
+
+        else if (vm->status != EXIT_SUCCESS) {
+            vm->end = true;
+            return NULL;
+        }
+
+        else if (vm->status == EXIT_SUCCESS && cmds->prev_op == OP_OR) {
+            cmds = vm_next_while_statement(vm);
+            if (!cmds) {
+                return NULL;
+            }
+
+            return vm_command_set(cmds, vm, VS_IN_LOOP_STATEMENTS);
+        }
+
+        else {
+            return vm_command_set(cmds, vm, VS_IN_CONDITIONS);
+        }
+    }
+
+    if (vm->cur_stmt->type == LT_WHILE) {
+        if (!vm->cur_cmds->next && (!vm->cur_stmt->right || vm->cur_stmt->right->type != LT_WHILE)) {
+            return vm_back_to_while_conditions(vm);
+        }
+        if (vm->status != EXIT_SUCCESS && (vm->state == VS_IN_LOOP_STATEMENTS || vm->state == VS_IN_CONDITIONS) && cmds->prev_op != OP_AND) {
+            vm->end = true;
+            return NULL;
+        }
+
+        return vm_command_set(cmds, vm, VS_IN_LOOP_STATEMENTS);
+    }
+
+    vm->end = true;
+    return NULL;
+}
+
+[[nodiscard]]
 Commands* vm_next_normal(Vm_Data* restrict vm)
 {
     if (vm->cur_cmds && vm->cur_cmds->prev_op == OP_AND && vm->status != EXIT_SUCCESS) {
@@ -629,11 +684,12 @@ Commands* vm_next(Commands* cmds, Vm_Data* restrict vm)
     case ST_IF_ELSE:
     case ST_IF_ELIF:
     case ST_IF_ELIF_ELSE: {
-        debug("vm_next_if");
         return vm_next_if(cmds, vm);
     }
+    case ST_WHILE: {
+        return vm_next_while(cmds, vm);
+    }
     default: {
-        debug("vm_next_normal");
         return vm_next_normal(vm);
     }
     }
@@ -751,8 +807,16 @@ int vm_run(Statements* restrict stmts, Shell* restrict shell, Arena* restrict sc
             }
         }
 
-        bool builtin_ran = builtins_check_and_run(&vm, shell, scratch);
-        if (builtin_ran) {
+        if (vm.ops[0] == OP_MATH_EXPR_START) {
+            Str res = vm_math_expr(&vm);
+            if (res.value) {
+                vm.status = EXIT_SUCCESS;
+                printf("%s\n", res.value);
+            }
+            else
+                vm.status = EXIT_FAILURE_CONTINUE;
+        }
+        else if (builtins_check_and_run(&vm, shell, scratch)) {
             debugf("builtin ran %s\n", vm.buffer[0]);
             if (vm.op_current == OP_PIPE) {
                 pipe_stop(vm.command_position, stmts->pipes_count, &vm.pipes_io);
@@ -760,7 +824,7 @@ int vm_run(Statements* restrict stmts, Shell* restrict shell, Arena* restrict sc
         }
         else if (vm.state == VS_IN_CONDITIONS &&
                  (vm.op_current == OP_EQUALS || vm.op_current == OP_GREATER_THAN || vm.op_current == OP_LESS_THAN)) {
-            vm_math_process(&vm);
+            vm_math_condition(&vm);
         }
         else if (stmts->is_bg_job) {
             rv = vm_run_background(&vm, &shell->pcs);

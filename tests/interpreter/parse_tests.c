@@ -17,6 +17,25 @@
 
 static char** envp_ptr;
 
+[[maybe_unused]]
+void stmt_print(Statements* stmts)
+{
+    printf("stmts->type %d\n", stmts->type);
+
+    printf("stmts->head->type %d\n", stmts->head->type);
+    printf("stmts->head->right->type %d\n", stmts->head->right->type);
+    printf("stmts->head->right->prev->type %d\n", stmts->head->right->prev->type);
+    printf("stmts->head->left->type %d\n", stmts->head->left->type);
+}
+
+[[maybe_unused]]
+void cmds_print(Commands* cmds)
+{
+    for (size_t i = 0; i < cmds->count; ++i)
+        printf("%s\n", cmds->strs[i].value);
+}
+
+/* tests start */
 void parse_ls_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
@@ -230,7 +249,7 @@ void parse_multiple_pipes_multiple_args_test()
 
     eassert(!memcmp(cmds->strs[1].value, "-1", 2));
     eassert(cmds->strs[1].length == 3);
-    eassert(cmds->ops[1] == OP_CONST);
+    eassert(cmds->ops[1] == OP_NUM);
 
     eassert(cmds->prev_op == OP_PIPE);
 
@@ -318,7 +337,7 @@ void parse_background_job_args_test()
 
     eassert(!memcmp(cmds->strs[1].value, "5", 1));
     eassert(cmds->strs[1].length == 2);
-    eassert(cmds->ops[1] == OP_CONST);
+    eassert(cmds->ops[1] == OP_NUM);
 
     eassert(!cmds->strs[2].value);
     eassert(!cmds->next);
@@ -606,50 +625,6 @@ void parse_stdout_and_stderr_redirection_append_test()
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-void parse_git_commit_test()
-{
-    SCRATCH_ARENA_TEST_SETUP;
-
-    auto line = Str_Lit("git commit -m \"this is a commit message\"");
-
-    Lexemes lexemes = {0};
-    lex(line, &lexemes, &scratch_arena);
-    auto res = parse(&lexemes, &scratch_arena);
-
-    eassert(!res.parser_errno);
-    eassert(res.output.stmts);
-    auto stmts = res.output.stmts;
-    eassert(stmts->type == ST_NORMAL);
-    eassert(!stmts->is_bg_job);
-    eassert(stmts->pipes_count == 1);
-    eassert(stmts->redirect_type == RT_NONE);
-    eassert(stmts->head->type == LT_NORMAL);
-    eassert(stmts->head->commands);
-    auto cmds = stmts->head->commands;
-    eassert(cmds->count = 4);
-
-    eassert(!memcmp(cmds->strs[0].value, "git", 3));
-    eassert(cmds->strs[0].length == 4);
-    eassert(cmds->ops[0] == OP_CONST);
-
-    eassert(!memcmp(cmds->strs[1].value, "commit", 6));
-    eassert(cmds->strs[1].length == 7);
-    eassert(cmds->ops[1] == OP_CONST);
-
-    eassert(!memcmp(cmds->strs[2].value, "-m", 2));
-    eassert(cmds->strs[2].length == 3);
-    eassert(cmds->ops[2] == OP_CONST);
-
-    eassert(!memcmp(cmds->strs[3].value, "this is a commit message", 24));
-    eassert(cmds->strs[3].length == 25);
-    eassert(cmds->ops[3] == OP_CONST);
-
-    eassert(!cmds->strs[4].value);
-    eassert(!cmds->next);
-
-    SCRATCH_ARENA_TEST_TEARDOWN;
-}
-
 void parse_assignment_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
@@ -853,7 +828,7 @@ void parse_variable_and_test()
     cmds = cmds->next;
     eassert(cmds);
     eassert(cmds->op == OP_NONE);
-    eassert(cmds->prev_op = OP_AND);
+    eassert(cmds->prev_op == OP_AND);
 
     eassert(!memcmp(cmds->strs[0].value, ECHO.value, ECHO.length));
     eassert(cmds->strs[0].length == ECHO.length);
@@ -865,39 +840,6 @@ void parse_variable_and_test()
 
     eassert(!cmds->strs[2].value);
     eassert(!cmds->next);
-
-    ARENA_TEST_TEARDOWN;
-    SCRATCH_ARENA_TEST_TEARDOWN;
-}
-
-void parse_variable_command_test()
-{
-    ARENA_TEST_SETUP;
-    SCRATCH_ARENA_TEST_SETUP;
-
-    auto line = Str_Lit("COMMAND=ls && $COMMAND");
-
-    Lexemes lexemes = {0};
-    lex(line, &lexemes, &s);
-    auto res = parse(&lexemes, &s);
-
-    eassert(!res.parser_errno);
-    eassert(res.output.stmts);
-    auto stmts = res.output.stmts;
-    eassert(stmts->type == ST_NORMAL);
-    eassert(!stmts->is_bg_job);
-    eassert(stmts->pipes_count == 1);
-    eassert(stmts->redirect_type == RT_NONE);
-    eassert(stmts->head->type == LT_NORMAL);
-    eassert(stmts->head->commands);
-    auto cmds = stmts->head->commands;
-    eassert(cmds->count == 1);
-
-    eassert(!memcmp(cmds->strs[0].value, LS.value, LS.length - 1));
-    eassert(cmds->strs[0].length == LS.length);
-    eassert(cmds->ops[0] == OP_CONST);
-
-    eassert(!cmds->strs[1].value);
 
     ARENA_TEST_TEARDOWN;
     SCRATCH_ARENA_TEST_TEARDOWN;
@@ -973,32 +915,6 @@ void parse_home_at_start_test()
 
     eassert(!cmds->strs[2].value);
     eassert(!cmds->next);
-
-    SCRATCH_ARENA_TEST_TEARDOWN;
-}
-
-void parse_math_operators_test()
-{
-    SCRATCH_ARENA_TEST_SETUP;
-
-    auto line = Str_Lit("$( 1 + 1 - 1 * 1 / 1 % 1 ** 1 )");
-
-    Lexemes lexemes = {0};
-    lex(line, &lexemes, &scratch_arena);
-    auto res = parse(&lexemes, &scratch_arena);
-
-    eassert(!res.parser_errno);
-    eassert(res.output.stmts);
-    auto stmts = res.output.stmts;
-    eassert(stmts->type == ST_NORMAL);
-    eassert(!stmts->is_bg_job);
-    eassert(stmts->pipes_count == 1);
-    eassert(stmts->redirect_type == RT_NONE);
-    eassert(stmts->head->type == LT_NORMAL);
-    eassert(stmts->head->commands);
-    auto cmds = stmts->head->commands;
-    eassert(cmds->count > 10);
-    // TODO: implement math operations in parser
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -1111,15 +1027,14 @@ void parse_glob_question_midcommand_test()
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-/*
+
 // Since some tests can call arena_realloc, we need to take care
 // to ensure the scratch arena lifetime is properly managed and not reset
-int parser_arena_ctx_wrapper(Str line, stmts-> stmts, Arena* restrict sa)
+Parser_Output parser_arena_ctx_wrapper(Str line, Arena* restrict sa)
 {
     Lexemes lexemes = {0};
     lex(line, &lexemes, sa);
-    int res = parse(&lexemes, stmts, NULL, sa);
-    return res;
+    return parse(&lexemes, sa);
 }
 
 void parse_glob_star_shouldnt_crash()
@@ -1131,12 +1046,11 @@ void parse_glob_star_shouldnt_crash()
 
     Lexemes lexemes = {0};
     lex(line, &lexemes, &s);
-    stmts->stmts = {0};
-    int res = parse(&lexemes, &stmts, NULL, &s);
+    auto res = parse(&lexemes, &s);
 
-    eassert(!res);
-    eassert(stmts.count == 1);
-    eassert(stmts.stmts->>count == 1);
+    eassert(!res.parser_errno);
+    eassert(res.output.stmts);
+    eassert(res.output.stmts->head->commands);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -1149,10 +1063,12 @@ void parse_tilde_home_shouldnt_crash()
     auto line = Str_Lit("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~?~");
 
     Lexemes lexemes = {0};
-    lex(line, &lexemes, &scratch_arena);
-    stmts->statements = {0};
-    int res = parse(&lexemes, &scratch_arena);
-    eassert(!res);
+    lex(line, &lexemes, &s);
+    auto res = parse(&lexemes, &s);
+
+    eassert(!res.parser_errno);
+    eassert(res.output.stmts);
+    eassert(res.output.stmts->head->commands);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -1166,14 +1082,15 @@ void parse_glob_question_and_tilde_home_shouldnt_crash()
                                 "~~~~?~>w?");
 
     Lexemes lexemes = {0};
-    lex(line, &lexemes, &scratch_arena);
-    stmts->statements = {0};
-    int res = parse(&lexemes, &scratch_arena);
+    lex(line, &lexemes, &s);
+    auto res = parse(&lexemes, &s);
 
-    eassert(!res);
+    eassert(!res.parser_errno);
+    eassert(res.output.stmts);
+    eassert(res.output.stmts->head->commands);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
-}*/
+}
 
 void parse_comment_test()
 {
@@ -1270,13 +1187,6 @@ void parse_bool_test()
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-[[maybe_unused]]
-void cmds_print(Commands* cmds)
-{
-    for (size_t i = 0; i < cmds->count; ++i)
-        printf("%s\n", cmds->strs[i].value);
-}
-
 void parse_if_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
@@ -1307,7 +1217,7 @@ void parse_if_test()
 
     eassert(!memcmp(cmds->strs[0].value, "1", 1));
     eassert(cmds->strs[0].length == 2);
-    eassert(cmds->ops[0] == OP_CONST);
+    eassert(cmds->ops[0] == OP_NUM);
 
     eassert(!memcmp(cmds->strs[1].value, "-eq", 3));
     eassert(cmds->strs[1].length == 4);
@@ -1315,7 +1225,7 @@ void parse_if_test()
 
     eassert(!memcmp(cmds->strs[2].value, "1", 1));
     eassert(cmds->strs[2].length == 2);
-    eassert(cmds->ops[2] == OP_CONST);
+    eassert(cmds->ops[2] == OP_NUM);
 
     eassert(!cmds->strs[3].value);
     eassert(!cmds->next);
@@ -1370,7 +1280,7 @@ void parse_if_eq_test()
 
     eassert(!memcmp(cmds->strs[0].value, "2", 1));
     eassert(cmds->strs[0].length == 2);
-    eassert(cmds->ops[0] == OP_CONST);
+    eassert(cmds->ops[0] == OP_NUM);
 
     eassert(!memcmp(cmds->strs[1].value, "-eq", 3));
     eassert(cmds->strs[1].length == 4);
@@ -1378,7 +1288,7 @@ void parse_if_eq_test()
 
     eassert(!memcmp(cmds->strs[2].value, "3", 1));
     eassert(cmds->strs[2].length == 2);
-    eassert(cmds->ops[2] == OP_CONST);
+    eassert(cmds->ops[2] == OP_NUM);
 
     eassert(!cmds->strs[3].value);
     eassert(!cmds->next);
@@ -1442,7 +1352,7 @@ void parse_if_variable_test()
 
     eassert(!memcmp(cmds->strs[2].value, "1", 1));
     eassert(cmds->strs[2].length == 2);
-    eassert(cmds->ops[2] == OP_CONST);
+    eassert(cmds->ops[2] == OP_NUM);
 
     eassert(!cmds->strs[3].value);
     eassert(!cmds->next);
@@ -1534,17 +1444,6 @@ void parse_if_multiple_conditions_test()
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-[[maybe_unused]]
-void print_stmt(Statements* stmts)
-{
-    printf("stmts->type %d\n", stmts->type);
-
-    printf("stmts->head->type %d\n", stmts->head->type);
-    printf("stmts->head->right->type %d\n", stmts->head->right->type);
-    printf("stmts->head->right->prev->type %d\n", stmts->head->right->prev->type);
-    printf("stmts->head->left->type %d\n", stmts->head->left->type);
-}
-
 void parse_if_else_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
@@ -1572,7 +1471,7 @@ void parse_if_else_test()
 
     eassert(!memcmp(cmds->strs[0].value, "1", 1));
     eassert(cmds->strs[0].length == 2);
-    eassert(cmds->ops[0] == OP_CONST);
+    eassert(cmds->ops[0] == OP_NUM);
 
     eassert(!memcmp(cmds->strs[1].value, "-eq", 3));
     eassert(cmds->strs[1].length == 4);
@@ -1580,7 +1479,7 @@ void parse_if_else_test()
 
     eassert(!memcmp(cmds->strs[2].value, "1", 1));
     eassert(cmds->strs[2].length == 2);
-    eassert(cmds->ops[2] == OP_CONST);
+    eassert(cmds->ops[2] == OP_NUM);
 
     eassert(!cmds->strs[3].value);
     eassert(!cmds->next);
@@ -1661,7 +1560,7 @@ void parse_if_elif_test()
 
     eassert(!memcmp(cmds->strs[0].value, "1", 1));
     eassert(cmds->strs[0].length == 2);
-    eassert(cmds->ops[0] == OP_CONST);
+    eassert(cmds->ops[0] == OP_NUM);
 
     eassert(!memcmp(cmds->strs[1].value, "-eq", 3));
     eassert(cmds->strs[1].length == 4);
@@ -1669,7 +1568,7 @@ void parse_if_elif_test()
 
     eassert(!memcmp(cmds->strs[2].value, "1", 1));
     eassert(cmds->strs[2].length == 2);
-    eassert(cmds->ops[2] == OP_CONST);
+    eassert(cmds->ops[2] == OP_NUM);
 
     eassert(!cmds->strs[3].value);
     eassert(!cmds->next);
@@ -1702,14 +1601,14 @@ void parse_if_elif_test()
 
     eassert(!memcmp(cmds->strs[0].value, "1", 1));
     eassert(cmds->strs[0].length == 2);
-    eassert(cmds->ops[0] == OP_CONST);
+    eassert(cmds->ops[0] == OP_NUM);
 
     eassert(!memcmp(cmds->strs[1].value, "-eq", 3));
     eassert(cmds->strs[1].length == 4);
 
     eassert(!memcmp(cmds->strs[2].value, "1", 1));
     eassert(cmds->strs[2].length == 2);
-    eassert(cmds->ops[2] == OP_CONST);
+    eassert(cmds->ops[2] == OP_NUM);
 
     eassert(!cmds->strs[3].value);
     eassert(!cmds->next);
@@ -1764,7 +1663,7 @@ void parse_if_elif_else_test()
 
     eassert(!memcmp(cmds->strs[0].value, "1", 1));
     eassert(cmds->strs[0].length == 2);
-    eassert(cmds->ops[0] == OP_CONST);
+    eassert(cmds->ops[0] == OP_NUM);
 
     eassert(!memcmp(cmds->strs[1].value, "-eq", 3));
     eassert(cmds->strs[1].length == 4);
@@ -1772,7 +1671,7 @@ void parse_if_elif_else_test()
 
     eassert(!memcmp(cmds->strs[2].value, "1", 1));
     eassert(cmds->strs[2].length == 2);
-    eassert(cmds->ops[2] == OP_CONST);
+    eassert(cmds->ops[2] == OP_NUM);
 
     eassert(!cmds->strs[3].value);
     eassert(!cmds->next);
@@ -1805,7 +1704,7 @@ void parse_if_elif_else_test()
 
     eassert(!memcmp(cmds->strs[0].value, "1", 1));
     eassert(cmds->strs[0].length == 2);
-    eassert(cmds->ops[0] == OP_CONST);
+    eassert(cmds->ops[0] == OP_NUM);
 
     eassert(!memcmp(cmds->strs[1].value, "-eq", 3));
     eassert(cmds->strs[1].length == 4);
@@ -1813,7 +1712,7 @@ void parse_if_elif_else_test()
 
     eassert(!memcmp(cmds->strs[2].value, "1", 1));
     eassert(cmds->strs[2].length == 2);
-    eassert(cmds->ops[2] == OP_CONST);
+    eassert(cmds->ops[2] == OP_NUM);
 
     eassert(!cmds->strs[3].value);
     eassert(!cmds->next);
@@ -1888,14 +1787,14 @@ void parse_if_elif_multiple_else_test()
 
     eassert(!memcmp(cmds->strs[0].value, "1", 1));
     eassert(cmds->strs[0].length == 2);
-    eassert(cmds->ops[0] == OP_CONST);
+    eassert(cmds->ops[0] == OP_NUM);
 
     eassert(!memcmp(cmds->strs[1].value, "-eq", 3));
     eassert(cmds->strs[1].length == 4);
 
     eassert(!memcmp(cmds->strs[2].value, "1", 1));
     eassert(cmds->strs[2].length == 2);
-    eassert(cmds->ops[2] == OP_CONST);
+    eassert(cmds->ops[2] == OP_NUM);
 
     eassert(!cmds->strs[3].value);
     eassert(!cmds->next);
@@ -1928,7 +1827,7 @@ void parse_if_elif_multiple_else_test()
 
     eassert(!memcmp(cmds->strs[0].value, "1", 1));
     eassert(cmds->strs[0].length == 2);
-    eassert(cmds->ops[0] == OP_CONST);
+    eassert(cmds->ops[0] == OP_NUM);
 
     eassert(!memcmp(cmds->strs[1].value, "-eq", 3));
     eassert(cmds->strs[1].length == 4);
@@ -1936,7 +1835,7 @@ void parse_if_elif_multiple_else_test()
 
     eassert(!memcmp(cmds->strs[2].value, "3", 1));
     eassert(cmds->strs[2].length == 2);
-    eassert(cmds->ops[2] == OP_CONST);
+    eassert(cmds->ops[2] == OP_NUM);
 
     eassert(!cmds->strs[3].value);
     eassert(!cmds->next);
@@ -1969,7 +1868,7 @@ void parse_if_elif_multiple_else_test()
 
     eassert(!memcmp(cmds->strs[0].value, "1", 1));
     eassert(cmds->strs[0].length == 2);
-    eassert(cmds->ops[0] == OP_CONST);
+    eassert(cmds->ops[0] == OP_NUM);
 
     eassert(!memcmp(cmds->strs[1].value, "-eq", 3));
     eassert(cmds->strs[1].length == 4);
@@ -1977,7 +1876,7 @@ void parse_if_elif_multiple_else_test()
 
     eassert(!memcmp(cmds->strs[2].value, "1", 1));
     eassert(cmds->strs[2].length == 2);
-    eassert(cmds->ops[2] == OP_CONST);
+    eassert(cmds->ops[2] == OP_NUM);
 
     eassert(!cmds->strs[3].value);
     eassert(!cmds->next);
@@ -2025,11 +1924,11 @@ void parse_if_elif_multiple_else_test()
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-void parse_while_test()
+void parse_math_operators_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    auto line = Str_Lit("$count=1\nwhile [ $count -lt 3 ]; do echo $count\n count=$((count + 1)) done");
+    auto line = Str_Lit("$( 1 + 1 - 1 * 1 / 1 % 1 ** 1 )");
 
     Lexemes lexemes = {0};
     lex(line, &lexemes, &scratch_arena);
@@ -2038,20 +1937,198 @@ void parse_while_test()
     eassert(!res.parser_errno);
     eassert(res.output.stmts);
     auto stmts = res.output.stmts;
-    eassert(stmts->type == ST_IF_ELIF_ELSE);
+    eassert(stmts->type == ST_NORMAL);
     eassert(!stmts->is_bg_job);
     eassert(stmts->pipes_count == 1);
     eassert(stmts->redirect_type == RT_NONE);
+    eassert(stmts->head->type == LT_NORMAL);
     eassert(stmts->head->commands);
-    // auto stmt = stmts->head;
-    // auto cmds = stmt->commands;
+    auto cmds = stmts->head->commands;
+    eassert(cmds->count == 15);
+
+    size_t p = 0;
+
+    eassert(!memcmp(cmds->strs[p].value, "$(", 2));
+    eassert(cmds->strs[p].length == 3);
+    eassert(cmds->ops[p++] == OP_MATH_EXPR_START);
+
+    eassert(!memcmp(cmds->strs[p].value, "1", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_NUM);
+
+    eassert(!memcmp(cmds->strs[p].value, "+", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_ADD);
+
+    eassert(!memcmp(cmds->strs[p].value, "1", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_NUM);
+
+    eassert(!memcmp(cmds->strs[p].value, "-", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_SUB);
+
+    eassert(!memcmp(cmds->strs[p].value, "1", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_NUM);
+
+    eassert(!memcmp(cmds->strs[p].value, "*", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_MUL);
+
+    eassert(!memcmp(cmds->strs[p].value, "1", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_NUM);
+
+    eassert(!memcmp(cmds->strs[p].value, "/", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_DIV);
+
+    eassert(!memcmp(cmds->strs[p].value, "1", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_NUM);
+
+    eassert(!memcmp(cmds->strs[p].value, "%", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_MOD);
+
+    eassert(!memcmp(cmds->strs[p].value, "1", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_NUM);
+
+    eassert(!memcmp(cmds->strs[p].value, "**", 2));
+    eassert(cmds->strs[p].length == 3);
+    eassert(cmds->ops[p++] == OP_EXP);
+
+    eassert(!memcmp(cmds->strs[p].value, "1", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_NUM);
+
+    eassert(!memcmp(cmds->strs[p].value, ")", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_MATH_EXPR_END);
+
+    eassert(!cmds->strs[p].value);
+    eassert(!cmds->next);
+
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
+void parse_while_test()
+{
+    SCRATCH_ARENA_TEST_SETUP;
+
+    auto line = Str_Lit("count=1\nwhile [ $count -lt 3 ]; do echo $count; count=$(count + 1) done");
+
+    Lexemes lexemes = {0};
+    lex(line, &lexemes, &scratch_arena);
+    auto res = parse(&lexemes, &scratch_arena);
+
+    if (res.parser_errno) {
+        printf("%s\n", res.output.msg);
+    }
+    eassert(!res.parser_errno);
+    eassert(res.output.stmts);
+    auto stmts = res.output.stmts;
+    eassert(stmts->type == ST_WHILE);
+    eassert(!stmts->is_bg_job);
+    eassert(stmts->pipes_count == 1);
+    eassert(stmts->redirect_type == RT_NONE);
+    eassert(stmts->head);
+    eassert(stmts->head->commands);
+    auto stmt = stmts->head;
+    auto cmds = stmt->commands;
+    eassert(stmt->type == LT_NORMAL);
+    eassert(cmds->count == 3);
+
+    size_t p = 0;
+
+    eassert(!memcmp(cmds->strs[p].value, "count", 5));
+    eassert(cmds->strs[p].length == 6);
+    eassert(cmds->ops[p++] == OP_CONST);
+
+    eassert(cmds->ops[p++] == OP_ASSIGNMENT);
+
+    eassert(!memcmp(cmds->strs[p].value, "1", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_NUM);
+
+    eassert(!cmds->strs[p].value);
+
+    stmt = stmt->right;
+    eassert(stmt);
+    eassert(stmt->type == LT_WHILE_CONDITIONS);
+    cmds = stmt->commands;
+    eassert(cmds);
+    p = 0;
+
+    eassert(!memcmp(cmds->strs[p].value, "count", 5));
+    eassert(cmds->strs[p].length == 6);
+    eassert(cmds->ops[p++] == OP_VARIABLE);
+
+    eassert(cmds->ops[p++] == OP_LESS_THAN);
+
+    eassert(!memcmp(cmds->strs[p].value, "3", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_NUM);
+
+    eassert(!cmds->strs[p].value);
+
+    stmt = stmt->right;
+    eassert(stmt);
+    eassert(stmt->type == LT_WHILE);
+    cmds = stmt->commands;
+    eassert(cmds);
+    p = 0;
+
+    eassert(!memcmp(cmds->strs[p].value, ECHO.value, ECHO.length - 1));
+    eassert(cmds->strs[p].length == ECHO.length);
+    eassert(cmds->ops[p++] == OP_CONST);
+
+    eassert(!memcmp(cmds->strs[p].value, "count", 5));
+    eassert(cmds->strs[p].length == 6);
+    eassert(cmds->ops[p++] == OP_VARIABLE);
+
+    eassert(!cmds->strs[p].value);
+
+    stmt = stmt->right;
+    eassert(stmt);
+    eassert(stmt->type == LT_WHILE);
+    cmds = stmt->commands;
+    eassert(cmds);
+    p = 0;
+
+    eassert(!memcmp(cmds->strs[p].value, "count", 5));
+    eassert(cmds->strs[p].length == 6);
+    eassert(cmds->ops[p++] == OP_CONST);
+
+    eassert(!memcmp(cmds->strs[p].value, "=", 2));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_ASSIGNMENT);
+
+    eassert(cmds->ops[p++] == OP_MATH_EXPR_START);
+
+    eassert(!memcmp(cmds->strs[p].value, "count", 5));
+    eassert(cmds->strs[p].length == 6);
+    eassert(cmds->ops[p++] == OP_CONST);
+    // eassert(cmds->ops[p++] == OP_VARIABLE); // ?
+
+    eassert(cmds->ops[p++] == OP_ADD);
+
+    eassert(!memcmp(cmds->strs[p].value, "1", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_NUM);
+
+    eassert(cmds->ops[p++] == OP_MATH_EXPR_END);
+
+    eassert(!cmds->strs[p].value);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
 void parser_tests()
 {
-    etest_init(true);
+    // etest_init(true);
     etest_start();
 
     etest_run(parse_ls_test);
@@ -2073,28 +2150,20 @@ void parser_tests()
     etest_run(parse_stdout_and_stderr_redirection_test);
     etest_run(parse_stdout_and_stderr_redirection_append_test);
 
-    // etest_run(parse_git_commit_test);
-
     etest_run(parse_assignment_test);
     etest_run(parse_assignment_spaces_test);
     etest_run(parse_assignment_spaces_multiple_test);
-
     etest_run(parse_variable_test);
     etest_run(parse_variable_and_test);
-    // etest_run(parse_variable_command_test);
 
     etest_run(parse_home_test);
     etest_run(parse_home_at_start_test);
-
-    // etest_run(parse_math_operators_test);
-
     etest_run(parse_glob_star_test);
     etest_run(parse_glob_question_test);
     etest_run(parse_glob_question_midcommand_test);
-
-    // etest_run(parse_glob_star_shouldnt_crash);
-    // etest_run(parse_tilde_home_shouldnt_crash);
-    // etest_run(parse_glob_question_and_tilde_home_shouldnt_crash);
+    etest_run(parse_glob_star_shouldnt_crash);
+    etest_run(parse_tilde_home_shouldnt_crash);
+    etest_run(parse_glob_question_and_tilde_home_shouldnt_crash);
 
     etest_run(parse_comment_test);
 
@@ -2109,7 +2178,9 @@ void parser_tests()
     etest_run(parse_if_elif_else_test);
     etest_run(parse_if_elif_multiple_else_test);
 
-    // etest_run(parse_while_test);
+    etest_run(parse_math_operators_test);
+
+    etest_run(parse_while_test);
 
     etest_finish();
 }

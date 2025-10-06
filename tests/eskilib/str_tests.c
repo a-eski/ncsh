@@ -314,9 +314,16 @@ void estrcat_valid_mixed_values_returns_concatted_str_test()
 
 void estridx_returns_idx_test()
 {
-    size_t idx = estridx(&Str_Lit("vim=nvim"), '=');
+    ssize_t idx = estridx(&Str_Lit("vim=nvim"), '=');
 
     eassert(idx == 3);
+}
+
+void estridx_not_found_returns_negative_one_test()
+{
+    ssize_t idx = estridx(&Str_Lit("vim=nvim"), '/');
+
+    eassert(idx == -1);
 }
 
 void estrtoarr_single_test()
@@ -632,6 +639,133 @@ void sb_joined_path_in_scratch_to_perm_test()
     ARENA_TEST_TEARDOWN;
 }
 
+void estrisnum_test()
+{
+    eassert(estrisnum(Str_Lit("-1")));
+    eassert(estrisnum(Str_Lit("1")));
+    eassert(estrisnum(Str_Lit("1234")));
+}
+
+void estrtonum_pos_test()
+{
+    auto s = Str_Lit("1");
+
+    auto num = estrtonum(s);
+
+    eassert(num.type == N_INT);
+    eassert(num.value.i == 1);
+}
+
+void estrtonum_neg_test()
+{
+    auto s = Str_Lit("-1");
+
+    auto num = estrtonum(s);
+
+    eassert(num.type == N_INT);
+    eassert(num.value.i == -1);
+}
+
+void estrtonum_tens_pos_test()
+{
+    auto s = Str_Lit("10");
+
+    auto num = estrtonum(s);
+
+    eassert(num.type == N_INT);
+    eassert(num.value.i == 10);
+}
+
+void estrtonum_tens_neg_test()
+{
+    auto s = Str_Lit("-12");
+
+    auto num = estrtonum(s);
+
+    eassert(num.type == N_INT);
+    eassert(num.value.i == -12);
+}
+
+void estrtonum_hundreds_pos_test()
+{
+    auto s = Str_Lit("100");
+
+    auto num = estrtonum(s);
+
+    eassert(num.type == N_INT);
+    eassert(num.value.i == 100);
+}
+
+void estrtonum_hundreds_neg_test()
+{
+    auto s = Str_Lit("-123");
+
+    auto num = estrtonum(s);
+
+    eassert(num.type == N_INT);
+    eassert(num.value.i == -123);
+}
+
+void estrtonum_thousands_pos_test()
+{
+    auto s = Str_Lit("1000");
+
+    auto num = estrtonum(s);
+
+    eassert(num.type == N_INT);
+    eassert(num.value.i == 1000);
+}
+
+void estrtonum_thousands_neg_test()
+{
+    auto s = Str_Lit("-1234");
+
+    auto num = estrtonum(s);
+
+    eassert(num.type == N_INT);
+    eassert(num.value.i == -1234);
+}
+
+void estrtonum_ten_thousands_pos_test()
+{
+    auto s = Str_Lit("10000");
+
+    auto num = estrtonum(s);
+
+    eassert(num.type == N_INT);
+    eassert(num.value.i == 10000);
+}
+
+void estrtonum_ten_thousands_neg_test()
+{
+    auto s = Str_Lit("-12345");
+
+    auto num = estrtonum(s);
+
+    eassert(num.type == N_INT);
+    eassert(num.value.i == -12345);
+}
+
+void estrtonum_hundred_thousands_pos_test()
+{
+    auto s = Str_Lit("100000");
+
+    auto num = estrtonum(s);
+
+    eassert(num.type == N_INT);
+    eassert(num.value.i == 100000);
+}
+
+void estrtonum_hundred_thousands_neg_test()
+{
+    auto s = Str_Lit("-123456");
+
+    auto num = estrtonum(s);
+
+    eassert(num.type == N_INT);
+    eassert(num.value.i == -123456);
+}
+
 void str_tests()
 {
     etest_start();
@@ -673,6 +807,7 @@ void str_tests()
     etest_run(estrcat_valid_mixed_values_returns_concatted_str_test);
 
     etest_run(estridx_returns_idx_test);
+    etest_run(estridx_not_found_returns_negative_one_test);
 
     etest_run(estrtoarr_single_test);
     etest_run(estrtoarr_two_test);
@@ -692,6 +827,21 @@ void str_tests()
     etest_run(sb_joined_multiple_realloc_test);
     etest_run(sb_joined_path_test);
     etest_run(sb_joined_path_in_scratch_to_perm_test);
+
+    etest_run(estrisnum_test);
+
+    etest_run(estrtonum_pos_test);
+    etest_run(estrtonum_neg_test);
+    etest_run(estrtonum_tens_pos_test);
+    etest_run(estrtonum_tens_neg_test);
+    etest_run(estrtonum_hundreds_pos_test);
+    etest_run(estrtonum_hundreds_neg_test);
+    etest_run(estrtonum_thousands_pos_test);
+    etest_run(estrtonum_thousands_neg_test);
+    etest_run(estrtonum_ten_thousands_pos_test);
+    etest_run(estrtonum_ten_thousands_neg_test);
+    etest_run(estrtonum_hundred_thousands_pos_test);
+    etest_run(estrtonum_hundred_thousands_neg_test);
 
     etest_finish();
 }

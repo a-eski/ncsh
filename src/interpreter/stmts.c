@@ -9,8 +9,8 @@
 #include "../defines.h"
 #include "stmts.h"
 
-#define STMT_DEFAULT_N 10
-#define STMT_MAX_N 40
+#define STMT_DEFAULT_N 25
+#define STMT_MAX_N 100
 
 Commands* cmds_alloc(Arena* restrict scratch)
 {
@@ -99,6 +99,8 @@ int stmt_next(Parser_Data* restrict data, enum Logic_Type type)
     case LT_IF_CONDITIONS:
     case LT_IF:
     case LT_ELIF:
+    case LT_WHILE_CONDITIONS:
+    case LT_WHILE:
         goto right;
     case LT_ELIF_CONDITIONS:
     case LT_ELSE:

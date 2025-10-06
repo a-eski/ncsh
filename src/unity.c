@@ -38,7 +38,6 @@
 #include "io/hashset.c"
 #include "io/prompt.c"
 
-#include "interpreter/sema.c"
 #include "interpreter/builtins.c"
 #include "interpreter/pipe.c"
 #include "interpreter/redirection.c"
