@@ -6,7 +6,6 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#include "ops.h"
 #include "../types.h"
 #include "../eskilib/str.h"
 #include "stmts.h"
@@ -56,24 +55,18 @@ typedef struct {
  * Stores information related to state in the VM.
  * Used in conjunction with Args and then Tokens. */
 typedef struct {
-    size_t strs_n;
-    Str* strs;
-    enum Ops* ops;
+    Commands* cmds;
 
     enum Ops op_current;
     enum Vm_State state;
     int status;
-
-    size_t loop_c_n;
-    Str* loop_c_s;
-    enum Ops* loop_c_ops;
-    enum Ops loop_c_op;
 
     uint8_t command_position;
     bool end;
     Statements* stmts;
     Statement* cur_stmt;
     Commands* cur_cmds;
+    Statement* conds;
 
     Shell* sh;
     Arena* s;

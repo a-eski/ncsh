@@ -3,5 +3,11 @@
 #pragma once
 
 #include "stmts.h"
+#include "vm_types.h"
 
-void expand(Statements* restrict stmts, Shell* restrict shell, Arena* restrict scratch);
+
+void expand_expr_variables(Commands* restrict cmds, size_t p, Env* restrict env, Arena* restrict scratch);
+
+void expand_assignment(Commands* restrict cmds, Shell* restrict shell);
+
+void expand(Vm_Data* restrict vm, Arena* restrict scratch);

@@ -12,6 +12,18 @@
 #define STMT_DEFAULT_N 25
 #define STMT_MAX_N 100
 
+ssize_t ops_idx(Commands* cmds, enum Ops op)
+{
+    assert(cmds); assert(cmds->ops); assert(op != OP_NONE);
+
+    ssize_t idx;
+    for (idx = 0; idx < (ssize_t)cmds->count; ++idx) {
+        if (cmds->ops[idx] == op)
+            return idx;
+    }
+    return -1;
+}
+
 Commands* cmds_alloc(Arena* restrict scratch)
 {
     Commands* c = arena_malloc(scratch, 1, Commands);
@@ -55,6 +67,21 @@ void cmds_realloc(Parser_Data* restrict data, Arena* restrict scratch)
         arena_realloc(scratch, new_cap, Str, data->cur_cmds->strs, c);
     data->cur_cmds->ops =
         arena_realloc(scratch, new_cap, enum Ops, data->cur_cmds->ops, c);
+}
+
+Commands* cmds_dup(Commands* restrict cmds, Arena* restrict scratch)
+{
+    Commands* c = arena_malloc(scratch, 1, Commands);
+    c->count = cmds->count;
+    c->cap = cmds->cap;
+    c->strs = arena_malloc(scratch, c->cap, Str);
+    memcpy(c->strs, cmds->strs, sizeof(Str) * c->cap);
+    c->ops = arena_malloc(scratch, c->cap, enum Ops);
+    memcpy(c->ops, cmds->ops, sizeof(enum Ops) * c->cap);
+    c->next = cmds->next;
+    c->op = cmds->op;
+    c->prev_op = cmds->prev_op;
+    return c;
 }
 
 Commands* cmd_next(Commands* restrict cmds, Arena* restrict scratch)

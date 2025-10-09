@@ -166,6 +166,34 @@ void vm_math_operator_precedence_test()
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
+void vm_math_assignment_operator_precedence_test()
+{
+    SCRATCH_ARENA_TEST_SETUP;
+
+    auto line = Str_Lit("count=$( 1 + 1 - 1 * 1 / 1 % 1 ** 1 )");
+
+    Lexemes lexemes = {0};
+    lex(line, &lexemes, &scratch_arena);
+    auto rv = parse(&lexemes, &scratch_arena);
+    eassert(!rv.parser_errno);
+    eassert(rv.output.stmts->type == ST_NORMAL);
+
+    // simulate setup the VM does
+    Vm_Data vm;
+    vm_setup(&vm, rv, &s);
+
+    vm.cur_cmds = vm_next(vm.cur_cmds, &vm);
+
+    auto res = vm_math_expr(&vm);
+
+    eassert(vm.status == EXIT_SUCCESS);
+    printf("%s\n", res.value);
+    eassert(res.value[0] == '1');
+    eassert(res.length == 2);
+
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
 void vm_math_tests()
 {
     etest_start();
@@ -178,6 +206,7 @@ void vm_math_tests()
     etest_run(vm_math_subtract_multiple_test);
 
     etest_run(vm_math_operator_precedence_test);
+    // etest_run(vm_math_assignment_operator_precedence_test);
 
     etest_finish();
 }

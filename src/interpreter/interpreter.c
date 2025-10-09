@@ -7,7 +7,6 @@
 #include "interpreter.h"
 #include "lex.h"
 #include "parse.h"
-#include "expand.h"
 #include "vm.h"
 #include "../ttyio/ttyio.h"
 
@@ -25,8 +24,6 @@ int interpreter_run(Shell* restrict shell, Arena scratch)
         return EXIT_FAILURE_CONTINUE;
     }
 
-    expand(parse_rv.output.stmts, shell, &scratch);
-
     return vm_execute(parse_rv.output.stmts, shell, &scratch);
 }
 
@@ -41,8 +38,6 @@ int interpreter_run_noninteractive(char** restrict argv, size_t argc, Shell* res
         tty_fputs(parse_rv.output.msg, stderr);
         return EXIT_FAILURE_CONTINUE;
     }
-
-    expand(parse_rv.output.stmts, shell, &shell->arena);
 
     return vm_execute_noninteractive(parse_rv.output.stmts, shell);
 }

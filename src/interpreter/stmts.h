@@ -8,18 +8,74 @@
 
 #include "../eskilib/str.h"
 #include "lex.h"
-#include "ops.h"
+
+/* enum Ops
+ * Represents the bytecodes which get sent to the VM.
+ */
+enum Ops : uint8_t {
+    // Default value, indicative of an issue parsing when found during execution
+    OP_NONE = 0,
+    // Constant values
+    OP_CONST,
+    OP_NUM,
+    // Boolean
+    OP_TRUE,                                  // true
+    OP_FALSE,                                 // false
+    // Shell operators
+    OP_PIPE,                                  // |
+    OP_AND,                                   // &&
+    OP_OR,                                    // ||
+    // Math
+    OP_ADD,                                   // +
+    OP_SUB,                                   // -
+    OP_MUL,                                   // *
+    OP_DIV,                                   // /
+    OP_MOD,                                   // %
+    OP_EXP,                                   // **
+    OP_MATH_EXPR_START,                       // $( or $((
+    OP_MATH_EXPR_END,                         // ) or ))
+    // Equality comparisons
+    OP_EQUALS,                                // -eq
+    OP_LESS_THAN,                             // -lt
+    OP_LESS_THAN_OR_EQUALS,                   // -le
+    OP_GREATER_THAN,                          // -gt
+    OP_GREATER_THAN_OR_EQUALS,                // -ge
+    // Expansions
+    OP_VARIABLE,                              // (starting with $, $VAR)
+    OP_ASSIGNMENT,                            // (var=val)
+    OP_HOME_EXPANSION,                        // ~
+    OP_GLOB_EXPANSION,                        // * or ?
+
+    // OP_JUMP,
+    // OP_JUMP_IF_FALSE,
+
+    // these could be condensed/removed into fewer ops.
+    // they are not needed by vm, only by parser to characterize tokens.
+    // If Control flow Structures
+    OP_CONDITION_START,                       // [, [[
+    OP_CONDITION_END,                         // ], ]]
+    OP_IF,                                    // if
+    OP_ELSE,                                  // else
+    OP_ELIF,                                  // elif
+    OP_THEN,                                  // then
+    OP_FI,                                    // fi
+    // Loop Control Flow Structures
+    OP_WHILE,                                 // while
+    OP_FOR,                                   // for
+    OP_DO,                                    // do
+    OP_DONE                                   // done
+};
 
 enum Redirect_Type : uint8_t {
     RT_NONE = 0,
-    RT_OUT = 3,             // OP_STDOUT_REDIRECTION = 3,                       // >
-    RT_OUT_APPEND = 4,      // OP_STDOUT_REDIRECTION_APPEND = 4,                // >>
-    RT_IN = 5,              // OP_STDIN_REDIRECTION = 5,                        // <
-    RT_IN_APPEND = 6,       // OP_STDIN_REDIRECTION_APPEND = 6,                 // <<
-    RT_ERR = 7,             // OP_STDERR_REDIRECTION = 7,                       // 2>
-    RT_ERR_APPEND = 8,      // OP_STDERR_REDIRECTION_APPEND = 8,                // 2>>
-    RT_OUT_ERR = 9,         // OP_STDOUT_AND_STDERR_REDIRECTION = 9,            // &>
-    RT_OUT_ERR_APPEND = 10, // OP_STDOUT_AND_STDERR_REDIRECTION_APPEND = 10,    // &>>
+    RT_OUT = 3,             // >
+    RT_OUT_APPEND = 4,      // >>
+    RT_IN = 5,              // <
+    RT_IN_APPEND = 6,       // <<
+    RT_ERR = 7,             // 2>
+    RT_ERR_APPEND = 8,      // 2>>
+    RT_OUT_ERR = 9,         // &>
+    RT_OUT_ERR_APPEND = 10, // &>>
 };
 
 typedef struct Commands Commands;
@@ -86,12 +142,16 @@ typedef struct {
     Str_Builder* restrict sb;
 } Parser_Data;
 
+ssize_t ops_idx(Commands* cmds, enum Ops op);
+
 Commands* cmds_alloc(Arena* restrict scratch);
 
 void cmd_realloc(Commands* restrict cmds, Arena* restrict scratch);
 void cmd_realloc_exact(Commands* restrict cmds, Arena* restrict scratch, size_t new_cap);
 
 void cmds_realloc(Parser_Data* restrict data, Arena* restrict scratch);
+
+Commands* cmds_dup(Commands* restrict cmds, Arena* restrict scratch);
 
 Commands* cmd_next(Commands* restrict cmds, Arena* restrict scratch);
 

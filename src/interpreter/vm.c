@@ -2,6 +2,7 @@
 /* vm.c: the VM for ncsh. Accepts op bytecodes and constant values and their lengths,
  * and processes those into commands. */
 
+#include <stddef.h>
 #define _POSIX_C_SOURCE 200809L
 
 #include <assert.h>
@@ -17,7 +18,6 @@
 #include "../types.h"
 #include "../debug.h"
 #include "../ttyio/ttyio.h"
-#include "ops.h"
 #include "stmts.h"
 #include "builtins.h"
 #include "pipe.h"
@@ -25,6 +25,7 @@
 #include "vm.h"
 #include "vm_math.h"
 #include "vm_types.h"
+#include "expand.h"
 
 #ifdef NCSH_VM_TEST
 #include "vm_mocks.h"
@@ -152,9 +153,7 @@ Commands* vm_command_next(Commands* restrict cmds, Vm_Data* restrict vm)
 [[nodiscard]]
 Commands* vm_command_set(Commands* restrict cmds, Vm_Data* restrict vm, enum Vm_State state)
 {
-    vm->strs_n = cmds->count;
-    vm->strs = cmds->strs;
-    vm->ops = cmds->ops;
+    vm->cmds = cmds;
     vm->state = state;
     vm->op_current = cmds->prev_op;
     return vm_command_next(cmds, vm);
@@ -163,11 +162,9 @@ Commands* vm_command_set(Commands* restrict cmds, Vm_Data* restrict vm, enum Vm_
 [[nodiscard]]
 Commands* vm_loop_condition_set(Commands* restrict cmds, Vm_Data* restrict vm)
 {
-    vm->loop_c_n = cmds->count;
-    vm->loop_c_s = cmds->strs;
-    vm->loop_c_ops = cmds->ops;
+    vm->conds = vm->cur_stmt;
+    // vm->conds->commands = cmds_dup(vm->conds->commands, vm->s);
     vm->state = VS_IN_CONDITIONS;
-    vm->loop_c_op = cmds->prev_op;
     return vm_command_set(cmds, vm, VS_IN_CONDITIONS);
 }
 
@@ -414,7 +411,7 @@ Commands* vm_next_if(Commands* restrict cmds, Vm_Data* restrict vm)
         }
 
         if (vm->state == VS_IN_ELIF_STATEMENTS) {
-            vm->strs = NULL;
+            vm->cmds = NULL;
             vm->end = true;
             return NULL;
         }
@@ -564,16 +561,10 @@ Commands* vm_next_while_statement(Vm_Data* restrict vm)
 
 Commands* vm_back_to_while_conditions(Vm_Data* restrict vm)
 {
-    vm->strs_n = vm->loop_c_n;
-    vm->strs = vm->loop_c_s;
-    vm->ops = vm->loop_c_ops;
-    vm->state = VS_IN_CONDITIONS;
-    vm->op_current = vm->loop_c_op;
-
-    while (vm->cur_stmt && vm->cur_stmt->prev && vm->cur_stmt->prev->type != LT_WHILE_CONDITIONS) {
-        vm->cur_stmt = vm->cur_stmt->prev;
-    }
+    vm->cur_stmt = vm->conds;
     vm->cur_cmds = vm->cur_stmt->commands;
+    vm->state = VS_IN_CONDITIONS;
+    vm->op_current = vm->cur_cmds->op;
 
     return vm_command_set(vm->cur_cmds, vm, VS_IN_CONDITIONS);
 }
@@ -626,12 +617,18 @@ Commands* vm_next_while(Commands* restrict cmds, Vm_Data* restrict vm)
     }
 
     if (vm->cur_stmt->type == LT_WHILE) {
-        if (!vm->cur_cmds->next && (!vm->cur_stmt->right || vm->cur_stmt->right->type != LT_WHILE)) {
-            return vm_back_to_while_conditions(vm);
-        }
         if (vm->status != EXIT_SUCCESS && (vm->state == VS_IN_LOOP_STATEMENTS || vm->state == VS_IN_CONDITIONS) && cmds->prev_op != OP_AND) {
             vm->end = true;
             return NULL;
+        }
+
+        if (vm->status != EXIT_SUCCESS) {
+            vm->end = true;
+            return NULL;
+        }
+
+        if (!vm->cur_cmds->next && (!vm->cur_stmt->right || vm->cur_stmt->right->type != LT_WHILE)) {
+            return vm_back_to_while_conditions(vm);
         }
 
         return vm_command_set(cmds, vm, VS_IN_LOOP_STATEMENTS);
@@ -656,10 +653,7 @@ Commands* vm_next_normal(Vm_Data* restrict vm)
         return NULL;
     }
 
-    vm->strs = vm->cur_cmds->strs;
-    vm->ops = vm->cur_cmds->ops;
-    vm->strs_n = vm->cur_cmds->count;
-    vm->ops = vm->cur_cmds->ops;
+    vm->cmds = vm->cur_cmds;
     vm->cur_cmds = vm_command_next(vm->cur_cmds, vm);
 
     if (!vm->end) {
@@ -710,7 +704,7 @@ int vm_run_foreground(Vm_Data* restrict vm, pid_t shell_pgid)
         if (vm->op_current == OP_PIPE)
             pipe_connect(vm->command_position, vm->stmts->pipes_count, &vm->pipes_io);
 
-        char** buffers = estrtoarr(vm->strs, vm->strs_n, vm->s);
+        char** buffers = estrtoarr(vm->cmds->strs, vm->cmds->count, vm->s);
         if (!buffers || !*buffers) {
             exit(-5);
         }
@@ -764,7 +758,7 @@ int vm_run_background(Vm_Data* restrict vm, Processes* restrict pcs)
         setpgid(0, 0);
         signal_reset();
 
-        char** buffers = estrtoarr(vm->strs, vm->strs_n, vm->s);
+        char** buffers = estrtoarr(vm->cmds->strs, vm->cmds->count, vm->s);
         execvp(*buffers, buffers);
         if (!buffers || !*buffers) {
             exit(-5);
@@ -795,10 +789,12 @@ int vm_run(Statements* restrict stmts, Shell* restrict shell, Arena* restrict sc
     while (!vm.end && vm.cur_cmds) {
         vm.cur_cmds = vm_next(vm.cur_cmds, &vm);
 
-        if (!vm.strs || !vm.strs[0].value) {
+        if (!vm.cmds || !vm.cmds->strs) {
             rv = EXIT_FAILURE_CONTINUE;
             goto failure;
         }
+
+        expand(&vm, scratch);
 
         if (vm.op_current == OP_PIPE && !vm.end) {
             if (pipe_start(vm.command_position, &vm.pipes_io) != EXIT_SUCCESS) {
@@ -807,11 +803,27 @@ int vm_run(Statements* restrict stmts, Shell* restrict shell, Arena* restrict sc
             }
         }
 
-        if (vm.ops[0] == OP_MATH_EXPR_START) {
+        if (vm.cmds->op == OP_ASSIGNMENT) {
+            if (vm.cmds->next && vm.cmds->next->ops[0] == OP_MATH_EXPR_START) {
+                expand_expr_variables(vm.cmds->next, 1, vm.sh->env, scratch);
+                Str res = vm_math_expr(&vm);
+                vm.cmds->strs[2] = res;
+                vm.cmds->ops[2] = OP_NUM;
+                vm.cmds->count = 3;
+                expand_assignment(vm.cmds, vm.sh);
+                vm.status = EXIT_SUCCESS;
+                vm.cur_cmds = vm_next(vm.cur_cmds, &vm);
+            }
+            else {
+                expand_assignment(vm.cmds, vm.sh);
+                vm.status = EXIT_SUCCESS;
+            }
+        }
+        else if (vm.cmds->ops[0] == OP_MATH_EXPR_START) {
             Str res = vm_math_expr(&vm);
             if (res.value) {
                 vm.status = EXIT_SUCCESS;
-                printf("%s\n", res.value);
+                tty_print("%s\n", res.value);
             }
             else
                 vm.status = EXIT_FAILURE_CONTINUE;

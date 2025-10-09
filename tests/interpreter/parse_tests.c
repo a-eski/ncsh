@@ -18,17 +18,6 @@
 static char** envp_ptr;
 
 [[maybe_unused]]
-void stmt_print(Statements* stmts)
-{
-    printf("stmts->type %d\n", stmts->type);
-
-    printf("stmts->head->type %d\n", stmts->head->type);
-    printf("stmts->head->right->type %d\n", stmts->head->right->type);
-    printf("stmts->head->right->prev->type %d\n", stmts->head->right->prev->type);
-    printf("stmts->head->left->type %d\n", stmts->head->left->type);
-}
-
-[[maybe_unused]]
 void cmds_print(Commands* cmds)
 {
     for (size_t i = 0; i < cmds->count; ++i)
@@ -2096,6 +2085,7 @@ void parse_while_test()
     eassert(stmt->type == LT_WHILE);
     cmds = stmt->commands;
     eassert(cmds);
+    eassert(cmds->op == OP_ASSIGNMENT)
     p = 0;
 
     eassert(!memcmp(cmds->strs[p].value, "count", 5));
@@ -2106,12 +2096,15 @@ void parse_while_test()
     eassert(cmds->strs[p].length == 2);
     eassert(cmds->ops[p++] == OP_ASSIGNMENT);
 
+    cmds = cmds->next;
+    eassert(cmds);
+    p = 0;
+
     eassert(cmds->ops[p++] == OP_MATH_EXPR_START);
 
     eassert(!memcmp(cmds->strs[p].value, "count", 5));
     eassert(cmds->strs[p].length == 6);
     eassert(cmds->ops[p++] == OP_CONST);
-    // eassert(cmds->ops[p++] == OP_VARIABLE); // ?
 
     eassert(cmds->ops[p++] == OP_ADD);
 

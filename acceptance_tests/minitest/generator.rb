@@ -34,11 +34,13 @@ def generate_if_bool_tests
     'false || false || true',
     'true || false || true',
     'false || true || false',
-    'false || false || false || true',  # true
-    'false || false || false || false', # false
-    'true && true && true && false',    # false
-    'false || false || true || false',  # true
-    'true && true && true && true'      # true
+    'false || false || false || true',          # true
+    'false || false || false || false',         # false
+    'true && true && true && false',            # false
+    'false || false || true || false',          # true
+    'true && true && true && true',             # true
+    'false || false || false || false || true', # true
+    'true && true && true && true && true'      # true
   ]
 
   results = [
@@ -71,6 +73,8 @@ def generate_if_bool_tests
     true,
     false,
     false,
+    true,
+    true,
     true,
     true
   ]
@@ -118,7 +122,7 @@ def generate_tests(conditions, results)
                     .gsub('||', 'or')
 
     define_method("test_if_#{name}_#{i}") do
-      tty = TTYtest.new_terminal(%(../bin/ncsh), width: 200, height: 160, use_return_for_newline: true)
+      tty = TTYtest.new_terminal(%(../bin/ncsh), width: 230, height: 160, use_return_for_newline: true)
       row = ROW_START
       tty.assert_row_ends_with(row, ' ❱ ')
 
@@ -132,7 +136,7 @@ def generate_tests(conditions, results)
     end
 
     define_method("test_if_else_#{name}_#{i}") do
-      tty = TTYtest.new_terminal(%(../bin/ncsh), width: 200, height: 160, use_return_for_newline: true)
+      tty = TTYtest.new_terminal(%(../bin/ncsh), width: 230, height: 160, use_return_for_newline: true)
       row = ROW_START
       tty.assert_row_ends_with(row, ' ❱ ')
 
@@ -146,7 +150,7 @@ def generate_tests(conditions, results)
     end
 
     define_method("test_if_first_elif_#{name}_#{i}") do
-      tty = TTYtest.new_terminal(%(../bin/ncsh), width: 200, height: 160, use_return_for_newline: true)
+      tty = TTYtest.new_terminal(%(../bin/ncsh), width: 230, height: 160, use_return_for_newline: true)
       row = ROW_START
       tty.assert_row_ends_with(row, ' ❱ ')
 
@@ -160,7 +164,7 @@ def generate_tests(conditions, results)
     end
 
     define_method("test_if_second_elif_#{name}_#{i}") do
-      tty = TTYtest.new_terminal(%(../bin/ncsh), width: 200, height: 160, use_return_for_newline: true)
+      tty = TTYtest.new_terminal(%(../bin/ncsh), width: 230, height: 160, use_return_for_newline: true)
       row = ROW_START
       tty.assert_row_ends_with(row, ' ❱ ')
 
@@ -174,7 +178,7 @@ def generate_tests(conditions, results)
     end
 
     define_method("test_if_first_elif_else_#{name}_#{i}") do
-      tty = TTYtest.new_terminal(%(../bin/ncsh), width: 200, height: 160, use_return_for_newline: true)
+      tty = TTYtest.new_terminal(%(../bin/ncsh), width: 230, height: 160, use_return_for_newline: true)
       row = ROW_START
       tty.assert_row_ends_with(row, ' ❱ ')
 
@@ -188,7 +192,7 @@ def generate_tests(conditions, results)
     end
 
     define_method("test_if_elif_else_multiple_conditions_#{name}_#{i}") do
-      tty = TTYtest.new_terminal(%(../bin/ncsh), width: 200, height: 160, use_return_for_newline: true)
+      tty = TTYtest.new_terminal(%(../bin/ncsh), width: 230, height: 160, use_return_for_newline: true)
       row = ROW_START
       tty.assert_row_ends_with(row, ' ❱ ')
 
@@ -202,7 +206,7 @@ def generate_tests(conditions, results)
     end
 
     define_method("test_if_second_elif_else_#{name}_#{i}") do
-      tty = TTYtest.new_terminal(%(../bin/ncsh), width: 200, height: 160, use_return_for_newline: true)
+      tty = TTYtest.new_terminal(%(../bin/ncsh), width: 230, height: 160, use_return_for_newline: true)
       row = ROW_START
       tty.assert_row_ends_with(row, ' ❱ ')
 
@@ -216,7 +220,7 @@ def generate_tests(conditions, results)
     end
 
     define_method("test_if_first_elif_multiple_#{name}_#{i}") do
-      tty = TTYtest.new_terminal(%(../bin/ncsh), width: 200, height: 160, use_return_for_newline: true)
+      tty = TTYtest.new_terminal(%(../bin/ncsh), width: 230, height: 160, use_return_for_newline: true)
       row = ROW_START
       tty.assert_row_ends_with(row, ' ❱ ')
 
@@ -230,7 +234,7 @@ def generate_tests(conditions, results)
     end
 
     define_method("test_if_second_elif_multiple_#{name}_#{i}") do
-      tty = TTYtest.new_terminal(%(../bin/ncsh), width: 200, height: 160, use_return_for_newline: true)
+      tty = TTYtest.new_terminal(%(../bin/ncsh), width: 230, height: 160, use_return_for_newline: true)
       row = ROW_START
       tty.assert_row_ends_with(row, ' ❱ ')
 
@@ -244,7 +248,7 @@ def generate_tests(conditions, results)
     end
 
     define_method("test_if_third_elif_multiple_#{name}_#{i}") do
-      tty = TTYtest.new_terminal(%(../bin/ncsh), width: 200, height: 160, use_return_for_newline: true)
+      tty = TTYtest.new_terminal(%(../bin/ncsh), width: 230, height: 160, use_return_for_newline: true)
       row = ROW_START
       tty.assert_row_ends_with(row, ' ❱ ')
 
@@ -258,7 +262,7 @@ def generate_tests(conditions, results)
     end
 
     define_method("test_if_fourth_elif_multiple_#{name}_#{i}") do
-      tty = TTYtest.new_terminal(%(../bin/ncsh), width: 200, height: 160, use_return_for_newline: true)
+      tty = TTYtest.new_terminal(%(../bin/ncsh), width: 230, height: 160, use_return_for_newline: true)
       row = ROW_START
       tty.assert_row_ends_with(row, ' ❱ ')
 
@@ -272,7 +276,7 @@ def generate_tests(conditions, results)
     end
 
     define_method("test_if_first_elif_multiple_else_#{name}_#{i}") do
-      tty = TTYtest.new_terminal(%(../bin/ncsh), width: 200, height: 160, use_return_for_newline: true)
+      tty = TTYtest.new_terminal(%(../bin/ncsh), width: 230, height: 160, use_return_for_newline: true)
       row = ROW_START
       tty.assert_row_ends_with(row, ' ❱ ')
 
@@ -286,7 +290,7 @@ def generate_tests(conditions, results)
     end
 
     define_method("test_if_second_elif_multiple_else_#{name}_#{i}") do
-      tty = TTYtest.new_terminal(%(../bin/ncsh), width: 200, height: 160, use_return_for_newline: true)
+      tty = TTYtest.new_terminal(%(../bin/ncsh), width: 230, height: 160, use_return_for_newline: true)
       row = ROW_START
       tty.assert_row_ends_with(row, ' ❱ ')
 
@@ -300,7 +304,7 @@ def generate_tests(conditions, results)
     end
 
     define_method("test_if_third_elif_multiple_else_#{name}_#{i}") do
-      tty = TTYtest.new_terminal(%(../bin/ncsh), width: 200, height: 160, use_return_for_newline: true)
+      tty = TTYtest.new_terminal(%(../bin/ncsh), width: 230, height: 160, use_return_for_newline: true)
       row = ROW_START
       tty.assert_row_ends_with(row, ' ❱ ')
 
@@ -314,7 +318,7 @@ def generate_tests(conditions, results)
     end
 
     define_method("test_if_multiple_second_elif_multiple_else_#{name}_#{i}") do
-      tty = TTYtest.new_terminal(%(../bin/ncsh), width: 200, height: 160, use_return_for_newline: true)
+      tty = TTYtest.new_terminal(%(../bin/ncsh), width: 230, height: 160, use_return_for_newline: true)
       row = ROW_START
       tty.assert_row_ends_with(row, ' ❱ ')
 

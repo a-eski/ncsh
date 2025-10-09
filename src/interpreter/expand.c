@@ -1,16 +1,18 @@
 /* Copyright ncsh (C) by Alex Eski 2025 */
 
+#include "expand.h"
 #include <assert.h>
 #include <glob.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 #include "../alias.h"
 #include "../debug.h"
 #include "../env.h"
-#include "ops.h"
-#include "stmts.h"
 #include "../types.h"
+#include "stmts.h"
+#include "vm_types.h"
 
 static Str* expand_home(Str* restrict s, Env* restrict env, Arena* restrict scratch)
 {
@@ -60,10 +62,29 @@ static void expand_glob(Commands* restrict cmds, size_t pos, Arena* restrict scr
     globfree(&glob_buf);
 }
 
+static Str* expand_variable(Str* restrict in, Env* restrict env, Arena* restrict scratch);
+
+void expand_expr_variables(Commands* restrict cmds, size_t p, Env* restrict env, Arena* restrict scratch)
+{
+    for (size_t j = p; j < cmds->count; j++) {
+        if (cmds->ops[j] == OP_MATH_EXPR_END)
+            break;
+        if (cmds->ops[j] == OP_CONST) {
+            Str* out = expand_variable(&cmds->strs[j], env, scratch);
+            if (out == NULL)
+                continue;
+            if (estrisnum(*out)) {
+                cmds->ops[j] = OP_NUM;
+            }
+            cmds->strs[j] = *out;
+        }
+    }
+}
+
 // variable values are stored in env hashmap.
 // the key is the previous value, which is tagged with OP_VARIABLE.
 // when VM comes in contact with OP_VARIABLE, it looks up value in env.
-static void expand_assignment(Commands* restrict cmds, Shell* restrict shell)
+void expand_assignment(Commands* restrict cmds, Shell* restrict shell)
 {
     assert(cmds); assert(shell && shell->env); assert(cmds->op == OP_ASSIGNMENT);
 
@@ -136,12 +157,17 @@ static void expand_alias(Str* restrict s, Arena* restrict scratch)
     debug("found space in alias");
 }
 
-static void expand_cmds(Commands* restrict cmds, Env* restrict env, Arena* restrict scratch)
+void expand(Vm_Data* restrict vm, Arena* restrict scratch)
 {
+    Commands* cmds = vm->cmds;
+    if (cmds->strs[0].value && cmds->ops[0] == OP_CONST) {
+        expand_alias(&cmds->strs[0], scratch);
+    }
+
     for (size_t i = 0; i < cmds->count; ++i) {
         switch (cmds->ops[i]) {
             case OP_HOME_EXPANSION: {
-                Str* out = expand_home(&cmds->strs[i], env, scratch);
+                Str* out = expand_home(&cmds->strs[i], vm->sh->env, scratch);
                 cmds->ops[i] = OP_CONST;
                 if (out == NULL)
                     continue;
@@ -149,7 +175,7 @@ static void expand_cmds(Commands* restrict cmds, Env* restrict env, Arena* restr
                 break;
             }
             case OP_VARIABLE: {
-                Str* out = expand_variable(&cmds->strs[i], env, scratch);
+                Str* out = expand_variable(&cmds->strs[i], vm->sh->env, scratch);
                 cmds->ops[i] = OP_CONST;
                 if (out == NULL)
                     continue;
@@ -161,69 +187,11 @@ static void expand_cmds(Commands* restrict cmds, Env* restrict env, Arena* restr
                 break;
             }
             case OP_MATH_EXPR_START: {
-                for (size_t j = i; j < cmds->count; j++) {
-                    if (cmds->ops[j] == OP_MATH_EXPR_END)
-                        break;
-                    if (cmds->ops[j] == OP_CONST) {
-                        Str* out = expand_variable(&cmds->strs[j], env, scratch);
-                        if (out == NULL)
-                            continue;
-                        if (estrisnum(*out)) {
-                            cmds->ops[j] = OP_NUM;
-                        }
-                        cmds->strs[j] = *out;
-                    }
-                }
+                expand_expr_variables(cmds, i, vm->sh->env, scratch);
                 break;
             }
             default:
                 break;
         }
     }
-
-    if (cmds->next)
-        expand_cmds(cmds->next, env, scratch);
-}
-
-/* recursively expand each statement and its commands */
-static void expand_stmt(Statement* restrict stmt, Shell* restrict shell, Arena* restrict scratch)
-{
-    if (!stmt || !stmt->commands || !stmt->commands->strs[0].value)
-        return;
-
-    if (stmt->commands->strs[0].value && stmt->commands->ops[0] == OP_CONST) {
-        expand_alias(&stmt->commands->strs[0], scratch);
-    }
-
-    while (stmt->commands && stmt->commands->op == OP_ASSIGNMENT) {
-        expand_assignment(stmt->commands, shell);
-        if (stmt->commands->next) {// remove assignment so it doesn't get processed by the VM.
-            stmt->commands = stmt->commands->next;
-        } else {
-            stmt->commands = NULL;
-            break;
-        }
-    }
-
-    if (!stmt->commands)
-        return;
-
-    expand_cmds(stmt->commands, shell->env, scratch);
-
-    if (stmt->right) {
-        expand_stmt(stmt->right, shell, scratch);
-    }
-
-    if (stmt->left) {
-        expand_stmt(stmt->left, shell, scratch);
-    }
-}
-
-void expand(Statements* restrict stmts, Shell* restrict shell, Arena* restrict scratch)
-{
-    if (!stmts->head || !stmts->head->commands)
-        return;
-
-    Statement* stmt = stmts->head;
-    expand_stmt(stmt, shell, scratch);
 }

@@ -9,7 +9,6 @@
 
 #include "../debug.h"
 #include "lex.h"
-#include "ops.h"
 #include "parse.h"
 #include "stmts.h"
 #include "parse_errors.h"
@@ -333,6 +332,9 @@ static Parser_Internal parse_while(Parser_Data* data, size_t* restrict n)
         return rv;
     }
 
+    // assert(data->prev_stmt->type == LT_WHILE_CONDITIONS);
+    // Commands* conds = data->prev_stmt->commands;
+
     consume(data->lexemes, n, T_DO);
 
     do {
@@ -343,6 +345,10 @@ static Parser_Internal parse_while(Parser_Data* data, size_t* restrict n)
             return rv;
         }
     } while (*n < data->lexemes->count && peek(data->lexemes, *n) != T_DONE);
+
+    // data->cur_cmds = cmd_next(data->cur_cmds, data->s);
+    // data_cmd_update(data, Str_Lit("JUMP"), OP_JUMP);
+    // data->cur_cmds->next = conds;
 
     if (!consume(data->lexemes, n, T_DONE)) {
         return (Parser_Internal){.parser_errno = PE_MISSING_TOK, .msg = "missing 'done', no closing 'done' for while loop."};
@@ -577,6 +583,8 @@ static Parser_Internal parse_token(Parser_Data* restrict data, Lexemes* restrict
         if (peeked == T_O_PARAN) {
             consume(lexemes, i, T_O_PARAN);
             ++*i;
+            if (data->cur_cmds->pos > 0)
+                data->cur_cmds = cmd_next(data->cur_cmds, data->s);
             data_cmd_update(data, Str_Lit("$("), OP_MATH_EXPR_START);
             return (Parser_Internal){};
         }
