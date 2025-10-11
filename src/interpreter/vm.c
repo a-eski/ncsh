@@ -159,15 +159,6 @@ Commands* vm_command_set(Commands* restrict cmds, Vm_Data* restrict vm, enum Vm_
     return vm_command_next(cmds, vm);
 }
 
-[[nodiscard]]
-Commands* vm_loop_condition_set(Commands* restrict cmds, Vm_Data* restrict vm)
-{
-    vm->conds = vm->cur_stmt;
-    // vm->conds->commands = cmds_dup(vm->conds->commands, vm->s);
-    vm->state = VS_IN_CONDITIONS;
-    return vm_command_set(cmds, vm, VS_IN_CONDITIONS);
-}
-
 Commands* vm_next_if_statement(Vm_Data* restrict vm)
 {
     vm->cur_stmt = vm->cur_stmt->right;
@@ -559,22 +550,13 @@ Commands* vm_next_while_statement(Vm_Data* restrict vm)
     return vm->cur_stmt->commands;
 }
 
-Commands* vm_back_to_while_conditions(Vm_Data* restrict vm)
-{
-    vm->cur_stmt = vm->conds;
-    vm->cur_cmds = vm->cur_stmt->commands;
-    vm->state = VS_IN_CONDITIONS;
-    vm->op_current = vm->cur_cmds->op;
-
-    return vm_command_set(vm->cur_cmds, vm, VS_IN_CONDITIONS);
-}
-
 [[nodiscard]]
 Commands* vm_next_while(Commands* restrict cmds, Vm_Data* restrict vm)
 {
     if (vm->cur_stmt->type == LT_WHILE_CONDITIONS) {
         if (vm->state != VS_IN_CONDITIONS) {
-            return vm_loop_condition_set(cmds, vm);
+            return vm_command_set(cmds, vm, VS_IN_CONDITIONS);
+            // return vm_loop_condition_set(cmds, vm);
         }
 
         else if (vm->status != EXIT_SUCCESS && cmds->prev_op == OP_AND) {
@@ -627,8 +609,8 @@ Commands* vm_next_while(Commands* restrict cmds, Vm_Data* restrict vm)
             return NULL;
         }
 
-        if (!vm->cur_cmds->next && (!vm->cur_stmt->right || vm->cur_stmt->right->type != LT_WHILE)) {
-            return vm_back_to_while_conditions(vm);
+        if (vm->cur_stmt->right && vm->cur_stmt->right->type == LT_WHILE_CONDITIONS) {
+            return vm_command_next(vm->cur_cmds, vm);
         }
 
         return vm_command_set(cmds, vm, VS_IN_LOOP_STATEMENTS);
@@ -794,6 +776,8 @@ int vm_run(Statements* restrict stmts, Shell* restrict shell, Arena* restrict sc
             goto failure;
         }
 
+        // Commands* cmds = vm.cmds;
+        // Commands* cmds = cmds_dup(vm.cmds, scratch);
         expand(&vm, scratch);
 
         if (vm.op_current == OP_PIPE && !vm.end) {
@@ -851,6 +835,7 @@ int vm_run(Statements* restrict stmts, Shell* restrict shell, Arena* restrict sc
             }
         }
 
+        // vm.cmds = cmds;
         ++vm.command_position;
     }
 

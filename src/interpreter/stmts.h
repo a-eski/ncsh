@@ -46,8 +46,8 @@ enum Ops : uint8_t {
     OP_HOME_EXPANSION,                        // ~
     OP_GLOB_EXPANSION,                        // * or ?
 
-    // OP_JUMP,
-    // OP_JUMP_IF_FALSE,
+    OP_JUMP,
+    OP_JUMP_IF_FALSE,
 
     // these could be condensed/removed into fewer ops.
     // they are not needed by vm, only by parser to characterize tokens.

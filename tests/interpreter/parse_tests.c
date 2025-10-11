@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <stdio.h>
 #include <unistd.h>
 
 #include "../etest.h"
@@ -2043,6 +2044,7 @@ void parse_while_test()
     eassert(cmds->ops[p++] == OP_NUM);
 
     eassert(!cmds->strs[p].value);
+    eassert(!cmds->next);
 
     stmt = stmt->right;
     eassert(stmt);
@@ -2062,6 +2064,7 @@ void parse_while_test()
     eassert(cmds->ops[p++] == OP_NUM);
 
     eassert(!cmds->strs[p].value);
+    eassert(!cmds->next);
 
     stmt = stmt->right;
     eassert(stmt);
@@ -2079,6 +2082,7 @@ void parse_while_test()
     eassert(cmds->ops[p++] == OP_VARIABLE);
 
     eassert(!cmds->strs[p].value);
+    eassert(!cmds->next);
 
     stmt = stmt->right;
     eassert(stmt);
@@ -2115,6 +2119,27 @@ void parse_while_test()
     eassert(cmds->ops[p++] == OP_MATH_EXPR_END);
 
     eassert(!cmds->strs[p].value);
+
+    // jump op back to conditions
+    stmt = stmt->right;
+    eassert(stmt);
+    eassert(stmt->type == LT_WHILE_CONDITIONS);
+    cmds = stmt->commands;
+    eassert(cmds);
+    p = 0;
+
+    eassert(cmds->ops[p] == OP_JUMP);
+
+    stmt = stmt->right;
+    eassert(stmt);
+    eassert(stmt->type == LT_WHILE_CONDITIONS);
+    cmds = stmt->commands;
+    eassert(cmds);
+    p = 0;
+
+    eassert(!memcmp(cmds->strs[p].value, "count", 5));
+    eassert(cmds->strs[p].length == 6);
+    eassert(cmds->ops[p++] == OP_VARIABLE);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }

@@ -332,8 +332,9 @@ static Parser_Internal parse_while(Parser_Data* data, size_t* restrict n)
         return rv;
     }
 
-    // assert(data->prev_stmt->type == LT_WHILE_CONDITIONS);
+    assert(data->prev_stmt->type == LT_WHILE_CONDITIONS);
     // Commands* conds = data->prev_stmt->commands;
+    Statement* conds = data->prev_stmt;
 
     consume(data->lexemes, n, T_DO);
 
@@ -346,9 +347,18 @@ static Parser_Internal parse_while(Parser_Data* data, size_t* restrict n)
         }
     } while (*n < data->lexemes->count && peek(data->lexemes, *n) != T_DONE);
 
-    // data->cur_cmds = cmd_next(data->cur_cmds, data->s);
-    // data_cmd_update(data, Str_Lit("JUMP"), OP_JUMP);
+    // cmd_stmt_next(data, LT_WHILE);
+
+    // data->cur_stmt->right = stmt_alloc(data->s);
+    // data->cur_stmt->right->type = LT_WHILE;
+    // data->cur_stmt = data->cur_stmt->right;
+    // data->cur_cmds = data->cur_stmt->commands;
+
+    data_cmd_update(data, Str_Lit("JUMP"), OP_JUMP);
     // data->cur_cmds->next = conds;
+    cmd_stmt_next(data, LT_WHILE_CONDITIONS);
+    data->cur_stmt = conds;
+    cmd_stmt_next(data, LT_WHILE_CONDITIONS);
 
     if (!consume(data->lexemes, n, T_DONE)) {
         return (Parser_Internal){.parser_errno = PE_MISSING_TOK, .msg = "missing 'done', no closing 'done' for while loop."};
