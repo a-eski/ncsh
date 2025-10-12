@@ -1,5 +1,5 @@
 /* Copyright ncsh (C) by Alex Eski 2025 */
-/* environment.h: deal with environment variables and other things related to the environment. */
+/* env.h: deal with environment variables and other things related to the environment. */
 
 #pragma once
 

@@ -1,5 +1,5 @@
 /* Copyright ncsh (C) by Alex Eski 2025 */
-/* environment.h: deal with environment variables and other things related to the environment. */
+/* env.c: deal with environment variables and other things related to the environment. */
 
 #define _POSIX_C_SOURCE 200809L
 
