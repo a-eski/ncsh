@@ -2,7 +2,6 @@
 /* vm.c: the VM for ncsh. Accepts op bytecodes and constant values and their lengths,
  * and processes those into commands. */
 
-#include <stddef.h>
 #define _POSIX_C_SOURCE 200809L
 
 #include <assert.h>
@@ -12,13 +11,13 @@
 #include <stdlib.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <stddef.h>
 
 #include "../defines.h"
 #include "../signals.h"
 #include "../types.h"
 #include "../debug.h"
 #include "../ttyio/ttyio.h"
-#include "stmts.h"
 #include "builtins.h"
 #include "pipe.h"
 #include "redirection.h"
@@ -776,8 +775,6 @@ int vm_run(Statements* restrict stmts, Shell* restrict shell, Arena* restrict sc
             goto failure;
         }
 
-        // Commands* cmds = vm.cmds;
-        // Commands* cmds = cmds_dup(vm.cmds, scratch);
         expand(&vm, scratch);
 
         if (vm.op_current == OP_PIPE && !vm.end) {
@@ -835,7 +832,6 @@ int vm_run(Statements* restrict stmts, Shell* restrict shell, Arena* restrict sc
             }
         }
 
-        // vm.cmds = cmds;
         ++vm.command_position;
     }
 

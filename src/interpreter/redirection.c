@@ -7,8 +7,8 @@
 
 #include "../debug.h"
 #include "../defines.h"
-#include "stmts.h"
 #include "../ttyio/ttyio.h"
+#include "parse.h"
 #include "vm_types.h"
 
 [[nodiscard]]

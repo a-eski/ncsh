@@ -1,6 +1,5 @@
 /* Copyright ncsh (C) by Alex Eski 2025 */
 
-#include "expand.h"
 #include <assert.h>
 #include <glob.h>
 #include <stdio.h>
@@ -11,7 +10,8 @@
 #include "../debug.h"
 #include "../env.h"
 #include "../types.h"
-#include "stmts.h"
+#include "parse.h"
+#include "expand.h"
 #include "vm_types.h"
 
 static Str* expand_home(Str* restrict s, Env* restrict env, Arena* restrict scratch)

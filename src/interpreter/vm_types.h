@@ -6,9 +6,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#include "parse.h"
 #include "../types.h"
-#include "../eskilib/str.h"
-#include "stmts.h"
 
 /****** MACROS ******/
 

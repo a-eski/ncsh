@@ -10,7 +10,6 @@
 #include "../debug.h"
 #include "lex.h"
 #include "parse.h"
-#include "stmts.h"
 #include "parse_errors.h"
 
 static size_t parser_state;
@@ -31,6 +30,122 @@ enum Parser_State: size_t {
     IN_BACKTICK_QUOTES =         1 << 2,
 };
 // clang-format on
+
+#define STMT_DEFAULT_N 25
+#define STMT_MAX_N 100
+
+void cmd_realloc_exact(Commands* restrict cmds, Arena* restrict scratch, size_t new_cap)
+{
+    size_t c = cmds->cap;
+    cmds->cap = new_cap;
+    cmds->strs =
+        arena_realloc(scratch, new_cap, Str, cmds->strs, c);
+    cmds->ops =
+        arena_realloc(scratch, new_cap, enum Ops, cmds->ops, c);
+}
+
+static Commands* cmds_alloc(Arena* restrict scratch)
+{
+    Commands* c = arena_malloc(scratch, 1, Commands);
+    c->count = 0;
+    c->cap = STMT_DEFAULT_N;
+    c->strs = arena_malloc(scratch, STMT_DEFAULT_N, Str);
+    c->ops = arena_malloc(scratch, STMT_DEFAULT_N, enum Ops);
+    c->next = NULL;
+    c->op = OP_NONE;
+    c->prev_op = OP_NONE;
+    return c;
+}
+
+static void cmd_realloc(Commands* restrict cmds, Arena* restrict scratch)
+{
+    size_t c = cmds->cap;
+    size_t new_cap = c *= 2;
+    cmds->cap = new_cap;
+    cmds->strs =
+        arena_realloc(scratch, new_cap, Str, cmds->strs, c);
+    cmds->ops =
+        arena_realloc(scratch, new_cap, enum Ops, cmds->ops, c);
+}
+
+static Commands* cmd_next(Commands* restrict cmds, Arena* restrict scratch)
+{
+    if (!cmds->pos) {
+        cmds->count = 1;
+        cmds->strs[1].value = NULL;
+    }
+    else {
+        cmds->count = cmds->pos;
+    }
+
+    cmds->next = cmds_alloc(scratch);
+    cmds->pos = 0;
+
+    cmds = cmds->next;
+    cmds->pos = 0;
+    return cmds;
+}
+
+static Statement* stmt_alloc(Arena* restrict scratch)
+{
+    Statement* stmt = arena_malloc(scratch, 1, Statement);
+    stmt->type = LT_NORMAL;
+    stmt->commands = cmds_alloc(scratch);
+    return stmt;
+}
+
+static int stmt_next(Parser_Data* restrict data, enum Logic_Type type)
+{
+    if (!data->stmts->head) {
+        assert(data->cur_stmt);
+        data->cur_stmt->type = type;
+        data->stmts->head = data->cur_stmt;
+        data->cur_stmt = stmt_alloc(data->s);
+        data->prev_stmt = data->stmts->head;
+        return EXIT_SUCCESS;
+    }
+
+    switch (type) {
+    case LT_NORMAL:
+    case LT_IF_CONDITIONS:
+    case LT_IF:
+    case LT_ELIF:
+    case LT_WHILE_CONDITIONS:
+    case LT_WHILE:
+        goto right;
+    case LT_ELIF_CONDITIONS:
+    case LT_ELSE:
+        goto left;
+    }
+
+    unreachable();
+    return EXIT_FAILURE_CONTINUE;
+
+right:
+    data->cur_stmt->type = type;
+    data->cur_stmt->prev = data->prev_stmt;
+    data->cur_stmt->prev->right = data->cur_stmt;
+    data->prev_stmt = data->cur_stmt;
+    data->cur_stmt = stmt_alloc(data->s);
+    return EXIT_SUCCESS;
+
+left:
+    data->cur_stmt->type = type;
+    data->cur_stmt->prev = data->prev_stmt->prev;
+    data->cur_stmt->prev->left = data->cur_stmt;
+    data->prev_stmt = data->cur_stmt;
+    data->cur_stmt = stmt_alloc(data->s);
+    return EXIT_SUCCESS;
+}
+
+static void cmd_stmt_next(Parser_Data* data, enum Logic_Type type)
+{
+    data->cur_cmds->count = data->cur_cmds->pos == 0 ? 1 : data->cur_cmds->pos; // update last commands count
+
+    stmt_next(data, type);
+
+    data->cur_cmds = data->cur_stmt->commands;
+}
 
 static Parser_Output internal_to_output(Parser_Internal* internal)
 {
@@ -789,7 +904,7 @@ Parser_Output parse(Lexemes* restrict lexemes, Arena* restrict scratch)
 
     for (size_t i = 0; i < lexemes->count; ++i) {
         if (data.cur_cmds->pos >= data.cur_cmds->cap - 1) {
-            cmds_realloc(&data, scratch);
+            cmd_realloc(data.cur_cmds, scratch);
         }
 
         rv = parse_token(&data, lexemes, &i);

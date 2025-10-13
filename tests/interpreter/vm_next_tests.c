@@ -4,7 +4,6 @@
 
 #include "../../src/interpreter/lex.h"
 #include "../../src/interpreter/parse.h"
-#include "../../src/interpreter/stmts.h"
 #include "../../src/interpreter/vm_types.h"
 #include "vm_test_helper.h"
 

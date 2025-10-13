@@ -3,7 +3,6 @@
 #include <setjmp.h>
 
 #include "../../src/interpreter/parse.h"
-#include "../../src/interpreter/stmts.h"
 #include "../../src/interpreter/vm_types.h"
 #include "../etest.h"
 #include "../lib/arena_test_helper.h"

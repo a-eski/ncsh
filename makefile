@@ -17,7 +17,7 @@ release_flags = $(main_flags) -flto=6 -O3 -ffast-math -march=native -DNDEBUG
 
 fuzz_flags = $(debug_flags) -fsanitize=fuzzer -DNDEBUG -O3
 
-objects = obj/main.o obj/bestline.o obj/arena.o obj/pipe.o obj/redirection.o obj/vm_math.o obj/vm.o obj/interpreter.o obj/parse.o obj/prompt.o obj/efile.o obj/hashset.o obj/lex.o obj/expand.o obj/stmts.o obj/builtins.o obj/ac.o obj/env.o obj/alias.o obj/conf.o obj/fzf.o obj/z.o obj/ttyio.o obj/tcaps.o obj/terminfo.o obj/unibilium.o obj/uninames.o obj/uniutil.o
+objects = obj/main.o obj/bestline.o obj/arena.o obj/pipe.o obj/redirection.o obj/vm_math.o obj/vm.o obj/interpreter.o obj/parse.o obj/prompt.o obj/efile.o obj/hashset.o obj/lex.o obj/expand.o obj/builtins.o obj/ac.o obj/env.o obj/alias.o obj/conf.o obj/fzf.o obj/z.o obj/ttyio.o obj/tcaps.o obj/terminfo.o obj/unibilium.o obj/uninames.o obj/uniutil.o
 
 target = ./bin/ncsh
 
@@ -210,7 +210,7 @@ fp:
 # Run parser tests
 .PHONY: test_parse
 test_parse:
-	$(CC) $(STD) $(test_flags) $(TTYIO_IN) ./src/arena.c ./src/alias.c ./src/env.c ./src/interpreter/lex.c ./src/interpreter/stmts.c ./src/interpreter/parse.c ./tests/interpreter/parse_tests.c -o ./bin/parse_tests
+	$(CC) $(STD) $(test_flags) $(TTYIO_IN) ./src/arena.c ./src/alias.c ./src/env.c ./src/interpreter/lex.c ./src/interpreter/parse.c ./tests/interpreter/parse_tests.c -o ./bin/parse_tests
 	./bin/parse_tests
 .PHONY: tp
 tp:
@@ -289,19 +289,19 @@ bench_str:
 
 # Run VM sanity tests
 test_vm:
-	$(CC) $(STD) $(test_flags) -DNCSH_VM_TEST $(TTYIO_IN) ./src/arena.c ./src/interpreter/lex.c ./src/eskilib/efile.c ./src/io/bestline.c ./src/io/hashset.c ./src/z/fzf.c ./src/z/z.c ./src/env.c ./src/alias.c ./src/conf.c ./src/interpreter/vm_math.c ./src/interpreter/vm.c ./src/interpreter/parse.c ./src/interpreter/builtins.c ./src/interpreter/stmts.c ./src/interpreter/expand.c ./src/interpreter/pipe.c ./src/interpreter/redirection.c ./tests/interpreter/vm_tests.c -o ./bin/vm_tests
+	$(CC) $(STD) $(test_flags) -DNCSH_VM_TEST $(TTYIO_IN) ./src/arena.c ./src/interpreter/lex.c ./src/eskilib/efile.c ./src/io/bestline.c ./src/io/hashset.c ./src/z/fzf.c ./src/z/z.c ./src/env.c ./src/alias.c ./src/conf.c ./src/interpreter/vm_math.c ./src/interpreter/vm.c ./src/interpreter/parse.c ./src/interpreter/builtins.c ./src/interpreter/expand.c ./src/interpreter/pipe.c ./src/interpreter/redirection.c ./tests/interpreter/vm_tests.c -o ./bin/vm_tests
 	./bin/vm_tests
 tvm:
 	make test_vm
 
 test_vm_next:
-	$(CC) $(STD) $(test_flags) -DNCSH_VM_TEST $(TTYIO_IN) ./src/arena.c ./src/interpreter/lex.c ./src/eskilib/efile.c ./src/io/bestline.c ./src/io/hashset.c ./src/z/fzf.c ./src/z/z.c ./src/env.c ./src/alias.c ./src/conf.c ./src/interpreter/vm_math.c ./src/interpreter/vm.c ./src/interpreter/parse.c ./src/interpreter/builtins.c ./src/interpreter/stmts.c ./src/interpreter/expand.c ./src/interpreter/pipe.c ./src/interpreter/redirection.c ./tests/interpreter/vm_next_tests.c -o ./bin/vm_next_tests
+	$(CC) $(STD) $(test_flags) -DNCSH_VM_TEST $(TTYIO_IN) ./src/arena.c ./src/interpreter/lex.c ./src/eskilib/efile.c ./src/io/bestline.c ./src/io/hashset.c ./src/z/fzf.c ./src/z/z.c ./src/env.c ./src/alias.c ./src/conf.c ./src/interpreter/vm_math.c ./src/interpreter/vm.c ./src/interpreter/parse.c ./src/interpreter/builtins.c ./src/interpreter/expand.c ./src/interpreter/pipe.c ./src/interpreter/redirection.c ./tests/interpreter/vm_next_tests.c -o ./bin/vm_next_tests
 	./bin/vm_next_tests
 tvmn:
 	make test_vm_next
 
 test_vm_math:
-	$(CC) $(STD) $(test_flags) -DNCSH_VM_TEST $(TTYIO_IN) ./src/arena.c ./src/interpreter/lex.c ./src/eskilib/efile.c ./src/io/bestline.c ./src/io/hashset.c ./src/z/fzf.c ./src/z/z.c ./src/env.c ./src/alias.c ./src/conf.c ./src/interpreter/vm_math.c ./src/interpreter/vm.c ./src/interpreter/parse.c ./src/interpreter/builtins.c ./src/interpreter/stmts.c ./src/interpreter/expand.c ./src/interpreter/pipe.c ./src/interpreter/redirection.c ./tests/interpreter/vm_math_tests.c -o ./bin/vm_math_tests
+	$(CC) $(STD) $(test_flags) -DNCSH_VM_TEST $(TTYIO_IN) ./src/arena.c ./src/interpreter/lex.c ./src/eskilib/efile.c ./src/io/bestline.c ./src/io/hashset.c ./src/z/fzf.c ./src/z/z.c ./src/env.c ./src/alias.c ./src/conf.c ./src/interpreter/vm_math.c ./src/interpreter/vm.c ./src/interpreter/parse.c ./src/interpreter/builtins.c ./src/interpreter/expand.c ./src/interpreter/pipe.c ./src/interpreter/redirection.c ./tests/interpreter/vm_math_tests.c -o ./bin/vm_math_tests
 	./bin/vm_math_tests
 tvmm:
 	make test_vm_math
@@ -315,7 +315,7 @@ ths:
 
 # Run expand tests
 test_expand:
-	$(CC) $(STD) $(test_flags) $(TTYIO_IN) ./src/arena.c ./src/alias.c ./src/env.c ./src/interpreter/stmts.c ./src/interpreter/lex.c ./src/interpreter/parse.c ./src/interpreter/expand.c ./tests/interpreter/expand_tests.c -o ./bin/expand_tests
+	$(CC) $(STD) $(test_flags) $(TTYIO_IN) ./src/arena.c ./src/alias.c ./src/env.c ./src/interpreter/lex.c ./src/interpreter/parse.c ./src/interpreter/expand.c ./tests/interpreter/expand_tests.c -o ./bin/expand_tests
 	./bin/expand_tests
 te:
 	make test_expand
@@ -338,7 +338,7 @@ tc:
 fuzz_interpreter:
 	chmod +x ./create_corpus_dirs.sh
 	./create_corpus_dirs.sh
-	clang-19 $(STD) $(fuzz_flags) -DZ_TEST -DNCSH_VM_TEST $(TTYIO_IN) ./src/arena.c ./src/interpreter/lex.c ./src/eskilib/efile.c ./src/io/hashset.c ./src/z/fzf.c ./src/z/z.c ./src/env.c ./src/alias.c ./src/conf.c ./src/interpreter/vm_math.c ./src/interpreter/vm.c ./src/interpreter/parse.c ./src/interpreter/builtins.c ./src/interpreter/stmts.c ./src/interpreter/expand.c ./src/interpreter/pipe.c ./src/interpreter/redirection.c ./src/io/bestline.c ./src/interpreter/interpreter.c ./tests/fuzz/interpreter_fuzzing.c -o ./bin/interpreter_fuzz
+	clang-19 $(STD) $(fuzz_flags) -DZ_TEST -DNCSH_VM_TEST $(TTYIO_IN) ./src/arena.c ./src/interpreter/lex.c ./src/eskilib/efile.c ./src/io/hashset.c ./src/z/fzf.c ./src/z/z.c ./src/env.c ./src/alias.c ./src/conf.c ./src/interpreter/vm_math.c ./src/interpreter/vm.c ./src/interpreter/parse.c ./src/interpreter/builtins.c ./src/interpreter/expand.c ./src/interpreter/pipe.c ./src/interpreter/redirection.c ./src/io/bestline.c ./src/interpreter/interpreter.c ./tests/fuzz/interpreter_fuzzing.c -o ./bin/interpreter_fuzz
 	./bin/interpreter_fuzz INTERPRETER_CORPUS/ -detect_leaks=0 -rss_limit_mb=8192
 
 # Format the project

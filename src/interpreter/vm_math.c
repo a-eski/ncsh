@@ -13,7 +13,7 @@
 #include "../signals.h"
 #include "../eskilib/str.h"
 #include "../ttyio/ttyio.h"
-#include "stmts.h"
+#include "parse.h"
 #include "vm_types.h"
 
 /* vm_math_condition
