@@ -17,7 +17,7 @@ release_flags = $(main_flags) -flto=6 -O3 -ffast-math -march=native -DNDEBUG
 
 fuzz_flags = $(debug_flags) -fsanitize=fuzzer -DNDEBUG -O3
 
-objects = obj/main.o obj/bestline.o obj/arena.o obj/pipe.o obj/redirection.o obj/vm_math.o obj/vm.o obj/interpreter.o obj/parse.o obj/prompt.o obj/efile.o obj/hashset.o obj/lex.o obj/expand.o obj/builtins.o obj/ac.o obj/env.o obj/alias.o obj/conf.o obj/fzf.o obj/z.o obj/ttyio.o obj/tcaps.o obj/terminfo.o obj/unibilium.o obj/uninames.o obj/uniutil.o
+objects = obj/main.o obj/bestline.o obj/arena.o obj/pipe.o obj/redirection.o obj/vm_math.o obj/vm.o obj/interpreter.o obj/parse.o obj/prompt.o obj/efile.o obj/hashset.o obj/lex.o obj/expand.o obj/vars.o obj/builtins.o obj/ac.o obj/env.o obj/alias.o obj/conf.o obj/fzf.o obj/z.o obj/ttyio.o obj/tcaps.o obj/terminfo.o obj/unibilium.o obj/uninames.o obj/uniutil.o
 
 target = ./bin/ncsh
 

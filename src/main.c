@@ -11,10 +11,6 @@
 #include <unistd.h>
 
 #include "eskilib/str.h"
-#include "debug.h"
-#include "arena.h"
-#include "conf.h"
-#include "defines.h"
 #include "eskilib/eresult.h"
 #include "interpreter/interpreter.h"
 #include "io/ac.h"
@@ -22,8 +18,13 @@
 #include "io/bestline.h"
 #include "io/bestout.h"
 #include "io/hashset.h"
-#include "signals.h"
 #include "ttyio/ttyio.h"
+#include "debug.h"
+#include "arena.h"
+#include "conf.h"
+#include "defines.h"
+#include "signals.h"
+#include "vars.h"
 #include "env.h"
 
 /* Global Variables
@@ -235,6 +236,7 @@ static char* init(Shell* restrict shell, char** restrict envp)
     }
 
     env_new(shell, envp, &shell->arena);
+    vars_new(shell);
 
     if (conf_init(shell) != E_SUCCESS) {
         return NULL;
