@@ -24,7 +24,7 @@ void vm_next_simple_test()
     vm_setup(&vm, rv, &s);
 
     // conditions
-    vm.next_cmds = vm_next(vm.next_cmds, &vm);
+    vm.next_cmds = vm_next(&vm);
 
     eassert(vm.state == VS_NORMAL);
     eassert(vm.op_current == OP_NONE);
@@ -55,7 +55,7 @@ void vm_next_bool_test()
     vm_setup(&vm, rv, &s);
 
     // conditions
-    vm.next_cmds = vm_next(vm.next_cmds, &vm);
+    vm.next_cmds = vm_next(&vm);
 
     eassert(vm.state == VS_NORMAL);
     eassert(vm.op_current == OP_NONE);
@@ -86,7 +86,7 @@ void vm_next_if_test()
     vm_setup(&vm, rv, &s);
 
     // conditions
-    vm.next_cmds = vm_next(vm.next_cmds, &vm);
+    vm.next_cmds = vm_next(&vm);
 
     eassert(vm.state == VS_IN_CONDITIONS);
     eassert(vm.op_current == OP_EQUALS);
@@ -98,7 +98,7 @@ void vm_next_if_test()
     vm.state = EXIT_SUCCESS;
 
     // if statements
-    vm.next_cmds = vm_next(vm.next_cmds, &vm);
+    vm.next_cmds = vm_next(&vm);
 
     eassert(vm.state == VS_IN_IF_STATEMENTS);
     eassert(!memcmp(vm.cmds->strs[0].value, "echo", 4));
@@ -129,7 +129,7 @@ void vm_next_if_multiple_conditions_true_and_test()
 
     // conditions
     // first condition
-    vm.next_cmds = vm_next(vm.next_cmds, &vm);
+    vm.next_cmds = vm_next(&vm);
 
     eassert(vm.next_cmds);
     eassert(vm.state == VS_IN_CONDITIONS);
@@ -140,7 +140,7 @@ void vm_next_if_multiple_conditions_true_and_test()
     vm.state = EXIT_SUCCESS;
 
     // second condition
-    vm.next_cmds = vm_next(vm.next_cmds, &vm);
+    vm.next_cmds = vm_next(&vm);
 
     eassert(vm.next_cmds);
     eassert(vm.state == VS_IN_CONDITIONS);
@@ -151,7 +151,7 @@ void vm_next_if_multiple_conditions_true_and_test()
     eassert(!vm.cmds->strs[1].value);
 
     // if statements
-    vm.next_cmds = vm_next(vm.next_cmds, &vm);
+    vm.next_cmds = vm_next(&vm);
 
     eassert(vm.state == VS_IN_IF_STATEMENTS);
     eassert(!memcmp(vm.cmds->strs[0].value, "echo", 4));
@@ -181,7 +181,7 @@ void vm_next_if_multiple_conditions_false_and_test()
 
     // conditions
     // first condition
-    vm.next_cmds = vm_next(vm.next_cmds, &vm);
+    vm.next_cmds = vm_next(&vm);
 
     eassert(vm.next_cmds);
     eassert(vm.state == VS_IN_CONDITIONS);
@@ -212,7 +212,7 @@ void vm_next_if_multiple_conditions_true_or_test()
 
     // conditions
     // first condition
-    vm.next_cmds = vm_next(vm.next_cmds, &vm);
+    vm.next_cmds = vm_next(&vm);
 
     eassert(vm.next_cmds);
     eassert(vm.state == VS_IN_CONDITIONS);
@@ -223,7 +223,7 @@ void vm_next_if_multiple_conditions_true_or_test()
     vm.state = EXIT_SUCCESS;
 
     // second condition
-    vm.next_cmds = vm_next(vm.next_cmds, &vm);
+    vm.next_cmds = vm_next(&vm);
 
     eassert(vm.next_cmds);
     eassert(vm.state == VS_IN_CONDITIONS);
@@ -234,7 +234,7 @@ void vm_next_if_multiple_conditions_true_or_test()
     eassert(!vm.cmds->strs[1].value);
 
     // if statements
-    vm.next_cmds = vm_next(vm.next_cmds, &vm);
+    vm.next_cmds = vm_next(&vm);
 
     eassert(vm.state == VS_IN_IF_STATEMENTS);
     eassert(!memcmp(vm.cmds->strs[0].value, "echo", 4));
@@ -263,7 +263,7 @@ void vm_next_if_else_true_test()
     vm_setup(&vm, rv, &s);
 
     // conditions
-    vm.next_cmds = vm_next(vm.next_cmds, &vm);
+    vm.next_cmds = vm_next(&vm);
 
     eassert(vm.state == VS_IN_CONDITIONS);
     eassert(vm.op_current == OP_EQUALS);
@@ -278,7 +278,7 @@ void vm_next_if_else_true_test()
     vm.status = EXIT_SUCCESS;
 
     // if statements
-    vm.next_cmds = vm_next(vm.next_cmds, &vm);
+    vm.next_cmds = vm_next(&vm);
 
     eassert(vm.state == VS_IN_IF_STATEMENTS);
     eassert(!memcmp(vm.cmds->strs[0].value, "echo", 4));
@@ -307,7 +307,7 @@ void vm_next_if_else_false_test()
     vm_setup(&vm, rv, &s);
 
     // conditions
-    vm.next_cmds = vm_next(vm.next_cmds, &vm);
+    vm.next_cmds = vm_next(&vm);
 
     eassert(vm.state == VS_IN_CONDITIONS);
     eassert(vm.op_current == OP_EQUALS);
@@ -320,7 +320,7 @@ void vm_next_if_else_false_test()
     vm.status = EXIT_FAILURE;
 
     // else statements
-    vm.next_cmds = vm_next(vm.next_cmds, &vm);
+    vm.next_cmds = vm_next(&vm);
 
     eassert(vm.state == VS_IN_ELSE_STATEMENTS);
     eassert(!memcmp(vm.cmds->strs[0].value, "echo", 4));
@@ -350,7 +350,7 @@ void vm_next_if_elif_else_if_true_test()
     vm_setup(&vm, rv, &s);
 
     // conditions
-    vm.next_cmds = vm_next(vm.next_cmds, &vm);
+    vm.next_cmds = vm_next(&vm);
 
     eassert(vm.state == VS_IN_CONDITIONS);
     eassert(vm.op_current == OP_EQUALS);
@@ -365,7 +365,7 @@ void vm_next_if_elif_else_if_true_test()
     vm.status = EXIT_SUCCESS;
 
     // if statements
-    vm.next_cmds = vm_next(vm.next_cmds, &vm);
+    vm.next_cmds = vm_next(&vm);
 
     eassert(vm.state == VS_IN_IF_STATEMENTS);
     eassert(!memcmp(vm.cmds->strs[0].value, "echo", 4));
@@ -392,7 +392,7 @@ void vm_next_if_elif_else_elif_true_test()
     vm_setup(&vm, rv, &s);
 
     // if conditions
-    vm.next_cmds = vm_next(vm.next_cmds, &vm);
+    vm.next_cmds = vm_next(&vm);
 
     eassert(vm.state == VS_IN_CONDITIONS);
     eassert(vm.op_current == OP_EQUALS);
@@ -407,7 +407,7 @@ void vm_next_if_elif_else_elif_true_test()
     vm.status = EXIT_FAILURE;
 
     // elif conditions
-    vm.next_cmds = vm_next(vm.next_cmds, &vm);
+    vm.next_cmds = vm_next(&vm);
 
     eassert(vm.state == VS_IN_CONDITIONS);
     eassert(vm.op_current == OP_EQUALS);
@@ -422,7 +422,7 @@ void vm_next_if_elif_else_elif_true_test()
     vm.status = EXIT_SUCCESS;
 
     // elif statements
-    vm.next_cmds = vm_next(vm.next_cmds, &vm);
+    vm.next_cmds = vm_next(&vm);
 
     eassert(vm.state == VS_IN_ELIF_STATEMENTS);
     eassert(!memcmp(vm.cmds->strs[0].value, "echo", 4));

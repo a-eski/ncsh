@@ -122,13 +122,13 @@ check:
 	make test_str
 	make test_arena
 	make test_alias
-	# make test_prompt
 	make test_ac
 	make test_hashset
 	make test_lex
 	make test_parse
-	# make test_vm_next
-	# make test_expand
+	make test_vm_next
+	make test_vm_math
+	make test_expand
 .PHONY: c
 c:
 	make check
@@ -147,7 +147,7 @@ at:
 check_local:
 	set -e
 	make check
-	# make test_vm
+	make test_vm
 	make test_env
 	make test_conf
 	make test_z
@@ -261,13 +261,6 @@ test_alias:
 tal:
 	make test_alias
 
-# Run prompt tests
-test_prompt:
-	$(CC) $(STD) $(test_flags) -DNCSH_HISTORY_TEST ./src/arena.c ./src/io/prompt.c ./tests/io/prompt_tests.c -o ./bin/prompt_tests
-	./bin/prompt_tests
-tpr:
-	make test_prompt
-
 # Run arena tests
 test_arena:
 	$(CC) $(STD) $(test_flags) -DNCSH_HISTORY_TEST ./src/arena.c ./tests/arena_tests.c -o ./bin/arena_tests
@@ -289,7 +282,7 @@ bench_str:
 
 # Run VM sanity tests
 test_vm:
-	$(CC) $(STD) $(test_flags) -DNCSH_VM_TEST $(TTYIO_IN) ./src/arena.c ./src/interpreter/lex.c ./src/eskilib/efile.c ./src/io/bestline.c ./src/io/hashset.c ./src/z/fzf.c ./src/z/z.c ./src/env.c ./src/alias.c ./src/conf.c ./src/interpreter/vm_math.c ./src/interpreter/vm.c ./src/interpreter/parse.c ./src/interpreter/builtins.c ./src/interpreter/expand.c ./src/interpreter/pipe.c ./src/interpreter/redirection.c ./tests/interpreter/vm_tests.c -o ./bin/vm_tests
+	$(CC) $(STD) $(test_flags) -DNCSH_VM_TEST $(TTYIO_IN) ./src/arena.c ./src/vars.c ./src/interpreter/lex.c ./src/eskilib/efile.c ./src/io/bestline.c ./src/io/hashset.c ./src/z/fzf.c ./src/z/z.c ./src/env.c ./src/alias.c ./src/conf.c ./src/interpreter/vm_math.c ./src/interpreter/vm.c ./src/interpreter/parse.c ./src/interpreter/builtins.c ./src/interpreter/expand.c ./src/interpreter/pipe.c ./src/interpreter/redirection.c ./tests/interpreter/vm_tests.c -o ./bin/vm_tests
 	./bin/vm_tests
 tvm:
 	make test_vm
@@ -315,7 +308,7 @@ ths:
 
 # Run expand tests
 test_expand:
-	$(CC) $(STD) $(test_flags) $(TTYIO_IN) ./src/arena.c ./src/alias.c ./src/env.c ./src/interpreter/lex.c ./src/interpreter/parse.c ./src/interpreter/expand.c ./tests/interpreter/expand_tests.c -o ./bin/expand_tests
+	$(CC) $(STD) $(test_flags) $(TTYIO_IN) ./src/arena.c ./src/alias.c ./src/env.c ./src/vars.c ./src/interpreter/lex.c ./src/interpreter/parse.c ./src/interpreter/expand.c ./tests/interpreter/expand_tests.c -o ./bin/expand_tests
 	./bin/expand_tests
 te:
 	make test_expand
@@ -329,7 +322,7 @@ ten:
 
 # Run conf tests
 test_conf:
-	$(CC) $(STD) $(test_flags) $(TTYIO_IN) ./src/arena.c ./src/alias.c ./src/env.c ./src/conf.c ./src/eskilib/efile.c ./tests/conf_tests.c -o ./bin/conf_tests
+	$(CC) $(STD) $(test_flags) $(TTYIO_IN) ./src/arena.c ./src/alias.c ./src/env.c ./src/vars.c ./src/conf.c ./src/eskilib/efile.c ./tests/conf_tests.c -o ./bin/conf_tests
 	./bin/conf_tests
 tc:
 	make test_conf

@@ -20,7 +20,7 @@ void vm_math_add_test()
     Vm_Data vm;
     vm_setup(&vm, rv, &s);
 
-    vm.next_cmds = vm_next(vm.next_cmds, &vm);
+    vm.next_cmds = vm_next(&vm);
 
     auto res = vm_math_expr(&vm);
 
@@ -47,7 +47,7 @@ void vm_math_add_multiple_test()
     Vm_Data vm;
     vm_setup(&vm, rv, &s);
 
-    vm.next_cmds = vm_next(vm.next_cmds, &vm);
+    vm.next_cmds = vm_next(&vm);
 
     auto res = vm_math_expr(&vm);
 
@@ -74,7 +74,7 @@ void vm_math_add_more_multiple_test()
     Vm_Data vm;
     vm_setup(&vm, rv, &s);
 
-    vm.next_cmds = vm_next(vm.next_cmds, &vm);
+    vm.next_cmds = vm_next(&vm);
 
     auto res = vm_math_expr(&vm);
 
@@ -101,7 +101,7 @@ void vm_math_subtract_test()
     Vm_Data vm;
     vm_setup(&vm, rv, &s);
 
-    vm.next_cmds = vm_next(vm.next_cmds, &vm);
+    vm.next_cmds = vm_next(&vm);
 
     auto res = vm_math_expr(&vm);
 
@@ -128,7 +128,7 @@ void vm_math_subtract_multiple_test()
     Vm_Data vm;
     vm_setup(&vm, rv, &s);
 
-    vm.next_cmds = vm_next(vm.next_cmds, &vm);
+    vm.next_cmds = vm_next(&vm);
 
     auto res = vm_math_expr(&vm);
 
@@ -155,7 +155,7 @@ void vm_math_operator_precedence_test()
     Vm_Data vm;
     vm_setup(&vm, rv, &s);
 
-    vm.next_cmds = vm_next(vm.next_cmds, &vm);
+    vm.next_cmds = vm_next(&vm);
 
     auto res = vm_math_expr(&vm);
 
@@ -182,7 +182,7 @@ void vm_math_assignment_operator_precedence_test()
     Vm_Data vm;
     vm_setup(&vm, rv, &s);
 
-    vm.next_cmds = vm_next(vm.next_cmds, &vm);
+    vm.next_cmds = vm_next(&vm);
 
     auto res = vm_math_expr(&vm);
 

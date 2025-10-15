@@ -816,6 +816,7 @@ int vm_run(Statements* restrict stmts, Shell* restrict shell, Arena* restrict sc
                 vm.status = EXIT_SUCCESS;
             }
         }
+
         else if (vm.cmds->ops[0] == OP_MATH_EXPR_START) {
             Str res = vm_math_expr(&vm);
             if (res.value) {
@@ -825,21 +826,25 @@ int vm_run(Statements* restrict stmts, Shell* restrict shell, Arena* restrict sc
             else
                 vm.status = EXIT_FAILURE_CONTINUE;
         }
+
         else if (builtins_check_and_run(&vm, shell, scratch)) {
             debugf("builtin ran %s\n", vm.cmds->strs[0].value);
             if (vm.op_current == OP_PIPE) {
                 pipe_stop(vm.command_position, stmts->pipes_count, &vm.pipes_io);
             }
         }
+
         else if (vm.state == VS_IN_CONDITIONS && vm_is_math_cond(vm.op_current)) {
             vm_math_condition(&vm);
         }
+
         else if (stmts->is_bg_job) {
             rv = vm_run_background(&vm, &shell->pcs);
             if (rv != EXIT_SUCCESS) {
                 goto failure;
             }
         }
+
         else {
             rv = vm_run_foreground(&vm, shell->pgid);
             if (rv != EXIT_SUCCESS) {

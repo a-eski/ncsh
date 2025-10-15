@@ -8,7 +8,7 @@
 
 #define Var_n(n) (Var){.type = V_NUM, .val.n = n}
 
-#define Var_s(s) (Var){.type = V_STR, .val.s = s}
+#define Var_s(str) (Var){.type = V_STR, .val.s = str}
 
 void vars_new(Shell* restrict shell);
 

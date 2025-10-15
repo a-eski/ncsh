@@ -79,7 +79,7 @@ def generate_if_bool_tests
     true
   ]
 
-  generate_tests(conditions, results)
+  generate_if_tests(conditions, results)
 end
 
 def generate_if_math_tests
@@ -119,10 +119,10 @@ def generate_if_math_tests
     true
   ]
 
-  generate_tests(conditions, results)
+  generate_if_tests(conditions, results)
 end
 
-def generate_tests(conditions, results)
+def generate_if_tests(conditions, results)
   conditions.each_with_index do |condition, i|
     result = results[i]
 

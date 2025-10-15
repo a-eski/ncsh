@@ -11,7 +11,7 @@ __sig_atomic_t vm_child_pid;
 jmp_buf env_jmp_buf;
 volatile int sigwinch_caught;
 
-Commands* vm_next(Commands* cmds, Vm_Data* restrict vm);
+Commands* vm_next(Vm_Data* restrict vm);
 
 static inline void vm_setup(Vm_Data* vm, Parser_Output rv, Arena* s)
 {
