@@ -90,9 +90,15 @@ def generate_if_math_tests
     '1 -lt 1',
     '2 -lt 1',
     '1 -lt 2',
+    '1 -le 1',
+    '2 -le 1',
+    '1 -le 2',
     '1 -gt 1',
     '1 -gt 2',
-    '2 -gt 1'
+    '2 -gt 1',
+    '1 -ge 1',
+    '1 -ge 2',
+    '2 -ge 1'
   ]
 
   results = [
@@ -102,7 +108,13 @@ def generate_if_math_tests
     false,
     false,
     true,
+    true,
     false,
+    true,
+    false,
+    false,
+    true,
+    true,
     false,
     true
   ]

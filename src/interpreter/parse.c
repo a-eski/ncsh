@@ -40,6 +40,8 @@ void cmd_realloc_exact(Commands* restrict cmds, Arena* restrict scratch, size_t 
     cmds->cap = new_cap;
     cmds->strs =
         arena_realloc(scratch, new_cap, Str, cmds->strs, c);
+    cmds->keys =
+        arena_realloc(scratch, new_cap, Str, cmds->keys, c);
     cmds->ops =
         arena_realloc(scratch, new_cap, enum Ops, cmds->ops, c);
 }
@@ -50,6 +52,7 @@ static Commands* cmds_alloc(Arena* restrict scratch)
     c->count = 0;
     c->cap = STMT_DEFAULT_N;
     c->strs = arena_malloc(scratch, STMT_DEFAULT_N, Str);
+    c->keys = arena_malloc(scratch, STMT_DEFAULT_N, Str);
     c->ops = arena_malloc(scratch, STMT_DEFAULT_N, enum Ops);
     c->next = NULL;
     c->op = OP_NONE;
@@ -64,6 +67,8 @@ static void cmd_realloc(Commands* restrict cmds, Arena* restrict scratch)
     cmds->cap = new_cap;
     cmds->strs =
         arena_realloc(scratch, new_cap, Str, cmds->strs, c);
+    cmds->keys =
+        arena_realloc(scratch, new_cap, Str, cmds->keys, c);
     cmds->ops =
         arena_realloc(scratch, new_cap, enum Ops, cmds->ops, c);
 }
@@ -448,7 +453,6 @@ static Parser_Internal parse_while(Parser_Data* data, size_t* restrict n)
     }
 
     assert(data->prev_stmt->type == LT_WHILE_CONDITIONS);
-    // Commands* conds = data->prev_stmt->commands;
     Statement* conds = data->prev_stmt;
 
     consume(data->lexemes, n, T_DO);
@@ -462,15 +466,7 @@ static Parser_Internal parse_while(Parser_Data* data, size_t* restrict n)
         }
     } while (*n < data->lexemes->count && peek(data->lexemes, *n) != T_DONE);
 
-    // cmd_stmt_next(data, LT_WHILE);
-
-    // data->cur_stmt->right = stmt_alloc(data->s);
-    // data->cur_stmt->right->type = LT_WHILE;
-    // data->cur_stmt = data->cur_stmt->right;
-    // data->cur_cmds = data->cur_stmt->commands;
-
     data_cmd_update(data, Str_Lit("JUMP"), OP_JUMP);
-    // data->cur_cmds->next = conds;
     cmd_stmt_next(data, LT_WHILE_CONDITIONS);
     data->cur_stmt = conds;
     cmd_stmt_next(data, LT_WHILE_CONDITIONS);
@@ -791,7 +787,7 @@ static Parser_Internal parse_token(Parser_Data* restrict data, Lexemes* restrict
         if (is_in_quotes())
             goto quoted;
 
-         data_cmd_update(data, lexemes->strs[*i], OP_LESS_THAN_OR_EQUALS);
+        data_cmd_update(data, lexemes->strs[*i], OP_LESS_THAN_OR_EQUALS);
         data->cur_cmds->prev_op = OP_LESS_THAN_OR_EQUALS;
         return (Parser_Internal){};
     }

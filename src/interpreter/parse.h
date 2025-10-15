@@ -82,6 +82,7 @@ struct Commands {
 
     enum Ops* ops;
     Str* strs;
+    Str* keys;
 
     Commands* next;
     enum Ops op;

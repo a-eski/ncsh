@@ -15,10 +15,13 @@ Commands* vm_next(Commands* cmds, Vm_Data* restrict vm);
 
 static inline void vm_setup(Vm_Data* vm, Parser_Output rv, Arena* s)
 {
+    *vm = (Vm_Data){.stmts = rv.output.stmts, .cur_stmt = rv.output.stmts->head, .sh = NULL, .s = s};
+    vm->next_cmds = vm->cur_stmt->commands;
+    vm->next_cmds->pos = 0;
     // simulate setup the VM does
-    vm->stmts = rv.output.stmts;
-    vm->cur_stmt = rv.output.stmts->head;
-    vm->s = s;
-    vm->cur_cmds = vm->cur_stmt->commands;
-    vm->cur_cmds->pos = 0;
+    // vm->stmts = rv.output.stmts;
+    // vm->cur_stmt = rv.output.stmts->head;
+    // vm->s = s;
+    // vm->next_cmds = vm->cur_stmt->commands;
+    // vm->next_cmds->pos = 0;
 }

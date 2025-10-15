@@ -6,6 +6,10 @@
 #include "eskilib/str.h"
 #include "types.h"
 
+#define Var_n(n) (Var){.type = V_NUM, .val.n = n}
+
+#define Var_s(s) (Var){.type = V_STR, .val.s = s}
+
 void vars_new(Shell* restrict shell);
 
 Var* vars_add_or_get(Vars* vars, Str key);

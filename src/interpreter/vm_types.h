@@ -54,8 +54,6 @@ typedef struct {
  * Stores information related to state in the VM.
  * Used in conjunction with Args and then Tokens. */
 typedef struct {
-    Commands* cmds;
-
     enum Ops op_current;
     enum Vm_State state;
     int status;
@@ -64,7 +62,8 @@ typedef struct {
     bool end;
     Statements* stmts;
     Statement* cur_stmt;
-    Commands* cur_cmds;
+    Commands* cmds;
+    Commands* next_cmds;
 
     Shell* sh;
     Arena* s;

@@ -88,11 +88,6 @@ typedef struct {
  */
 Str vm_math_expr(Vm_Data* restrict vm)
 {
-#ifdef NCSH_DEBUG
-    char** buf = vm->buffer;
-    while (*buf && printf("%s\n", *buf) && ++buf);
-#endif
-
     Commands* cmds = vm->cmds;
     constexpr size_t start = 1;
     if (cmds->ops[0] != OP_MATH_EXPR_START || cmds->ops[1] != OP_NUM) {
@@ -122,7 +117,6 @@ Str vm_math_expr(Vm_Data* restrict vm)
     for (size_t i = start; i < exs->n; ++i) {
         if (exs[i].type == M_OP && exs[i].val.op == OP_EXP) {
             int rv = numpowi(exs[i - 1].val.num, exs[i + 1].val.num);
-            // int rv = exs[i - 1].val.num.value.i * exs[i - 1].val.num.value.i * exs[i + 1].val.num.value.i;
             exs[i - 1] = (Expr){.type = M_NUM, .val.num = (Num){.type = N_INT, .value.i = rv}};
             if (exs->n > 3) {
                 memmove(exs + i, exs + i + 2, sizeof(Expr) * (exs->n - i + 1));

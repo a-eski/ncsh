@@ -30,7 +30,7 @@ enum Lexer_State: size_t {
     IN_COMMENT =                 1 << 0,
 };
 // clang-format on
-//
+
 /* ops_2char_str
  * A constant array that contains all shell operations that are 2 characters long, like ">>", "||", "&&".
  * Size of the array is stored as constant expression in ops_2char_len
@@ -243,7 +243,7 @@ void lex(Str line, Lexemes* lexemes, Arena* restrict scratch)
 
     estrtrim(&line);
 
-    debug_lexer_input(line, length);
+    debug_lexer_input(line);
 
     lex_buf = arena_malloc(scratch, NCSH_MAX_INPUT, char);
     lex_buf_pos = 0;

@@ -29,6 +29,7 @@ typedef struct
 
 typedef struct {
     enum {
+        V_EMPTY = 0,
         V_STR,
         V_NUM
     } type;

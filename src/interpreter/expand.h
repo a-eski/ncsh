@@ -6,7 +6,9 @@
 #include "vm_types.h"
 
 
-void expand_expr_variables(Commands* restrict cmds, size_t p, Env* restrict env, Arena* restrict scratch);
+void expand_expr_variables(Commands* restrict cmds, size_t p, Vars* restrict vars, Arena* restrict scratch);
+
+Str* expand_variable(Commands* cmds, size_t i, Vars* restrict vars, Arena* restrict scratch);
 
 void expand_assignment(Commands* restrict cmds, Shell* restrict shell);
 

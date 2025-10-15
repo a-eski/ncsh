@@ -9,6 +9,7 @@
 #include "../alias.h"
 #include "../debug.h"
 #include "../env.h"
+#include "../vars.h"
 #include "../types.h"
 #include "parse.h"
 #include "expand.h"
@@ -62,25 +63,6 @@ static void expand_glob(Commands* restrict cmds, size_t pos, Arena* restrict scr
     globfree(&glob_buf);
 }
 
-static Str* expand_variable(Str* restrict in, Env* restrict env, Arena* restrict scratch);
-
-void expand_expr_variables(Commands* restrict cmds, size_t p, Env* restrict env, Arena* restrict scratch)
-{
-    for (size_t j = p; j < cmds->count; j++) {
-        if (cmds->ops[j] == OP_MATH_EXPR_END)
-            break;
-        if (cmds->ops[j] == OP_CONST) {
-            Str* out = expand_variable(&cmds->strs[j], env, scratch);
-            if (out == NULL)
-                continue;
-            if (estrisnum(*out)) {
-                cmds->ops[j] = OP_NUM;
-            }
-            cmds->strs[j] = *out;
-        }
-    }
-}
-
 // variable values are stored in env hashmap.
 // the key is the previous value, which is tagged with OP_VARIABLE.
 // when VM comes in contact with OP_VARIABLE, it looks up value in env.
@@ -88,11 +70,19 @@ void expand_assignment(Commands* restrict cmds, Shell* restrict shell)
 {
     assert(cmds); assert(shell && shell->env); assert(cmds->op == OP_ASSIGNMENT);
 
-    *env_add_or_get(shell->env, *estrdup(&cmds->strs[0], &shell->arena)) = *estrdup(&cmds->strs[2], &shell->arena);
+    if (cmds->ops[2] == OP_NUM) {
+        Num n = estrtonum(cmds->strs[2]);
+        *vars_add_or_get(shell->vars, *estrdup(&cmds->strs[0], &shell->arena)) = Var_n(n);
+        return;
+    }
+
+    Str s = *estrdup(&cmds->strs[2], &shell->arena);
+    *vars_add_or_get(shell->vars, *estrdup(&cmds->strs[0], &shell->arena)) = Var_s(s);
 }
 
-static Str* expand_variable(Str* restrict in, Env* restrict env, Arena* restrict scratch)
+Str* expand_variable(Commands* cmds, size_t i, Vars* restrict vars, Arena* restrict scratch)
 {
+    Str* in = cmds->keys[i].value ? &cmds->keys[i] : &cmds->strs[i];
     assert(in); assert(in->value);
     if (!in || in->length < 2) {
         return NULL;
@@ -104,12 +94,16 @@ static Str* expand_variable(Str* restrict in, Env* restrict env, Arena* restrict
     else
         key = (Str){.value = in->value, .length = in->length};
 
-    Str* val = env_add_or_get(env, key);
-    if (!val || !val->value) {
+    Var* val = vars_add_or_get(vars, key);
+    if (!val || val->type == V_EMPTY) {
         return NULL;
     }
+    cmds->keys[i] = *estrdup(&key, scratch);
 
-    return estrdup(val, scratch);
+    if (val->type == V_STR)
+        return estrdup(&val->val.s, scratch);
+
+    return numtostr(val->val.n, scratch);
 
     // TODO: improve expansion to separate values when not in quotes, expand variables which contain a space
     /*char* space = strchr(var.value, ' ');
@@ -133,6 +127,24 @@ static Str* expand_variable(Str* restrict in, Env* restrict env, Arena* restrict
         return;
     }*/
     // cmds->pos = stmts->statements[stmts->pos].commands->count;
+}
+
+void expand_expr_variables(Commands* restrict cmds, size_t p, Vars* restrict vars, Arena* restrict scratch)
+{
+    for (size_t j = p; j < cmds->count; j++) {
+        if (cmds->ops[j] == OP_MATH_EXPR_END)
+            break;
+        if (cmds->ops[j] == OP_NUM || cmds->ops[j] == OP_CONST || cmds->ops[j] == OP_VARIABLE) {
+            Str* out = expand_variable(cmds, j, vars, scratch);
+            if (out == NULL)
+                continue;
+            if (estrisnum(*out))
+                cmds->ops[j] = OP_NUM;
+            else
+                cmds->ops[j] = OP_VARIABLE;
+            cmds->strs[j] = *out;
+        }
+    }
 }
 
 static void expand_alias(Str* restrict s, Arena* restrict scratch)
@@ -175,8 +187,7 @@ void expand(Vm_Data* restrict vm, Arena* restrict scratch)
                 break;
             }
             case OP_VARIABLE: {
-                Str* out = expand_variable(&cmds->strs[i], vm->sh->env, scratch);
-                cmds->ops[i] = OP_CONST;
+                Str* out = expand_variable(cmds, i, vm->sh->vars, scratch);
                 if (out == NULL)
                     continue;
                 cmds->strs[i] = *out;
@@ -187,7 +198,7 @@ void expand(Vm_Data* restrict vm, Arena* restrict scratch)
                 break;
             }
             case OP_MATH_EXPR_START: {
-                expand_expr_variables(cmds, i, vm->sh->env, scratch);
+                expand_expr_variables(cmds, i, vm->sh->vars, scratch);
                 break;
             }
             default:
