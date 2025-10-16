@@ -344,3 +344,53 @@ def generate_if_tests(conditions, results)
     end
   end
 end
+
+def generate_while_tests
+  conditions = [
+    '$count -lt 3',
+    '$count -le 2',
+    '$count -gt 0',
+    '$count -ge 1'
+  ]
+
+  assignment = [
+    'count + 1',
+    'count + 1',
+    'count - 1',
+    'count - 1'
+  ]
+
+  count = [
+    0,
+    0,
+    3,
+    3
+  ]
+
+  results = [
+    %w[0 1 2],
+    %w[0 1 2],
+    %w[3 2 1],
+    %w[3 2 1]
+  ]
+
+  conditions.each_with_index do |condition, i|
+    name = condition.gsub(' ', '_')
+                    .gsub('-', '')
+                    .gsub('3', 'three')
+
+    define_method("test_while_#{name}_#{i}") do
+      tty = TTYtest.new_terminal(%(../bin/ncsh), width: 230, height: 160, use_return_for_newline: true)
+      row = ROW_START
+      tty.assert_row_ends_with(row, ' ❱ ')
+      tty.send_line("count=#{count[i]}")
+      row += 1
+
+      tty.send_line_exact("while [ #{condition} ]; do echo $count; count=$(#{assignment[i]}) done")
+      row += 1
+      tty.assert_row(row, results[i][0])
+      tty.assert_row(row + 1, results[i][1])
+      tty.assert_row(row + 2, results[i][2])
+    end
+  end
+end
