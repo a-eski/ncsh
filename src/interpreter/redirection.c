@@ -7,9 +7,12 @@
 
 #include "../debug.h"
 #include "../defines.h"
-#include "stmts.h"
 #include "../ttyio/ttyio.h"
+#include "parse.h"
 #include "vm_types.h"
+
+// extern int vm_output_fd; // from vm.c, used as fd for writing to stdout
+// extern int vm_error_fd; // from vm.c, used as fd for writing to stderr
 
 [[nodiscard]]
 static inline int output_redirection_oflags_get(bool append)
@@ -30,6 +33,7 @@ void stdout_redirection_start(char* restrict file, bool append, Output_Redirect_
 
     io->original_stdout = dup(STDOUT_FILENO);
     dup2(io->fd_stdout, STDOUT_FILENO);
+    // vm_output_fd = io->fd_stdout;
 
     close(io->fd_stdout);
 }
@@ -40,6 +44,7 @@ void stdout_redirection_stop(int original_stdout)
     if (original_stdout < 0)
         return;
     dup2(original_stdout, STDOUT_FILENO);
+    // vm_output_fd = original_stdout;
 }
 
 void stdin_redirection_start(char* restrict file, Input_Redirect_IO* restrict io)
@@ -77,6 +82,7 @@ void stderr_redirection_start(char* restrict file, bool append, Output_Redirect_
 
     io->original_stderr = dup(STDERR_FILENO);
     dup2(io->fd_stderr, STDERR_FILENO);
+    // vm_error_fd = io->fd_stderr;
 
     close(io->fd_stderr);
 }
@@ -87,6 +93,7 @@ void stderr_redirection_stop(int original_stderr)
     if (original_stderr < 0)
         return;
     dup2(original_stderr, STDERR_FILENO);
+    // vm_error_fd = original_stderr;
 }
 
 void stdout_and_stderr_redirection_start(char* restrict file, bool append, Output_Redirect_IO* restrict io)
@@ -108,6 +115,8 @@ void stdout_and_stderr_redirection_start(char* restrict file, bool append, Outpu
     io->original_stderr = dup(STDERR_FILENO);
     dup2(file_descriptor, STDOUT_FILENO);
     dup2(file_descriptor, STDERR_FILENO);
+    // vm_output_fd = file_descriptor;
+    // vm_error_fd = file_descriptor;
 
     close(file_descriptor);
 }
@@ -117,7 +126,9 @@ void stdout_and_stderr_redirection_stop(Output_Redirect_IO* restrict io)
     assert(io);
 
     dup2(io->original_stdout, STDOUT_FILENO);
+    // vm_output_fd = io->original_stdout;
     dup2(io->original_stderr, STDERR_FILENO);
+    // vm_error_fd = io->original_stderr;
 }
 
 [[nodiscard]]

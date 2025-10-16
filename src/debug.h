@@ -6,28 +6,33 @@
 
 #pragma once
 
+#include "configurables.h"
+
 #ifndef NCSH_DEBUG
 #define debug(buf)
 #define debugf(fmt, ...)
 #define debug_line(buf, len, max_len)
-#define debug_lexer_input(buf, len)
+#define debug_lexer_input(str)
 #define debug_lexemes(lexemes)
 #define debug_argsv(argsc, argsv)
 #define debug_string(str, name)
+#define debug_cmds(cmds)
 #else /* !NCSH_DEBUG */
 #include <stdarg.h>
 #include <stdio.h>
 
 #include "eskilib/str.h"
-#include "interpreter/lexer.h"
+#include "interpreter/lex.h"
+#include "interpreter/parse.h"
 
 #define debug(buf) debug__(__FILE__, __LINE__, __func__, buf)
 #define debugf(fmt, ...) debugf__(__FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__)
 #define debug_line(buf, len, max_len) debug_line__(__FILE__, __LINE__, __func__, buf, len, max_len)
-#define debug_lexer_input(buf, len) debug_lexer_input__(__FILE__, __LINE__, __func__, buf, len)
+#define debug_lexer_input(str) debug_lexer_input__(__FILE__, __LINE__, __func__, str)
 #define debug_lexemes(lexemes) debug_lexemes__(__FILE__, __LINE__, __func__, lexemes)
 #define debug_argsv(argsc, argsv) debug_argsv__(__FILE__, __LINE__, __func__, argsc, argsv)
 #define debug_string(str, name) debug_string__(__FILE__, __LINE__, __func__, str, name)
+#define debug_cmds(cmds) debug_cmds__(__FILE__, __LINE__, __func__, cmds)
 
 static inline void debug__(const char* file, const int line, const char* func, char* buffer)
 {
@@ -58,13 +63,13 @@ static inline void debug_line__(const char* file, const int line, const char* fu
     fflush(stderr);
 }
 
-static inline void debug_lexer_input__(const char* file, const int line, const char* func, char* buffer,
-                                              size_t buf_position)
+static inline void debug_lexer_input__(const char* file, const int line, const char* func, Str s)
+
 {
     fprintf(stderr, "%s %s:%d ", file, func, line);
-    fprintf(stderr, "buffer: %s\n", buffer);
+    fprintf(stderr, "line.value: %s\n", s.value);
     fprintf(stderr, "%s %s:%d ", file, func, line);
-    fprintf(stderr, "buf_position: %zu\n", buf_position);
+    fprintf(stderr, "line.length: %zu\n", s.length);
     fflush(stderr);
 }
 
@@ -75,11 +80,11 @@ static inline void debug_lexemes__(const char* file, const int line, const char*
 
     for (size_t i = 0; i < lexemes->count; ++i) {
         fprintf(stderr, "%s %s:%d ", file, func, line);
-        fprintf(stderr, "lexemes->values[%lu] %s\n", i, lexemes->vals[i]);
+        fprintf(stderr, "lexemes->strs[%lu].value %s\n", i, lexemes->strs[i].value);
+        fprintf(stderr, "lexemes->strs[%lu].length %zu\n", i, lexemes->strs[i].length);
         fprintf(stderr, "%s %s:%d ", file, func, line);
         fprintf(stderr, "lexemes->ops[%lu] %d\n", i, lexemes->ops[i]);
         fprintf(stderr, "%s %s:%d ", file, func, line);
-        fprintf(stderr, "lexemes->lengths[%lu] %zu\n", i, lexemes->lens[i]);
     }
     fflush(stderr);
 }
@@ -100,5 +105,12 @@ static inline void debug_string__(const char* file, const int line, const char* 
     fprintf(stderr, "%s %s:%d ", file, func, line);
     fprintf(stderr, "%s length: %zu\n", name, string.length);
     fflush(stderr);
+}
+
+static inline void debug_cmds__(const char* file, const int line, const char* func, Commands* cmds)
+{
+    fprintf(stderr, "%s %s:%d cmds:\n", file, func, line);
+    for (size_t i = 0; i < cmds->count; ++i)
+        printf("%s\n", cmds->strs[i].value);
 }
 #endif // !NCSH_DEBUG

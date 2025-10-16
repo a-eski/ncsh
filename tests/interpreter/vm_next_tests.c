@@ -1,28 +1,11 @@
 /* vm_next_tests.c: tests for vm.c function vm_next. */
 
 #include <stdlib.h>
-#include <setjmp.h>
 
 #include "../../src/interpreter/lex.h"
 #include "../../src/interpreter/parse.h"
-#include "../../src/interpreter/stmts.h"
 #include "../../src/interpreter/vm_types.h"
-#include "../etest.h"
-#include "../lib/arena_test_helper.h"
-
-__sig_atomic_t vm_child_pid;
-jmp_buf env_jmp_buf;
-volatile int sigwinch_caught;
-
-Commands* vm_next(Commands* cmds, Vm_Data* restrict vm);
-
-void vm_setup(Vm_Data* vm, Parser_Output rv, Arena s)
-{
-    // simulate setup the VM does
-    *vm = (Vm_Data){.stmts = rv.output.stmts, .cur_stmt = rv.output.stmts->head, .s = &s};
-    vm->cur_cmds = vm->cur_stmt->commands;
-    vm->cur_cmds->pos = 0;
-}
+#include "vm_test_helper.h"
 
 void vm_next_simple_test()
 {
@@ -38,18 +21,18 @@ void vm_next_simple_test()
 
     // simulate setup the VM does
     Vm_Data vm;
-    vm_setup(&vm, rv, s);
+    vm_setup(&vm, rv, &s);
 
     // conditions
-    vm.cur_cmds = vm_next(vm.cur_cmds, &vm);
+    vm.next_cmds = vm_next(&vm);
 
     eassert(vm.state == VS_NORMAL);
     eassert(vm.op_current == OP_NONE);
-    eassert(!memcmp(vm.strs[0].value, "ls", 2));
-    eassert(vm.strs[0].length == 3);
+    eassert(!memcmp(vm.cmds->strs[0].value, "ls", 2));
+    eassert(vm.cmds->strs[0].length == 3);
 
-    eassert(!vm.strs[1].value);
-    eassert(!vm.cur_cmds);
+    eassert(!vm.cmds->strs[1].value);
+    eassert(!vm.next_cmds);
     eassert(vm.end);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
@@ -69,18 +52,18 @@ void vm_next_bool_test()
 
     // simulate setup the VM does
     Vm_Data vm;
-    vm_setup(&vm, rv, s);
+    vm_setup(&vm, rv, &s);
 
     // conditions
-    vm.cur_cmds = vm_next(vm.cur_cmds, &vm);
+    vm.next_cmds = vm_next(&vm);
 
     eassert(vm.state == VS_NORMAL);
     eassert(vm.op_current == OP_NONE);
-    eassert(!memcmp(vm.strs[0].value, "ls", 2));
-    eassert(vm.strs[0].length == 3);
+    eassert(!memcmp(vm.cmds->strs[0].value, "ls", 2));
+    eassert(vm.cmds->strs[0].length == 3);
 
-    eassert(!vm.strs[1].value);
-    eassert(!vm.cur_cmds);
+    eassert(!vm.cmds->strs[1].value);
+    eassert(!vm.next_cmds);
     eassert(vm.end);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
@@ -100,30 +83,30 @@ void vm_next_if_test()
 
     // simulate setup the VM does
     Vm_Data vm;
-    vm_setup(&vm, rv, s);
+    vm_setup(&vm, rv, &s);
 
     // conditions
-    vm.cur_cmds = vm_next(vm.cur_cmds, &vm);
+    vm.next_cmds = vm_next(&vm);
 
     eassert(vm.state == VS_IN_CONDITIONS);
     eassert(vm.op_current == OP_EQUALS);
-    eassert(!memcmp(vm.strs[0].value, "1", 1));
-    eassert(!memcmp(vm.strs[1].value, "-eq", 1));
-    eassert(!memcmp(vm.strs[2].value, "1", 1));
-    eassert(!vm.strs[3].value);
+    eassert(!memcmp(vm.cmds->strs[0].value, "1", 1));
+    eassert(!memcmp(vm.cmds->strs[1].value, "-eq", 1));
+    eassert(!memcmp(vm.cmds->strs[2].value, "1", 1));
+    eassert(!vm.cmds->strs[3].value);
 
     vm.state = EXIT_SUCCESS;
 
     // if statements
-    vm.cur_cmds = vm_next(vm.cur_cmds, &vm);
+    vm.next_cmds = vm_next(&vm);
 
     eassert(vm.state == VS_IN_IF_STATEMENTS);
-    eassert(!memcmp(vm.strs[0].value, "echo", 4));
-    eassert(!memcmp(vm.strs[1].value, "hi", 2));
-    eassert(!vm.strs[2].value);
+    eassert(!memcmp(vm.cmds->strs[0].value, "echo", 4));
+    eassert(!memcmp(vm.cmds->strs[1].value, "hi", 2));
+    eassert(!vm.cmds->strs[2].value);
 
     eassert(vm.end);
-    eassert(!vm.cur_cmds);
+    eassert(!vm.next_cmds);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -142,40 +125,40 @@ void vm_next_if_multiple_conditions_true_and_test()
 
     // simulate setup the VM does
     Vm_Data vm;
-    vm_setup(&vm, rv, s);
+    vm_setup(&vm, rv, &s);
 
     // conditions
     // first condition
-    vm.cur_cmds = vm_next(vm.cur_cmds, &vm);
+    vm.next_cmds = vm_next(&vm);
 
-    eassert(vm.cur_cmds);
+    eassert(vm.next_cmds);
     eassert(vm.state == VS_IN_CONDITIONS);
-    eassert(!memcmp(vm.strs[0].value, "true", 4));
-    eassert(!vm.strs[1].value);
+    eassert(!memcmp(vm.cmds->strs[0].value, "true", 4));
+    eassert(!vm.cmds->strs[1].value);
 
     // assume first condition succeeds
     vm.state = EXIT_SUCCESS;
 
     // second condition
-    vm.cur_cmds = vm_next(vm.cur_cmds, &vm);
+    vm.next_cmds = vm_next(&vm);
 
-    eassert(vm.cur_cmds);
+    eassert(vm.next_cmds);
     eassert(vm.state == VS_IN_CONDITIONS);
 
     eassert(vm.op_current == OP_AND);
-    eassert(!memcmp(vm.strs[0].value, "true", 4));
+    eassert(!memcmp(vm.cmds->strs[0].value, "true", 4));
 
-    eassert(!vm.strs[1].value);
+    eassert(!vm.cmds->strs[1].value);
 
     // if statements
-    vm.cur_cmds = vm_next(vm.cur_cmds, &vm);
+    vm.next_cmds = vm_next(&vm);
 
     eassert(vm.state == VS_IN_IF_STATEMENTS);
-    eassert(!memcmp(vm.strs[0].value, "echo", 4));
-    eassert(!memcmp(vm.strs[1].value, "hi", 2));
+    eassert(!memcmp(vm.cmds->strs[0].value, "echo", 4));
+    eassert(!memcmp(vm.cmds->strs[1].value, "hi", 2));
 
     eassert(vm.end);
-    eassert(!vm.cur_cmds);
+    eassert(!vm.next_cmds);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -194,17 +177,17 @@ void vm_next_if_multiple_conditions_false_and_test()
 
     // simulate setup the VM does
     Vm_Data vm;
-    vm_setup(&vm, rv, s);
+    vm_setup(&vm, rv, &s);
 
     // conditions
     // first condition
-    vm.cur_cmds = vm_next(vm.cur_cmds, &vm);
+    vm.next_cmds = vm_next(&vm);
 
-    eassert(vm.cur_cmds);
+    eassert(vm.next_cmds);
     eassert(vm.state == VS_IN_CONDITIONS);
-    eassert(!memcmp(vm.strs[0].value, "false", 4));
+    eassert(!memcmp(vm.cmds->strs[0].value, "false", 4));
 
-    eassert(!vm.strs[1].value);
+    eassert(!vm.cmds->strs[1].value);
 
     // VM will short ciruit the and and stop evaluation
 
@@ -225,40 +208,40 @@ void vm_next_if_multiple_conditions_true_or_test()
 
     // simulate setup the VM does
     Vm_Data vm;
-    vm_setup(&vm, rv, s);
+    vm_setup(&vm, rv, &s);
 
     // conditions
     // first condition
-    vm.cur_cmds = vm_next(vm.cur_cmds, &vm);
+    vm.next_cmds = vm_next(&vm);
 
-    eassert(vm.cur_cmds);
+    eassert(vm.next_cmds);
     eassert(vm.state == VS_IN_CONDITIONS);
-    eassert(!memcmp(vm.strs[0].value, "true", 4));
-    eassert(!vm.strs[1].value);
+    eassert(!memcmp(vm.cmds->strs[0].value, "true", 4));
+    eassert(!vm.cmds->strs[1].value);
 
     // assume first condition succeeds
     vm.state = EXIT_SUCCESS;
 
     // second condition
-    vm.cur_cmds = vm_next(vm.cur_cmds, &vm);
+    vm.next_cmds = vm_next(&vm);
 
-    eassert(vm.cur_cmds);
+    eassert(vm.next_cmds);
     eassert(vm.state == VS_IN_CONDITIONS);
 
     eassert(vm.op_current == OP_OR);
-    eassert(!memcmp(vm.strs[0].value, "true", 4));
+    eassert(!memcmp(vm.cmds->strs[0].value, "true", 4));
 
-    eassert(!vm.strs[1].value);
+    eassert(!vm.cmds->strs[1].value);
 
     // if statements
-    vm.cur_cmds = vm_next(vm.cur_cmds, &vm);
+    vm.next_cmds = vm_next(&vm);
 
     eassert(vm.state == VS_IN_IF_STATEMENTS);
-    eassert(!memcmp(vm.strs[0].value, "echo", 4));
-    eassert(!memcmp(vm.strs[1].value, "hi", 2));
+    eassert(!memcmp(vm.cmds->strs[0].value, "echo", 4));
+    eassert(!memcmp(vm.cmds->strs[1].value, "hi", 2));
 
     eassert(vm.end);
-    eassert(!vm.cur_cmds);
+    eassert(!vm.next_cmds);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -277,32 +260,32 @@ void vm_next_if_else_true_test()
 
     // simulate setup the VM does
     Vm_Data vm;
-    vm_setup(&vm, rv, s);
+    vm_setup(&vm, rv, &s);
 
     // conditions
-    vm.cur_cmds = vm_next(vm.cur_cmds, &vm);
+    vm.next_cmds = vm_next(&vm);
 
     eassert(vm.state == VS_IN_CONDITIONS);
     eassert(vm.op_current == OP_EQUALS);
-    eassert(!memcmp(vm.strs[0].value, "1", 1));
-    eassert(vm.strs[0].length == 2);
-    eassert(!memcmp(vm.strs[1].value, "-eq", 1));
-    eassert(vm.strs[1].length == 4);
-    eassert(!memcmp(vm.strs[2].value, "1", 1));
-    eassert(vm.strs[2].length == 2);
+    eassert(!memcmp(vm.cmds->strs[0].value, "1", 1));
+    eassert(vm.cmds->strs[0].length == 2);
+    eassert(!memcmp(vm.cmds->strs[1].value, "-eq", 1));
+    eassert(vm.cmds->strs[1].length == 4);
+    eassert(!memcmp(vm.cmds->strs[2].value, "1", 1));
+    eassert(vm.cmds->strs[2].length == 2);
 
     // simulate vm status (condition result)
     vm.status = EXIT_SUCCESS;
 
     // if statements
-    vm.cur_cmds = vm_next(vm.cur_cmds, &vm);
+    vm.next_cmds = vm_next(&vm);
 
     eassert(vm.state == VS_IN_IF_STATEMENTS);
-    eassert(!memcmp(vm.strs[0].value, "echo", 4));
-    eassert(!memcmp(vm.strs[1].value, "hi", 2));
+    eassert(!memcmp(vm.cmds->strs[0].value, "echo", 4));
+    eassert(!memcmp(vm.cmds->strs[1].value, "hi", 2));
 
     eassert(vm.end);
-    eassert(!vm.cur_cmds);
+    eassert(!vm.next_cmds);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -321,30 +304,30 @@ void vm_next_if_else_false_test()
 
     // simulate setup the VM does
     Vm_Data vm;
-    vm_setup(&vm, rv, s);
+    vm_setup(&vm, rv, &s);
 
     // conditions
-    vm.cur_cmds = vm_next(vm.cur_cmds, &vm);
+    vm.next_cmds = vm_next(&vm);
 
     eassert(vm.state == VS_IN_CONDITIONS);
     eassert(vm.op_current == OP_EQUALS);
-    eassert(!memcmp(vm.strs[0].value, "1", 1));
-    eassert(!memcmp(vm.strs[1].value, "-eq", 1));
-    eassert(!memcmp(vm.strs[2].value, "2", 1));
-    eassert(!vm.strs[3].value);
+    eassert(!memcmp(vm.cmds->strs[0].value, "1", 1));
+    eassert(!memcmp(vm.cmds->strs[1].value, "-eq", 1));
+    eassert(!memcmp(vm.cmds->strs[2].value, "2", 1));
+    eassert(!vm.cmds->strs[3].value);
 
     // simulate VM status (condition result)
     vm.status = EXIT_FAILURE;
 
     // else statements
-    vm.cur_cmds = vm_next(vm.cur_cmds, &vm);
+    vm.next_cmds = vm_next(&vm);
 
     eassert(vm.state == VS_IN_ELSE_STATEMENTS);
-    eassert(!memcmp(vm.strs[0].value, "echo", 4));
-    eassert(!memcmp(vm.strs[1].value, "hello", 5));
+    eassert(!memcmp(vm.cmds->strs[0].value, "echo", 4));
+    eassert(!memcmp(vm.cmds->strs[1].value, "hello", 5));
 
-    eassert(!vm.strs[2].value);
-    eassert(!vm.cur_cmds);
+    eassert(!vm.cmds->strs[2].value);
+    eassert(!vm.next_cmds);
     eassert(vm.end);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
@@ -364,32 +347,32 @@ void vm_next_if_elif_else_if_true_test()
 
     // simulate setup the VM does
     Vm_Data vm;
-    vm_setup(&vm, rv, s);
+    vm_setup(&vm, rv, &s);
 
     // conditions
-    vm.cur_cmds = vm_next(vm.cur_cmds, &vm);
+    vm.next_cmds = vm_next(&vm);
 
     eassert(vm.state == VS_IN_CONDITIONS);
     eassert(vm.op_current == OP_EQUALS);
-    eassert(!memcmp(vm.strs[0].value, "1", 1));
-    eassert(vm.strs[0].length == 2);
-    eassert(!memcmp(vm.strs[1].value, "-eq", 1));
-    eassert(vm.strs[1].length == 4);
-    eassert(!memcmp(vm.strs[2].value, "1", 1));
-    eassert(vm.strs[2].length == 2);
+    eassert(!memcmp(vm.cmds->strs[0].value, "1", 1));
+    eassert(vm.cmds->strs[0].length == 2);
+    eassert(!memcmp(vm.cmds->strs[1].value, "-eq", 1));
+    eassert(vm.cmds->strs[1].length == 4);
+    eassert(!memcmp(vm.cmds->strs[2].value, "1", 1));
+    eassert(vm.cmds->strs[2].length == 2);
 
     // simulate vm status (condition result)
     vm.status = EXIT_SUCCESS;
 
     // if statements
-    vm.cur_cmds = vm_next(vm.cur_cmds, &vm);
+    vm.next_cmds = vm_next(&vm);
 
     eassert(vm.state == VS_IN_IF_STATEMENTS);
-    eassert(!memcmp(vm.strs[0].value, "echo", 4));
-    eassert(!memcmp(vm.strs[1].value, "hi", 2));
+    eassert(!memcmp(vm.cmds->strs[0].value, "echo", 4));
+    eassert(!memcmp(vm.cmds->strs[1].value, "hi", 2));
 
     eassert(vm.end);
-    eassert(!vm.cur_cmds);
+    eassert(!vm.next_cmds);
 }
 
 void vm_next_if_elif_else_elif_true_test()
@@ -406,47 +389,47 @@ void vm_next_if_elif_else_elif_true_test()
 
     // simulate setup the VM does
     Vm_Data vm;
-    vm_setup(&vm, rv, s);
+    vm_setup(&vm, rv, &s);
 
     // if conditions
-    vm.cur_cmds = vm_next(vm.cur_cmds, &vm);
+    vm.next_cmds = vm_next(&vm);
 
     eassert(vm.state == VS_IN_CONDITIONS);
     eassert(vm.op_current == OP_EQUALS);
-    eassert(!memcmp(vm.strs[0].value, "2", 1));
-    eassert(vm.strs[0].length == 2);
-    eassert(!memcmp(vm.strs[1].value, "-eq", 1));
-    eassert(vm.strs[1].length == 4);
-    eassert(!memcmp(vm.strs[2].value, "1", 1));
-    eassert(vm.strs[2].length == 2);
+    eassert(!memcmp(vm.cmds->strs[0].value, "2", 1));
+    eassert(vm.cmds->strs[0].length == 2);
+    eassert(!memcmp(vm.cmds->strs[1].value, "-eq", 1));
+    eassert(vm.cmds->strs[1].length == 4);
+    eassert(!memcmp(vm.cmds->strs[2].value, "1", 1));
+    eassert(vm.cmds->strs[2].length == 2);
 
     // simulate vm status (condition result)
     vm.status = EXIT_FAILURE;
 
     // elif conditions
-    vm.cur_cmds = vm_next(vm.cur_cmds, &vm);
+    vm.next_cmds = vm_next(&vm);
 
     eassert(vm.state == VS_IN_CONDITIONS);
     eassert(vm.op_current == OP_EQUALS);
-    eassert(!memcmp(vm.strs[0].value, "1", 1));
-    eassert(vm.strs[0].length == 2);
-    eassert(!memcmp(vm.strs[1].value, "-eq", 1));
-    eassert(vm.strs[1].length == 4);
-    eassert(!memcmp(vm.strs[2].value, "1", 1));
-    eassert(vm.strs[2].length == 2);
+    eassert(!memcmp(vm.cmds->strs[0].value, "1", 1));
+    eassert(vm.cmds->strs[0].length == 2);
+    eassert(!memcmp(vm.cmds->strs[1].value, "-eq", 1));
+    eassert(vm.cmds->strs[1].length == 4);
+    eassert(!memcmp(vm.cmds->strs[2].value, "1", 1));
+    eassert(vm.cmds->strs[2].length == 2);
 
     // simulate vm status (condition result)
     vm.status = EXIT_SUCCESS;
 
     // elif statements
-    vm.cur_cmds = vm_next(vm.cur_cmds, &vm);
+    vm.next_cmds = vm_next(&vm);
 
     eassert(vm.state == VS_IN_ELIF_STATEMENTS);
-    eassert(!memcmp(vm.strs[0].value, "echo", 4));
-    eassert(!memcmp(vm.strs[1].value, "hey", 2));
+    eassert(!memcmp(vm.cmds->strs[0].value, "echo", 4));
+    eassert(!memcmp(vm.cmds->strs[1].value, "hey", 2));
 
     eassert(vm.end);
-    eassert(!vm.cur_cmds);
+    eassert(!vm.next_cmds);
 }
 
 void vm_next_tests()

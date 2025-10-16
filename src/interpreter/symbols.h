@@ -22,6 +22,12 @@
 #define TILDE '~'
 #define EQ '='
 #define AMP '&'
+#define PLUS '+'
+#define MINUS '-'
+#define MOD '%'
+#define FSLASH '/'
+
+#define EXP "**"
 
 // ops: boolean
 // prefixed with BOOL to avoid any possible conflicts in the future

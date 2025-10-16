@@ -5,7 +5,7 @@
 #pragma once
 
 #include "../types.h"
-#include "stmts.h"
+#include "parse.h"
 
 int vm_execute(Statements* restrict stmts, Shell* restrict shell, Arena* restrict scratch);
 

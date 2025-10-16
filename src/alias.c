@@ -47,7 +47,7 @@ void alias_add(Str alias, Arena* restrict arena)
         return;
     }
 
-    debugf("trying to add alias: %s\n", val);
+    debugf("trying to add alias: %s\n", alias.value);
 
     if (!aliases) {
         aliases_count = 0;
@@ -99,7 +99,7 @@ void alias_add_new(Str alias, Str command, Arena* restrict arena)
 
 void alias_remove(Str alias)
 {
-    debugf("removing alias %s %zu\n", val, len);
+    debugf("removing alias %s %zu\n", alias.value, alias.length);
     size_t i;
     bool found = false;
     for (i = 0; i < aliases_count; ++i) {

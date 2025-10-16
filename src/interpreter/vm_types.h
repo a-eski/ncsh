@@ -6,10 +6,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#include "ops.h"
+#include "parse.h"
 #include "../types.h"
-#include "../eskilib/str.h"
-#include "stmts.h"
 
 /****** MACROS ******/
 
@@ -23,7 +21,8 @@ enum Vm_State {
     VS_IN_CONDITIONS,
     VS_IN_IF_STATEMENTS,
     VS_IN_ELSE_STATEMENTS,
-    VS_IN_ELIF_STATEMENTS
+    VS_IN_ELIF_STATEMENTS,
+    VS_IN_LOOP_STATEMENTS
 };
 
 /* Output_Redirect_IO
@@ -55,19 +54,17 @@ typedef struct {
  * Stores information related to state in the VM.
  * Used in conjunction with Args and then Tokens. */
 typedef struct {
-    size_t strs_n;
-    Str* strs;
-    uint8_t command_position;
-    bool end;
-
     enum Ops op_current;
     enum Vm_State state;
     int status;
 
+    uint8_t command_position;
+    bool end;
     Statements* stmts;
     Statement* cur_stmt;
-    enum Ops* ops;
-    Commands* cur_cmds;
+    Commands* cmds;
+    Commands* next_cmds;
+
     Shell* sh;
     Arena* s;
 

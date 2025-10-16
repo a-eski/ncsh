@@ -923,42 +923,42 @@ static int builtins_unset(Str* restrict strs, Env* restrict env)
 bool builtins_check_and_run(Vm_Data* restrict vm, Shell* restrict shell, Arena* restrict scratch)
 {
     if (shell) {
-        if (estrcmp(vm->strs[0], Str_Lit(Z))) {
-            vm->status = builtins_z(&shell->z_db, vm->strs, &shell->arena, scratch);
+        if (estrcmp(vm->cmds->strs[0], Str_Lit(Z))) {
+            vm->status = builtins_z(&shell->z_db, vm->cmds->strs, &shell->arena, scratch);
             return true;
         }
 
-        if (estrcmp(vm->strs[0], Str_Lit(NCSH_HISTORY))) {
+        if (estrcmp(vm->cmds->strs[0], Str_Lit(NCSH_HISTORY))) {
             if (builtins_disabled_state & BF_HISTORY) {
                 return false;
             }
-            vm->status = builtins_history(vm->strs);
+            vm->status = builtins_history(vm->cmds->strs);
             return true;
         }
 
-        if (estrcmp(vm->strs[0], Str_Lit(NCSH_ALIAS))) {
+        if (estrcmp(vm->cmds->strs[0], Str_Lit(NCSH_ALIAS))) {
             if (builtins_disabled_state & BF_ALIAS) {
                 return false;
             }
-            vm->status = builtins_alias(vm->strs, &shell->arena);
+            vm->status = builtins_alias(vm->cmds->strs, &shell->arena);
             return true;
         }
 
-        if (estrcmp(vm->strs[0], Str_Lit(NCSH_UNSET))) {
+        if (estrcmp(vm->cmds->strs[0], Str_Lit(NCSH_UNSET))) {
             if (builtins_disabled_state & BF_UNSET) {
                 return false;
             }
-            vm->status = builtins_unset(vm->strs, shell->env);
+            vm->status = builtins_unset(vm->cmds->strs, shell->env);
             return true;
         }
     }
 
     for (size_t i = 0; i < builtins_count; ++i) {
-        if (estrcmp(vm->strs[0], builtins[i].str)) {
+        if (estrcmp(vm->cmds->strs[0], builtins[i].str)) {
             if (builtins_disabled_state & builtins[i].flag) {
                 return false;
             }
-            vm->status = (*builtins[i].func)(vm->strs);
+            vm->status = (*builtins[i].func)(vm->cmds->strs);
             return true;
         }
     }

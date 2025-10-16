@@ -27,6 +27,26 @@ typedef struct
     Str vals[env_size];
 } Env;
 
+typedef struct {
+    enum {
+        V_EMPTY = 0,
+        V_STR,
+        V_NUM
+    } type;
+    union {
+        Str s;
+        Num n;
+    } val;
+} Var;
+
+constexpr size_t var_exp = 7;
+constexpr size_t var_size = 1 << var_exp; // 128
+typedef struct
+{
+    Str keys[var_size];
+    Var vals[var_size];
+} Vars;
+
 /* Config
  * Stores home location, config location, and full path to the config file.
  */
@@ -67,6 +87,7 @@ typedef struct Shell {
     Arena scratch;
 
     Env* env;
+    Vars* vars;
     Config config;
 
     Input input;

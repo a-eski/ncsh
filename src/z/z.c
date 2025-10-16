@@ -100,6 +100,10 @@ enum z_Result z_write_entry(z_Directory* restrict dir, FILE* restrict file)
 {
     assert(dir && file);
 
+    if (!dir->path.value) {
+        tty_puts("ncsh z: an entry couldn't be written to the z database.");
+    }
+
     size_t bytes_written;
 
     bytes_written = fwrite(&dir->rank, sizeof(double), 1, file);
@@ -270,6 +274,12 @@ enum z_Result z_read(z_Database* restrict db, Arena* restrict arena)
     enum z_Result result;
     for (uint32_t i = 0; i < number_of_entries && number_of_entries < Z_DATABASE_IN_MEMORY_LIMIT && !feof(file); ++i) {
         if ((result = z_read_entry((db->dirs + i), file, arena)) != Z_SUCCESS) {
+            if (result == Z_ZERO_BYTES_READ) {
+                tty_puts("ncsh z: database file is corrupted, will try to read rest of file.");
+                --i;
+                continue;
+            }
+            tty_puts("ncsh z: database file is corrupted, file cannot be read.");
             fclose(file);
             return result;
         }

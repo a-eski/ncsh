@@ -12,18 +12,8 @@
 
 
 
-/* Input Settings */
-/* USE_GNU_READLINE: use GNU readline to process input from the terminal instead of custom implementation.
- * The custom implementation does not support as many terminals as GNU readline, so the option is provided for those cases.
- * GNU readline must be installed on your system. */
-// TODO: Not yet implemented
-#ifndef USE_GNU_READLINE
-// #   define USE_GNU_READLINE
-#endif // !USE_GNU_READLINE
-
-
-
-/* Prompt Settings */
+/********* Input Settings *********/
+/*** Prompt Settings ***/
 /* NCSH_PROMPT_DIRECTORY section: do you want to show the entire cwd in the prompt line? no directory?
  * a shortened version? use this configurable. */
 /* NCSH_DIRECTORY_{OPTION}: options for NCSH_PROMPT_DIRECTORY */
@@ -64,7 +54,7 @@
 
 
 
-/* Startup Settings */
+/********* Startup Settings *********/
 /* NCSH_CLEAR_SCREEN_ON_STARTUP: clear screen on startup (defined) or don't clear screen on startup (not defined).
  * Useful for when you are doing debugging/dev and don't want to clear the screen on startup. */
 #ifndef NCSH_CLEAR_SCREEN_ON_STARTUP
@@ -78,7 +68,8 @@
 
 
 
-/* History Settings */
+/********* History Settings *********/
+// TODO: these not used after bestline, incorporate
 /* NCSH_MAX_HISTORY_FILE: the maximum number of history entries to save to the history file */
 #ifndef NCSH_MAX_HISTORY_FILE
 #    define NCSH_MAX_HISTORY_FILE 2000
@@ -92,7 +83,7 @@
 
 
 
-/* Autocompletion Settings */
+/********* Autocompletion Settings *********/
 /* NCSH_AC_CHARACTER_WEIGHTING macro
  * When enabled, every character in a command gets its weight incremented.
  * This biases the autocompletions to shorter commands.
