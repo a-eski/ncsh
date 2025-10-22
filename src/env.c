@@ -19,8 +19,12 @@ static void env_flat_to_hmap(Env* env, char** envp, Arena* restrict arena)
     assert(envp);
     assert(arena);
 
-    while (*envp) {
+    while (*envp && **envp) {
         Str* strs = estrsplit(Str_Get(*envp), '=', arena);
+        if (!strs || !strs[0].length || !strs[1].length) {
+            ++envp;
+            continue;
+        }
         *env_add_or_get(env, strs[0]) = strs[1];
         ++envp;
     }

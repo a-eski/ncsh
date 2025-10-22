@@ -183,6 +183,8 @@ enum z_Result z_write(z_Database* restrict db)
 enum z_Result z_read_entry(z_Directory* restrict dir, FILE* restrict file, Arena* restrict arena)
 {
     assert(dir && file);
+    if (!dir || !file)
+        return Z_NULL_REFERENCE;
 
     size_t bytes_read;
     bytes_read = fread(&dir->rank, sizeof(double), 1, file);
@@ -577,11 +579,9 @@ enum z_Result z_add(Str* restrict path, z_Database* restrict db, Arena* restrict
 
 void z_remove_dirs_shift(size_t offset, z_Database* restrict db)
 {
-    if (offset + 1 == db->count) {
-        return;
+    for (size_t i = offset; i < db->count - 1; ++i) {
+        db->dirs[i] = db->dirs[i + 1];
     }
-
-    memmove(db->dirs + offset, db->dirs + offset + 1, db->count - 1);
 }
 
 #define Z_ENTRY_NOT_FOUND_MESSAGE "z: Entry could not be found in z database."
@@ -605,6 +605,7 @@ enum z_Result z_remove(Str* restrict path, z_Database* restrict db)
             (db->dirs + i)->path.length = 0;
             (db->dirs + i)->last_accessed = 0;
             (db->dirs + i)->rank = 0;
+
             z_remove_dirs_shift(i, db);
             --db->count;
             tty_writeln(Z_ENTRY_REMOVED_MESSAGE, sizeof(Z_ENTRY_REMOVED_MESSAGE) - 1);

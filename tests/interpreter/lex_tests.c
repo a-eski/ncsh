@@ -1185,6 +1185,145 @@ void lex_while_test()
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
+void lex_for_test()
+{
+    SCRATCH_ARENA_TEST_SETUP;
+
+    auto line = Str_Lit("for ((i = 1; i <= 5; i++)); do echo $i done");
+
+    Lexemes lexemes = {0};
+    lex(line, &lexemes, &scratch_arena);
+
+    size_t p = 0;
+
+    eassert(!memcmp(lexemes.strs[p].value, "for", 3));
+    eassert(lexemes.ops[p] == T_FOR);
+    eassert(lexemes.strs[p++].length == 4);
+
+    eassert(lexemes.ops[p++] == T_O_PARAN);
+    eassert(lexemes.ops[p++] == T_O_PARAN);
+
+    eassert(!memcmp(lexemes.strs[p].value, "i", 1));
+    eassert(lexemes.ops[p] == T_CONST);
+    eassert(lexemes.strs[p++].length == 2);
+
+    eassert(!memcmp(lexemes.strs[p].value, "=", 1));
+    eassert(lexemes.ops[p] == T_EQ);
+    eassert(lexemes.strs[p++].length == 2);
+
+    eassert(!memcmp(lexemes.strs[p].value, "1", 1));
+    eassert(lexemes.ops[p] == T_NUM);
+    eassert(lexemes.strs[p++].length == 2);
+
+    eassert(lexemes.ops[p++] == T_SEMIC);
+
+    eassert(!memcmp(lexemes.strs[p].value, "i", 1));
+    eassert(lexemes.ops[p] == T_CONST);
+    eassert(lexemes.strs[p++].length == 2);
+
+    eassert(!memcmp(lexemes.strs[p].value, "<", 1));
+    eassert(lexemes.ops[p] == T_LT);
+    eassert(lexemes.strs[p++].length == 2);
+
+    eassert(!memcmp(lexemes.strs[p].value, "=", 1));
+    eassert(lexemes.ops[p] == T_EQ);
+    eassert(lexemes.strs[p++].length == 2);
+
+    eassert(!memcmp(lexemes.strs[p].value, "5", 1));
+    eassert(lexemes.ops[p] == T_NUM);
+    eassert(lexemes.strs[p++].length == 2);
+
+    eassert(lexemes.ops[p++] == T_SEMIC);
+
+    eassert(!memcmp(lexemes.strs[p].value, "i", 1));
+    eassert(lexemes.ops[p] == T_CONST);
+    eassert(lexemes.strs[p++].length == 2);
+
+    eassert(!memcmp(lexemes.strs[p].value, "+", 1));
+    eassert(lexemes.ops[p] == T_PLUS);
+    eassert(lexemes.strs[p++].length == 2);
+
+    eassert(!memcmp(lexemes.strs[p].value, "+", 1));
+    eassert(lexemes.ops[p] == T_PLUS);
+    eassert(lexemes.strs[p++].length == 2);
+
+    eassert(lexemes.ops[p++] == T_C_PARAN);
+    eassert(lexemes.ops[p++] == T_C_PARAN);
+    eassert(lexemes.ops[p++] == T_SEMIC);
+    eassert(lexemes.ops[p++] == T_DO);
+
+    eassert(!memcmp(lexemes.strs[p].value, "echo", 4));
+    eassert(lexemes.ops[p] == T_CONST);
+    eassert(lexemes.strs[p++].length == 5);
+
+    eassert(!memcmp(lexemes.strs[p].value, "$", 1));
+    eassert(lexemes.ops[p] == T_DOLLAR);
+    eassert(lexemes.strs[p++].length == 2);
+
+    eassert(!memcmp(lexemes.strs[p].value, "i", 1));
+    eassert(lexemes.ops[p] == T_CONST);
+    eassert(lexemes.strs[p++].length == 2);
+
+    eassert(lexemes.ops[p++] == T_DONE);
+
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
+void lex_for_each_test()
+{
+    SCRATCH_ARENA_TEST_SETUP;
+
+    auto line = Str_Lit("for fruit in apple banana orange; do echo $fruit done");
+
+    Lexemes lexemes = {0};
+    lex(line, &lexemes, &scratch_arena);
+
+    size_t p = 0;
+
+    eassert(!memcmp(lexemes.strs[p].value, "for", 3));
+    eassert(lexemes.ops[p] == T_FOR);
+    eassert(lexemes.strs[p++].length == 4);
+
+    eassert(!memcmp(lexemes.strs[p].value, "fruit", 5));
+    eassert(lexemes.ops[p] == T_CONST);
+    eassert(lexemes.strs[p++].length == 6);
+
+    eassert(!memcmp(lexemes.strs[p].value, "in", 2));
+    eassert(lexemes.ops[p] == T_IN);
+    eassert(lexemes.strs[p++].length == 3);
+
+    eassert(!memcmp(lexemes.strs[p].value, "apple", 5));
+    eassert(lexemes.ops[p] == T_CONST);
+    eassert(lexemes.strs[p++].length == 6);
+
+    eassert(!memcmp(lexemes.strs[p].value, "banana", 6));
+    eassert(lexemes.ops[p] == T_CONST);
+    eassert(lexemes.strs[p++].length == 7);
+
+    eassert(!memcmp(lexemes.strs[p].value, "orange", 6));
+    eassert(lexemes.ops[p] == T_CONST);
+    eassert(lexemes.strs[p++].length == 7);
+
+    eassert(lexemes.ops[p++] == T_SEMIC);
+    eassert(lexemes.ops[p++] == T_DO);
+
+    eassert(!memcmp(lexemes.strs[p].value, "echo", 4));
+    eassert(lexemes.ops[p] == T_CONST);
+    eassert(lexemes.strs[p++].length == 5);
+
+    eassert(!memcmp(lexemes.strs[p].value, "$", 1));
+    eassert(lexemes.ops[p] == T_DOLLAR);
+    eassert(lexemes.strs[p++].length == 2);
+
+    eassert(!memcmp(lexemes.strs[p].value, "fruit", 5));
+    eassert(lexemes.ops[p] == T_CONST);
+    eassert(lexemes.strs[p++].length == 6);
+
+    eassert(lexemes.ops[p++] == T_DONE);
+
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
 // forward declaration: implementation put at the end because it messes with clangd lsp
 void lex_bad_input_shouldnt_crash();
 
@@ -1236,6 +1375,8 @@ void lexer_tests()
     etest_run(lex_var_increment_test);
 
     etest_run(lex_while_test);
+    etest_run(lex_for_test);
+    etest_run(lex_for_each_test);
 
     etest_finish();
 }

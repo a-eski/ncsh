@@ -128,7 +128,6 @@ check:
 	make test_parse
 	make test_vm_next
 	make test_vm_math
-	make test_expand
 .PHONY: c
 c:
 	make check
@@ -147,6 +146,7 @@ at:
 check_local:
 	set -e
 	make check
+	make test_expand
 	make test_vm
 	make test_env
 	make test_conf

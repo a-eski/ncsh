@@ -89,7 +89,7 @@ void vm_next_if_test()
     vm.next_cmds = vm_next(&vm);
 
     eassert(vm.state == VS_IN_CONDITIONS);
-    eassert(vm.op_current == OP_EQUALS);
+    eassert(vm.op_current == OP_EQ_A);
     eassert(!memcmp(vm.cmds->strs[0].value, "1", 1));
     eassert(!memcmp(vm.cmds->strs[1].value, "-eq", 1));
     eassert(!memcmp(vm.cmds->strs[2].value, "1", 1));
@@ -266,7 +266,7 @@ void vm_next_if_else_true_test()
     vm.next_cmds = vm_next(&vm);
 
     eassert(vm.state == VS_IN_CONDITIONS);
-    eassert(vm.op_current == OP_EQUALS);
+    eassert(vm.op_current == OP_EQ_A);
     eassert(!memcmp(vm.cmds->strs[0].value, "1", 1));
     eassert(vm.cmds->strs[0].length == 2);
     eassert(!memcmp(vm.cmds->strs[1].value, "-eq", 1));
@@ -310,7 +310,7 @@ void vm_next_if_else_false_test()
     vm.next_cmds = vm_next(&vm);
 
     eassert(vm.state == VS_IN_CONDITIONS);
-    eassert(vm.op_current == OP_EQUALS);
+    eassert(vm.op_current == OP_EQ_A);
     eassert(!memcmp(vm.cmds->strs[0].value, "1", 1));
     eassert(!memcmp(vm.cmds->strs[1].value, "-eq", 1));
     eassert(!memcmp(vm.cmds->strs[2].value, "2", 1));
@@ -353,7 +353,7 @@ void vm_next_if_elif_else_if_true_test()
     vm.next_cmds = vm_next(&vm);
 
     eassert(vm.state == VS_IN_CONDITIONS);
-    eassert(vm.op_current == OP_EQUALS);
+    eassert(vm.op_current == OP_EQ_A);
     eassert(!memcmp(vm.cmds->strs[0].value, "1", 1));
     eassert(vm.cmds->strs[0].length == 2);
     eassert(!memcmp(vm.cmds->strs[1].value, "-eq", 1));
@@ -395,7 +395,7 @@ void vm_next_if_elif_else_elif_true_test()
     vm.next_cmds = vm_next(&vm);
 
     eassert(vm.state == VS_IN_CONDITIONS);
-    eassert(vm.op_current == OP_EQUALS);
+    eassert(vm.op_current == OP_EQ_A);
     eassert(!memcmp(vm.cmds->strs[0].value, "2", 1));
     eassert(vm.cmds->strs[0].length == 2);
     eassert(!memcmp(vm.cmds->strs[1].value, "-eq", 1));
@@ -410,7 +410,7 @@ void vm_next_if_elif_else_elif_true_test()
     vm.next_cmds = vm_next(&vm);
 
     eassert(vm.state == VS_IN_CONDITIONS);
-    eassert(vm.op_current == OP_EQUALS);
+    eassert(vm.op_current == OP_EQ_A);
     eassert(!memcmp(vm.cmds->strs[0].value, "1", 1));
     eassert(vm.cmds->strs[0].length == 2);
     eassert(!memcmp(vm.cmds->strs[1].value, "-eq", 1));

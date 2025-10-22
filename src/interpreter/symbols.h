@@ -41,6 +41,7 @@
 #define THEN "then"
 #define ELSE "else"
 #define ELIF "elif"
+#define IN "in"
 
 // ops: equality
 #define EQUALS "-eq"

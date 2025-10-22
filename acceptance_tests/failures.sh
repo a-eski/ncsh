@@ -1,7 +1,6 @@
 # Broken features after moving to bestline
-history add, history rm, history clean ?
-z rm
 echo -n, echo -n hello
+echo "multiple   whitespaces becomes multiple whitespaces"
 
 # Broken features after while loops
 echo $PATH

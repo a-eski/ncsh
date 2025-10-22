@@ -18,6 +18,7 @@
 #include "../signals.h"
 #include "../ttyio/ttyio.h"
 #include "../types.h"
+#include "parse.h"
 #include "builtins.h"
 #include "expand.h"
 #include "pipe.h"
@@ -203,8 +204,7 @@ Commands* vm_next_else_statement(Vm_Data* restrict vm)
     case LT_ELSE:
         vm->cur_stmt = vm->cur_stmt->prev->left;
         break;
-    case LT_WHILE:
-    case LT_WHILE_CONDITIONS:
+    default:
         goto next_else_failure;
     }
 
@@ -580,7 +580,7 @@ Commands* vm_next_while(Vm_Data* restrict vm)
                 return vm_command_set(cmds, vm, VS_IN_CONDITIONS);
             }
 
-            else if (vm->cur_stmt->type == LT_IF_CONDITIONS) {
+            else if (vm->cur_stmt->type == LT_WHILE_CONDITIONS) {
                 return vm_command_set(cmds, vm, VS_IN_CONDITIONS);
             }
 
@@ -632,6 +632,99 @@ Commands* vm_next_while(Vm_Data* restrict vm)
     return NULL;
 }
 
+
+[[nodiscard]]
+Commands* vm_next_for_statement(Vm_Data* restrict vm)
+{
+    vm->cur_stmt = vm->cur_stmt->right;
+    if (vm->cur_stmt->type != LT_FOR || !vm->cur_stmt->commands) {
+        vm->end = true;
+        return NULL;
+    }
+
+    return vm->cur_stmt->commands;
+}
+
+[[nodiscard]]
+Commands* vm_next_for(Vm_Data* restrict vm)
+{
+    Commands* cmds = vm->next_cmds;
+    if (vm->cur_stmt->type == LT_FOR_INIT) {
+        return vm_command_set(cmds, vm, VS_NORMAL);
+    }
+
+    if (vm->cur_stmt->type == LT_FOR_CONDITIONS) {
+        if (vm->state != VS_IN_CONDITIONS) {
+            return vm_command_set(cmds, vm, VS_IN_CONDITIONS);
+        }
+
+        else if (vm->status != EXIT_SUCCESS && cmds->prev_op == OP_AND) {
+            vm->end = true;
+            return NULL;
+        }
+
+        else if (vm->status != EXIT_SUCCESS && cmds->prev_op == OP_OR) {
+            if (cmds->ops[cmds->pos] == OP_TRUE || cmds->ops[cmds->pos] == OP_CONST) {
+                return vm_command_set(cmds, vm, VS_IN_CONDITIONS);
+            }
+
+            else if (vm->cur_stmt->type == LT_FOR_CONDITIONS) {
+                return vm_command_set(cmds, vm, VS_IN_CONDITIONS);
+            }
+
+            else {
+                vm->end = true;
+                return NULL;
+            }
+        }
+
+        else if (vm->status != EXIT_SUCCESS) {
+            vm->end = true;
+            return NULL;
+        }
+
+        else if (vm->status == EXIT_SUCCESS && cmds->prev_op == OP_OR) {
+            cmds = vm_next_for_statement(vm);
+            if (!cmds) {
+                return NULL;
+            }
+
+            return vm_command_set(cmds, vm, VS_IN_LOOP_STATEMENTS);
+        }
+
+        else {
+            return vm_command_set(cmds, vm, VS_IN_CONDITIONS);
+        }
+    }
+
+    if (vm->cur_stmt->type == LT_FOR_INCREMENT) {
+        if (vm->state == VS_NORMAL) {
+        }
+    }
+
+    if (vm->cur_stmt->type == LT_FOR) {
+        if (vm->status != EXIT_SUCCESS && (vm->state == VS_IN_LOOP_STATEMENTS || vm->state == VS_IN_CONDITIONS) &&
+            cmds->prev_op != OP_AND) {
+            vm->end = true;
+            return NULL;
+        }
+
+        if (vm->status != EXIT_SUCCESS) {
+            vm->end = true;
+            return NULL;
+        }
+
+        if (!cmds->next && vm->cur_stmt->right && vm->cur_stmt->right->type == LT_FOR_CONDITIONS) {
+            return vm_command_set(cmds, vm, VS_IN_CONDITIONS);
+        }
+
+        return vm_command_set(cmds, vm, VS_IN_LOOP_STATEMENTS);
+    }
+
+    vm->end = true;
+    return NULL;
+}
+
 [[nodiscard]]
 Commands* vm_next_normal(Vm_Data* restrict vm)
 {
@@ -672,15 +765,14 @@ Commands* vm_next(Vm_Data* restrict vm)
     case ST_IF:
     case ST_IF_ELSE:
     case ST_IF_ELIF:
-    case ST_IF_ELIF_ELSE: {
+    case ST_IF_ELIF_ELSE:
         return vm_next_if(vm);
-    }
-    case ST_WHILE: {
+    case ST_WHILE:
         return vm_next_while(vm);
-    }
-    default: {
+    case ST_FOR:
+        return vm_next_for(vm);
+    default:
         return vm_next_normal(vm);
-    }
     }
 }
 
@@ -754,6 +846,10 @@ int vm_run_background(Vm_Data* restrict vm, Processes* restrict pcs)
         signal_reset();
 
         char** buffers = estrtoarr(vm->cmds->strs, vm->cmds->count, vm->s);
+        if (!buffers || !*buffers) {
+            return EXIT_FAILURE_CONTINUE;
+        }
+
         execvp(*buffers, buffers);
         if (!buffers || !*buffers) {
             exit(-5);

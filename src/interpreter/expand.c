@@ -52,13 +52,22 @@ static void expand_glob(Commands* restrict cmds, size_t pos, Arena* restrict scr
         cmd_realloc_exact(cmds, scratch, cmds->count + glob_buf.gl_pathc);
     }
 
+    if (cmds->count > pos + 1) {
+        // move later entries so they don't get overwritten
+        for (size_t i = pos + 1; i < cmds->count; ++i) {
+            cmds->strs[i + glob_buf.gl_pathc - 1] = cmds->strs[i];
+            cmds->ops[i + glob_buf.gl_pathc - 1] = cmds->ops[i];
+            cmds->keys[i + glob_buf.gl_pathc - 1] = cmds->keys[i];
+        }
+    }
+
     for (size_t i = 0; i < glob_buf.gl_pathc; ++i) {
         debugf("%s\n", glob_buf.gl_pathv[i]);
 
         estrset(&cmds->strs[pos], &Str_Get(glob_buf.gl_pathv[i]), scratch);
         cmds->ops[pos++] = OP_CONST;
     }
-    cmds->count += pos - 1;
+    cmds->count += glob_buf.gl_pathc - 1;
 
     globfree(&glob_buf);
 }
@@ -84,7 +93,7 @@ Str* expand_variable(Commands* cmds, size_t i, Vars* restrict vars, Arena* restr
 {
     Str* in = cmds->keys[i].value ? &cmds->keys[i] : &cmds->strs[i];
     assert(in); assert(in->value);
-    if (!in || in->length < 2) {
+    if (!in || in->length < 2 || !in->value) {
         return NULL;
     }
 
