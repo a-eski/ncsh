@@ -27,3 +27,4 @@ HISTORY_CORPUS/*
 NCSH_CORPUS/*
 INTERPRETER_CORPUS/*
 .idea/*
+src/ttyio

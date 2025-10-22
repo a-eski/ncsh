@@ -26,30 +26,46 @@ void vm_math_condition(Vm_Data* restrict vm)
         return;
     }
 
+    if (vm->cmds->ops[0] != OP_VARIABLE && vm->cmds->ops[0] != OP_NUM) {
+        vm->status = EXIT_FAILURE_CONTINUE;
+        return;
+    }
+    if (vm->cmds->ops[2] != OP_VARIABLE && vm->cmds->ops[2] != OP_NUM) {
+        vm->status = EXIT_FAILURE_CONTINUE;
+        return;
+    }
+
     Str s1 = vm->cmds->strs[0];
+    if (!s1.length || s1.value[0] < '0' || s1.value[0] > '9') {
+        vm->status = EXIT_FAILURE_CONTINUE;
+        return;
+    }
     enum Ops op = vm->cmds->ops[1];
     Str s2 = vm->cmds->strs[2];
-    assert(s1.value); assert(s2.value);
+    if (!s2.length || s2.value[0] < '0' || s2.value[0] > '9') {
+        vm->status = EXIT_FAILURE_CONTINUE;
+        return;
+    }
 
     bool result;
     switch (op) {
-    case OP_EQUALS: {
+    case OP_EQ_A: {
         result = numeq(estrtonum(s1), estrtonum(s2));
         break;
     }
-    case OP_LESS_THAN: {
+    case OP_LT_A: {
         result = numlt(estrtonum(s1), estrtonum(s2));
         break;
     }
-    case OP_LESS_THAN_OR_EQUALS: {
+    case OP_LE_A: {
         result = numle(estrtonum(s1), estrtonum(s2));
         break;
     }
-    case OP_GREATER_THAN: {
+    case OP_GT_A: {
         result = numgt(estrtonum(s1), estrtonum(s2));
         break;
     }
-    case OP_GREATER_THAN_OR_EQUALS: {
+    case OP_GE_A: {
         result = numge(estrtonum(s1), estrtonum(s2));
         break;
     }

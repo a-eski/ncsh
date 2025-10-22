@@ -47,6 +47,7 @@ enum Token {
     T_FOR,
     T_WHILE,
     T_DONE,
+    T_IN,
     T_EQ_A,     // -eq
     T_GT_A,     // -gt
     T_GE_A,     // -ge

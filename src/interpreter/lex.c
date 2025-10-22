@@ -36,11 +36,11 @@ enum Lexer_State: size_t {
  * Size of the array is stored as constant expression in ops_2char_len
  * Bytecodes (opcodes) equivalents are stored in the array of enum Ops, ops_2char
  */
-static constexpr char ops_2char_str[3][2] = {IF, FI, DO};
+static constexpr char ops_2char_str[4][2] = {IF, FI, DO, IN};
 
 static constexpr size_t ops_2char_len = sizeof(ops_2char_str) / sizeof(ops_2char_str[0]);
 
-static constexpr enum Token ops_2char[] = {T_IF, T_FI, T_DO};
+static constexpr enum Token ops_2char[] = {T_IF, T_FI, T_DO, T_IN};
 
 /* ops_3char_str
  * A constant array that contain all shell operations that are 3 characters long, like "&>>".

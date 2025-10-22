@@ -1,0 +1,8 @@
+#define LS Str_Lit("ls")
+#define SORT Str_Lit("sort")
+#define DASH_L Str_Lit("-l")
+#define JOB Str_Lit("longrunningprogram")
+#define FILE Str_Lit("text.txt")
+#define ECHO Str_Lit("echo")
+#define SLEEP Str_Lit("sleep")
+#define STR Str_Lit("STR")

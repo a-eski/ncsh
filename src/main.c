@@ -198,13 +198,15 @@ void history_remove(const char* rm, int n, char** history, unsigned count)
     char **h = bestlineHistory(); // get the reloaded history
     for (size_t i = 0; i < bestlineHistoryCount(); ++i) {
         if (estrcmp(Str_Get(h[i]), s)) {
+            free(h[i]);
             h[i] = NULL;
             if (i + 1 == count || !count) {
-                // tty_print("ncsh history: entry to remove '%s' was not found\n", rm);
                 return;
             }
 
-            memmove(h + i, h + i + 1, count - i - 1);
+            for (size_t j = i; j < count - 1; ++j) {
+                h[i] = h[i + 1];
+            }
             bestlineHistoryCountDecrement();
             tty_print("ncsh history: removed entry: %s\n", s.value);
             return;
