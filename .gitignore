@@ -28,3 +28,4 @@ NCSH_CORPUS/*
 INTERPRETER_CORPUS/*
 .idea/*
 src/ttyio
+src/ttyio/*
