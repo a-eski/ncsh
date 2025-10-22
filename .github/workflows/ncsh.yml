@@ -16,7 +16,7 @@ jobs:
       with:
         ref: ${{ github.ref }}
     - name: init submodule
-        git submodule add https://github.com/a-eski/ttyio.git src/ttyio
+      run: git submodule add https://github.com/a-eski/ttyio.git src/ttyio
     - name: make
       run: make
     - name: make debug
