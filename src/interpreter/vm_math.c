@@ -53,18 +53,22 @@ void vm_math_condition(Vm_Data* restrict vm)
         result = numeq(estrtonum(s1), estrtonum(s2));
         break;
     }
+    case OP_LT:
     case OP_LT_A: {
         result = numlt(estrtonum(s1), estrtonum(s2));
         break;
     }
+    case OP_LE:
     case OP_LE_A: {
         result = numle(estrtonum(s1), estrtonum(s2));
         break;
     }
+    case OP_GT:
     case OP_GT_A: {
         result = numgt(estrtonum(s1), estrtonum(s2));
         break;
     }
+    case OP_GE:
     case OP_GE_A: {
         result = numge(estrtonum(s1), estrtonum(s2));
         break;

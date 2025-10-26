@@ -650,7 +650,7 @@ Commands* vm_next_for(Vm_Data* restrict vm)
 {
     Commands* cmds = vm->next_cmds;
     if (vm->cur_stmt->type == LT_FOR_INIT) {
-        return vm_command_set(cmds, vm, VS_NORMAL);
+        return vm_command_set(cmds, vm, VS_IN_LOOP_INIT);
     }
 
     if (vm->cur_stmt->type == LT_FOR_CONDITIONS) {
@@ -698,13 +698,11 @@ Commands* vm_next_for(Vm_Data* restrict vm)
     }
 
     if (vm->cur_stmt->type == LT_FOR_INCREMENT) {
-        if (vm->state == VS_NORMAL) {
-        }
+        return vm_command_set(cmds, vm, VS_IN_LOOP_INCREMENT);
     }
 
     if (vm->cur_stmt->type == LT_FOR) {
-        if (vm->status != EXIT_SUCCESS && (vm->state == VS_IN_LOOP_STATEMENTS || vm->state == VS_IN_CONDITIONS) &&
-            cmds->prev_op != OP_AND) {
+        if (vm->status != EXIT_SUCCESS && (vm->state == VS_IN_LOOP_STATEMENTS || vm->state == VS_IN_CONDITIONS) && cmds->prev_op != OP_AND) {
             vm->end = true;
             return NULL;
         }
@@ -714,7 +712,7 @@ Commands* vm_next_for(Vm_Data* restrict vm)
             return NULL;
         }
 
-        if (!cmds->next && vm->cur_stmt->right && vm->cur_stmt->right->type == LT_FOR_CONDITIONS) {
+        if (!cmds->next && vm->cur_stmt->right && vm->cur_stmt->right->type == LT_FOR_INCREMENT) {
             return vm_command_set(cmds, vm, VS_IN_CONDITIONS);
         }
 
@@ -913,6 +911,10 @@ int vm_run(Statements* restrict stmts, Shell* restrict shell, Arena* restrict sc
             }
         }
 
+        else if (vm.cmds->op == OP_INCREMENT || vm.cmds->op == OP_DECREMENT) {
+            vm.status = EXIT_SUCCESS;
+        }
+
         else if (vm.cmds->ops[0] == OP_MATH_EXPR_START) {
             Str res = vm_math_expr(&vm);
             if (res.value) {
@@ -930,7 +932,7 @@ int vm_run(Statements* restrict stmts, Shell* restrict shell, Arena* restrict sc
             }
         }
 
-        else if (vm.state == VS_IN_CONDITIONS && vm_is_math_cond(vm.op_current)) {
+        else if (vm.state == VS_IN_CONDITIONS && (vm_is_math_cond(vm.op_current) || vm_is_math_cond(vm.cmds->op))) {
             vm_math_condition(&vm);
         }
 

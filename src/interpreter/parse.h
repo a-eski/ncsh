@@ -144,12 +144,16 @@ typedef struct {
 } Statements;
 
 typedef struct {
+    Statement* increment;
+} For_Data;
+
+typedef struct {
     Lexemes* restrict lexemes;
     Statements* restrict stmts;
     Statement* restrict cur_stmt;
     Statement* restrict prev_stmt;
-    // Statement* restrict conds;
     Commands* restrict cur_cmds;
+    For_Data* restrict for_data;
     Arena* restrict s;
     Str_Builder* restrict sb;
 } Parser_Data;

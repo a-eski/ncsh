@@ -147,6 +147,20 @@ def generate_if_tests(conditions, results)
       end
     end
 
+    define_method("test_if_double_bracket_#{name}_#{i}") do
+      tty = TTYtest.new_terminal(%(../bin/ncsh), width: 230, height: 160, use_return_for_newline: true)
+      row = ROW_START
+      tty.assert_row_ends_with(row, ' ❱ ')
+
+      tty.send_line_exact("if [[ #{condition} ]]; then echo hello; fi")
+      row += 1
+      if result
+        tty.assert_row(row, 'hello')
+      else
+        tty.assert_row_ends_with(row, ' ❱ ')
+      end
+    end
+
     define_method("test_if_else_#{name}_#{i}") do
       tty = TTYtest.new_terminal(%(../bin/ncsh), width: 230, height: 160, use_return_for_newline: true)
       row = ROW_START
@@ -167,6 +181,20 @@ def generate_if_tests(conditions, results)
       tty.assert_row_ends_with(row, ' ❱ ')
 
       tty.send_line_exact("if [ 1 -eq 5 ]; then echo hello; elif [ #{condition} ]; then echo hey; fi")
+      row += 1
+      if result
+        tty.assert_row(row, 'hey')
+      else
+        tty.assert_row_ends_with(row, ' ❱ ')
+      end
+    end
+
+    define_method("test_if_first_elif_double_bracket_#{name}_#{i}") do
+      tty = TTYtest.new_terminal(%(../bin/ncsh), width: 230, height: 160, use_return_for_newline: true)
+      row = ROW_START
+      tty.assert_row_ends_with(row, ' ❱ ')
+
+      tty.send_line_exact("if [[ 1 -eq 5 ]]; then echo hello; elif [[ #{condition} ]]; then echo hey; fi")
       row += 1
       if result
         tty.assert_row(row, 'hey')
@@ -387,6 +415,20 @@ def generate_while_tests
       row += 1
 
       tty.send_line_exact("while [ #{condition} ]; do echo $count; count=$(#{assignment[i]}) done")
+      row += 1
+      tty.assert_row(row, results[i][0])
+      tty.assert_row(row + 1, results[i][1])
+      tty.assert_row(row + 2, results[i][2])
+    end
+
+    define_method("test_while_double_bracket_#{name}_#{i}") do
+      tty = TTYtest.new_terminal(%(../bin/ncsh), width: 230, height: 160, use_return_for_newline: true)
+      row = ROW_START
+      tty.assert_row_ends_with(row, ' ❱ ')
+      tty.send_line("count=#{count[i]}")
+      row += 1
+
+      tty.send_line_exact("while [[ #{condition} ]]; do echo $count; count=$(#{assignment[i]}) done")
       row += 1
       tty.assert_row(row, results[i][0])
       tty.assert_row(row + 1, results[i][1])

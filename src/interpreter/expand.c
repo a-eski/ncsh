@@ -112,6 +112,15 @@ Str* expand_variable(Commands* cmds, size_t i, Vars* restrict vars, Arena* restr
     if (val->type == V_STR)
         return estrdup(&val->val.s, scratch);
 
+    if (i < cmds->count - 1) {
+        if (cmds->op == OP_INCREMENT) {
+            ++val->val.n.value.i;
+        }
+        else if (cmds->op == OP_DECREMENT) {
+            --val->val.n.value.i;
+        }
+    }
+
     return numtostr(val->val.n, scratch);
 
     // TODO: improve expansion to separate values when not in quotes, expand variables which contain a space

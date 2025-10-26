@@ -10,7 +10,9 @@ static inline bool vm_is_math_cond(enum Ops op)
 {
     return op == OP_EQ_A ||
         op == OP_GT_A || op == OP_GE_A ||
-        op == OP_LT_A || op == OP_LE_A;
+        op == OP_GT || op == OP_GE ||
+        op == OP_LT_A || op == OP_LE_A ||
+        op == OP_LT || op == OP_LE;
 }
 
 void vm_math_condition(Vm_Data* restrict vm);
