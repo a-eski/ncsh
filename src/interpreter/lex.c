@@ -64,12 +64,6 @@ static constexpr enum Token ops_3char[] = {T_EQ_A,
                                            T_FOR};
 
 [[nodiscard]]
-static inline bool tok_check_var(char* line, size_t len)
-{
-    return len > 2 && line[0] == DOLLAR;
-}
-
-[[nodiscard]]
 static inline enum Token tok_check_len_one(Str s)
 {
     if (s.value[0] == MINUS)
