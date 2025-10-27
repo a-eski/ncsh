@@ -187,8 +187,26 @@ static void expand_alias(Str* restrict s, Arena* restrict scratch)
     debug("found space in alias");
 }
 
+static void handle_init_assignment(Vm_Data* restrict vm)
+{
+    Commands* cmds = vm->cmds;
+    if (cmds->ops[vm->pos] == OP_NUM) {
+        Num n = estrtonum(cmds->strs[vm->pos]);
+        *vars_add_or_get(vm->sh->vars, *estrdup(&cmds->strs[0], &vm->sh->arena)) = Var_n(n);
+        return;
+    }
+
+    Str s = *estrdup(&cmds->strs[vm->pos], &vm->sh->arena);
+    *vars_add_or_get(vm->sh->vars, *estrdup(&cmds->strs[0], &vm->sh->arena)) = Var_s(s);
+}
+
 void expand(Vm_Data* restrict vm, Arena* restrict scratch)
 {
+    if (vm->state == VS_IN_LOOP_EACH_INIT) {
+        handle_init_assignment(vm);
+        return;
+    }
+
     Commands* cmds = vm->cmds;
     if (cmds->strs[0].value && cmds->ops[0] == OP_CONST) {
         expand_alias(&cmds->strs[0], scratch);

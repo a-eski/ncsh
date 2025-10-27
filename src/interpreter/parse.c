@@ -582,12 +582,11 @@ static Parser_Internal parse_for_each(Parser_Data* restrict data, size_t* restri
     data_cmd_update(data, data->lexemes->strs[*n], OP_VARIABLE);
     ++*n;
     Statement* init = data->cur_stmt;
-    cmd_stmt_next(data, LT_FOR_INIT);
 
     if (!consume(data->lexemes, n, T_IN))
         return (Parser_Internal){.parser_errno = PE_MISSING_TOK, .msg = "missing 'in', no joining 'in' in for loop."};
 
-    Parser_Internal rv = parse_for_stmts(data, n, LT_FOR_VALUES);
+    Parser_Internal rv = parse_for_stmts(data, n, LT_FOR_EACH_INIT);
     if (rv.parser_errno)
         return rv;
 
@@ -598,9 +597,9 @@ static Parser_Internal parse_for_each(Parser_Data* restrict data, size_t* restri
         return rv;
 
     data_cmd_update(data, Str_Lit("JUMP"), OP_JUMP);
-    cmd_stmt_next(data, LT_FOR_INIT);
+    cmd_stmt_next(data, LT_FOR_EACH_INIT);
     data->cur_stmt = init;
-    cmd_stmt_next(data, LT_FOR_INIT);
+    cmd_stmt_next(data, LT_FOR_EACH_INIT);
 
     consume(data->lexemes, n, T_DONE);
 
@@ -613,14 +612,17 @@ static Parser_Internal parse_for(Parser_Data* restrict data, size_t* restrict n)
     if (data->cur_cmds->pos > 0) {
         cmd_stmt_next(data, LT_NORMAL);
     }
-    data->stmts->type = ST_FOR;
     consume(data->lexemes, n, T_FOR);
 
     Parser_Internal rv;
-    if (peek(data->lexemes, *n) == T_O_PARAN)
+    if (peek(data->lexemes, *n) == T_O_PARAN) {
+        data->stmts->type = ST_FOR;
         rv = parse_for_c_style(data, n);
-    else
+    }
+    else {
+        data->stmts->type = ST_FOR_EACH;
         rv = parse_for_each(data, n);
+    }
 
     return rv;
 }

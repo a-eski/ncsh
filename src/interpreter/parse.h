@@ -109,9 +109,9 @@ enum Logic_Type {
     LT_WHILE_CONDITIONS,
     LT_FOR,
     LT_FOR_INIT,
+    LT_FOR_EACH_INIT,
     LT_FOR_CONDITIONS,
     LT_FOR_INCREMENT,
-    LT_FOR_VALUES,
 };
 
 typedef struct Statement Statement;
@@ -130,7 +130,8 @@ enum Statements_Type {
     ST_IF_ELIF,
     ST_IF_ELIF_ELSE,
     ST_WHILE,
-    ST_FOR
+    ST_FOR,
+    ST_FOR_EACH,
 };
 
 typedef struct {

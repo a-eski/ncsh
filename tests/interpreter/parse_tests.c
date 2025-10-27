@@ -2379,7 +2379,7 @@ void parse_for_each_test()
     eassert(!res.parser_errno);
     eassert(res.output.stmts);
     auto stmts = res.output.stmts;
-    eassert(stmts->type == ST_FOR);
+    eassert(stmts->type == ST_FOR_EACH);
     eassert(!stmts->is_bg_job);
     eassert(stmts->pipes_count == 1);
     eassert(stmts->redirect_type == RT_NONE);
@@ -2390,21 +2390,21 @@ void parse_for_each_test()
     size_t p = 0;
     // the init statement runs the first time,
     // subsequent loops jump to conditions
-    eassert(stmt->type == LT_FOR_INIT);
-    eassert(cmds->count == 1);
+    eassert(stmt->type == LT_FOR_EACH_INIT);
+    eassert(cmds->count == 4);
 
     eassert(!memcmp(cmds->strs[p].value, "fruit", 5));
     eassert(cmds->strs[p].length == 6);
     eassert(cmds->ops[p++] == OP_VARIABLE);
 
-    eassert(!cmds->strs[p].value);
-    eassert(!cmds->next);
+    // eassert(!cmds->strs[p].value);
+    // eassert(!cmds->next);
 
-    stmt = stmt->right;
-    cmds = stmt->commands;
-    p = 0;
-    eassert(stmt->type == LT_FOR_VALUES);
-    eassert(cmds->count == 3);
+    // stmt = stmt->right;
+    // cmds = stmt->commands;
+    // p = 0;
+    // eassert(stmt->type == LT_FOR_VALUES);
+    // eassert(cmds->count == 3);
 
     eassert(!memcmp(cmds->strs[p].value, "apple", 5));
     eassert(cmds->strs[p].length == 6);
@@ -2441,7 +2441,7 @@ void parse_for_each_test()
     // jump op back to conditions
     stmt = stmt->right;
     eassert(stmt);
-    eassert(stmt->type == LT_FOR_INIT);
+    eassert(stmt->type == LT_FOR_EACH_INIT);
     cmds = stmt->commands;
     eassert(cmds);
     p = 0;
@@ -2450,7 +2450,7 @@ void parse_for_each_test()
 
     stmt = stmt->right;
     eassert(stmt);
-    eassert(stmt->type == LT_FOR_INIT);
+    eassert(stmt->type == LT_FOR_EACH_INIT);
     cmds = stmt->commands;
     eassert(cmds);
     p = 0;

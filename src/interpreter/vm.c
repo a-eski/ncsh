@@ -649,8 +649,22 @@ Commands* vm_next_for_statement(Vm_Data* restrict vm)
 Commands* vm_next_for(Vm_Data* restrict vm)
 {
     Commands* cmds = vm->next_cmds;
-    if (vm->cur_stmt->type == LT_FOR_INIT) {
+    if (vm->cur_stmt->type == LT_FOR_INIT) { // init C style for loop
         return vm_command_set(cmds, vm, VS_IN_LOOP_INIT);
+    }
+
+    if (vm->cur_stmt->type == LT_FOR_EACH_INIT) { // init for val in v1 v2 ... style for loop
+        if (vm->state == VS_NORMAL)
+            vm->pos = 1;
+        else
+            ++vm->pos;
+
+        if (vm->pos >= cmds->count) {
+            vm->cmds = NULL;
+            vm->end = true;
+            return NULL;
+        }
+        return vm_command_set(cmds, vm, VS_IN_LOOP_EACH_INIT);
     }
 
     if (vm->cur_stmt->type == LT_FOR_CONDITIONS) {
@@ -768,6 +782,7 @@ Commands* vm_next(Vm_Data* restrict vm)
     case ST_WHILE:
         return vm_next_while(vm);
     case ST_FOR:
+    case ST_FOR_EACH:
         return vm_next_for(vm);
     default:
         return vm_next_normal(vm);
@@ -887,6 +902,11 @@ int vm_run(Statements* restrict stmts, Shell* restrict shell, Arena* restrict sc
 
         expand(&vm, scratch);
 
+        if (vm.state == VS_IN_LOOP_EACH_INIT) {
+            vm.status = EXIT_SUCCESS;
+            goto next;
+        }
+
         if (vm.op_current == OP_PIPE && !vm.end) {
             if (pipe_start(vm.command_position, &vm.pipes_io) != EXIT_SUCCESS) {
                 rv = EXIT_FAILURE;
@@ -949,7 +969,7 @@ int vm_run(Statements* restrict stmts, Shell* restrict shell, Arena* restrict sc
                 goto failure;
             }
         }
-
+next:
         ++vm.command_position;
     }
 
