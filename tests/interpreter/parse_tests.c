@@ -2391,37 +2391,35 @@ void parse_for_each_test()
     // the init statement runs the first time,
     // subsequent loops jump to conditions
     eassert(stmt->type == LT_FOR_INIT);
-    eassert(cmds->count == 3);
+    eassert(cmds->count == 1);
 
-    eassert(!memcmp(cmds->strs[p].value, "i", 1));
-    eassert(cmds->strs[p].length == 2);
+    eassert(!memcmp(cmds->strs[p].value, "fruit", 5));
+    eassert(cmds->strs[p].length == 6);
     eassert(cmds->ops[p++] == OP_VARIABLE);
 
-    eassert(!memcmp(cmds->strs[p].value, "=", 1));
-    eassert(cmds->strs[p].length == 2);
-    eassert(cmds->ops[p++] == OP_ASSIGNMENT);
-
-    eassert(!memcmp(cmds->strs[p].value, "1", 1));
-    eassert(cmds->strs[p].length == 2);
-    eassert(cmds->ops[p++] == OP_NUM);
+    eassert(!cmds->strs[p].value);
+    eassert(!cmds->next);
 
     stmt = stmt->right;
     cmds = stmt->commands;
     p = 0;
-    eassert(stmt->type == LT_FOR_CONDITIONS);
+    eassert(stmt->type == LT_FOR_VALUES);
     eassert(cmds->count == 3);
 
-    eassert(!memcmp(cmds->strs[p].value, "i", 1));
-    eassert(cmds->strs[p].length == 2);
-    eassert(cmds->ops[p++] == OP_VARIABLE);
+    eassert(!memcmp(cmds->strs[p].value, "apple", 5));
+    eassert(cmds->strs[p].length == 6);
+    eassert(cmds->ops[p++] == OP_CONST);
 
-    eassert(!memcmp(cmds->strs[p].value, "<=", 2));
-    eassert(cmds->strs[p].length == 3);
-    eassert(cmds->ops[p++] == OP_LE);
+    eassert(!memcmp(cmds->strs[p].value, "banana", 6));
+    eassert(cmds->strs[p].length == 7);
+    eassert(cmds->ops[p++] == OP_CONST);
 
-    eassert(!memcmp(cmds->strs[p].value, "5", 1));
-    eassert(cmds->strs[p].length == 2);
-    eassert(cmds->ops[p++] == OP_NUM);
+    eassert(!memcmp(cmds->strs[p].value, "orange", 6));
+    eassert(cmds->strs[p].length == 7);
+    eassert(cmds->ops[p++] == OP_CONST);
+
+    eassert(!cmds->strs[p].value);
+    eassert(!cmds->next);
 
     stmt = stmt->right;
     cmds = stmt->commands;
@@ -2433,29 +2431,17 @@ void parse_for_each_test()
     eassert(cmds->strs[p].length == 5);
     eassert(cmds->ops[p++] == OP_CONST);
 
-    eassert(!memcmp(cmds->strs[p].value, "i", 1));
-    eassert(cmds->strs[p].length == 2);
+    eassert(!memcmp(cmds->strs[p].value, "fruit", 5));
+    eassert(cmds->strs[p].length == 6);
     eassert(cmds->ops[p++] == OP_VARIABLE);
 
-    // increment should be after all of the LT_FOR statements
-    stmt = stmt->right;
-    cmds = stmt->commands;
-    p = 0;
-    eassert(stmt->type == LT_FOR_INCREMENT);
-    eassert(cmds->count == 2);
-
-    eassert(!memcmp(cmds->strs[p].value, "i", 1));
-    eassert(cmds->strs[p].length == 2);
-    eassert(cmds->ops[p++] == OP_VARIABLE);
-
-    eassert(!memcmp(cmds->strs[p].value, "++", 2));
-    eassert(cmds->strs[p].length == 3);
-    eassert(cmds->ops[p++] == OP_INCREMENT);
+    eassert(!cmds->strs[p].value);
+    eassert(!cmds->next);
 
     // jump op back to conditions
     stmt = stmt->right;
     eassert(stmt);
-    eassert(stmt->type == LT_FOR_CONDITIONS);
+    eassert(stmt->type == LT_FOR_INIT);
     cmds = stmt->commands;
     eassert(cmds);
     p = 0;
@@ -2464,13 +2450,13 @@ void parse_for_each_test()
 
     stmt = stmt->right;
     eassert(stmt);
-    eassert(stmt->type == LT_FOR_CONDITIONS);
+    eassert(stmt->type == LT_FOR_INIT);
     cmds = stmt->commands;
     eassert(cmds);
     p = 0;
 
-    eassert(!memcmp(cmds->strs[p].value, "i", 1));
-    eassert(cmds->strs[p].length == 2);
+    eassert(!memcmp(cmds->strs[p].value, "fruit", 5));
+    eassert(cmds->strs[p].length == 6);
     eassert(cmds->ops[p++] == OP_VARIABLE);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
@@ -2533,6 +2519,7 @@ void parser_tests()
     etest_run(parse_while_test);
     etest_run(parse_for_test);
     etest_run(parse_for_lt_test);
+    etest_run(parse_for_each_test);
 
     etest_finish();
 }

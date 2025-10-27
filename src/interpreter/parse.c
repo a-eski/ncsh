@@ -577,9 +577,12 @@ static Parser_Internal parse_for_c_style(Parser_Data* restrict data, size_t* res
 // for fruit in apple banana orange; do echo $fruit done
 // for file in *; do echo $file done
 [[nodiscard]]
-static Parser_Internal parse_for_in(Parser_Data* restrict data, size_t* restrict n)
+static Parser_Internal parse_for_each(Parser_Data* restrict data, size_t* restrict n)
 {
-    data_cmd_update(data, data->lexemes->strs[*n++], OP_VARIABLE);
+    data_cmd_update(data, data->lexemes->strs[*n], OP_VARIABLE);
+    ++*n;
+    Statement* init = data->cur_stmt;
+    cmd_stmt_next(data, LT_FOR_INIT);
 
     if (!consume(data->lexemes, n, T_IN))
         return (Parser_Internal){.parser_errno = PE_MISSING_TOK, .msg = "missing 'in', no joining 'in' in for loop."};
@@ -593,6 +596,11 @@ static Parser_Internal parse_for_in(Parser_Data* restrict data, size_t* restrict
     rv = parse_for_stmts(data, n, LT_FOR);
     if (rv.parser_errno)
         return rv;
+
+    data_cmd_update(data, Str_Lit("JUMP"), OP_JUMP);
+    cmd_stmt_next(data, LT_FOR_INIT);
+    data->cur_stmt = init;
+    cmd_stmt_next(data, LT_FOR_INIT);
 
     consume(data->lexemes, n, T_DONE);
 
@@ -612,7 +620,7 @@ static Parser_Internal parse_for(Parser_Data* restrict data, size_t* restrict n)
     if (peek(data->lexemes, *n) == T_O_PARAN)
         rv = parse_for_c_style(data, n);
     else
-        rv = parse_for_in(data, n);
+        rv = parse_for_each(data, n);
 
     return rv;
 }
