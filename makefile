@@ -4,7 +4,7 @@ CC ?= gcc
 DESTDIR ?= /bin
 RELEASE ?= 1
 
-main_flags = -Wall -Wextra -Werror -pedantic -pedantic-errors -Wsign-conversion -Wformat=2 -Wshadow -Wvla -fstack-protector-strong -fPIC -fPIE -Wundef -Wbad-function-cast -Wcast-align -Wstrict-prototypes -Wnested-externs -Winline -Winline -Wdisabled-optimization -Wunreachable-code -Wchar-subscripts
+main_flags = -Wall -Wextra -Werror -pedantic -pedantic-errors -Wsign-conversion -Wformat=2 -Wshadow -Wvla -fstack-protector-strong -fPIC -fPIE -Wundef -Wbad-function-cast -Wcast-align -Wstrict-prototypes -Wnested-externs -Wdisabled-optimization -Wunreachable-code -Wchar-subscripts
 # -pg
 
 debug_flags = $(main_flags) -D_FORTIFY_SOURCE=3 -fsanitize=address,undefined,leak -g
