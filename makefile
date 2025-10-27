@@ -12,7 +12,7 @@ debug_flags = $(main_flags) -D_FORTIFY_SOURCE=3 -fsanitize=address,undefined,lea
 
 test_flags =  $(debug_flags)
 
-release_flags = $(main_flags) -flto=6 -O3 -ffast-math -march=native -DNDEBUG
+release_flags = $(main_flags) -flto -O3 -ffast-math -march=native -DNDEBUG
 # release_flags = $(main_flags) -flto -O3 -ffast-math -march=native -DNDEBUG
 
 fuzz_flags = $(debug_flags) -fsanitize=fuzzer -DNDEBUG -O3
