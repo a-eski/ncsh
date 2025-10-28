@@ -710,14 +710,14 @@ static Parser_Internal parse_gt(Parser_Data* restrict data, Lexemes* restrict le
 {
     enum Token peeked = peek(lexemes, *i + 1);
     if (peeked == T_EQ) {
-        consume(lexemes, i, T_LT);
+        consume(lexemes, i, T_GT);
         data->cur_cmds->op = OP_GE;
         data_cmd_update(data, Str_Lit(">="), OP_GE);
         return (Parser_Internal){};
     }
     if (parser_state & IN_FOR_C_STYLE) {
         data->cur_cmds->op = OP_GT;
-        data_cmd_update(data, Str_Lit("<"), OP_GT);
+        data_cmd_update(data, Str_Lit(">"), OP_GT);
         return (Parser_Internal){};
     }
 

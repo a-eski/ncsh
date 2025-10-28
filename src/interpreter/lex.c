@@ -67,8 +67,6 @@ static constexpr enum Token ops_3char[] = {T_EQ_A,
 [[nodiscard]]
 static inline enum Token tok_check_len_one(Str s)
 {
-    if (s.value[0] == MINUS)
-        return T_MINUS;
     if (s.value[0] == FSLASH)
         return T_FSLASH;
 
@@ -339,6 +337,15 @@ void lex(Str line, Lexemes* lexemes, Arena* restrict scratch)
         case PLUS: {
             lexeme_add(lexemes, &n, line.value[pos], T_PLUS, scratch);
             continue;
+        }
+        case MINUS: {
+            if (pos + 1 < line.length &&
+                    (is_whitespace(line.value[pos + 1]) || line.value[pos + 1] == MINUS || line.value[pos + 1] == C_PARAN)) {
+                lexeme_add(lexemes, &n, line.value[pos], T_MINUS, scratch);
+                continue;
+            }
+            else
+                goto lex_default;
         }
         case MOD: {
             lexeme_add(lexemes, &n, line.value[pos], T_MOD, scratch);

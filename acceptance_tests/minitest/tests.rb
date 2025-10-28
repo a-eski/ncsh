@@ -16,5 +16,6 @@ module NcshTests
     generate_if_bool_tests
     generate_if_math_tests
     generate_while_tests
+    generate_for_tests
   end
 end
