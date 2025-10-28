@@ -190,6 +190,18 @@ static void expand_alias(Str* restrict s, Arena* restrict scratch)
 static void handle_init_assignment(Vm_Data* restrict vm)
 {
     Commands* cmds = vm->cmds;
+    if (vm->pos == 1) {
+        for (size_t i = 0; i < cmds->count; ++i) {
+            switch (cmds->ops[i]) {
+                case OP_GLOB_EXPANSION: {
+                    expand_glob(cmds, i, vm->s);
+                    break;
+                }
+                default:
+                    break;
+            }
+        }
+    }
     if (cmds->ops[vm->pos] == OP_NUM) {
         Num n = estrtonum(cmds->strs[vm->pos]);
         *vars_add_or_get(vm->sh->vars, *estrdup(&cmds->strs[0], &vm->sh->arena)) = Var_n(n);

@@ -2362,7 +2362,6 @@ void parse_for_lt_test()
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
-
 void parse_for_each_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
@@ -2388,23 +2387,12 @@ void parse_for_each_test()
     auto stmt = stmts->head;
     auto cmds = stmt->commands;
     size_t p = 0;
-    // the init statement runs the first time,
-    // subsequent loops jump to conditions
     eassert(stmt->type == LT_FOR_EACH_INIT);
     eassert(cmds->count == 4);
 
     eassert(!memcmp(cmds->strs[p].value, "fruit", 5));
     eassert(cmds->strs[p].length == 6);
     eassert(cmds->ops[p++] == OP_VARIABLE);
-
-    // eassert(!cmds->strs[p].value);
-    // eassert(!cmds->next);
-
-    // stmt = stmt->right;
-    // cmds = stmt->commands;
-    // p = 0;
-    // eassert(stmt->type == LT_FOR_VALUES);
-    // eassert(cmds->count == 3);
 
     eassert(!memcmp(cmds->strs[p].value, "apple", 5));
     eassert(cmds->strs[p].length == 6);
@@ -2457,6 +2445,86 @@ void parse_for_each_test()
 
     eassert(!memcmp(cmds->strs[p].value, "fruit", 5));
     eassert(cmds->strs[p].length == 6);
+    eassert(cmds->ops[p++] == OP_VARIABLE);
+
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
+void parse_for_each_expansion_test()
+{
+    SCRATCH_ARENA_TEST_SETUP;
+
+    auto line = Str_Lit("for file in src/*.c; do echo $file done");
+
+    Lexemes lexemes = {0};
+    lex(line, &lexemes, &scratch_arena);
+    auto res = parse(&lexemes, &scratch_arena);
+
+    if (res.parser_errno) {
+        printf("%s\n", res.output.msg);
+    }
+    eassert(!res.parser_errno);
+    eassert(res.output.stmts);
+    auto stmts = res.output.stmts;
+    eassert(stmts->type == ST_FOR_EACH);
+    eassert(!stmts->is_bg_job);
+    eassert(stmts->pipes_count == 1);
+    eassert(stmts->redirect_type == RT_NONE);
+    eassert(stmts->head);
+    eassert(stmts->head->commands);
+    auto stmt = stmts->head;
+    auto cmds = stmt->commands;
+    size_t p = 0;
+    eassert(stmt->type == LT_FOR_EACH_INIT);
+    eassert(cmds->count == 2);
+
+    eassert(!memcmp(cmds->strs[p].value, "file", 4));
+    eassert(cmds->strs[p].length == 5);
+    eassert(cmds->ops[p++] == OP_VARIABLE);
+
+    eassert(!memcmp(cmds->strs[p].value, "src/*.c", 7));
+    eassert(cmds->strs[p].length == 8);
+    eassert(cmds->ops[p++] == OP_GLOB_EXPANSION);
+
+    eassert(!cmds->strs[p].value);
+    eassert(!cmds->next);
+
+    stmt = stmt->right;
+    cmds = stmt->commands;
+    p = 0;
+    eassert(stmt->type == LT_FOR);
+    eassert(cmds->count == 2);
+
+    eassert(!memcmp(cmds->strs[p].value, "echo", 4));
+    eassert(cmds->strs[p].length == 5);
+    eassert(cmds->ops[p++] == OP_CONST);
+
+    eassert(!memcmp(cmds->strs[p].value, "file", 4));
+    eassert(cmds->strs[p].length == 5);
+    eassert(cmds->ops[p++] == OP_VARIABLE);
+
+    eassert(!cmds->strs[p].value);
+    eassert(!cmds->next);
+
+    // jump op back to conditions
+    stmt = stmt->right;
+    eassert(stmt);
+    eassert(stmt->type == LT_FOR_EACH_INIT);
+    cmds = stmt->commands;
+    eassert(cmds);
+    p = 0;
+
+    eassert(cmds->ops[p] == OP_JUMP);
+
+    stmt = stmt->right;
+    eassert(stmt);
+    eassert(stmt->type == LT_FOR_EACH_INIT);
+    cmds = stmt->commands;
+    eassert(cmds);
+    p = 0;
+
+    eassert(!memcmp(cmds->strs[p].value, "file", 4));
+    eassert(cmds->strs[p].length == 5);
     eassert(cmds->ops[p++] == OP_VARIABLE);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
@@ -2520,6 +2588,7 @@ void parser_tests()
     etest_run(parse_for_test);
     etest_run(parse_for_lt_test);
     etest_run(parse_for_each_test);
+    etest_run(parse_for_each_expansion_test);
 
     etest_finish();
 }

@@ -708,6 +708,31 @@ void lex_glob_star_test()
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
+void lex_glob_star_middle_test()
+{
+    SCRATCH_ARENA_TEST_SETUP;
+
+    auto line = Str_Lit("ls src/*.c");
+
+    Lexemes lexemes = {0};
+    lex(line, &lexemes, &scratch_arena);
+
+    eassert(lexemes.count == 2);
+
+    eassert(!memcmp(lexemes.strs[0].value, "ls", 3));
+    eassert(lexemes.ops[0] == T_CONST);
+    eassert(lexemes.strs[0].length == 3);
+
+    auto src = Str_Lit("src/*.c");
+    eassert(!memcmp(lexemes.strs[1].value, src.value, src.length - 1));
+    eassert(lexemes.strs[1].length == src.length);
+    eassert(lexemes.ops[1] == T_GLOB);
+
+    eassert(!lexemes.strs[2].value);
+
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
 void lex_glob_question_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
@@ -1324,6 +1349,53 @@ void lex_for_each_test()
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
+void lex_for_each_expansion_test()
+{
+    SCRATCH_ARENA_TEST_SETUP;
+
+    auto line = Str_Lit("for file in src/*.c; do echo $file done");
+
+    Lexemes lexemes = {0};
+    lex(line, &lexemes, &scratch_arena);
+
+    size_t p = 0;
+
+    eassert(!memcmp(lexemes.strs[p].value, "for", 3));
+    eassert(lexemes.ops[p] == T_FOR);
+    eassert(lexemes.strs[p++].length == 4);
+
+    eassert(!memcmp(lexemes.strs[p].value, "file", 4));
+    eassert(lexemes.ops[p] == T_CONST);
+    eassert(lexemes.strs[p++].length == 5);
+
+    eassert(!memcmp(lexemes.strs[p].value, "in", 2));
+    eassert(lexemes.ops[p] == T_IN);
+    eassert(lexemes.strs[p++].length == 3);
+
+    eassert(!memcmp(lexemes.strs[p].value, "src/*.c", 7));
+    eassert(lexemes.ops[p] == T_GLOB);
+    eassert(lexemes.strs[p++].length == 8);
+
+    eassert(lexemes.ops[p++] == T_SEMIC);
+    eassert(lexemes.ops[p++] == T_DO);
+
+    eassert(!memcmp(lexemes.strs[p].value, "echo", 4));
+    eassert(lexemes.ops[p] == T_CONST);
+    eassert(lexemes.strs[p++].length == 5);
+
+    eassert(!memcmp(lexemes.strs[p].value, "$", 1));
+    eassert(lexemes.ops[p] == T_DOLLAR);
+    eassert(lexemes.strs[p++].length == 2);
+
+    eassert(!memcmp(lexemes.strs[p].value, "file", 4));
+    eassert(lexemes.ops[p] == T_CONST);
+    eassert(lexemes.strs[p++].length == 5);
+
+    eassert(lexemes.ops[p++] == T_DONE);
+
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
 // forward declaration: implementation put at the end because it messes with clangd lsp
 void lex_bad_input_shouldnt_crash();
 
@@ -1357,6 +1429,7 @@ void lexer_tests()
     etest_run(lex_home_test);
     etest_run(lex_home_at_start_test);
     etest_run(lex_glob_star_test);
+    etest_run(lex_glob_star_middle_test);
     etest_run(lex_glob_question_test);
 
     etest_run(lex_glob_star_shouldnt_crash);
@@ -1377,6 +1450,7 @@ void lexer_tests()
     etest_run(lex_while_test);
     etest_run(lex_for_test);
     etest_run(lex_for_each_test);
+    etest_run(lex_for_each_expansion_test);
 
     etest_finish();
 }
