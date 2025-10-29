@@ -462,6 +462,8 @@ static Parser_Internal parse_while(Parser_Data* restrict data, size_t* restrict 
         }
     } while (*n < data->lexemes->count && peek(data->lexemes, *n) != T_DONE);
 
+    consume(data->lexemes, n, T_SEMIC);
+
     data_cmd_update(data, Str_Lit("JUMP"), OP_JUMP);
     cmd_stmt_next(data, LT_WHILE_CONDITIONS);
     data->cur_stmt = conds;
@@ -598,6 +600,8 @@ static Parser_Internal parse_for_each(Parser_Data* restrict data, size_t* restri
     rv = parse_for_stmts(data, n, LT_FOR);
     if (rv.parser_errno)
         return rv;
+
+    consume(data->lexemes, n, T_SEMIC);
 
     data_cmd_update(data, Str_Lit("JUMP"), OP_JUMP);
     cmd_stmt_next(data, LT_FOR_EACH_INIT);
