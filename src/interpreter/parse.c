@@ -555,8 +555,11 @@ static Parser_Internal parse_for_c_style(Parser_Data* restrict data, size_t* res
         rv = parse_token(data, data->lexemes, n);
         if (rv.parser_errno)
             return rv;
-    } while (data->lexemes->ops[++*n] != T_DONE && *n < data->lexemes->count - 1);
+    } while (data->lexemes->ops[*n] != T_SEMIC &&
+            data->lexemes->ops[++*n] != T_DONE && *n < data->lexemes->count - 1);
     cmd_stmt_next(data, LT_FOR);
+
+    consume(data->lexemes, n, T_SEMIC);
 
     // set increment after the LT_FOR commands
     data->cur_stmt = data->for_data->increment;
@@ -1067,6 +1070,9 @@ static Parser_Internal parse_token(Parser_Data* restrict data, Lexemes* restrict
             goto quoted;
 
         data_cmd_update(data, lexemes->strs[*i], OP_MATH_EXPR_END);
+        return (Parser_Internal){};
+    }
+    case T_SEMIC: {
         return (Parser_Internal){};
     }
 
