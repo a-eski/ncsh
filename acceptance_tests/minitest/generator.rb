@@ -489,16 +489,16 @@ def generate_for_tests
       tty.assert_row(row + 2, results[i][2])
     end
 
-    # define_method("test_for_ending_semic_#{name}_#{i}") do
-    #   tty = TTYtest.new_terminal(%(../bin/ncsh), width: 230, height: 160, use_return_for_newline: true)
-    #   row = ROW_START
-    #   tty.assert_row_ends_with(row, ' ❱ ')
-    #
-    #   tty.send_line_exact("for ((#{loop})); do echo $i; done")
-    #   row += 1
-    #   tty.assert_row(row, results[i][0])
-    #   tty.assert_row(row + 1, results[i][1])
-    #   tty.assert_row(row + 2, results[i][2])
-    # end
+    define_method("test_for_ending_semic_#{name}_#{i}") do
+      tty = TTYtest.new_terminal(%(../bin/ncsh), width: 230, height: 160, use_return_for_newline: true)
+      row = ROW_START
+      tty.assert_row_ends_with(row, ' ❱ ')
+
+      tty.send_line_exact("for ((#{loop})); do echo $i; done")
+      row += 1
+      tty.assert_row(row, results[i][0])
+      tty.assert_row(row + 1, results[i][1])
+      tty.assert_row(row + 2, results[i][2])
+    end
   end
 end

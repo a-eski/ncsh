@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require './acceptance_tests/tests/common'
-require 'ttytest'
 
 def if_variable_test(row)
   assert_check_new_row(row)
