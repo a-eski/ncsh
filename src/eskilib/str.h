@@ -74,7 +74,7 @@ enodiscard static inline bool estrcmp_s(Str v, char* restrict v2, size_t v2_len)
 enodiscard static inline Str* estrsplit(Str val, char splitter, Arena* restrict a)
 {
     assert(a);
-    if (!val.length) {
+    if (!val.length || !val.value) {
         return NULL;
     }
 

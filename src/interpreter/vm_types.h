@@ -18,11 +18,17 @@
 /****** TYPES ******/
 enum Vm_State {
     VS_NORMAL = 0,
-    VS_IN_CONDITIONS,
-    VS_IN_IF_STATEMENTS,
+
+    VS_IN_CONDITIONS,       // Generic in conditions, if/elif/while/for
+
+    VS_IN_IF_STATEMENTS,    // statements in if/elif/else blocks
     VS_IN_ELSE_STATEMENTS,
     VS_IN_ELIF_STATEMENTS,
-    VS_IN_LOOP_STATEMENTS
+
+    VS_IN_LOOP_STATEMENTS,  // statements in for/while blocks
+    VS_IN_LOOP_INIT,        // init statement for for loops
+    VS_IN_LOOP_EACH_INIT,   // for each init
+    VS_IN_LOOP_INCREMENT,   // increment/decrement for C style for loops
 };
 
 /* Output_Redirect_IO
@@ -64,6 +70,7 @@ typedef struct {
     Statement* cur_stmt;
     Commands* cmds;
     Commands* next_cmds;
+    size_t pos;
 
     Shell* sh;
     Arena* s;

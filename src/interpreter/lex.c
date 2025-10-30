@@ -17,6 +17,7 @@
 static char* restrict lex_buf;
 static size_t lex_state;
 static size_t lex_buf_pos;
+static enum Token cur_tok;
 
 [[nodiscard]]
 static inline enum Token get_const_type(Str s)
@@ -36,11 +37,11 @@ enum Lexer_State: size_t {
  * Size of the array is stored as constant expression in ops_2char_len
  * Bytecodes (opcodes) equivalents are stored in the array of enum Ops, ops_2char
  */
-static constexpr char ops_2char_str[3][2] = {IF, FI, DO};
+static constexpr char ops_2char_str[4][2] = {IF, FI, DO, IN};
 
 static constexpr size_t ops_2char_len = sizeof(ops_2char_str) / sizeof(ops_2char_str[0]);
 
-static constexpr enum Token ops_2char[] = {T_IF, T_FI, T_DO};
+static constexpr enum Token ops_2char[] = {T_IF, T_FI, T_DO, T_IN};
 
 /* ops_3char_str
  * A constant array that contain all shell operations that are 3 characters long, like "&>>".
@@ -64,16 +65,8 @@ static constexpr enum Token ops_3char[] = {T_EQ_A,
                                            T_FOR};
 
 [[nodiscard]]
-static inline bool tok_check_var(char* line, size_t len)
-{
-    return len > 2 && line[0] == DOLLAR;
-}
-
-[[nodiscard]]
 static inline enum Token tok_check_len_one(Str s)
 {
-    if (s.value[0] == MINUS)
-        return T_MINUS;
     if (s.value[0] == FSLASH)
         return T_FSLASH;
 
@@ -202,9 +195,10 @@ void lexeme_add(Lexemes* restrict lexemes, size_t* n, char c, enum Token tok, Ar
         lexemes->strs[*n].length = lex_buf_pos + 1;
         lexemes->strs[*n].value = arena_malloc(scratch, lexemes->strs[*n].length, char);
         memcpy(lexemes->strs[*n].value, lex_buf, lex_buf_pos);
-        lexemes->ops[*n] = get_const_type(lexemes->strs[*n]);
+        lexemes->ops[*n] = cur_tok == T_NONE ? tok_get(lexemes->strs[*n]) : cur_tok;
         lex_buf_pos = 0;
         lex_buf[0] = 0;
+        cur_tok = T_NONE;
         *n += 1;
     }
 
@@ -249,7 +243,7 @@ void lex(Str line, Lexemes* lexemes, Arena* restrict scratch)
     lex_buf_pos = 0;
     lex_state = 0;
     size_t n = lexemes->count;
-    enum Token t = T_NONE;
+    cur_tok = T_NONE;
 
     for (size_t pos = 0; pos < line.length; ++pos) {
         if (lexemes->count == LEXER_TOKENS_LIMIT - 1 && pos < line.length) { // can't lex all of the tokens
@@ -263,7 +257,7 @@ void lex(Str line, Lexemes* lexemes, Arena* restrict scratch)
 
         switch (line.value[pos]) {
         case QUESTION: {
-            t = T_GLOB;
+            cur_tok = T_GLOB;
             lex_buf[lex_buf_pos++] = line.value[pos];
             continue;
         }
@@ -274,13 +268,13 @@ void lex(Str line, Lexemes* lexemes, Arena* restrict scratch)
                     continue;
                 }
             }
-            t = T_GLOB;
+            cur_tok = T_GLOB;
             lex_buf[lex_buf_pos++] = line.value[pos];
             continue;
         }
         case TILDE: {
             if (lex_buf_pos == 0) {
-                t = T_HOME;
+                cur_tok = T_HOME;
             }
             goto lex_default;
         }
@@ -344,6 +338,15 @@ void lex(Str line, Lexemes* lexemes, Arena* restrict scratch)
             lexeme_add(lexemes, &n, line.value[pos], T_PLUS, scratch);
             continue;
         }
+        case MINUS: {
+            if (pos + 1 < line.length &&
+                    (is_whitespace(line.value[pos + 1]) || line.value[pos + 1] == MINUS || line.value[pos + 1] == C_PARAN)) {
+                lexeme_add(lexemes, &n, line.value[pos], T_MINUS, scratch);
+                continue;
+            }
+            else
+                goto lex_default;
+        }
         case MOD: {
             lexeme_add(lexemes, &n, line.value[pos], T_MOD, scratch);
             continue;
@@ -390,12 +393,12 @@ void lex(Str line, Lexemes* lexemes, Arena* restrict scratch)
         lexemes->strs[n].length = lex_buf_pos + 1;
         lexemes->strs[n].value = arena_malloc(scratch, lexemes->strs[n].length, char);
         memcpy(lexemes->strs[n].value, lex_buf, lex_buf_pos);
-        lexemes->ops[n] = t == T_NONE ? tok_get(lexemes->strs[n]) : t;
+        lexemes->ops[n] = cur_tok == T_NONE ? tok_get(lexemes->strs[n]) : cur_tok;
         ++n;
 
         lex_buf[0] = '\0';
         lex_buf_pos = 0;
-        t = T_NONE;
+        cur_tok = T_NONE;
     }
 
     lexemes->count = n;

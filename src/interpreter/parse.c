@@ -28,6 +28,7 @@ enum Parser_State: size_t {
     IN_SINGLE_QUOTES =           1 << 0,
     IN_DOUBLE_QUOTES =           1 << 1,
     IN_BACKTICK_QUOTES =         1 << 2,
+    IN_FOR_C_STYLE =             1 << 3,
 };
 // clang-format on
 
@@ -111,16 +112,11 @@ static int stmt_next(Parser_Data* restrict data, enum Logic_Type type)
     }
 
     switch (type) {
-    case LT_NORMAL:
-    case LT_IF_CONDITIONS:
-    case LT_IF:
-    case LT_ELIF:
-    case LT_WHILE_CONDITIONS:
-    case LT_WHILE:
-        goto right;
     case LT_ELIF_CONDITIONS:
     case LT_ELSE:
         goto left;
+    default:
+        goto right;
     }
 
     unreachable();
@@ -143,7 +139,7 @@ left:
     return EXIT_SUCCESS;
 }
 
-static void cmd_stmt_next(Parser_Data* data, enum Logic_Type type)
+static void cmd_stmt_next(Parser_Data* restrict data, enum Logic_Type type)
 {
     data->cur_cmds->count = data->cur_cmds->pos == 0 ? 1 : data->cur_cmds->pos; // update last commands count
 
@@ -226,7 +222,7 @@ static bool is_end_of_stmt(enum Token op)
 static Parser_Internal parse_token(Parser_Data* restrict data, Lexemes* restrict lexemes, size_t* restrict i);
 
 [[nodiscard]]
-static Parser_Internal parse_cmds(Parser_Data* data, size_t* restrict n)
+static Parser_Internal parse_cmds(Parser_Data* restrict data, size_t* restrict n)
 {
     Parser_Internal rv;
 
@@ -244,7 +240,7 @@ static Parser_Internal parse_cmds(Parser_Data* data, size_t* restrict n)
 }
 
 [[nodiscard]]
-static Parser_Internal parse_conditions(Parser_Data* data, size_t* restrict n, enum Logic_Type type)
+static Parser_Internal parse_conditions(Parser_Data* restrict data, size_t* restrict n, enum Logic_Type type)
 {
     if (!consume(data->lexemes, n, T_O_BRACK)) {
         return (Parser_Internal){.parser_errno = PE_MISSING_TOK, .msg = "missing condition start '['."};
@@ -284,7 +280,7 @@ static Parser_Internal parse_conditions(Parser_Data* data, size_t* restrict n, e
     return (Parser_Internal){};
 }
 
-static Parser_Internal parse_if_statements(Parser_Data* restrict data, size_t* restrict n)
+static Parser_Internal parse_if_stmts(Parser_Data* restrict data, size_t* restrict n)
 {
     debug("processing if statements");
     Parser_Internal rv = parse_cmds(data, n);
@@ -297,7 +293,7 @@ static Parser_Internal parse_if_statements(Parser_Data* restrict data, size_t* r
     return rv;
 }
 
-static Parser_Internal parse_else_statements(Parser_Data* restrict data, size_t* restrict n)
+static Parser_Internal parse_else_stmts(Parser_Data* restrict data, size_t* restrict n)
 {
     debug("processing else");
 
@@ -315,7 +311,7 @@ static Parser_Internal parse_else_statements(Parser_Data* restrict data, size_t*
     return rv;
 }
 
-static Parser_Internal parse_elif_statements(Parser_Data* restrict data, size_t* restrict n)
+static Parser_Internal parse_elif_stmts(Parser_Data* restrict data, size_t* restrict n)
 {
     debug("processing elif");
 
@@ -346,7 +342,7 @@ static Parser_Internal parse_elif_statements(Parser_Data* restrict data, size_t*
 
     if (peek(data->lexemes, *n) == T_ELIF) {
         debug("found another elif to process");
-        rv = parse_elif_statements(data, n);
+        rv = parse_elif_stmts(data, n);
         if (rv.parser_errno)
             return rv;
     }
@@ -355,7 +351,7 @@ static Parser_Internal parse_elif_statements(Parser_Data* restrict data, size_t*
 }
 
 [[nodiscard]]
-static Parser_Internal parse_if(Parser_Data* data, size_t* restrict n)
+static Parser_Internal parse_if(Parser_Data* restrict data, size_t* restrict n)
 {
     debug("processing if");
 
@@ -371,7 +367,7 @@ static Parser_Internal parse_if(Parser_Data* data, size_t* restrict n)
         return (Parser_Internal){.parser_errno = PE_MISSING_TOK, .msg = "missing 'then' after a condition."};
     }
 
-    rv = parse_if_statements(data, n);
+    rv = parse_if_stmts(data, n);
     if (rv.parser_errno) {
         Str* expanded_msg = estrcat(&Str_Get(rv.msg), &Str_Lit(" Couldn't process if statements."), data->s);
         rv.msg = expanded_msg && expanded_msg->value ? expanded_msg->value : rv.msg;
@@ -395,17 +391,17 @@ static Parser_Internal parse_if(Parser_Data* data, size_t* restrict n)
 
     if (peeked == T_ELSE) {
         data->stmts->type = ST_IF_ELSE;
-        rv = parse_else_statements(data, n);
+        rv = parse_else_stmts(data, n);
     }
     else if (peeked == T_ELIF) {
-        rv = parse_elif_statements(data, n);
+        rv = parse_elif_stmts(data, n);
         if (rv.parser_errno)
             return rv;
 
         peeked = peek(data->lexemes, *n);
         if (peeked == T_ELSE) {
             data->stmts->type = ST_IF_ELIF_ELSE;
-            rv = parse_else_statements(data, n);
+            rv = parse_else_stmts(data, n);
         }
         else {
             data->stmts->type = ST_IF_ELIF;
@@ -423,7 +419,7 @@ static Parser_Internal parse_if(Parser_Data* data, size_t* restrict n)
 }
 
 [[nodiscard]]
-static Parser_Internal parse_while_statements(Parser_Data* restrict data, size_t* restrict n)
+static Parser_Internal parse_while_stmts(Parser_Data* restrict data, size_t* restrict n)
 {
     debug("processing while statements");
     Parser_Internal rv = parse_cmds(data, n);
@@ -437,7 +433,7 @@ static Parser_Internal parse_while_statements(Parser_Data* restrict data, size_t
 }
 
 [[nodiscard]]
-static Parser_Internal parse_while(Parser_Data* data, size_t* restrict n)
+static Parser_Internal parse_while(Parser_Data* restrict data, size_t* restrict n)
 {
     if (data->cur_cmds->pos > 0) {
         cmd_stmt_next(data, LT_NORMAL);
@@ -458,7 +454,7 @@ static Parser_Internal parse_while(Parser_Data* data, size_t* restrict n)
     consume(data->lexemes, n, T_DO);
 
     do {
-        rv = parse_while_statements(data, n);
+        rv = parse_while_stmts(data, n);
         if (rv.parser_errno) {
             Str* expanded_msg = estrcat(&Str_Get(rv.msg), &Str_Lit(" Failed parsing while statements."), data->s);
             rv.msg = expanded_msg && expanded_msg->value ? expanded_msg->value : rv.msg;
@@ -466,16 +462,176 @@ static Parser_Internal parse_while(Parser_Data* data, size_t* restrict n)
         }
     } while (*n < data->lexemes->count && peek(data->lexemes, *n) != T_DONE);
 
+    consume(data->lexemes, n, T_SEMIC);
+
     data_cmd_update(data, Str_Lit("JUMP"), OP_JUMP);
     cmd_stmt_next(data, LT_WHILE_CONDITIONS);
     data->cur_stmt = conds;
     cmd_stmt_next(data, LT_WHILE_CONDITIONS);
 
-    if (!consume(data->lexemes, n, T_DONE)) {
-        return (Parser_Internal){.parser_errno = PE_MISSING_TOK, .msg = "missing 'done', no closing 'done' for while loop."};
-    }
+    if (!consume(data->lexemes, n, T_DONE))
+        return (Parser_Internal){.parser_errno = PE_MISSING_TOK, .msg = "missing 'done', no closing 'done' in while loop."};
 
     return (Parser_Internal){};
+}
+
+[[nodiscard]]
+static Parser_Internal parse_for_stmts(Parser_Data* restrict data, size_t* restrict n, enum Logic_Type lt)
+{
+    debug("processing for statements");
+    Parser_Internal rv;
+    do {
+        rv = parse_token(data, data->lexemes, n);
+        if (rv.parser_errno)
+            return rv;
+    } while (data->lexemes->ops[++*n] != T_SEMIC && *n < data->lexemes->count - 1 && data->lexemes->ops[*n] != T_C_PARAN);
+
+    if (rv.parser_errno)
+        return rv;
+
+    consume(data->lexemes, n, T_SEMIC);
+
+    cmd_stmt_next(data, lt);
+    return rv;
+}
+
+[[nodiscard]]
+static Parser_Internal parse_for_increment(Parser_Data* restrict data, size_t* restrict n)
+{
+    debug("processing for statements");
+    Parser_Internal rv;
+    do {
+        rv = parse_token(data, data->lexemes, n);
+        if (rv.parser_errno)
+            return rv;
+    } while (data->lexemes->ops[++*n] != T_SEMIC && *n < data->lexemes->count - 1 && data->lexemes->ops[*n] != T_C_PARAN);
+
+    if (rv.parser_errno)
+        return rv;
+
+    consume(data->lexemes, n, T_SEMIC);
+
+    data->cur_cmds->count = data->cur_cmds->pos == 0 ? 1 : data->cur_cmds->pos; // update last commands count
+
+    data->cur_stmt->type = LT_FOR_INCREMENT;
+    data->for_data->increment = data->cur_stmt;
+    data->cur_stmt = stmt_alloc(data->s);
+
+    data->cur_cmds = data->cur_stmt->commands;
+    return rv;
+}
+
+// for ((i = 1; i <= 5; i++)); do echo $i done
+[[nodiscard]]
+static Parser_Internal parse_for_c_style(Parser_Data* restrict data, size_t* restrict n)
+{
+    data->for_data = arena_malloc(data->s, 1, For_Data);
+
+    consume(data->lexemes, n, T_O_PARAN);
+    consume(data->lexemes, n, T_O_PARAN);
+
+    Parser_Internal rv = parse_for_stmts(data, n, LT_FOR_INIT);
+    if (rv.parser_errno)
+        return rv;
+
+    parser_state |= IN_FOR_C_STYLE;
+    rv = parse_for_stmts(data, n, LT_FOR_CONDITIONS);
+    if (rv.parser_errno)
+        return rv;
+
+    assert(data->prev_stmt->type == LT_FOR_CONDITIONS);
+    Statement* conds = data->prev_stmt;
+
+    rv = parse_for_increment(data, n);
+    if (rv.parser_errno)
+        return rv;
+
+    parser_state &= ~IN_FOR_C_STYLE;
+
+    consume(data->lexemes, n, T_C_PARAN);
+    consume(data->lexemes, n, T_C_PARAN);
+    consume(data->lexemes, n, T_SEMIC);
+    consume(data->lexemes, n, T_DO);
+
+    do {
+        rv = parse_token(data, data->lexemes, n);
+        if (rv.parser_errno)
+            return rv;
+    } while (data->lexemes->ops[*n] != T_SEMIC &&
+            data->lexemes->ops[++*n] != T_DONE && *n < data->lexemes->count - 1);
+    cmd_stmt_next(data, LT_FOR);
+
+    consume(data->lexemes, n, T_SEMIC);
+
+    // set increment after the LT_FOR commands
+    data->cur_stmt = data->for_data->increment;
+    cmd_stmt_next(data, LT_FOR_INCREMENT);
+
+    // then set to jump back to conditions, skipping init
+    data_cmd_update(data, Str_Lit("JUMP"), OP_JUMP);
+    cmd_stmt_next(data, LT_FOR_CONDITIONS);
+    data->cur_stmt = conds;
+    cmd_stmt_next(data, LT_FOR_CONDITIONS);
+
+    if (!consume(data->lexemes, n, T_DONE))
+        return (Parser_Internal){.parser_errno = PE_MISSING_TOK, .msg = "missing 'done', no closing 'done' in for loop."};
+
+    return (Parser_Internal){};
+}
+
+// for fruit in apple banana orange; do echo $fruit done
+// for file in *; do echo $file done
+[[nodiscard]]
+static Parser_Internal parse_for_each(Parser_Data* restrict data, size_t* restrict n)
+{
+    data_cmd_update(data, data->lexemes->strs[*n], OP_VARIABLE);
+    ++*n;
+    Statement* init = data->cur_stmt;
+
+    if (!consume(data->lexemes, n, T_IN))
+        return (Parser_Internal){.parser_errno = PE_MISSING_TOK, .msg = "missing 'in', no joining 'in' in for loop."};
+
+    Parser_Internal rv = parse_for_stmts(data, n, LT_FOR_EACH_INIT);
+    if (rv.parser_errno)
+        return rv;
+
+    consume(data->lexemes, n, T_DO);
+
+    rv = parse_for_stmts(data, n, LT_FOR);
+    if (rv.parser_errno)
+        return rv;
+
+    consume(data->lexemes, n, T_SEMIC);
+
+    data_cmd_update(data, Str_Lit("JUMP"), OP_JUMP);
+    cmd_stmt_next(data, LT_FOR_EACH_INIT);
+    data->cur_stmt = init;
+    cmd_stmt_next(data, LT_FOR_EACH_INIT);
+
+    consume(data->lexemes, n, T_DONE);
+
+    return (Parser_Internal){};
+}
+
+[[nodiscard]]
+static Parser_Internal parse_for(Parser_Data* restrict data, size_t* restrict n)
+{
+    if (data->cur_cmds->pos > 0) {
+        cmd_stmt_next(data, LT_NORMAL);
+    }
+    consume(data->lexemes, n, T_FOR);
+
+    Parser_Internal rv;
+    if (peek(data->lexemes, *n) == T_O_PARAN) {
+        data->stmts->type = ST_FOR;
+        rv = parse_for_c_style(data, n);
+    }
+    else {
+        data->stmts->type = ST_FOR_EACH;
+        rv = parse_for_each(data, n);
+    }
+
+    return rv;
 }
 
 static Parser_Internal parse_pipe(Parser_Data* restrict data, Lexemes* restrict lexemes, size_t* restrict i)
@@ -559,14 +715,27 @@ static Parser_Internal parse_amp(Parser_Data* restrict data, Lexemes* restrict l
 
 static Parser_Internal parse_gt(Parser_Data* restrict data, Lexemes* restrict lexemes, size_t* restrict i)
 {
-    size_t start_i = *i;
-    if (peek(lexemes, *i + 1) == T_GT) {
+    enum Token peeked = peek(lexemes, *i + 1);
+    if (peeked == T_EQ) {
+        consume(lexemes, i, T_GT);
+        data->cur_cmds->op = OP_GE;
+        data_cmd_update(data, Str_Lit(">="), OP_GE);
+        return (Parser_Internal){};
+    }
+    if (parser_state & IN_FOR_C_STYLE) {
+        data->cur_cmds->op = OP_GT;
+        data_cmd_update(data, Str_Lit(">"), OP_GT);
+        return (Parser_Internal){};
+    }
+
+    if (peeked == T_GT) {
         data->stmts->redirect_type = RT_OUT_APPEND;
         ++*i;
     } else {
         data->stmts->redirect_type = RT_OUT;
     }
 
+    size_t start_i = *i;
     if (!start_i) {
         char* msg = data->stmts->redirect_type == RT_OUT
                 ? INVALID_SYNTAX_STDOUT_REDIR_FIRST_ARG
@@ -587,8 +756,21 @@ static Parser_Internal parse_gt(Parser_Data* restrict data, Lexemes* restrict le
 
 static Parser_Internal parse_lt(Parser_Data* restrict data, Lexemes* restrict lexemes, size_t* restrict i)
 {
+    enum Token peeked = peek(lexemes, *i + 1);
+    if (peeked == T_EQ) {
+        consume(lexemes, i, T_LT);
+        data->cur_cmds->op = OP_LE;
+        data_cmd_update(data, Str_Lit("<="), OP_LE);
+        return (Parser_Internal){};
+    }
+    if (parser_state & IN_FOR_C_STYLE) {
+        data->cur_cmds->op = OP_LT;
+        data_cmd_update(data, Str_Lit("<"), OP_LT);
+        return (Parser_Internal){};
+    }
+
     size_t start_i = *i;
-    if (peek(lexemes, *i + 1) == T_LT) {
+    if (peeked == T_LT) {
         // TODO: switch this to the "here document operator", there is not actually stdin append
         data->stmts->redirect_type = RT_IN_APPEND;
         ++*i;
@@ -767,50 +949,75 @@ static Parser_Internal parse_token(Parser_Data* restrict data, Lexemes* restrict
         return (Parser_Internal){};
     }
 
+    case T_FOR: {
+        if (is_in_quotes())
+            goto quoted;
+
+        Parser_Internal rv = parse_for(data, i);
+        if (rv.parser_errno)
+            return rv;
+
+        return (Parser_Internal){};
+    }
+    case T_IN: {
+        if (is_in_quotes())
+            goto quoted;
+
+        data_cmd_update(data, lexemes->strs[*i], OP_IN);
+        return (Parser_Internal){};
+    }
+
     case T_EQ_A: {
         if (is_in_quotes())
             goto quoted;
 
-        data_cmd_update(data, lexemes->strs[*i], OP_EQUALS);
-        data->cur_cmds->prev_op = OP_EQUALS;
+        data_cmd_update(data, lexemes->strs[*i], OP_EQ_A);
+        data->cur_cmds->prev_op = OP_EQ_A;
         return (Parser_Internal){};
     }
     case T_LT_A: {
         if (is_in_quotes())
             goto quoted;
 
-        data_cmd_update(data, lexemes->strs[*i], OP_LESS_THAN);
-        data->cur_cmds->prev_op = OP_LESS_THAN;
+        data_cmd_update(data, lexemes->strs[*i], OP_LT_A);
+        data->cur_cmds->prev_op = OP_LT_A;
         return (Parser_Internal){};
     }
     case T_LE_A: {
         if (is_in_quotes())
             goto quoted;
 
-        data_cmd_update(data, lexemes->strs[*i], OP_LESS_THAN_OR_EQUALS);
-        data->cur_cmds->prev_op = OP_LESS_THAN_OR_EQUALS;
+        data_cmd_update(data, lexemes->strs[*i], OP_LE_A);
+        data->cur_cmds->prev_op = OP_LE_A;
         return (Parser_Internal){};
     }
     case T_GT_A: {
         if (is_in_quotes())
             goto quoted;
 
-        data_cmd_update(data, lexemes->strs[*i], OP_GREATER_THAN);
-        data->cur_cmds->prev_op = OP_GREATER_THAN;
+        data_cmd_update(data, lexemes->strs[*i], OP_GT_A);
+        data->cur_cmds->prev_op = OP_GT_A;
         return (Parser_Internal){};
     }
     case T_GE_A: {
         if (is_in_quotes())
             goto quoted;
 
-        data_cmd_update(data, lexemes->strs[*i], OP_GREATER_THAN_OR_EQUALS);
-        data->cur_cmds->prev_op = OP_GREATER_THAN_OR_EQUALS;
+        data_cmd_update(data, lexemes->strs[*i], OP_GE_A);
+        data->cur_cmds->prev_op = OP_GE_A;
         return (Parser_Internal){};
     }
 
     case T_PLUS: {
         if (is_in_quotes())
             goto quoted;
+
+        if (peek(lexemes, *i + 1) == T_PLUS) {
+            ++*i;
+            data->cur_cmds->op = OP_INCREMENT;
+            data_cmd_update(data, Str_Lit("++"), OP_INCREMENT);
+            return (Parser_Internal){};
+        }
 
         data_cmd_update(data, lexemes->strs[*i], OP_ADD);
         data->cur_cmds->prev_op = OP_ADD;
@@ -819,6 +1026,13 @@ static Parser_Internal parse_token(Parser_Data* restrict data, Lexemes* restrict
     case T_MINUS: {
         if (is_in_quotes())
             goto quoted;
+
+        if (peek(lexemes, *i + 1) == T_MINUS) {
+            ++*i;
+            data->cur_cmds->op = OP_DECREMENT;
+            data_cmd_update(data, Str_Lit("--"), OP_DECREMENT);
+            return (Parser_Internal){};
+        }
 
         data_cmd_update(data, lexemes->strs[*i], OP_SUB);
         data->cur_cmds->prev_op = OP_SUB;
@@ -862,6 +1076,9 @@ static Parser_Internal parse_token(Parser_Data* restrict data, Lexemes* restrict
         data_cmd_update(data, lexemes->strs[*i], OP_MATH_EXPR_END);
         return (Parser_Internal){};
     }
+    case T_SEMIC: {
+        return (Parser_Internal){};
+    }
 
     default: {
     quoted:
@@ -871,6 +1088,11 @@ static Parser_Internal parse_token(Parser_Data* restrict data, Lexemes* restrict
         }
         break;
     }
+    }
+
+    if (const_op == OP_CONST && parser_state & IN_FOR_C_STYLE) {
+        data_cmd_update(data, lexemes->strs[*i], OP_VARIABLE);
+        return (Parser_Internal){};
     }
 
     data_cmd_update(data, lexemes->strs[*i], const_op);

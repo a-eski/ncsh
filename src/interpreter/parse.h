@@ -31,11 +31,16 @@ enum Ops : uint8_t {
     OP_MATH_EXPR_START,                       // $( or $((
     OP_MATH_EXPR_END,                         // ) or ))
     // Equality comparisons
-    OP_EQUALS,                                // -eq
-    OP_LESS_THAN,                             // -lt
-    OP_LESS_THAN_OR_EQUALS,                   // -le
-    OP_GREATER_THAN,                          // -gt
-    OP_GREATER_THAN_OR_EQUALS,                // -ge
+    // OP_EQ,
+    OP_LT,                                    // <
+    OP_LE,                                    // <=
+    OP_GT,                                    // >
+    OP_GE,                                    // >=
+    OP_EQ_A,                                  // -eq
+    OP_LT_A,                                  // -lt
+    OP_LE_A,                                  // -le
+    OP_GT_A,                                  // -gt
+    OP_GE_A,                                  // -ge
     // Expansions
     OP_VARIABLE,                              // (starting with $, $VAR)
     OP_ASSIGNMENT,                            // (var=val)
@@ -59,7 +64,11 @@ enum Ops : uint8_t {
     OP_WHILE,                                 // while
     OP_FOR,                                   // for
     OP_DO,                                    // do
-    OP_DONE                                   // done
+    OP_DONE,                                  // done
+    OP_IN,                                    // in
+
+    OP_INCREMENT,                             // ++
+    OP_DECREMENT,                             // --
 };
 
 enum Redirect_Type : uint8_t {
@@ -97,7 +106,12 @@ enum Logic_Type {
     LT_ELIF_CONDITIONS,
     LT_ELIF,
     LT_WHILE,
-    LT_WHILE_CONDITIONS
+    LT_WHILE_CONDITIONS,
+    LT_FOR,
+    LT_FOR_INIT,
+    LT_FOR_EACH_INIT,
+    LT_FOR_CONDITIONS,
+    LT_FOR_INCREMENT,
 };
 
 typedef struct Statement Statement;
@@ -116,7 +130,8 @@ enum Statements_Type {
     ST_IF_ELIF,
     ST_IF_ELIF_ELSE,
     ST_WHILE,
-    ST_FOR
+    ST_FOR,
+    ST_FOR_EACH,
 };
 
 typedef struct {
@@ -130,11 +145,16 @@ typedef struct {
 } Statements;
 
 typedef struct {
+    Statement* increment;
+} For_Data;
+
+typedef struct {
     Lexemes* restrict lexemes;
     Statements* restrict stmts;
     Statement* restrict cur_stmt;
     Statement* restrict prev_stmt;
     Commands* restrict cur_cmds;
+    For_Data* restrict for_data;
     Arena* restrict s;
     Str_Builder* restrict sb;
 } Parser_Data;

@@ -2,6 +2,7 @@
 
 #include "../lib/arena_test_helper.h"
 #include "../lib/shell_test_helper.h"
+#include "../lib/test_defines.h"
 #include "vm_test_helper.h"
 #include "../etest.h"
 #include "../../src/env.h"
@@ -149,6 +150,37 @@ void expand_glob_question_test()
     ARENA_TEST_TEARDOWN;
 }
 
+void expand_glob_multiple_test()
+{
+    ARENA_TEST_SETUP;
+    SCRATCH_ARENA_TEST_SETUP;
+
+    Shell shell = {0};
+    shell_init(&shell, &a, envp_ptr);
+
+    auto line = Str_Lit("ls src/*.c src/*.h");
+
+    Lexemes lexemes = {0};
+    lex(line, &lexemes, &s);
+    auto rv = parse(&lexemes, &s);
+    Vm_Data vm;
+    vm_setup(&vm, rv, &s);
+    vm.sh = &shell;
+    vm.cmds = vm.next_cmds;
+
+    expand(&vm, &s);
+
+    auto cmds = rv.output.stmts->head->commands;
+    eassert(cmds->count >= 18);
+
+    eassert(!memcmp(cmds->strs[0].value, LS.value, LS.length - 1));
+    eassert(cmds->strs[0].length == LS.length);
+    eassert(cmds->ops[0] == OP_CONST);
+
+    SCRATCH_ARENA_TEST_TEARDOWN;
+    ARENA_TEST_TEARDOWN;
+}
+
 void expand_var_test()
 {
     ARENA_TEST_SETUP;
@@ -278,6 +310,7 @@ void expansion_tests()
     etest_run(expand_home_suffix_test);
     etest_run(expand_glob_star_test);
     etest_run(expand_glob_question_test);
+    etest_run(expand_glob_multiple_test);
     etest_run(expand_var_test);
     // etest_run(expand_var_path_test);
     // etest_run(expand_var_home_test);

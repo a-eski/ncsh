@@ -6,24 +6,9 @@
 #include "../../src/interpreter/lex.h"
 #include "../../src/interpreter/parse.h"
 #include "../lib/arena_test_helper.h"
-
-#define LS Str_Lit("ls")
-#define SORT Str_Lit("sort")
-#define DASH_L Str_Lit("-l")
-#define JOB Str_Lit("longrunningprogram")
-#define FILE Str_Lit("text.txt")
-#define ECHO Str_Lit("echo")
-#define SLEEP Str_Lit("sleep")
-#define STR Str_Lit("STR")
+#include "../lib/test_defines.h"
 
 static char** envp_ptr;
-
-[[maybe_unused]]
-void cmds_print(Commands* cmds)
-{
-    for (size_t i = 0; i < cmds->count; ++i)
-        printf("%s\n", cmds->strs[i].value);
-}
 
 /* tests start */
 void parse_ls_test()
@@ -1211,7 +1196,7 @@ void parse_if_test()
 
     eassert(!memcmp(cmds->strs[1].value, "-eq", 3));
     eassert(cmds->strs[1].length == 4);
-    eassert(cmds->ops[1] == OP_EQUALS);
+    eassert(cmds->ops[1] == OP_EQ_A);
 
     eassert(!memcmp(cmds->strs[2].value, "1", 1));
     eassert(cmds->strs[2].length == 2);
@@ -1274,7 +1259,7 @@ void parse_if_eq_test()
 
     eassert(!memcmp(cmds->strs[1].value, "-eq", 3));
     eassert(cmds->strs[1].length == 4);
-    eassert(cmds->ops[1] == OP_EQUALS);
+    eassert(cmds->ops[1] == OP_EQ_A);
 
     eassert(!memcmp(cmds->strs[2].value, "3", 1));
     eassert(cmds->strs[2].length == 2);
@@ -1338,7 +1323,7 @@ void parse_if_variable_test()
 
     eassert(!memcmp(cmds->strs[1].value, "-eq", 3));
     eassert(cmds->strs[1].length == 4);
-    eassert(cmds->ops[1] == OP_EQUALS);
+    eassert(cmds->ops[1] == OP_EQ_A);
 
     eassert(!memcmp(cmds->strs[2].value, "1", 1));
     eassert(cmds->strs[2].length == 2);
@@ -1465,7 +1450,7 @@ void parse_if_else_test()
 
     eassert(!memcmp(cmds->strs[1].value, "-eq", 3));
     eassert(cmds->strs[1].length == 4);
-    eassert(cmds->ops[1] == OP_EQUALS);
+    eassert(cmds->ops[1] == OP_EQ_A);
 
     eassert(!memcmp(cmds->strs[2].value, "1", 1));
     eassert(cmds->strs[2].length == 2);
@@ -1554,7 +1539,7 @@ void parse_if_elif_test()
 
     eassert(!memcmp(cmds->strs[1].value, "-eq", 3));
     eassert(cmds->strs[1].length == 4);
-    eassert(cmds->ops[1] == OP_EQUALS);
+    eassert(cmds->ops[1] == OP_EQ_A);
 
     eassert(!memcmp(cmds->strs[2].value, "1", 1));
     eassert(cmds->strs[2].length == 2);
@@ -1657,7 +1642,7 @@ void parse_if_elif_else_test()
 
     eassert(!memcmp(cmds->strs[1].value, "-eq", 3));
     eassert(cmds->strs[1].length == 4);
-    eassert(cmds->ops[1] == OP_EQUALS);
+    eassert(cmds->ops[1] == OP_EQ_A);
 
     eassert(!memcmp(cmds->strs[2].value, "1", 1));
     eassert(cmds->strs[2].length == 2);
@@ -1698,7 +1683,7 @@ void parse_if_elif_else_test()
 
     eassert(!memcmp(cmds->strs[1].value, "-eq", 3));
     eassert(cmds->strs[1].length == 4);
-    eassert(cmds->ops[1] == OP_EQUALS);
+    eassert(cmds->ops[1] == OP_EQ_A);
 
     eassert(!memcmp(cmds->strs[2].value, "1", 1));
     eassert(cmds->strs[2].length == 2);
@@ -1821,7 +1806,7 @@ void parse_if_elif_multiple_else_test()
 
     eassert(!memcmp(cmds->strs[1].value, "-eq", 3));
     eassert(cmds->strs[1].length == 4);
-    eassert(cmds->ops[1] == OP_EQUALS);
+    eassert(cmds->ops[1] == OP_EQ_A);
 
     eassert(!memcmp(cmds->strs[2].value, "3", 1));
     eassert(cmds->strs[2].length == 2);
@@ -1862,7 +1847,7 @@ void parse_if_elif_multiple_else_test()
 
     eassert(!memcmp(cmds->strs[1].value, "-eq", 3));
     eassert(cmds->strs[1].length == 4);
-    eassert(cmds->ops[1] == OP_EQUALS);
+    eassert(cmds->ops[1] == OP_EQ_A);
 
     eassert(!memcmp(cmds->strs[2].value, "1", 1));
     eassert(cmds->strs[2].length == 2);
@@ -2057,7 +2042,7 @@ void parse_while_test()
     eassert(cmds->strs[p].length == 6);
     eassert(cmds->ops[p++] == OP_VARIABLE);
 
-    eassert(cmds->ops[p++] == OP_LESS_THAN);
+    eassert(cmds->ops[p++] == OP_LT_A);
 
     eassert(!memcmp(cmds->strs[p].value, "3", 1));
     eassert(cmds->strs[p].length == 2);
@@ -2144,6 +2129,758 @@ void parse_while_test()
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
+void parse_for_test()
+{
+    SCRATCH_ARENA_TEST_SETUP;
+
+    auto line = Str_Lit("for ((i = 1; i <= 5; i++)); do echo $i done");
+
+    Lexemes lexemes = {0};
+    lex(line, &lexemes, &scratch_arena);
+    auto res = parse(&lexemes, &scratch_arena);
+
+    if (res.parser_errno) {
+        printf("%s\n", res.output.msg);
+    }
+    eassert(!res.parser_errno);
+    eassert(res.output.stmts);
+    auto stmts = res.output.stmts;
+    eassert(stmts->type == ST_FOR);
+    eassert(!stmts->is_bg_job);
+    eassert(stmts->pipes_count == 1);
+    eassert(stmts->redirect_type == RT_NONE);
+    eassert(stmts->head);
+    eassert(stmts->head->commands);
+    auto stmt = stmts->head;
+    auto cmds = stmt->commands;
+    size_t p = 0;
+    eassert(stmt->type == LT_FOR_INIT);
+    eassert(cmds->count == 3);
+    eassert(cmds->op == OP_ASSIGNMENT);
+
+    eassert(!memcmp(cmds->strs[p].value, "i", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_CONST);
+
+    eassert(!memcmp(cmds->strs[p].value, "=", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_ASSIGNMENT);
+
+    eassert(!memcmp(cmds->strs[p].value, "1", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_NUM);
+
+    stmt = stmt->right;
+    cmds = stmt->commands;
+    p = 0;
+    eassert(stmt->type == LT_FOR_CONDITIONS);
+    eassert(cmds->count == 3);
+    eassert(cmds->op == OP_LE);
+
+    eassert(!memcmp(cmds->strs[p].value, "i", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_VARIABLE);
+
+    eassert(!memcmp(cmds->strs[p].value, "<=", 2));
+    eassert(cmds->strs[p].length == 3);
+    eassert(cmds->ops[p++] == OP_LE);
+
+    eassert(!memcmp(cmds->strs[p].value, "5", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_NUM);
+
+    eassert(!cmds->strs[p].value);
+    eassert(!cmds->next);
+
+    stmt = stmt->right;
+    cmds = stmt->commands;
+    p = 0;
+    eassert(stmt->type == LT_FOR);
+    eassert(cmds->count == 2);
+
+    eassert(!memcmp(cmds->strs[p].value, "echo", 4));
+    eassert(cmds->strs[p].length == 5);
+    eassert(cmds->ops[p++] == OP_CONST);
+
+    eassert(!memcmp(cmds->strs[p].value, "i", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_VARIABLE);
+
+    // set the increment/decrement after LT_FOR commands
+    stmt = stmt->right;
+    cmds = stmt->commands;
+    p = 0;
+    eassert(stmt->type == LT_FOR_INCREMENT);
+    eassert(cmds->count == 2);
+    eassert(cmds->op == OP_INCREMENT);
+
+    eassert(!memcmp(cmds->strs[p].value, "i", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_VARIABLE);
+
+    eassert(!memcmp(cmds->strs[p].value, "++", 2));
+    eassert(cmds->strs[p].length == 3);
+    eassert(cmds->ops[p++] == OP_INCREMENT);
+
+    // jump op back to conditions
+    stmt = stmt->right;
+    eassert(stmt);
+    eassert(stmt->type == LT_FOR_CONDITIONS);
+    cmds = stmt->commands;
+    eassert(cmds);
+    p = 0;
+
+    eassert(cmds->ops[p] == OP_JUMP);
+
+    stmt = stmt->right;
+    eassert(stmt);
+    eassert(stmt->type == LT_FOR_CONDITIONS);
+    cmds = stmt->commands;
+    eassert(cmds);
+    p = 0;
+
+    eassert(!memcmp(cmds->strs[p].value, "i", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_VARIABLE);
+
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
+void parse_for_ending_semic_test()
+{
+    SCRATCH_ARENA_TEST_SETUP;
+
+    auto line = Str_Lit("for ((i = 1; i <= 5; i++)); do echo $i; done");
+
+    Lexemes lexemes = {0};
+    lex(line, &lexemes, &scratch_arena);
+    auto res = parse(&lexemes, &scratch_arena);
+
+    if (res.parser_errno) {
+        printf("%s\n", res.output.msg);
+    }
+    eassert(!res.parser_errno);
+    eassert(res.output.stmts);
+    auto stmts = res.output.stmts;
+    eassert(stmts->type == ST_FOR);
+    eassert(!stmts->is_bg_job);
+    eassert(stmts->pipes_count == 1);
+    eassert(stmts->redirect_type == RT_NONE);
+    eassert(stmts->head);
+    eassert(stmts->head->commands);
+    auto stmt = stmts->head;
+    auto cmds = stmt->commands;
+    size_t p = 0;
+    eassert(stmt->type == LT_FOR_INIT);
+    eassert(cmds->count == 3);
+    eassert(cmds->op == OP_ASSIGNMENT);
+
+    eassert(!memcmp(cmds->strs[p].value, "i", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_CONST);
+
+    eassert(!memcmp(cmds->strs[p].value, "=", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_ASSIGNMENT);
+
+    eassert(!memcmp(cmds->strs[p].value, "1", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_NUM);
+
+    stmt = stmt->right;
+    cmds = stmt->commands;
+    p = 0;
+    eassert(stmt->type == LT_FOR_CONDITIONS);
+    eassert(cmds->count == 3);
+    eassert(cmds->op == OP_LE);
+
+    eassert(!memcmp(cmds->strs[p].value, "i", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_VARIABLE);
+
+    eassert(!memcmp(cmds->strs[p].value, "<=", 2));
+    eassert(cmds->strs[p].length == 3);
+    eassert(cmds->ops[p++] == OP_LE);
+
+    eassert(!memcmp(cmds->strs[p].value, "5", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_NUM);
+
+    eassert(!cmds->strs[p].value);
+    eassert(!cmds->next);
+
+    stmt = stmt->right;
+    cmds = stmt->commands;
+    p = 0;
+    eassert(stmt->type == LT_FOR);
+    eassert(cmds->count == 2);
+
+    eassert(!memcmp(cmds->strs[p].value, "echo", 4));
+    eassert(cmds->strs[p].length == 5);
+    eassert(cmds->ops[p++] == OP_CONST);
+
+    eassert(!memcmp(cmds->strs[p].value, "i", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_VARIABLE);
+
+    // set the increment/decrement after LT_FOR commands
+    stmt = stmt->right;
+    cmds = stmt->commands;
+    p = 0;
+    eassert(stmt->type == LT_FOR_INCREMENT);
+    eassert(cmds->count == 2);
+    eassert(cmds->op == OP_INCREMENT);
+
+    eassert(!memcmp(cmds->strs[p].value, "i", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_VARIABLE);
+
+    eassert(!memcmp(cmds->strs[p].value, "++", 2));
+    eassert(cmds->strs[p].length == 3);
+    eassert(cmds->ops[p++] == OP_INCREMENT);
+
+    // jump op back to conditions
+    stmt = stmt->right;
+    eassert(stmt);
+    eassert(stmt->type == LT_FOR_CONDITIONS);
+    cmds = stmt->commands;
+    eassert(cmds);
+    p = 0;
+
+    eassert(cmds->ops[p] == OP_JUMP);
+
+    stmt = stmt->right;
+    eassert(stmt);
+    eassert(stmt->type == LT_FOR_CONDITIONS);
+    cmds = stmt->commands;
+    eassert(cmds);
+    p = 0;
+
+    eassert(!memcmp(cmds->strs[p].value, "i", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_VARIABLE);
+
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
+void parse_for_lt_test()
+{
+    SCRATCH_ARENA_TEST_SETUP;
+
+    auto line = Str_Lit("for ((i = 1; i < 5; i++)); do echo $i done");
+
+    Lexemes lexemes = {0};
+    lex(line, &lexemes, &scratch_arena);
+    auto res = parse(&lexemes, &scratch_arena);
+
+    if (res.parser_errno) {
+        printf("%s\n", res.output.msg);
+    }
+    eassert(!res.parser_errno);
+    eassert(res.output.stmts);
+    auto stmts = res.output.stmts;
+    eassert(stmts->type == ST_FOR);
+    eassert(!stmts->is_bg_job);
+    eassert(stmts->pipes_count == 1);
+    eassert(stmts->redirect_type == RT_NONE);
+    eassert(stmts->head);
+    eassert(stmts->head->commands);
+    auto stmt = stmts->head;
+    auto cmds = stmt->commands;
+    size_t p = 0;
+    eassert(stmt->type == LT_FOR_INIT);
+    eassert(cmds->count == 3);
+    eassert(cmds->op == OP_ASSIGNMENT);
+
+    eassert(!memcmp(cmds->strs[p].value, "i", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_CONST);
+
+    eassert(!memcmp(cmds->strs[p].value, "=", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_ASSIGNMENT);
+
+    eassert(!memcmp(cmds->strs[p].value, "1", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_NUM);
+
+    stmt = stmt->right;
+    cmds = stmt->commands;
+    p = 0;
+    eassert(stmt->type == LT_FOR_CONDITIONS);
+    eassert(cmds->count == 3);
+    eassert(cmds->op == OP_LT);
+
+    eassert(!memcmp(cmds->strs[p].value, "i", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_VARIABLE);
+
+    eassert(!memcmp(cmds->strs[p].value, "<", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_LT);
+
+    eassert(!memcmp(cmds->strs[p].value, "5", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_NUM);
+
+    eassert(!cmds->strs[p].value);
+    eassert(!cmds->next);
+
+    stmt = stmt->right;
+    cmds = stmt->commands;
+    p = 0;
+    eassert(stmt->type == LT_FOR);
+    eassert(cmds->count == 2);
+
+    eassert(!memcmp(cmds->strs[p].value, "echo", 4));
+    eassert(cmds->strs[p].length == 5);
+    eassert(cmds->ops[p++] == OP_CONST);
+
+    eassert(!memcmp(cmds->strs[p].value, "i", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_VARIABLE);
+
+    // set the increment/decrement after LT_FOR commands
+    stmt = stmt->right;
+    cmds = stmt->commands;
+    p = 0;
+    eassert(stmt->type == LT_FOR_INCREMENT);
+    eassert(cmds->count == 2);
+
+    eassert(!memcmp(cmds->strs[p].value, "i", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_VARIABLE);
+
+    eassert(!memcmp(cmds->strs[p].value, "++", 2));
+    eassert(cmds->strs[p].length == 3);
+    eassert(cmds->ops[p++] == OP_INCREMENT);
+
+    // jump op back to conditions
+    stmt = stmt->right;
+    eassert(stmt);
+    eassert(stmt->type == LT_FOR_CONDITIONS);
+    cmds = stmt->commands;
+    eassert(cmds);
+    p = 0;
+
+    eassert(cmds->ops[p] == OP_JUMP);
+
+    stmt = stmt->right;
+    eassert(stmt);
+    eassert(stmt->type == LT_FOR_CONDITIONS);
+    cmds = stmt->commands;
+    eassert(cmds);
+    p = 0;
+
+    eassert(!memcmp(cmds->strs[p].value, "i", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_VARIABLE);
+
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
+void parse_for_decrement_test()
+{
+    SCRATCH_ARENA_TEST_SETUP;
+
+    auto line = Str_Lit("for ((i = 5; i > 0; i--)); do echo $i done");
+
+    Lexemes lexemes = {0};
+    lex(line, &lexemes, &scratch_arena);
+    auto res = parse(&lexemes, &scratch_arena);
+
+    if (res.parser_errno) {
+        printf("%s\n", res.output.msg);
+    }
+    eassert(!res.parser_errno);
+    eassert(res.output.stmts);
+    auto stmts = res.output.stmts;
+    eassert(stmts->type == ST_FOR);
+    eassert(!stmts->is_bg_job);
+    eassert(stmts->pipes_count == 1);
+    eassert(stmts->redirect_type == RT_NONE);
+    eassert(stmts->head);
+    eassert(stmts->head->commands);
+    auto stmt = stmts->head;
+    auto cmds = stmt->commands;
+    size_t p = 0;
+    eassert(stmt->type == LT_FOR_INIT);
+    eassert(cmds->count == 3);
+    eassert(cmds->op == OP_ASSIGNMENT);
+
+    eassert(!memcmp(cmds->strs[p].value, "i", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_CONST);
+
+    eassert(!memcmp(cmds->strs[p].value, "=", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_ASSIGNMENT);
+
+    eassert(!memcmp(cmds->strs[p].value, "5", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_NUM);
+
+    stmt = stmt->right;
+    cmds = stmt->commands;
+    p = 0;
+    eassert(stmt->type == LT_FOR_CONDITIONS);
+    eassert(cmds->count == 3);
+    eassert(cmds->op == OP_GT);
+
+    eassert(!memcmp(cmds->strs[p].value, "i", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_VARIABLE);
+
+    eassert(!memcmp(cmds->strs[p].value, ">", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_GT);
+
+    eassert(!memcmp(cmds->strs[p].value, "0", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_NUM);
+
+    eassert(!cmds->strs[p].value);
+    eassert(!cmds->next);
+
+    stmt = stmt->right;
+    cmds = stmt->commands;
+    p = 0;
+    eassert(stmt->type == LT_FOR);
+    eassert(cmds->count == 2);
+
+    eassert(!memcmp(cmds->strs[p].value, "echo", 4));
+    eassert(cmds->strs[p].length == 5);
+    eassert(cmds->ops[p++] == OP_CONST);
+
+    eassert(!memcmp(cmds->strs[p].value, "i", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_VARIABLE);
+
+    // set the increment/decrement after LT_FOR commands
+    stmt = stmt->right;
+    cmds = stmt->commands;
+    p = 0;
+    eassert(stmt->type == LT_FOR_INCREMENT);
+    eassert(cmds->count == 2);
+    eassert(cmds->op == OP_DECREMENT);
+
+    eassert(!memcmp(cmds->strs[p].value, "i", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_VARIABLE);
+
+    eassert(!memcmp(cmds->strs[p].value, "--", 2));
+    eassert(cmds->strs[p].length == 3);
+    eassert(cmds->ops[p++] == OP_DECREMENT);
+
+    // jump op back to conditions
+    stmt = stmt->right;
+    eassert(stmt);
+    eassert(stmt->type == LT_FOR_CONDITIONS);
+    cmds = stmt->commands;
+    eassert(cmds);
+    p = 0;
+
+    eassert(cmds->ops[p] == OP_JUMP);
+
+    stmt = stmt->right;
+    eassert(stmt);
+    eassert(stmt->type == LT_FOR_CONDITIONS);
+    cmds = stmt->commands;
+    eassert(cmds);
+    p = 0;
+
+    eassert(!memcmp(cmds->strs[p].value, "i", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_VARIABLE);
+
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
+void parse_for_decrement_ge_test()
+{
+    SCRATCH_ARENA_TEST_SETUP;
+
+    auto line = Str_Lit("for ((i = 5; i >= 0; i--)); do echo $i done");
+
+    Lexemes lexemes = {0};
+    lex(line, &lexemes, &scratch_arena);
+    auto res = parse(&lexemes, &scratch_arena);
+
+    if (res.parser_errno) {
+        printf("%s\n", res.output.msg);
+    }
+    eassert(!res.parser_errno);
+    eassert(res.output.stmts);
+    auto stmts = res.output.stmts;
+    eassert(stmts->type == ST_FOR);
+    eassert(!stmts->is_bg_job);
+    eassert(stmts->pipes_count == 1);
+    eassert(stmts->redirect_type == RT_NONE);
+    eassert(stmts->head);
+    eassert(stmts->head->commands);
+    auto stmt = stmts->head;
+    auto cmds = stmt->commands;
+    size_t p = 0;
+    eassert(stmt->type == LT_FOR_INIT);
+    eassert(cmds->count == 3);
+    eassert(cmds->op == OP_ASSIGNMENT);
+
+    eassert(!memcmp(cmds->strs[p].value, "i", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_CONST);
+
+    eassert(!memcmp(cmds->strs[p].value, "=", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_ASSIGNMENT);
+
+    eassert(!memcmp(cmds->strs[p].value, "5", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_NUM);
+
+    stmt = stmt->right;
+    cmds = stmt->commands;
+    p = 0;
+    eassert(stmt->type == LT_FOR_CONDITIONS);
+    eassert(cmds->count == 3);
+    eassert(cmds->op == OP_GE);
+
+    eassert(!memcmp(cmds->strs[p].value, "i", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_VARIABLE);
+
+    eassert(!memcmp(cmds->strs[p].value, ">=", 2));
+    eassert(cmds->strs[p].length == 3);
+    eassert(cmds->ops[p++] == OP_GE);
+
+    eassert(!memcmp(cmds->strs[p].value, "0", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_NUM);
+
+    eassert(!cmds->strs[p].value);
+    eassert(!cmds->next);
+
+    stmt = stmt->right;
+    cmds = stmt->commands;
+    p = 0;
+    eassert(stmt->type == LT_FOR);
+    eassert(cmds->count == 2);
+
+    eassert(!memcmp(cmds->strs[p].value, "echo", 4));
+    eassert(cmds->strs[p].length == 5);
+    eassert(cmds->ops[p++] == OP_CONST);
+
+    eassert(!memcmp(cmds->strs[p].value, "i", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_VARIABLE);
+
+    // set the increment/decrement after LT_FOR commands
+    stmt = stmt->right;
+    cmds = stmt->commands;
+    p = 0;
+    eassert(stmt->type == LT_FOR_INCREMENT);
+    eassert(cmds->count == 2);
+    eassert(cmds->op == OP_DECREMENT);
+
+    eassert(!memcmp(cmds->strs[p].value, "i", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_VARIABLE);
+
+    eassert(!memcmp(cmds->strs[p].value, "--", 2));
+    eassert(cmds->strs[p].length == 3);
+    eassert(cmds->ops[p++] == OP_DECREMENT);
+
+    // jump op back to conditions
+    stmt = stmt->right;
+    eassert(stmt);
+    eassert(stmt->type == LT_FOR_CONDITIONS);
+    cmds = stmt->commands;
+    eassert(cmds);
+    p = 0;
+
+    eassert(cmds->ops[p] == OP_JUMP);
+
+    stmt = stmt->right;
+    eassert(stmt);
+    eassert(stmt->type == LT_FOR_CONDITIONS);
+    cmds = stmt->commands;
+    eassert(cmds);
+    p = 0;
+
+    eassert(!memcmp(cmds->strs[p].value, "i", 1));
+    eassert(cmds->strs[p].length == 2);
+    eassert(cmds->ops[p++] == OP_VARIABLE);
+
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
+void parse_for_each_test()
+{
+    SCRATCH_ARENA_TEST_SETUP;
+
+    auto line = Str_Lit("for fruit in apple banana orange; do echo $fruit done");
+
+    Lexemes lexemes = {0};
+    lex(line, &lexemes, &scratch_arena);
+    auto res = parse(&lexemes, &scratch_arena);
+
+    if (res.parser_errno) {
+        printf("%s\n", res.output.msg);
+    }
+    eassert(!res.parser_errno);
+    eassert(res.output.stmts);
+    auto stmts = res.output.stmts;
+    eassert(stmts->type == ST_FOR_EACH);
+    eassert(!stmts->is_bg_job);
+    eassert(stmts->pipes_count == 1);
+    eassert(stmts->redirect_type == RT_NONE);
+    eassert(stmts->head);
+    eassert(stmts->head->commands);
+    auto stmt = stmts->head;
+    auto cmds = stmt->commands;
+    size_t p = 0;
+    eassert(stmt->type == LT_FOR_EACH_INIT);
+    eassert(cmds->count == 4);
+
+    eassert(!memcmp(cmds->strs[p].value, "fruit", 5));
+    eassert(cmds->strs[p].length == 6);
+    eassert(cmds->ops[p++] == OP_VARIABLE);
+
+    eassert(!memcmp(cmds->strs[p].value, "apple", 5));
+    eassert(cmds->strs[p].length == 6);
+    eassert(cmds->ops[p++] == OP_CONST);
+
+    eassert(!memcmp(cmds->strs[p].value, "banana", 6));
+    eassert(cmds->strs[p].length == 7);
+    eassert(cmds->ops[p++] == OP_CONST);
+
+    eassert(!memcmp(cmds->strs[p].value, "orange", 6));
+    eassert(cmds->strs[p].length == 7);
+    eassert(cmds->ops[p++] == OP_CONST);
+
+    eassert(!cmds->strs[p].value);
+    eassert(!cmds->next);
+
+    stmt = stmt->right;
+    cmds = stmt->commands;
+    p = 0;
+    eassert(stmt->type == LT_FOR);
+    eassert(cmds->count == 2);
+
+    eassert(!memcmp(cmds->strs[p].value, "echo", 4));
+    eassert(cmds->strs[p].length == 5);
+    eassert(cmds->ops[p++] == OP_CONST);
+
+    eassert(!memcmp(cmds->strs[p].value, "fruit", 5));
+    eassert(cmds->strs[p].length == 6);
+    eassert(cmds->ops[p++] == OP_VARIABLE);
+
+    eassert(!cmds->strs[p].value);
+    eassert(!cmds->next);
+
+    // jump op back to conditions
+    stmt = stmt->right;
+    eassert(stmt);
+    eassert(stmt->type == LT_FOR_EACH_INIT);
+    cmds = stmt->commands;
+    eassert(cmds);
+    p = 0;
+
+    eassert(cmds->ops[p] == OP_JUMP);
+
+    stmt = stmt->right;
+    eassert(stmt);
+    eassert(stmt->type == LT_FOR_EACH_INIT);
+    cmds = stmt->commands;
+    eassert(cmds);
+    p = 0;
+
+    eassert(!memcmp(cmds->strs[p].value, "fruit", 5));
+    eassert(cmds->strs[p].length == 6);
+    eassert(cmds->ops[p++] == OP_VARIABLE);
+
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
+void parse_for_each_expansion_test()
+{
+    SCRATCH_ARENA_TEST_SETUP;
+
+    auto line = Str_Lit("for file in src/*.c; do echo $file done");
+
+    Lexemes lexemes = {0};
+    lex(line, &lexemes, &scratch_arena);
+    auto res = parse(&lexemes, &scratch_arena);
+
+    if (res.parser_errno) {
+        printf("%s\n", res.output.msg);
+    }
+    eassert(!res.parser_errno);
+    eassert(res.output.stmts);
+    auto stmts = res.output.stmts;
+    eassert(stmts->type == ST_FOR_EACH);
+    eassert(!stmts->is_bg_job);
+    eassert(stmts->pipes_count == 1);
+    eassert(stmts->redirect_type == RT_NONE);
+    eassert(stmts->head);
+    eassert(stmts->head->commands);
+    auto stmt = stmts->head;
+    auto cmds = stmt->commands;
+    size_t p = 0;
+    eassert(stmt->type == LT_FOR_EACH_INIT);
+    eassert(cmds->count == 2);
+
+    eassert(!memcmp(cmds->strs[p].value, "file", 4));
+    eassert(cmds->strs[p].length == 5);
+    eassert(cmds->ops[p++] == OP_VARIABLE);
+
+    eassert(!memcmp(cmds->strs[p].value, "src/*.c", 7));
+    eassert(cmds->strs[p].length == 8);
+    eassert(cmds->ops[p++] == OP_GLOB_EXPANSION);
+
+    eassert(!cmds->strs[p].value);
+    eassert(!cmds->next);
+
+    stmt = stmt->right;
+    cmds = stmt->commands;
+    p = 0;
+    eassert(stmt->type == LT_FOR);
+    eassert(cmds->count == 2);
+
+    eassert(!memcmp(cmds->strs[p].value, "echo", 4));
+    eassert(cmds->strs[p].length == 5);
+    eassert(cmds->ops[p++] == OP_CONST);
+
+    eassert(!memcmp(cmds->strs[p].value, "file", 4));
+    eassert(cmds->strs[p].length == 5);
+    eassert(cmds->ops[p++] == OP_VARIABLE);
+
+    eassert(!cmds->strs[p].value);
+    eassert(!cmds->next);
+
+    // jump op back to conditions
+    stmt = stmt->right;
+    eassert(stmt);
+    eassert(stmt->type == LT_FOR_EACH_INIT);
+    cmds = stmt->commands;
+    eassert(cmds);
+    p = 0;
+
+    eassert(cmds->ops[p] == OP_JUMP);
+
+    stmt = stmt->right;
+    eassert(stmt);
+    eassert(stmt->type == LT_FOR_EACH_INIT);
+    cmds = stmt->commands;
+    eassert(cmds);
+    p = 0;
+
+    eassert(!memcmp(cmds->strs[p].value, "file", 4));
+    eassert(cmds->strs[p].length == 5);
+    eassert(cmds->ops[p++] == OP_VARIABLE);
+
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
 void parser_tests()
 {
     // etest_init(true);
@@ -2199,6 +2936,13 @@ void parser_tests()
     etest_run(parse_math_operators_test);
 
     etest_run(parse_while_test);
+    etest_run(parse_for_test);
+    etest_run(parse_for_ending_semic_test);
+    etest_run(parse_for_lt_test);
+    etest_run(parse_for_decrement_test);
+    etest_run(parse_for_decrement_ge_test);
+    etest_run(parse_for_each_test);
+    etest_run(parse_for_each_expansion_test);
 
     etest_finish();
 }

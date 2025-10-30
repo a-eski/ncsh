@@ -4,7 +4,7 @@ CC ?= gcc
 DESTDIR ?= /bin
 RELEASE ?= 1
 
-main_flags = -Wall -Wextra -Werror -pedantic -pedantic-errors -Wsign-conversion -Wformat=2 -Wshadow -Wvla -fstack-protector-strong -fPIC -fPIE -Wundef -Wbad-function-cast -Wcast-align -Wstrict-prototypes -Wnested-externs -Winline -Winline -Wdisabled-optimization -Wunreachable-code -Wchar-subscripts
+main_flags = -Wall -Wextra -Werror -pedantic -pedantic-errors -Wsign-conversion -Wformat=2 -Wshadow -Wvla -fstack-protector-strong -fPIC -fPIE -Wundef -Wbad-function-cast -Wcast-align -Wstrict-prototypes -Wnested-externs -Wdisabled-optimization -Wunreachable-code -Wchar-subscripts
 # -pg
 
 debug_flags = $(main_flags) -D_FORTIFY_SOURCE=3 -fsanitize=address,undefined,leak -g
@@ -12,7 +12,7 @@ debug_flags = $(main_flags) -D_FORTIFY_SOURCE=3 -fsanitize=address,undefined,lea
 
 test_flags =  $(debug_flags)
 
-release_flags = $(main_flags) -flto=6 -O3 -ffast-math -march=native -DNDEBUG
+release_flags = $(main_flags) -flto -O3 -ffast-math -march=native -DNDEBUG
 # release_flags = $(main_flags) -flto -O3 -ffast-math -march=native -DNDEBUG
 
 fuzz_flags = $(debug_flags) -fsanitize=fuzzer -DNDEBUG -O3
@@ -128,7 +128,6 @@ check:
 	make test_parse
 	make test_vm_next
 	make test_vm_math
-	make test_expand
 .PHONY: c
 c:
 	make check
@@ -147,6 +146,7 @@ at:
 check_local:
 	set -e
 	make check
+	make test_expand
 	make test_vm
 	make test_env
 	make test_conf

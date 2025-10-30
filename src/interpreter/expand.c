@@ -52,13 +52,22 @@ static void expand_glob(Commands* restrict cmds, size_t pos, Arena* restrict scr
         cmd_realloc_exact(cmds, scratch, cmds->count + glob_buf.gl_pathc);
     }
 
+    if (cmds->count > pos + 1) {
+        // move later entries so they don't get overwritten
+        for (size_t i = pos + 1; i < cmds->count; ++i) {
+            cmds->strs[i + glob_buf.gl_pathc - 1] = cmds->strs[i];
+            cmds->ops[i + glob_buf.gl_pathc - 1] = cmds->ops[i];
+            cmds->keys[i + glob_buf.gl_pathc - 1] = cmds->keys[i];
+        }
+    }
+
     for (size_t i = 0; i < glob_buf.gl_pathc; ++i) {
         debugf("%s\n", glob_buf.gl_pathv[i]);
 
         estrset(&cmds->strs[pos], &Str_Get(glob_buf.gl_pathv[i]), scratch);
         cmds->ops[pos++] = OP_CONST;
     }
-    cmds->count += pos - 1;
+    cmds->count += glob_buf.gl_pathc - 1;
 
     globfree(&glob_buf);
 }
@@ -84,7 +93,7 @@ Str* expand_variable(Commands* cmds, size_t i, Vars* restrict vars, Arena* restr
 {
     Str* in = cmds->keys[i].value ? &cmds->keys[i] : &cmds->strs[i];
     assert(in); assert(in->value);
-    if (!in || in->length < 2) {
+    if (!in || in->length < 2 || !in->value) {
         return NULL;
     }
 
@@ -102,6 +111,15 @@ Str* expand_variable(Commands* cmds, size_t i, Vars* restrict vars, Arena* restr
 
     if (val->type == V_STR)
         return estrdup(&val->val.s, scratch);
+
+    if (i < cmds->count - 1) {
+        if (cmds->op == OP_INCREMENT) {
+            ++val->val.n.value.i;
+        }
+        else if (cmds->op == OP_DECREMENT) {
+            --val->val.n.value.i;
+        }
+    }
 
     return numtostr(val->val.n, scratch);
 
@@ -169,8 +187,38 @@ static void expand_alias(Str* restrict s, Arena* restrict scratch)
     debug("found space in alias");
 }
 
+static void handle_init_assignment(Vm_Data* restrict vm)
+{
+    Commands* cmds = vm->cmds;
+    if (vm->pos == 1) {
+        for (size_t i = 0; i < cmds->count; ++i) {
+            switch (cmds->ops[i]) {
+                case OP_GLOB_EXPANSION: {
+                    expand_glob(cmds, i, vm->s);
+                    break;
+                }
+                default:
+                    break;
+            }
+        }
+    }
+    if (cmds->ops[vm->pos] == OP_NUM) {
+        Num n = estrtonum(cmds->strs[vm->pos]);
+        *vars_add_or_get(vm->sh->vars, *estrdup(&cmds->strs[0], &vm->sh->arena)) = Var_n(n);
+        return;
+    }
+
+    Str s = *estrdup(&cmds->strs[vm->pos], &vm->sh->arena);
+    *vars_add_or_get(vm->sh->vars, *estrdup(&cmds->strs[0], &vm->sh->arena)) = Var_s(s);
+}
+
 void expand(Vm_Data* restrict vm, Arena* restrict scratch)
 {
+    if (vm->state == VS_IN_LOOP_EACH_INIT) {
+        handle_init_assignment(vm);
+        return;
+    }
+
     Commands* cmds = vm->cmds;
     if (cmds->strs[0].value && cmds->ops[0] == OP_CONST) {
         expand_alias(&cmds->strs[0], scratch);
