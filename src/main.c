@@ -5,6 +5,7 @@
 #endif /* ifndef _POXIC_C_SOURCE */
 
 #include <assert.h>
+#include <errno.h>
 #include <setjmp.h>
 #include <stdlib.h>
 #include <time.h>
@@ -404,8 +405,17 @@ int main(int argc, char** argv, char** envp)
     startup_time();
 
     Str prompt;
-    while ((prompt = prompt_get(&shell.input, &shell.scratch)).value &&
-        (shell.input.buffer = bestline(prompt.value))) {
+    while ((prompt = prompt_get(&shell.input, &shell.scratch)).value) {
+        shell.input.buffer = bestline(prompt.value);
+        if (!shell.input.buffer) {
+            // Check if bestline returned NULL due to interrupt (Ctrl+C)
+            if (errno == EINTR) {
+                errno = 0;
+                continue;  // Continue to next iteration with fresh prompt
+            }
+            break;  // EOF or other error, exit loop
+        }
+
         shell.input.pos = strlen(shell.input.buffer) + 1;
 
         int command_result = interpreter_run(&shell, shell.scratch);

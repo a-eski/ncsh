@@ -57,30 +57,6 @@ int vm_fork_failure(Vm_Data* restrict vm)
 }
 
 /* VM */
-#define VM_COMMAND_DIED_MESSAGE "ncsh: Command child process died, cause unknown."
-void vm_status_check(Vm_Data* restrict vm)
-{
-    if (WIFEXITED(vm->status)) {
-        if ((vm->status = WEXITSTATUS(vm->status))) {
-            tty_fprintln(stderr, "ncsh: Command child process failed with status %d", WEXITSTATUS(vm->status));
-        }
-#ifdef NCSH_DEBUG
-        else {
-            tty_fprintln(stderr, "ncsh: Command child process exited successfully.");
-        }
-#endif /* NCSH_DEBUG */
-        // return EXIT_SUCCESS;
-    }
-#ifdef NCSH_DEBUG
-    else if (WIFSIGNALED(vm->status)) {
-        tty_fprintln(stderr, "ncsh: Command child process died from signal %d", WTERMSIG(vm->status));
-    }
-    else {
-        tty_writeln(VM_COMMAND_DIED_MESSAGE, sizeof(VM_COMMAND_DIED_MESSAGE) - 1);
-    }
-#endif /* NCSH_DEBUG */
-}
-
 void vm_waitpid(int pid, Vm_Data* restrict vm)
 {
     pid_t waitpid_result;
@@ -102,7 +78,20 @@ void vm_waitpid(int pid, Vm_Data* restrict vm)
 
         // check if child process has exited
         if (waitpid_result == pid) {
-            // vm_status_check();
+            if (WIFEXITED(vm->status)) {
+                vm->status = WEXITSTATUS(vm->status);
+            }
+            else if (WIFSIGNALED(vm->status)) {
+                // Child was killed by a signal (e.g., Ctrl+C), this is not an error for the shell - return success
+                vm->status = EXIT_SUCCESS;
+            }
+            else if (WIFSTOPPED(vm->status)) {
+                // Child was stopped, continue waiting
+                continue;
+            }
+            else { // Unknown status
+                vm->status = EXIT_FAILURE;
+            }
             break;
         }
     }
@@ -792,12 +781,24 @@ Commands* vm_next(Vm_Data* restrict vm)
 [[nodiscard]]
 int vm_run_foreground(Vm_Data* restrict vm, pid_t shell_pgid)
 {
+    // Block SIGINT and SIGQUIT BEFORE fork to avoid race conditions
+    // This prevents the shell from being interrupted by signals meant for the foreground job
+    sigset_t block_mask, old_mask;
+    sigemptyset(&block_mask);
+    sigaddset(&block_mask, SIGINT);
+    sigaddset(&block_mask, SIGQUIT);
+    sigprocmask(SIG_BLOCK, &block_mask, &old_mask);
+
     int pid = fork();
     if (pid < 0) {
+        sigprocmask(SIG_SETMASK, &old_mask, NULL);
         return vm_fork_failure(vm);
     }
 
     if (pid == 0) { // runs in the child process
+        // Restore signal mask in child (unblock SIGINT/SIGQUIT)
+        sigprocmask(SIG_SETMASK, &old_mask, NULL);
+
         setpgid(0, 0);
         signal_reset();
 
@@ -813,15 +814,50 @@ int vm_run_foreground(Vm_Data* restrict vm, pid_t shell_pgid)
         exit(-1);
     }
 
+    // Set global vm_child_pid so signal handler can forward signals to child
+    vm_child_pid = pid;
+
+    // Put child in its own process group (both parent and child do this to avoid race)
     setpgid(pid, pid);
-    tcsetpgrp(STDIN_FILENO, pid);
+
+    // Give terminal control to the child's process group
+    // This ensures SIGINT goes to the child, not the shell
+    if (tcsetpgrp(STDIN_FILENO, pid) < 0) {
+        // If we can't set foreground process group, continue anyway
+        // but this might cause issues with signal delivery
+        // tty_perror("ncsh: tcsetpgrp failed for child");
+    }
 
     if (vm->op_current == OP_PIPE) {
         pipe_stop(vm->command_position, vm->stmts->pipes_count, &vm->pipes_io);
     }
 
     vm_waitpid(pid, vm);
-    tcsetpgrp(STDIN_FILENO, shell_pgid);
+
+    // Reset vm_child_pid now that child has exited
+    vm_child_pid = 0;
+
+    // Give terminal control back to the shell
+    if (tcsetpgrp(STDIN_FILENO, shell_pgid) < 0) {
+        // tty_perror("ncsh: tcsetpgrp failed to restore shell");
+    }
+
+    // Clear any pending SIGINT/SIGQUIT before unblocking
+    // These signals were meant for the child, not the shell
+    sigset_t pending;
+    sigpending(&pending);
+    if (sigismember(&pending, SIGINT) || sigismember(&pending, SIGQUIT)) {
+        struct timespec timeout = {0, 0};
+        siginfo_t info;
+        // Consume the pending signal(s) without processing them
+        while (sigtimedwait(&block_mask, &info, &timeout) > 0) {
+            // Just discard the signal
+        }
+    }
+
+    // Restore signal mask (unblock SIGINT/SIGQUIT)
+    sigprocmask(SIG_SETMASK, &old_mask, NULL);
+
     return EXIT_SUCCESS;
 }
 
