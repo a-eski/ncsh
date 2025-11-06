@@ -29,6 +29,7 @@ enum Parser_State: size_t {
     IN_DOUBLE_QUOTES =           1 << 1,
     IN_BACKTICK_QUOTES =         1 << 2,
     IN_FOR_C_STYLE =             1 << 3,
+    IN_MATH_EXPR =               1 << 4,
 };
 // clang-format on
 
@@ -888,6 +889,8 @@ static Parser_Internal parse_token(Parser_Data* restrict data, Lexemes* restrict
             ++*i;
             if (data->cur_cmds->pos > 0)
                 data->cur_cmds = cmd_next(data->cur_cmds, data->s);
+
+            parser_state |= IN_MATH_EXPR;
             data_cmd_update(data, Str_Lit("$("), OP_MATH_EXPR_START);
             return (Parser_Internal){};
         }
@@ -1012,7 +1015,7 @@ static Parser_Internal parse_token(Parser_Data* restrict data, Lexemes* restrict
         if (is_in_quotes())
             goto quoted;
 
-        if (peek(lexemes, *i + 1) == T_PLUS) {
+        if (parser_state & IN_FOR_C_STYLE && peek(lexemes, *i + 1) == T_PLUS) {
             ++*i;
             data->cur_cmds->op = OP_INCREMENT;
             data_cmd_update(data, Str_Lit("++"), OP_INCREMENT);
@@ -1026,6 +1029,9 @@ static Parser_Internal parse_token(Parser_Data* restrict data, Lexemes* restrict
     case T_MINUS: {
         if (is_in_quotes())
             goto quoted;
+
+        if (!(parser_state & IN_FOR_C_STYLE || parser_state & IN_MATH_EXPR))
+            break;
 
         if (peek(lexemes, *i + 1) == T_MINUS) {
             ++*i;
@@ -1073,6 +1079,7 @@ static Parser_Internal parse_token(Parser_Data* restrict data, Lexemes* restrict
         if (is_in_quotes())
             goto quoted;
 
+        parser_state &= ~IN_MATH_EXPR;
         data_cmd_update(data, lexemes->strs[*i], OP_MATH_EXPR_END);
         return (Parser_Internal){};
     }

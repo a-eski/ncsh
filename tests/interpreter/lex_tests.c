@@ -5,6 +5,7 @@
 #include "../etest.h"
 #include "../../src/interpreter/lex.h"
 #include "../lib/arena_test_helper.h"
+#include "../lib/test_defines.h"
 
 [[maybe_unused]]
 void lex_print(Lexemes* lexemes)
@@ -19,17 +20,15 @@ void lex_ls_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
 
-    auto line = Str_Lit("ls");
-
     Lexemes lexemes = {0};
-    lex(line, &lexemes, &scratch_arena);
+    lex(LS, &lexemes, &scratch_arena);
 
     eassert(lexemes.count == 1);
 
     eassert(lexemes.strs[0].value);
-    eassert(!memcmp(lexemes.strs[0].value, line.value, line.length));
+    eassert(!memcmp(lexemes.strs[0].value, LS.value, LS.length));
     eassert(lexemes.ops[0] == T_CONST);
-    eassert(lexemes.strs[0].length == line.length);
+    eassert(lexemes.strs[0].length == LS.length);
 
     eassert(!lexemes.strs[1].value);
 
@@ -47,15 +46,57 @@ void lex_ls_dash_l_test()
 
     eassert(lexemes.count == 2);
 
-    eassert(!memcmp(lexemes.strs[0].value, "ls", 3));
+    eassert(!memcmp(lexemes.strs[0].value, LS.value, LS.length - 1));
     eassert(lexemes.ops[0] == T_CONST);
-    eassert(lexemes.strs[0].length == 3);
+    eassert(lexemes.strs[0].length == LS.length);
 
     eassert(!memcmp(lexemes.strs[1].value, "-l", 3));
     eassert(lexemes.ops[1] == T_CONST);
     eassert(lexemes.strs[1].length == 3);
 
     eassert(!lexemes.strs[2].value);
+
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
+void lex_double_dash_test()
+{
+    SCRATCH_ARENA_TEST_SETUP;
+
+    auto line = Str_Lit("git commit --amend -m message");
+
+    Lexemes lexemes = {0};
+    lex(line, &lexemes, &scratch_arena);
+
+    eassert(lexemes.count == 5);
+    size_t p = 0;
+
+    auto git = Str_Lit("git");
+    eassert(!memcmp(lexemes.strs[p].value, git.value, git.length - 1));
+    eassert(lexemes.ops[p] == T_CONST);
+    eassert(lexemes.strs[p++].length == git.length);
+
+    auto commit = Str_Lit("commit");
+    eassert(!memcmp(lexemes.strs[p].value, commit.value, commit.length - 1));
+    eassert(lexemes.ops[p] == T_CONST);
+    eassert(lexemes.strs[p++].length == commit.length);
+
+    auto amend = Str_Lit("--amend");
+    eassert(!memcmp(lexemes.strs[p].value, amend.value, amend.length - 1));
+    eassert(lexemes.ops[p] == T_CONST);
+    eassert(lexemes.strs[p++].length == amend.length);
+
+    auto dash_m = Str_Lit("-m");
+    eassert(!memcmp(lexemes.strs[p].value, dash_m.value, dash_m.length - 1));
+    eassert(lexemes.ops[p] == T_CONST);
+    eassert(lexemes.strs[p++].length == dash_m.length);
+
+    auto msg = Str_Lit("message");
+    eassert(!memcmp(lexemes.strs[p].value, msg.value, msg.length - 1));
+    eassert(lexemes.ops[p] == T_CONST);
+    eassert(lexemes.strs[p++].length == msg.length);
+
+    eassert(!lexemes.strs[p].value);
 
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
@@ -1571,6 +1612,7 @@ void lexer_tests()
 
     etest_run(lex_ls_test);
     etest_run(lex_ls_dash_l_test);
+    etest_run(lex_double_dash_test);
     etest_run(lex_pipe_test);
     etest_run(lex_multiple_pipes_test);
     etest_run(lex_multiple_pipes_multiple_args_test);
