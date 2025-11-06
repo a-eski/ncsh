@@ -199,7 +199,5 @@ Please see COMPILE.md.
 * Custom prompt colors, backgrounds
 * Improve noninteractive mode
 * Add command-line flags for noninteractive mode
-* Background jobs implementation
-* Math/Arithmetic implementation
 * Better POSIX compliance
 * Usable with GDB (currently doesn't work)
