@@ -172,6 +172,61 @@ void parse_multiple_pipes_test()
     SCRATCH_ARENA_TEST_TEARDOWN;
 }
 
+void parse_double_dash_test()
+{
+    SCRATCH_ARENA_TEST_SETUP;
+
+    auto line = Str_Lit("git commit --amend -m \"message\"");
+
+    Lexemes lexemes = {0};
+    lex(line, &lexemes, &scratch_arena);
+    auto res = parse(&lexemes, &scratch_arena);
+
+    eassert(!res.parser_errno);
+    eassert(res.output.stmts);
+    auto stmts = res.output.stmts;
+    eassert(stmts->type == ST_NORMAL);
+    eassert(!stmts->is_bg_job);
+    eassert(stmts->pipes_count == 1);
+    eassert(stmts->redirect_type == RT_NONE);
+    eassert(stmts->head->type == LT_NORMAL);
+    eassert(stmts->head->commands);
+    auto cmds = stmts->head->commands;
+    // eassert(cmds->count == 5);
+    size_t p = 0;
+
+    auto git = Str_Lit("git");
+    eassert(!memcmp(cmds->strs[p].value, git.value, git.length - 1));
+    eassert(cmds->strs[p].length == git.length);
+    eassert(cmds->ops[p++] == OP_CONST);
+
+    auto commit = Str_Lit("commit");
+    eassert(!memcmp(cmds->strs[p].value, commit.value, commit.length - 1));
+    eassert(cmds->strs[p].length == commit.length);
+    eassert(cmds->ops[p++] == OP_CONST);
+
+    auto amend = Str_Lit("--amend");
+    eassert(!memcmp(cmds->strs[p].value, amend.value, amend.length - 1));
+    eassert(cmds->strs[p].length == amend.length);
+    eassert(cmds->ops[p++] == OP_CONST);
+
+    auto dash_m = Str_Lit("-m");
+    eassert(!memcmp(cmds->strs[p].value, dash_m.value, dash_m.length - 1));
+    eassert(cmds->strs[p].length == dash_m.length);
+    eassert(cmds->ops[p++] == OP_CONST);
+
+    auto msg = Str_Lit("message");
+    eassert(!memcmp(cmds->strs[p].value, msg.value, msg.length - 1));
+    eassert(cmds->strs[p].length == msg.length);
+    eassert(cmds->ops[p++] == OP_CONST);
+
+    eassert(!cmds->strs[p].value);
+
+    eassert(!cmds->next);
+
+    SCRATCH_ARENA_TEST_TEARDOWN;
+}
+
 void parse_multiple_pipes_multiple_args_test()
 {
     SCRATCH_ARENA_TEST_SETUP;
@@ -2892,6 +2947,8 @@ void parser_tests()
     etest_run(parse_pipe_test);
     etest_run(parse_multiple_pipes_test);
     etest_run(parse_multiple_pipes_multiple_args_test);
+
+    etest_run(parse_double_dash_test);
 
     etest_run(parse_background_job_test);
     etest_run(parse_background_job_args_test);

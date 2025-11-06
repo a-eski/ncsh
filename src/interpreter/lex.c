@@ -339,13 +339,22 @@ void lex(Str line, Lexemes* lexemes, Arena* restrict scratch)
             continue;
         }
         case MINUS: {
-            if (pos + 1 < line.length &&
-                    (is_whitespace(line.value[pos + 1]) || line.value[pos + 1] == MINUS || line.value[pos + 1] == C_PARAN)) {
-                lexeme_add(lexemes, &n, line.value[pos], T_MINUS, scratch);
-                continue;
+            if (pos + 1 < line.length) {
+                if (is_whitespace(line.value[pos + 1]) || line.value[pos + 1] == C_PARAN) {
+                    lexeme_add(lexemes, &n, line.value[pos], T_MINUS, scratch);
+                    continue;
+                }
+                if (line.value[pos + 1] == MINUS) {
+                    if (pos + 2 < line.length && !is_whitespace(line.value[pos + 2]) && line.value[pos + 2] != C_PARAN)
+                        goto lex_default;
+
+                    lexeme_add(lexemes, &n, line.value[pos], T_MINUS, scratch);
+                    continue;
+                }
+
             }
-            else
-                goto lex_default;
+
+            goto lex_default;
         }
         case MOD: {
             lexeme_add(lexemes, &n, line.value[pos], T_MOD, scratch);
