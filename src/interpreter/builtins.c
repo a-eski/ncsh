@@ -25,6 +25,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include "vm_types.h"
 #include "../alias.h"
 #include "../arena.h"
 #include "../defines.h"
@@ -32,8 +33,8 @@
 #include "../ttyio/ttyio.h"
 #include "../types.h"
 #include "../z/z.h"
+#include "../io/prompt.h"
 #include "../io/bestline.h"
-#include "vm_types.h"
 
 /* External values */
 extern jmp_buf env_jmp_buf;      // from main.c, used on unrecoverable failures
@@ -133,6 +134,13 @@ static int builtins_enable(Str* restrict strs);
 #define NCSH_DISABLE "disable"
 static int builtins_disable(Str* restrict strs);
 
+#define NCSH_PROMPT "prompt"
+#define NCSH_PROMPT_USER "--user"
+#define NCSH_PROMPT_USER_SHORT "-u"
+#define NCSH_PROMPT_TYPE "--type"
+#define NCSH_PROMPT_TYPE_SHORT "-t"
+static int builtins_prompt(Str* restrict strs);
+
 // TODO: finish implementation
 // #define NCSH_EXPORT "export"
 // int builtins_export(Statements* restrict toks, size_t* restrict buf_lens);
@@ -162,7 +170,8 @@ enum Builtins_Disabled : long unsigned int {
     BF_DISABLE =     1 << 12,
     BF_Z =           1 << 13,
     BF_HISTORY =     1 << 14,
-    BF_UNSET =       1 << 16
+    BF_UNSET =       1 << 16,
+    BF_PROMPT =      1 << 17,
     // BF_SET =         1 << 13,
     // BF_EXPORT =      1 << 9,
 };
@@ -191,12 +200,13 @@ static const Builtin builtins[] = {
     {.flag = BF_DISABLE, .str.length = sizeof(NCSH_DISABLE), .str.value = NCSH_DISABLE, .func = &builtins_disable},
     /*{.flag = BF_EXPORT, .str.length = sizeof(NCSH_EXPORT), .str.value = NCSH_EXPORT, .func = &builtins_export},
     {.flag = BF_SET, .str.length = sizeof(NCSH_SET), .str.value = NCSH_SET, .func = &builtins_set},*/
+    {.flag = BF_PROMPT, .str.length = sizeof(NCSH_PROMPT), .str.value = NCSH_PROMPT, .func = &builtins_prompt}
 };
 
 static constexpr size_t builtins_count = sizeof(builtins) / sizeof(builtins[0]);
 
 /* Implementations */
-#define Z_COMMAND_NOT_FOUND_MESSAGE "ncsh z: command not found, options not supported."
+#define Z_COMMAND_NOT_FOUND "ncsh z: command not found, options not supported."
 
 [[nodiscard]]
 static int builtins_z(z_Database* restrict z_db, Str* restrict strs, Arena* restrict arena, Arena* restrict scratch)
@@ -255,13 +265,13 @@ static int builtins_z(z_Database* restrict z_db, Str* restrict strs, Arena* rest
         }
     }
 
-    if (builtins_writeln(vm_output_fd, Z_COMMAND_NOT_FOUND_MESSAGE, sizeof(Z_COMMAND_NOT_FOUND_MESSAGE) - 1) == -1) {
+    if (builtins_writeln(vm_output_fd, Z_COMMAND_NOT_FOUND, sizeof(Z_COMMAND_NOT_FOUND) - 1) == -1) {
         return EXIT_FAILURE;
     }
     return EXIT_SUCCESS;
 }
 
-#define HISTORY_COMMAND_NOT_FOUND_MESSAGE "ncsh history: command not found."
+#define HISTORY_COMMAND_NOT_FOUND "ncsh history: command not found."
 
 [[nodiscard]]
 [[maybe_unused]]
@@ -278,8 +288,8 @@ static int builtins_history(Str* restrict strs)
     // skip first position since we know it is 'history'
     Str* args = strs + 1;
     if (!args || !args->value) {
-        if (builtins_writeln(vm_output_fd, HISTORY_COMMAND_NOT_FOUND_MESSAGE,
-                           sizeof(HISTORY_COMMAND_NOT_FOUND_MESSAGE) - 1) == -1) {
+        if (builtins_writeln(vm_output_fd, HISTORY_COMMAND_NOT_FOUND,
+                           sizeof(HISTORY_COMMAND_NOT_FOUND) - 1) == -1) {
             return EXIT_FAILURE;
         }
         return EXIT_FAILURE_CONTINUE;
@@ -312,8 +322,8 @@ static int builtins_history(Str* restrict strs)
         }
     }
 
-    if (builtins_writeln(vm_output_fd, HISTORY_COMMAND_NOT_FOUND_MESSAGE,
-                       sizeof(HISTORY_COMMAND_NOT_FOUND_MESSAGE) - 1) == -1) {
+    if (builtins_writeln(vm_output_fd, HISTORY_COMMAND_NOT_FOUND,
+                       sizeof(HISTORY_COMMAND_NOT_FOUND) - 1) == -1) {
         return EXIT_FAILURE;
     }
     return EXIT_FAILURE_CONTINUE;
@@ -583,7 +593,7 @@ static int builtins_help([[maybe_unused]] Str* restrict strs)
     return EXIT_SUCCESS;
 }
 
-#define NCSH_COULD_NOT_CD_MESSAGE "ncsh cd: could not change directory."
+#define NCSH_COULD_NOT_CD "ncsh cd: could not change directory."
 
 [[nodiscard]]
 static int builtins_cd(Str* restrict strs)
@@ -595,7 +605,7 @@ static int builtins_cd(Str* restrict strs)
     if (!args || !args->value) {
         char* home = getenv("HOME");
         if (!home) {
-            if (builtins_writeln(STDERR_FILENO, NCSH_COULD_NOT_CD_MESSAGE, sizeof(NCSH_COULD_NOT_CD_MESSAGE) - 1) == -1)
+            if (builtins_writeln(STDERR_FILENO, NCSH_COULD_NOT_CD, sizeof(NCSH_COULD_NOT_CD) - 1) == -1)
                 return EXIT_FAILURE;
         }
         else if (chdir(home)) {
@@ -606,7 +616,7 @@ static int builtins_cd(Str* restrict strs)
     }
 
     if (chdir(args->value)) {
-        if (builtins_writeln(STDERR_FILENO, NCSH_COULD_NOT_CD_MESSAGE, sizeof(NCSH_COULD_NOT_CD_MESSAGE) - 1) == -1)
+        if (builtins_writeln(STDERR_FILENO, NCSH_COULD_NOT_CD, sizeof(NCSH_COULD_NOT_CD) - 1) == -1)
             return EXIT_FAILURE;
     }
 
@@ -626,15 +636,15 @@ static int builtins_pwd([[maybe_unused]] Str* restrict strs)
     return EXIT_SUCCESS;
 }
 
-#define KILL_NOTHING_TO_KILL_MESSAGE "ncsh kill: nothing to kill, please pass in a process ID (PID)."
-#define KILL_COULDNT_PARSE_PID_MESSAGE "ncsh kill: could not parse process ID (PID) from arguments."
+#define KILL_NOTHING_TO_KILL "ncsh kill: nothing to kill, please pass in a process ID (PID)."
+#define KILL_COULDNT_PARSE_PID "ncsh kill: could not parse process ID (PID) from arguments."
 
 [[nodiscard]]
 static int builtins_kill(Str* restrict strs)
 {
     assert(strs);
     if (!strs->value) {
-        if (builtins_writeln(vm_output_fd, KILL_NOTHING_TO_KILL_MESSAGE, sizeof(KILL_NOTHING_TO_KILL_MESSAGE) - 1) ==
+        if (builtins_writeln(vm_output_fd, KILL_NOTHING_TO_KILL, sizeof(KILL_NOTHING_TO_KILL) - 1) ==
             -1) {
             return EXIT_FAILURE;
         }
@@ -645,7 +655,7 @@ static int builtins_kill(Str* restrict strs)
     // skip first position since we know it is 'kill'
     Str* args = strs + 1;
     if (!args || !args->value) {
-        if (builtins_writeln(vm_output_fd, KILL_NOTHING_TO_KILL_MESSAGE, sizeof(KILL_NOTHING_TO_KILL_MESSAGE) - 1) ==
+        if (builtins_writeln(vm_output_fd, KILL_NOTHING_TO_KILL, sizeof(KILL_NOTHING_TO_KILL) - 1) ==
             -1) {
             return EXIT_FAILURE;
         }
@@ -655,7 +665,7 @@ static int builtins_kill(Str* restrict strs)
 
     pid_t pid = atoi(args->value);
     if (!pid) {
-        if (builtins_writeln(vm_output_fd, KILL_COULDNT_PARSE_PID_MESSAGE, sizeof(KILL_COULDNT_PARSE_PID_MESSAGE) - 1) ==
+        if (builtins_writeln(vm_output_fd, KILL_COULDNT_PARSE_PID, sizeof(KILL_COULDNT_PARSE_PID) - 1) ==
             -1) {
             return EXIT_FAILURE;
         }
@@ -755,7 +765,7 @@ static int builtins_disable(Str* restrict strs)
     return EXIT_SUCCESS;
 }
 
-#define ENABLE_OPTION_NOT_SUPPORTED_MESSAGE "ncsh enable: command not found, options entered not supported."
+#define ENABLE_OPTION_NOT_SUPPORTED "ncsh enable: command not found, options entered not supported."
 
 [[nodiscard]]
 static int builtins_enable(Str* restrict strs)
@@ -794,16 +804,85 @@ static int builtins_enable(Str* restrict strs)
         }
     }
 
-    if (builtins_writeln(vm_output_fd, ENABLE_OPTION_NOT_SUPPORTED_MESSAGE,
-                       sizeof(ENABLE_OPTION_NOT_SUPPORTED_MESSAGE) - 1) == -1) {
+    if (builtins_writeln(vm_output_fd, ENABLE_OPTION_NOT_SUPPORTED,
+                       sizeof(ENABLE_OPTION_NOT_SUPPORTED) - 1) == -1) {
         return EXIT_FAILURE;
     }
     return EXIT_SUCCESS;
 }
 
+#define PROMPT_OPTION_NONE "ncsh prompt: please pass in at least one option:\n" \
+    "--user (-u): false, true\n" \
+    "--type (-t): short, normal, none, fish"
+#define PROMPT_OPTION_NOT_SUPPORTED "ncsh prompt: unsupported option."
+#define PROMPT_OPTION_NO_VALUE "ncsh prompt: no value found for option."
+[[nodiscard]]
+static int builtins_prompt(Str* restrict strs)
+{
+    assert(strs && strs->value);
+
+    // skip first position since we know it is 'enable'
+    Str* args = strs + 1;
+    if (!args || !args->value ||
+            estrcmp(*args, Str_Lit("--help")) ||
+            estrcmp(*args, Str_Lit("-h"))) {
+        if (builtins_writeln(vm_output_fd, PROMPT_OPTION_NONE,
+                       sizeof(PROMPT_OPTION_NONE) - 1) == -1) {
+            return EXIT_FAILURE;
+        }
+        return EXIT_SUCCESS;
+    }
+
+    while (args && args->value) {
+        if (estrcmp(*args, Str_Lit(NCSH_PROMPT_TYPE)) || estrcmp(*args, Str_Lit(NCSH_PROMPT_TYPE_SHORT))) {
+            ++args;
+            if (!args || !args->value) {
+                if (builtins_writeln(vm_output_fd, PROMPT_OPTION_NONE,
+                               sizeof(PROMPT_OPTION_NONE) - 1) == -1) {
+                    return EXIT_FAILURE;
+                }
+                return EXIT_SUCCESS;
+            }
+
+            if (prompt_dir_type_set(*args)) {
+                if (builtins_writeln(vm_output_fd, PROMPT_OPTION_NOT_SUPPORTED,
+                               sizeof(PROMPT_OPTION_NOT_SUPPORTED) - 1) == -1) {
+                    return EXIT_FAILURE;
+                }
+                return EXIT_FAILURE_CONTINUE;
+            }
+            ++args;
+            continue;
+        }
+
+        if (estrcmp(*args, Str_Lit(NCSH_PROMPT_USER)) || estrcmp(*args, Str_Lit(NCSH_PROMPT_USER_SHORT))) {
+            ++args;
+            if (!args || !args->value) {
+                if (builtins_writeln(vm_output_fd, PROMPT_OPTION_NONE,
+                               sizeof(PROMPT_OPTION_NONE) - 1) == -1) {
+                    return EXIT_FAILURE;
+                }
+                return EXIT_SUCCESS;
+            }
+
+            if (prompt_show_user_set(*args)) {
+                if (builtins_writeln(vm_output_fd, PROMPT_OPTION_NOT_SUPPORTED,
+                               sizeof(PROMPT_OPTION_NOT_SUPPORTED) - 1) == -1) {
+                    return EXIT_FAILURE;
+                }
+                return EXIT_FAILURE_CONTINUE;
+            }
+            ++args;
+            continue;
+        }
+    }
+
+    return EXIT_SUCCESS;
+}
+
 // TODO: implement export
-/*#define EXPORT_OPTION_NOT_SUPPORTED_MESSAGE "ncsh export: command not found, options entered not supported."
-#define EXPORT_OPTIONS_MESSAGE \*/
+/*#define EXPORT_OPTION_NOT_SUPPORTED "ncsh export: command not found, options entered not supported."
+#define EXPORT_OPTIONS \*/
 //     "ncsh export: please pass in at least once argument. export currently supports modifying $PATH and $HOME."
 
 // [[nodiscard]]
@@ -815,8 +894,8 @@ static int builtins_enable(Str* restrict strs)
 //     // skip first position since we know it is 'export'
 //     Token* tok = toks->head->next->next;
 //     if (!tok || !tok->val) {
-//         if (builtins_write(vm_output_fd, EXPORT_OPTION_NOT_SUPPORTED_MESSAGE,
-//                            sizeof(EXPORT_OPTION_NOT_SUPPORTED_MESSAGE) - 1) == -1) {
+//         if (builtins_write(vm_output_fd, EXPORT_OPTION_NOT_SUPPORTED,
+//                            sizeof(EXPORT_OPTION_NOT_SUPPORTED) - 1) == -1) {
 //             return EXIT_FAILURE;
 //         }
 //         return EXIT_FAILURE_CONTINUE;
@@ -829,8 +908,8 @@ static int builtins_enable(Str* restrict strs)
 //         puts("export $HOME found");
 //     }
 //     else {
-//         if (builtins_write(vm_output_fd, EXPORT_OPTION_NOT_SUPPORTED_MESSAGE,
-//                            sizeof(EXPORT_OPTION_NOT_SUPPORTED_MESSAGE) - 1) == -1) {
+//         if (builtins_write(vm_output_fd, EXPORT_OPTION_NOT_SUPPORTED,
+//                            sizeof(EXPORT_OPTION_NOT_SUPPORTED) - 1) == -1) {
 //             return EXIT_FAILURE;
 //         }
 //     }
@@ -849,8 +928,8 @@ static int builtins_enable(Str* restrict strs)
 //     return EXIT_SUCCESS;
 // }
 //
-// #define SET_NOTHING_TO_SET_MESSAGE "ncsh set: nothing to set, please pass in a value to set (i.e. '-e', '-c')"
-// #define SET_VALID_OPERATIONS_MESSAGE "ncsh set: valid set operations are in the form '-e', '-c', etc."
+// #define SET_NOTHING_TO_SET "ncsh set: nothing to set, please pass in a value to set (i.e. '-e', '-c')"
+// #define SET_VALID_OPERATIONS "ncsh set: valid set operations are in the form '-e', '-c', etc."
 // [[nodiscard]]
 // static int builtins_set(Tokens* restrict toks, size_t* restrict buf_lens)
 // {
@@ -860,7 +939,7 @@ static int builtins_enable(Str* restrict strs)
 //     // skip first position since we know it is 'set'
 //     Token* tok = toks->head->next->next;
 //     if (!tok || !tok->val) {
-//         if (builtins_write(vm_output_fd, SET_NOTHING_TO_SET_MESSAGE, sizeof(SET_NOTHING_TO_SET_MESSAGE) - 1) == -1) {
+//         if (builtins_write(vm_output_fd, SET_NOTHING_TO_SET, sizeof(SET_NOTHING_TO_SET) - 1) == -1) {
 //             return EXIT_FAILURE;
 //         }
 //
@@ -868,7 +947,7 @@ static int builtins_enable(Str* restrict strs)
 //     }
 //
 //     if (tok->len > 3 || tok->val[0] != '-') {
-//         if (builtins_write(vm_output_fd, SET_VALID_OPERATIONS_MESSAGE, sizeof(SET_VALID_OPERATIONS_MESSAGE) - 1) ==
+//         if (builtins_write(vm_output_fd, SET_VALID_OPERATIONS, sizeof(SET_VALID_OPERATIONS) - 1) ==
 //             -1) {
 //             return EXIT_FAILURE;
 //         }
@@ -888,7 +967,7 @@ static int builtins_enable(Str* restrict strs)
 //     return EXIT_SUCCESS;
 // }
 
-#define UNSET_NOTHING_TO_UNSET_MESSAGE "ncsh unset: nothing to unset, please pass in a value to unset."
+#define UNSET_NOTHING_TO_UNSET "ncsh unset: nothing to unset, please pass in a value to unset."
 [[nodiscard]]
 static int builtins_unset(Str* restrict strs, Env* restrict env)
 {
@@ -898,8 +977,8 @@ static int builtins_unset(Str* restrict strs, Env* restrict env)
     Str* args = strs + 1;
     if (!args || !args->value) {
         if (builtins_writeln(vm_output_fd,
-                           UNSET_NOTHING_TO_UNSET_MESSAGE,
-                           sizeof(UNSET_NOTHING_TO_UNSET_MESSAGE) - 1) == -1) {
+                           UNSET_NOTHING_TO_UNSET,
+                           sizeof(UNSET_NOTHING_TO_UNSET) - 1) == -1) {
             return EXIT_FAILURE;
         }
 

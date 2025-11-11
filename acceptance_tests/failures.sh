@@ -6,6 +6,3 @@ echo "multiple   whitespaces becomes multiple whitespaces"
 echo $PATH
 echo $HOME
 # etc.
-
-git push origin --tags
-error: did you mean `--tags` (with two dashes)?
