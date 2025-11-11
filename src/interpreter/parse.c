@@ -803,14 +803,23 @@ static Parser_Internal parse_token(Parser_Data* restrict data, Lexemes* restrict
     }
 
     case T_AMP: {
+        if (is_in_quotes())
+            goto quoted;
+
         return parse_amp(data, lexemes, i);
     }
 
     case T_GT: {
+        if (is_in_quotes())
+            goto quoted;
+
         return parse_gt(data, lexemes, i);
     }
 
     case T_LT: {
+        if (is_in_quotes())
+            goto quoted;
+
         return parse_lt(data, lexemes, i);
     }
 
@@ -853,6 +862,9 @@ static Parser_Internal parse_token(Parser_Data* restrict data, Lexemes* restrict
     }
 
     case T_EQ: {
+        if (is_in_quotes())
+            goto quoted;
+
         if (*i > 0 && lexemes->ops[*i - 1] == T_CONST) {
             peeked = peek(lexemes, *i + 1);
             if (peeked == T_CONST || peeked == T_NUM || peeked == T_QUOTE || peeked == T_D_QUOTE || peeked == T_BACKTICK || peeked == T_DOLLAR) {
@@ -878,6 +890,9 @@ static Parser_Internal parse_token(Parser_Data* restrict data, Lexemes* restrict
     }
 
     case T_DOLLAR: {
+        if (is_in_quotes())
+            goto quoted;
+
         peeked = peek(lexemes, *i + 1);
         if (peeked == T_CONST) {
             ++*i;
@@ -1084,6 +1099,9 @@ static Parser_Internal parse_token(Parser_Data* restrict data, Lexemes* restrict
         return (Parser_Internal){};
     }
     case T_SEMIC: {
+        if (is_in_quotes())
+            goto quoted;
+
         return (Parser_Internal){};
     }
 

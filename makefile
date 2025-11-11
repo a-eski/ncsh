@@ -331,7 +331,7 @@ tc:
 fuzz_interpreter:
 	chmod +x ./create_corpus_dirs.sh
 	./create_corpus_dirs.sh
-	clang-19 $(STD) $(fuzz_flags) -DZ_TEST -DNCSH_VM_TEST $(TTYIO_IN) ./src/arena.c ./src/interpreter/lex.c ./src/eskilib/efile.c ./src/io/hashset.c ./src/z/fzf.c ./src/z/z.c ./src/env.c ./src/alias.c ./src/conf.c ./src/interpreter/vm_math.c ./src/interpreter/vm.c ./src/interpreter/parse.c ./src/interpreter/builtins.c ./src/interpreter/expand.c ./src/interpreter/pipe.c ./src/interpreter/redirection.c ./src/io/bestline.c ./src/interpreter/interpreter.c ./tests/fuzz/interpreter_fuzzing.c -o ./bin/interpreter_fuzz
+	clang-19 $(STD) $(fuzz_flags) -DZ_TEST -DNCSH_VM_TEST $(TTYIO_IN) ./src/arena.c ./src/interpreter/lex.c ./src/eskilib/efile.c ./src/io/hashset.c ./src/z/fzf.c ./src/z/z.c ./src/env.c ./src/vars.c ./src/alias.c ./src/conf.c ./src/interpreter/vm_math.c ./src/interpreter/vm.c ./src/interpreter/parse.c ./src/interpreter/builtins.c ./src/interpreter/expand.c ./src/interpreter/pipe.c ./src/interpreter/redirection.c ./src/io/bestline.c ./src/interpreter/interpreter.c ./tests/fuzz/interpreter_fuzzing.c -o ./bin/interpreter_fuzz
 	./bin/interpreter_fuzz INTERPRETER_CORPUS/ -detect_leaks=0 -rss_limit_mb=8192
 
 # Format the project

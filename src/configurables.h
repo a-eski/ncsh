@@ -20,6 +20,7 @@
 #define NCSH_DIRECTORY_NORMAL 0 // show the current working directory in the prompt line
 #define NCSH_DIRECTORY_SHORT 1  // show up to 2 of the parent directories in the prompt line
 #define NCSH_DIRECTORY_NONE 2   // do not show the current working directory in the prompt line
+#define NCSH_DIRECTORY_FISH 3   // do not show the current working directory in the prompt line
 
 #ifndef NCSH_PROMPT_DIRECTORY
 /* put the option from above that you want after NCSH_PROMPT_DIRECTORY */
