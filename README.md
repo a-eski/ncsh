@@ -195,9 +195,7 @@ Please see COMPILE.md.
 * More rc file configurations
 * More compile-time configurations
 * Frecency-based autocomplete
-* More built-in commands like export, setting environment variables, etc.
 * Custom prompt colors, backgrounds
 * Improve noninteractive mode
 * Add command-line flags for noninteractive mode
 * Better POSIX compliance
-* Usable with GDB (currently doesn't work)
