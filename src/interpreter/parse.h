@@ -46,6 +46,7 @@ enum Ops : uint8_t {
     OP_ASSIGNMENT,                            // (var=val)
     OP_HOME_EXPANSION,                        // ~
     OP_GLOB_EXPANSION,                        // * or ?
+    OP_STR_EXPANSION,                         // "file: $file"
 
     OP_JUMP,
     OP_JUMP_IF_FALSE,

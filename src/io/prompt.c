@@ -225,7 +225,7 @@ int prompt_show_user_set(Str show_user)
         prompt_data.show_user = false;
         return EXIT_SUCCESS;
     }
-    return EXIT_SUCCESS;
+    return EXIT_FAILURE_CONTINUE;
 }
 
 void prompt_init()

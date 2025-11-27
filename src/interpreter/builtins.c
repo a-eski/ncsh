@@ -814,7 +814,8 @@ static int builtins_enable(Str* restrict strs)
 #define PROMPT_OPTION_NONE "ncsh prompt: please pass in at least one option:\n" \
     "--user (-u): false, true\n" \
     "--type (-t): short, normal, none, fish"
-#define PROMPT_OPTION_NOT_SUPPORTED "ncsh prompt: unsupported option."
+#define PROMPT_USER_OPTION_NOT_SUPPORTED "ncsh prompt: unsupported option for user."
+#define PROMPT_TYPE_OPTION_NOT_SUPPORTED "ncsh prompt: unsupported option for type."
 #define PROMPT_OPTION_NO_VALUE "ncsh prompt: no value found for option."
 [[nodiscard]]
 static int builtins_prompt(Str* restrict strs)
@@ -844,15 +845,13 @@ static int builtins_prompt(Str* restrict strs)
                 return EXIT_SUCCESS;
             }
 
-            if (prompt_dir_type_set(*args)) {
-                if (builtins_writeln(vm_output_fd, PROMPT_OPTION_NOT_SUPPORTED,
-                               sizeof(PROMPT_OPTION_NOT_SUPPORTED) - 1) == -1) {
+            if (prompt_dir_type_set(*args) != EXIT_SUCCESS) {
+                if (builtins_writeln(vm_output_fd, PROMPT_TYPE_OPTION_NOT_SUPPORTED,
+                               sizeof(PROMPT_TYPE_OPTION_NOT_SUPPORTED) - 1) == -1) {
                     return EXIT_FAILURE;
                 }
                 return EXIT_FAILURE_CONTINUE;
             }
-            ++args;
-            continue;
         }
 
         if (estrcmp(*args, Str_Lit(NCSH_PROMPT_USER)) || estrcmp(*args, Str_Lit(NCSH_PROMPT_USER_SHORT))) {
@@ -865,16 +864,15 @@ static int builtins_prompt(Str* restrict strs)
                 return EXIT_SUCCESS;
             }
 
-            if (prompt_show_user_set(*args)) {
-                if (builtins_writeln(vm_output_fd, PROMPT_OPTION_NOT_SUPPORTED,
-                               sizeof(PROMPT_OPTION_NOT_SUPPORTED) - 1) == -1) {
+            if (prompt_show_user_set(*args) != EXIT_SUCCESS) {
+                if (builtins_writeln(vm_output_fd, PROMPT_USER_OPTION_NOT_SUPPORTED,
+                               sizeof(PROMPT_USER_OPTION_NOT_SUPPORTED) - 1) == -1) {
                     return EXIT_FAILURE;
                 }
                 return EXIT_FAILURE_CONTINUE;
             }
-            ++args;
-            continue;
         }
+        ++args;
     }
 
     return EXIT_SUCCESS;

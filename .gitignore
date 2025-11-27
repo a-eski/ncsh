@@ -29,3 +29,6 @@ INTERPRETER_CORPUS/*
 .idea/*
 src/ttyio
 src/ttyio/*
+acceptance_tests/ncsh_history
+acceptance_tests/ncsh_history_test
+acceptance_tests/_z_database.bin
