@@ -890,8 +890,10 @@ static Parser_Internal parse_token(Parser_Data* restrict data, Lexemes* restrict
     }
 
     case T_DOLLAR: {
-        if (is_in_quotes())
+        if (is_in_quotes()) {
+            const_op = OP_STR_EXPANSION;
             goto quoted;
+        }
 
         peeked = peek(lexemes, *i + 1);
         if (peeked == T_CONST) {
